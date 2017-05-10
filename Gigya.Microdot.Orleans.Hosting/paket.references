@@ -1,0 +1,11 @@
+Metrics.NET
+Microsoft.Orleans.OrleansCodeGenerator
+Microsoft.Orleans.OrleansCodeGenerator.Build
+
+Microsoft.Orleans.Core
+Microsoft.Orleans.OrleansRuntime
+Microsoft.Orleans.OrleansProviders
+Microsoft.Orleans.OrleansSqlUtils
+Microsoft.Orleans.OrleansZooKeeperUtils
+
+Gigya.ServiceContract

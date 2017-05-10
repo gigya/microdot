@@ -1,0 +1,10 @@
+Gigya.ServiceContract 
+Microsoft.Extensions.DependencyInjection
+Microsoft.Orleans.OrleansCodeGenerator
+Microsoft.Orleans.OrleansCodeGenerator.Build
+NSubstitute
+NUnit
+Ninject
+Shouldly
+Castle.Core
+ZooKeeperNetEx

@@ -1,0 +1,4 @@
+Ninject
+Microsoft.Orleans.Core
+Gigya.ServiceContract 
+NSubstitute

@@ -1,0 +1,6 @@
+Gigya.ServiceContract
+Nito.AsyncEx
+Newtonsoft.Json
+Metrics.NET
+System.Collections.Immutable
+System.Threading.Tasks.Dataflow

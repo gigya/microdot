@@ -1,0 +1,121 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.7
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
+		.paket\update.bat = .paket\update.bat
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Hosting", "Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj", "{33C1B76E-47B2-40BC-A434-81EE22996BEF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Solution Items", ".Solution Items", "{2E2E6FD0-E228-44D7-9794-FEA76E00FD34}"
+	ProjectSection(SolutionItems) = preProject
+		Readme.txt = Readme.txt
+		SolutionVersion.cs = SolutionVersion.cs
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Fakes", "Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj", "{2865F69B-D847-4901-8945-4941E463F94E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceProxy", "Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj", "{1FCB2569-A640-4292-9CDC-821AEEF14813}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.SharedLogic", "Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj", "{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting", "Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj", "{DD807780-01B0-4EF6-9E42-5D15CA26F353}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting.FunctionalTests", "Gigya.Microdot.Orleans.Hosting.FunctionalTests\Gigya.Microdot.Orleans.Hosting.FunctionalTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Configuration", "Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj", "{0E3A2422-DD99-4D75-A18C-96329A842742}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Interfaces", "Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj", "{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Ninject", "Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj", "{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Ninject.Host", "Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj", "{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Ninject.Host", "Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj", "{4E6A024F-DDC9-4A27-A859-77EBC3241009}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F8A1B754-3C63-4051-A1A5-C51E916F90EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing", "Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj", "{6D6A62A1-15B5-44C2-AD37-698AB31863E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Logging", "Gigya.Microdot.Logging\Gigya.Microdot.Logging.csproj", "{06E45085-5A54-4BFE-BD24-E9C3983A2689}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceDiscovery", "Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj", "{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{33C1B76E-47B2-40BC-A434-81EE22996BEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33C1B76E-47B2-40BC-A434-81EE22996BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33C1B76E-47B2-40BC-A434-81EE22996BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33C1B76E-47B2-40BC-A434-81EE22996BEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2865F69B-D847-4901-8945-4941E463F94E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2865F69B-D847-4901-8945-4941E463F94E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2865F69B-D847-4901-8945-4941E463F94E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2865F69B-D847-4901-8945-4941E463F94E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FCB2569-A640-4292-9CDC-821AEEF14813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FCB2569-A640-4292-9CDC-821AEEF14813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FCB2569-A640-4292-9CDC-821AEEF14813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FCB2569-A640-4292-9CDC-821AEEF14813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD807780-01B0-4EF6-9E42-5D15CA26F353}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD807780-01B0-4EF6-9E42-5D15CA26F353}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD807780-01B0-4EF6-9E42-5D15CA26F353}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD807780-01B0-4EF6-9E42-5D15CA26F353}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E3A2422-DD99-4D75-A18C-96329A842742}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3A2422-DD99-4D75-A18C-96329A842742}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E3A2422-DD99-4D75-A18C-96329A842742}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E3A2422-DD99-4D75-A18C-96329A842742}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E6A024F-DDC9-4A27-A859-77EBC3241009}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E6A024F-DDC9-4A27-A859-77EBC3241009}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E6A024F-DDC9-4A27-A859-77EBC3241009}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E6A024F-DDC9-4A27-A859-77EBC3241009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8E548D57-5880-4283-BDF5-7386886D481D} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
+	EndGlobalSection
+EndGlobal
