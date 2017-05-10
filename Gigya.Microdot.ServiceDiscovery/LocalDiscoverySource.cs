@@ -1,6 +1,6 @@
 using System;
 
-using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.ServiceContract.Exceptions;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic;
 

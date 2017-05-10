@@ -6,7 +6,6 @@ using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 
-using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
@@ -24,6 +23,7 @@ using Ninject.Syntax;
 using Orleans;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
+using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Testing.ServiceTester
 {

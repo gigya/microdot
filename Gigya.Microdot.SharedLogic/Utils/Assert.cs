@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
-using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.ServiceContract.Exceptions;
 
 namespace Gigya.Microdot.SharedLogic.Utils {
 

@@ -1,6 +1,5 @@
 using System;
 
-using Gigya.Common.Contracts.HttpService;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

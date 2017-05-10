@@ -69,6 +69,10 @@
     <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.ServiceContract\Gigya.Microdot.ServiceContract.csproj">
+      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
+      <Name>Gigya.Microdot.ServiceContract</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
       <Project>{c88db2a8-a1d2-46f8-8b65-06b9ee3f1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>
@@ -91,17 +95,6 @@
       <ItemGroup>
         <Reference Include="DataAnnotationsValidator">
           <HintPath>..\packages\DataAnnotationsValidator\lib\net40\DataAnnotationsValidator.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
-      <ItemGroup>
-        <Reference Include="Gigya.ServiceContract">
-          <HintPath>..\packages\Gigya.ServiceContract\lib\net451\Gigya.ServiceContract.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

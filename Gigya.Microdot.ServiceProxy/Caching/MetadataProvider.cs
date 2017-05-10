@@ -4,13 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-using Gigya.Common.Contracts.Attributes;
+using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-
-
-
     public class MetadataProvider : IMetadataProvider
     {
         private ConcurrentDictionary<MethodInfo, Type> TaskReturnTypes { get; } = new ConcurrentDictionary<MethodInfo, Type>();

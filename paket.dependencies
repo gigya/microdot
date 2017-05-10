@@ -1,4 +1,3 @@
-source http://nuget/nugetForVS/nuget/
 source https://www.nuget.org/api/v2/
 
 framework: net451
@@ -7,31 +6,14 @@ content: once
 copy_content_to_output_dir: always
 
 # Misc
-nuget Antlr4.Runtime ~> 4.3.0
-nuget Apache.Avro ~> 1.0
-nuget Confluent.RestClient ~> 1.0 >= 1.0.0.35
-nuget log4net 
 nuget Metrics.NET 
-nuget MySql.Data
-nuget Thrift 0.9.0.0 
 nuget Newtonsoft.Json ~> 9.0
-nuget Nuclex.Cloning ~> 1.0
-nuget PlainElastic.Net ~> 1.0
-nuget RabbitMQ.Client 
-nuget Dapper
 nuget Nito.AsyncEx
-nuget Troschuetz.Random 
-nuget Thrower
 nuget System.Threading.Tasks.Dataflow ~> 4.0
-nuget Gigya.Common.Contracts ~> 2.4
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
 nuget System.ComponentModel.Annotations
-nuget ParallelExtensionsExtras
 nuget System.Collections.Immutable
 nuget DataAnnotationsValidator
-# Services
-nuget KeyManagementService.Interface ~> 1.3
-nuget KeyEncryptionService.Interface
 
 # Orleans
 nuget Microsoft.Orleans.Core  1.3.1
@@ -44,8 +26,6 @@ nuget Microsoft.Orleans.OrleansCodeGenerator.Build 1.3.1
 nuget Microsoft.Orleans.TestingHost 1.3.1
 nuget Microsoft.CodeAnalysis.CSharp 1.3.2
 nuget Microsoft.CodeAnalysis.Common 1.3.2
-
-nuget Orleans.KafkaStreamProvider 1.2.2-pre002
 
 #Ninject
 nuget Ninject ~> 3.2 >= 3.2.1
@@ -62,8 +42,4 @@ nuget NSubstitute
 nuget FluentAssertions
 nuget Nuget.CommandLine
 nuget Shouldly
-nuget OrleansTestingUtils 
-nuget BenchmarkDotNet 0.10.3
-nuget BenchmarkDotNet.Core 0.10.3
-nuget BenchmarkDotNet.Toolchains.Roslyn 0.10.3
 nuget NLog

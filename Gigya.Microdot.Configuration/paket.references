@@ -1,6 +1,5 @@
 System.Threading.Tasks.Dataflow
 Metrics.NET
 Newtonsoft.Json
-Gigya.ServiceContract
 System.ComponentModel.Annotations
 DataAnnotationsValidator

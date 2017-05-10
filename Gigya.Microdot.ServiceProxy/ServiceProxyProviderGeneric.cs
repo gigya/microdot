@@ -3,11 +3,11 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.DispatchProxy;
 
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.ServiceContract.Exceptions;
 using Gigya.Microdot.Interfaces.HttpService;
 
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.ServiceProxy
 {

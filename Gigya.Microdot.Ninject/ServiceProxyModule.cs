@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 
@@ -14,6 +13,7 @@ using Ninject.Modules;
 using Ninject.Parameters;
 using Ninject.Planning.Bindings;
 using Ninject.Planning.Bindings.Resolvers;
+using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Ninject
 {

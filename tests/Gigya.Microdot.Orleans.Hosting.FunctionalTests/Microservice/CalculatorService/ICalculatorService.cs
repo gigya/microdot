@@ -1,9 +1,8 @@
 using System;
 using System.Threading.Tasks;
 
-using Gigya.Common.Contracts.HttpService;
-
 using Newtonsoft.Json.Linq;
+using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
 {

@@ -1,4 +1,3 @@
-Gigya.ServiceContract 
 Microsoft.Extensions.DependencyInjection
 Microsoft.Orleans.OrleansCodeGenerator
 Microsoft.Orleans.OrleansCodeGenerator.Build

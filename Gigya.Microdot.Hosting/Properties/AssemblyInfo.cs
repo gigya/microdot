@@ -5,8 +5,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Common.Application")]
-[assembly: AssemblyProduct("Gigya.Common.Application")]
+[assembly: AssemblyTitle("Gigya.Microdot.Hosting")]
+[assembly: AssemblyProduct("Gigya.Microdot.Hosting")]
 
 [assembly: Guid("27abc89f-fe0c-44df-b0db-ac951015d281")]
 

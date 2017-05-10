@@ -3,7 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.ServiceContract.Exceptions;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {

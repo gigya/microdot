@@ -7,5 +7,3 @@ Microsoft.Orleans.OrleansRuntime
 Microsoft.Orleans.OrleansProviders
 Microsoft.Orleans.OrleansSqlUtils
 Microsoft.Orleans.OrleansZooKeeperUtils
-
-Gigya.ServiceContract

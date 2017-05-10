@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.ServiceContract.HttpService;
 using Gigya.Microdot.Interfaces.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService

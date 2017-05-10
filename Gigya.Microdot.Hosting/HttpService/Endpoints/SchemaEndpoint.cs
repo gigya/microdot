@@ -2,9 +2,8 @@
 using System.Net;
 using System.Threading.Tasks;
 
-using Gigya.Common.Contracts.HttpService;
-
 using Newtonsoft.Json;
+using Gigya.Microdot.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {
