@@ -68,10 +68,6 @@
       <Project>{2865F69B-D847-4901-8945-4941E463F94E}</Project>
       <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.ServiceContract\Gigya.Microdot.ServiceContract.csproj">
-      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
-      <Name>Gigya.Microdot.ServiceContract</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
       <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
       <Name>Gigya.Microdot.ServiceDiscovery</Name>
@@ -103,6 +99,10 @@
     <ProjectReference Include="..\Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj">
       <Project>{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}</Project>
       <Name>Gigya.Microdot.Orleans.Ninject.Host</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
+      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
+      <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

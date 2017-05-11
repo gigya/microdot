@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Gigya.Microdot.ServiceContract.HttpService;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.ServiceTester;
 
 using NUnit.Framework;
-using Gigya.Microdot.ServiceContract.Attributes;
+
 
 namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
 {

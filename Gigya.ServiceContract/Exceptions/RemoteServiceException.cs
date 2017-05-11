@@ -1,7 +1,9 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Gigya.Microdot.ServiceContract.Exceptions
+using Gigya.Common.Contracts.Exceptions;
+
+namespace Gigya.Common.Application.HttpService.Client
 {
 	[Serializable]
 	public class RemoteServiceException : EnvironmentException

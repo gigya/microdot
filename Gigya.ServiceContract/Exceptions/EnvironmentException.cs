@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Gigya.Microdot.ServiceContract.Exceptions
+namespace Gigya.Common.Contracts.Exceptions
 {
 	/// <summary>
 	/// This exception denotes a problem with the environment, such as a database that's down, an external service

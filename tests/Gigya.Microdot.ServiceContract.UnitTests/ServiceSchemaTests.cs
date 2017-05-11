@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Gigya.Microdot.ServiceContract.Attributes;
-using Gigya.Microdot.ServiceContract.HttpService;
+using Gigya.Common.Contracts.HttpService;
 using Newtonsoft.Json;
 using NUnit.Framework;
 

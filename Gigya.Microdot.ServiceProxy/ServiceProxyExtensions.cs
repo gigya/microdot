@@ -1,6 +1,6 @@
 ﻿using System;
+using Gigya.Common.Contracts.HttpService;
 
-using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.ServiceProxy
 {

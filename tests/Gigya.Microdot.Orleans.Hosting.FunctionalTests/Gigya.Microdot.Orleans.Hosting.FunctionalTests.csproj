@@ -79,10 +79,6 @@
       <Project>{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}</Project>
       <Name>Gigya.Microdot.Orleans.Ninject.Host</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceContract\Gigya.Microdot.ServiceContract.csproj">
-      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
-      <Name>Gigya.Microdot.ServiceContract</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
       <Project>{37e6909e-51e2-4bba-8efc-dbdf086d860e}</Project>
       <Name>Gigya.Microdot.ServiceDiscovery</Name>
@@ -106,6 +102,10 @@
     <ProjectReference Include="..\..\Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj">
       <Project>{6D6A62A1-15B5-44C2-AD37-698AB31863E4}</Project>
       <Name>Gigya.Microdot.Testing</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
+      <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
+      <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

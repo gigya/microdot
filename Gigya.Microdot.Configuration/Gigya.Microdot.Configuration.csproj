@@ -69,10 +69,6 @@
     <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.ServiceContract\Gigya.Microdot.ServiceContract.csproj">
-      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
-      <Name>Gigya.Microdot.ServiceContract</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
       <Project>{c88db2a8-a1d2-46f8-8b65-06b9ee3f1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>
@@ -80,6 +76,10 @@
     <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
       <Project>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</Project>
       <Name>Gigya.Microdot.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
+      <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
+      <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

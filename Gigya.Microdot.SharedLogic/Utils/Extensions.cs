@@ -1,6 +1,6 @@
 ﻿using System;
+using Gigya.Common.Contracts.Exceptions;
 
-using Gigya.Microdot.ServiceContract.Exceptions;
 
 namespace Gigya.Microdot.SharedLogic.Utils
 {
