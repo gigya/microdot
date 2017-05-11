@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
-
-
+using Gigya.Microdot.ServiceContract.Attributes;
+using Gigya.Microdot.ServiceContract.HttpService;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Gigya.Microdot.ServiceContract.HttpService;
-using Gigya.Microdot.ServiceContract.Attributes;
 
-namespace Gigya.Microdot.ServiceContract.UnitTests.HttpService
+namespace Gigya.Common.Contracts.UnitTests
 {
 
     class Data
