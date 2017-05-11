@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 
 using Newtonsoft.Json;

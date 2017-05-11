@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 
-using Gigya.Microdot.ServiceContract.Exceptions;
-using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {

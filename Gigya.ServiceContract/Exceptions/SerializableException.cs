@@ -4,9 +4,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
-namespace Gigya.Microdot.ServiceContract.Exceptions
+namespace Gigya.Common.Contracts.Exceptions
 {
 	/// <summary>
 	/// Abstract base class for all exceptions which support advanced serialization features, such as automatic property

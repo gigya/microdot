@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.Serialization;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
+using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {

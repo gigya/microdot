@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Gigya.Microdot.ServiceContract.Exceptions
+namespace Gigya.Common.Contracts.Exceptions
 {
 	/// <summary>
 	/// This exception denotes a problem in an incoming request. For example, a missing required parameter, bad

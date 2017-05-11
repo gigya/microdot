@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Gigya.Microdot.ServiceContract.Exceptions
+namespace Gigya.Common.Contracts.Exceptions
 {
 	/// <summary>
 	/// This exception denotes a programmatic error, i.e. a bug we detected in our code at run time. For example,

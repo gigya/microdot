@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Numerics;
-using Gigya.Microdot.ServiceContract;
+using Gigya.Common.Contracts;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Shouldly;

@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
-using Gigya.Microdot.ServiceContract.Attributes;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery.Config;

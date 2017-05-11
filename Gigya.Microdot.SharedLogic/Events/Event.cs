@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic.Logging;
 using Gigya.Microdot.SharedLogic.Utils;
-using Gigya.Microdot.ServiceContract.Exceptions;
+
 
 namespace Gigya.Microdot.SharedLogic.Events
 {

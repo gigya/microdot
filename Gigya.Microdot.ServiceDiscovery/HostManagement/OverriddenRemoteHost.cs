@@ -1,6 +1,5 @@
 using System;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
+using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 {

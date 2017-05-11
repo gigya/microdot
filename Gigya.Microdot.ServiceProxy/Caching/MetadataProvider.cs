@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Attributes;
 
-using Gigya.Microdot.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {

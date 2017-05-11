@@ -7,8 +7,8 @@
     <ProjectGuid>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Gigya.Microdot.ServiceContract</RootNamespace>
-    <AssemblyName>Gigya.Microdot.ServiceContract</AssemblyName>
+    <RootNamespace>Gigya.ServiceContract</RootNamespace>
+    <AssemblyName>Gigya.ServiceContract</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

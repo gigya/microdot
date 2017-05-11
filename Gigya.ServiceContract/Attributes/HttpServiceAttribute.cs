@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Gigya.Microdot.ServiceContract.Attributes
+namespace Gigya.Common.Contracts.HttpService
 {
 	[AttributeUsage(AttributeTargets.Interface)]
 	public class HttpServiceAttribute : Attribute

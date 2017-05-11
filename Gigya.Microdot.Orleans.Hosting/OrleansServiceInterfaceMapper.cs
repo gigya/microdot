@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.SharedLogic;
 
 using Orleans;
-using Gigya.Microdot.ServiceContract.Attributes;
+
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

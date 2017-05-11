@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
