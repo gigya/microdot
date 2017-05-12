@@ -50,7 +50,6 @@ namespace Gigya.Microdot.Configuration
                 InternalBufferSize = INTERNAL_BUFFER_SIZE,
                 EnableRaisingEvents = true,
                 IncludeSubdirectories = true,
-                Filter = "*.config"
             };
 
             _rootWatcher.Created += OnRootChanged;
