@@ -8,7 +8,7 @@ using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
 
 using Ninject;
-
+using Ninject.Syntax;
 using Orleans;
 using Orleans.Runtime.Configuration;
 
@@ -25,12 +25,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         protected GigyaSiloHost SiloHost { get; set; }
 
-        /// <summary>
-        /// Contains an instance of <see cref="ILog"/> that was configured by <see cref="Configure"/>. This property
-        /// is populated only after <see cref="Configure"/> completes.
-        /// </summary>
-        protected ILog Log { get; set; }
-        
         protected IKernel Kernel { get; set; }
 
         public abstract ILoggingModule GetLoggingModule();
@@ -53,20 +47,24 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             
             Configure(kernel, kernel.Get<OrleansCodeConfig>());
-
-            Log = kernel.Get<ILog>();
             
             kernel.Get<ClusterConfiguration>().WithNinject(kernel);
 
+            OnInitilize(kernel);
+
             SiloHost = kernel.Get<GigyaSiloHost>();            
-            SiloHost.Start(InfraOneTimeInits, BeforeOrleansShutdown);
+            SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
         }
 
-        private async Task InfraOneTimeInits(IGrainFactory factory)
+        /// <summary>
+        /// Extensability point, this method is called after kernel is configured and before, service is willing to 
+        /// serve incoming request.
+        /// </summary>
+        /// <param name="resolutionRoot"></param>
+        protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
-            await AfterOrleansStartup(factory);            
-        }
 
+        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but

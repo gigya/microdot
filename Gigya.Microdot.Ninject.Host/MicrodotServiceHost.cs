@@ -8,6 +8,7 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 
 using Ninject;
+using Ninject.Syntax;
 
 namespace Gigya.Ninject.Host
 {
@@ -21,12 +22,6 @@ namespace Gigya.Ninject.Host
         private bool disposed = false;
 
         private IKernel kernel;
-
-        /// <summary>
-        /// Contains an instance of <see cref="ILog"/> that was configured by <see cref="Configure"/>. This property
-        /// is populated only after <see cref="Configure"/> completes.
-        /// </summary>
-        protected ILog Log { get; set; }
 
         private HttpServiceListener Listener { get; set; }
 
@@ -42,7 +37,7 @@ namespace Gigya.Ninject.Host
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
         }
 
-        public abstract ILoggingModule GetLoggingModule();
+        protected abstract ILoggingModule GetLoggingModule();
 
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
@@ -52,23 +47,33 @@ namespace Gigya.Ninject.Host
         protected override void OnStart()
         {
             kernel = CreateKernel();
+
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
-
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
-
+                        
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+
             Configure(kernel, kernel.Get<BaseCommonConfig>());
 
-            Log = kernel.Get<ILog>();
+            OnInitilize(kernel);
 
             Listener = kernel.Get<HttpServiceListener>();
             Listener.Start();
         }
 
+        /// <summary>
+        /// Extensability point, this method is called after kernel is configured and before, service is willing to 
+        /// serve incoming request.
+        /// </summary>
+        /// <param name="resolutionRoot"></param>
+        protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
+        {
+            
+        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
