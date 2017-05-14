@@ -43,6 +43,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ConfigObjectsModule.cs" />
+    <Compile Include="ILoggingModule.cs" />
     <Compile Include="MicrodotConvections.cs" />
     <Compile Include="MicrodotHostingModule.cs" />
     <Compile Include="MicrodotModule.cs" />

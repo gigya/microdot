@@ -11,11 +11,11 @@ using NLog;
 namespace Gigya.Microdot.Logging
 {
 
-    public class NlogBasedLogger:LogBase
+    public class NLogLogger:LogBase
     {
         private readonly Logger logger;
 
-        public NlogBasedLogger(Type receivingType)
+        public NLogLogger(Type receivingType)
         {
             
             logger = LogManager.GetCurrentClassLogger(receivingType);

@@ -1,46 +1,59 @@
-using System.Diagnostics;
-
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
 
 using Ninject;
+using Ninject.Syntax;
 
 namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
 {
+    public class FakesLoggersModules : ILoggingModule
+    {
+        private readonly bool _useHttpLog;
+
+        public FakesLoggersModules(bool useHttpLog)
+        {
+            _useHttpLog = useHttpLog;
+        }
+
+        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+        {
+            if(_useHttpLog)
+                logBinding.To<HttpLog>();
+            else
+                logBinding.To<ConsoleLog>();
+
+            eventPublisherBinding.To<NullEventPublisher>();
+        }
+    }
+
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        private bool UseHttpLog { get; }
-
+        private ILoggingModule LoggingModule { get; }
 
         public CalculatorServiceHost() : this(true)
         { }
 
 
         public CalculatorServiceHost(bool useHttpLog)
-        {
-            UseHttpLog = useHttpLog;
+        {            
+            LoggingModule = new FakesLoggersModules(useHttpLog);
         }
 
 
         protected override string ServiceName => "TestService";
 
 
-        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
+        public override ILoggingModule GetLoggingModule()
         {
-            if (UseHttpLog)
-                BindFakeLog<HttpLog>(kernel);
-            else
-                BindFakeLog<ConsoleLog>(kernel);
-
-           // kernel.Rebind<IMetricsInitializer>().To<TestingMetricsInitializer>();
+            return LoggingModule;
         }
 
-
-        private void BindFakeLog<T>(IKernel kernel) where T : FakeLog, new()
+        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
-            kernel.Rebind<ILog>().ToConstant(new T { MinimumTraceLevel = TraceEventType.Warning });
-            //kernel.Bind<ILog>().ToConstant(new T { MinimumTraceLevel = TraceEventType.Information }).WhenInjectedInto<NonServiceGrain>();
+
         }
     }
 }

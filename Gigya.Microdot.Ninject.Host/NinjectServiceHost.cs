@@ -4,12 +4,10 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 
 using Ninject;
-using Ninject.Activation;
 
 namespace Gigya.Ninject.Host
 {
@@ -44,6 +42,8 @@ namespace Gigya.Ninject.Host
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
         }
 
+        public abstract ILoggingModule GetLoggingModule();
+
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
         /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
@@ -55,14 +55,7 @@ namespace Gigya.Ninject.Host
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
 
-            kernel.Rebind<ILog>()
-                  .To<NlogBasedLogger>()
-                  .InScope(GetTypeOfTarget)
-                  .WithConstructorArgument("receivingType", (context, target) => GetTypeOfTarget(context));
-
-            kernel.Rebind<IEventPublisher>()
-                  .To<LogBasedEventPublisher>()
-                  .InSingletonScope();
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
 
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
@@ -76,11 +69,6 @@ namespace Gigya.Ninject.Host
             Listener.Start();
         }
 
-        private static Type GetTypeOfTarget(IContext context)
-        {
-            var type = context.Request.Target?.Member.DeclaringType;
-            return type ?? typeof(MicrodotServiceHost<>);
-        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but

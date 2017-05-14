@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.SharedLogic;
 
 using Orleans;
