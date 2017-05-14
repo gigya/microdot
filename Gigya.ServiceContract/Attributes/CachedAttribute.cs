@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Gigya.Microdot.ServiceContract.Attributes
+namespace Gigya.Common.Contracts.Attributes
 {
     /// <summary>
     /// Specifies that the method should be cached using the CachingProxy. This attribute should only be applied to

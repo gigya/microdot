@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-
-
+using Gigya.Common.Contracts.HttpService;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Gigya.Microdot.ServiceContract.HttpService;
-using Gigya.Microdot.ServiceContract.Attributes;
 
-namespace Gigya.Microdot.ServiceContract.UnitTests.HttpService
+namespace Gigya.Common.Contracts.UnitTests
 {
 
     class Data
@@ -70,21 +67,22 @@ namespace Gigya.Microdot.ServiceContract.UnitTests.HttpService
         [Test]
         public void TestUnknownAttribute()
         {
+            var typeFullName = typeof(SensitiveAttribute).AssemblyQualifiedName;
             string json = @"
                 {
-                  ""TypeName"": ""Gigya.Microdot.ServiceContract.UnitTests.HttpService.SensitiveAttribute, Gigya.Microdot.ServiceContract.UnitTests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"",
+                  ""TypeName"": """ + typeFullName + @""",
                   ""Data"": {
-                    ""TypeId"": ""Gigya.Microdot.ServiceContract.UnitTests.HttpService.SensitiveAttribute, Gigya.Microdot.ServiceContract.UnitTests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null""
+                    ""TypeId"": """ + typeFullName + @"""
                   }
                 }";
             AttributeSchema attr = JsonConvert.DeserializeObject<AttributeSchema>(json);
             Assert.IsNotNull(attr.Attribute);
-
+        
             json = @"
                 {
                   ""TypeName"": ""Gigya.Microdot.ServiceContract.UnitTests.HttpService.SensitiveAttribute2, Gigya.Microdot.ServiceContract.UnitTests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"",
                   ""Data"": {
-                    ""TypeId"": ""Gigya.Microdot.ServiceContract.UnitTests.HttpService.SensitiveAttribute, Gigya.Microdot.ServiceContract.UnitTests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null""
+                    ""TypeId"": """ + typeFullName + @"""
                   }
                 }";
             attr = JsonConvert.DeserializeObject<AttributeSchema>(json);

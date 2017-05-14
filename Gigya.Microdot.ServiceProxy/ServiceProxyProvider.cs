@@ -10,9 +10,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
-using Gigya.Microdot.ServiceContract.HttpService;
+using Gigya.Common.Application.HttpService.Client;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Interfaces.Logging;

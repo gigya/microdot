@@ -5,20 +5,20 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Microdot.ServiceContract")]
-[assembly: AssemblyProduct("Gigya.Microdot.ServiceContract")]
+[assembly: AssemblyTitle("Gigya.ServiceToService.Contracts")]
+[assembly: AssemblyProduct("Gigya.ServiceToService.Contracts")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("db6d3561-835e-40d5-b9d4-83951cf426df")]
 
-[assembly: AssemblyCompany("Microdot")]
-[assembly: AssemblyCopyright("Microdot")]
-[assembly: AssemblyTrademark("Microdot")]
+[assembly: AssemblyCompany("Gigya")]
+[assembly: AssemblyCopyright("Gigya")]
+[assembly: AssemblyTrademark("Gigya")]
 
-// This is the nuget version, if pre-release should be in the format of "1.0.0-Zdevelop01".
-[assembly: AssemblyInformationalVersion("1.0.0.0")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+// This is the nuget version, if pre-release should be in the format of "2.0.0-Zdevelop08".
+[assembly: AssemblyInformationalVersion("2.4.8.0")]
+[assembly: AssemblyVersion("2.4.8.0")]
+[assembly: AssemblyFileVersion("2.4.8.0")]
 
 [assembly: AssemblyDescription("Gigya infrastructure")]
 

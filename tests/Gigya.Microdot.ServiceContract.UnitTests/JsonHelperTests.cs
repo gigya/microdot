@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Numerics;
-
+using Gigya.Common.Contracts;
 using Newtonsoft.Json;
-
 using NUnit.Framework;
-
 using Shouldly;
-using Gigya.Microdot.ServiceContract;
 
-namespace Gigya.Microdot.ServiceContract.UnitTests
+namespace Gigya.Common.Contracts.UnitTests
 {
     public enum MyEnum { Zero, One, Two }
     public class SomeClass { public int A; public long B; public ushort? C; }

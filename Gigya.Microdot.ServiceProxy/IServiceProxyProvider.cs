@@ -1,8 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-
-using Gigya.Microdot.ServiceContract.HttpService;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.HttpService;
 
 using Newtonsoft.Json;

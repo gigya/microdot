@@ -3,27 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.SharedLogic
 {
-    /// <summary>
-    /// Provides a list of assemblies that should be used for discovery via reflection.
-    /// </summary>
-    public interface IAssemblyProvider
-    {
-        /// <summary>
-        /// Get a list of assemblies hat should be used for discovery via reflection.
-        /// </summary>
-        /// <returns></returns>
-        Assembly[] GetAssemblies();
-
-
-        Type[] GetAllTypes();
-    }
-
-
     /// <summary>
     /// Provides a list of assemblies that should be used for discovery via reflection. Loads all assemblies in the
     /// current directory, except blacklisted assemblies.

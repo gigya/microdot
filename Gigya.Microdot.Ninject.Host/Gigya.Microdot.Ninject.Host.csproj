@@ -60,10 +60,6 @@
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Logging\Gigya.Microdot.Logging.csproj">
-      <Project>{06E45085-5A54-4BFE-BD24-E9C3983A2689}</Project>
-      <Name>Gigya.Microdot.Logging</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
       <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>

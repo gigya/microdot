@@ -55,9 +55,9 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceContract\Gigya.Microdot.ServiceContract.csproj">
-      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
-      <Name>Gigya.Microdot.ServiceContract</Name>
+    <ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
+      <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
+      <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

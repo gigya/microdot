@@ -3,7 +3,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Gigya.Microdot.ServiceContract
+namespace Gigya.Common.Contracts
 {
     /// <summary>
     /// Utility class for converting between JSON and .NET values.

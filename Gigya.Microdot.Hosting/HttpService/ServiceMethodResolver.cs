@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-
-using Gigya.Microdot.ServiceContract.Exceptions;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService

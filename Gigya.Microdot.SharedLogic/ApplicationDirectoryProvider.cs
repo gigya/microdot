@@ -1,13 +1,9 @@
 ﻿using System.IO;
 using System.Reflection;
+using Gigya.Microdot.Interfaces;
 
 namespace Gigya.Microdot.SharedLogic
 {
-    public interface IApplicationDirectoryProvider
-    {
-        string GetApplicationDirectory();
-    }
-
     public class ApplicationDirectoryProvider : IApplicationDirectoryProvider
     {
         private string ApplicationDirectory { get; }

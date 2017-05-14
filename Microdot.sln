@@ -41,15 +41,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F8A1B754
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing", "Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj", "{6D6A62A1-15B5-44C2-AD37-698AB31863E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Logging", "Gigya.Microdot.Logging\Gigya.Microdot.Logging.csproj", "{06E45085-5A54-4BFE-BD24-E9C3983A2689}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceDiscovery", "Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj", "{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceContract", "Gigya.Microdot.ServiceContract\Gigya.Microdot.ServiceContract.csproj", "{DB6D3561-835E-40D5-B9D4-83951CF426DF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceContract.UnitTests", "tests\Gigya.Microdot.ServiceContract.UnitTests\Gigya.Microdot.ServiceContract.UnitTests.csproj", "{C224F79A-EAB5-48B8-B587-65772B0966EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting.FunctionalTests", "tests\Gigya.Microdot.Orleans.Hosting.FunctionalTests\Gigya.Microdot.Orleans.Hosting.FunctionalTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.ServiceContract", "Gigya.ServiceContract\Gigya.ServiceContract.csproj", "{DB6D3561-835E-40D5-B9D4-83951CF426DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -101,18 +99,10 @@ Global
 		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D6A62A1-15B5-44C2-AD37-698AB31863E4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.Build.0 = Release|Any CPU
 		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C224F79A-EAB5-48B8-B587-65772B0966EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C224F79A-EAB5-48B8-B587-65772B0966EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C224F79A-EAB5-48B8-B587-65772B0966EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -121,6 +111,10 @@ Global
 		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

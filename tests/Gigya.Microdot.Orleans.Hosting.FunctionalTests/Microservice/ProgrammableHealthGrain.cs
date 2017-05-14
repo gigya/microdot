@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 
 using Orleans;
-using Gigya.Microdot.ServiceContract.Attributes;
+
 
 namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice
 {

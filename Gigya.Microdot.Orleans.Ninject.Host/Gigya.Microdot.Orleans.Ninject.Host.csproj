@@ -78,10 +78,6 @@
       <Project>{DD807780-01B0-4EF6-9E42-5D15CA26F353}</Project>
       <Name>Gigya.Microdot.Orleans.Hosting</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Logging\Gigya.Microdot.Logging.csproj">
-      <Project>{06E45085-5A54-4BFE-BD24-E9C3983A2689}</Project>
-      <Name>Gigya.Microdot.Logging</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>
