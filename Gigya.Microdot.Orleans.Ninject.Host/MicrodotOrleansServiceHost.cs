@@ -1,16 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
 
 using Ninject;
-using Ninject.Activation;
 
 using Orleans;
 using Orleans.Runtime.Configuration;
@@ -36,6 +33,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         
         protected IKernel Kernel { get; set; }
 
+        public abstract ILoggingModule GetLoggingModule();
 
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
@@ -50,14 +48,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
 
-            kernel.Rebind<ILog>()
-                .To<NlogBasedLogger>()
-                .InScope(GetTypeOfTarget)
-                .WithConstructorArgument("receivingType", (context, target) => GetTypeOfTarget(context));
-
-            kernel.Rebind<IEventPublisher>()
-                .To<LogBasedEventPublisher>()
-                .InSingletonScope();
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
 
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             
@@ -70,14 +61,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             SiloHost = kernel.Get<GigyaSiloHost>();            
             SiloHost.Start(InfraOneTimeInits, BeforeOrleansShutdown);
         }
-
-
-        private static Type GetTypeOfTarget(IContext context)
-        {
-            var type = context.Request.Target?.Member.DeclaringType;
-            return type ?? typeof(MicrodotOrleansServiceHost);
-        }
-
 
         private async Task InfraOneTimeInits(IGrainFactory factory)
         {
