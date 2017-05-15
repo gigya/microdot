@@ -311,7 +311,7 @@ namespace Gigya.Microdot.ServiceProxy
             {
                 string responseContent;
                 HttpResponseMessage response;
-                IEndPointHandle endPoint = await ServiceDiscovery.GetNextHost(serviceEvent.RequestId);
+                IEndPointHandle endPoint = await ServiceDiscovery.GetNextHost(serviceEvent.RequestId).ConfigureAwait(false);
 
                 // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
                 var uri = string.Format(BuildUri(endPoint, config) + ServiceName);

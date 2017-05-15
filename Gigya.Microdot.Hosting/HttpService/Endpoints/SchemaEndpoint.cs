@@ -22,7 +22,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         {
             if (context.Request.Url.AbsolutePath.EndsWith("/schema"))
             {
-                await writeResponse(_jsonSchema);
+                await writeResponse(_jsonSchema).ConfigureAwait(false);
                 return true;
             }
 
