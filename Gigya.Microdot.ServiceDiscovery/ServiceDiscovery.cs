@@ -94,10 +94,10 @@ namespace Gigya.Microdot.ServiceDiscovery
             
             ServiceDiscoverySourceBase masterSource = null;
 
-            var originatingSource = await GetServiceDiscoverySource(_originatingDeployment, newServiceConfig);
+            var originatingSource = await GetServiceDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
 
             if (shouldCreateMasterPool)
-                masterSource = await GetServiceDiscoverySource(_masterDeployment, newServiceConfig);
+                masterSource = await GetServiceDiscoverySource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
 
             lock (_locker)
             {
