@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Collection of concrete classes sharable between different parts of the frameworks, part of Microdot framework.

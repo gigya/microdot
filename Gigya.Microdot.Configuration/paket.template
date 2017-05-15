@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Package, provides a way to consume xml based hierarchical configuration as POCO objects, part of Microdot framework.

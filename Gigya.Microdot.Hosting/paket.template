@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	A service hosting component, provides a base for Orleans and not Orleans hostin, part of Microdot framework.

@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Testing helpers, part of Microdot framework.

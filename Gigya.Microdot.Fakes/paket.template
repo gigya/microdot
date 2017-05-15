@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Collection of predifined fakes used for testing , part of Microdot framework.

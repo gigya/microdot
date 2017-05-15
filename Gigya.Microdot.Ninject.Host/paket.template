@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Ninject based, not orleans abstract host, part of Microdot framework.
