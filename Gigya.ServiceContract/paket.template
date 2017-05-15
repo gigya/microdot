@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Referenced by micro-service interfaces. Provides common facilities that are needed to define a service interface, part of Microdot framework.

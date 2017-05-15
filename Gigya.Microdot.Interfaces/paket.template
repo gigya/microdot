@@ -1,1 +1,3 @@
 type project
+DESCRIPTION
+	Collection of shared interfaces, part of Microdot framework.
