@@ -3,3 +3,4 @@ Newtonsoft.Json
 Nito.AsyncEx
 System.Collections.Immutable
 System.Threading.Tasks.Dataflow
+System.Reflection.DispatchProxy
