@@ -36,18 +36,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
-            var kernel = CreateKernel();
-            Kernel = kernel;
-
-            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            Kernel = CreateKernel();
+                        
+            PreConfigure();          
             
-            Configure(kernel, kernel.Get<OrleansCodeConfig>());
-            
-            kernel.Get<ClusterConfiguration>().WithNinject(kernel);
+            Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
 
-            OnInitilize(kernel);
+            Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
-            SiloHost = kernel.Get<GigyaSiloHost>();            
+            OnInitilize(Kernel);
+
+            SiloHost = Kernel.Get<GigyaSiloHost>();            
             SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
         }
 
@@ -84,6 +83,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Load<MicrodotModule>();
             Kernel.Load<MicrodotHostingModule>();
             Kernel.Load<MicrodotOrleansHostModule>();
+
+            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
 
             GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
         }

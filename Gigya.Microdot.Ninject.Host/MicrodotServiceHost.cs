@@ -49,8 +49,7 @@ namespace Gigya.Ninject.Host
             Kernel = CreateKernel();
 
             PreConfigure();
-
-            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+           
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -104,6 +103,7 @@ namespace Gigya.Ninject.Host
             Kernel.Load<MicrodotModule>();
             Kernel.Load<MicrodotHostingModule>();
             GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
         }
         
         
