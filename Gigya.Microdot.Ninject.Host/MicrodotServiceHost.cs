@@ -8,6 +8,7 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 
 using Ninject;
+using Ninject.Syntax;
 
 namespace Gigya.Ninject.Host
 {
@@ -20,13 +21,7 @@ namespace Gigya.Ninject.Host
     {
         private bool disposed = false;
 
-        private IKernel kernel;
-
-        /// <summary>
-        /// Contains an instance of <see cref="ILog"/> that was configured by <see cref="Configure"/>. This property
-        /// is populated only after <see cref="Configure"/> completes.
-        /// </summary>
-        protected ILog Log { get; set; }
+        private IKernel Kernel { get; set; }
 
         private HttpServiceListener Listener { get; set; }
 
@@ -42,7 +37,7 @@ namespace Gigya.Ninject.Host
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
         }
 
-        public abstract ILoggingModule GetLoggingModule();
+        protected abstract ILoggingModule GetLoggingModule();
 
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
@@ -51,24 +46,31 @@ namespace Gigya.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
-            kernel = CreateKernel();
-            kernel.Load<MicrodotModule>();
-            kernel.Load<MicrodotHostingModule>();
+            Kernel = CreateKernel();
 
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+            PreConfigure();
 
-            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
-            kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
+            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
+            Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
-            Configure(kernel, kernel.Get<BaseCommonConfig>());
+            Configure(Kernel, Kernel.Get<BaseCommonConfig>());
 
-            Log = kernel.Get<ILog>();
+            OnInitilize(Kernel);
 
-            Listener = kernel.Get<HttpServiceListener>();
+            Listener = Kernel.Get<HttpServiceListener>();
             Listener.Start();
         }
 
+        /// <summary>
+        /// Extensibility point - this method is called after the Kernel is configured and before service starts
+        /// processing incoming request.
+        /// </summary>
+        /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
+        protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
+        {
+            
+        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
@@ -85,12 +87,26 @@ namespace Gigya.Ninject.Host
         {
             if(disposed)
                 return;
-            kernel?.Dispose();
+            Kernel?.Dispose();
             disposed = true;
             base.Dispose(disposing);
         }
 
-
+        /// <summary>
+        /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
+        /// Should be overridden when creating a base-class that should include common behaviour for a family of services, without
+        /// worrying about concrete service authors forgetting to call base.Configure(). Nevertheless, when overriding this method,
+        /// you should always call base.PreConfigure(), and if all inheritors of the class are concrete services, you should also
+        /// mark this method as sealed to prevent confusion with Configure().
+        /// </summary>
+        protected virtual void PreConfigure()
+        {
+            Kernel.Load<MicrodotModule>();
+            Kernel.Load<MicrodotHostingModule>();
+            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+        }
+        
+        
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started. You must bind an implementation to the
@@ -98,7 +114,7 @@ namespace Gigya.Ninject.Host
         /// </summary>
         /// <param name="kernel">A <see cref="IKernel"/> already configured with infrastructure bindings.</param>
         /// <param name="commonConfig">An <see cref="BaseCommonConfig"/> that allows you to select which
-        ///     infrastructure features you'd like to enable.</param>
+        /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
 
 
