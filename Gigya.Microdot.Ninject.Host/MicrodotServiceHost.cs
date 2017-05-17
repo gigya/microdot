@@ -21,7 +21,7 @@ namespace Gigya.Ninject.Host
     {
         private bool disposed = false;
 
-        private IKernel kernel;
+        private IKernel Kernel { get; set; }
 
         private HttpServiceListener Listener { get; set; }
 
@@ -46,23 +46,31 @@ namespace Gigya.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
-            kernel = CreateKernel();
+            Kernel = CreateKernel();
 
-            kernel.Load<MicrodotModule>();
-            kernel.Load<MicrodotHostingModule>();
-                        
-            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
-            kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
+            PreConfigure();
 
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
+            Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
-            Configure(kernel, kernel.Get<BaseCommonConfig>());
+            Configure(Kernel, Kernel.Get<BaseCommonConfig>());
 
-            OnInitilize(kernel);
+            OnInitilize(Kernel);
 
-            Listener = kernel.Get<HttpServiceListener>();
+            Listener = Kernel.Get<HttpServiceListener>();
             Listener.Start();
+        }
+
+        /// <summary>
+        /// Used to configure Kernel, shoud be overriden only if you want to prepare a base service configured for your common usecase
+        /// in this case you shoud call base.Preconfigure before your own code.
+        /// </summary>
+        protected virtual void PreConfigure()
+        {
+            Kernel.Load<MicrodotModule>();
+            Kernel.Load<MicrodotHostingModule>();
+            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
         }
 
         /// <summary>
@@ -90,7 +98,7 @@ namespace Gigya.Ninject.Host
         {
             if(disposed)
                 return;
-            kernel?.Dispose();
+            Kernel?.Dispose();
             disposed = true;
             base.Dispose(disposing);
         }

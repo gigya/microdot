@@ -38,11 +38,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             var kernel = CreateKernel();
             Kernel = kernel;
-            kernel.Load<MicrodotModule>();
-            kernel.Load<MicrodotHostingModule>();
-            kernel.Load<MicrodotOrleansHostModule>();
-
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
 
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             
@@ -64,6 +59,19 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
 
+        }
+
+        /// <summary>
+        /// Used to configure Kernel, shoud be overriden only if you want to prepare a base service configured for your common usecase
+        /// in this case you shoud call base.Preconfigure before your own code.
+        /// </summary>
+        protected virtual void PreConfigure()
+        {
+            Kernel.Load<MicrodotModule>();
+            Kernel.Load<MicrodotHostingModule>();
+            Kernel.Load<MicrodotOrleansHostModule>();
+
+            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
         }
 
         /// <summary>
