@@ -1,3 +1,8 @@
-type project
-DESCRIPTION
-	Testing helpers, part of Microdot framework.
+type
+	project
+description
+	Tools to help write tests for Microdot services.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices fakes mocks mocking unit-testing

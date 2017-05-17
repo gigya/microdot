@@ -1,3 +1,11 @@
-type project
-DESCRIPTION
-	Package, provides a way to consume xml based hierarchical configuration as POCO objects, part of Microdot framework.
+type
+	project
+description
+	A configuration system based on a hierarchy of XML files, the values of
+	which are accessed using strongly-typed configuration objects. Supports
+	runtime modification of the files, environment variable substitution,
+	encryption and collections. Part of the Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices configuration

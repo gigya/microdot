@@ -1,3 +1,9 @@
-type project
-DESCRIPTION
-	A service hosting component, provides a base for Orleans and not Orleans hostin, part of Microdot framework.
+type
+	project
+description
+	Infrastructure used for hosting Microdot services, part of the Microdot
+	framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices

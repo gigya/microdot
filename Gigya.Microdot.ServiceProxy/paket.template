@@ -1,3 +1,11 @@
-type project
-DESCRIPTION
-	Dynamic transperent proxy responsible for translating .NET rpc calls to HTTP, part of Microdot framework.
+type
+	project
+description
+	ServiceProxy is used to call remote Microdot services. It is a
+	runtime-generated transparent proxy which implements the remote	service's
+	public interface, translating all calls performed on it to HTTP calls.
+	Part of the Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices serviceproxy http rpc

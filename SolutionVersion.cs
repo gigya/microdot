@@ -2,9 +2,8 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyCompany("Microdot")]
-[assembly: AssemblyCopyright("Microdot")]
-[assembly: AssemblyTrademark("Microdot")]
+[assembly: AssemblyCompany("Gigya Inc.")]
+[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
 [assembly: AssemblyDescription("Microdot Framework")]
 
 [assembly: AssemblyVersion("1.0.0.0")]

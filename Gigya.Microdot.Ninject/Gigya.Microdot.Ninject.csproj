@@ -44,7 +44,7 @@
     </Compile>
     <Compile Include="ConfigObjectsModule.cs" />
     <Compile Include="ILoggingModule.cs" />
-    <Compile Include="MicrodotConvections.cs" />
+    <Compile Include="MicrodotConventions.cs" />
     <Compile Include="MicrodotHostingModule.cs" />
     <Compile Include="MicrodotModule.cs" />
     <Compile Include="NinjectExtensions.cs" />
