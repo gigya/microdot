@@ -52,26 +52,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
 
         /// <summary>
-        /// Extensability point, this method is called after kernel is configured and before, service is willing to 
-        /// serve incoming request.
+        /// Extensibility point - this method is called after the Kernel is configured and before service starts
+        /// processing incoming request.
         /// </summary>
-        /// <param name="resolutionRoot"></param>
+        /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
         protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
 
-        }
-
-        /// <summary>
-        /// Used to configure Kernel, shoud be overriden only if you want to prepare a base service configured for your common usecase
-        /// in this case you shoud call base.Preconfigure before your own code.
-        /// </summary>
-        protected virtual void PreConfigure()
-        {
-            Kernel.Load<MicrodotModule>();
-            Kernel.Load<MicrodotHostingModule>();
-            Kernel.Load<MicrodotOrleansHostModule>();
-
-            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
         }
 
         /// <summary>
@@ -85,6 +72,23 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
 
 
+        /// <summary>
+        /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
+        /// Should be overridden when creating a base-class that should include common behaviour for a family of services, without
+        /// worrying about concrete service authors forgetting to call base.Configure(). Nevertheless, when overriding this method,
+        /// you should always call base.PreConfigure(), and if all inheritors of the class are concrete services, you should also
+        /// mark this method as sealed to prevent confusion with Configure().
+        /// </summary>
+        protected virtual void PreConfigure()
+        {
+            Kernel.Load<MicrodotModule>();
+            Kernel.Load<MicrodotHostingModule>();
+            Kernel.Load<MicrodotOrleansHostModule>();
+
+            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+        }
+        
+        
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started.
