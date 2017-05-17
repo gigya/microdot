@@ -1,3 +1,8 @@
-type project
-DESCRIPTION
-	Collection of concrete classes sharable between different parts of the frameworks, part of Microdot framework.
+type
+	project
+description
+	Various components and utilities shared between different parts of the Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices

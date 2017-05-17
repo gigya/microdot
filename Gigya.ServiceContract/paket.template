@@ -1,3 +1,10 @@
-type project
-DESCRIPTION
-	Referenced by micro-service interfaces. Provides common facilities that are needed to define a service interface, part of Microdot framework.
+type
+	project
+description
+	Referenced by microservice public-facing interfaces. Provides common
+	facilities that are needed to define a service's contract. Part of the
+	Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices contracts

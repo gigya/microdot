@@ -1,3 +1,11 @@
-type project
-DESCRIPTION
-	Ninject based,  abstract host for Orleans services, part of Microdot framework.
+type
+	project
+description
+	A container used to host an Orleans Microdot service which uses Ninject for
+	dependency injection. Incoming HTTP calls (via Gigya.Microdot.ServiceProxy)
+	are handled and processed inside Orleans and are then dispatched to
+	specific Grains. Part of the Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices
