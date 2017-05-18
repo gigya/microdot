@@ -6,7 +6,7 @@ The Microdot framework helps you to create scalable and reliable microservices, 
 Microdot builds upon **[Microsoft Orleans](https://github.com/dotnet/orleans)** which provides: 
 * **Ease of development** - A simple programming model (Virtual Actors) that doesn't require you to understand threads, locks, mutexes, transactions, cache coherency, etc. 
 * **Scale up** - write async code and utilize all the power your machine has; only one thread per CPU core, cooperative multitasking and async IO. The result is high-throughput, low-latency, low-overhead services. 
-* **Scaling out** - Without any changes to your code, you can scale your service to any number of nodes and make changes at runtime. 
+* **Scale out** - Without any changes to your code, you can scale your service to any number of nodes and make changes at runtime. 
 * **Resiliency** - failure of a node only affects in-flight operations happening on that node, but your service remains operational and work is redistributed across healthy nodes. Orleans also handles situations like multiple node failure, split brain and other disasters. 
   
 But using Orleans by itself to build microservices is non-trivial. That's where Microdot comes in, and provides: 
