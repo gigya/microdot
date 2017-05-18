@@ -40,7 +40,7 @@ This section details the architecture of Microdot at a high level, without going
 
 ### System Architecture
 
-![Microdot System Architecture Diagram](https://cloud.githubusercontent.com/assets/1709453/26200861/f44c685e-3bd8-11e7-9fde-b631b6b78548.png)
+![Microdot System Architecture Diagram](https://cloud.githubusercontent.com/assets/1709453/26209694/302ee1f4-3bf6-11e7-9ceb-d1aada30c9ae.png)
 
 A <span style="color:MediumSeaGreen">**service**</span> is composed of several nodes, each one is a <span style="color:LightSkyBlue">**Microdot host**</span> that is running an <span style="color:Plum">**Orleans Silo**</span>. The host accepts RPC calls via JSON over HTTP and forwards it to the <span style="color:Plum">**Silo**</span>. Calls to the <span style="color:LightSkyBlue">**host**</span> can come from <span style="color:Gold">**clients**</span> (e.g. frontend) or from other servies. Each <span style="color:Plum">**Orleans Silo**</span> is part of an Orleans cluster, and they communicate between each other using a propriatary binary communication protocol. Outside the developer's machine, each <span style="color:Plum">**Silo**</span> in an Orleans cluster also connects to a Membership Table (e.g. ZooKeeper, Consul or other high-availability database), which it uses to discover other Silos in the same cluster (not shown in diagram).
 
@@ -48,7 +48,7 @@ A <span style="color:MediumSeaGreen">**service**</span> is composed of several n
 
 ### Node Architecture
 
-![Microdot Node Architecture Diagram](https://cloud.githubusercontent.com/assets/1709453/26208856/d09efa1e-3bf3-11e7-8dc1-d327d04d6261.png)
+![Microdot Node Architecture Diagram](https://cloud.githubusercontent.com/assets/1709453/26209772/61e36c88-3bf6-11e7-90f7-dd839f7eea4f.png)
 
 Each node is composed of the Microdot host which contains the 
 
