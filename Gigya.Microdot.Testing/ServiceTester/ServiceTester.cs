@@ -280,7 +280,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
             {
                 try
                 {
-                    var context = await LogListener.GetContextAsync();
+                    var context = await LogListener.GetContextAsync().ConfigureAwait(false);
 
                     using (context.Response)
                     {
@@ -290,7 +290,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
                             continue;
                         }
 
-                        string log = await new StreamReader(context.Request.InputStream).ReadToEndAsync();
+                        string log = await new StreamReader(context.Request.InputStream).ReadToEndAsync().ConfigureAwait(false);
                         Console.WriteLine(log);
                         context.Response.StatusCode = 200;
                     }

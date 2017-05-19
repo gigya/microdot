@@ -56,15 +56,15 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
                 if (ServiceInterfaceMapper.HealthStatusServiceType == null || serviceType.IsAssignableFrom(ServiceInterfaceMapper.HealthStatusServiceType) == false)
                 {
-                    await writeResponse(string.Empty);
+                    await writeResponse(string.Empty).ConfigureAwait(false);
                 }
                 else
                 {
-                    var healthStatusResult = await CheckServiceHealth();
+                    var healthStatusResult = await CheckServiceHealth().ConfigureAwait(false);
 
                     var status = healthStatusResult.IsHealthy ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
                     var json = healthStatusResult.Message;
-                    await writeResponse(json, status);
+                    await writeResponse(json, status).ConfigureAwait(false);
                 }
 
                 return true;
@@ -81,14 +81,14 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             var invocationTask = Activator.Invoke(serviceMethod, new object[0]);
 
             // Health check must always complete in less than 10 seconds.
-            var endedTask = await Task.WhenAny(Task.Delay(TimeSpan.FromSeconds(10)), invocationTask);
+            var endedTask = await Task.WhenAny(Task.Delay(TimeSpan.FromSeconds(10)), invocationTask).ConfigureAwait(false);
 
             if (endedTask != invocationTask)
             {
                 return new HealthStatusResult("Health status check took too long.", false);
             }
 
-            var invocationResult = await invocationTask;
+            var invocationResult = await invocationTask.ConfigureAwait(false);
 
             return invocationResult.Result as HealthStatusResult;
         }

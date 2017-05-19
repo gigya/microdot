@@ -1,1 +1,9 @@
-type project
+type
+	project
+description
+	Ninject modules, providers and binding resolvers for various Microdot
+	components, part of the Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices ninject ioc di
