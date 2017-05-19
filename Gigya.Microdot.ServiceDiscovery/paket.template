@@ -1,1 +1,15 @@
-type project
+type
+	project
+description
+	Using this component you can find other Microdot services (and any other
+	remote system), perform client-side load balancing between multiple
+	servers, detect and	skip unresponsive servers and resume using them
+	when they return to full operation. Discovery is typically perfomed with
+	Consul by HashiCorp	(http://consul.io) but it also supports manual server
+	lists specified in Microdot configuration (see NuGet package
+	Gigya.Microdot.Configuration) and can be expanded to support additional
+	service discovery systems.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices discovery service-discovery consul

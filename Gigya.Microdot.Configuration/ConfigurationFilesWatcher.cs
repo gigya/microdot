@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.Configuration
 {
@@ -61,11 +62,17 @@ namespace Gigya.Microdot.Configuration
 
         private void OnRootChanged(object sender, FileSystemEventArgs e)
         {
-            if(!e.FullPath.Contains(".git"))
+            if (!e.FullPath.Contains(".git"))
             {
-                // Schedule a config reload in 5 seconds from now. If more config files are changed till then, we'll keep
-                // pushing back the reload time 5 seconds away, till no more file updates are encountered for 5 seconds.
-                refreshTimer.Change(5000, Timeout.Infinite);
+                foreach(var configFileDeclaration in ConfigurationLocationsParser.ConfigFileDeclarations)
+                {                   
+                   if(e.FullPath.IsSubPathOf( Path.GetDirectoryName(configFileDeclaration.Pattern) )) {
+                        // Schedule a config reload in 5 seconds from now. If more config files are changed till then, we'll keep
+                        // pushing back the reload time 5 seconds away, till no more file updates are encountered for 5 seconds.
+                        refreshTimer.Change(5000, Timeout.Infinite);
+                        return;
+                   }
+                }                
             }
         }
 
@@ -76,4 +83,5 @@ namespace Gigya.Microdot.Configuration
             refreshTimer.Dispose();
         }
     }
+
 }

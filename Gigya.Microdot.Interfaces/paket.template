@@ -1,1 +1,10 @@
-type project
+type
+	project
+description
+	Interface abstractions used by various Microdot components, seperated from
+	their implementations to allow easy unit testing with mocks	(see
+	Gigya.Microdot.Fakes). Part of the Microdot Framework.
+projectUrl
+	https://github.com/gigya/microdot
+tags
+	gigya microdot microservice microservices

@@ -8,7 +8,7 @@ using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
 
 using Ninject;
-
+using Ninject.Syntax;
 using Orleans;
 using Orleans.Runtime.Configuration;
 
@@ -25,12 +25,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         protected GigyaSiloHost SiloHost { get; set; }
 
-        /// <summary>
-        /// Contains an instance of <see cref="ILog"/> that was configured by <see cref="Configure"/>. This property
-        /// is populated only after <see cref="Configure"/> completes.
-        /// </summary>
-        protected ILog Log { get; set; }
-        
         protected IKernel Kernel { get; set; }
 
         public abstract ILoggingModule GetLoggingModule();
@@ -42,31 +36,29 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
-            var kernel = CreateKernel();
-            Kernel = kernel;
-            kernel.Load<MicrodotModule>();
-            kernel.Load<MicrodotHostingModule>();
-            kernel.Load<MicrodotOrleansHostModule>();
-
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
-
-            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            Kernel = CreateKernel();
+                        
+            PreConfigure();          
             
-            Configure(kernel, kernel.Get<OrleansCodeConfig>());
+            Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
 
-            Log = kernel.Get<ILog>();
-            
-            kernel.Get<ClusterConfiguration>().WithNinject(kernel);
+            Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
-            SiloHost = kernel.Get<GigyaSiloHost>();            
-            SiloHost.Start(InfraOneTimeInits, BeforeOrleansShutdown);
+            OnInitilize(Kernel);
+
+            SiloHost = Kernel.Get<GigyaSiloHost>();            
+            SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
         }
 
-        private async Task InfraOneTimeInits(IGrainFactory factory)
+        /// <summary>
+        /// Extensibility point - this method is called after the Kernel is configured and before service starts
+        /// processing incoming request.
+        /// </summary>
+        /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
+        protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
-            await AfterOrleansStartup(factory);            
-        }
 
+        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
@@ -79,6 +71,25 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
 
 
+        /// <summary>
+        /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
+        /// Should be overridden when creating a base-class that should include common behaviour for a family of services, without
+        /// worrying about concrete service authors forgetting to call base.Configure(). Nevertheless, when overriding this method,
+        /// you should always call base.PreConfigure(), and if all inheritors of the class are concrete services, you should also
+        /// mark this method as sealed to prevent confusion with Configure().
+        /// </summary>
+        protected virtual void PreConfigure()
+        {
+            Kernel.Load<MicrodotModule>();
+            Kernel.Load<MicrodotHostingModule>();
+            Kernel.Load<MicrodotOrleansHostModule>();
+
+            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+
+            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+        }
+        
+        
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started.

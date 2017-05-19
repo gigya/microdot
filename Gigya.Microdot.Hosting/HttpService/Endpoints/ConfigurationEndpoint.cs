@@ -23,11 +23,11 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 {
                     case "json":
                         var json = _responseBuilder.BuildJson();
-                        await writeResponse(json);
+                        await writeResponse(json).ConfigureAwait(false);
                         break;
                     default:
                         var text = _responseBuilder.BuildText();
-                        await writeResponse(text, contentType: "text/plain");
+                        await writeResponse(text, contentType: "text/plain").ConfigureAwait(false);
                         break;
                 }
 

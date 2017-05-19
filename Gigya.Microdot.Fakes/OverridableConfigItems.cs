@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Fakes
             ConfigItemsCollection configItemCollection = null;
 
             if (FileBasedConfigItemsSource != null)
-            configItemCollection = await FileBasedConfigItemsSource.GetConfiguration();
+            configItemCollection = await FileBasedConfigItemsSource.GetConfiguration().ConfigureAwait(false);
 
             return new MockConfigItemsCollection(GetConfigItemsOverrides, configItemCollection);
         }
