@@ -7,5 +7,7 @@ description
 	Part of the Microdot framework.
 projectUrl
 	https://github.com/gigya/microdot
+licenseUrl
+	https://github.com/gigya/microdot/blob/develop/LICENSE.md
 tags
 	gigya microdot microservice microservices serviceproxy http rpc
