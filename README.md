@@ -44,7 +44,7 @@ This section details the architecture of Microdot at a high level, without going
   
 ![Microdot System Architecture Diagram](https://cloud.githubusercontent.com/assets/1709453/26209694/302ee1f4-3bf6-11e7-9ceb-d1aada30c9ae.png) 
   
-A <span style="color:MediumSeaGreen">**service**</span> is composed of several nodes, each one is a <span style="color:LightSkyBlue">**Microdot host**</span> that is running an <span style="color:Plum">**Orleans Silo**</span>. The host accepts RPC calls via JSON over HTTP and forwards it to the <span style="color:Plum">**Silo**</span>. Calls to the <span style="color:LightSkyBlue">**host**</span> can come from <span style="color:Gold">**clients**</span> (e.g. frontend) or from other services. Each <span style="color:Plum">**Orleans Silo**</span> is part of an Orleans cluster, and they communicate between each other using a propriatary binary communication protocol. Outside the developer's machine, each <span style="color:Plum">**Silo**</span> in an Orleans cluster also connects to a Membership Table (e.g. ZooKeeper, Consul or other high-availability database), which it uses to discover other Silos in the same cluster (not shown in diagram). 
+A **service** (green) is composed of several nodes, each one is a **Microdot host** (blue) that is running an **Orleans Silo** (purple). The host accepts RPC calls via JSON over HTTP and forwards it to the Silo. Calls to the host can come from clients (yellow), e.g. frontend, or from other services. Each Orleans Silo is part of an Orleans cluster, and they communicate between each other using a propriatary binary communication protocol. Outside the developer's machine, each Silo in an Orleans cluster also connects to a Membership Table (e.g. ZooKeeper, Consul, Azure or other high-availability database), which it uses to discover other Silos in the same cluster (not shown in diagram). 
   
 <br/><br/> 
   
@@ -52,7 +52,7 @@ A <span style="color:MediumSeaGreen">**service**</span> is composed of several n
   
 ![Microdot Node Architecture Diagram](https://cloud.githubusercontent.com/assets/1709453/26209772/61e36c88-3bf6-11e7-90f7-dd839f7eea4f.png) 
   
-Each node is composed of a Microdot host which contains three main components: <span style="color:RoyalBlue">**HttpServiceListener**</span>, <span style="color:SandyBrown">**Service Grain**</span> and <span style="color: white; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;">**other grains**</span>.  
+Each node is composed of a Microdot host which contains three main components: **HttpServiceListener** (dark blue), **Service Grain** (orange) and **other grains** (white).  
   
 * HttpServiceListener is responsible for listening to incoming HTTP requests, parsing them and calling the appropriate method on the Service Grain. 
 * The Service Grain is responsible for exposing and handling the public API of your service. It will receive calls from the HttpServiceListener and needs to do initial processing on them and usually dispatch them to other grains. It is required by the Microdot framework, and is treated as the entry point of your service. 
