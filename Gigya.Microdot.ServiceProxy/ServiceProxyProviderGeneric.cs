@@ -23,6 +23,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.DispatchProxy;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.HttpService;
