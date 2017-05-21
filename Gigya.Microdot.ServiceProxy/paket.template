@@ -8,6 +8,6 @@ description
 projectUrl
 	https://github.com/gigya/microdot
 licenseUrl
-	https://github.com/gigya/microdot/blob/develop/LICENSE.md
+	https://github.com/gigya/microdot/blob/master/LICENSE.md
 tags
 	gigya microdot microservice microservices serviceproxy http rpc
