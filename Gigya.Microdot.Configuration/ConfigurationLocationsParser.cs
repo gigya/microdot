@@ -174,6 +174,9 @@ namespace Gigya.Microdot.Configuration
                 throw new ConfigurationException($"Problem reading {configPathFiles} file, {ex.InnerException}.", ex);
             }
 
+            if (configs == null)
+                return new ConfigFileDeclaration[0];
+
             var configLocationWithDuplicatePriority = configs.GroupBy(line => line.Priority).Where(priority => priority.Count() > 1).ToArray();
 
             if(configLocationWithDuplicatePriority.Any())
