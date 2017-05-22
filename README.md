@@ -19,10 +19,9 @@ But using Orleans by itself to build microservices is non-trivial. That's where 
 * **Logging and tracing** facilities to help diagnosing issues in production. Also, all components emit useful statistics via [Metrics.NET](https://github.com/Recognos/Metrics.NET) for real-time monitoring.  
 * Tools to help test your service, for both **unit tests** and **acceptance tests**.  
    
-Microdot also supports creating non-Orleans services, in which case the threading model, scaling and resiliency are problems the service developer must solve.  
-  
-<br/> 
-> The rest of this document uses Orlean jargon such as *grains* and *silos*. It is highly recommended to familiarlize yourself with those basic concepts by reading this short [introduction to Orleans](https://dotnet.github.io/orleans/Documentation/Introduction.html). 
+Microdot also supports creating non-Orleans services, in which case the threading model, scaling and resiliency are problems the service developer must solve.
+
+The rest of this document uses Orlean jargon such as *grains* and *silos*. It is highly recommended to familiarlize yourself with those basic concepts by reading this short [introduction to Orleans](https://dotnet.github.io/orleans/Documentation/Introduction.html). 
    
 ## Getting started  
   
