@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.IO;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Testing;
 using Ninject.Syntax;
@@ -40,6 +41,7 @@ public class AssemblyInitialize
     {
         try
         {
+            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory + Path.AltDirectorySeparatorChar,EnvironmentVariableTarget.Process);
             kernel = new TestingKernel<ConsoleLog>();            
             ResolutionRoot = kernel;
         }

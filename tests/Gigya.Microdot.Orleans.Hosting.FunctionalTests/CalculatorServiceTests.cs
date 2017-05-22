@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.HttpService;
@@ -67,8 +66,7 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
         {
             try
             {
-                
-                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory+ Path.AltDirectorySeparatorChar);
+                          
                 Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
                 Service = Tester.GetServiceProxy<ICalculatorService>();
             }
