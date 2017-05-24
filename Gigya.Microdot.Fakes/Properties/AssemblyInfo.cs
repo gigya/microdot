@@ -31,6 +31,3 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("2865f69b-d847-4901-8945-4941e463f94e")]
-[assembly: AssemblyCompany("Gigya")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-

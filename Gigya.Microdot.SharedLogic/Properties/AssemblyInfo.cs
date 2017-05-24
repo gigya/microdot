@@ -47,6 +47,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Common.TestingHelpers")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.ServiceProxy")]
 [assembly: InternalsVisibleTo("Gigya.Common.SharedLogic.UnitTests")]
-[assembly: AssemblyCompany("Gigya")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
 

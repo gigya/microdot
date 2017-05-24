@@ -42,6 +42,6 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.MySql.Client")]
 [assembly: InternalsVisibleTo("Gigya.Common.Application.Ninject")]
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.Ninject")]
-[assembly: AssemblyCompany("Gigya")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
+
+
 
