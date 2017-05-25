@@ -82,13 +82,13 @@ namespace Gigya.Microdot.SharedLogic.Logging
                                                      .Concat(exception.GetUnencryptedTags())
                                                      .Where(_ => _.Value != null)
                                                      .FormatTagsWithTypeSuffix()
-                                                     .ToList();
+                                                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                         var encTags = TagsExtractor.GetTagsFromObject(encryptedTags)
                                                    .Concat(exception.GetEncryptedTagsAndExtendedProperties())
                                                    .Where(_ => _.Value != null)
                                                    .FormatTagsWithoutTypeSuffix()
-                                                   .ToList();
+                            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                         WriteLog(level, logCallSiteInfo, message, encTags, unencTags, exception, stackTrace);
                     });
@@ -100,7 +100,7 @@ namespace Gigya.Microdot.SharedLogic.Logging
         }
 
 
-        protected abstract Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, List<KeyValuePair<string, string>> encTags, List<KeyValuePair<string, string>> unencTags, Exception exception= null, string stackTrace= null);
+        protected abstract Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null);
 
         public abstract TraceEventType? MinimumTraceLevel { get; set; }
 

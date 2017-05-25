@@ -55,14 +55,14 @@ namespace Gigya.Microdot.Fakes
         }
 
 
-        protected override Task<bool> WriteLog(TraceEventType severity, LogCallSiteInfo logCallSiteInfo, string message, List<KeyValuePair<string, string>> encTags, List<KeyValuePair<string, string>> unencTags, Exception exception = null, string stackTrace = null)
+        protected override Task<bool> WriteLog(TraceEventType severity, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
         {            
             var entry = new LogEntry
             {
                 Severity = severity,
                 Message = message,
-                EncryptedTags = encTags.ToDictionary(_ => _.Key, _ => EventFieldFormatter.SerializeFieldValue(_.Value)),
-                UnencryptedTags = unencTags.ToDictionary(_ => _.Key, _ => EventFieldFormatter.SerializeFieldValue(_.Value)),
+                EncryptedTags = encryptedTags.ToDictionary(_ => _.Key, _ => EventFieldFormatter.SerializeFieldValue(_.Value)),
+                UnencryptedTags = unencryptedTags.ToDictionary(_ => _.Key, _ => EventFieldFormatter.SerializeFieldValue(_.Value)),
                 Exception = exception
             };
 

@@ -31,7 +31,7 @@ namespace Gigya.Microdot.Fakes
     public class NullLog : LogBase
     {
 
-        protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, List<KeyValuePair<string, string>> encTags, List<KeyValuePair<string, string>> unencTags, Exception exception = null, string stackTrace = null)
+        protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
         {
             return Task.FromResult(true);
         }

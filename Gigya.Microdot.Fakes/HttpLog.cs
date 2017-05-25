@@ -63,10 +63,9 @@ namespace Gigya.Microdot.Fakes
 
 
         protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message,
-                                               List<KeyValuePair<string, string>> encTags,
-                                               List<KeyValuePair<string, string>> unencTags, Exception exception = null, string stackTrace = null)
+            IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
         {
-            var str = FormatLogEntry(level, message, encTags.Concat(unencTags)
+            var str = FormatLogEntry(level, message, encryptedTags.Concat(unencryptedTags)
                                                                  .Where(_ => _.Value != null)
                                                                  .ToList(), exception);
                        
