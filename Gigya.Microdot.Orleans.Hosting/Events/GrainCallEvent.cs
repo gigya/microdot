@@ -28,12 +28,12 @@ namespace Gigya.Microdot.Orleans.Hosting.Events
 {
     public class GrainCallEvent : StatsEvent
     {
-        public override string FlumeType => EventConsts.GrainReqType;
+        public override string EventType => EventConsts.GrainReqType;
 
-        [FlumeField(EventConsts.targetType)]
+        [EventField(EventConsts.targetType)]
         public string TargetType { get; set; }
 
-        [FlumeField(EventConsts.targetMethod)]
+        [EventField(EventConsts.targetMethod)]
         public string TargetMethod { get; set; }
     }
 }

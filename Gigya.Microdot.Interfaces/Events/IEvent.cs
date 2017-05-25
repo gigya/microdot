@@ -27,7 +27,7 @@ namespace Gigya.Microdot.Interfaces.Events
 {
     public interface IEvent
     {
-        string FlumeType { get; }
+        string EventType { get; }
 
         bool ShouldAudit { get; }
         

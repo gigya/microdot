@@ -34,35 +34,35 @@ namespace Gigya.Microdot.Hosting.Events
     public class ServiceCallEvent : StatsEvent
     {
    
-        protected Regex FlumeExcludeStackTraceForErrorCodeRegex => Configuration.ExcludeStackTraceRule;
+        protected Regex ExcludeStackTraceForErrorCodeRegex => Configuration.ExcludeStackTraceRule;
 
         internal double? ActualTotalTime { get; set; }
 
       
         public override double? TotalTime => ActualTotalTime;
 
-        public override string FlumeType => EventConsts.ServerReqType;
+        public override string EventType => EventConsts.ServerReqType;
 
         public TracingData ClientMetadata { get; set; }
 
         /// <summary>The interface of the service that executed executed the request</summary>
-        [FlumeField(EventConsts.srvService)]
+        [EventField(EventConsts.srvService)]
         internal string CalledServiceName { get; set; }
 
         /// <summary>The name of the calling  system (comments/socialize/hades/mongo etc)</summary>
-        [FlumeField("cln.system")]
+        [EventField("cln.system")]
         public string CallerServiceName => ClientMetadata?.ServiceName;
 
         /// <summary>The name of a calling server</summary>    
-        [FlumeField("cln.host")]
+        [EventField("cln.host")]
         public string CallerHostName => ClientMetadata?.HostName;
 
         /// <summary> Service method called </summary>
-        [FlumeField(EventConsts.targetMethod)]
+        [EventField(EventConsts.targetMethod)]
         public string ServiceMethod { get; set; }
 
         /// <summary> Service method arguments </summary>
-        [FlumeField("params", Encrypt = true)]
+        [EventField("params", Encrypt = true)]
         public IEnumerable<KeyValuePair<string, string>> ServiceMethodArguments => LazyRequestParams.GetValue(this);
 
     
