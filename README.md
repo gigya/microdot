@@ -21,7 +21,7 @@ Microdot builds upon **[Microsoft Orleans](https://github.com/dotnet/orleans)** 
    
 But using Orleans by itself to build microservices is non-trivial. That's where Microdot comes in, and provides:  
 * A **container for hosting Orleans** which enables it to be used in various environments (simple command-line process, native Windows Service)  
-* An Orleans-style **inter-service communication layer** using JSON over HTTP, which includes client-side load balancing and failover support.  
+* An Orleans-style **inter-service communication layer** using JSON over HTTP, which includes client-side load balancing and failover support, support for secure comunication via HTTPS server and client certificates.  
 * A hierarchical [**configuration system**](http://microservices.io/patterns/externalized-configuration.html) based on XML files which allows overriding values based on where and how the microservice is hosted (per data center, environment and microservice). The configuration is consumed from code via strongly-typed object with automatic mapping.  
 * [Client-side **Service discovery**](http://microservices.io/patterns/client-side-discovery.html) that supports [HashiCorp's Consul](https://github.com/hashicorp/consul) or manual configuration-based discovery.  
 * Client-side, opt-in, **transparent caching** between services.  
