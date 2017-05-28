@@ -1,0 +1,33 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
+
+using Gigya.Common.Contracts.Attributes;
+
+namespace Gigya.Microdot.UnitTests.Caching
+{
+    public interface IThingFrobber
+    {
+        int ThingifyInt(string s);
+        Thing ThingifyThing(string s);
+        Task ThingifyTask(string s);
+        void ThingifyVoid(string s);
+
+        [Cached] Task<Thing> ThingifyTaskThing(string s);
+        [Cached] Task<int> ThingifyTaskInt(string s);
+    }
+
+
+    public class Thing
+    {
+        [Key]
+        public long Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class NonRevokableThing
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+    }
+
+}
