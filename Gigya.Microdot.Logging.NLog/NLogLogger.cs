@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic.Logging;
@@ -37,7 +38,11 @@ namespace Gigya.Microdot.Logging.NLog
         {
             var logLevel = ToLogLevel(level);
             if (Logger.IsEnabled(logLevel))
-                Logger.Log(logLevel, message);
+            {
+                Logger.Log(logLevel, (message ?? exception?.ToString()) + ". " +
+                    string.Join(", ", unencryptedTags.Select(kvp => $"{kvp.Key.Substring(5)}={kvp.Value}")));
+
+            }
 
             return Task.FromResult(true);
         }
