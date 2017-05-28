@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Logging;
 using NLog;
 
@@ -39,9 +40,8 @@ namespace Gigya.Microdot.Logging.NLog
             var logLevel = ToLogLevel(level);
             if (Logger.IsEnabled(logLevel))
             {
-                Logger.Log(logLevel, (message ?? exception?.ToString()) + ". " +
-                    string.Join(", ", unencryptedTags.Select(kvp => $"{kvp.Key.Substring(5)}={kvp.Value}")));
-
+                var messageWithTags = message + string.Join(", ", unencryptedTags.Select(kvp => $"{kvp.Key.Substring(5)}={EventFieldFormatter.SerializeFieldValue(kvp.Value)}")) + ". ";
+                Logger.Log(logLevel, exception, messageWithTags, null);
             }
 
             return Task.FromResult(true);
