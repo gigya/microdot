@@ -19,7 +19,7 @@ namespace Gigya.Microdot.Logging.NLog
 
         public NLogLogger(Type receivingType)
         {
-            Logger = LogManager.GetCurrentClassLogger(receivingType);
+            Logger = LogManager.GetLogger(receivingType.FullName);
 
             AssemblyName reflectedAssembly = receivingType.Assembly.GetName();
             CallSiteInfoTemplate = new LogCallSiteInfo
