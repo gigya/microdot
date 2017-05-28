@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Configuration
             LoadPathsFilePath = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE);
             
             if (string.IsNullOrEmpty(LoadPathsFilePath))
-                LoadPathsFilePath = ConfigRoot + LOADPATHS_JSON;
+                LoadPathsFilePath = Path.Combine(ConfigRoot, LOADPATHS_JSON);
 
             //Normalize slashes
             LoadPathsFilePath = LoadPathsFilePath.Replace("\\", "/");
