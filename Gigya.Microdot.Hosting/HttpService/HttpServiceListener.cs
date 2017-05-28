@@ -139,9 +139,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                     throw;
 
                 throw new Exception(
-                    "One or more of the specified HTTP listen ports wasn't configured to run without administrative premissions.\n" +
+                    "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +
                     "To configure them, run the following commands in an elevated (administrator) command prompt:\n" +
-                    $"netsh http add urlacl url={Prefix} user={CurrentApplicationInfo.OsUser}", ex);
+                    $"netsh http add urlacl url={Prefix} user={CurrentApplicationInfo.OsUser}");
             }
 
             StartListening();

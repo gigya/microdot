@@ -34,9 +34,8 @@ using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.Service
 {
-    public abstract class GigyaServiceHost:IDisposable
+    public abstract class GigyaServiceHost : IDisposable
     {
-
         const int WANR_IF_SHUTDOWN_LONGER_THAN_SECS = 10;
 
         private bool disposed;
@@ -51,7 +50,7 @@ namespace Gigya.Microdot.Hosting.Service
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
-        protected abstract string ServiceName { get; }
+        protected virtual string ServiceName { get; }
 
         protected GigyaServiceHost()
         {
@@ -60,6 +59,12 @@ namespace Gigya.Microdot.Hosting.Service
 
             StopEvent = new ManualResetEvent(true);
             ServiceStartedEvent = new TaskCompletionSource<object>();
+
+            ServiceName = GetType().Name;
+
+            // ReSharper disable VirtualMemberCallInConstructor
+            if (ServiceName.EndsWith("Host") && ServiceName.Length > 4)
+                ServiceName = ServiceName.Substring(0, ServiceName.Length - 4);
         }
 
         /// <summary>
