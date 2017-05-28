@@ -1,11 +1,10 @@
 type
 	project
 description
-	Infrastructure used for hosting Microdot services, part of the Microdot
-	framework.
+	An implementation of Microdot's logging and tracing using NLog.
 projectUrl
 	https://github.com/gigya/microdot
 licenseUrl
 	https://github.com/gigya/microdot/blob/master/LICENSE.md
 tags
-	gigya microdot microservice microservices
+	gigya microdot microservice microservices NLog logging tracing
