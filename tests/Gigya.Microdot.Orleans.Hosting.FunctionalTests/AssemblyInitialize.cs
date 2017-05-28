@@ -41,7 +41,7 @@ public class AssemblyInitialize
     {
         try
         {
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory + Path.DirectorySeparatorChar, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
             kernel = new TestingKernel<ConsoleLog>();            
             ResolutionRoot = kernel;
         }
