@@ -71,18 +71,4 @@ Each node is composed of a Microdot host which contains three main components: *
 * The Service Grain is responsible for exposing and handling the public API of your service. It will receive calls from the HttpServiceListener and needs to do initial processing on them and usually dispatch them to other grains. It is required by the Microdot framework, and is treated as the entry point of your service. 
 * All the other grains are responsible for the core functions of your service. Most, if not all of your service's logic will reside in those grains. The methods on these grains are not exposed via by Microdot and can only be called from within that service (except when using an Orleans feature, 'Outside Grain Client', in which case it is possible to call any grain directly using Orlean's binary communication protocol, but this can be blocked if desired). 
 * The Service Interface, an ordinary .NET interface that defines the public-facing API of your service, is published via NuGet (usually an internal server) so that other client can call your service (e.g. other services, frontend/GUI, DevOps tools, etc). 
-* The Service Interface NuGet is used by client in conjunction with the ServiceProxy, which generates (at runtime) a client that implements that interface. Any calls to the client are transformed into JSON that contains which method was called, the arguments that were passed to the method and additional tracing data. The JSON is sent to the service over HTTP (the hostname, port and protocol are resolved using Service Discovery) and the remote service returns a JSON representing the return value of the method, which is deserialized and returned to the caller of the ServiceProxy. 
-  
-<br/><br/> 
-
-
-### Class Diagram 
-(should be moved to step-by-step guide) 
-  
-![AccountingService Class Diagram](https://cloud.githubusercontent.com/assets/1709453/26209155/b66ea166-3bf4-11e7-8a4b-621d600d676b.png) 
-  
-  
-  
-  
-  
- 
+* The Service Interface NuGet is used by client in conjunction with the ServiceProxy, which generates (at runtime) a client that implements that interface. Any calls to the client are transformed into JSON that contains which method was called, the arguments that were passed to the method and additional tracing data. The JSON is sent to the service over HTTP (the hostname, port and protocol are resolved using Service Discovery) and the remote service returns a JSON representing the return value of the method, which is deserialized and returned to the caller of the ServiceProxy.
