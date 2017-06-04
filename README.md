@@ -45,7 +45,7 @@ The easiest way to start using Microdot is by adding the `Gigya.Microdot.Orleans
 * Define any other grains you need to perform the required processing. 
 * Run your service (F5) 
   
-A detailed step-by-step guide is available [here](!!!). 
+A detailed step-by-step guide is available [here](https://github.com/gigya/microdot/wiki/Building-your-first-Microdot-service). 
 
 <br/> 
 
