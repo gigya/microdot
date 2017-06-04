@@ -49,6 +49,7 @@
     <Compile Include="Caching\AsyncMemoizer.cs" />
     <Compile Include="Caching\CachingProxyProvider.cs" />
     <Compile Include="Caching\ICache.cs" />
+    <Compile Include="Caching\ICachingProxyProvider.cs" />
     <Compile Include="Caching\IMemoizer.cs" />
     <Compile Include="Caching\IMetadataProvider.cs" />
     <Compile Include="Caching\MetadataProvider.cs" />

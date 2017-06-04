@@ -25,12 +25,11 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Syntax;
 
-namespace Gigya.Ninject.Host
+namespace Gigya.Microdot.Ninject.Host
 {
     /// <summary>
     /// Base class for all non-Orleans services that use Ninject. Override <see cref="Configure"/> to configure your own
@@ -68,7 +67,7 @@ namespace Gigya.Ninject.Host
         {
             Kernel = CreateKernel();
 
-            PreConfigure();
+            PreConfigure(Kernel);
            
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
@@ -118,12 +117,13 @@ namespace Gigya.Ninject.Host
         /// you should always call base.PreConfigure(), and if all inheritors of the class are concrete services, you should also
         /// mark this method as sealed to prevent confusion with Configure().
         /// </summary>
-        protected virtual void PreConfigure()
+        /// <param name="kernel">Kernel that should contain bindings for the service.</param>
+        protected virtual void PreConfigure(IKernel kernel)
         {
-            Kernel.Load<MicrodotModule>();
-            Kernel.Load<MicrodotHostingModule>();
-            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
-            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            kernel.Load<MicrodotModule>();
+            kernel.Load<MicrodotHostingModule>();
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
         }
         
         

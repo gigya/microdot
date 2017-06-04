@@ -31,7 +31,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    public class CachingProxyProvider<TInterface>
+    public class CachingProxyProvider<TInterface> : ICachingProxyProvider<TInterface>
     {
         /// <summary>
         /// The instance of the transparent proxy used to access the data source with caching.

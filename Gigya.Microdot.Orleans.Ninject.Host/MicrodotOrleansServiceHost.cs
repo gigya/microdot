@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         protected GigyaSiloHost SiloHost { get; set; }
 
-        protected IKernel Kernel { get; set; }
+        private IKernel Kernel { get; set; }
 
         public abstract ILoggingModule GetLoggingModule();
 
@@ -58,7 +58,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             Kernel = CreateKernel();
                         
-            PreConfigure();          
+            PreConfigure(Kernel);          
             
             Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
 
@@ -98,15 +98,16 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// you should always call base.PreConfigure(), and if all inheritors of the class are concrete services, you should also
         /// mark this method as sealed to prevent confusion with Configure().
         /// </summary>
-        protected virtual void PreConfigure()
+        /// <param name="kernel"></param>
+        protected virtual void PreConfigure(IKernel kernel)
         {
-            Kernel.Load<MicrodotModule>();
-            Kernel.Load<MicrodotHostingModule>();
-            Kernel.Load<MicrodotOrleansHostModule>();
+            kernel.Load<MicrodotModule>();
+            kernel.Load<MicrodotHostingModule>();
+            kernel.Load<MicrodotOrleansHostModule>();
 
-            Kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
 
-            GetLoggingModule().Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
         }
         
         
