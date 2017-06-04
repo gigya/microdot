@@ -27,11 +27,11 @@ namespace Gigya.Microdot.Fakes
 {
     public class NullEventPublisher:IEventPublisher
     {
-        static readonly FlumePublishingTasks flumePublishingTasks = new FlumePublishingTasks { ToFlume = Task.FromResult(true), ToFlumeAudit = Task.FromResult(true) };
+        static readonly PublishingTasks PublishingTasks = new PublishingTasks { PublishEvent = Task.FromResult(true), PublishAudit = Task.FromResult(true) };
 
-        public FlumePublishingTasks TryPublish(IEvent evt)
+        public PublishingTasks TryPublish(IEvent evt)
         {            
-            return flumePublishingTasks;
+            return PublishingTasks;
         }
     }
 }

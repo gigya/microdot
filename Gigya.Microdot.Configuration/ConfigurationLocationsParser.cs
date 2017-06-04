@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Configuration
             LoadPathsFilePath = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE);
             
             if (string.IsNullOrEmpty(LoadPathsFilePath))
-                LoadPathsFilePath = ConfigRoot + LOADPATHS_JSON;
+                LoadPathsFilePath = Path.Combine(ConfigRoot, LOADPATHS_JSON);
 
             //Normalize slashes
             LoadPathsFilePath = LoadPathsFilePath.Replace("\\", "/");
@@ -173,6 +173,9 @@ namespace Gigya.Microdot.Configuration
             {
                 throw new ConfigurationException($"Problem reading {configPathFiles} file, {ex.InnerException}.", ex);
             }
+
+            if (configs == null)
+                return new ConfigFileDeclaration[0];
 
             var configLocationWithDuplicatePriority = configs.GroupBy(line => line.Priority).Where(priority => priority.Count() > 1).ToArray();
 

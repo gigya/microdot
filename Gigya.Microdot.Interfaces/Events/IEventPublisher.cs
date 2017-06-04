@@ -24,12 +24,12 @@ namespace Gigya.Microdot.Interfaces.Events
 {
     public interface IEventPublisher
     {
-        FlumePublishingTasks TryPublish(IEvent evt);
+        PublishingTasks TryPublish(IEvent evt);
     }
 
     public interface IEventPublisher<T> where T : IEvent
     {
-        FlumePublishingTasks TryPublish(T evt);
+        PublishingTasks TryPublish(T evt);
         T CreateEvent();
     }
 }

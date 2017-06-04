@@ -43,13 +43,12 @@ namespace Gigya.Common.Contracts.Exceptions
 	///			Mark the exception with the SerializableAttribute.
 	///		</item>
 	///		<item>
-	///			Do not inherit from SerializableException, but instead inherit from one of the four concrete
+	///			Do not inherit from SerializableException, but instead inherit from one of the three concrete
 	///         implementations:
-	///			<see cref="ProgrammaticException"/>, <see cref="EnvironmentException"/>, <see cref="RequestException"/>
-	///         or <see cref="CustomerFacingException"/>.
+	///			<see cref="ProgrammaticException"/>, <see cref="EnvironmentException"/>, <see cref="RequestException"/>.
 	///		</item>
 	///		<item>
-	///			Make sure to call the appropritate base constructor from your constructors.
+	///			Make sure to call the appropriate base constructor from your constructors.
 	///		</item>
 	///		<item>
 	///			Include a protected constructor with parameters (<see cref="SerializationInfo"/>,
@@ -72,7 +71,7 @@ namespace Gigya.Common.Contracts.Exceptions
 	/// 
 	/// When an attempt is made to deserialize an exception, but the exact type of the exception is not available in
 	/// that context (e.g. a derived exception type that only exists on the serializing side, not the deserializing
-	/// side), then an attempt is made to deserialize that exception as it's base-type (the inheritance hiearchy is
+	/// side), then an attempt is made to deserialize that exception as it's base-type (the inheritance hierarchy is
 	/// serialized together with the exception), and if that fails, with the base-base-type, etc. When deserializing an 
 	/// exception into a base type, there could be some properties that existed on the original derived type but do not
 	/// exist on the base type. Those properties were serialized, but there is no corresponding property to deserialize

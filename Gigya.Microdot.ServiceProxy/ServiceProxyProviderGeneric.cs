@@ -23,6 +23,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.DispatchProxy;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.HttpService;
@@ -53,13 +54,6 @@ namespace Gigya.Microdot.ServiceProxy
         /// <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, unless overridden by configuration.
         /// </summary>
         public int? DefaultPort { get { return InnerProvider.DefaultPort; } set { InnerProvider.DefaultPort = value; } }
-
-        /// <summary>
-        /// Gets or sets the port used to access the remote service. This defaults to the port that was specified in the
-        /// <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, unless overridden by configuration.
-        /// </summary>
-        [Obsolete("Duplicate of DefaultPort")]
-        public int? Port { get { return InnerProvider.DefaultPort; } set { InnerProvider.DefaultPort = value; } }
 
         /// <summary>
         /// Specifies a delegate that can be used to change a request in a user-defined way before it is sent over the

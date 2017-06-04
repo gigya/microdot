@@ -34,44 +34,44 @@ namespace Gigya.Microdot.SharedLogic.Events
             ParentSpanId = TracingContext.TryGetSpanID();
         }
 
-        public override string FlumeType => EventConsts.ClientReqType;
+        public override string EventType => EventConsts.ClientReqType;
 
         /// <summary>The name of the calling  system (comments/socialize/hades/mongo etc)</summary>
-        [FlumeField(EventConsts.targetService)]
+        [EventField(EventConsts.targetService)]
         public virtual string TargetService { get; set; }
 
         /// <summary>The name of a calling server</summary>    
-        [FlumeField(EventConsts.targetHost)]
+        [EventField(EventConsts.targetHost)]
         public string TargetHostName { get; set; }
 
         /// <summary>Service method called</summary>
-        [FlumeField(EventConsts.targetMethod)]
+        [EventField(EventConsts.targetMethod)]
         public string TargetMethod { get; set; }
 
         /// <summary>Stopwatch timestamp when request was sent.</summary>
-        [FlumeField(EventConsts.clnSendTimestamp)]
+        [EventField(EventConsts.clnSendTimestamp)]
         public long? RequestStartTimestamp { get; set; }
 
-        /// <summary>Stopwatch timestamp when response was received. Not published to Flume, used in <see cref="TotalTimeMS"/>
+        /// <summary>Stopwatch timestamp when response was received. Not published, used in <see cref="TotalTimeMS"/>
         /// which is published.</summary>
         public long? ResponseEndTimestamp { get; set; }
 
-        [FlumeField(EventConsts.protocolMethod)]
+        [EventField(EventConsts.protocolMethod)]
         public string ProtocolMethod { get; set; }
 
-        [FlumeField(EventConsts.protocolParams)]
+        [EventField(EventConsts.protocolParams)]
         public string ProtocolParams { get; set; }
 
         /// <summary>Total time in milliseconds from sending the request till we got a response.</summary>
-        [FlumeField(EventConsts.statsTotalTime, OmitFromAudit = true)]
+        [EventField(EventConsts.statsTotalTime, OmitFromAudit = true)]
         public double? TotalTimeMS => (ResponseEndTimestamp - RequestStartTimestamp) / (Stopwatch.Frequency / 1000.0);
 
         /// <summary>Time in milliseconds on a server.</summary>
-        [FlumeField(EventConsts.statsServerTime, OmitFromAudit = true)]
+        [EventField(EventConsts.statsServerTime, OmitFromAudit = true)]
         public double? ServerTimeMs { get; set; }
 
         /// <summary>Total time - ServerTimeMs</summary>
-        [FlumeField(EventConsts.statsNetworkTime, OmitFromAudit = true)]
+        [EventField(EventConsts.statsNetworkTime, OmitFromAudit = true)]
         public double? NetworkTimeMS => TotalTimeMS - ServerTimeMs;
 
     }

@@ -39,7 +39,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         }
 
 
-        public FlumePublishingTasks TryPublish(T evt)
+        public PublishingTasks TryPublish(T evt)
         {
             return Publisher.TryPublish(evt);
         }

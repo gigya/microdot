@@ -7,8 +7,8 @@
     <ProjectGuid>{06E45085-5A54-4BFE-BD24-E9C3983A2689}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Gigya.Microdot.Logging</RootNamespace>
-    <AssemblyName>Gigya.Microdot.Logging</AssemblyName>
+    <RootNamespace>Gigya.Microdot.Logging.NLog</RootNamespace>
+    <AssemblyName>Gigya.Microdot.Logging.NLog</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,24 +40,25 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="LogBasedEventPublisher.cs" />
+    <Compile Include="LogEventPublisher.cs" />
     <Compile Include="NLogLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SampleLoggingModule.cs" />
+    <Compile Include="NLogModule.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
+    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
       <Project>{63e40f38-df99-4df5-9b45-addb0c2fc9ff}</Project>
       <Name>Gigya.Microdot.Ninject</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
+    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
       <Project>{c88db2a8-a1d2-46f8-8b65-06b9ee3f1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
+    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
       <Project>{a90d7c71-ec7c-4328-9db1-d2c3a30727db}</Project>
       <Name>Gigya.Microdot.Interfaces</Name>
     </ProjectReference>
@@ -67,7 +68,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
         <Reference Include="Ninject">
-          <HintPath>..\..\packages\Ninject\lib\net45-full\Ninject.dll</HintPath>
+          <HintPath>..\packages\Ninject\lib\net45-full\Ninject.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -78,7 +79,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
         <Reference Include="NLog">
-          <HintPath>..\..\packages\NLog\lib\net45\NLog.dll</HintPath>
+          <HintPath>..\packages\NLog\lib\net45\NLog.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

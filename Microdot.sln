@@ -50,6 +50,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Host
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.ServiceContract", "Gigya.ServiceContract\Gigya.ServiceContract.csproj", "{DB6D3561-835E-40D5-B9D4-83951CF426DF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.UnitTests", "Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj", "{0A24AE97-EE88-4E8B-8B92-092884D41399}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Logging.NLog", "Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj", "{06E45085-5A54-4BFE-BD24-E9C3983A2689}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -116,6 +120,14 @@ Global
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -123,6 +135,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C224F79A-EAB5-48B8-B587-65772B0966EF} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 		{8E548D57-5880-4283-BDF5-7386886D481D} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
+		{0A24AE97-EE88-4E8B-8B92-092884D41399} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8

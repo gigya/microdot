@@ -22,7 +22,7 @@
 
 using System;
 using System.Reflection;
-
+using System.Reflection.DispatchProxy;
 
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;

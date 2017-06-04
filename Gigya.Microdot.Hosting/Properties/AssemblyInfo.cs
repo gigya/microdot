@@ -33,6 +33,7 @@ using System.Runtime.InteropServices;
 [assembly: Guid("27abc89f-fe0c-44df-b0db-ac951015d281")]
 
 [assembly: InternalsVisibleTo("Gigya.Common.Application.UnitTests")]
+[assembly: InternalsVisibleTo("Gigya.Microdot.UnitTests")]
 [assembly: InternalsVisibleTo("Gigya.Common.Application.FunctionalTests")]
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.FunctionalTests")]
 

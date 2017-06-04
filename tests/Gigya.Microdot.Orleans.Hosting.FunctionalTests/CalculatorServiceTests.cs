@@ -66,6 +66,7 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
         {
             try
             {
+                          
                 Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
                 Service = Tester.GetServiceProxy<ICalculatorService>();
             }
