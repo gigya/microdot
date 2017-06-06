@@ -78,12 +78,20 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public string Name { get; set; }
     }
 
+   
     [ConfigurationRoot("Prefix1.Prefix2", RootStrategy.AppendClassNameToPath)]
     public class GatorConfig : IConfigObject
     {
         public string Name { get; set; } = "Default";
     }
 
+    [ConfigurationRoot("Prefix1.Prefix2.gatorConfig", RootStrategy.ReplaceClassNameWithPath)]
+    public class GatorLowerCase : IConfigObject
+    {
+        public string Name { get; set; }
+
+        public NotConfigObject NotConfigObject { get; set; }
+    }
 
 
     [ConfigurationRoot("Prefix1.Prefix2.GatorConfig", RootStrategy.ReplaceClassNameWithPath)]
