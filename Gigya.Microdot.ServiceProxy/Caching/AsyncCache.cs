@@ -79,6 +79,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             // Counters
             AwaitingResult = Metrics.Context("AwaitingResult");
+            ClearCache = Metrics.Counter("ClearCache", Unit.Calls);
 
             // Meters
             Hits = Metrics.Context("Hits");

@@ -21,39 +21,24 @@
 #endregion
 
 using System;
-using System.Reflection;
-using System.Runtime.Caching;
-using Gigya.Microdot.ServiceDiscovery.Config;
+using System.Collections.Generic;
 
-namespace Gigya.Microdot.ServiceProxy.Caching
+namespace Gigya.Microdot.ServiceDiscovery.Config
 {
-    public interface IMemoizer
+    public class CachingPolicyCollection: ConfigCollection<MethodCachingPolicyConfig>
     {
-        object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
-    }
-
-
-
-    public class CacheItemPolicyEx : CacheItemPolicy
-    {
-        /// <summary>
-        /// The amount of time after which a request of an item triggers a background refresh from the data source.
-        /// </summary>
-        public TimeSpan RefreshTime { get; set; }
-
-        /// <summary>
-        /// The amount of time to wait before attempting another refresh after the previous refresh failed.
-        /// </summary>
-        public TimeSpan FailedRefreshDelay { get; set; }
-
-
-        public CacheItemPolicyEx() { }
-
-        public CacheItemPolicyEx(MethodCachingPolicyConfig config)
+        public CachingPolicyCollection(IDictionary<string, MethodCachingPolicyConfig> source, MethodCachingPolicyConfig defaultItem) : base(source, defaultItem)
         {
-            AbsoluteExpiration = DateTime.UtcNow + config.ExpirationTime.Value;
-            RefreshTime = config.RefreshTime.Value;
-            FailedRefreshDelay = config.FailedRefreshDelay.Value;
+        }
+
+        protected override MethodCachingPolicyConfig ApplyDefaults(MethodCachingPolicyConfig item)
+        {
+            item.RefreshTime = item.RefreshTime ?? DefaultItem.RefreshTime;
+            item.Enabled = item.Enabled ?? DefaultItem.Enabled;
+            item.ExpirationTime = item.ExpirationTime ?? DefaultItem.ExpirationTime;
+            item.FailedRefreshDelay = item.FailedRefreshDelay ?? DefaultItem.FailedRefreshDelay;
+
+            return item;
         }
     }
 }

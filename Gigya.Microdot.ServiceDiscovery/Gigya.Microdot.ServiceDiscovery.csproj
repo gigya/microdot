@@ -44,9 +44,12 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ConfigDiscoverySource.cs" />
+    <Compile Include="Config\CachingPolicyCollection.cs" />
     <Compile Include="Config\CachingPolicyConfig.cs" />
+    <Compile Include="Config\ConfigCollection.cs" />
     <Compile Include="Config\DiscoveryConfig.cs" />
     <Compile Include="Config\DiscoverySource.cs" />
+    <Compile Include="Config\MethodCachingPolicyConfig.cs" />
     <Compile Include="Config\PortAllocationConfig.cs" />
     <Compile Include="Config\ServiceDiscoveryCollection.cs" />
     <Compile Include="Config\ServiceDiscoveryConfig.cs" />
