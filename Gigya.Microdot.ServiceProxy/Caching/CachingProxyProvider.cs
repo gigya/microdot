@@ -23,7 +23,6 @@
 using System;
 using System.Reflection;
 using System.Reflection.DispatchProxy;
-
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -67,34 +66,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
             ((DelegatingDispatchProxy)(object)Proxy).InvokeDelegate = Invoke;
             ServiceName = serviceName ?? typeof(TInterface).GetServiceName();
-
-            var config = GetConfig();
-
-            if (config.Enabled)
-            {
-                Log.Info(_ => _("Caching has been enabled for an interface.", unencryptedTags: new
-                {
-                    ServiceName = typeof(TInterface).GetServiceName(),
-                    InterfaceName = typeof(TInterface).FullName,
-                    config.ExpirationTime,
-                    config.RefreshTime
-                }));
-            }
         }
 
 
-        private CachingPolicyConfig GetConfig()
+        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod)
         {
             ServiceDiscoveryConfig config;
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out config);
-        
-            return config?.CachingPolicy ?? new CachingPolicyConfig();
+
+            return config?.CachingPolicy?.Methods?[targetMethod.Name] ?? CachingPolicyConfig.Default;
         }
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig();
-            if (!config.Enabled)
+            var config = GetConfig(targetMethod);
+            if (config.Enabled.Value==false)
                 return targetMethod.Invoke(DataSource, args);
 
             if (MetadataProvider.IsCached(targetMethod))

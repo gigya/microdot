@@ -44,8 +44,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private MetricsContext Misses { get; set; }
         private MetricsContext JoinedTeam { get; set; }
         private MetricsContext AwaitingResult { get; set; }
-        private MetricsContext Failed { get; set; }
-        private Counter ClearCache { get; set; }
+        private MetricsContext Failed { get; set; }        
 
         private const double MB = 1048576.0;
         private int _clearCount;
@@ -187,8 +186,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             if (oldMemoryCache != null)
             {
                 // Disposing of MemoryCache can be a CPU intensive task and should therefore not block the current thread.
-                Task.Run(() => oldMemoryCache.Dispose());
-                ClearCache.Increment();
+                Task.Run(() => oldMemoryCache.Dispose());                
             }
         }
 
