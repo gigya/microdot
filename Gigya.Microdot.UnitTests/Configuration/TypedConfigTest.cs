@@ -300,6 +300,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             infraKernel.Dispose();
         }
 
+
         [Test]
         public void AllPropertiesExceptNullableShouldBeSet()
         {
@@ -352,6 +353,22 @@ namespace Gigya.Microdot.UnitTests.Configuration
                 {"Prefix1.Prefix2.GatorConfig.Name", "infraTest"},
             });
             var extractor = infraKernel.Get<Func<GatorConfig>>();
+
+            var busSettings = extractor();
+            busSettings.ShouldNotBeNull();
+            busSettings.Name.ShouldBe("infraTest");
+
+            infraKernel.Dispose();
+        }
+
+        [Test]
+        public void CanReadWithReplacingPrefixWInWrongCase()
+        {
+            var infraKernel = new TestingKernel<ConsoleLog>(mockConfig: new Dictionary<string, string>
+            {
+                {"Prefix1.Prefix2.GatorConfig.Name", "infraTest"},
+            });
+            var extractor = infraKernel.Get<Func<GatorLowerCase>>();
 
             var busSettings = extractor();
             busSettings.ShouldNotBeNull();
