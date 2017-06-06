@@ -40,7 +40,7 @@ namespace Gigya.Microdot.Logging.NLog
             var logLevel = ToLogLevel(level);
             if (Logger.IsEnabled(logLevel))
             {
-                var messageWithTags = message + string.Join(", ", unencryptedTags.Select(kvp => $"{kvp.Key.Substring(5)}={EventFieldFormatter.SerializeFieldValue(kvp.Value)}")) + ". ";
+                var messageWithTags = message + ". " + string.Join(", ", unencryptedTags.Select(kvp => $"{kvp.Key.Substring(5)}={EventFieldFormatter.SerializeFieldValue(kvp.Value)}")) + ". ";
                 Logger.Log(logLevel, exception, messageWithTags, null);
             }
 
