@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
-
+using Gigya.ServiceContract.HttpService;
 using Metrics;
 
 using NSubstitute;
@@ -29,6 +29,9 @@ namespace Gigya.Microdot.UnitTests.Caching
         private MethodInfo ThingifyThing { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyThing));
         private MethodInfo ThingifyTask { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTask));
         private MethodInfo ThingifyTaskThing { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskThing));
+
+        private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokabkle));
+
         private MethodInfo ThingifyTaskInt { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskInt));
         private MethodInfo ThingifyVoidMethod { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyVoid));
         private IThingFrobber EmptyThingFrobber { get; } = Substitute.For<IThingFrobber>();
@@ -49,10 +52,37 @@ namespace Gigya.Microdot.UnitTests.Caching
             return new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake), metadataProvider, Metric.Context("Tests"));
         }
 
+        private IThingFrobber CreateRevokableDataSource(params object[] results)
+        {
+            var revocableTaskResults = new List<Task<IRevocable>>();
+            var dataSource = Substitute.For<IThingFrobber>();
 
+            if (results == null)
+                results = new object[] { null };
+
+            foreach (var result in results)
+            {
+                if (result == null)
+                    revocableTaskResults.Add(Task.FromResult((IRevocable)default(Revocable<Thing>)));
+                else if(result is int)
+                    revocableTaskResults.Add(Task.FromResult((IRevocable)new Revocable<Thing>{ Value = new Thing {Id = (int)result}}));
+                //else if (result is TaskCompletionSource<Revocable<Thing>>)
+                  //  revocableTaskResults.Add(((TaskCompletionSource<Revocable<Thing>>)result).Task);                
+                else
+                    throw new ArgumentException();
+            }
+            
+
+           if (results.Any())
+              dataSource.ThingifyTaskRevokabkle("someString").Returns(revocableTaskResults.First(), revocableTaskResults.Skip(1).ToArray());
+
+            return dataSource;
+        }
+        
         private IThingFrobber CreateDataSource(params object[] results)
         {
             var dataSource = Substitute.For<IThingFrobber>();
+          
             var taskResults = new List<Task<Thing>>();
 
             if (results == null)
@@ -72,7 +102,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             if (results.Any())
                 dataSource.ThingifyTaskThing("someString").Returns(taskResults.First(), taskResults.Skip(1).ToArray());
-
+            
             var intResults = results.OfType<int>().ToArray();
 
             if (intResults.Any())
@@ -80,7 +110,17 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             return dataSource;
         }
+        
+        [Test]
+        public async Task MemoizeAsync_FirstCall_UsesDataSource_Revokable()
+        {
+            var dataSource = CreateRevokableDataSource(5);
 
+            var actual = (Revocable<Thing>)await (Task<IRevocable>)CreateMemoizer().Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+
+            actual.Value.Id.ShouldBe(5);
+            dataSource.Received(1).ThingifyTaskThing("someString");
+        }
 
         [Test]
         public async Task MemoizeAsync_FirstCall_UsesDataSource()

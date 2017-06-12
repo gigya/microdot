@@ -21,6 +21,8 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.Caching;
 using System.Runtime.Caching.Hosting;
@@ -28,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.ServiceContract.HttpService;
 using Metrics;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
@@ -93,7 +96,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy,  metricsKeys);
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
-
+        
+        Dictionary<string, HashSet<string>> revocationIndex=new Dictionary<string, HashSet<string>>();
 
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys)
         {
@@ -102,6 +106,19 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 try
                 {
                     var result = await factory().ConfigureAwait(false);
+
+                    if (result is IRevocable)
+                    {
+                        foreach (var revocationId in (result as IRevocable).RevocationIds)
+                        {
+                            if(!revocationIndex.ContainsKey(revocationId))
+                            {
+                                revocationIndex[revocationId] = new HashSet<string>();
+                            }
+                            revocationIndex[revocationId].Add(revocationId);
+                        }
+                    }
+
                     AwaitingResult.Decrement(metricsKeys);
                     return result;
                 }
