@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 
 using Gigya.Common.Contracts.Attributes;
+using Gigya.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
@@ -14,6 +15,8 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         [Cached] Task<Thing> ThingifyTaskThing(string s);
         [Cached] Task<int> ThingifyTaskInt(string s);
+
+        [Cached] Task<IRevocable> ThingifyTaskRevokabkle(string s);
     }
 
 

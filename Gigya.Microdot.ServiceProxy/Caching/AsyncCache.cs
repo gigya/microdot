@@ -21,13 +21,17 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Runtime.Caching;
 using System.Runtime.Caching.Hosting;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.ServiceContract.HttpService;
 using Metrics;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
@@ -91,18 +95,52 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy, params string[] metricsKeys)
         {
-            var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy,  metricsKeys);
+            var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy,  metricsKeys, taskResultType);
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
 
+        readonly ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex = new ConcurrentDictionary<string, HashSet<string>>();
 
-        private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys)
+        /// <summary>
+        /// Call it on remove event
+        /// </summary>
+        /// <param name="revokeKey">Key of item to remove.</param>
+        private void Remove(string revokeKey)
+        {
+            HashSet<string> listOfCacheKeys;
+            if(RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out listOfCacheKeys))
+            {
+                lock(listOfCacheKeys)
+                {
+                    foreach(var cacheKey in listOfCacheKeys)
+                    {
+                        var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
+                    }
+                }
+            }               
+        }
+        
+        private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys, Type taskResultType)
         {
             Func<bool, Task<object>> wrappedFactory = async removeOnException =>
             {
                 try
                 {
-                    var result = await factory().ConfigureAwait(false);
+                    var result = await factory().ConfigureAwait(false) as IRevocable;
+        
+                    if (result != null)
+                    {
+                        foreach (var revokeKey in result.RevokeKeys)
+                        {
+                            var listOfCacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
+
+                            lock (listOfCacheKeys)
+                            {
+                                listOfCacheKeys.Add(revokeKey);
+                            }
+                        }
+                    }
+
                     AwaitingResult.Decrement(metricsKeys);
                     return result;
                 }
@@ -126,6 +164,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             // second lock, preventing concurrent mutation of the same object.
             lock (newItem.Lock)
             {
+                if (typeof(IRevocable).IsAssignableFrom(taskResultType))
+                    policy.RemovedCallback += ItemRemovedCallback;
+                
                 // Surprisingly, when using MemoryCache.AddOrGetExisting() where the item doesn't exist in the cache,
                 // null is returned.
                 var existingItem = (AsyncCacheItem)MemoryCache.AddOrGetExisting(key, newItem, policy);
@@ -177,6 +218,31 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             }
 
             return resultTask;
+        }
+        
+        /// <summary>
+        /// For revocable items , move over all revoke ids in cache index and remove them.
+        /// </summary>        
+        private void ItemRemovedCallback(CacheEntryRemovedArguments arguments)
+        {            
+            var cachedItem = arguments.CacheItem.Value as IRevocable;
+            
+            foreach(var revocationKey in cachedItem.RevokeKeys)
+            {
+                HashSet<string> cacheKeys;
+
+                if(RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out cacheKeys))
+                {
+                    lock(cacheKeys)
+                    {
+                        cacheKeys.Remove(arguments.CacheItem.Key);
+                        if(!cacheKeys.Any())
+                        {
+                            RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out cacheKeys);
+                        }
+                    }
+                }
+            }
         }
 
 
