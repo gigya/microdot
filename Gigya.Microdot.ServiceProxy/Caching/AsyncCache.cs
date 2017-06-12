@@ -97,8 +97,25 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
         
-        Dictionary<string, HashSet<string>> revocationIndex=new Dictionary<string, HashSet<string>>();
+        ConcurrentDictionary<string, HashSet<string>> revocationIndex=new ConcurrentDictionary<string, HashSet<string>>();
 
+        private void Remove(string revokeId)
+        {
+            if(revocationIndex.ContainsKey(revokeId))
+            {
+                var listOfCacheKeys = revocationIndex[revokeId];
+                
+                lock(listOfCacheKeys)
+                {
+                    foreach (var cacheKey in listOfCacheKeys)
+                    {
+                        var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                        
+                    }
+                }
+            }
+                
+        }
+        
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys)
         {
             Func<bool, Task<object>> wrappedFactory = async removeOnException =>
@@ -115,7 +132,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             {
                                 revocationIndex[revocationId] = new HashSet<string>();
                             }
-                            revocationIndex[revocationId].Add(revocationId);
+                            
+                            var listOfCacheKeys = revocationIndex[revocationId];
+                            
+                            lock(listOfCacheKeys)
+                            {
+                                listOfCacheKeys.Add(revocationId);
+                            }
                         }
                     }
 
@@ -142,6 +165,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             // second lock, preventing concurrent mutation of the same object.
             lock (newItem.Lock)
             {
+
+                policy.RemovedCallback += ItemRemovedCallback;
+                
                 // Surprisingly, when using MemoryCache.AddOrGetExisting() where the item doesn't exist in the cache,
                 // null is returned.
                 var existingItem = (AsyncCacheItem)MemoryCache.AddOrGetExisting(key, newItem, policy);
@@ -193,6 +219,30 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             }
 
             return resultTask;
+        }
+        
+        /// <summary>
+        /// For revocable items , move over all revoke ids in cache index and remove them.
+        /// </summary>        
+        private void ItemRemovedCallback(CacheEntryRemovedArguments arguments)
+        {            
+            var cachedItem = arguments.CacheItem.Value as IRevocable;
+            
+            if(cachedItem != null)
+            {
+                foreach(var revocationId in cachedItem.RevocationIds)
+                {
+                    HashSet<string> cacheKeys;
+
+                    if(revocationIndex.TryGetValue(revocationId, out cacheKeys))
+                    {
+                        lock(cacheKeys)
+                        {
+                            cacheKeys.Remove(arguments.CacheItem.Key);
+                        }
+                    }
+                }
+            }
         }
 
 
