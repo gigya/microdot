@@ -424,18 +424,21 @@ namespace Gigya.Microdot.Hosting.HttpService
 
 
         private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData)
-        {           
+        {
+            var taskType = serviceMethod.ServiceInterfaceMethod.ReturnType;
+            var resultType = taskType.IsGenericType ? taskType.GetGenericArguments().First() : null;
+
             string response;
             InvocationResult invocationResult;
             if (requestData.Target.IsWeaklyTyped)
             {
                 invocationResult = await Activator.Invoke(serviceMethod, requestData.Arguments);
-                response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, serviceMethod.ServiceInterfaceMethod.ReturnType, JsonSettingsWeak));
+                response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, resultType, JsonSettingsWeak));
             }
             else
             {
                 invocationResult = await Activator.Invoke(serviceMethod, requestData.Arguments.Values.Cast<object>().ToArray());
-                response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, serviceMethod.ServiceInterfaceMethod.ReturnType, JsonSettings));
+                response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, resultType, JsonSettings));
             }
 
             context.Response.Headers.Add(GigyaHttpHeaders.ExecutionTime, invocationResult.ExecutionTime.ToString());
