@@ -97,8 +97,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy,  metricsKeys, taskResultType);
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
-        
-        ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex = new ConcurrentDictionary<string, HashSet<string>>();
+
+        readonly ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex = new ConcurrentDictionary<string, HashSet<string>>();
 
         /// <summary>
         /// Call it on remove event
@@ -106,20 +106,17 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         /// <param name="revokeKey">Key of item to remove.</param>
         private void Remove(string revokeKey)
         {
-            if(RevokeKeyToCacheKeysIndex.ContainsKey(revokeKey))
+            HashSet<string> listOfCacheKeys;
+            if(RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out listOfCacheKeys))
             {
-                HashSet<string> listOfCacheKeys;
-                if(RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out listOfCacheKeys))
+                lock(listOfCacheKeys)
                 {
-                    lock(listOfCacheKeys)
+                    foreach(var cacheKey in listOfCacheKeys)
                     {
-                        foreach(var cacheKey in listOfCacheKeys)
-                        {
-                            var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
-                        }
+                        var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
                     }
                 }
-            }                
+            }               
         }
         
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys, Type taskResultType)
@@ -128,11 +125,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             {
                 try
                 {
-                    var result = await factory().ConfigureAwait(false);
-
-                    if (result is IRevocable)
+                    var result = await factory().ConfigureAwait(false) as IRevocable;
+        
+                    if (result != null)
                     {
-                        foreach (var revokeKey in (result as IRevocable).RevokeKeys)
+                        foreach (var revokeKey in result.RevokeKeys)
                         {
                             var listOfCacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
 
