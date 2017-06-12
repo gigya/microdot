@@ -24,6 +24,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Runtime.Caching;
 using System.Runtime.Caching.Hosting;
 using System.Threading;
@@ -93,30 +94,35 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy, params string[] metricsKeys)
         {
-            var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy,  metricsKeys);
+            var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy,  metricsKeys, taskResultType);
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
         
-        ConcurrentDictionary<string, HashSet<string>> revocationIndex=new ConcurrentDictionary<string, HashSet<string>>();
+        ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex = new ConcurrentDictionary<string, HashSet<string>>();
 
-        private void Remove(string revokeId)
+        /// <summary>
+        /// Call it on remove event
+        /// </summary>
+        /// <param name="revokeKey">Key of item to remove.</param>
+        private void Remove(string revokeKey)
         {
-            if(revocationIndex.ContainsKey(revokeId))
+            if(RevokeKeyToCacheKeysIndex.ContainsKey(revokeKey))
             {
-                var listOfCacheKeys = revocationIndex[revokeId];
-                
-                lock(listOfCacheKeys)
+                HashSet<string> listOfCacheKeys;
+                if(RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out listOfCacheKeys))
                 {
-                    foreach (var cacheKey in listOfCacheKeys)
+                    lock(listOfCacheKeys)
                     {
-                        var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                        
+                        foreach(var cacheKey in listOfCacheKeys)
+                        {
+                            var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
+                        }
                     }
                 }
-            }
-                
+            }                
         }
         
-        private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys)
+        private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys, Type taskResultType)
         {
             Func<bool, Task<object>> wrappedFactory = async removeOnException =>
             {
@@ -126,18 +132,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                     if (result is IRevocable)
                     {
-                        foreach (var revocationId in (result as IRevocable).RevocationIds)
+                        foreach (var revokeKey in (result as IRevocable).RevokeKeys)
                         {
-                            if(!revocationIndex.ContainsKey(revocationId))
+                            var listOfCacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
+
+                            lock (listOfCacheKeys)
                             {
-                                revocationIndex[revocationId] = new HashSet<string>();
-                            }
-                            
-                            var listOfCacheKeys = revocationIndex[revocationId];
-                            
-                            lock(listOfCacheKeys)
-                            {
-                                listOfCacheKeys.Add(revocationId);
+                                listOfCacheKeys.Add(revokeKey);
                             }
                         }
                     }
@@ -165,8 +166,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             // second lock, preventing concurrent mutation of the same object.
             lock (newItem.Lock)
             {
-
-                policy.RemovedCallback += ItemRemovedCallback;
+                if (typeof(IRevocable).IsAssignableFrom(taskResultType))
+                    policy.RemovedCallback += ItemRemovedCallback;
                 
                 // Surprisingly, when using MemoryCache.AddOrGetExisting() where the item doesn't exist in the cache,
                 // null is returned.
@@ -228,17 +229,18 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         {            
             var cachedItem = arguments.CacheItem.Value as IRevocable;
             
-            if(cachedItem != null)
+            foreach(var revocationKey in cachedItem.RevokeKeys)
             {
-                foreach(var revocationId in cachedItem.RevocationIds)
-                {
-                    HashSet<string> cacheKeys;
+                HashSet<string> cacheKeys;
 
-                    if(revocationIndex.TryGetValue(revocationId, out cacheKeys))
+                if(RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out cacheKeys))
+                {
+                    lock(cacheKeys)
                     {
-                        lock(cacheKeys)
+                        cacheKeys.Remove(arguments.CacheItem.Key);
+                        if(!cacheKeys.Any())
                         {
-                            cacheKeys.Remove(arguments.CacheItem.Key);
+                            RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out cacheKeys);
                         }
                     }
                 }
