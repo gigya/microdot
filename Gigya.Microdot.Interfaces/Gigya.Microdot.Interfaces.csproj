@@ -55,6 +55,7 @@
     <Compile Include="HttpService\ServiceReachabilityStatus.cs" />
     <Compile Include="IApplicationDirectoryProvider.cs" />
     <Compile Include="IAssemblyProvider.cs" />
+    <Compile Include="ICacheRevoker.cs" />
     <Compile Include="IMetricsSettings.cs" />
     <Compile Include="Logging\ILog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

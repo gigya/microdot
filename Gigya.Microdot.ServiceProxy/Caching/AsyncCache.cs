@@ -33,6 +33,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.ServiceContract.HttpService;
 using Metrics;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
@@ -50,13 +51,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private MetricsContext AwaitingResult { get; set; }
         private MetricsContext Failed { get; set; }
         private Counter ClearCache { get; set; }
-
+        private IDisposable RevokeDisposable { get; }
         private const double MB = 1048576.0;
         private int _clearCount;
 
 
 
-        public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime)
+        public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener)
         {
             DateTime = dateTime;
             Log = log;
@@ -70,6 +71,30 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             Metrics = metrics;
             InitMetrics();
+            var onRevoke = new ActionBlock<string[]>(revokeKeys => OnRevoke(revokeKeys));
+            RevokeDisposable = revokeListener.RevokeSource.LinkTo(onRevoke);
+
+        }
+
+        internal void OnRevoke(string[] revokeKeys)
+        {
+            if (revokeKeys == null || revokeKeys.Length == 0 )
+            {
+                Log.Warn("error while revoking cache, revokeKeys can not be null");
+                return;
+            }
+
+            foreach (string revokeKey in revokeKeys)
+            {
+                try
+                {
+                    Remove(revokeKey);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
+                }
+            }
         }
 
 
@@ -126,11 +151,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             {
                 try
                 {
-                    var result = await factory().ConfigureAwait(false) as IRevocable;
-        
-                    if (result != null)
+                    var result = await factory().ConfigureAwait(false) ;
+                    var revocableResult = result as IRevocable;
+
+
+                    if (revocableResult?.RevokeKeys != null)
                     {
-                        foreach (var revokeKey in result.RevokeKeys)
+                        foreach (var revokeKey in revocableResult.RevokeKeys)
                         {
                             var listOfCacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
 
@@ -281,6 +308,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         public void Dispose()
         {
             MemoryCache?.Dispose();
+            RevokeDisposable?.Dispose();
         }
     }
 }
