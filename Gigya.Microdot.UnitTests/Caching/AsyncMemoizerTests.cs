@@ -276,8 +276,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(5, refreshTask, 7);
 
             IMemoizer memoizer = CreateMemoizer();
-            var thing = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy());
-            thing.Id.ShouldBe(5);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(5);
 
             // fake that refreshTime has passed
             TimeFake.UtcNow += refreshTime;

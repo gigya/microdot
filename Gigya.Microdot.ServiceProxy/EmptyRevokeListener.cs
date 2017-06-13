@@ -26,6 +26,6 @@ namespace Gigya.Microdot.ServiceProxy
 {
     public class EmptyRevokeListener : IRevokeListener
     {
-        public ISourceBlock<string[]> RevokeSource => new WriteOnceBlock<string[]>(message => message);
+        public ISourceBlock<string[]> RevokeSource { get; } = new WriteOnceBlock<string[]>(message => message);
     }
 }

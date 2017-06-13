@@ -59,7 +59,6 @@
     <Compile Include="CoreFX\DispatchProxy\DispatchProxyGenerator.cs" />
     <Compile Include="DelegatingDispatchProxy.cs" />
     <Compile Include="EmptyRevokeListener.cs" />
-    <Compile Include="ICacheRevoker.cs" />
     <Compile Include="IRevokeListener.cs" />
     <Compile Include="IServiceProxyProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
