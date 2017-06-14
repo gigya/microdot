@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-
+using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.ServiceContract.HttpService;
@@ -31,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         private MethodInfo ThingifyTask { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTask));
         private MethodInfo ThingifyTaskThing { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskThing));
 
-        private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokabkle));
+        private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));
 
         private MethodInfo ThingifyTaskInt { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskInt));
         private MethodInfo ThingifyVoidMethod { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyVoid));
@@ -44,18 +43,22 @@ namespace Gigya.Microdot.UnitTests.Caching
             FailedRefreshDelay = TimeSpan.FromSeconds(1)
         };
 
-        private DateTimeFake TimeFake { get; set; }
+        private DateTimeFake TimeFake { get; set; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
 
-        private IMemoizer CreateMemoizer()
+        private AsyncCache CreateCache(ISourceBlock<string> revokeSource = null)
+        {
+            return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource });
+        }
+        
+        private IMemoizer CreateMemoizer(AsyncCache cache)
         {
             var metadataProvider = new MetadataProvider();
-            TimeFake = new DateTimeFake { UtcNow = DateTime.UtcNow };
-            return new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, new EmptyRevokeListener()), metadataProvider, Metric.Context("Tests"));
+            return new AsyncMemoizer(cache, metadataProvider, Metric.Context("Tests"));
         }
 
-        private IThingFrobber CreateRevokableDataSource(params object[] results)
+        private IThingFrobber CreateRevokableDataSource(string[] revokeKeys, params object[] results)
         {
-            var revocableTaskResults = new List<Task<IRevocable>>();
+            var revocableTaskResults = new List<Task<Revocable<Thing>>>();
             var dataSource = Substitute.For<IThingFrobber>();
 
             if (results == null)
@@ -64,18 +67,18 @@ namespace Gigya.Microdot.UnitTests.Caching
             foreach (var result in results)
             {
                 if (result == null)
-                    revocableTaskResults.Add(Task.FromResult((IRevocable)default(Revocable<Thing>)));
+                    revocableTaskResults.Add(Task.FromResult(default(Revocable<Thing>)));
                 else if(result is int)
-                    revocableTaskResults.Add(Task.FromResult((IRevocable)new Revocable<Thing>{ Value = new Thing {Id = (int)result}}));
-                //else if (result is TaskCompletionSource<Revocable<Thing>>)
-                  //  revocableTaskResults.Add(((TaskCompletionSource<Revocable<Thing>>)result).Task);                
+                    revocableTaskResults.Add(Task.FromResult(new Revocable<Thing>{ Value = new Thing {Id = (int)result}, RevokeKeys = revokeKeys }));
+                else if (result is TaskCompletionSource<Revocable<Thing>>)
+                    revocableTaskResults.Add(((TaskCompletionSource<Revocable<Thing>>)result).Task);                
                 else
                     throw new ArgumentException();
             }
             
 
            if (results.Any())
-              dataSource.ThingifyTaskRevokabkle("someString").Returns(revocableTaskResults.First(), revocableTaskResults.Skip(1).ToArray());
+              dataSource.ThingifyTaskRevokable("someString").Returns(revocableTaskResults.First(), revocableTaskResults.Skip(1).ToArray());
 
             return dataSource;
         }
@@ -113,26 +116,103 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
         
         [Test]
-        public async Task MemoizeAsync_FirstCall_UsesDataSource_Revokable()
+        public async Task MemoizeAsync_RevokeBeforeRetrivalTaskCompletedCaused_NoIssues()
         {
-            var revocable = new Revocable<int> {
-                RevokeKeys = new List<string> {"test1", "test2"}
-            };
+            var completionSource = new TaskCompletionSource<Revocable<Thing>>();            
+            var dataSource = CreateRevokableDataSource(null, completionSource);
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+
+            //Call method to get results
+            var resultTask =  (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
             
-            var dataSource = CreateRevokableDataSource(revocable);
-
-            var actual = (Revocable<Thing>)await (Task<IRevocable>)CreateMemoizer().Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
-
+            //Post revoke message while results had not arrived
+            revokesSource.PostMessageSynced("revokeKey");
+            
+            //Wait before sending results 
+            Task.Delay(100);
+            completionSource.SetResult(new Revocable<Thing> {Value = new Thing() {Id = 5}, RevokeKeys = new[] {"revokeKey"}});
+            
+            //Results should arive now
+            var actual=await resultTask;
+            dataSource.Received(1).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(5);
-            dataSource.Received(1).ThingifyTaskRevokabkle("someString");
+
+            cache.CacheKeyCount.ShouldBe(1);
+        }
+        
+        [Test]
+        public async Task MemoizeAsync_RevokeBeforeItemIsStoredCausesNoIssues()
+        {
+            var dataSource = CreateRevokableDataSource(new[] { "revokeKey" }, 5, 6);
+
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+            
+            //Post revoke message, value should change to 6
+            revokesSource.PostMessageSynced("revokeKey");
+
+            var actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            dataSource.Received(1).ThingifyTaskRevokable("someString");
+            actual.Value.Id.ShouldBe(5);
+
+            //Read value from cache should be still 5
+            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            dataSource.Received(1).ThingifyTaskRevokable("someString");
+            actual.Value.Id.ShouldBe(5);
+
+            //Just one key should be stored
+            cache.CacheKeyCount.ShouldBe(1);
+        }
+
+        [Test]
+        public async Task MemoizeAsync_RevokableObjectShouldBeCachedAndRevoked()
+        {            
+            var dataSource = CreateRevokableDataSource(new[] { "revokeKey" }, 5, 6);
+            
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+            
+            var actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());            
+            dataSource.Received(1).ThingifyTaskRevokable("someString");
+            actual.Value.Id.ShouldBe(5);
+
+            //Read value from cache should be still 5
+            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());            
+            dataSource.Received(1).ThingifyTaskRevokable("someString");
+            actual.Value.Id.ShouldBe(5);
+            //A single cache key should be stored in index
+            cache.CacheKeyCount.ShouldBe(1);
+            
+            //Post revoke message, no cache keys should be stored
+            revokesSource.PostMessageSynced("revokeKey");
+            cache.CacheKeyCount.ShouldBe(0);
+
+            //Value should change to 6 
+            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());            
+            dataSource.Received(2).ThingifyTaskRevokable("someString");
+            actual.Value.Id.ShouldBe(6);
+            cache.CacheKeyCount.ShouldBe(1);
+            
+            //Post revoke message to not existing key value still should be 6
+            revokesSource.PostMessageSynced("NotExistin-RevokeKey");
+
+            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            dataSource.Received(2).ThingifyTaskRevokable("someString");
+            actual.Value.Id.ShouldBe(6);            
+            cache.CacheKeyCount.ShouldBe(1);
         }
 
         [Test]
         public async Task MemoizeAsync_FirstCall_UsesDataSource()
         {
             var dataSource = CreateDataSource(5);
-
-            var actual = await (Task<Thing>)CreateMemoizer().Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+            
+            var actual = await (Task<Thing>)CreateMemoizer(CreateCache()).Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
             
             actual.Id.ShouldBe(5);
             dataSource.Received(1).ThingifyTaskThing("someString");
@@ -145,14 +225,14 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(failedTask);
 
             failedTask.SetException(new Exception("Boo!!"));
-            Should.Throw<Exception>(() => (Task)CreateMemoizer().Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<Exception>(() => (Task)CreateMemoizer(CreateCache()).Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()));
         }
 
         [Test]
         public async Task MemoizeAsync_MultipleCalls_UsesDataSourceOnlyOnce()
         {
             var dataSource = CreateDataSource(5);
-            var memoizer = CreateMemoizer();
+            var memoizer = CreateMemoizer(CreateCache());
 
             for (int i = 0; i < 100; i++)
             {
@@ -168,7 +248,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         public async Task MemoizeAsync_MultipleCallsReturningNull_UsesDataSourceOnlyOnce()
         {
             var dataSource = CreateDataSource(null);
-            var memoizer = CreateMemoizer();
+            var memoizer = CreateMemoizer(CreateCache());
 
             for (int i = 0; i < 100; i++)
             {
@@ -183,7 +263,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         public async Task MemoizeAsync_MultipleCallsPrimitive_UsesDataSourceOnlyOnce()
         {
             var dataSource = CreateDataSource(5);
-            var memoizer = CreateMemoizer();
+            var memoizer = CreateMemoizer(CreateCache());
 
             for (int i = 0; i < 100; i++)
             {
@@ -199,7 +279,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             var dataSource = CreateDataSource(5);
             dataSource.ThingifyTaskThing("otherString").Returns(Task.FromResult(new Thing { Id = 7 }));
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Id.ShouldBe(5);
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "otherString" }, GetPolicy())).Id.ShouldBe(7);
@@ -215,7 +295,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         public async Task MemoizeAsync_TwoCalls_RespectsCachingPolicy()
         {
             var dataSource = CreateDataSource(5, 7);
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(0.05))).Id.ShouldBe(5);
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Id.ShouldBe(5);
@@ -234,7 +314,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var args = new object[] { "someString" };
             var dataSource = CreateDataSource(5, refreshTask);
 
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(5);
 
             // fake that refreshTime has passed
@@ -256,7 +336,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var args = new object[] { "someString" };
             var dataSource = CreateDataSource(5, refreshTask);
 
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(5);
 
             // fake that refreshTime has passed
@@ -279,7 +359,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var args = new object[] { "someString" };
             var dataSource = CreateDataSource(5, refreshTask, 7);
 
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(5);
 
             // fake that refreshTime has passed
@@ -375,7 +455,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             var dataSource = CreateDataSource();
             dataSource.ThingifyTaskInt("someString").Returns(async i => { await Task.Delay(100); return 1; }, async i => 2);
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
             var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
@@ -391,7 +471,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             var dataSource = Substitute.For<IThingFrobber>();
             dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(100); throw new InvalidOperationException(); }, async i => 2);
-            IMemoizer memoizer = CreateMemoizer();
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
             var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
@@ -407,10 +487,10 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Test]
         public void MemoizeAsync_NonCacheableMethods_Throws()
         {
-            Should.Throw<ArgumentException>(() => CreateMemoizer().Memoize(EmptyThingFrobber, ThingifyInt, new object[] { "someString" }, GetPolicy()));
-            Should.Throw<ArgumentException>(() => CreateMemoizer().Memoize(EmptyThingFrobber, ThingifyThing, new object[] { "someString" }, GetPolicy()));
-            Should.Throw<ArgumentException>(() => CreateMemoizer().Memoize(EmptyThingFrobber, ThingifyTask, new object[] { "someString" }, GetPolicy()));
-            Should.Throw<ArgumentException>(() => CreateMemoizer().Memoize(EmptyThingFrobber, ThingifyVoidMethod, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyInt, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyThing, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyTask, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyVoidMethod, new object[] { "someString" }, GetPolicy()));
         }
     }
 }

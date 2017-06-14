@@ -16,7 +16,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Cached] Task<Thing> ThingifyTaskThing(string s);
         [Cached] Task<int> ThingifyTaskInt(string s);
 
-        [Cached] Task<IRevocable> ThingifyTaskRevokabkle(string s);
+        [Cached] Task<Revocable<Thing>> ThingifyTaskRevokable(string s);
     }
 
 

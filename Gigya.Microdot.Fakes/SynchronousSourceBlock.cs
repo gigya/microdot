@@ -43,8 +43,9 @@ namespace Gigya.Microdot.Fakes
         {
             _targetBlocks.ForEach(block =>
             {
-                if (!block.Post(messageValue))
-                    throw new NotImplementedException();
+                block.Post(messageValue);
+                //if (!)
+                  //  throw new NotImplementedException();
 
                 block.Complete();
                 block.Completion.Wait();
