@@ -114,7 +114,11 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Test]
         public async Task MemoizeAsync_FirstCall_UsesDataSource_Revokable()
         {
-            var dataSource = CreateRevokableDataSource(5);
+            var revocable = new Revocable<int> {
+                RevokeKeys = new List<string> {"test1", "test2"}
+            };
+            
+            var dataSource = CreateRevokableDataSource(revocable);
 
             var actual = (Revocable<Thing>)await (Task<IRevocable>)CreateMemoizer().Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
 
