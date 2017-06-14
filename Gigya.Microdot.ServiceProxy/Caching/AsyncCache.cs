@@ -90,7 +90,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         {
             if (string.IsNullOrEmpty(revokeKey))
             {
-                Log.Warn("error while revoking cache, revokeKey can not be null");
+                Log.Warn("Error while revoking cache, revokeKey can't be null");
+                return;
             }
 
             try
@@ -100,7 +101,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 {
                     lock (cacheKeys)
                     {
-                        var arrayOfCacheKeys = cacheKeys.ToArray();
+                        var arrayOfCacheKeys = cacheKeys.ToArray();// To prevent iteration over modified collection.
                         foreach (var cacheKey in arrayOfCacheKeys)
                         {
                             var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);

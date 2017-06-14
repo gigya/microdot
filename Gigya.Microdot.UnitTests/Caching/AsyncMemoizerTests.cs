@@ -131,8 +131,8 @@ namespace Gigya.Microdot.UnitTests.Caching
             revokesSource.PostMessageSynced("revokeKey");
             
             //Wait before sending results 
-            Task.Delay(100);
-            completionSource.SetResult(new Revocable<Thing> {Value = new Thing() {Id = 5}, RevokeKeys = new[] {"revokeKey"}});
+            await Task.Delay(100);
+            completionSource.SetResult(new Revocable<Thing> {Value = new Thing {Id = 5}, RevokeKeys = new[] {"revokeKey"}});
             
             //Results should arive now
             var actual=await resultTask;
@@ -142,30 +142,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             cache.CacheKeyCount.ShouldBe(1);
         }
         
-        [Test]
-        public async Task MemoizeAsync_RevokeBeforeItemIsStoredCausesNoIssues()
-        {
-            var dataSource = CreateRevokableDataSource(new[] { "revokeKey" }, 5, 6);
 
-            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
-            var cache = CreateCache(revokesSource);
-            var memoizer = CreateMemoizer(cache);
-            
-            //Post revoke message, value should change to 6
-            revokesSource.PostMessageSynced("revokeKey");
-
-            var actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
-            dataSource.Received(1).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(5);
-
-            //Read value from cache should be still 5
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
-            dataSource.Received(1).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(5);
-
-            //Just one key should be stored
-            cache.CacheKeyCount.ShouldBe(1);
-        }
 
         [Test]
         public async Task MemoizeAsync_RevokableObjectShouldBeCachedAndRevoked()
