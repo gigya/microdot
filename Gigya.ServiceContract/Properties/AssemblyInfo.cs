@@ -38,9 +38,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 
 // This is the NuGet version, if pre-release should be in the format of "2.0.0-Zdevelop08".
-[assembly: AssemblyInformationalVersion("2.4.8.0")]
-[assembly: AssemblyVersion("2.4.8.0")]
-[assembly: AssemblyFileVersion("2.4.8.0")]
+[assembly: AssemblyInformationalVersion("2.4.9-pre02")]
+[assembly: AssemblyVersion("2.4.9.0")]
+[assembly: AssemblyFileVersion("2.4.9.0")]
 
 [assembly: AssemblyDescription("")]
 

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.ServiceContract.HttpService;
@@ -49,7 +50,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             var metadataProvider = new MetadataProvider();
             TimeFake = new DateTimeFake { UtcNow = DateTime.UtcNow };
-            return new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake), metadataProvider, Metric.Context("Tests"));
+            return new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, new EmptyRevokeListener()), metadataProvider, Metric.Context("Tests"));
         }
 
         private IThingFrobber CreateRevokableDataSource(params object[] results)
@@ -123,7 +124,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var actual = (Revocable<Thing>)await (Task<IRevocable>)CreateMemoizer().Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
 
             actual.Value.Id.ShouldBe(5);
-            dataSource.Received(1).ThingifyTaskThing("someString");
+            dataSource.Received(1).ThingifyTaskRevokabkle("someString");
         }
 
         [Test]
@@ -313,7 +314,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(5, 7, 9);
             var args = new object[] { "someString" };
 
-            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl()), new MetadataProvider(), Metric.Context("Tests"));
+            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener()), new MetadataProvider(), Metric.Context("Tests"));
 
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
 
@@ -345,7 +346,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             refreshTask.SetException(new Exception("Boo!!"));
             var dataSource = CreateDataSource(5, refreshTask, 7);
 
-            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl()), new MetadataProvider(), Metric.Context("Tests"));
+            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener()), new MetadataProvider(), Metric.Context("Tests"));
 
             // T = 0. No data in cache, should retrieve value from source (5).
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
