@@ -26,6 +26,6 @@ namespace Gigya.Microdot.ServiceProxy
 {
    public interface IRevokeListener
     {
-        ISourceBlock<string[]> RevokeSource { get; }
+        ISourceBlock<string> RevokeSource { get; }
     }
 }

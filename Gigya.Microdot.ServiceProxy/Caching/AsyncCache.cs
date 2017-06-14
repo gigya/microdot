@@ -71,30 +71,29 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             Metrics = metrics;
             InitMetrics();
-            var onRevoke = new ActionBlock<string[]>(revokeKeys => OnRevoke(revokeKeys));
+            var onRevoke = new ActionBlock<string>(OnRevoke);
             RevokeDisposable = revokeListener.RevokeSource.LinkTo(onRevoke);
 
         }
 
-        internal void OnRevoke(string[] revokeKeys)
+        internal Task OnRevoke(string revokeKey)
         {
-            if (revokeKeys == null || revokeKeys.Length == 0 )
+            if (string.IsNullOrEmpty(revokeKey))
             {
-                Log.Warn("error while revoking cache, revokeKeys can not be null");
-                return;
+                Log.Warn("error while revoking cache, revokeKey can not be null");
+                return Task.FromResult(1);
             }
 
-            foreach (string revokeKey in revokeKeys)
+            try
             {
-                try
-                {
-                    Remove(revokeKey);
-                }
-                catch (Exception ex)
-                {
-                    Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
-                }
+                Remove(revokeKey);
             }
+            catch (Exception ex)
+            {
+                Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
+            }
+
+            return Task.FromResult(1);
         }
 
 

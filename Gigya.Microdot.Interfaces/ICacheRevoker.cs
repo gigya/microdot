@@ -26,6 +26,6 @@ namespace Gigya.Microdot.Interfaces
 {
     public interface ICacheRevoker
     {
-        Task Revoke(params string[] keys);
+        Task Revoke(string key);
     }
 }
