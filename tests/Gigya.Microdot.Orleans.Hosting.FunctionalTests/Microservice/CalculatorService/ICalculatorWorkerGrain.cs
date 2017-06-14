@@ -37,5 +37,6 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
         Task Do();
         Task<Wrapper> DoComplex(Wrapper wrapper);
         Task<int> DoInt(int a);
+        Task<int> GetNextNum();
     }
 }

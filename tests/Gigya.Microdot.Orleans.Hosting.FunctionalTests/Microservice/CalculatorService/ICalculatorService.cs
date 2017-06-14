@@ -22,6 +22,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Newtonsoft.Json.Linq;
 
@@ -42,6 +43,9 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
 
         Task<Wrapper> DoComplex(Wrapper wrapper);
 
-        Task<int> DoInt(int a);        
+        Task<int> DoInt(int a);
+
+        [Cached] Task<int> GetNextNum();
+
     }
 }

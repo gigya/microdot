@@ -20,11 +20,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Ninject;
 using Ninject.Syntax;
 

@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
     {
       
         private ILog Log { get; set; }
-
+        private int _counter;
 
         public CalculatorWorkerGrain(ILog log)
         {
@@ -105,5 +105,10 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
 
         public async Task<int> DoInt(int a) { return a; }
 
+        public Task<int> GetNextNum()
+        {
+            _counter++;
+            return Task.FromResult(_counter);
+        }
     }
 }
