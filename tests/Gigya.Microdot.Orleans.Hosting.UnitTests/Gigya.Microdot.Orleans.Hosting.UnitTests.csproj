@@ -7,8 +7,8 @@
     <ProjectGuid>{8E548D57-5880-4283-BDF5-7386886D481D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Gigya.Microdot.Orleans.Hosting.FunctionalTests</RootNamespace>
-    <AssemblyName>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyName>
+    <RootNamespace>Gigya.Microdot.Orleans.Hosting.UnitTests</RootNamespace>
+    <AssemblyName>Gigya.Microdot.Orleans.Hosting.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

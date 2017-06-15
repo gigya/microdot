@@ -27,7 +27,7 @@ using Newtonsoft.Json.Linq;
 using Orleans;
 using Orleans.Concurrency;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
 
     [StatelessWorker, Reentrant]

@@ -26,10 +26,8 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.ServiceTester;
 using Newtonsoft.Json;
@@ -38,7 +36,7 @@ using Ninject;
 using NUnit.Framework;
 using Shouldly;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     public class Wrapper
     {
@@ -267,7 +265,7 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
             await AssemblyInitialize.ResolutionRoot.Get<ICacheRevoker>().Revoke(id);
          
             //Items shouldBe remove from Cache
-            await Task.Delay(10000);
+            await Task.Delay(200);
             var threadValue = await ServiceWithCaching.GetVersion(id);
             
             threadValue.ShouldNotBe(secondValue);
