@@ -265,7 +265,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await AssemblyInitialize.ResolutionRoot.Get<ICacheRevoker>().Revoke(id);
          
             //Items shouldBe remove from Cache
-            await Task.Delay(10000);
+            await Task.Delay(200);
             var threadValue = await ServiceWithCaching.GetVersion(id);
             
             threadValue.ShouldNotBe(secondValue);
