@@ -24,9 +24,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.ServiceTester;
 using Newtonsoft.Json;
@@ -246,8 +249,28 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
             var firstValue = await ServiceWithCaching.GetNextNum();
             await Task.Delay(1);
             var secondValue = await ServiceWithCaching.GetNextNum();
-            //Items shouldBe come from the Cached
+            //Items shouldBe come from the Cache
             secondValue.ShouldBe(firstValue);
+        }
+
+        [Test]
+        public async Task ValueShouldBeRevoked()
+        {
+            string id = $"Test-{DateTime.UtcNow}";
+            var firstValue = await ServiceWithCaching.GetVersion(id);
+            await Task.Delay(1);
+            var secondValue = await ServiceWithCaching.GetVersion(id);
+
+            //Items shouldBe come from the Cache
+            secondValue.ShouldBe(firstValue);
+
+            await AssemblyInitialize.ResolutionRoot.Get<ICacheRevoker>().Revoke(id);
+         
+            //Items shouldBe remove from Cache
+            await Task.Delay(10000);
+            var threadValue = await ServiceWithCaching.GetVersion(id);
+            
+            threadValue.ShouldNotBe(secondValue);
         }
     }
 }
