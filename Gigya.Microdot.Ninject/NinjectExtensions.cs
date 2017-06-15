@@ -93,6 +93,7 @@ namespace Gigya.Microdot.Ninject
             }
         }
 
+
         /// <summary>
         /// Binds <see cref="TService"/> to <see cref="TImplementation"/> and configures Ninject factories in the form
         /// of <see cref="Func{TKey1, TKey2, TService}"/> and <see cref="Func{TKey1, TKey2, TImplementation}"/> to 

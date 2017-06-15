@@ -23,7 +23,6 @@
 using System;
 using System.Reflection;
 using System.Reflection.DispatchProxy;
-
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -48,14 +47,14 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
 
         private IMemoizer Memoizer { get; }
-        private MetadataProvider MetadataProvider { get; }
+        private IMetadataProvider MetadataProvider { get; }
         private ILog Log { get; }
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private string ServiceName { get; }
 
 
-        public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, MetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
+        public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
         {
             DataSource = dataSource;
             Memoizer = memoizer;
@@ -67,37 +66,30 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
             ((DelegatingDispatchProxy)(object)Proxy).InvokeDelegate = Invoke;
             ServiceName = serviceName ?? typeof(TInterface).GetServiceName();
-
-            var config = GetConfig();
-
-            if (config.Enabled)
-            {
-                Log.Info(_ => _("Caching has been enabled for an interface.", unencryptedTags: new
-                {
-                    ServiceName = typeof(TInterface).GetServiceName(),
-                    InterfaceName = typeof(TInterface).FullName,
-                    config.ExpirationTime,
-                    config.RefreshTime
-                }));
-            }
         }
 
 
-        private CachingPolicyConfig GetConfig()
+        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod)
         {
             ServiceDiscoveryConfig config;
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out config);
-        
-            return config?.CachingPolicy ?? new CachingPolicyConfig();
+
+            return config?.CachingPolicy?.Methods?[targetMethod.Name] ?? CachingPolicyConfig.Default;
         }
+
+        protected virtual bool IsMethodCached(MethodInfo targetMethod, object[] args)
+        {
+            return MetadataProvider.IsCached(targetMethod);
+        }
+
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig();
-            if (!config.Enabled)
+            var config = GetConfig(targetMethod);
+            if (config.Enabled.Value==false)
                 return targetMethod.Invoke(DataSource, args);
 
-            if (MetadataProvider.IsCached(targetMethod))
+            if (IsMethodCached(targetMethod, args))
                 return Memoizer.Memoize(DataSource, targetMethod, args, new CacheItemPolicyEx(config));
             else
                 return targetMethod.Invoke(DataSource, args);

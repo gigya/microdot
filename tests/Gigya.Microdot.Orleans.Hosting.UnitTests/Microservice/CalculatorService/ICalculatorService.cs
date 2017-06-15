@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,21 +21,32 @@
 #endregion
 
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Gigya.Common.Contracts.Attributes;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.ServiceContract.HttpService;
+using Newtonsoft.Json.Linq;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
+{
+    [HttpService(6555)]
+    public interface ICalculatorService
+    {
+        Task<int> Add(int a, int b, bool shouldThrow = false);
 
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")] 
-[assembly: AssemblyInformationalVersion("1.1.0.0")]
+        [PublicEndpoint("test.calculator.getAppDomainChain")]
+        Task<string[]> GetAppDomainChain(int depth);
+        Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset);
+        Task<JObject> Add(JObject jObject);
+        Task<JObjectWrapper> Add(JObjectWrapper jObjectW);
 
+        Task Do();
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
+        Task<Wrapper> DoComplex(Wrapper wrapper);
 
+        Task<int> DoInt(int a);
+
+        [Cached] Task<int> GetNextNum();
+        [Cached] Task<Revocable<int>> GetVersion(string id);
+    }
+}

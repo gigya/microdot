@@ -92,8 +92,8 @@ namespace Gigya.Microdot.Ninject
 
         public object Create(IContext context)
         {
-            var serviceProxyType = typeof(ServiceProxyProvider<>).MakeGenericType(Type);
-            var clientProperty = serviceProxyType.GetProperty(nameof(ServiceProxyProvider<int>.Client));
+            var serviceProxyType = typeof(IServiceProxyProvider<>).MakeGenericType(Type);
+            var clientProperty = serviceProxyType.GetProperty(nameof(IServiceProxyProvider<int>.Client));
             var serviceProxy = clientProperty.GetValue(context.Kernel.Get(serviceProxyType));
 
             if (context.Kernel.Get<IMetadataProvider>().HasCachedMethods(Type))

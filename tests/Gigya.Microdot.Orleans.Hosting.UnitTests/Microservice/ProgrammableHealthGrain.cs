@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,22 +20,36 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Orleans;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
+{
+    [HttpService(6555)]
+    public interface IProgrammableHealth { }
 
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")] 
-[assembly: AssemblyInformationalVersion("1.1.0.0")]
+    public interface IProgrammableHealthGrain : IProgrammableHealth, IHealthStatus, IGrainWithIntegerKey
+    {
+        Task SetHealth(bool healthy);
+    }
+
+    public class ProgrammableHealthGrain : Grain, IProgrammableHealthGrain
+    {
+        private HealthStatusResult Health { get; set; }
 
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
+        public async Task<HealthStatusResult> Status()
+        {
+            return Health;
+            //return new HealthStatusResult("I am not feeling well because I suffer from cold and headache", false);
+        }
 
+
+        public async Task SetHealth(bool healthy)
+        {
+            Health = healthy ? new HealthStatusResult("I'm healthy") : new HealthStatusResult("I'm not healthy", false);
+        }
+    }
+}

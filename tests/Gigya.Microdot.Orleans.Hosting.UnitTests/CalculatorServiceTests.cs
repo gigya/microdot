@@ -24,8 +24,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.ServiceTester;
@@ -35,7 +36,7 @@ using Ninject;
 using NUnit.Framework;
 using Shouldly;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     public class Wrapper
     {
@@ -59,6 +60,7 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
     {
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }
         private ICalculatorService Service { get; set; }
+        private ICalculatorService ServiceWithCaching { get; set; }
 
 
         [OneTimeSetUp]
@@ -69,8 +71,10 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
                           
                 Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
                 Service = Tester.GetServiceProxy<ICalculatorService>();
+                ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw;
@@ -237,5 +241,34 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
             actual.Item2.Offset.ShouldBe(TimeSpan.Zero);
         }
 
+        [Test]
+        public async Task ValueShouldBeCached()
+        {
+            var firstValue = await ServiceWithCaching.GetNextNum();
+            await Task.Delay(1);
+            var secondValue = await ServiceWithCaching.GetNextNum();
+            //Items shouldBe come from the Cache
+            secondValue.ShouldBe(firstValue);
+        }
+
+        [Test]
+        public async Task ValueShouldBeRevoked()
+        {
+            string id = $"Test-{DateTime.UtcNow}";
+            var firstValue = await ServiceWithCaching.GetVersion(id);
+            await Task.Delay(1);
+            var secondValue = await ServiceWithCaching.GetVersion(id);
+
+            //Items shouldBe come from the Cache
+            secondValue.ShouldBe(firstValue);
+
+            await AssemblyInitialize.ResolutionRoot.Get<ICacheRevoker>().Revoke(id);
+         
+            //Items shouldBe remove from Cache
+            await Task.Delay(200);
+            var threadValue = await ServiceWithCaching.GetVersion(id);
+            
+            threadValue.ShouldNotBe(secondValue);
+        }
     }
 }

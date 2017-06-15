@@ -28,7 +28,7 @@ using Gigya.Microdot.Orleans.Ninject.Host;
 using Ninject;
 using Ninject.Syntax;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     public class FakesLoggersModules : ILoggingModule
     {

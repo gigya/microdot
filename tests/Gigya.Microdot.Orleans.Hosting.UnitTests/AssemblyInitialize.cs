@@ -21,41 +21,51 @@
 #endregion
 
 using System;
-using System.IO;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing;
 using Ninject.Syntax;
 using NUnit.Framework;
 
 // ReSharper disable once CheckNamespace
-[SetUpFixture]
-public class AssemblyInitialize
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
+    [SetUpFixture]
+    public class AssemblyInitialize
+    {
     
-    public static IResolutionRoot ResolutionRoot { get; private set; }
+        public static IResolutionRoot ResolutionRoot { get; private set; }
 
-    private TestingKernel<ConsoleLog> kernel;
+        private TestingKernel<ConsoleLog> kernel;
 
-    [OneTimeSetUp]
-    public void SetUp()
-    {
-        try
+        [OneTimeSetUp]
+        public void SetUp()
         {
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
-            kernel = new TestingKernel<ConsoleLog>();            
-            ResolutionRoot = kernel;
-        }
-        catch(Exception ex)
-        {
-            Console.Write(ex);
-            throw;
-        }
+            try
+            {
+                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
+                kernel = new TestingKernel<ConsoleLog>((kernel) =>
+                {
+                    var revokingManager = new FakeRevokingManager();
+                    kernel.Rebind<IRevokeListener>().ToConstant(revokingManager);
+                    kernel.Rebind<ICacheRevoker>().ToConstant(revokingManager);
+                });            
+                ResolutionRoot = kernel;
+            }
+            catch(Exception ex)
+            {
+                Console.Write(ex);
+                throw;
+            }
         
-    }
+        }
 
-    [OneTimeTearDown]
-    public void TearDown()
-    {
-        kernel.Dispose();
+        [OneTimeTearDown]
+        public void TearDown()
+        {
+            kernel.Dispose();
+        }
     }
 }

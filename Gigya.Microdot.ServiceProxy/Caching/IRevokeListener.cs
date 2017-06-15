@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,22 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Orleans;
+using System.Threading.Tasks.Dataflow;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    public interface ICalculatorWorkerGrain : IGrainWithIntegerKey
+   public interface IRevokeListener
     {
-        Task<int> Add(int a, int b, bool shouldThrow = false);
-        Task<string[]> GetAppDomainChain(int depth);
-        Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset);
-        Task<JObject> Add(JObject jObject);
-        Task<JObjectWrapper> Add(JObjectWrapper jObjectW);
-        Task Do();
-        Task<Wrapper> DoComplex(Wrapper wrapper);
-        Task<int> DoInt(int a);
+        ISourceBlock<string> RevokeSource { get; }
     }
 }

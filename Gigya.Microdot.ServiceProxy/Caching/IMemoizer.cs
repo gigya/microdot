@@ -49,11 +49,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public CacheItemPolicyEx() { }
 
-        public CacheItemPolicyEx(CachingPolicyConfig config)
+        public CacheItemPolicyEx(MethodCachingPolicyConfig config)
         {
-            AbsoluteExpiration = DateTime.UtcNow + config.ExpirationTime;
-            RefreshTime = config.RefreshTime;
-            FailedRefreshDelay = config.FailedRefreshDelay;
+            AbsoluteExpiration = DateTime.UtcNow + config.ExpirationTime.Value;
+            RefreshTime = config.RefreshTime.Value;
+            FailedRefreshDelay = config.FailedRefreshDelay.Value;
         }
     }
 }

@@ -22,26 +22,23 @@
 
 using System;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
+using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
+using Orleans;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
-    [HttpService(6555)]
-    public interface ICalculatorService
+    public interface ICalculatorWorkerGrain : IGrainWithIntegerKey
     {
         Task<int> Add(int a, int b, bool shouldThrow = false);
-
-        [PublicEndpoint("test.calculator.getAppDomainChain")]
         Task<string[]> GetAppDomainChain(int depth);
         Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset);
         Task<JObject> Add(JObject jObject);
         Task<JObjectWrapper> Add(JObjectWrapper jObjectW);
-
         Task Do();
-
         Task<Wrapper> DoComplex(Wrapper wrapper);
-
-        Task<int> DoInt(int a);        
+        Task<int> DoInt(int a);
+        Task<int> GetNextNum();
+        Task<Revocable<int>> GetVersion(string id);
     }
 }

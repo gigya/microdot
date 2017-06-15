@@ -21,21 +21,24 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Measurement;
+using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 using Orleans;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     public class CalculatorWorkerGrain : Grain, ICalculatorWorkerGrain
     {
       
         private ILog Log { get; set; }
-
+        private int _counter;
+        private int _counter2;
 
         public CalculatorWorkerGrain(ILog log)
         {
@@ -105,5 +108,16 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
 
         public async Task<int> DoInt(int a) { return a; }
 
+        public Task<int> GetNextNum()
+        {
+            _counter++;
+            return Task.FromResult(_counter);
+        }
+
+        public Task<Revocable<int>> GetVersion(string Id)
+        {
+            _counter2++;
+            return Task.FromResult(new Revocable<int> {Value = _counter2, RevokeKeys = new List<string> {Id}});
+        }
     }
 }

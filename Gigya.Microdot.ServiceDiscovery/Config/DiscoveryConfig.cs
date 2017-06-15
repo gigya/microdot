@@ -101,7 +101,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                 Source = Source
             };
 
-            var services = (IDictionary<string, ServiceDiscoveryConfig>)Services??new Dictionary<string, ServiceDiscoveryConfig>();
+            var services = (IDictionary<string, ServiceDiscoveryConfig>)Services?? new Dictionary<string, ServiceDiscoveryConfig>();
             
             Services = new ServiceDiscoveryCollection(services, DefaultItem, PortAllocation);
         }

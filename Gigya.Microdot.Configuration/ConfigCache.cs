@@ -70,7 +70,7 @@ namespace Gigya.Microdot.Configuration
             path = path + ".";
             var root = new JObject();
 
-            foreach (var configItem in LatestConfig.Items.Where(kvp => kvp.Key.StartsWith(path)))
+            foreach (var configItem in LatestConfig.Items.Where(kvp => kvp.Key.StartsWith(path,StringComparison.OrdinalIgnoreCase)))
             {
                 var pathParts = configItem.Key.Substring(path.Length).Split('.');
                 var currentObj = root;

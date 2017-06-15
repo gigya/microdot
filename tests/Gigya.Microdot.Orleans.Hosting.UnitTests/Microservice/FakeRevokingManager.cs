@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,35 +21,20 @@
 #endregion
 
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Hosting.HttpService.Endpoints;
-using Orleans;
+using System.Threading.Tasks.Dataflow;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.ServiceProxy.Caching;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 {
-    [HttpService(6555)]
-    public interface IProgrammableHealth { }
-
-    public interface IProgrammableHealthGrain : IProgrammableHealth, IHealthStatus, IGrainWithIntegerKey
+    public class FakeRevokingManager : ICacheRevoker, IRevokeListener
     {
-        Task SetHealth(bool healthy);
-    }
-
-    public class ProgrammableHealthGrain : Grain, IProgrammableHealthGrain
-    {
-        private HealthStatusResult Health { get; set; }
-
-
-        public async Task<HealthStatusResult> Status()
+        private readonly BroadcastBlock<string> _broadcastBlock = new BroadcastBlock<string>(x => x);
+        public Task Revoke(string key)
         {
-            return Health;
-            //return new HealthStatusResult("I am not feeling well because I suffer from cold and headache", false);
+            return _broadcastBlock.SendAsync(key);
         }
 
-
-        public async Task SetHealth(bool healthy)
-        {
-            Health = healthy ? new HealthStatusResult("I'm healthy") : new HealthStatusResult("I'm not healthy", false);
-        }
+        public ISourceBlock<string> RevokeSource => _broadcastBlock;
     }
 }

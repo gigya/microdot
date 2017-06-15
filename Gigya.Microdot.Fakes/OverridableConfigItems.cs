@@ -62,7 +62,7 @@ namespace Gigya.Microdot.Fakes
 
         private Dictionary<string, ConfigItem> GetConfigItemsOverrides()
         {
-            var items = new Dictionary<string, ConfigItem>(StringComparer.CurrentCultureIgnoreCase);
+            var items = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
             foreach(var item in Data)
             {
                 items.Add(item.Key, new ConfigItem

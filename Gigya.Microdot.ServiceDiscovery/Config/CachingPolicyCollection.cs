@@ -21,21 +21,24 @@
 #endregion
 
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
+namespace Gigya.Microdot.ServiceDiscovery.Config
+{
+    public class CachingPolicyCollection: ConfigCollection<MethodCachingPolicyConfig>
+    {
+        public CachingPolicyCollection(IDictionary<string, MethodCachingPolicyConfig> source, MethodCachingPolicyConfig defaultItem) : base(source, defaultItem)
+        {
+        }
 
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")] 
-[assembly: AssemblyInformationalVersion("1.1.0.0")]
+        protected override MethodCachingPolicyConfig ApplyDefaults(MethodCachingPolicyConfig item)
+        {
+            item.RefreshTime = item.RefreshTime ?? DefaultItem.RefreshTime;
+            item.Enabled = item.Enabled ?? DefaultItem.Enabled;
+            item.ExpirationTime = item.ExpirationTime ?? DefaultItem.ExpirationTime;
+            item.FailedRefreshDelay = item.FailedRefreshDelay ?? DefaultItem.FailedRefreshDelay;
 
-
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
-
+            return item;
+        }
+    }
+}
