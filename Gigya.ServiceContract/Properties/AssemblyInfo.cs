@@ -37,8 +37,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
 [assembly: AssemblyTrademark("")]
 
-// This is the NuGet version, if pre-release should be in the format of "2.0.0-Zdevelop08".
-[assembly: AssemblyInformationalVersion("2.4.9-pre03")]
+
+[assembly: AssemblyInformationalVersion("2.4.9.0")]// if pre-release should be in the format of "2.4.10-pre01".
 [assembly: AssemblyVersion("2.4.9.0")]
 [assembly: AssemblyFileVersion("2.4.9.0")]
 

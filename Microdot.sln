@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
 	ProjectSection(SolutionItems) = preProject
@@ -46,13 +46,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceDisco
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceContract.UnitTests", "tests\Gigya.Microdot.ServiceContract.UnitTests\Gigya.Microdot.ServiceContract.UnitTests.csproj", "{C224F79A-EAB5-48B8-B587-65772B0966EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting.FunctionalTests", "tests\Gigya.Microdot.Orleans.Hosting.FunctionalTests\Gigya.Microdot.Orleans.Hosting.FunctionalTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.ServiceContract", "Gigya.ServiceContract\Gigya.ServiceContract.csproj", "{DB6D3561-835E-40D5-B9D4-83951CF426DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.UnitTests", "Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj", "{0A24AE97-EE88-4E8B-8B92-092884D41399}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Logging.NLog", "Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj", "{06E45085-5A54-4BFE-BD24-E9C3983A2689}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting.UnitTests", "tests\Gigya.Microdot.Orleans.Hosting.UnitTests\Gigya.Microdot.Orleans.Hosting.UnitTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.UnitTests", "tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj", "{0A24AE97-EE88-4E8B-8B92-092884D41399}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -112,22 +112,22 @@ Global
 		{C224F79A-EAB5-48B8-B587-65772B0966EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C224F79A-EAB5-48B8-B587-65772B0966EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C224F79A-EAB5-48B8-B587-65772B0966EF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.Build.0 = Release|Any CPU
 		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06E45085-5A54-4BFE-BD24-E9C3983A2689}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E548D57-5880-4283-BDF5-7386886D481D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
