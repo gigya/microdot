@@ -54,6 +54,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private MetricsContext AwaitingResult { get; set; }
         private MetricsContext Failed { get; set; }
         private Counter ClearCache { get; set; }
+
+        private MetricsContext Items { get; set; }
+        private MetricsContext Revokes { get; set; }
+
         private IDisposable RevokeDisposable { get; }
         private const double MB = 1048576.0;
         private int _clearCount;
@@ -104,13 +108,19 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                         var arrayOfCacheKeys = cacheKeys.ToArray();// To prevent iteration over modified collection.
                         foreach (var cacheKey in arrayOfCacheKeys)
                         {
-                            var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
+                            var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                            
                         }
                     }
+                    Revokes.Meter("Succeeded", Unit.Events).Mark();
                 }
+                else
+                {
+                    Revokes.Meter("Discarded", Unit.Events).Mark();
+                }                
             }
             catch (Exception ex)
             {
+                Revokes.Meter("Failed", Unit.Events).Mark();
                 Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
             }
         }
@@ -133,6 +143,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Misses = Metrics.Context("Misses");
             JoinedTeam = Metrics.Context("JoinedTeam");
             Failed = Metrics.Context("Failed");
+
+            Items = Metrics.Context("Items");
+            Revokes = Metrics.Context("Revoke");
         }
 
 
@@ -270,6 +283,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     }
                 }
             }
+
+            Items.Meter(arguments.RemovedReason.ToString(), Unit.Items);
         }
 
 
