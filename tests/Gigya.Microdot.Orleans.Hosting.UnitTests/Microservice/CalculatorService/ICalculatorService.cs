@@ -27,7 +27,7 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     [HttpService(6555)]
     public interface ICalculatorService

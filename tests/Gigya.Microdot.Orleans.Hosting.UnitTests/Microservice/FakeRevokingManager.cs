@@ -25,7 +25,7 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceProxy.Caching;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 {
     public class FakeRevokingManager : ICacheRevoker, IRevokeListener
     {

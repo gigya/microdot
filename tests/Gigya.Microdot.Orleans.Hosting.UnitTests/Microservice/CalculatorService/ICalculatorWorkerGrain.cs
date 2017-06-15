@@ -26,7 +26,7 @@ using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 using Orleans;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     public interface ICalculatorWorkerGrain : IGrainWithIntegerKey
     {

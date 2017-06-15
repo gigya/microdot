@@ -24,12 +24,12 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.ServiceTester;
 using NUnit.Framework;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     [TestFixture]
     public class SchemaEndpointTests

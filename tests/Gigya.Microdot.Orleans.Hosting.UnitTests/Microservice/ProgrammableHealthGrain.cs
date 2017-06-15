@@ -25,7 +25,7 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Orleans;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 {
     [HttpService(6555)]
     public interface IProgrammableHealth { }

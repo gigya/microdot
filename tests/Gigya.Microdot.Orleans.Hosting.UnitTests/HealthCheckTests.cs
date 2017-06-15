@@ -23,14 +23,14 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.CalculatorService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.ServiceTester;
 using NUnit.Framework;
 using Shouldly;
 
-namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     [TestFixture]
     public class HealthCheckTests
