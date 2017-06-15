@@ -111,12 +111,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                            
                         }
                     }
+                    Revokes.Meter("Succeeded", Unit.Events).Mark();
                 }
-                Revokes.Meter("Success",Unit.Events).Mark();
+                else
+                {
+                    Revokes.Meter("Discarded", Unit.Events).Mark();
+                }                
             }
             catch (Exception ex)
             {
-                Revokes.Meter("Failure", Unit.Events).Mark();
+                Revokes.Meter("Failed", Unit.Events).Mark();
                 Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
             }
         }
