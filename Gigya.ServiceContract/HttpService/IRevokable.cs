@@ -26,13 +26,13 @@ namespace Gigya.ServiceContract.HttpService
 {
     public interface IRevocable
     {
-        IList<string> RevokeKeys { get; }
+        IEnumerable<string> RevokeKeys { get; }
     }
 
     public class Revocable<T> : IRevocable
     {        
         public T Value { get; set; }
         
-        public IList<string> RevokeKeys { get; set; }
+        public IEnumerable<string> RevokeKeys { get; set; }
     }
 }
