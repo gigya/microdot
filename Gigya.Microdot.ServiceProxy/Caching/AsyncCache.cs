@@ -37,6 +37,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
+
     public sealed class AsyncCache : IMemoryCacheManager, IServiceProvider, IDisposable
     {
         private IDateTime DateTime { get; }
@@ -44,6 +45,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private MemoryCache MemoryCache { get; set; }
         private long LastCacheSizeBytes { get; set; }
         private MetricsContext Metrics { get; }
+
+        internal ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex { get; set; } = new ConcurrentDictionary<string, HashSet<string>>();
 
         private MetricsContext Hits { get; set; }
         private MetricsContext Misses { get; set; }
@@ -55,6 +58,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private const double MB = 1048576.0;
         private int _clearCount;
 
+
+        public int RevokeKeysCount => RevokeKeyToCacheKeysIndex.Count;
+
+        /// <summary>
+        /// Not thread safe used for testing
+        /// </summary>
+        internal int CacheKeyCount => RevokeKeyToCacheKeysIndex.Sum(item => item.Value.Count);
 
 
         public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener)
@@ -76,24 +86,33 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         }
 
-        internal Task OnRevoke(string revokeKey)
+        private async Task OnRevoke(string revokeKey)
         {
             if (string.IsNullOrEmpty(revokeKey))
             {
-                Log.Warn("error while revoking cache, revokeKey can not be null");
-                return Task.FromResult(1);
+                Log.Warn("Error while revoking cache, revokeKey can't be null");
+                return;
             }
 
             try
             {
-                Remove(revokeKey);
+                HashSet<string> cacheKeys;
+                if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out cacheKeys))
+                {
+                    lock (cacheKeys)
+                    {
+                        var arrayOfCacheKeys = cacheKeys.ToArray();// To prevent iteration over modified collection.
+                        foreach (var cacheKey in arrayOfCacheKeys)
+                        {
+                            var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
             }
-
-            return Task.FromResult(1);
         }
 
 
@@ -123,50 +142,31 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
 
-        readonly ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex = new ConcurrentDictionary<string, HashSet<string>>();
 
-        /// <summary>
-        /// Call it on remove event
-        /// </summary>
-        /// <param name="revokeKey">Key of item to remove.</param>
-        private void Remove(string revokeKey)
-        {
-            HashSet<string> listOfCacheKeys;
-            if(RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out listOfCacheKeys))
-            {
-                lock(listOfCacheKeys)
-                {
-                    foreach(var cacheKey in listOfCacheKeys)
-                    {
-                        var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);
-                    }
-                }
-            }               
-        }
-        
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys, Type taskResultType)
         {
             Func<bool, Task<object>> wrappedFactory = async removeOnException =>
             {
                 try
                 {
-                    var result = await factory().ConfigureAwait(false) ;
-                    var revocableResult = result as IRevocable;
-
-
-                    if (revocableResult?.RevokeKeys != null)
+                    var result = await factory().ConfigureAwait(false);
+                    //Can happen if item removed before task is completed
+                    if (MemoryCache.Contains(key))
                     {
-                        foreach (var revokeKey in revocableResult.RevokeKeys)
+                        var revocableResult = result as IRevocable;
+                        if(revocableResult?.RevokeKeys != null)
                         {
-                            var listOfCacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
-
-                            lock (listOfCacheKeys)
+                            foreach (var revokeKey in revocableResult.RevokeKeys)
                             {
-                                listOfCacheKeys.Add(revokeKey);
+                                var cacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
+
+                                lock (cacheKeys)
+                                {
+                                    cacheKeys.Add(key);
+                                }
                             }
                         }
                     }
-
                     AwaitingResult.Decrement(metricsKeys);
                     return result;
                 }
@@ -251,20 +251,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         /// </summary>        
         private void ItemRemovedCallback(CacheEntryRemovedArguments arguments)
         {            
-            var cachedItem = arguments.CacheItem.Value as IRevocable;
-            
-            foreach(var revocationKey in cachedItem.RevokeKeys)
+            var cachedItem = ((AsyncCacheItem)arguments.CacheItem.Value).CurrentValueTask;
+            if(cachedItem.Status==TaskStatus.RanToCompletion && (cachedItem.Result as IRevocable)?.RevokeKeys!=null)
             {
-                HashSet<string> cacheKeys;
-
-                if(RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out cacheKeys))
+                foreach(var revocationKey in ((IRevocable)cachedItem.Result).RevokeKeys)
                 {
-                    lock(cacheKeys)
+                    HashSet<string> cacheKeys;
+                    if (RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out cacheKeys))
                     {
-                        cacheKeys.Remove(arguments.CacheItem.Key);
-                        if(!cacheKeys.Any())
+                        lock (cacheKeys)
                         {
-                            RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out cacheKeys);
+                            cacheKeys.Remove(arguments.CacheItem.Key);
+                            if (!cacheKeys.Any())
+                            {
+                                RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out cacheKeys);
+                            }
                         }
                     }
                 }

@@ -22,10 +22,10 @@
 
 using System.Threading.Tasks.Dataflow;
 
-namespace Gigya.Microdot.ServiceProxy
+namespace Gigya.Microdot.ServiceProxy.Caching
 {
-   public interface IRevokeListener
+    public class EmptyRevokeListener : IRevokeListener
     {
-        ISourceBlock<string> RevokeSource { get; }
+        public ISourceBlock<string> RevokeSource { get; set; } = new WriteOnceBlock<string>(message => message);
     }
 }
