@@ -20,50 +20,21 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using Gigya.Microdot.Fakes;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice;
-using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.Testing;
-using Ninject.Syntax;
-using NUnit.Framework;
 
-// ReSharper disable once CheckNamespace
-[SetUpFixture]
-public class AssemblyInitialize
+namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice
 {
-    
-    public static IResolutionRoot ResolutionRoot { get; private set; }
-
-    private TestingKernel<ConsoleLog> kernel;
-
-    [OneTimeSetUp]
-    public void SetUp()
+    public class FakeRevokingManager : ICacheRevoker, IRevokeListener
     {
-        try
+        private readonly BroadcastBlock<string> _broadcastBlock = new BroadcastBlock<string>(x => x);
+        public Task Revoke(string key)
         {
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
-            kernel = new TestingKernel<ConsoleLog>((kernel) =>
-            {
-                var revokingManager = new FakeRevokingManager();
-                kernel.Rebind<IRevokeListener>().ToConstant(revokingManager);
-                kernel.Rebind<ICacheRevoker>().ToConstant(revokingManager);
-            });            
-            ResolutionRoot = kernel;
+            return _broadcastBlock.SendAsync(key);
         }
-        catch(Exception ex)
-        {
-            Console.Write(ex);
-            throw;
-        }
-        
-    }
 
-    [OneTimeTearDown]
-    public void TearDown()
-    {
-        kernel.Dispose();
+        public ISourceBlock<string> RevokeSource => _broadcastBlock;
     }
 }

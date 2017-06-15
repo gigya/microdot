@@ -49,6 +49,7 @@
     <Compile Include="Microservice\CalculatorService\ICalculatorService.cs" />
     <Compile Include="Microservice\CalculatorService\ICalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\ICalculatorWorkerGrain.cs" />
+    <Compile Include="Microservice\FakeRevokingManager.cs" />
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
     <Compile Include="Properties\orleans.codegen.cs" />
     <Compile Include="SchemaEndpointTests.cs" />
@@ -304,6 +305,17 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
         <Reference Include="System.Numerics">
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="System.Threading.Tasks.Dataflow">
+          <HintPath>..\..\packages\System.Threading.Tasks.Dataflow\lib\netstandard1.1\System.Threading.Tasks.Dataflow.dll</HintPath>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>

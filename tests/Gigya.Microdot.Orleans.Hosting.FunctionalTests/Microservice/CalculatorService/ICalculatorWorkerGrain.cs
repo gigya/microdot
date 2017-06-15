@@ -22,6 +22,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 using Orleans;
 
@@ -38,5 +39,6 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
         Task<Wrapper> DoComplex(Wrapper wrapper);
         Task<int> DoInt(int a);
         Task<int> GetNextNum();
+        Task<Revocable<int>> GetVersion(string id);
     }
 }
