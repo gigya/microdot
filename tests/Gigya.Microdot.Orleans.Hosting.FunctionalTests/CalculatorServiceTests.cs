@@ -59,6 +59,7 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
     {
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }
         private ICalculatorService Service { get; set; }
+        private ICalculatorService ServiceWithCaching { get; set; }
 
 
         [OneTimeSetUp]
@@ -69,8 +70,10 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
                           
                 Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
                 Service = Tester.GetServiceProxy<ICalculatorService>();
+                ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw;
@@ -237,5 +240,14 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests
             actual.Item2.Offset.ShouldBe(TimeSpan.Zero);
         }
 
+        [Test]
+        public async Task ValueShouldBeCached()
+        {
+            var firstValue = await ServiceWithCaching.GetNextNum();
+            await Task.Delay(1);
+            var secondValue = await ServiceWithCaching.GetNextNum();
+            //Items shouldBe come from the Cached
+            secondValue.ShouldBe(firstValue);
+        }
     }
 }

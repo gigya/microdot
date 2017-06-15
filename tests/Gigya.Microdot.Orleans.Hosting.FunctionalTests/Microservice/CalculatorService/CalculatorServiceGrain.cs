@@ -63,7 +63,8 @@ namespace Gigya.Microdot.Orleans.Hosting.FunctionalTests.Microservice.Calculator
 
 
         public Task<int> DoInt(int a) { return Worker.DoInt(a); }
-        
+        public Task<int> GetNextNum() { return Worker.GetNextNum(); }
+    
     }
 
 }
