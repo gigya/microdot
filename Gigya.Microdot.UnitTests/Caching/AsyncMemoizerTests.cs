@@ -7,7 +7,6 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
-using Gigya.ServiceContract.HttpService;
 using Metrics;
 
 using NSubstitute;
@@ -20,7 +19,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Caching
 {
     // Calls to NSubstitute's .Received() method on async methods generate this warning.
-    #pragma warning disable 4014 "Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call."
+#pragma warning disable 4014 "Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call."
 
     [TestFixture]
     public class AsyncMemoizerTests
@@ -29,8 +28,6 @@ namespace Gigya.Microdot.UnitTests.Caching
         private MethodInfo ThingifyThing { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyThing));
         private MethodInfo ThingifyTask { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTask));
         private MethodInfo ThingifyTaskThing { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskThing));
-
-        private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));
 
         private MethodInfo ThingifyTaskInt { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskInt));
         private MethodInfo ThingifyVoidMethod { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyVoid));
@@ -47,7 +44,11 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         private AsyncCache CreateCache(ISourceBlock<string> revokeSource = null)
         {
-            return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource });
+            var revokeListener=new EmptyRevokeListener();
+            if(revokeSource != null)
+                revokeListener.RevokeSource = revokeSource;
+
+            return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, revokeListener);
         }
         
         private IMemoizer CreateMemoizer(AsyncCache cache)
@@ -56,33 +57,6 @@ namespace Gigya.Microdot.UnitTests.Caching
             return new AsyncMemoizer(cache, metadataProvider, Metric.Context("Tests"));
         }
 
-        private IThingFrobber CreateRevokableDataSource(string[] revokeKeys, params object[] results)
-        {
-            var revocableTaskResults = new List<Task<Revocable<Thing>>>();
-            var dataSource = Substitute.For<IThingFrobber>();
-
-            if (results == null)
-                results = new object[] { null };
-
-            foreach (var result in results)
-            {
-                if (result == null)
-                    revocableTaskResults.Add(Task.FromResult(default(Revocable<Thing>)));
-                else if(result is int)
-                    revocableTaskResults.Add(Task.FromResult(new Revocable<Thing>{ Value = new Thing {Id = (int)result}, RevokeKeys = revokeKeys }));
-                else if (result is TaskCompletionSource<Revocable<Thing>>)
-                    revocableTaskResults.Add(((TaskCompletionSource<Revocable<Thing>>)result).Task);                
-                else
-                    throw new ArgumentException();
-            }
-            
-
-           if (results.Any())
-              dataSource.ThingifyTaskRevokable("someString").Returns(revocableTaskResults.First(), revocableTaskResults.Skip(1).ToArray());
-
-            return dataSource;
-        }
-        
         private IThingFrobber CreateDataSource(params object[] results)
         {
             var dataSource = Substitute.For<IThingFrobber>();
@@ -113,75 +87,6 @@ namespace Gigya.Microdot.UnitTests.Caching
                 dataSource.ThingifyTaskInt("someString").Returns(intResults.First(), intResults.Skip(1).ToArray());
 
             return dataSource;
-        }
-        
-        [Test]
-        public async Task MemoizeAsync_RevokeBeforeRetrivalTaskCompletedCaused_NoIssues()
-        {
-            var completionSource = new TaskCompletionSource<Revocable<Thing>>();            
-            var dataSource = CreateRevokableDataSource(null, completionSource);
-            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
-            var cache = CreateCache(revokesSource);
-            var memoizer = CreateMemoizer(cache);
-
-            //Call method to get results
-            var resultTask =  (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
-            
-            //Post revoke message while results had not arrived
-            revokesSource.PostMessageSynced("revokeKey");
-            
-            //Wait before sending results 
-            await Task.Delay(100);
-            completionSource.SetResult(new Revocable<Thing> {Value = new Thing {Id = 5}, RevokeKeys = new[] {"revokeKey"}});
-            
-            //Results should arive now
-            var actual=await resultTask;
-            dataSource.Received(1).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(5);
-
-            cache.CacheKeyCount.ShouldBe(1);
-        }
-        
-
-
-        [Test]
-        public async Task MemoizeAsync_RevokableObjectShouldBeCachedAndRevoked()
-        {            
-            var dataSource = CreateRevokableDataSource(new[] { "revokeKey" }, 5, 6);
-            
-            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
-
-            var cache = CreateCache(revokesSource);
-            var memoizer = CreateMemoizer(cache);
-            
-            var actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());            
-            dataSource.Received(1).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(5);
-
-            //Read value from cache should be still 5
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());            
-            dataSource.Received(1).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(5);
-            //A single cache key should be stored in index
-            cache.CacheKeyCount.ShouldBe(1);
-            
-            //Post revoke message, no cache keys should be stored
-            revokesSource.PostMessageSynced("revokeKey");
-            cache.CacheKeyCount.ShouldBe(0);
-
-            //Value should change to 6 
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());            
-            dataSource.Received(2).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(6);
-            cache.CacheKeyCount.ShouldBe(1);
-            
-            //Post revoke message to not existing key value still should be 6
-            revokesSource.PostMessageSynced("NotExistin-RevokeKey");
-
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
-            dataSource.Received(2).ThingifyTaskRevokable("someString");
-            actual.Value.Id.ShouldBe(6);            
-            cache.CacheKeyCount.ShouldBe(1);
         }
 
         [Test]
