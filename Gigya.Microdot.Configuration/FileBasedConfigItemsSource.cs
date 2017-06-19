@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -51,7 +52,7 @@ namespace Gigya.Microdot.Configuration
 
         public async Task<ConfigItemsCollection> GetConfiguration()
         {
-            var conf = new Dictionary<string, ConfigItem>();
+            var conf = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
 
             foreach(var configFile in _configurationLocations.ConfigFileDeclarations.SelectMany(FindConfigFiles))
             {
