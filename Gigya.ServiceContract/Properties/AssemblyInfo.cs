@@ -38,9 +38,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 
 
-[assembly: AssemblyInformationalVersion("2.4.9.0")]// if pre-release should be in the format of "2.4.10-pre01".
-[assembly: AssemblyVersion("2.4.9.0")]
-[assembly: AssemblyFileVersion("2.4.9.0")]
+[assembly: AssemblyInformationalVersion("2.4.9")]// if pre-release should be in the format of "2.4.10-pre01".
+[assembly: AssemblyVersion("2.4.9")]
+[assembly: AssemblyFileVersion("2.4.9")]
 
 [assembly: AssemblyDescription("")]
 
