@@ -90,13 +90,13 @@ namespace Gigya.Common.Contracts.HttpService
 
             if (info.ReturnType.IsGenericType)
             {
-                var responseType = info.ReturnType.GetGenericArguments().First();
-                IsRevocable = typeof(IRevocable).IsAssignableFrom(responseType);
-                ResponseType = responseType.Name;
+                var resultType = info.ReturnType.GetGenericArguments().Single();
+                IsRevocable = typeof(IRevocable).IsAssignableFrom(resultType);
+                ResponseType = resultType.Name;
             }
 
-            Parameters = info.GetParameters().Select(_ => new ParameterSchema(_)).ToArray();
-            Attributes = info.GetCustomAttributes().Select(_ => new AttributeSchema(_)).ToArray();
+            Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
+            Attributes = info.GetCustomAttributes().Select(a => new AttributeSchema(a)).ToArray();
         }
     }
 
