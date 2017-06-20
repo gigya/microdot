@@ -284,7 +284,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 }
             }
 
-            Items.Meter(arguments.RemovedReason.ToString(), Unit.Items);
+            Items.Meter(arguments.RemovedReason.ToString(), Unit.Items).Mark();
         }
 
 

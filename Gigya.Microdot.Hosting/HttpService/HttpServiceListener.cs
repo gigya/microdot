@@ -257,11 +257,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                     finally
                     {
                         sw.Stop();
-                        long requestTime = sw.ElapsedMilliseconds; // use same timing for both measurements
-                        _roundtripTime.Record(requestTime, TimeUnit.Milliseconds);
+                        _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
                         if (methodName != null)
-                            _endpointContext.Timer(methodName, Unit.Requests).Record(requestTime, TimeUnit.Milliseconds);
-                        PublishEvent(requestData, actualException, serviceMethod, requestTime);
+                            _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
+                        PublishEvent(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
                     }
                 }
             }
@@ -350,7 +349,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
 
-        private void PublishEvent(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, long requestTime)
+        private void PublishEvent(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime)
         {
             var callEvent = EventPublisher.CreateEvent();
 

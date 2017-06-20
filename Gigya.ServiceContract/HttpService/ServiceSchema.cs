@@ -24,6 +24,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -75,6 +76,10 @@ namespace Gigya.Common.Contracts.HttpService
 
         public ParameterSchema[] Parameters { get; set; }
 
+        public bool IsRevocable { get; set; }
+
+        public string ResponseType { get; set; }
+
         public AttributeSchema[] Attributes { get; set; }
 
         public MethodSchema() { }
@@ -82,8 +87,16 @@ namespace Gigya.Common.Contracts.HttpService
         public MethodSchema(MethodInfo info)
         {
             Name = info.Name;
-            Parameters = info.GetParameters().Select(_ => new ParameterSchema(_)).ToArray();
-            Attributes = info.GetCustomAttributes().Select(_ => new AttributeSchema(_)).ToArray();
+
+            if (info.ReturnType.IsGenericType)
+            {
+                var resultType = info.ReturnType.GetGenericArguments().Single();
+                IsRevocable = typeof(IRevocable).IsAssignableFrom(resultType);
+                ResponseType = resultType.Name;
+            }
+
+            Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
+            Attributes = info.GetCustomAttributes().Select(a => new AttributeSchema(a)).ToArray();
         }
     }
 

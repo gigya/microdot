@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.ServiceContract.HttpService;
 using Metrics;
-
+using Metrics.MetricData;
 using NSubstitute;
 
 using NUnit.Framework;
@@ -21,7 +22,8 @@ namespace Gigya.Microdot.UnitTests.Caching
     [TestFixture]
     public class AsyncMemoizerRevokesTests
     {
-        const string cacheContextName = "AsyncCache";
+        private const string cacheContextName = "AsyncCache";
+        private const string memoizerContextName = "AsyncMemoizer";
 #pragma warning disable 4014 "Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call."
 
         private DateTimeFake TimeFake { get; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
@@ -35,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         private IMemoizer CreateMemoizer(AsyncCache cache)
         {
             var metadataProvider = new MetadataProvider();
-            return new AsyncMemoizer(cache, metadataProvider, Metric.Context("Tests"));
+            return new AsyncMemoizer(cache, metadataProvider, Metric.Context(memoizerContextName));
         }
 
         private CacheItemPolicyEx GetPolicy(double ttlSeconds = 60 * 60 * 6, double refreshTimeSeconds = 60) => new CacheItemPolicyEx
@@ -74,6 +76,11 @@ namespace Gigya.Microdot.UnitTests.Caching
             return dataSource;
         }
 
+        [SetUp]
+        public void SetUp()
+        {         
+            Metric.ShutdownContext(cacheContextName);
+        }
 
         [Test]
         public async Task MemoizeAsync_RevokeBeforeRetrivalTaskCompletedCaused_NoIssues()
@@ -90,6 +97,15 @@ namespace Gigya.Microdot.UnitTests.Caching
             //Post revoke message while results had not arrived
             revokesSource.PostMessageSynced("revokeKey");
 
+            //Should have a single discarded revoke in meter
+            GetMetricsData("Revoke").AssertEquals(new MetricsDataEquatable
+            {
+                MetersSettings = new MetricsCheckSetting { CheckValues = true },
+                Meters = new List<MetricDataEquatable> {
+                    new MetricDataEquatable {Name = "Discarded", Unit = Unit.Events, Value = 1},
+                }
+            });
+
             //Wait before sending results 
             await Task.Delay(100);
             completionSource.SetResult(new Revocable<Thing> { Value = new Thing { Id = 5 }, RevokeKeys = new[] { "revokeKey" } });
@@ -98,7 +114,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var actual = await resultTask;
             dataSource.Received(1).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(5);
-
+            
             cache.CacheKeyCount.ShouldBe(1);
         }
 
@@ -107,6 +123,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Test]
         public async Task MemoizeAsync_RevokableObjectShouldBeCachedAndRevoked()
         {
+
             var dataSource = CreateRevokableDataSource(new[] { "revokeKey" }, 5, 6);
 
             var revokesSource = new OneTimeSynchronousSourceBlock<string>();
@@ -114,23 +131,45 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
 
-            var actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            var actual = await CallWithMemoize(memoizer, dataSource);
             dataSource.Received(1).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(5);
 
             //Read value from cache should be still 5
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            actual = await CallWithMemoize(memoizer, dataSource);
             dataSource.Received(1).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(5);
             //A single cache key should be stored in index
             cache.CacheKeyCount.ShouldBe(1);
 
+            //No metric for Revoke
+            GetMetricsData("Revoke").AssertEquals(new MetricsDataEquatable { Meters = new List<MetricDataEquatable> ()});
+
             //Post revoke message, no cache keys should be stored
             revokesSource.PostMessageSynced("revokeKey");
             cache.CacheKeyCount.ShouldBe(0);
 
+            //Should have a single revoke in meter
+            GetMetricsData("Revoke").AssertEquals(new MetricsDataEquatable
+            {
+                MetersSettings = new MetricsCheckSetting { CheckValues = true },
+                Meters = new List<MetricDataEquatable> {
+                    new MetricDataEquatable {Name = "Succeeded", Unit = Unit.Events, Value = 1},
+                }
+            });
+
+            //Should have a single item removed in meter
+            GetMetricsData("Items").AssertEquals(new MetricsDataEquatable
+            {
+                MetersSettings = new MetricsCheckSetting { CheckValues = true },
+                Meters = new List<MetricDataEquatable> {
+                    new MetricDataEquatable {Name = CacheEntryRemovedReason.Removed.ToString(), Unit = Unit.Items, Value = 1},
+                }
+            });
+
+
             //Value should change to 6 
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            actual = await CallWithMemoize(memoizer, dataSource);
             dataSource.Received(2).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(6);
             cache.CacheKeyCount.ShouldBe(1);
@@ -138,10 +177,41 @@ namespace Gigya.Microdot.UnitTests.Caching
             //Post revoke message to not existing key value still should be 6
             revokesSource.PostMessageSynced("NotExistin-RevokeKey");
 
-            actual = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+
+            actual = await CallWithMemoize(memoizer, dataSource);
             dataSource.Received(2).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(6);
             cache.CacheKeyCount.ShouldBe(1);
+
+
+
+
+        }
+
+        private async Task<Revocable<Thing>> CallWithMemoize(IMemoizer memoizer, IThingFrobber dataSource)
+        {
+            return await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+        }
+
+
+        private static MetricsData GetMetricsData(string subContext)
+        {
+            return
+                Metric.Context(cacheContextName)
+                      .Context(subContext)
+                      .DataProvider.CurrentMetricsData;
+        }
+
+        private static MetricsDataEquatable DefaultExpected()
+        {
+            return new MetricsDataEquatable
+            {
+                Counters = new List<MetricDataEquatable>(),
+                Timers = new List<MetricDataEquatable> {
+                    new MetricDataEquatable{Name = "Serialization",Unit= Unit.Calls},
+                    new MetricDataEquatable{Name = "Roundtrip",Unit= Unit.Calls}
+                }
+            };
         }
 
     }
