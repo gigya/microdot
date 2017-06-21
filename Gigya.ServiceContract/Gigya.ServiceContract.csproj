@@ -46,8 +46,8 @@
     <Compile Include="Exceptions\RemoteServiceException.cs" />
     <Compile Include="Exceptions\RequestException.cs" />
     <Compile Include="Exceptions\SerializableException.cs" />
+    <Compile Include="HttpService\IRevocable.cs" />
     <Compile Include="HttpService\ServiceSchema.cs" />
-    <Compile Include="HttpService\IRevokable.cs" />
     <Compile Include="JsonHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
