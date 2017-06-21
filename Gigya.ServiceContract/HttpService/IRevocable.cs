@@ -24,15 +24,15 @@ using System.Collections.Generic;
 
 namespace Gigya.ServiceContract.HttpService
 {
-    public interface IRevocable
+    internal interface IRevocable
     {
         IEnumerable<string> RevokeKeys { get; }
     }
 
     public class Revocable<T> : IRevocable
-    {        
+    {
         public T Value { get; set; }
-        
+
         public IEnumerable<string> RevokeKeys { get; set; }
     }
 }

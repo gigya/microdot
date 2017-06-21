@@ -22,6 +22,7 @@
 
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -29,6 +30,7 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyTitle("Gigya.ServiceContract")]
 [assembly: AssemblyProduct("Gigya.ServiceContract")]
+[assembly: InternalsVisibleTo("Gigya.Microdot.ServiceProxy")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("db6d3561-835e-40d5-b9d4-83951cf426df")]
