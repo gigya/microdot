@@ -28,7 +28,9 @@ using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.SharedLogic;
+using Ninject;
 
 [assembly: InternalsVisibleTo("LINQPadQuery")]
 
@@ -38,7 +40,7 @@ namespace Gigya.Microdot.Hosting.Service
     {
         const int WANR_IF_SHUTDOWN_LONGER_THAN_SECS = 10;
 
-        private bool disposed;
+        private bool disposed;        
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -152,6 +154,7 @@ namespace Gigya.Microdot.Hosting.Service
                 var cancelShutdownMonitoring = new CancellationTokenSource();
                 VerifyStuckedShutDown(cancelShutdownMonitoring.Token);
                 OnStop();
+                
                 cancelShutdownMonitoring.Cancel();
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
@@ -176,6 +179,18 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
 
+        /// <summary>
+        /// Used to initialize service dependencies. This method is called before OnInitialize(), 
+        /// and should include common behaviour for a family of services. 
+        /// When overriden on the family services base, it is recommended to mark it as sealed, 
+        /// to prevent concrete services from overriding the common behaviour. 
+        /// </summary>
+        /// <param name="kernel"></param>
+        protected virtual void PreInitialize(IKernel kernel)
+        {
+            var metricsInitializer = kernel.TryGet<IMetricsInitializer>();
+            metricsInitializer?.Init();
+        }
 
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
@@ -248,7 +263,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
 
         }
-
+        
 
         protected abstract void OnStart();
         protected abstract void OnStop();
@@ -260,7 +275,7 @@ namespace Gigya.Microdot.Hosting.Service
                 return;
 
             if(disposing)
-            {                
+            {
                 StopEvent.Dispose();
                 WindowsService?.Dispose();
                 MonitoredShutdownProcess?.Dispose();

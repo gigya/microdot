@@ -64,6 +64,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
+            PreInitialize(Kernel);
             OnInitilize(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();            
@@ -145,6 +146,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected override void OnStop()
         {
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
+            Dispose();
         }
 
 
