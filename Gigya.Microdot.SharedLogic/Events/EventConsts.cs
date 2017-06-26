@@ -56,6 +56,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public const string targetService="target.service";
         public const string targetHost = "target.host";
+        public const string targetPort = "target.port";
         public const string targetType = "target.type";
         public const string targetMethod = "target.method";
 
