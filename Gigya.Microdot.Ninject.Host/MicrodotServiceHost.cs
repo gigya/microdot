@@ -83,6 +83,19 @@ namespace Gigya.Microdot.Ninject.Host
         }
 
         /// <summary>
+        /// Used to initialize service dependencies. This method is called before OnInitialize(), 
+        /// and should include common behaviour for a family of services. 
+        /// When overriden on the family services base, it is recommended to mark it as sealed, 
+        /// to prevent concrete services from overriding the common behaviour. 
+        /// </summary>
+        /// <param name="kernel"></param>
+        protected virtual void PreInitialize(IKernel kernel)
+        {
+            var metricsInitializer = kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
+        }
+
+        /// <summary>
         /// Extensibility point - this method is called after the Kernel is configured and before service starts
         /// processing incoming request.
         /// </summary>

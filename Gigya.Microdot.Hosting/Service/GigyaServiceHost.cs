@@ -28,9 +28,8 @@ using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.SharedLogic;
-using Ninject;
+
 
 [assembly: InternalsVisibleTo("LINQPadQuery")]
 
@@ -177,19 +176,6 @@ namespace Gigya.Microdot.Hosting.Service
                     Console.ReadKey(true);
                 }
             }
-        }
-
-        /// <summary>
-        /// Used to initialize service dependencies. This method is called before OnInitialize(), 
-        /// and should include common behaviour for a family of services. 
-        /// When overriden on the family services base, it is recommended to mark it as sealed, 
-        /// to prevent concrete services from overriding the common behaviour. 
-        /// </summary>
-        /// <param name="kernel"></param>
-        protected virtual void PreInitialize(IKernel kernel)
-        {
-            var metricsInitializer = kernel.TryGet<IMetricsInitializer>();
-            metricsInitializer?.Init();
         }
 
         /// <summary>

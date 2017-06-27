@@ -6,7 +6,7 @@ using Metrics;
 
 namespace Gigya.Microdot.Fakes
 {
-    public class MetricsInitializerFake : IMetricsInitializer
+    public sealed class MetricsInitializerFake : IMetricsInitializer
     {
 
         public void Init()
@@ -18,7 +18,7 @@ namespace Gigya.Microdot.Fakes
             }, true);
         }
 
-        public void Shutdown()
+        public void Dispose()
         {
             try
             {
@@ -43,9 +43,5 @@ namespace Gigya.Microdot.Fakes
             Log = log;
         }
 
-        public void Dispose()
-        {
-            MetricsConfig?.Dispose();
-        }
     }
 }

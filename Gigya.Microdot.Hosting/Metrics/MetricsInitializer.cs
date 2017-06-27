@@ -12,8 +12,9 @@ using Metrics.Logging;
 
 namespace Gigya.Microdot.Hosting.Metrics
 {
-    public class MetricsInitializer : IMetricsInitializer
+    public sealed class MetricsInitializer : IMetricsInitializer
     {
+        private bool _disposed;
         public MetricsConfig MetricsConfig { get; private set; }
         private IMetricsSettings MetricsSettings { get; }
         public HealthMonitor HealthMonitor { get; set; }
@@ -67,10 +68,13 @@ namespace Gigya.Microdot.Hosting.Metrics
 
         public void Dispose()
         {
+            if (_disposed)
+                return;
             try
             {
+                _disposed = true;
                 MetricsConfig.Dispose();
-                HealthMonitor.Dispose();
+                HealthMonitor.Dispose();                
             }
             catch (AggregateException ae)
             {

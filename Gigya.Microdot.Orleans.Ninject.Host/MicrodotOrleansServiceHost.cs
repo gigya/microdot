@@ -22,6 +22,7 @@
 
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -69,6 +70,19 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             SiloHost = Kernel.Get<GigyaSiloHost>();            
             SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
+        }
+
+        /// <summary>
+        /// Used to initialize service dependencies. This method is called before OnInitialize(), 
+        /// and should include common behaviour for a family of services. 
+        /// When overriden on the family services base, it is recommended to mark it as sealed, 
+        /// to prevent concrete services from overriding the common behaviour. 
+        /// </summary>
+        /// <param name="kernel"></param>
+        protected virtual void PreInitialize(IKernel kernel)
+        {
+            var metricsInitializer = kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
         }
 
         /// <summary>
