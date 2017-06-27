@@ -26,6 +26,7 @@ using System.Linq;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -55,6 +56,7 @@ namespace Gigya.Microdot.Testing
             var locationsParserMock = Substitute.For<IConfigurationLocationsParser>();
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
+            Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
 
             additionalBindings?.Invoke(this);
 
