@@ -1,7 +1,7 @@
 using System;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.Interfaces;
 using Ninject.Activation;
 using Ninject.Modules;
 using Ninject.Syntax;

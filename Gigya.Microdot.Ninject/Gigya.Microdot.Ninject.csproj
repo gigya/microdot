@@ -43,7 +43,6 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ConfigObjectsModule.cs" />
-    <Compile Include="ILoggingModule.cs" />
     <Compile Include="MicrodotConventions.cs" />
     <Compile Include="MicrodotHostingModule.cs" />
     <Compile Include="MicrodotModule.cs" />
@@ -59,6 +58,10 @@
     <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Gigya.Microdot.Ninject.Interfaces\Gigya.Microdot.Ninject.Interfaces.csproj">
+      <Project>{446269a9-6528-4e58-a978-14b190ce8bf7}</Project>
+      <Name>Gigya.Microdot.Ninject.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
       <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>

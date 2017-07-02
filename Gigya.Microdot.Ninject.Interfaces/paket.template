@@ -1,0 +1,10 @@
+type
+	project
+description
+	Interfaces relying on Ninject, part of the Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+licenseUrl
+	https://github.com/gigya/microdot/blob/master/LICENSE.md
+tags
+	gigya microdot microservice microservices

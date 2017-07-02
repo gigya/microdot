@@ -60,6 +60,10 @@
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Gigya.Microdot.Ninject.Interfaces\Gigya.Microdot.Ninject.Interfaces.csproj">
+      <Project>{446269A9-6528-4E58-A978-14B190CE8BF7}</Project>
+      <Name>Gigya.Microdot.Ninject.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
       <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>
