@@ -21,6 +21,7 @@
 #endregion
 
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -74,7 +75,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
-
+            kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
         }
     }
 }
