@@ -51,6 +51,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                     var revokingManager = new FakeRevokingManager();
                     kernel.Rebind<IRevokeListener>().ToConstant(revokingManager);
                     kernel.Rebind<ICacheRevoker>().ToConstant(revokingManager);
+                    kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
                 });            
                 ResolutionRoot = kernel;
             }

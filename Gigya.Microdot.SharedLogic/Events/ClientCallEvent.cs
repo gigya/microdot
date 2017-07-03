@@ -44,6 +44,9 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.targetHost)]
         public string TargetHostName { get; set; }
 
+        [EventField(EventConsts.targetPort)]
+        public int TargetPort { get; set; }
+
         /// <summary>Service method called</summary>
         [EventField(EventConsts.targetMethod)]
         public string TargetMethod { get; set; }

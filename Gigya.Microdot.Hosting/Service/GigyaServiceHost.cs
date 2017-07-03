@@ -30,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic;
 
+
 [assembly: InternalsVisibleTo("LINQPadQuery")]
 
 namespace Gigya.Microdot.Hosting.Service
@@ -38,7 +39,7 @@ namespace Gigya.Microdot.Hosting.Service
     {
         const int WANR_IF_SHUTDOWN_LONGER_THAN_SECS = 10;
 
-        private bool disposed;
+        private bool disposed;        
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -152,6 +153,7 @@ namespace Gigya.Microdot.Hosting.Service
                 var cancelShutdownMonitoring = new CancellationTokenSource();
                 VerifyStuckedShutDown(cancelShutdownMonitoring.Token);
                 OnStop();
+                
                 cancelShutdownMonitoring.Cancel();
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
@@ -175,7 +177,6 @@ namespace Gigya.Microdot.Hosting.Service
                 }
             }
         }
-
 
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
@@ -248,7 +249,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
 
         }
-
+        
 
         protected abstract void OnStart();
         protected abstract void OnStop();
@@ -260,7 +261,7 @@ namespace Gigya.Microdot.Hosting.Service
                 return;
 
             if(disposing)
-            {                
+            {
                 StopEvent.Dispose();
                 WindowsService?.Dispose();
                 MonitoredShutdownProcess?.Dispose();
