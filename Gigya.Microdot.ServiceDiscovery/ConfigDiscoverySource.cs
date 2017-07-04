@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             var hosts = _serviceDiscoveryConfig.Hosts ?? string.Empty;
             var endPoints = hosts.Split(',', '\r', '\n')
                                  .Where(e => !string.IsNullOrWhiteSpace(e))
-                                 .Select(h => new EndPoint { HostName = h.Trim(), Port = _serviceDiscoveryConfig.DefaultPort })
+                                 .Select(CreateEndpoint)
                                  .ToArray();
 
             Log.Debug(_ => _("Loaded RemoteHosts instance. See tags for details.", unencryptedTags: new
@@ -64,6 +64,22 @@ namespace Gigya.Microdot.ServiceDiscovery
             }));
 
             return endPoints;           
+        }
+
+        private EndPoint CreateEndpoint(string host)
+        {
+            var colonIndex = host.IndexOf(":", StringComparison.Ordinal);
+            if (colonIndex > 0)
+            {
+                int port;
+                if (int.TryParse(host.Substring(colonIndex+1), out port))
+                {
+                    var hostName = host.Substring(0, colonIndex);
+                    return new EndPoint {HostName = hostName.Trim(), Port = port};
+                }
+            }
+
+            return new EndPoint {HostName = host.Trim(), Port = _serviceDiscoveryConfig.DefaultPort};
         }
 
 
