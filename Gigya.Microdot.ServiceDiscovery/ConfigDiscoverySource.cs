@@ -68,18 +68,22 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private EndPoint CreateEndpoint(string host)
         {
-            var colonIndex = host.IndexOf(":", StringComparison.Ordinal);
-            if (colonIndex > 0)
-            {
-                int port;
-                if (int.TryParse(host.Substring(colonIndex+1), out port))
-                {
-                    var hostName = host.Substring(0, colonIndex);
-                    return new EndPoint {HostName = hostName.Trim(), Port = port};
-                }
-            }
+            var parts = host
+                .Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim())
+                .Where(p => string.IsNullOrEmpty(p) == false)
+                .ToArray();
 
-            return new EndPoint {HostName = host.Trim(), Port = _serviceDiscoveryConfig.DefaultPort};
+            if (parts.Length > 2)
+                throw new ArgumentException("Host name must contain at most one colon (:).", nameof(host));
+
+            var endpoint = new EndPoint
+            {
+                Port = parts.Length == 2 ? int.Parse(parts[1]) : _serviceDiscoveryConfig.DefaultPort,
+                HostName = parts[0]
+            };
+
+            return endpoint;
         }
 
 
