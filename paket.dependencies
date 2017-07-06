@@ -13,7 +13,7 @@ nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
 nuget System.ComponentModel.Annotations
 nuget System.Collections.Immutable
-nuget DataAnnotationsValidator
+nuget DataAnnotationsValidator 1.0.0.1
 
 # Orleans
 nuget Microsoft.Orleans.Core  1.3.1
