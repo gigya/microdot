@@ -1,7 +1,9 @@
 # Microdot Framework  
-## Easily create .NET Microservices with Orleans  
+## Easily create .NET Microservices
    
 The Microdot framework helps you to create scalable and reliable microservices (a ["microservice chassis"](http://microservices.io/patterns/microservice-chassis.html)), allowing you to focus on writing code that defines the logic of your service without the need to tackle the myriad of challenges of developing a distributed system. 
+
+Microdot also plays nicely with the [Orleans](https://dotnet.github.io/orleans/) virtual actors framework, allowing you to easily write Orleans based microservices. 
 
 Microdot implements and supports many established Microservice-related patterns. Below is a comprehensive diagram created by Chris Richardson of [Microservices.io](http://Microservices.io), with added color highlights to show which parts are implemented in Microdot (yellow), which are planned to be implemented (purple) and which patterns are not implemented but can be easily incorporated (blue).
 
