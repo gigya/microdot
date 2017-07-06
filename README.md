@@ -1,6 +1,21 @@
 # Microdot Framework  
-## Easily create .NET Microservices
+## An open source .NET microservices framework
    
+Microdot is an open source .NET framework that answers a lot of the needs for easily creating microservices.
+
+Some of its main features:
+* **Service container** for hosting a microservice
+* **Inter-service RPC** for easy interface-based service communication
+* **Client-side transparent response caching** between services
+* **Logging and Distributed Tracing** support
+* **Client-side load balancing** and service discovery
+* **Detailed health Checks** for easy service monitoring
+* **Hierarchical configuration system** with online change detection
+* **Dependency injection** as first-classs citizen
+* **Orleans integration** for creating Orleans based services and enjoying the benefits of virtual actors
+
+## Details ##
+
 The Microdot framework helps you to create scalable and reliable microservices (a ["microservice chassis"](http://microservices.io/patterns/microservice-chassis.html)), allowing you to focus on writing code that defines the logic of your service without the need to tackle the myriad of challenges of developing a distributed system. 
 
 Microdot also plays nicely with the [Orleans](https://dotnet.github.io/orleans/) virtual actors framework, allowing you to easily write Orleans based microservices. 
