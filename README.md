@@ -14,6 +14,8 @@ Some of its main features:
 * **Dependency injection** as first-classs citizen
 * **Orleans integration** for creating Orleans based services and enjoying the benefits of virtual actors
 
+Read on for an overview of the framework, and check the [wiki](https://github.com/gigya/microdot/wiki) for more details and a tutorial for building your first service.
+
 ## Details ##
 
 The Microdot framework helps you to create scalable and reliable microservices (a ["microservice chassis"](http://microservices.io/patterns/microservice-chassis.html)), allowing you to focus on writing code that defines the logic of your service without the need to tackle the myriad of challenges of developing a distributed system. 
