@@ -45,15 +45,13 @@ namespace Gigya.Microdot.Configuration
             Log = log;
             ConfigChangedBroadcastBlock = new BroadcastBlock<ConfigItemsCollection>(null);
 
-            watcher.DataChanges.LinkTo(new ActionBlock<bool>(Refresh));
+            watcher.DataChanges.LinkTo(new ActionBlock<bool>(nothing => Refresh(nothing)));
 
-            //Fail fast on startup
-            LatestConfig = Source.GetConfiguration().ConfigureAwait(false).GetAwaiter().GetResult();
-            ConfigChangedBroadcastBlock.Post(LatestConfig);
+            Refresh(true, false).GetAwaiter().GetResult();
         }
 
 
-        private async Task Refresh(bool nothing)
+        private async Task Refresh(bool nothing, bool catchExceptions=true)
         {
             //Prevents faulting of action block
             try
@@ -61,10 +59,10 @@ namespace Gigya.Microdot.Configuration
                 LatestConfig = await Source.GetConfiguration().ConfigureAwait(false);
                 ConfigChangedBroadcastBlock.Post(LatestConfig);
             }
-            catch(Exception ex)
+            catch(Exception ex) when(catchExceptions)
             {
                 Log.Warn("Error with Refreshing configuration.", exception: ex);
-            }            
+            }                
         }
 
 
