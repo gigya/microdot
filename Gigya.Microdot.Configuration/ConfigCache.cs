@@ -46,7 +46,10 @@ namespace Gigya.Microdot.Configuration
             ConfigChangedBroadcastBlock = new BroadcastBlock<ConfigItemsCollection>(null);
 
             watcher.DataChanges.LinkTo(new ActionBlock<bool>(Refresh));
-            Refresh(false).GetAwaiter().GetResult();
+
+            //Fail fast on startup
+            LatestConfig = Source.GetConfiguration().ConfigureAwait(false).GetAwaiter().GetResult();
+            ConfigChangedBroadcastBlock.Post(LatestConfig);
         }
 
 
