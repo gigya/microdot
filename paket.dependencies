@@ -6,14 +6,14 @@ content: once
 copy_content_to_output_dir: always
 
 # Misc
-nuget Metrics.NET 
+nuget Metrics.NET ~> 0.0
 nuget Newtonsoft.Json ~> 9.0
-nuget Nito.AsyncEx
+nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
-nuget System.ComponentModel.Annotations
-nuget System.Collections.Immutable
-nuget DataAnnotationsValidator 1.0.0.1
+nuget System.ComponentModel.Annotations ~> 4.0
+nuget System.Collections.Immutable ~> 1.0
+nuget DataAnnotationsValidator ~> 2.0
 
 # Orleans
 nuget Microsoft.Orleans.Core  1.3.1
@@ -34,12 +34,12 @@ nuget Ninject.Extensions.Conventions ~> 3.2 >= 3.2.0
 nuget Castle.Core ~> 3.3 >= 3.3.0.0
 
 #Tests only dependencies
-nuget Ninject.MockingKernel
-nuget Ninject.MockingKernel.NSubstitute
-nuget NUnit
-nuget RichardSzalay.MockHttp 
-nuget NSubstitute
-nuget FluentAssertions
-nuget Nuget.CommandLine
-nuget Shouldly
-nuget NLog
+nuget Ninject.MockingKernel ~> 3.0
+nuget Ninject.MockingKernel.NSubstitute ~> 3.0
+nuget NUnit ~> 3.0
+nuget RichardSzalay.MockHttp ~> 1.0
+nuget NSubstitute ~> 1.0
+nuget FluentAssertions ~> 4.0
+nuget Nuget.CommandLine ~> 4.0
+nuget Shouldly ~> 2.0
+nuget NLog ~> 4.0
