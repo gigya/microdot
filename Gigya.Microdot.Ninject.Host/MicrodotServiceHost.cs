@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Events;
@@ -142,7 +143,8 @@ namespace Gigya.Microdot.Ninject.Host
         /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
         /// method.
         /// </summary>
-        protected override void OnStop()
+        /// <param name="cancelShutdownMonitoring"></param>
+        protected override void OnStop(CancellationTokenSource cancelShutdownMonitoring)
         {
             Listener.Dispose();
         }

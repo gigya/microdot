@@ -90,25 +90,24 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         }
 
-        private async Task OnRevoke(string revokeKey)
+        private Task OnRevoke(string revokeKey)
         {
             if (string.IsNullOrEmpty(revokeKey))
             {
                 Log.Warn("Error while revoking cache, revokeKey can't be null");
-                return;
+                return Task.FromResult(false);
             }
 
             try
-            {
-                HashSet<string> cacheKeys;
-                if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out cacheKeys))
+            {                 
+                if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out HashSet<string>  cacheKeys))
                 {
                     lock (cacheKeys)
                     {
                         var arrayOfCacheKeys = cacheKeys.ToArray();// To prevent iteration over modified collection.
                         foreach (var cacheKey in arrayOfCacheKeys)
                         {
-                            var removed = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                            
+                            var unused = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                            
                         }
                     }
                     Revokes.Meter("Succeeded", Unit.Events).Mark();
@@ -123,6 +122,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 Revokes.Meter("Failed", Unit.Events).Mark();
                 Log.Warn("error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
             }
+            return Task.FromResult(true);
         }
 
 
@@ -158,22 +158,22 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string[] metricsKeys, Type taskResultType)
         {
-            Func<bool, Task<object>> wrappedFactory = async removeOnException =>
+            async Task<object> WrappedFactory(bool removeOnException)
             {
                 try
                 {
                     var result = await factory().ConfigureAwait(false);
                     //Can happen if item removed before task is completed
-                    if (MemoryCache.Contains(key))
+                    if(MemoryCache.Contains(key))
                     {
                         var revocableResult = result as IRevocable;
                         if(revocableResult?.RevokeKeys != null)
                         {
-                            foreach (var revokeKey in revocableResult.RevokeKeys)
+                            foreach(var revokeKey in revocableResult.RevokeKeys)
                             {
                                 var cacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
 
-                                lock (cacheKeys)
+                                lock(cacheKeys)
                                 {
                                     cacheKeys.Add(key);
                                 }
@@ -185,14 +185,14 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 }
                 catch
                 {
-                    if (removeOnException)
+                    if(removeOnException)
                         MemoryCache.Remove(key); // Do not cache exceptions.
 
                     AwaitingResult.Decrement(metricsKeys);
                     Failed.Mark(metricsKeys);
                     throw;
                 }
-            };
+            }
 
             var newItem = new AsyncCacheItem();
 
@@ -214,7 +214,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 {
                     Misses.Mark(metricsKeys);
                     AwaitingResult.Increment(metricsKeys);
-                    newItem.CurrentValueTask = wrappedFactory(true);
+                    newItem.CurrentValueTask = WrappedFactory(true);
                     newItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
                     resultTask = newItem.CurrentValueTask;
                 }
@@ -233,7 +233,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                 {
                                     try
                                     {
-                                        var getNewValue = wrappedFactory(false);
+                                        var getNewValue = WrappedFactory(false);
                                         await getNewValue.ConfigureAwait(false);
                                         existingItem.CurrentValueTask = getNewValue;
                                         existingItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
@@ -269,8 +269,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             {
                 foreach(var revocationKey in ((IRevocable)cachedItem.Result).RevokeKeys)
                 {
-                    HashSet<string> cacheKeys;
-                    if (RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out cacheKeys))
+                    if (RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out HashSet<string> cacheKeys))
                     {
                         lock (cacheKeys)
                         {

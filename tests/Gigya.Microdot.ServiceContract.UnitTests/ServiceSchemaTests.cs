@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Newtonsoft.Json;
 using NUnit.Framework;
+#pragma warning disable 169
 
 namespace Gigya.Common.Contracts.UnitTests
 {
@@ -43,7 +44,7 @@ namespace Gigya.Common.Contracts.UnitTests
     public class SensitiveAttribute : Attribute {}
 
     [HttpService(100, Name = "ServiceName")]
-    interface TestInterface
+    internal interface ITestInterface
     {
         [PublicEndpoint("demo.doSomething")]
         Task DoSomething(int i, double? nd, string s, [Sensitive] Data data);
@@ -56,19 +57,19 @@ namespace Gigya.Common.Contracts.UnitTests
         [Test]
         public void TestSerialization()
         {
-            ServiceSchema schema = new ServiceSchema(new[] { typeof(TestInterface) });
+            ServiceSchema schema = new ServiceSchema(new[] { typeof(ITestInterface) });
             string serialized = JsonConvert.SerializeObject(schema, Formatting.Indented);
             schema = JsonConvert.DeserializeObject<ServiceSchema>(serialized);
 
             Assert.IsTrue(schema.Interfaces.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Name == typeof(TestInterface).FullName);
+            Assert.IsTrue(schema.Interfaces[0].Name == typeof(ITestInterface).FullName);
             Assert.IsTrue(schema.Interfaces[0].Attributes.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Attributes[0].Attribute is HttpServiceAttribute);
             Assert.IsTrue(schema.Interfaces[0].Attributes[0].TypeName == typeof(HttpServiceAttribute).AssemblyQualifiedName);
             Assert.IsTrue((schema.Interfaces[0].Attributes[0].Attribute as HttpServiceAttribute).BasePort == 100);
             Assert.IsTrue((schema.Interfaces[0].Attributes[0].Attribute as HttpServiceAttribute).Name == "ServiceName");
             Assert.IsTrue(schema.Interfaces[0].Methods.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Name == nameof(TestInterface.DoSomething));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Name == nameof(ITestInterface.DoSomething));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes[0].Attribute is PublicEndpointAttribute);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes[0].TypeName == typeof(PublicEndpointAttribute).AssemblyQualifiedName);

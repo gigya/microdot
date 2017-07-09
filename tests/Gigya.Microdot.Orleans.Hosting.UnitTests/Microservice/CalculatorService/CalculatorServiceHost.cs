@@ -71,10 +71,5 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             return LoggingModule;
         }
-
-        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
-        {
-
-        }
     }
 }

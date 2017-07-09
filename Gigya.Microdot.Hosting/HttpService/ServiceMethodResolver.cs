@@ -87,10 +87,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             if (string.IsNullOrEmpty(target.TypeName) || string.IsNullOrEmpty(target.MethodName) || target.ParameterTypes == null)
 				throw new ArgumentException("The specified invocation target is invalid.", nameof(target));
 
-			ServiceMethod method;
-			MethodCache.TryGetValue(target, out method);
+            MethodCache.TryGetValue(target, out ServiceMethod method);
 
-			if (method == null)
+            if (method == null)
 				throw new MissingMethodException("The specified request contains an unrecognized interface name, method name or method overload.");
 
 			return method;

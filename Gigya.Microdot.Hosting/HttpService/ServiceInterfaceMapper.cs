@@ -32,8 +32,10 @@ namespace Gigya.Microdot.Hosting.HttpService
     /// Base implementation of IServiceInterfaceMapper
     /// </summary>
     public abstract class ServiceInterfaceMapper : IServiceInterfaceMapper
-    {  
-        public virtual IEnumerable<Type> ServiceInterfaceTypes { get; protected set; }
+    {
+        protected IEnumerable<Type> _serviceInterfaceTypes;
+
+        public virtual IEnumerable<Type> ServiceInterfaceTypes => _serviceInterfaceTypes;
 
         public Type HealthStatusServiceType { get; set; }
 

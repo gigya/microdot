@@ -102,6 +102,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
         public MyException(int error, string message = null, Exception innerException = null) : base( message, error, innerException) { }
 
-        protected MyException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+        protected MyException(SerializationInfo info, StreamingContext context) : base(info, context) { }        
     }
 }

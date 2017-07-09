@@ -23,6 +23,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
