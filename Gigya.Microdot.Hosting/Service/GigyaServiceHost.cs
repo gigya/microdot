@@ -30,13 +30,20 @@ using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic;
 using TimeoutException = System.TimeoutException;
 
+
 [assembly: InternalsVisibleTo("LINQPadQuery")]
 
 namespace Gigya.Microdot.Hosting.Service
 {
     public abstract class GigyaServiceHost : IDisposable
     {
+<<<<<<< HEAD
         private bool disposed;
+=======
+        const int WANR_IF_SHUTDOWN_LONGER_THAN_SECS = 10;
+
+        private bool disposed;        
+>>>>>>> develop
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -147,10 +154,18 @@ namespace Gigya.Microdot.Hosting.Service
                 StopEvent.WaitOne();
 
                 Console.WriteLine("   ***   Shutting down...   ***   ");
+<<<<<<< HEAD
                 var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 cts.Token.Register(() => throw new TimeoutException("Shutdown took more that 10 seconds."));
                 OnStop(cts);
        
+=======
+                var cancelShutdownMonitoring = new CancellationTokenSource();
+                VerifyStuckedShutDown(cancelShutdownMonitoring.Token);
+                OnStop();
+                
+                cancelShutdownMonitoring.Cancel();
+>>>>>>> develop
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
 
@@ -173,7 +188,6 @@ namespace Gigya.Microdot.Hosting.Service
                 }
             }
         }
-
 
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
@@ -248,7 +262,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
 
         }
-
+        
 
         protected abstract void OnStart();
         protected abstract void OnStop(CancellationTokenSource cancelShutdownMonitoring);
@@ -260,7 +274,7 @@ namespace Gigya.Microdot.Hosting.Service
                 return;
 
             if(disposing)
-            {                
+            {
                 StopEvent.Dispose();
                 WindowsService?.Dispose();
                 MonitoredShutdownProcess?.Dispose();

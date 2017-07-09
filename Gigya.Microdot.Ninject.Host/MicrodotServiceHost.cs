@@ -24,6 +24,7 @@ using System;
 using System.Threading;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
@@ -75,10 +76,24 @@ namespace Gigya.Microdot.Ninject.Host
 
             Configure(Kernel, Kernel.Get<BaseCommonConfig>());
 
+            PreInitialize(Kernel);
             OnInitilize(Kernel);
 
             Listener = Kernel.Get<HttpServiceListener>();
             Listener.Start();
+        }
+
+        /// <summary>
+        /// Used to initialize service dependencies. This method is called before OnInitialize(), 
+        /// and should include common behaviour for a family of services. 
+        /// When overriden on the family services base, it is recommended to mark it as sealed, 
+        /// to prevent concrete services from overriding the common behaviour. 
+        /// </summary>
+        /// <param name="kernel"></param>
+        protected virtual void PreInitialize(IKernel kernel)
+        {
+            var metricsInitializer = kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
         }
 
         /// <summary>
@@ -126,8 +141,7 @@ namespace Gigya.Microdot.Ninject.Host
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
         }
-        
-        
+
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started. You must bind an implementation to the
@@ -147,6 +161,7 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStop(CancellationTokenSource cancelShutdownMonitoring)
         {
             Listener.Dispose();
+            Kernel.Dispose();
         }
     }
 }

@@ -45,11 +45,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-               // Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
-                kernel = new TestingKernel<ConsoleLog>(k =>  {
+                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
+                kernel = new TestingKernel<ConsoleLog>((kernel) =>
                     var revokingManager = new FakeRevokingManager();
-                    k.Rebind<IRevokeListener>().ToConstant(revokingManager);
-                    k.Rebind<ICacheRevoker>().ToConstant(revokingManager);
+                    kernel.Rebind<IRevokeListener>().ToConstant(revokingManager);
+                    kernel.Rebind<ICacheRevoker>().ToConstant(revokingManager);
+                    kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
                 });            
                 ResolutionRoot = kernel;
             }

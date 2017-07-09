@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -42,8 +43,8 @@ namespace Gigya.Microdot.UnitTests
 
             kernel.Rebind<IEventPublisher>().To<NullEventPublisher>();
             kernel.Rebind<IWorker>().To<WaitingWorker>();
+            kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
 
- 
             kernel.Bind<T>().ToConstant(Substitute.For<T>());
 
             optionalConfigs?.Invoke(kernel);
