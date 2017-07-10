@@ -29,9 +29,6 @@ using Gigya.Microdot.Testing;
 using Ninject.Syntax;
 using NUnit.Framework;
 
-// ReSharper disable once CheckNamespace
-namespace Gigya.Microdot.Orleans.Hosting.UnitTests
-{
     [SetUpFixture]
     public class AssemblyInitialize
     {
@@ -72,4 +69,3 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             kernel.Dispose();
         }
     }
-}

@@ -23,14 +23,10 @@
 using System;
 using NUnit.Framework;
 
-namespace Gigya.Microdot.UnitTests
-{
-    [SetUpFixture]
+[SetUpFixture]
     public class AssemblyInitialize
     {
-
-
-        [OneTimeSetUp]
+       [OneTimeSetUp]
         public void SetUp()
         {
             try
@@ -38,15 +34,12 @@ namespace Gigya.Microdot.UnitTests
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
-
             }
             catch(Exception ex)
             {
                 Console.Write(ex);
                 throw;
             }
-        
         }
 
     }
-}
