@@ -276,7 +276,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             cacheKeys.Remove(arguments.CacheItem.Key);
                             if (!cacheKeys.Any())
                             {
-                                RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out cacheKeys);
+                                RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out _);
                             }
                         }
                     }

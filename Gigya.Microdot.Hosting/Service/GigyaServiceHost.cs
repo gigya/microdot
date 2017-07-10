@@ -28,7 +28,6 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic;
-using TimeoutException = System.TimeoutException;
 
 
 [assembly: InternalsVisibleTo("LINQPadQuery")]
@@ -147,11 +146,9 @@ namespace Gigya.Microdot.Hosting.Service
                 ServiceStartedEvent.SetResult(null);
                 StopEvent.WaitOne();
 
-                Console.WriteLine("   ***   Shutting down...   ***   ");
-                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                cts.Token.Register(() => throw new TimeoutException("Shutdown took more that 10 seconds."));
-                OnStop(cts);
-       
+                Console.WriteLine("   ***   Shutting down...   ***   ");                
+                Task.Run(() => OnStop()).Wait(TimeSpan.FromSeconds(10));
+             
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
 
@@ -236,10 +233,8 @@ namespace Gigya.Microdot.Hosting.Service
             WindowsService.RequestAdditionalTime(60000);
 
             try
-            {
-                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                cts.Token.Register(() => throw new TimeoutException("Shutdown took more that 10 seconds."));
-                OnStop(cts);
+            {                
+                OnStop();
             }
             catch
             {
@@ -251,7 +246,7 @@ namespace Gigya.Microdot.Hosting.Service
         
 
         protected abstract void OnStart();
-        protected abstract void OnStop(CancellationTokenSource cancelShutdownMonitoring);
+        protected abstract void OnStop();
 
 
         protected virtual void Dispose(bool disposing)
