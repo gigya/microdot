@@ -264,7 +264,10 @@ namespace Gigya.Microdot.ServiceProxy
             try
             {
                 var config = GetConfig();
-                var uri = BuildUri(endpoint, config);
+                var port = GetEffectivePort(endpoint, config);
+                if (port == null)
+                    return false;
+                var uri = BuildUri(endpoint.HostName, port.Value, config);
                 var response = await GetHttpClient(config).GetAsync(uri, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
 
                 return response.Headers.Contains(GigyaHttpHeaders.ServerHostname);
@@ -276,18 +279,16 @@ namespace Gigya.Microdot.ServiceProxy
         }
 
 
-        private string BuildUri(IEndPointHandle endpoint, ServiceDiscoveryConfig config)
+        private string BuildUri(string hostName, int port, ServiceDiscoveryConfig config)
         {
             var useHttps = config.UseHttpsOverride ?? UseHttpsDefault;
             var urlTemplate = useHttps ? "https://{0}:{1}/" : "http://{0}:{1}/";
-            var port = endpoint.Port ?? DefaultPort ?? config.DefaultPort;
-            if (port==null)
-                throw new ConfigurationException("Cannot access service. Service Port not configured. See tags to find missing configuration", unencrypted: new Tags
-                {
-                    {"ServiceName", ServiceName },
-                    {"Required configuration key", $"Discovery.{ServiceName}.DefaultPort"}
-                });
-            return string.Format(urlTemplate, endpoint.HostName, port);
+            return string.Format(urlTemplate, hostName, port);
+        }
+
+        private int? GetEffectivePort(IEndPointHandle endpoint, ServiceDiscoveryConfig config)
+        {
+            return endpoint.Port ?? DefaultPort ?? config.DefaultPort;
         }
 
 
@@ -333,8 +334,15 @@ namespace Gigya.Microdot.ServiceProxy
                 HttpResponseMessage response;
                 IEndPointHandle endPoint = await ServiceDiscovery.GetNextHost(serviceEvent.RequestId).ConfigureAwait(false);
 
+                int? effectivePort = GetEffectivePort(endPoint, config);
+                if (effectivePort == null)
+                    throw new ConfigurationException("Cannot access service. Service Port not configured. See tags to find missing configuration", unencrypted: new Tags {
+                        {"ServiceName", ServiceName },
+                        {"Required configuration key", $"Discovery.{ServiceName}.DefaultPort"}
+                    });
+
                 // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
-                var uri = string.Format(BuildUri(endPoint, config) + ServiceName);
+                var uri = string.Format(BuildUri(endPoint.HostName, effectivePort.Value, config) + ServiceName);
                 if (request.Target.MethodName!=null)
                     uri += $".{request.Target.MethodName}";
                 if (request.Target.Endpoint != null)
@@ -346,12 +354,13 @@ namespace Gigya.Microdot.ServiceProxy
                                   unencryptedTags: new
                                   {
                                       remoteEndpoint = endPoint.HostName,
-                                      remotePort = endPoint.Port ?? DefaultPort,
+                                      remotePort = effectivePort,
                                       remoteServiceName = ServiceName,
                                       remoteMethodName = request.Target.MethodName
                                   }));
 
-                    serviceEvent.TargetHostName = endPoint.HostName;                    
+                    serviceEvent.TargetHostName = endPoint.HostName;
+                    serviceEvent.TargetPort = effectivePort.Value;
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
                     httpContent.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
 

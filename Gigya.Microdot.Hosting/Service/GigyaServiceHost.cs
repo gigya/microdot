@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic;
 using TimeoutException = System.TimeoutException;
 
+
 [assembly: InternalsVisibleTo("LINQPadQuery")]
 
 namespace Gigya.Microdot.Hosting.Service
@@ -174,7 +175,6 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
 
-
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
         /// </summary>
@@ -248,7 +248,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
 
         }
-
+        
 
         protected abstract void OnStart();
         protected abstract void OnStop(CancellationTokenSource cancelShutdownMonitoring);
@@ -260,7 +260,7 @@ namespace Gigya.Microdot.Hosting.Service
                 return;
 
             if(disposing)
-            {                
+            {
                 StopEvent.Dispose();
                 WindowsService?.Dispose();
                 MonitoredShutdownProcess?.Dispose();

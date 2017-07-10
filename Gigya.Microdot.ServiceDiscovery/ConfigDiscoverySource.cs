@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             var hosts = _serviceDiscoveryConfig.Hosts ?? string.Empty;
             var endPoints = hosts.Split(',', '\r', '\n')
                                  .Where(e => !string.IsNullOrWhiteSpace(e))
-                                 .Select(h => new EndPoint { HostName = h.Trim(), Port = _serviceDiscoveryConfig.DefaultPort })
+                                 .Select(CreateEndpoint)
                                  .ToArray();
 
             Log.Debug(_ => _("Loaded RemoteHosts instance. See tags for details.", unencryptedTags: new
@@ -64,6 +64,26 @@ namespace Gigya.Microdot.ServiceDiscovery
             }));
 
             return endPoints;           
+        }
+
+        private EndPoint CreateEndpoint(string host)
+        {
+            var parts = host
+                .Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim())
+                .Where(p => string.IsNullOrEmpty(p) == false)
+                .ToArray();
+
+            if (parts.Length > 2)
+                throw new ArgumentException("Host name must contain at most one colon (:).", nameof(host));
+
+            var endpoint = new EndPoint
+            {
+                Port = parts.Length == 2 ? int.Parse(parts[1]) : _serviceDiscoveryConfig.DefaultPort,
+                HostName = parts[0]
+            };
+
+            return endpoint;
         }
 
 
