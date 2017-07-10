@@ -39,8 +39,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         {
             get
             {
-                T item;
-                TryGetValue(key, out item);
+                TryGetValue(key, out T item);
                 return item;
             }
         }

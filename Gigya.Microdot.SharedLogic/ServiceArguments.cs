@@ -111,7 +111,7 @@ namespace Gigya.Microdot.SharedLogic
             ApplyDefaults();
         }
 
-        private static int? TryParseInt(string str) { int val; return int.TryParse(str, out val) ? (int?)val : null; }
+        private static int? TryParseInt(string str) { return int.TryParse(str, out int val) ? (int?)val : null; }
 
 
         private void ApplyDefaults()
@@ -182,7 +182,7 @@ namespace Gigya.Microdot.SharedLogic
 
 
     /// <summary>
-    /// Specifies how to start a <see cref="GigyaServiceHost"/>.
+    /// Specifies how to start a host
     /// </summary>
     public enum ServiceStartupMode
     {

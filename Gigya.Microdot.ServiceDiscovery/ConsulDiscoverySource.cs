@@ -138,11 +138,11 @@ namespace Gigya.Microdot.ServiceDiscovery
                 {
                     {"requestedService", DeploymentName},
                     {"consulAddress", ConsulClient?.ConsulAddress?.ToString()},
-                    { "requestTime", endPointsResult?.RequestDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") },
-                    { "requestLog", endPointsResult?.RequestLog },
-                    { "responseLog", endPointsResult?.ResponseLog },
+                    { "requestTime", endPointsResult.RequestDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") },
+                    { "requestLog", endPointsResult.RequestLog },
+                    { "responseLog", endPointsResult.ResponseLog },
                     { "queryDefined", endPointsResult.IsQueryDefined.ToString() },
-                    { "consulError", endPointsResult?.Error?.ToString() }
+                    { "consulError", endPointsResult.Error?.ToString() }
                 };
 
                 if (_lastConsulResult == null)

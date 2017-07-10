@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Fakes
     /// <summary>
     /// Log used in conjunction with ServiceTester class to send logs across app domains.
     /// </summary>
-    public class HttpLog : FakeLog
+    public sealed class HttpLog : FakeLog,IDisposable
     {
         private readonly HttpClient httpClient = new HttpClient();
 
@@ -72,6 +72,11 @@ namespace Gigya.Microdot.Fakes
             httpClient.PostAsync(HttpLogUrl, new StringContent($"{AppDomain.CurrentDomain.FriendlyName}: {str}"));
 
             return Task.FromResult(true);
-        }        
+        }
+
+        public void Dispose()
+        {
+            httpClient.Dispose();
+        }
     }
 }

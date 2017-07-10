@@ -64,7 +64,7 @@ namespace Gigya.Microdot.SharedLogic {
 
 	    static CurrentApplicationInfo()
 		{
-            OsUser = WindowsIdentity.GetCurrent()?.Name;
+            OsUser = WindowsIdentity.GetCurrent().Name;
 		    InfraVersion = typeof(CurrentApplicationInfo).Assembly.GetName().Version;
             Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
 			HostName = Dns.GetHostName();

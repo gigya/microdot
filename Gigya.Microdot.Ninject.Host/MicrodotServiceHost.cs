@@ -155,7 +155,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <summary>
         /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
         /// method.
-        /// </summary>
+        /// </summary>        
         protected override void OnStop()
         {
             Listener.Dispose();

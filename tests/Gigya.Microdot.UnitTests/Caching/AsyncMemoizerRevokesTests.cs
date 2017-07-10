@@ -24,7 +24,6 @@ namespace Gigya.Microdot.UnitTests.Caching
     {
         private const string cacheContextName = "AsyncCache";
         private const string memoizerContextName = "AsyncMemoizer";
-#pragma warning disable 4014 "Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call."
 
         private DateTimeFake TimeFake { get; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
 

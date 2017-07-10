@@ -97,7 +97,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public async Task<JObjectWrapper> Add(JObjectWrapper jObjectW)
         {
-            jObjectW.jObject["c"] = jObjectW.jObject["a"].Value<int>() + jObjectW.jObject["b"].Value<int>();
+            jObjectW.JObject["c"] = jObjectW.JObject["a"].Value<int>() + jObjectW.JObject["b"].Value<int>();
             return jObjectW;
         }
 

@@ -39,7 +39,7 @@ namespace Gigya.Microdot.Configuration
     public class EnvironmentVariablesFileReader
     {
         private const string GIGYA_ENV_VARS_FILE = "GIGYA_ENVVARS_FILE";
-        private const string ENV_FILEPATH = @"{0}/gigya/environmentVariables.json";
+        private const string ENV_FILEPATH = "{0}/gigya/environmentVariables.json";
         private readonly string locEnvFilePath;
 
         private IEnvironment Environment { get; }

@@ -1,5 +1,5 @@
 using System;
-using Newtonsoft.Json;
+
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

@@ -74,21 +74,19 @@ namespace System.Reflection.DispatchProxy
 		{
 			lock (s_baseTypeAndInterfaceToGeneratedProxyType)
 			{
-				Dictionary<Type, Type> interfaceToProxy = null;
-				if (!s_baseTypeAndInterfaceToGeneratedProxyType.TryGetValue(baseType, out interfaceToProxy))
-				{
-					interfaceToProxy = new Dictionary<Type, Type>();
-					s_baseTypeAndInterfaceToGeneratedProxyType[baseType] = interfaceToProxy;
-				}
+                if (!s_baseTypeAndInterfaceToGeneratedProxyType.TryGetValue(baseType, out Dictionary<Type, Type> interfaceToProxy))
+                {
+                    interfaceToProxy = new Dictionary<Type, Type>();
+                    s_baseTypeAndInterfaceToGeneratedProxyType[baseType] = interfaceToProxy;
+                }
 
-				Type generatedProxy = null;
-				if (!interfaceToProxy.TryGetValue(interfaceType, out generatedProxy))
-				{
-					generatedProxy = GenerateProxyType(baseType, interfaceType);
-					interfaceToProxy[interfaceType] = generatedProxy;
-				}
+                if (!interfaceToProxy.TryGetValue(interfaceType, out Type generatedProxy))
+                {
+                    generatedProxy = GenerateProxyType(baseType, interfaceType);
+                    interfaceToProxy[interfaceType] = generatedProxy;
+                }
 
-				return generatedProxy;
+                return generatedProxy;
 			}
 		}
 
@@ -479,10 +477,8 @@ namespace System.Reflection.DispatchProxy
 
 				// packed[PackedArgs.DeclaringTypePosition] = typeof(iface);
 				MethodInfo Type_GetTypeFromHandle = typeof(Type).GetRuntimeMethod("GetTypeFromHandle", new Type[] { typeof(RuntimeTypeHandle) });
-				int methodToken;
-				Type declaringType;
-				_assembly.GetTokenForMethod(mi, out declaringType, out methodToken);
-				packedArr.BeginSet(PackedArgs.DeclaringTypePosition);
+                _assembly.GetTokenForMethod(mi, out Type declaringType, out int methodToken);
+                packedArr.BeginSet(PackedArgs.DeclaringTypePosition);
 				il.Emit(OpCodes.Ldtoken, declaringType);
 				il.Emit(OpCodes.Call, Type_GetTypeFromHandle);
 				packedArr.EndSet(typeof(object));

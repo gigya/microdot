@@ -124,8 +124,7 @@ namespace Gigya.Microdot.SharedLogic.Logging
         {
             foreach (var tag in tags)
             {
-                string value, suffix;
-                EventFieldFormatter.SerializeFieldValueAndTypeSuffix(tag.Value, out value, out suffix);
+                EventFieldFormatter.SerializeFieldValueAndTypeSuffix(tag.Value, out string value, out string suffix);
                 yield return new KeyValuePair<string, string>(prefix + tag.Key + suffix, value);
             }
         }
