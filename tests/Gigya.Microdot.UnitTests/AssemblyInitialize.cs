@@ -21,23 +21,12 @@
 #endregion
 
 using System;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
-using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.Testing;
-using Ninject.Syntax;
 using NUnit.Framework;
 
-    [SetUpFixture]
+[SetUpFixture]
     public class AssemblyInitialize
     {
-
-        public static IResolutionRoot ResolutionRoot { get; private set; }
-
-        private TestingKernel<ConsoleLog> kernel;
-
-        [OneTimeSetUp]
+       [OneTimeSetUp]
         public void SetUp()
         {
             try
@@ -45,27 +34,12 @@ using NUnit.Framework;
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
-
-                kernel = new TestingKernel<ConsoleLog>((kernel) =>
-                {
-                    var revokingManager = new FakeRevokingManager();
-                    kernel.Rebind<IRevokeListener>().ToConstant(revokingManager);
-                    kernel.Rebind<ICacheRevoker>().ToConstant(revokingManager);
-                    kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
-                });            
-                ResolutionRoot = kernel;
             }
             catch(Exception ex)
             {
                 Console.Write(ex);
                 throw;
             }
-        
         }
 
-        [OneTimeTearDown]
-        public void TearDown()
-        {
-            kernel.Dispose();
-        }
     }

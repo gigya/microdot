@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="Caching\AsyncMemoizerRevokesTests.cs" />
     <Compile Include="Caching\AsyncMemoizerTests.cs" />
     <Compile Include="Caching\CachingProxyTests.cs" />
