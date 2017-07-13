@@ -25,7 +25,7 @@ using System.Diagnostics;
 
 namespace Gigya.Microdot.SharedLogic.Measurement
 {
-    public class CustomTimings:IDisposable
+    public sealed class CustomTimings:IDisposable
     {
         readonly Stopwatch Stopwatch;
 
@@ -39,15 +39,14 @@ namespace Gigya.Microdot.SharedLogic.Measurement
         {
             GroupName=groupName;
             MeasurementName = measurementName;
-            Stopwatch = new Stopwatch();
-            Stopwatch.Start();
+            Stopwatch = Stopwatch.StartNew();
         }
 
 
-        protected string MeasurementName { get; set; }
+        private string MeasurementName { get;  }
 
 
-        protected string GroupName { get; set; }
+        private string GroupName { get; }
 
         /// <summary>
         /// This static used to measure via using pattern like: using(Report(groupName,measurementName))

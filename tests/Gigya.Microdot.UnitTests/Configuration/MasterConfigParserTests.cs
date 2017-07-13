@@ -120,9 +120,8 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
 
             environmentVariableProvider.GetEnvironmentVariable(Arg.Any<string>()).Returns(key =>  {
-                                                                             string val;
-                                                                             envDictionary.TryGetValue(key.Arg<string>(), out val);
-                                                                             return val;
+                envDictionary.TryGetValue(key.Arg<string>(), out string val);
+                return val;
                                                                          });
 
             var configs = new ConfigurationLocationsParser(environment, _fileSystem, environmentVariableProvider);

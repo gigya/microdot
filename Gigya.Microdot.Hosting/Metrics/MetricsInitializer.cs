@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Metrics.Logging;
+using ILog = Gigya.Microdot.Interfaces.Logging.ILog;
 
 namespace Gigya.Microdot.Hosting.Metrics
 {

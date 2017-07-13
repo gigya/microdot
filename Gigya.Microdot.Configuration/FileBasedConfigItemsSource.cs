@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -210,8 +209,7 @@ namespace Gigya.Microdot.Configuration
                 Value = value
             };
 
-            ConfigItem old;
-            conf.TryGetValue(key, out old);
+            conf.TryGetValue(key, out ConfigItem old);
             if (old == null)
             {
                 var configItem = new ConfigItem { Key = key, Value = value, Priority = priority, Node = node };

@@ -137,8 +137,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private void QueryIsOk(string consulQuery, string serviceName, bool queryExists)
         {
-            Exception e;
-            _failedQueries.TryRemove(consulQuery, out e);
+            _failedQueries.TryRemove(consulQuery, out Exception _);
             _existingServices.AddOrUpdate(serviceName, queryExists, (_,__)=>queryExists);
         }
 

@@ -369,7 +369,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             return new EndPoint[0];
         }
 
-        public bool AlwaysThrowException;
+        public bool AlwaysThrowException=false;
 
         public override bool IsServiceDeploymentDefined { get; } = true;
         public override Exception AllEndpointsUnreachable(EndPointsResult endpointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)

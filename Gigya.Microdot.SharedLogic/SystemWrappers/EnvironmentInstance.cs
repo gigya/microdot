@@ -30,7 +30,7 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         public EnvironmentInstance()
         {
             PlatformID = Environment.OSVersion.Platform;
-            PlatformSpecificPathPrefix = PlatformID == PlatformID.Unix ? "/etc" : @"D:";
+            PlatformSpecificPathPrefix = PlatformID == PlatformID.Unix ? "/etc" : "D:";
         }
 
         public PlatformID PlatformID { get; }

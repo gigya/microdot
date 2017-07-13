@@ -22,7 +22,6 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.ServiceProcess;
@@ -37,9 +36,7 @@ namespace Gigya.Microdot.Hosting.Service
 {
     public abstract class GigyaServiceHost : IDisposable
     {
-        const int WANR_IF_SHUTDOWN_LONGER_THAN_SECS = 10;
-
-        private bool disposed;        
+        private bool disposed;
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -47,11 +44,11 @@ namespace Gigya.Microdot.Hosting.Service
         private ManualResetEvent StopEvent { get; }
         private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
-
+        private readonly string _serviceName;
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
-        protected virtual string ServiceName { get; }
+        protected virtual string ServiceName => _serviceName;
 
         protected GigyaServiceHost()
         {
@@ -61,11 +58,11 @@ namespace Gigya.Microdot.Hosting.Service
             StopEvent = new ManualResetEvent(true);
             ServiceStartedEvent = new TaskCompletionSource<object>();
 
-            ServiceName = GetType().Name;
+            _serviceName = GetType().Name;
 
-            // ReSharper disable VirtualMemberCallInConstructor
-            if (ServiceName.EndsWith("Host") && ServiceName.Length > 4)
-                ServiceName = ServiceName.Substring(0, ServiceName.Length - 4);
+         
+            if (_serviceName.EndsWith("Host") && _serviceName.Length > 4)
+                _serviceName = _serviceName.Substring(0, _serviceName.Length - 4);
         }
 
         /// <summary>
@@ -75,6 +72,16 @@ namespace Gigya.Microdot.Hosting.Service
         {
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
             CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName);
+
+            if (Arguments.ProcessorAffinity != null)
+            {
+                int processorAffinityMask = 0;
+
+                foreach (var cpuId in Arguments.ProcessorAffinity)
+                    processorAffinityMask |= 1 << cpuId;
+
+                Process.GetCurrentProcess().ProcessorAffinity = new IntPtr(processorAffinityMask);
+            }
 
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
@@ -149,12 +156,9 @@ namespace Gigya.Microdot.Hosting.Service
                 ServiceStartedEvent.SetResult(null);
                 StopEvent.WaitOne();
 
-                Console.WriteLine("   ***   Shutting down...   ***   ");
-                var cancelShutdownMonitoring = new CancellationTokenSource();
-                VerifyStuckedShutDown(cancelShutdownMonitoring.Token);
-                OnStop();
-                
-                cancelShutdownMonitoring.Cancel();
+                Console.WriteLine("   ***   Shutting down...   ***   ");                
+                Task.Run(() => OnStop()).Wait(TimeSpan.FromSeconds(10));
+             
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
 
@@ -239,7 +243,7 @@ namespace Gigya.Microdot.Hosting.Service
             WindowsService.RequestAdditionalTime(60000);
 
             try
-            {
+            {                
                 OnStop();
             }
             catch
@@ -277,31 +281,6 @@ namespace Gigya.Microdot.Hosting.Service
             GC.SuppressFinalize(this);
         }
 
-
-        // temporary method to detect if we lock up during shutdown (some services were observed to not shut down properly).
-        // since we don't have a logger at that time, we write to a file (nomad does the same when it needs to hard-kill a service).
-        // remove this after Q1 2017 if it never triggers
-        void VerifyStuckedShutDown(CancellationToken cancel)
-        {
-            var shutdownThread = Thread.CurrentThread;
-            Task.Run(async () =>
-            {
-                await Task.Delay(WANR_IF_SHUTDOWN_LONGER_THAN_SECS * 1000);
-                if (!cancel.IsCancellationRequested)
-                    try {
-                        shutdownThread.Suspend();
-                        var message = $"Application stuck during shut down for over {WANR_IF_SHUTDOWN_LONGER_THAN_SECS} seconds! Stack trace:\n";
-                        var stackTrace = new StackTrace(shutdownThread, needFileInfo: true);
-                        File.WriteAllText($"_{CurrentApplicationInfo.Name}_slow_shutdown_{DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss")}.log", message + stackTrace);
-                    }
-                    catch (Exception ex) { }
-                    finally
-                    {
-                        try { shutdownThread.Resume(); }
-                        catch { }
-                    }
-            });
-        }
 
 
         private class DelegatingServiceBase : ServiceBase

@@ -88,7 +88,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
 
         [OnDeserialized]
-        public void OnDeserialized(StreamingContext context)
+        private void OnDeserialized(StreamingContext context)
         {
             DefaultItem = new ServiceDiscoveryConfig
             {

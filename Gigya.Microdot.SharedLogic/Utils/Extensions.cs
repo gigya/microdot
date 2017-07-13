@@ -105,8 +105,7 @@ namespace Gigya.Microdot.SharedLogic.Utils
         {
             var weakRef = new WeakReference<T>(instance);
             return () => {
-                T inst;
-                if (weakRef.TryGetTarget(out inst))
+                if (weakRef.TryGetTarget(out T inst))
                     return getter(inst);
                 else
                     return default(V);

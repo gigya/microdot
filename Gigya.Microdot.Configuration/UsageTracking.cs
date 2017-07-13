@@ -33,8 +33,7 @@ namespace Gigya.Microdot.Configuration
 
         public Type Get(string configKey)
         {
-            Type result;
-            if (_usageTracing.TryGetValue(configKey, out result))
+            if (_usageTracing.TryGetValue(configKey, out Type result))
                 return result;
 
             var kvp = _objectTracking.FirstOrDefault(p => configKey.StartsWith(p.Key));

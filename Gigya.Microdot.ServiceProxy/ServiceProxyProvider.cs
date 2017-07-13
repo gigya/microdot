@@ -374,12 +374,10 @@ namespace Gigya.Microdot.ServiceProxy
                     {
                         serviceEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
                     }
-                    IEnumerable<string> values;
-                    if(response.Headers.TryGetValues(GigyaHttpHeaders.ExecutionTime, out values))
+                    if (response.Headers.TryGetValues(GigyaHttpHeaders.ExecutionTime, out IEnumerable<string> values))
                     {
                         var time = values.FirstOrDefault();
-                        TimeSpan executionTime;
-                        if (TimeSpan.TryParse(time, out executionTime))
+                        if (TimeSpan.TryParse(time, out TimeSpan executionTime))
                         {
                             serviceEvent.ServerTimeMs = executionTime.TotalMilliseconds;
                         }
@@ -539,7 +537,7 @@ namespace Gigya.Microdot.ServiceProxy
             if (disposing)
             {
                 LastHttpClient?.Dispose();
-                _httpMessageHandler?.Dispose();
+                _httpMessageHandler.Dispose();
             }
 
             Disposed = true;

@@ -40,7 +40,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             if (invalidInterfaces.Any())
                 throw new ProgrammaticException("The following service interface types are invalid, please make sure the types specified are interfaces and are decorated with [HttpService] attribute: " + string.Join(", ", invalidInterfaces));
 
-			ServiceInterfaceTypes = serviceInterfaceTypes;
+			_serviceInterfaceTypes = serviceInterfaceTypes;
 
 		    ExtractHealthStatusServiceType(serviceInterfaceTypes);            
 		}

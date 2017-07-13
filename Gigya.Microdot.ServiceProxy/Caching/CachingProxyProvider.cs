@@ -71,8 +71,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod)
         {
-            ServiceDiscoveryConfig config;
-            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out config);
+            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
 
             return config?.CachingPolicy?.Methods?[targetMethod.Name] ?? CachingPolicyConfig.Default;
         }

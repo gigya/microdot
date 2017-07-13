@@ -26,7 +26,7 @@ using Metrics;
 
 namespace Gigya.Microdot.SharedLogic.Monitor
 {
-    public class ComponentHealthMonitor : IDisposable
+    public sealed class ComponentHealthMonitor : IDisposable
     {
         private Func<HealthCheckResult> _healthFunction;
         private Func<Dictionary<string, string>> _getHealthData;
@@ -59,10 +59,7 @@ namespace Gigya.Microdot.SharedLogic.Monitor
 
         public void SetHealthFunction(Func<HealthCheckResult> func)
         {
-            if (func == null)
-                throw new ArgumentNullException(nameof(func));
-
-            _healthFunction = func;
+            _healthFunction = func ?? throw new ArgumentNullException(nameof(func));
         }
 
         private HealthCheckResult CheckFunction()

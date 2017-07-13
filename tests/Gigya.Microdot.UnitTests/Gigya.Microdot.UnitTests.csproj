@@ -17,9 +17,10 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <NoWarn>CS4014;CS1998;</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -42,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="Caching\AsyncMemoizerRevokesTests.cs" />
     <Compile Include="Caching\AsyncMemoizerTests.cs" />
     <Compile Include="Caching\CachingProxyTests.cs" />
@@ -178,6 +180,9 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
+        <Reference Include="System.Data.DataSetExtensions">
+          <Paket>True</Paket>
+        </Reference>
         <Reference Include="DataAnnotationsValidator">
           <HintPath>..\..\packages\DataAnnotationsValidator\lib\net40\DataAnnotationsValidator.dll</HintPath>
           <Private>True</Private>

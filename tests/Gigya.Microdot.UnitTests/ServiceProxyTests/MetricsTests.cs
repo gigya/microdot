@@ -115,7 +115,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 await CreateClient(messageHandler).ToUpper("aaaa");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 var expected = DefaultExpected();
 
