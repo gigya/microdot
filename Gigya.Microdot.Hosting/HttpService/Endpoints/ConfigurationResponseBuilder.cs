@@ -43,6 +43,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         JsonSerializerSettings JsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented};
 
         private UsageTracking UsageTracking { get; }
+        private ServiceArguments ServiceArguments { get; }
         private ConfigCache ConfigCache { get; }
         private IEnvironmentVariableProvider Envs { get; }
         private IAssemblyProvider AssemblyProvider { get; }
@@ -51,9 +52,11 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         public ConfigurationResponseBuilder(ConfigCache configCache,
                                             IEnvironmentVariableProvider envs,
                                             IAssemblyProvider assemblyProvider,
-                                            UsageTracking usageTracking)
+                                            UsageTracking usageTracking,
+                                            ServiceArguments serviceArguments)
         {
             UsageTracking = usageTracking;
+            ServiceArguments = serviceArguments;
             ConfigCache = configCache;
             Envs = envs;
             AssemblyProvider = assemblyProvider;
@@ -68,6 +71,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 EnvironmentVariables = GetEnvironmentVariables(),
                 AssemblyVersions = GetAssemblyVersions(),
                 RuntimeInfo = GetRuntimeInfo(),
+                ServiceArguments = GetServiceArguments(),
                 ConfigurationEntries = GetConfigurationEntries()
             };
 
@@ -109,6 +113,15 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 sb.AppendLine($"{info.Key.PadRight(maxNameLen)} = {info.Value}");
 
 
+            var serviceArguments = GetServiceArguments();
+            maxNameLen = serviceArguments.Keys.Select(k => k.Length).Max();
+
+            sb.AppendLine($"\n\n\n===       Service Arguments (hash {hashes["ServiceArguments"]})        ===\n");
+
+            foreach (var info in serviceArguments)
+                sb.AppendLine($"{info.Key.PadRight(maxNameLen)} = {info.Value}");
+
+
             sb.AppendLine($"\n\n\n===   Configuration Entries (hash {hashes["ConfigurationEntries"]})   ===\n");
 
             var configItems = GetConfigurationEntries();
@@ -129,8 +142,9 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             var env = JsonConvert.SerializeObject(GetEnvironmentVariables()).GetHashCode();
             var ver = JsonConvert.SerializeObject(GetAssemblyVersions()).GetHashCode();
             var runtime = JsonConvert.SerializeObject(GetRuntimeInfo()).GetHashCode();
+            var arguments = JsonConvert.SerializeObject(GetServiceArguments()).GetHashCode();
             var config = JsonConvert.SerializeObject(GetConfigurationEntries()).GetHashCode();
-            var all = ((env * 397 ^ ver) * 397 ^ runtime) * 397 ^ config;
+            var all = (((env * 397 ^ ver) * 397 ^ runtime) * 397 ^ arguments) * 397 ^ config;
 
             return new Dictionary<string, int>
             {
@@ -138,6 +152,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 { "EnvironmentVariables", env },
                 { "AssemblyVersions", ver },
                 { "RuntimeInfo", runtime },
+                { "ServiceArguments", arguments },
                 { "ConfigurationEntries", config }
             };
         }
@@ -205,6 +220,30 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 { "DefaultConnectionLimit", ServicePointManager.DefaultConnectionLimit.ToString() },
                 { "SecurityProtocol", ServicePointManager.SecurityProtocol.ToString() }
             };
+        }
+
+        private Dictionary<string, string> GetServiceArguments()
+        {
+            var dict = new Dictionary<string, string>();
+
+            foreach (var property in typeof(ServiceArguments).GetProperties())
+            {
+                var value = property.GetValue(ServiceArguments);
+
+                if (value != null && property.PropertyType.IsArray)
+                {
+                    var untypedArray = (Array)value;
+                    var typedArray = new object[untypedArray.Length];
+                    untypedArray.CopyTo(typedArray, 0);
+                    dict[property.Name] = string.Join(",", typedArray);
+                }
+                else
+                {
+                    dict[property.Name] = value?.ToString() ?? "<null>";
+                }
+            }
+
+            return dict;
         }
 
 
