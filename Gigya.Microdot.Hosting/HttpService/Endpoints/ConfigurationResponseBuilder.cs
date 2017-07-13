@@ -71,6 +71,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 EnvironmentVariables = GetEnvironmentVariables(),
                 AssemblyVersions = GetAssemblyVersions(),
                 RuntimeInfo = GetRuntimeInfo(),
+                ServiceArguments = GetServiceArguments(),
                 ConfigurationEntries = GetConfigurationEntries()
             };
 
