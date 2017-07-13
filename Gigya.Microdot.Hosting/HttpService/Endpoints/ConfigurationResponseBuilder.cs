@@ -144,7 +144,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             var runtime = JsonConvert.SerializeObject(GetRuntimeInfo()).GetHashCode();
             var arguments = JsonConvert.SerializeObject(GetServiceArguments()).GetHashCode();
             var config = JsonConvert.SerializeObject(GetConfigurationEntries()).GetHashCode();
-            var all = ((env * 397 ^ ver) * 397 ^ runtime) * 397 ^ config;
+            var all = (((env * 397 ^ ver) * 397 ^ runtime) * 397 ^ arguments) * 397 ^ config;
 
             return new Dictionary<string, int>
             {
