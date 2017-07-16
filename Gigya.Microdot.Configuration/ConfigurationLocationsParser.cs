@@ -65,7 +65,8 @@ namespace Gigya.Microdot.Configuration
         public ConfigurationLocationsParser(IEnvironment environment, IFileSystem fileSystemInstance, IEnvironmentVariableProvider environmentVariableProvider)
         {
             AppName = CurrentApplicationInfo.Name;
-   
+            environment.SetEnvironmentVariableForProcess("AppName", CurrentApplicationInfo.Name);
+
             ConfigRoot = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_ROOT);
 
             if (string.IsNullOrEmpty(ConfigRoot))
