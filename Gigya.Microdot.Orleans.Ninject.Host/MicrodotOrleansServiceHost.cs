@@ -34,6 +34,7 @@ using Ninject;
 using Ninject.Syntax;
 using Orleans;
 using Orleans.Runtime.Configuration;
+using Gigya.Microdot.Ninject.Interfaces;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {

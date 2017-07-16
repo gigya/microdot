@@ -24,7 +24,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.Interfaces;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Ninject;
 using Ninject.Syntax;

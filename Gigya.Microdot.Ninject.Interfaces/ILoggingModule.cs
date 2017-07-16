@@ -24,7 +24,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Ninject.Syntax;
 
-namespace Gigya.Microdot.Ninject
+namespace Gigya.Microdot.Ninject.Interfaces
 {
    public interface ILoggingModule
    {

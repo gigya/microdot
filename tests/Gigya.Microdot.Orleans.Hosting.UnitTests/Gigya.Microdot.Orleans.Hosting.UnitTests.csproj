@@ -80,6 +80,10 @@
       <Project>{2865F69B-D847-4901-8945-4941E463F94E}</Project>
       <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Interfaces\Gigya.Microdot.Ninject.Interfaces.csproj">
+      <Project>{446269A9-6528-4E58-A978-14B190CE8BF7}</Project>
+      <Name>Gigya.Microdot.Ninject.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
       <Project>{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}</Project>
       <Name>Gigya.Microdot.Ninject</Name>

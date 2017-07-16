@@ -29,6 +29,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Syntax;
+using Gigya.Microdot.Ninject.Interfaces;
 
 namespace Gigya.Microdot.Ninject.Host
 {
