@@ -70,6 +70,8 @@ namespace Gigya.Microdot.SharedLogic
         /// </summary>
         public int? ShutdownWhenPidExits { get; }
 
+        public int? OnStopWaitTimeMS { get;  }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceArguments"/> class, explicitly specifying the arguments.
         /// Typically used in tests.
@@ -82,7 +84,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? onStopWaitTimeInMs=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -91,6 +93,7 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
+            OnStopWaitTimeMS = onStopWaitTimeInMs;
             ApplyDefaults();
         }
 
@@ -108,6 +111,7 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = ParseStringArg(nameof(InstanceName), args);
             ShutdownWhenPidExits = TryParseInt(ParseStringArg(nameof(ShutdownWhenPidExits), args));
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
+            OnStopWaitTimeMS = TryParseInt(ParseStringArg(nameof(OnStopWaitTimeMS), args));
             ApplyDefaults();
         }
 

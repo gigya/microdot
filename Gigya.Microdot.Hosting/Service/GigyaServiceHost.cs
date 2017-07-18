@@ -37,9 +37,8 @@ namespace Gigya.Microdot.Hosting.Service
 {
     public abstract class GigyaServiceHost : IDisposable
     {
-        const int WANR_IF_SHUTDOWN_LONGER_THAN_SECS = 10;
-
-        private bool disposed;        
+        
+        private bool disposed;
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -149,12 +148,9 @@ namespace Gigya.Microdot.Hosting.Service
                 ServiceStartedEvent.SetResult(null);
                 StopEvent.WaitOne();
 
-                Console.WriteLine("   ***   Shutting down...   ***   ");
-                var cancelShutdownMonitoring = new CancellationTokenSource();
-                VerifyStuckedShutDown(cancelShutdownMonitoring.Token);
-                OnStop();
-                
-                cancelShutdownMonitoring.Cancel();
+                Console.WriteLine("   ***   Shutting down...   ***   ");                
+                Task.Run(() => OnStop()).Wait(TimeSpan.FromMilliseconds(Arguments.OnStopWaitTimeMS ?? 10000));
+             
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
 
@@ -260,12 +256,9 @@ namespace Gigya.Microdot.Hosting.Service
             if (disposed)
                 return;
 
-            if(disposing)
-            {
-                StopEvent.Dispose();
-                WindowsService?.Dispose();
-                MonitoredShutdownProcess?.Dispose();
-            }
+            StopEvent?.Dispose();            
+            WindowsService?.Dispose();
+            MonitoredShutdownProcess?.Dispose();
 
             disposed = true;
         }
