@@ -71,6 +71,11 @@ namespace Gigya.Microdot.SharedLogic
         public int? ShutdownWhenPidExits { get; }
 
         /// <summary>
+        /// Defines wait time before service is stoping, default is 10 seconds.
+        /// </summary>
+        public TimeSpan? OnStopWaitTime { get;  }
+
+        /// <summary>
         /// An array of processor IDs the service should run on, otherwise null if none are is specified. This also affects the degree
         /// or parallism of the underlying runtime (e.g. the number of threads Orleans will be configured with). Mainly used for 
         /// multi-tenant servers where multiple services run, each with dedicated CPU cores.
@@ -89,7 +94,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, TimeSpan? onStopWaitTimeInMs=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -98,6 +103,7 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
+            OnStopWaitTime = onStopWaitTimeInMs;
             ApplyDefaults();
         }
 
@@ -115,9 +121,12 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = ParseStringArg(nameof(InstanceName), args);
             ShutdownWhenPidExits = TryParseInt(ParseStringArg(nameof(ShutdownWhenPidExits), args));
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
+            OnStopWaitTime = TryParseTimeSpan(ParseStringArg(nameof(OnStopWaitTime), args));
             ProcessorAffinity = ParseProcessorIds(ParseStringArg(nameof(ProcessorAffinity), args));
             ApplyDefaults();
         }
+
+        private static TimeSpan? TryParseTimeSpan(string str) { return TimeSpan.TryParse(str, out TimeSpan val) ? (TimeSpan?)val : null; }
 
         private static int? TryParseInt(string str) { return int.TryParse(str, out int val) ? (int?)val : null; }
 
