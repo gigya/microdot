@@ -156,8 +156,8 @@ namespace Gigya.Microdot.Hosting.Service
                 ServiceStartedEvent.SetResult(null);
                 StopEvent.WaitOne();
 
-                Console.WriteLine("   ***   Shutting down...   ***   ");                
-                Task.Run(() => OnStop()).Wait(TimeSpan.FromSeconds(10));
+                Console.WriteLine("   ***   Shutting down...   ***   ");
+                Task.Run(() => OnStop()).Wait(Arguments.OnStopWaitTime ?? TimeSpan.FromSeconds(10));
              
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();
@@ -264,12 +264,9 @@ namespace Gigya.Microdot.Hosting.Service
             if (disposed)
                 return;
 
-            if(disposing)
-            {
-                StopEvent.Dispose();
-                WindowsService?.Dispose();
-                MonitoredShutdownProcess?.Dispose();
-            }
+            StopEvent?.Dispose();            
+            WindowsService?.Dispose();
+            MonitoredShutdownProcess?.Dispose();
 
             disposed = true;
         }
