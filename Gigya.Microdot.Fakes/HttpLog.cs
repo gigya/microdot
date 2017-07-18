@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Fakes
     /// </summary>
     public sealed class HttpLog : FakeLog,IDisposable
     {
-        private readonly HttpClient httpClient = new HttpClient();
+        private HttpClient httpClient = new HttpClient();
 
         private string HttpLogUrl { get; }
         private readonly TraceEventType severityToTrace;
@@ -65,6 +65,9 @@ namespace Gigya.Microdot.Fakes
         protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message,
             IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
         {
+            if(httpClient==null)
+                return Task.FromResult(false);
+
             var str = FormatLogEntry(level, message, encryptedTags.Concat(unencryptedTags)
                                                                  .Where(_ => _.Value != null)
                                                                  .ToList(), exception);
@@ -76,7 +79,8 @@ namespace Gigya.Microdot.Fakes
 
         public void Dispose()
         {
-            httpClient.Dispose();
+            httpClient?.Dispose();
+            httpClient = null;
         }
     }
 }
