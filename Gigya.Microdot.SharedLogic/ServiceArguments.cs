@@ -70,6 +70,9 @@ namespace Gigya.Microdot.SharedLogic
         /// </summary>
         public int? ShutdownWhenPidExits { get; }
 
+        /// <summary>
+        /// Defines wait time before service is stoping, default is 10 seconds.
+        /// </summary>
         public TimeSpan? OnStopWaitTime { get;  }
 
         /// <summary>
