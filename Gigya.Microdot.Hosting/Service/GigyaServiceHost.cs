@@ -156,8 +156,8 @@ namespace Gigya.Microdot.Hosting.Service
                 ServiceStartedEvent.SetResult(null);
                 StopEvent.WaitOne();
 
-                Console.WriteLine("   ***   Shutting down...   ***   ");                
-                Task.Run(() => OnStop()).Wait(TimeSpan.FromMilliseconds(Arguments.OnStopWaitTimeMS ?? 10000));
+                Console.WriteLine("   ***   Shutting down...   ***   ");
+                Task.Run(() => OnStop()).Wait(Arguments.OnStopWaitTime ?? TimeSpan.FromSeconds(10));
              
                 ServiceStartedEvent = new TaskCompletionSource<object>();
                 MonitoredShutdownProcess?.Dispose();

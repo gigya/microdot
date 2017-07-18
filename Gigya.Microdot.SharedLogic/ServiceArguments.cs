@@ -70,7 +70,7 @@ namespace Gigya.Microdot.SharedLogic
         /// </summary>
         public int? ShutdownWhenPidExits { get; }
 
-        public int? OnStopWaitTimeMS { get;  }
+        public TimeSpan? OnStopWaitTime { get;  }
 
         /// <summary>
         /// An array of processor IDs the service should run on, otherwise null if none are is specified. This also affects the degree
@@ -91,7 +91,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? onStopWaitTimeInMs=null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, TimeSpan? onStopWaitTimeInMs=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -100,7 +100,7 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
-            OnStopWaitTimeMS = onStopWaitTimeInMs;
+            OnStopWaitTime = onStopWaitTimeInMs;
             ApplyDefaults();
         }
 
@@ -118,10 +118,12 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = ParseStringArg(nameof(InstanceName), args);
             ShutdownWhenPidExits = TryParseInt(ParseStringArg(nameof(ShutdownWhenPidExits), args));
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
-            OnStopWaitTimeMS = TryParseInt(ParseStringArg(nameof(OnStopWaitTimeMS), args));
+            OnStopWaitTime = TryParseTimeSpan(ParseStringArg(nameof(OnStopWaitTime), args));
             ProcessorAffinity = ParseProcessorIds(ParseStringArg(nameof(ProcessorAffinity), args));
             ApplyDefaults();
         }
+
+        private static TimeSpan? TryParseTimeSpan(string str) { return TimeSpan.TryParse(str, out TimeSpan val) ? (TimeSpan?)val : null; }
 
         private static int? TryParseInt(string str) { return int.TryParse(str, out int val) ? (int?)val : null; }
 

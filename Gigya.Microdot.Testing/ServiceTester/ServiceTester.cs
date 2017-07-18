@@ -60,7 +60,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         private HttpListener LogListener { get; set; }
 
 
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, int? shutdownWaitTime=null)
+        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime=null)
         {
             Log = log;
             ResolutionRoot = resolutionRoot;
@@ -276,7 +276,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary,int? shutdownWaitTime)
+        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary,TimeSpan? shutdownWaitTime)
         {
             if (isSecondary && basePortOverride == null)
                 throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
@@ -380,12 +380,13 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
     public static class ServiceTesterExtensions
     {
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false)
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime=null)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
             ServiceTester<TServiceHost> tester = kernel.Get<ServiceTester<TServiceHost>>(
                 new ConstructorArgument(nameof(basePortOverride), basePortOverride),
-                new ConstructorArgument(nameof(isSecondary), isSecondary));
+                new ConstructorArgument(nameof(isSecondary), isSecondary),
+                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime));
             
             return tester;
         }
