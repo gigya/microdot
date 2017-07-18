@@ -29,13 +29,10 @@ using Gigya.Microdot.Testing;
 using Ninject.Syntax;
 using NUnit.Framework;
 
-// ReSharper disable once CheckNamespace
-namespace Gigya.Microdot.Orleans.Hosting.UnitTests
-{
     [SetUpFixture]
     public class AssemblyInitialize
     {
-    
+
         public static IResolutionRoot ResolutionRoot { get; private set; }
 
         private TestingKernel<ConsoleLog> kernel;
@@ -46,6 +43,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
+
                 kernel = new TestingKernel<ConsoleLog>((kernel) =>
                 {
                     var revokingManager = new FakeRevokingManager();
@@ -69,4 +69,3 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             kernel.Dispose();
         }
     }
-}

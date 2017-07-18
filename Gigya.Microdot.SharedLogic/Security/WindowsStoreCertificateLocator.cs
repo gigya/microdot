@@ -59,13 +59,12 @@ namespace Gigya.Microdot.SharedLogic.Security
 		public X509Certificate2 GetCertificate(string certName)
 		{
 		    var config = HttpsConfigurationFactory();
-		    CertificateConfig certificateConfigconfig;
-		    if(!config.Certificates.TryGetValue(certName, out certificateConfigconfig))
-		    {
-		        throw new ConfigurationException($"No configuration is found for "+ certName);
-		    }
+            if (!config.Certificates.TryGetValue(certName, out CertificateConfig certificateConfigconfig))
+            {
+                throw new ConfigurationException($"No configuration is found for {certName}" );
+            }
 
-		    string certPath = certificateConfigconfig.CertificatePath;
+            string certPath = certificateConfigconfig.CertificatePath;
             string errorPrefix = $"Config entry '{certName}.CertificatePath' specifies '{certPath}'";
 			var parts = certPath.Split('\\');
 			var storeLocation = StoreLocation.CurrentUser;

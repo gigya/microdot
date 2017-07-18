@@ -73,6 +73,13 @@ namespace Gigya.Microdot.SharedLogic
         public int? OnStopWaitTimeMS { get;  }
 
         /// <summary>
+        /// An array of processor IDs the service should run on, otherwise null if none are is specified. This also affects the degree
+        /// or parallism of the underlying runtime (e.g. the number of threads Orleans will be configured with). Mainly used for 
+        /// multi-tenant servers where multiple services run, each with dedicated CPU cores.
+        /// </summary>
+        public int[] ProcessorAffinity { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ServiceArguments"/> class, explicitly specifying the arguments.
         /// Typically used in tests.
         /// </summary>
@@ -112,10 +119,31 @@ namespace Gigya.Microdot.SharedLogic
             ShutdownWhenPidExits = TryParseInt(ParseStringArg(nameof(ShutdownWhenPidExits), args));
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
             OnStopWaitTimeMS = TryParseInt(ParseStringArg(nameof(OnStopWaitTimeMS), args));
+            ProcessorAffinity = ParseProcessorIds(ParseStringArg(nameof(ProcessorAffinity), args));
             ApplyDefaults();
         }
 
-        private static int? TryParseInt(string str) { int val; return int.TryParse(str, out val) ? (int?)val : null; }
+        private static int? TryParseInt(string str) { return int.TryParse(str, out int val) ? (int?)val : null; }
+
+        private static int[] ParseProcessorIds(string processorIdList)
+        {
+            var processorAffinity = processorIdList?
+                .Split(',')
+                .Select(TryParseInt)
+                .Where(i => i != null)
+                .Select(i => i.Value)
+                .Distinct()
+                .OrderBy(i => i)
+                .ToArray();
+
+            if (processorAffinity == null || processorAffinity.Length == 0)
+                return null;
+
+            if (processorAffinity.Any(id => id < 0 || id >= Environment.ProcessorCount))
+                throw new ArgumentOutOfRangeException(nameof(ProcessorAffinity), $"The specified processor affinity list contains an invalid processor ID. On this machine, processor IDs must be between 0 and {Environment.ProcessorCount - 1}, inclusive.");
+
+            return processorAffinity;
+        }
 
 
         private void ApplyDefaults()
@@ -186,7 +214,7 @@ namespace Gigya.Microdot.SharedLogic
 
 
     /// <summary>
-    /// Specifies how to start a <see cref="GigyaServiceHost"/>.
+    /// Specifies how to start a host
     /// </summary>
     public enum ServiceStartupMode
     {

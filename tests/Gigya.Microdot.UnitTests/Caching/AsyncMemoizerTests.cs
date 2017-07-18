@@ -19,7 +19,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Caching
 {
     // Calls to NSubstitute's .Received() method on async methods generate this warning.
-#pragma warning disable 4014 "Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call."
+
 
     [TestFixture]
     public class AsyncMemoizerTests

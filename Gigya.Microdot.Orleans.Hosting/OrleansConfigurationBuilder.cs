@@ -45,10 +45,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         public string ConnectionString { get; set; }
     }
 
-    public class OrleansConfig:IConfigObject
+    public class OrleansConfig : IConfigObject
     {
-        public int MaxActiveThreads { get; set; }
-
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
 
         public ZooKeeperConfig ZooKeeper { get; set; }
@@ -64,7 +62,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
 	    public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
 	                                       ClusterConfiguration clusterConfiguration, ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
-	                                       OrleansLogConsumer orleansLogConsumer, ZooKeeperLogConsumer zooKeeperLogConsumer)
+	                                       OrleansLogConsumer orleansLogConsumer, ZooKeeperLogConsumer zooKeeperLogConsumer, ServiceArguments serviceArguments)
 	    {
 	        ClusterConfiguration = clusterConfiguration;
 
@@ -76,8 +74,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 	        defaults.ProxyGatewayEndpoint = new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloGatewayPort);
 	        defaults.Port = endPointDefinition.SiloNetworkingPort;
 
-	        if(orleansConfig.MaxActiveThreads > 0)
-	            defaults.MaxActiveThreads = orleansConfig.MaxActiveThreads;
+	        if (serviceArguments.ProcessorAffinity != null)
+	            defaults.MaxActiveThreads = serviceArguments.ProcessorAffinity.Length;
 
 	        // Orleans log redirection
 	        defaults.TraceToConsole = false;

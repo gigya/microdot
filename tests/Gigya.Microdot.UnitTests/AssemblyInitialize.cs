@@ -20,24 +20,26 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Collections.Generic;
+using System;
+using NUnit.Framework;
 
-namespace Gigya.Microdot.ServiceDiscovery.Config
-{
-    public class CachingPolicyCollection: ConfigCollection<MethodCachingPolicyConfig>
+[SetUpFixture]
+    public class AssemblyInitialize
     {
-        public CachingPolicyCollection(IDictionary<string, MethodCachingPolicyConfig> source, MethodCachingPolicyConfig defaultItem) : base(source, defaultItem)
+       [OneTimeSetUp]
+        public void SetUp()
         {
+            try
+            {
+                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
+            }
+            catch(Exception ex)
+            {
+                Console.Write(ex);
+                throw;
+            }
         }
 
-        protected override MethodCachingPolicyConfig ApplyDefaults(MethodCachingPolicyConfig item)
-        {
-            item.RefreshTime = item.RefreshTime ?? DefaultItem.RefreshTime;
-            item.Enabled = item.Enabled ?? DefaultItem.Enabled;
-            item.ExpirationTime = item.ExpirationTime ?? DefaultItem.ExpirationTime;
-            item.FailedRefreshDelay = item.FailedRefreshDelay ?? DefaultItem.FailedRefreshDelay;
-
-            return item;
-        }
     }
-}

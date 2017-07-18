@@ -61,12 +61,10 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 var value = metric.IsValueDelta ? metric.GetDeltaString() : metric.GetValueString();
 
-                double newVal;
 
-                if (double.TryParse(value, out newVal))
+                if (double.TryParse(value, out double newVal))
                 {
-                    double oldValue;
-                    if (latestMetricValues.TryGetValue(metric.Name, out oldValue))
+                    if (latestMetricValues.TryGetValue(metric.Name, out double _))
                     {
                         if (metric.IsValueDelta)
                         {

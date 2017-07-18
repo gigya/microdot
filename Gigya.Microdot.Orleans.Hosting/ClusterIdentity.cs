@@ -55,8 +55,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             string dc = environmentVariableProvider.DataCenter;
             string env = environmentVariableProvider.DeploymentEnvironment;
 
-            if (dc == null || env == null)
-                throw new EnvironmentException("One or more of the following environment variables, which are required when running with ZooKeeper, have not been set: %DC%, %ENV%");
+         
 
             var serviceIdSourceString = string.Join("_", dc, env, CurrentApplicationInfo.Name, CurrentApplicationInfo.InstanceName);
             ServiceId = Guid.Parse(serviceIdSourceString.GetHashCode().ToString("X32"));

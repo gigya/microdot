@@ -124,7 +124,7 @@ namespace Gigya.Common.Contracts.HttpService
 
 
         [OnDeserialized]
-        public void OnDeserialized(StreamingContext context)
+        private void OnDeserialized(StreamingContext context)
         {
             try
             {
@@ -155,7 +155,7 @@ namespace Gigya.Common.Contracts.HttpService
         }
 
         [OnDeserialized]
-        public void OnDeserialized(StreamingContext context)
+        private void OnDeserialized(StreamingContext context)
         {
             try
             { 

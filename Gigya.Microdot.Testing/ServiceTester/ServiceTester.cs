@@ -49,14 +49,14 @@ namespace Gigya.Microdot.Testing.ServiceTester
 {
     public class ServiceTester<TServiceHost> : IDisposable where TServiceHost : MicrodotOrleansServiceHost, new()
     {
-        private ILog Log { get; set; }
-        private IResolutionRoot ResolutionRoot { get; set; }
+        private ILog Log { get; }
+        private IResolutionRoot ResolutionRoot { get; }
         public AppDomain ServiceAppDomain { get; private set; }
 
         public static TServiceHost Host { get; private set; }
         private static Task StopTask;
 
-        private int BasePort { get; set; }
+        private int BasePort { get; }
         private HttpListener LogListener { get; set; }
 
 
@@ -134,8 +134,8 @@ namespace Gigya.Microdot.Testing.ServiceTester
         /// Get a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
+        /// <param name="serviceName">Name of service </param>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        
         /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
         public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
@@ -200,6 +200,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
+        /// <param name="keyExtension">String part of a primary key</param>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
         /// <typeparam name="TGrainInterface"></typeparam>
         /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>
@@ -214,6 +215,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
+        /// <param name="keyExtension">String part of a primary key</param>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
         /// <typeparam name="TGrainInterface"></typeparam>
         /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>

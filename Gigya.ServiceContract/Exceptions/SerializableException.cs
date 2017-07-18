@@ -107,6 +107,7 @@ namespace Gigya.Common.Contracts.Exceptions
 	/// }
 	/// ]]></code>
 	/// </example>
+	[Serializable]
 	public abstract class SerializableException : Exception
 	{
 	    private const string EXTENDED_PROPERTIES_NAMES_KEY = "ExtendedPropertiesNames";
@@ -178,8 +179,7 @@ namespace Gigya.Common.Contracts.Exceptions
 		    for (int i = 0; i < extendedPropertiesNames.Length; i++)
 		        _extendedProperties.Add(extendedPropertiesNames[i], extendedPropertiesValues[i]);
 
-		    object tags;
-		    _extendedProperties.TryGetValue(nameof(EncryptedTags), out tags);
+            _extendedProperties.TryGetValue(nameof(EncryptedTags), out object tags);
             EncryptedTags = tags as IReadOnlyDictionary<string, string>;
 		    _extendedProperties.Remove(nameof(EncryptedTags));
 
@@ -191,9 +191,8 @@ namespace Gigya.Common.Contracts.Exceptions
 
             foreach (var extendedProperty in _extendedProperties.ToArray())
             {
-                PropertyInfo property;
 
-                if (properties.TryGetValue(extendedProperty.Key, out property))
+                if (properties.TryGetValue(extendedProperty.Key, out PropertyInfo property))
                 {
                     try
                     {
@@ -292,5 +291,17 @@ namespace Gigya.Common.Contracts.Exceptions
 	    public string RawMessage => base.Message;
 	}
 
-	public class Tags : Dictionary<string, string> { }
+	[Serializable]
+	public class Tags : Dictionary<string, string>
+	{
+		public Tags()
+		{
+			
+		}
+
+		protected Tags(SerializationInfo info, StreamingContext context):base(info,context)
+		{
+			
+		}
+	}
 }

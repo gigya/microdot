@@ -54,9 +54,17 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if(disposing) {                
+                ShutDown();
+            }
+        }
+
         public void Dispose()
         {
-            ShutDown();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

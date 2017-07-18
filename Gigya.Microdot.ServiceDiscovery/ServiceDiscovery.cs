@@ -32,7 +32,7 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    public class ServiceDiscovery : IServiceDiscovery, IDisposable
+    public sealed class ServiceDiscovery : IServiceDiscovery, IDisposable
     {
         public ISourceBlock<string> EndPointsChanged => _endPointsChanged;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => _reachabilityChanged;

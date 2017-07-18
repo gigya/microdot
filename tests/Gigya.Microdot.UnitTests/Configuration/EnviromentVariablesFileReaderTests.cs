@@ -35,8 +35,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             enviroment = Substitute.For<IEnvironment>();            
             enviroment.GetEnvironmentVariable(Arg.Any<string>()).Returns(a =>
             {
-                string val;
-                envVariables.TryGetValue(a.Arg<string>(), out val);
+                envVariables.TryGetValue(a.Arg<string>(), out string val);
                 return val;
             });
             enviroment.When(a => a.SetEnvironmentVariableForProcess(Arg.Any<string>(), Arg.Any<string>())).Do(a =>

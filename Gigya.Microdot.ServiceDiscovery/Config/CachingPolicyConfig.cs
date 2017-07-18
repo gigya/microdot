@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public IImmutableDictionary<string, MethodCachingPolicyConfig> Methods { get; set; }  // <method name, caching policy params>        
 
         [OnDeserialized]
-        public void OnDeserialized(StreamingContext context)
+        private void OnDeserialized(StreamingContext context)
         {
             DefaultItem = new MethodCachingPolicyConfig
             {

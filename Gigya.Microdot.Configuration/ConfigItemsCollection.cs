@@ -43,8 +43,7 @@ namespace Gigya.Microdot.Configuration
         
         public virtual ConfigItem TryGetConfigItem(string key)
         {
-            ConfigItem configItem;
-            _data.TryGetValue(key, out configItem);
+            _data.TryGetValue(key, out ConfigItem configItem);
             return configItem;
         }
 

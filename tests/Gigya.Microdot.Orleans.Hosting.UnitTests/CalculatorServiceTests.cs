@@ -47,11 +47,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class JObjectWrapper
     {
        
-        public JObject jObject { get; private set; }
+        public JObject JObject { get; private set; }
 
         public JObjectWrapper(JObject jObject)
         {
-            this.jObject = jObject;
+            this.JObject = jObject;
         }
     }
 
@@ -85,7 +85,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [OneTimeTearDown]
         public void TearDown()
         {
-            Tester?.Dispose();
+            Tester.Dispose();
         }
 
 
@@ -93,12 +93,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task Add_NumbersVia_JObjectWrapper()
         {
             JObjectWrapper jObjectW = new JObjectWrapper(new JObject());
-            jObjectW.jObject["a"] = 5;
-            jObjectW.jObject["b"] = 3;
+            jObjectW.JObject["a"] = 5;
+            jObjectW.JObject["b"] = 3;
 
             jObjectW = await Service.Add(jObjectW);
 
-            var actual = jObjectW.jObject["c"].Value<int>();
+            var actual = jObjectW.JObject["c"].Value<int>();
             actual.ShouldBe(8);
         }
 
