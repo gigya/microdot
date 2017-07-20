@@ -210,7 +210,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 using (_activeRequestsCounter.NewContext("Request"))
                 {
                     TracingContext.SetUpStorage();
-                    //RequestTimings.GetOrCreate(); // initialize request timing context
+                    RequestTimings.GetOrCreate(); // initialize request timing context
 
                     Exception ex;
                     Exception actualException = null;
