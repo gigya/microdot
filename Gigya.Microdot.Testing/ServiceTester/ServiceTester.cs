@@ -60,14 +60,14 @@ namespace Gigya.Microdot.Testing.ServiceTester
         private HttpListener LogListener { get; set; }
 
 
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot)
+        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime=null)
         {
             Log = log;
             ResolutionRoot = resolutionRoot;
             // ReSharper disable VirtualMemberCallInContructor
             InitializeInfrastructure();
 
-            var serviceArguments = GetServiceArguments(basePortOverride, isSecondary);
+            var serviceArguments = GetServiceArguments(basePortOverride, isSecondary, shutdownWaitTime);
             
             BasePort = serviceArguments.BasePortOverride.Value;
             ServiceAppDomain = Common.CreateDomain(typeof(TServiceHost).Name + BasePort);
@@ -276,23 +276,23 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary)
+        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary,TimeSpan? shutdownWaitTime)
         {
             if (isSecondary && basePortOverride == null)
                 throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
 
             var siloClusterMode = isSecondary ? SiloClusterMode.SecondaryNode : SiloClusterMode.PrimaryNode;
-            ServiceArguments arguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode);
+            ServiceArguments arguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, onStopWaitTimeInMs: shutdownWaitTime);
 
             if (basePortOverride != null)
                 return arguments;
 
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode);
+            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode,onStopWaitTimeInMs: shutdownWaitTime);
             var commonConfig = new BaseCommonConfig(serviceArguments);
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
             var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
 
-            return new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePort);
+            return new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePort, onStopWaitTimeInMs: shutdownWaitTime);
         }
 
 
@@ -380,12 +380,13 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
     public static class ServiceTesterExtensions
     {
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false)
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime=null)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
             ServiceTester<TServiceHost> tester = kernel.Get<ServiceTester<TServiceHost>>(
                 new ConstructorArgument(nameof(basePortOverride), basePortOverride),
-                new ConstructorArgument(nameof(isSecondary), isSecondary));
+                new ConstructorArgument(nameof(isSecondary), isSecondary),
+                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime));
             
             return tester;
         }
