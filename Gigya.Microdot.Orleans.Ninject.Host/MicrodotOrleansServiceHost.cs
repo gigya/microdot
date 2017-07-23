@@ -165,14 +165,26 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Dispose();
         }
 
-
+        private readonly object lockHandale=new object();
         protected override void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
-            Kernel?.Dispose();
-            disposed = true;
-            base.Dispose(disposing);
+            lock(lockHandale)
+            {
+                try
+                {
+                    if (disposed)
+                        return;
+
+                    if (!Kernel.IsDisposed)
+                        Kernel?.Dispose();
+
+                    base.Dispose(disposing);
+                }
+                finally
+                {
+                    disposed = true;
+                }
+            }                       
         }
     }
 }
