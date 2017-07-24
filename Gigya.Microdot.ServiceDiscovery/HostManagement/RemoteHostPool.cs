@@ -377,6 +377,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             Health.Deactivate();
         }
 
+        public EndPoint[] GetAllEndPoints() { return EndPointsResult.EndPoints; }
     }
 
     public interface IRemoteHostPoolFactory

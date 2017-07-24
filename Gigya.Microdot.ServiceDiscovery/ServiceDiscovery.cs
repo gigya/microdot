@@ -84,7 +84,12 @@ namespace Gigya.Microdot.ServiceDiscovery
             _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
         }
 
-
+        public async Task<EndPoint[]> GetAllEndPoints()
+        {
+            await _initTask.ConfigureAwait(false);
+            return GetRelevantPool().GetAllEndPoints();
+        }
+        
         public async Task<IEndPointHandle> GetNextHost(string affinityToken = null)
         {
             await _initTask.ConfigureAwait(false);
