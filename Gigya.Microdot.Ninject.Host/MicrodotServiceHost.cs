@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
@@ -40,6 +41,8 @@ namespace Gigya.Microdot.Ninject.Host
     public abstract class MicrodotServiceHost<TInterface> : GigyaServiceHost
     {
         private bool disposed;
+        
+        private readonly object disposeLockHandale = new object();
 
         private IKernel Kernel { get; set; }
 
@@ -116,15 +119,6 @@ namespace Gigya.Microdot.Ninject.Host
         }
 
 
-        protected override void Dispose(bool disposing)
-        {
-            if(disposed)
-                return;
-            Kernel?.Dispose();
-            disposed = true;
-            base.Dispose(disposing);
-        }
-
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
         /// Should be overridden when creating a base-class that should include common behaviour for a family of services, without
@@ -157,9 +151,32 @@ namespace Gigya.Microdot.Ninject.Host
         /// method.
         /// </summary>        
         protected override void OnStop()
+        {            
+            Dispose();
+        }
+
+     
+        protected override void Dispose(bool disposing)
         {
-            Listener.Dispose();
-            Kernel.Dispose();
+            lock (disposeLockHandale)
+            {
+                try
+                {
+                    if(disposed)
+                        return;
+
+                    SafeDispose(Listener);
+
+                    if(!Kernel.IsDisposed)
+                        SafeDispose(Kernel);
+
+                    base.Dispose(disposing);
+                }
+                finally
+                {
+                    disposed = true;
+                }
+            }
         }
     }
 }
