@@ -286,7 +286,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
             catch (Exception e)
             {
-                Trace.WriteLine(e.ToString());
+                Trace.TraceError(e.ToString());
             }
         }
 
