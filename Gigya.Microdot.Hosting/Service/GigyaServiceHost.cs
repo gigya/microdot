@@ -264,9 +264,9 @@ namespace Gigya.Microdot.Hosting.Service
             if (disposed)
                 return;
 
-            StopEvent?.Dispose();            
-            WindowsService?.Dispose();
-            MonitoredShutdownProcess?.Dispose();
+            SafeDispose(StopEvent);
+            SafeDispose(WindowsService);
+            SafeDispose(MonitoredShutdownProcess);
 
             disposed = true;
         }
@@ -278,6 +278,17 @@ namespace Gigya.Microdot.Hosting.Service
             GC.SuppressFinalize(this);
         }
 
+        protected void SafeDispose(IDisposable disposable)
+        {
+            try
+            {
+                disposable?.Dispose();
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(e.ToString());
+            }
+        }
 
 
         private class DelegatingServiceBase : ServiceBase
