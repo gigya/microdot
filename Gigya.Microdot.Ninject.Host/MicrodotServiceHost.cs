@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
@@ -40,7 +41,7 @@ namespace Gigya.Microdot.Ninject.Host
     public abstract class MicrodotServiceHost<TInterface> : GigyaServiceHost
     {
         private bool disposed;
-
+        
         private readonly object disposeLockHandale = new object();
 
         private IKernel Kernel { get; set; }
@@ -161,12 +162,13 @@ namespace Gigya.Microdot.Ninject.Host
             {
                 try
                 {
-                    if (disposed)
+                    if(disposed)
                         return;
-                    Listener?.Dispose();
 
-                    if (!Kernel.IsDisposed)
-                        Kernel?.Dispose();
+                    SafeDispose(Listener);
+
+                    if(!Kernel.IsDisposed)
+                        SafeDispose(Kernel);
 
                     base.Dispose(disposing);
                 }

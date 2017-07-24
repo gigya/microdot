@@ -176,7 +176,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         return;
 
                     if (!Kernel.IsDisposed)
-                        Kernel?.Dispose();
+                        SafeDispose( Kernel);
 
                     base.Dispose(disposing);
                 }
