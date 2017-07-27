@@ -162,7 +162,10 @@ namespace Gigya.Microdot.SharedLogic.Events
                 if (ShouldExcludeStackTrace || Exception == null)
                     return null;
 
-                return Exception.StackTrace ?? Exception.InnerException?.StackTrace;
+                var ex = Exception;
+                while (ex.StackTrace == null && ex.InnerException != null)
+                    ex = ex.InnerException;
+                return ex.StackTrace;                
             }
         }
 
