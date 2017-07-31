@@ -371,7 +371,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public bool AlwaysThrowException=false;
 
-        public override bool IsServiceDeploymentDefined { get; } = true;
+        public override bool IsServiceDeploymentDefined => true;
         public override Exception AllEndpointsUnreachable(EndPointsResult endpointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)
         {
             return new EnvironmentException("All endpoints unreachable");

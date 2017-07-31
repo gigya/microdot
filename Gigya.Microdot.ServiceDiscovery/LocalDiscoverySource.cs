@@ -49,9 +49,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                     {"innerExceptionIsForEndPoint", lastExceptionEndPoint}
                 });
         }
-
-
-        public override bool IsServiceDeploymentDefined { get; } = true;
+        
+        public override bool IsServiceDeploymentDefined => true;
     }
 
 }

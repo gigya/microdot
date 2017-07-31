@@ -42,7 +42,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
     public sealed class RemoteHostPool : IDisposable
     {
         public ISourceBlock<ServiceReachabilityStatus> ReachabilitySource => ReachabilityBroadcaster;
-        public bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
+        public  bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
+        public BroadcastBlock<EndPointsResult> EndPointsChanged { get; } = new BroadcastBlock<EndPointsResult>(null);
 
         /// <summary>
         /// Time of the last attempt to reach the service.
@@ -156,10 +157,14 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         ReachableHosts.AddRange(newHosts);
 
                         EndPointsResult = updatedEndPointsResult;
+
                         Counter = (ulong)_random.Next(0, ReachableHosts.Count);
 
                         Health.SetHealthFunction(CheckHealth);
                     }
+
+                    EndPointsChanged.Post(EndPointsResult);
+
                 }
                 catch (Exception ex)
                 {

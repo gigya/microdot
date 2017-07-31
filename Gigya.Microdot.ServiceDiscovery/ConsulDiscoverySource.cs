@@ -22,6 +22,7 @@
 
 using System;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -40,7 +41,14 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class ConsulDiscoverySource : ServiceDiscoverySourceBase
     {
         public override Task InitCompleted => _initialized;
-        public override bool IsServiceDeploymentDefined => _lastConsulResult?.IsQueryDefined ?? true;
+        public override bool IsServiceDeploymentDefined =>  DeploymentStatus(_lastConsulResult);
+
+        private bool DeploymentStatus(EndPointsResult endPointsResult)
+        {
+            if(endPointsResult == null) return true;
+
+            return endPointsResult.IsQueryDefined;
+        }
 
         private IConsulClient ConsulClient { get; }
         private CancellationTokenSource ShutdownToken { get; }
@@ -96,20 +104,23 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task Load()
         {
-            var lastConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
+            var newConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
             lock (_lastResultLocker)
             {
-                if (lastConsulResult.Error != null)
+                var oldConsulResult = _lastConsulResult;
+                _lastConsulResult = newConsulResult;
+                
+                if (newConsulResult.Error != null)
                 {
-                    _lastConsulResult = lastConsulResult;
                     return;
                 }
-                var newEndPoints = lastConsulResult
-                    .EndPoints                    
+                
+                var newEndPoints = newConsulResult
+                    .EndPoints
                     .OrderBy(x => x.HostName)
                     .ThenBy(x => x.Port)
                     .ToArray();
-
+                bool isEndPointChanged = false;
                 if (newEndPoints.SequenceEqual(EndPoints) == false)
                 {
                     EndPoints = newEndPoints;
@@ -120,12 +131,18 @@ namespace Gigya.Microdot.ServiceDiscovery
                         endpoints = string.Join(", ", EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
                     }));
 
-                    if (!_firstTime || _lastConsulResult?.Error != null)
-                        EndPointsChanged?.Post(lastConsulResult);
-                }
+                     isEndPointChanged = !_firstTime || oldConsulResult?.Error != null;
+                   }
+
+                bool isDeploymentDefinedChanged = !_firstTime &&  DeploymentStatus(oldConsulResult) != DeploymentStatus(newConsulResult);
+
+     
+                if (isEndPointChanged || isDeploymentDefinedChanged)
+                    EndPointsChanged?.Post(newConsulResult);
+
 
                 _firstTime = false;
-                _lastConsulResult = lastConsulResult;
+
                 _initialized = Task.FromResult(1);
             }
         }
@@ -151,7 +168,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 else if (endPointsResult.Error != null)
                     return new EnvironmentException("Error calling Consul. See tags for details.", unencrypted: tags);
-                else if (endPointsResult.IsQueryDefined==false)
+                else if (endPointsResult.IsQueryDefined == false)
                     return new EnvironmentException("Query not exists on Consul. See tags for details.", unencrypted: tags);
                 else
                     return new EnvironmentException("No endpoint were specified in Consul for the requested service.", unencrypted: tags);

@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Fakes
 
         private readonly Func<Dictionary<string, ConfigItem>> configItemsFunc;
 
-        public MockConfigItemsCollection(Func<Dictionary<string, ConfigItem>> configItems, ConfigItemsCollection configItemCollection=null )
+        public MockConfigItemsCollection(Func<Dictionary<string, ConfigItem>> configItems, ConfigItemsCollection configItemCollection = null)
             : base(Enumerable.Empty<ConfigItem>())
         {
             ConfigItemCollection = configItemCollection;
@@ -46,23 +46,14 @@ namespace Gigya.Microdot.Fakes
         {
             get
             {
+                var result = new List<ConfigItem>();
                 var data = configItemsFunc();
-
-                foreach(var item in data)
+                result.AddRange(data.Values);
+                if (ConfigItemCollection != null)
                 {
-                    yield return item.Value;
+                    result.AddRange(data.Where(item => !data.ContainsKey(item.Key)).Select(x => x.Value));
                 }
-
-                if(ConfigItemCollection != null)
-                {
-                    foreach(var item in ConfigItemCollection.Items)
-                    {
-                        if(!data.ContainsKey(item.Key))
-                        {
-                            yield return item;
-                        }
-                    }
-                }
+                return result;
             }
         }
 

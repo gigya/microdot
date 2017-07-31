@@ -87,7 +87,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
 
-        public override bool IsServiceDeploymentDefined { get; } = true;
+        public override bool IsServiceDeploymentDefined => true;
+      
 
 
         public override Exception AllEndpointsUnreachable(EndPointsResult endPointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)

@@ -50,7 +50,6 @@ namespace Gigya.Microdot.ServiceDiscovery
     }
 
 
-
     public interface IConsulClient
     {
         Task<EndPointsResult> GetEndPoints(string serviceName);
