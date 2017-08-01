@@ -112,6 +112,9 @@ namespace Gigya.Microdot.ServiceDiscovery
                 
                 if (newConsulResult.Error != null)
                 {
+                    if (_firstTime)
+                        _firstTime = false;
+                    EndPoints = newConsulResult;
                     return;
                 }
                 
@@ -121,14 +124,15 @@ namespace Gigya.Microdot.ServiceDiscovery
                     .ThenBy(x => x.Port)
                     .ToArray();
                 bool isEndPointChanged = false;
-                if (newEndPoints.SequenceEqual(EndPoints) == false)
+                if (newEndPoints.SequenceEqual(EndPoints.EndPoints) == false)
                 {
-                    EndPoints = newEndPoints;
+                    newConsulResult.EndPoints = newEndPoints;
+                    EndPoints = newConsulResult;
 
                     _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
                     {
                         serviceName = DeploymentName,
-                        endpoints = string.Join(", ", EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
+                        endpoints = string.Join(", ", newEndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
                     }));
 
                      isEndPointChanged = !_firstTime || oldConsulResult?.Error != null;

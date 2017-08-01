@@ -182,17 +182,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private void AssertEndpointsNotChanged()
         {
-            CollectionAssert.AreEqual(_endpointsBeforeChange, _consulDiscoverySource.EndPoints.Select(_ => _.HostName).ToArray(), "Endpoints list was changed");
+            CollectionAssert.AreEqual(_endpointsBeforeChange, _consulDiscoverySource.EndPoints.EndPoints.Select(_ => _.HostName).ToArray(), "Endpoints list was changed");
         }
 
         private void AssertEndpointsChanged()
         {
-            CollectionAssert.AreEqual(_endpointsAfterChange, _consulDiscoverySource.EndPoints.Select(_ => _.HostName), "Endpoints list did not update");
+            CollectionAssert.AreEqual(_endpointsAfterChange, _consulDiscoverySource.EndPoints.EndPoints.Select(_ => _.HostName), "Endpoints list did not update");
         }
 
         private void AssertNoEndpoints()
         {
-            Assert.AreEqual(0, _consulDiscoverySource.EndPoints.Length, "Endpoints list should be empty");
+            Assert.AreEqual(0, _consulDiscoverySource.EndPoints.EndPoints.Length, "Endpoints list should be empty");
         }
 
         private void OneSecondPassed()

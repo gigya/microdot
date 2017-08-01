@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceDiscovery
     public abstract class ServiceDiscoverySourceBase : IDisposable
     {
         public string DeploymentName { get; }
-        public EndPoint[] EndPoints { get; protected set; } = new EndPoint[0];
+        public EndPointsResult EndPoints { get; protected set; } = new EndPointsResult{EndPoints = new EndPoint[0]};
         public BroadcastBlock<EndPointsResult> EndPointsChanged { get; } = new BroadcastBlock<EndPointsResult>(null);
         public abstract bool IsServiceDeploymentDefined { get; }
         public virtual Task InitCompleted { get; } = Task.FromResult(1);

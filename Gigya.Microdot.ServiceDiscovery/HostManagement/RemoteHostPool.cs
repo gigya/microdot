@@ -43,7 +43,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
     {
         public ISourceBlock<ServiceReachabilityStatus> ReachabilitySource => ReachabilityBroadcaster;
         public  bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
-        public BroadcastBlock<EndPointsResult> EndPointsChanged { get; } = new BroadcastBlock<EndPointsResult>(null);
+        private readonly BroadcastBlock<EndPointsResult> _endPointsChanged = new BroadcastBlock<EndPointsResult>(null);
+        public ISourceBlock<EndPointsResult> EndPointsChanged => _endPointsChanged;
 
         /// <summary>
         /// Time of the last attempt to reach the service.
@@ -99,7 +100,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             ReachableHosts = new List<RemoteHost>();
             UnreachableHosts = new List<RemoteHost>();
             EndPointsChangedBlockLink = discovery.EndPointsChanged.LinkTo(new ActionBlock<EndPointsResult>(_ => ReloadEndpoints(_)));
-            ReloadEndpoints(new EndPointsResult {EndPoints = discovery.EndPoints});
+            ReloadEndpoints(discovery.EndPoints);
             Metrics = metrics;
             var metricsContext = Metrics.Context(DiscoverySource.DeploymentName);
             metricsContext.Gauge("ReachableHosts", () => ReachableHosts.Count, Unit.Custom("EndPoints"));
@@ -163,7 +164,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         Health.SetHealthFunction(CheckHealth);
                     }
 
-                    EndPointsChanged.Post(EndPointsResult);
+                    _endPointsChanged.Post(EndPointsResult);
 
                 }
                 catch (Exception ex)

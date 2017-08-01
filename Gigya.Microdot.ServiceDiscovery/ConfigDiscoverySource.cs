@@ -45,7 +45,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             _serviceDiscoveryConfig = serviceDiscoveryConfig;
             Log = log;
-            EndPoints = GetEndPointsInitialValue();
+            EndPoints = new EndPointsResult {EndPoints = GetEndPointsInitialValue()};
         }
 
         private EndPoint[] GetEndPointsInitialValue()

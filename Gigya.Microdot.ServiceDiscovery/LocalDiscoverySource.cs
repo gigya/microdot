@@ -34,7 +34,7 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         public LocalDiscoverySource(string serviceName) : base($"{CurrentApplicationInfo.HostName}-{serviceName}")
         {
-            EndPoints = new[] { new EndPoint { HostName = CurrentApplicationInfo.HostName } };
+            EndPoints = new EndPointsResult{EndPoints  = new[] { new EndPoint { HostName = CurrentApplicationInfo.HostName }}} ;
         }
 
         public override Exception AllEndpointsUnreachable(EndPointsResult endPointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)

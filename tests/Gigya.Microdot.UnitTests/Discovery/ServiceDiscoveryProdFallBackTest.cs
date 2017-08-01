@@ -1,24 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.Testing;
-
 using Metrics;
-
 using Ninject;
-
 using NSubstitute;
-
 using NUnit.Framework;
 using Shouldly;
 
@@ -177,7 +170,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovey.GetNextHost());
+            var exception = Should.Throw<EnvironmentException>(() => GetServiceDiscovey.GetNextHost());
+            exception.UnencryptedTags["responseLog"].ShouldBe("Mock: some error");
+            exception.UnencryptedTags["queryDefined"].ShouldBe("True");
+            exception.UnencryptedTags["consulError"].ShouldNotBeNullOrEmpty();
+            exception.UnencryptedTags["requestedService"].ShouldBe(OriginatingService);
+
         }
 
         [Test]
