@@ -22,7 +22,6 @@
 
 using System;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -41,9 +40,9 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class ConsulDiscoverySource : ServiceDiscoverySourceBase
     {
         public override Task InitCompleted => _initialized;
-        public override bool IsServiceDeploymentDefined =>  DeploymentStatus(_lastConsulResult);
+        public override bool IsServiceDeploymentDefined =>  IsDeploymentDefined(_lastConsulResult);
 
-        private bool DeploymentStatus(EndPointsResult endPointsResult)
+        private bool IsDeploymentDefined(EndPointsResult endPointsResult)
         {
             if(endPointsResult == null) return true;
 
@@ -137,13 +136,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                         endpoints = string.Join(", ", newEndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
                     }));
 
-                     isEndPointChanged = !_firstTime || oldConsulResult?.Error != null;
-                   }
+                    isEndPointChanged = true;
+                }
 
-                bool isDeploymentDefinedChanged = !_firstTime &&  DeploymentStatus(oldConsulResult) != DeploymentStatus(newConsulResult);
+                bool isDeploymentDefinedChanged = IsDeploymentDefined(oldConsulResult) != IsDeploymentDefined(newConsulResult);
 
-     
-                if (isEndPointChanged || isDeploymentDefinedChanged)
+
+                if (!_firstTime && (isEndPointChanged || isDeploymentDefinedChanged))
                     EndPointsChanged?.Post(newConsulResult);
 
 
