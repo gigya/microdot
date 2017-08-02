@@ -109,12 +109,14 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 var oldConsulResult = _lastConsulResult;
                 _lastConsulResult = newConsulResult;
-                
+
                 if (newConsulResult.Error != null)
                 {
                     if (_firstTime)
+                    {
                         _firstTime = false;
-                    EndPoints = newConsulResult;
+                        EndPoints = newConsulResult;
+                    }                
                     return;
                 }
                 
