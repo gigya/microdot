@@ -1,57 +1,84 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Orleans;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    public class CountDownEvent
+    public static class CountDownEventExtensions
     {
-        private int _counter;
-        private readonly List<KeyValuePair<int, TaskCompletionSource<int>>> _waiting = new List<KeyValuePair<int, TaskCompletionSource<int>>>();
+        public static async Task<T> WhenEventReceived<T>(this ISourceBlock<T> sourceBlock, TimeSpan? timeout = null)
+        {
+            var countDown = StartCountingEvents(sourceBlock);
+            return await countDown.WhenNextEventReceived(timeout);            
+        }
+
+        public static CountDownEvent<T> StartCountingEvents<T>(this ISourceBlock<T> sourceBlock)
+        {
+            var countDown = new CountDownEvent<T>();
+            sourceBlock.LinkTo(new ActionBlock<T>(_ => countDown.ReceivedEvent(_)));
+            return countDown;
+        }
+
+
+    }
+
+    public class CountDownEvent<T>
+    {
+        private readonly List<T> _events = new List<T>();
+        private readonly List<KeyValuePair<int, TaskCompletionSource<List<T>>>> _waiting = new List<KeyValuePair<int, TaskCompletionSource<List<T>>>>();
+
+        public async Task<T> WhenNextEventReceived(TimeSpan? timeout)
+        {
+            
+              return (await WhenEventsReceived(null, timeout)).Last();
+               
+            
+        }
 
         readonly object _locker = new object();
-        public Task SetExpected(int expected, TimeSpan timeOut)
+        public Task<List<T>> WhenEventsReceived(int? expectedNumberOfEvents, TimeSpan? timeout)
         {
+            timeout = timeout ?? TimeSpan.FromSeconds(5);
             lock (_locker)
             {
-
-                if (_counter >= expected)
+                expectedNumberOfEvents = expectedNumberOfEvents ?? _events.Count + 1;
+                if (_events.Count >= expectedNumberOfEvents)
                 {
-                    Console.WriteLine($"already received {_counter} events");
-                    return TaskDone.Done;
+                    Console.WriteLine($"already received {_events.Count} events");
+                    return Task.FromResult(_events.ToList());
                 }
 
-                var cancel = new CancellationTokenSource(timeOut);
-                var wait = new TaskCompletionSource<int>();
+                var cancel = new CancellationTokenSource(timeout.Value);
+                var wait = new TaskCompletionSource<List<T>>();
                 cancel.Token.Register(
                     () => wait.TrySetException(
                         new Exception(
-                            $"Expected events: {expected}. Received events: {_counter}. Timeout after {timeOut.TotalMilliseconds} ms")));
+                            $"Expected events: {expectedNumberOfEvents}. Received events: {_events.Count}. Timeout after {timeout.Value.TotalMilliseconds} ms")));
                 wait.Task.ContinueWith(x => cancel.Dispose(), TaskContinuationOptions.OnlyOnRanToCompletion);
 
-                _waiting.Add(new KeyValuePair<int, TaskCompletionSource<int>>(expected, wait));
+                _waiting.Add(new KeyValuePair<int, TaskCompletionSource<List<T>>>(expectedNumberOfEvents, wait));
 
                 return wait.Task;
             }
         }
-
-
-
-        public void ReceivedEvent(string eventDescription = null)
+        
+        public void ReceivedEvent(T @event)
         {
             try
             {
                 lock (_locker)
                 {
-                    _counter++;
-                    Console.WriteLine($"Received new event, total events {_counter}. EventDescription: {eventDescription}");
+                    Console.WriteLine($"Received new event, total events {_events.Count}. EventDescription: {@event}");
 
                     for (int i = 0; i < _waiting.Count; i++)
                     {
                         var wait = _waiting[i];
-                        if (_counter >= wait.Key) wait.Value.TrySetResult(1);
+                        _events.Add(@event);
+                        if (_events.Count >= wait.Key) wait.Value.TrySetResult(_events.ToList());
                     }
 
 
@@ -64,11 +91,15 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 throw;
             }
         }
-        public int TotalEvents()
+
+        public List<T> ReceivedEvents
         {
-            lock (_locker)
+            get
             {
-                return _counter;
+                lock (_locker)
+                {
+                    return _events.ToList();
+                }
             }
         }
 
