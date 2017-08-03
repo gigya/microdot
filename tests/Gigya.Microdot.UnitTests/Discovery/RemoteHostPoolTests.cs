@@ -342,19 +342,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public DiscoverySourceMock(string deploymentName, string initialEndPoints) : base(deploymentName)
         {
-            EndPoints = new EndPointsResult {EndPoints = GetEndPointsInitialValue(initialEndPoints)};
+            Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue(initialEndPoints)};
         }
 
         public void SetEndPoints(string endPoints)
         {
-            EndPoints = new EndPointsResult {EndPoints = new EndPoint[0]};
+            Result = new EndPointsResult {EndPoints = new EndPoint[0]};
             if (!string.IsNullOrWhiteSpace(endPoints))
-                EndPoints = new EndPointsResult {EndPoints= endPoints.Split(',').Select(_ => _.Trim())
+                Result = new EndPointsResult {EndPoints= endPoints.Split(',').Select(_ => _.Trim())
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .Select(_ => new EndPoint { HostName = _ })
                     .ToArray()};
 
-            EndPointsChanged.Post( EndPoints);
+            EndPointsChanged.Post( Result);
             Task.Delay(100).Wait();
         }
 

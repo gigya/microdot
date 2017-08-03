@@ -231,13 +231,14 @@ namespace Gigya.Microdot.ServiceDiscovery
             }
         }
 
-        private string _endPoints;
+        private string _endPointsSignature;
         private void FireEndPointChange()
         {
             lock (_locker)
             {
-                var endPoints = GetRelevantPool().GetAllEndPoints().OrderBy(x => x.HostName);
-                string endPoint = string.Join(",", endPoints.Select(x =>
+                var relevantPool = GetRelevantPool();
+                var endPoints = relevantPool.GetAllEndPoints().OrderBy(x => x.HostName).ThenBy(x=>x.Port??0);
+                string newSignature = string.Join(",", endPoints.Select(x =>
                     {
                         var port = x.Port.HasValue ? $":{x.Port}" : string.Empty;
                         return $"{x.HostName}{port}";
@@ -245,13 +246,14 @@ namespace Gigya.Microdot.ServiceDiscovery
 
 
 
-                if (!_firstTime && _endPoints != endPoint && !_suppressNotifications)
+                if (!_firstTime && _endPointsSignature != newSignature && !_suppressNotifications)
                 {
-                    _endPointsChanged.Post(endPoint);
+                    // Don't send any information on the event.
+                    // Any information should be collected from current state                     
+                    _endPointsChanged.Post(null);
                 }
-                if (_firstTime)
-                    _firstTime = false;
-                _endPoints = endPoint;
+                _firstTime = false;
+                _endPointsSignature = newSignature;
 
             }
 

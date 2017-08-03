@@ -19,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
                 if (_counter >= expected)
                 {
-                    Console.WriteLine($"all ready receive {_counter} events");
+                    Console.WriteLine($"already received {_counter} events");
                     return TaskDone.Done;
                 }
 
@@ -28,7 +28,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 cancel.Token.Register(
                     () => wait.TrySetException(
                         new Exception(
-                            $"expect events:{expected} receive events:{_counter} timeout after {timeOut.TotalMilliseconds}ms")));
+                            $"Expected events: {expected}. Received events: {_counter}. Timeout after {timeOut.TotalMilliseconds} ms")));
                 wait.Task.ContinueWith(x => cancel.Dispose(), TaskContinuationOptions.OnlyOnRanToCompletion);
 
                 _waiting.Add(new KeyValuePair<int, TaskCompletionSource<int>>(expected, wait));
@@ -39,14 +39,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
 
 
-        public void ReceiveEvent(string eventDescription = null)
+        public void ReceivedEvent(string eventDescription = null)
         {
             try
             {
                 lock (_locker)
                 {
                     _counter++;
-                    Console.WriteLine($"receive new event ,total events {_counter} eventDescription:{eventDescription}");
+                    Console.WriteLine($"Received new event, total events {_counter}. EventDescription: {eventDescription}");
 
                     for (int i = 0; i < _waiting.Count; i++)
                     {

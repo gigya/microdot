@@ -129,7 +129,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var wait = new CountDownEvent();
 
             var discovey = GetServiceDiscovey;
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceiveEvent(x)));
+            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceivedEvent(x)));
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(OriginatingService);
@@ -153,7 +153,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             var discovey = GetServiceDiscovey;
             var wait = new CountDownEvent();
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceiveEvent(x)));
+            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceivedEvent(x)));
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(MasterService);
@@ -238,7 +238,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             //in the first time can fire one or two event
             var wait = new CountDownEvent();
             var discovey = GetServiceDiscovey;
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceiveEvent(x)));
+            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceivedEvent(x)));
             await discovey.GetNextHost();
 
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
@@ -267,7 +267,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var endPoints = await discovey.GetAllEndPoints();
             endPoints.Single().HostName.ShouldBe(OriginatingService);
 
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => countDownEvent.ReceiveEvent(x)));
+            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => countDownEvent.ReceivedEvent(x)));
 
 
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
@@ -295,7 +295,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             await discovey.GetAllEndPoints();
 
             var countDownEvent = new CountDownEvent();
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => countDownEvent.ReceiveEvent(x)));
+            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => countDownEvent.ReceivedEvent(x)));
 
 
             bool UseOriginatingService(int i) => i % 2 == 0;

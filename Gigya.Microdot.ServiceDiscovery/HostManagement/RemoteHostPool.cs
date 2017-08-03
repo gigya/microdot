@@ -100,7 +100,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             ReachableHosts = new List<RemoteHost>();
             UnreachableHosts = new List<RemoteHost>();
             EndPointsChangedBlockLink = discovery.EndPointsChanged.LinkTo(new ActionBlock<EndPointsResult>(_ => ReloadEndpoints(_)));
-            ReloadEndpoints(discovery.EndPoints);
+            ReloadEndpoints(discovery.Result);
             Metrics = metrics;
             var metricsContext = Metrics.Context(DiscoverySource.DeploymentName);
             metricsContext.Gauge("ReachableHosts", () => ReachableHosts.Count, Unit.Custom("EndPoints"));
