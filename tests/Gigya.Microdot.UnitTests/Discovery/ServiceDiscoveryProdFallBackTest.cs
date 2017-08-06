@@ -8,6 +8,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
 using Metrics;
 using Ninject;
@@ -54,7 +55,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
             }, _configDic);
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
-
+   
             var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
             Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
         }

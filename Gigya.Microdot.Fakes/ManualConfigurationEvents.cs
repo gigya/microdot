@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Fakes
             // Task.Delay(100).Wait();
         }
 
-        public Task<T> ChangeConfig<T>(TimeSpan? timeout) where T : IConfigObject
+        public Task<T> ChangeConfig<T>(TimeSpan? timeout=null) where T : IConfigObject
         {
             timeout = timeout ?? TimeSpan.FromSeconds(5);
 
