@@ -24,16 +24,16 @@ using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Configuration
 {
-    public class ConfigProvider : IConfigProvider
+    public class Configuration : IConfiguration
     {
         private readonly IConfigFuncFactory _configFuncFactory;
 
-        public ConfigProvider(IConfigFuncFactory configFuncFactory)
+        public Configuration(IConfigFuncFactory configFuncFactory)
         {
             _configFuncFactory = configFuncFactory;
         }
 
-        public T Get<T>() where T : IConfigObject
+        public T GetObject<T>() where T : IConfigObject
         {
             return _configFuncFactory.CreateConfigFunc<T>()();
         }

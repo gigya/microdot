@@ -82,7 +82,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public int? DefaultSlotNumber { get; set; }
 
         /// <summary>
-        /// Get a value indicating if a secure will be used to connect to the remote service. This defaults to the
+        /// GetObject a value indicating if a secure will be used to connect to the remote service. This defaults to the
         /// value that was specified in the <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, and can
         /// be overridden by discovery configuration.
         /// </summary>

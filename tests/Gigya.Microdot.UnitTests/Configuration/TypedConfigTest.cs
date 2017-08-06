@@ -182,16 +182,16 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             var manualConfigurationEvents = infraKernel.Get<ManualConfigurationEvents>();
             var configItems = infraKernel.Get<OverridableConfigItems>();
-            var configFactory = infraKernel.Get<IConfigProvider>();
+            var configFactory = infraKernel.Get<IConfiguration>();
 
-            var busSettings = configFactory.Get<BusSettings>();
+            var busSettings = configFactory.GetObject<BusSettings>();
             busSettings.TopicName.ShouldBe("OldValue");
 
             configItems.SetValue("BusSettings.TopicName", "NewValue");
             busSettings = await manualConfigurationEvents.ApplyChanges<BusSettings>();
             busSettings.TopicName.ShouldBe("NewValue");
 
-            busSettings = configFactory.Get<BusSettings>();
+            busSettings = configFactory.GetObject<BusSettings>();
             busSettings.TopicName.ShouldBe("NewValue");
 
             infraKernel.Dispose();

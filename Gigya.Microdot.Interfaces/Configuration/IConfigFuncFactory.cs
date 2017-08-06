@@ -29,11 +29,11 @@ namespace Gigya.Microdot.Interfaces.Configuration
         Func<T> CreateConfigFunc<T>() where T : IConfigObject;
     }
 
-    public interface IConfigProvider
+    public interface IConfiguration
     {
         /// <summary>
-        ///  Get the latest config. Used once at the start of every flow.
+        ///  GetObject the latest config. Used once at the start of every flow.
         /// </summary>
-        T Get<T>() where T : IConfigObject;
+        T GetObject<T>() where T : IConfigObject;
     }
 }
