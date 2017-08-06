@@ -4,9 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Orleans;
 
-namespace Gigya.Microdot.UnitTests.Discovery
+namespace Gigya.Microdot.UnitTests
 {
     public static class CountDownEventExtensions
     {
@@ -22,8 +21,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
             sourceBlock.LinkTo(new ActionBlock<T>(_ => countDown.ReceivedEvent(_)));
             return countDown;
         }
-
-
     }
 
     public class CountDownEvent<T>
@@ -31,15 +28,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private readonly List<T> _events = new List<T>();
         private readonly List<KeyValuePair<int, TaskCompletionSource<List<T>>>> _waiting = new List<KeyValuePair<int, TaskCompletionSource<List<T>>>>();
 
-        public async Task<T> WhenNextEventReceived(TimeSpan? timeout)
+        public async Task<T> WhenNextEventReceived(TimeSpan? timeout = null)
         {
-            
-              return (await WhenEventsReceived(null, timeout)).Last();
-               
-            
+            return (await WhenEventsReceived(null, timeout)).Last();
         }
 
-        readonly object _locker = new object();
+        private readonly object _locker = new object();
         public Task<List<T>> WhenEventsReceived(int? expectedNumberOfEvents, TimeSpan? timeout)
         {
             timeout = timeout ?? TimeSpan.FromSeconds(5);
@@ -60,7 +54,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                             $"Expected events: {expectedNumberOfEvents}. Received events: {_events.Count}. Timeout after {timeout.Value.TotalMilliseconds} ms")));
                 wait.Task.ContinueWith(x => cancel.Dispose(), TaskContinuationOptions.OnlyOnRanToCompletion);
 
-                _waiting.Add(new KeyValuePair<int, TaskCompletionSource<List<T>>>(expectedNumberOfEvents, wait));
+                _waiting.Add(new KeyValuePair<int, TaskCompletionSource<List<T>>>(expectedNumberOfEvents.Value, wait));
 
                 return wait.Task;
             }
@@ -72,12 +66,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             {
                 lock (_locker)
                 {
+                    _events.Add(@event);
+
                     Console.WriteLine($"Received new event, total events {_events.Count}. EventDescription: {@event}");
 
                     for (int i = 0; i < _waiting.Count; i++)
                     {
                         var wait = _waiting[i];
-                        _events.Add(@event);
                         if (_events.Count >= wait.Key) wait.Value.TrySetResult(_events.ToList());
                     }
 
@@ -104,4 +99,4 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
     }
-}
+    }

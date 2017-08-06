@@ -53,7 +53,7 @@
     <Compile Include="Configuration\MasterConfigParserTests.cs" />
     <Compile Include="Configuration\TypedConfigTest.cs" />
     <Compile Include="Discovery\ConsulDiscoverySourceTest.cs" />
-    <Compile Include="Discovery\CountDownEvent.cs" />
+    <Compile Include="CountDownEvent.cs" />
     <Compile Include="Discovery\DiscoveryConfigTests.cs" />
     <Compile Include="Discovery\RemoteHostPoolTests.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />

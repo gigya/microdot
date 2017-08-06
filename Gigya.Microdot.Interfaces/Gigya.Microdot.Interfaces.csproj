@@ -41,6 +41,7 @@
     </Compile>
     <Compile Include="Configuration\ConfigItemInfo.cs" />
     <Compile Include="Configuration\ConfigurationRootAttribute.cs" />
+    <Compile Include="Configuration\IConfigFactory.cs" />
     <Compile Include="Configuration\IConfigItem.cs" />
     <Compile Include="Configuration\IConfigObject.cs" />
     <Compile Include="Configuration\IEnvironmentVariableProvider.cs" />
