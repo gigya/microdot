@@ -223,8 +223,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var isReachable = false;
             CreatePool("host2", host => Task.FromResult(isReachable));
 
-            (await Pool.ReachabilitySource.ShouldRaiseMessage(() =>
-                {
+            var wait = Pool.ReachabilitySource.WhenEventReceived();
+          
                     for (int i = 0; i < 2; i++)
                     {
                         var host = Pool.GetNextHost();
@@ -232,7 +232,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                         if (host.HostName == "host2")
                             host.ReportFailure();
                     }
-                })).Message.IsReachable.ShouldBeFalse();
+            (await wait).IsReachable.ShouldBeFalse();
 
             (await Pool.ReachabilitySource.ShouldRaiseMessage(() =>
                 {
@@ -354,7 +354,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     .Select(_ => new EndPoint { HostName = _ })
                     .ToArray()};
 
-            EndPointsChanged.Post( Result);
+            EndPointsChanged.Post(Result);
             Task.Delay(100).Wait();
         }
 

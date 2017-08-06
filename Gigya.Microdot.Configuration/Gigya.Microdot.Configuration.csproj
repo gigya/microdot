@@ -56,6 +56,7 @@
     <Compile Include="EnvironmentVariableProvider.cs" />
     <Compile Include="EnvironmentVariablesFileReader.cs" />
     <Compile Include="FileBasedConfigItemsSource.cs" />
+    <Compile Include="IConfigEventFactory.cs" />
     <Compile Include="IConfigItemsSource.cs" />
     <Compile Include="IConfigurationDataWatcher.cs" />
     <Compile Include="IConfigurationLocationsParser.cs" />

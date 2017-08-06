@@ -8,12 +8,14 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
 using Metrics;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using Gigya.Microdot.UnitTests;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
@@ -53,7 +55,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
             }, _configDic);
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
-
+   
             var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
             Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
         }
@@ -126,16 +128,15 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
-            var wait = new CountDownEvent();
 
             var discovey = GetServiceDiscovey;
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceivedEvent(x)));
+            var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(OriginatingService);
 
             SetMockToReturnQueryNotFound(OriginatingService);
-            await wait.SetExpected(1, _timeOut);
+            await waitForEvents;
 
             nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(MasterService);
@@ -152,14 +153,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnQueryNotFound(OriginatingService);
 
             var discovey = GetServiceDiscovey;
-            var wait = new CountDownEvent();
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceivedEvent(x)));
+            var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            await wait.SetExpected(1, _timeOut);
+            await waitForEvents;
             nextHost = GetServiceDiscovey.GetNextHost();
             nextHost.Result.HostName.ShouldBe(OriginatingService);
         }
@@ -227,7 +227,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             }
             numOfEvent.ShouldBe(0);
         }
-        
+
         [Test]
         [Repeat(Repeat)]
         public async Task EndPointsChangedShouldFireConfigChange()
@@ -236,22 +236,22 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var wait = new CountDownEvent();
             var discovey = GetServiceDiscovey;
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => wait.ReceivedEvent(x)));
+            var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
+
             await discovey.GetNextHost();
 
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
 
             _configRefresh.RaiseChangeEvent();
-            await wait.SetExpected(1, _timeOut);
+            await waitForEvents.WhenNextEventReceived();
             var host = await discovey.GetNextHost();
             host.HostName.ShouldBe("localhost");
+            waitForEvents.ReceivedEvents.Count.ShouldBe(1);
 
-            wait.TotalEvents().ShouldBe(1);
         }
-        
+
         [Test]
         [Repeat(Repeat)]
         public async Task GetAllEndPointsChangedShouldFireConfigChange()
@@ -261,13 +261,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             //in the first time can fire one or two event
             var discovey = GetServiceDiscovey;
-            var countDownEvent = new CountDownEvent();
 
             //wait for discovey to be initialize!!
             var endPoints = await discovey.GetAllEndPoints();
             endPoints.Single().HostName.ShouldBe(OriginatingService);
 
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => countDownEvent.ReceivedEvent(x)));
+            var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
 
 
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
@@ -275,12 +274,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
             Console.WriteLine("RaiseChangeEvent");
             _configRefresh.RaiseChangeEvent();
 
-            await countDownEvent.SetExpected(1, _timeOut);
+            await waitForEvents.WhenNextEventReceived();
+            waitForEvents.ReceivedEvents.Count.ShouldBe(1);
 
-            countDownEvent.TotalEvents().ShouldBe(1);
+
             endPoints = await discovey.GetAllEndPoints();
             endPoints.Single().HostName.ShouldBe("localhost");
-            countDownEvent.TotalEvents().ShouldBe(1);
+            waitForEvents.ReceivedEvents.Count.ShouldBe(1);
+
         }
 
         [Test]
@@ -294,9 +295,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var discovey = GetServiceDiscovey;
             await discovey.GetAllEndPoints();
 
-            var countDownEvent = new CountDownEvent();
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => countDownEvent.ReceivedEvent(x)));
-
+            var wait = discovey.EndPointsChanged.StartCountingEvents();
 
             bool UseOriginatingService(int i) => i % 2 == 0;
             for (int i = 1; i < 6; i++)
@@ -307,9 +306,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 else
                     SetMockToReturnQueryNotFound(OriginatingService);
 
-                await countDownEvent.SetExpected(i, _timeOut);
+                await wait.WhenNextEventReceived();
                 //assert
-                countDownEvent.TotalEvents().ShouldBe(i);
+                wait.ReceivedEvents.Count.ShouldBe(i);
+
                 var nextHost = (await discovey.GetNextHost()).HostName;
                 if (UseOriginatingService(i))
                     nextHost.ShouldBe(OriginatingService);
@@ -317,7 +317,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     nextHost.ShouldBe(MasterService);
             }
         }
-        
+
         private void SetMockToReturnHost(string query)
         {
             _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.SuccessResult(new[] { new ConsulEndPoint { HostName = query } }, "<Mock consul request log>", "<Mock consul response>")));

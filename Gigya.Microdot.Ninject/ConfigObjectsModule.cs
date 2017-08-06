@@ -24,10 +24,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces.Configuration;
 using Ninject;
 using Ninject.Activation;
+using Ninject.Extensions.Factory;
 using Ninject.Infrastructure;
 using Ninject.Modules;
 using Ninject.Planning.Bindings;
@@ -41,6 +43,9 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel.BindPerKey<Type, ConfigObjectCreator>();
             Kernel.Components.Add<IBindingResolver, ConfigObjectsBindingResolver>();
+            Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
+            Kernel.Bind<IConfigFactory>().ToFactory();
+
         }
     }
 
