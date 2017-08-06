@@ -45,6 +45,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ConfigCache.cs" />
+    <Compile Include="ConfigFactory.cs" />
     <Compile Include="ConfigFile.cs" />
     <Compile Include="ConfigFileDeclaration.cs" />
     <Compile Include="ConfigItem.cs" />

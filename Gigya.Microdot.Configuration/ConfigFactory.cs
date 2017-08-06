@@ -20,12 +20,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
+using Gigya.Microdot.Interfaces.Configuration;
 
-namespace Gigya.Microdot.Interfaces.Configuration
+namespace Gigya.Microdot.Configuration
 {
-    public interface IConfigFactory
+    public class ConfigProvider : IConfigProvider
     {
-        Func<T> CreateConfig<T>() where T : IConfigObject;
+        private readonly IConfigFuncFactory _configFuncFactory;
+
+        public ConfigProvider(IConfigFuncFactory configFuncFactory)
+        {
+            _configFuncFactory = configFuncFactory;
+        }
+
+        public T Get<T>() where T : IConfigObject
+        {
+            return _configFuncFactory.CreateConfigFunc<T>()();
+        }
     }
 }

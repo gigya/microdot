@@ -44,7 +44,7 @@ namespace Gigya.Microdot.Ninject
             Kernel.BindPerKey<Type, ConfigObjectCreator>();
             Kernel.Components.Add<IBindingResolver, ConfigObjectsBindingResolver>();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
-            Kernel.Bind<IConfigFactory>().ToFactory();
+            Kernel.Bind<IConfigFuncFactory>().ToFactory();
 
         }
     }
