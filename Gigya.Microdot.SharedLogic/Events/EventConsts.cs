@@ -50,6 +50,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string exMessage = "ex.message";
         public const string exOneWordMessage = "ex.oneWordMessage";
         public const string exInnerMessages = "ex.innerMessages";
+        public const string exOneWordInnerMessages = "ex.oneWordInnerMessages";
+        public const string exInnerType = "ex.inner.type";
         public const string exStackTrace = "ex.stackTrace";
         public const string exType = "ex.type";
         public const string tags = "tags";
