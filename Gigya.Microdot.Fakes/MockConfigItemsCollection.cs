@@ -51,7 +51,7 @@ namespace Gigya.Microdot.Fakes
                 result.AddRange(data.Values);
                 if (ConfigItemCollection != null)
                 {
-                    result.AddRange(data.Where(item => !data.ContainsKey(item.Key)).Select(x => x.Value));
+                    result.AddRange(ConfigItemCollection.Items.Where(x=> !data.ContainsKey(x.Key)));
                 }
                 return result;
             }
