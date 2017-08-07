@@ -154,28 +154,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         }
 
         [EventField(EventConsts.exOneWordInnerMessages)]
-        public string OneWordInnerException
-        {
-            get
-            {
-                if (ExceptionInnerMessages != null)
-                    return ExceptionInnerMessages.Replace(' ', '_');
-
-                return null;
-            }
-        }
+        public string OneWordInnerException => Exception?.InnerException?.RawMessage().Replace(' ', '_');
 
         [EventField(EventConsts.exInnerType)]
-        public string InnerExceptionType
-        {
-            get
-            {
-                if (Exception?.InnerException == null)
-                    return null;
-
-                return Exception.GetType().FullName;
-            }
-        }
+        public string InnerExceptionType => Exception?.InnerException?.GetType().FullName;
 
         /// <summary>If an exception occured, the exception stack trace.</summary>
         [EventField(EventConsts.exStackTrace)]
