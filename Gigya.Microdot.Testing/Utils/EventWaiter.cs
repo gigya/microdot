@@ -27,7 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace Gigya.Microdot.UnitTests
+namespace Gigya.Microdot.Testing.Utils
 {
     public static class EventWaiterExtensions
     {

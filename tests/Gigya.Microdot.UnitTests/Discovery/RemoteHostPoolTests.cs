@@ -13,7 +13,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.Testing;
-
+using Gigya.Microdot.Testing.Utils;
 using Metrics;
 
 using Ninject;

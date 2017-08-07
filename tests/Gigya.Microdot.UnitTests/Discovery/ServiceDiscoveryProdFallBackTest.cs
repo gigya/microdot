@@ -10,6 +10,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
+using Gigya.Microdot.Testing.Utils;
 using Metrics;
 using Ninject;
 using NSubstitute;
