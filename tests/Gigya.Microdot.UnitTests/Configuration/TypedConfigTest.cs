@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.Testing;
@@ -172,6 +172,30 @@ namespace Gigya.Microdot.UnitTests.Configuration
             infraKernel.Dispose();
         }
 
+        [Test]
+        public async Task ConfigObjectValuesChangedAfterUpdate()
+        {
+            var infraKernel = new TestingKernel<ConsoleLog>(mockConfig: new Dictionary<string, string>
+            {
+                {"BusSettings.TopicName", "OldValue"},
+            });
+
+            var manualConfigurationEvents = infraKernel.Get<ManualConfigurationEvents>();
+            var configItems = infraKernel.Get<OverridableConfigItems>();
+            var configFactory = infraKernel.Get<IConfiguration>();
+
+            var busSettings = configFactory.GetObject<BusSettings>();
+            busSettings.TopicName.ShouldBe("OldValue");
+
+            configItems.SetValue("BusSettings.TopicName", "NewValue");
+            busSettings = await manualConfigurationEvents.ApplyChanges<BusSettings>();
+            busSettings.TopicName.ShouldBe("NewValue");
+
+            busSettings = configFactory.GetObject<BusSettings>();
+            busSettings.TopicName.ShouldBe("NewValue");
+
+            infraKernel.Dispose();
+        }
 
         [Test]
         public void DeepNestedShouldWork()

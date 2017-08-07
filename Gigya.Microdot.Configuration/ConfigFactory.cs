@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,28 +20,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Interfaces.HttpService;
-using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.Interfaces.Configuration;
 
-namespace Gigya.Microdot.Fakes.Discovery
+namespace Gigya.Microdot.Configuration
 {
-
-    public class LocalhostServiceDiscovery : IServiceDiscovery
+    public class Configuration : IConfiguration
     {
-        private static readonly IEndPointHandle handle = new LocalhostEndPointHandle();
-        private readonly Task<IEndPointHandle> _source = Task.FromResult(handle);
+        private readonly IConfigFuncFactory _configFuncFactory;
 
-        public Task<IEndPointHandle> GetNextHost(string affinityToken = null) => _source;
-        public Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken) => _source;
-        public ISourceBlock<string> EndPointsChanged => new BroadcastBlock<string>(null);
-        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => new BroadcastBlock<ServiceReachabilityStatus>(null);
-
-        public async Task<EndPoint[]> GetAllEndPoints()
+        public Configuration(IConfigFuncFactory configFuncFactory)
         {
-            return new[] { new EndPoint {HostName = handle.HostName, Port = handle.Port } };
+            _configFuncFactory = configFuncFactory;
+        }
+
+        public T GetObject<T>() where T : IConfigObject
+        {
+            return _configFuncFactory.CreateConfigFunc<T>()();
         }
     }
 }

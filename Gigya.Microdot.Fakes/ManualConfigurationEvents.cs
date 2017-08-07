@@ -20,22 +20,54 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Fakes
 {
-    public class ManualConfigurationEvents : IConfigurationDataWatcher
+   public class ManualConfigurationEvents : IConfigurationDataWatcher
     {
-        private readonly BroadcastBlock<bool> block  = new BroadcastBlock<bool>(null);
+        private readonly IConfigEventFactory _eventFactory;
+        private readonly BroadcastBlock<bool> block = new BroadcastBlock<bool>(null);
 
+        public ManualConfigurationEvents(IConfigEventFactory eventFactory)
+        {
+            _eventFactory = eventFactory;
+        }
 
         public void RaiseChangeEvent()
         {
             block.Post(true);
-           // Task.Delay(100).Wait();
+            // Task.Delay(100).Wait();
         }
 
+        public Task<T> ApplyChanges<T>(TimeSpan? timeout=null) where T : IConfigObject
+        {
+            timeout = timeout ?? TimeSpan.FromSeconds(5);
+
+            var cancel = new CancellationTokenSource(timeout.Value);
+
+            TaskCompletionSource<T> waitForConfigChange = new TaskCompletionSource<T>();
+            cancel.Token.Register(
+                () => waitForConfigChange.TrySetException(
+                    new Exception(
+                        $"Expected config to change in time, Timeout after {timeout.Value.TotalMilliseconds} ms")));
+            waitForConfigChange.Task.ContinueWith(x => cancel.Dispose(), TaskContinuationOptions.OnlyOnRanToCompletion);
+
+            var configEvent = _eventFactory.GetChangeEvent<T>();
+            configEvent.LinkTo(new ActionBlock<T>(x =>
+            {
+
+                waitForConfigChange.TrySetResult(x);
+            }));
+            RaiseChangeEvent();
+            
+            return waitForConfigChange.Task;
+        }
 
         public ISourceBlock<bool> DataChanges => block;
     }

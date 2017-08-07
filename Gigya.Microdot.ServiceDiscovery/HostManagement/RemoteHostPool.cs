@@ -42,7 +42,9 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
     public sealed class RemoteHostPool : IDisposable
     {
         public ISourceBlock<ServiceReachabilityStatus> ReachabilitySource => ReachabilityBroadcaster;
-        public bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
+        public  bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
+        private readonly BroadcastBlock<EndPointsResult> _endPointsChanged = new BroadcastBlock<EndPointsResult>(null);
+        public ISourceBlock<EndPointsResult> EndPointsChanged => _endPointsChanged;
 
         /// <summary>
         /// Time of the last attempt to reach the service.
@@ -98,7 +100,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             ReachableHosts = new List<RemoteHost>();
             UnreachableHosts = new List<RemoteHost>();
             EndPointsChangedBlockLink = discovery.EndPointsChanged.LinkTo(new ActionBlock<EndPointsResult>(_ => ReloadEndpoints(_)));
-            ReloadEndpoints(new EndPointsResult {EndPoints = discovery.EndPoints});
+            ReloadEndpoints(discovery.Result);
             Metrics = metrics;
             var metricsContext = Metrics.Context(DiscoverySource.DeploymentName);
             metricsContext.Gauge("ReachableHosts", () => ReachableHosts.Count, Unit.Custom("EndPoints"));
@@ -156,10 +158,14 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         ReachableHosts.AddRange(newHosts);
 
                         EndPointsResult = updatedEndPointsResult;
+
                         Counter = (ulong)_random.Next(0, ReachableHosts.Count);
 
                         Health.SetHealthFunction(CheckHealth);
                     }
+
+                    _endPointsChanged.Post(EndPointsResult);
+
                 }
                 catch (Exception ex)
                 {
@@ -377,6 +383,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             Health.Deactivate();
         }
 
+        public EndPoint[] GetAllEndPoints() { return EndPointsResult.EndPoints; }
     }
 
     public interface IRemoteHostPoolFactory

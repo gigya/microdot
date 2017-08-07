@@ -30,7 +30,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// <summary>
         /// Result of endpoints which returned by Consul
         /// </summary>
-        public EndPoint[] EndPoints { get; set; }
+        public EndPoint[] EndPoints { get; set; }=new EndPoint[0];
 
         /// <summary>
         /// Log of Request sent to Consul
@@ -48,7 +48,6 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public bool IsQueryDefined { get; set; }
     }
-
 
 
     public interface IConsulClient

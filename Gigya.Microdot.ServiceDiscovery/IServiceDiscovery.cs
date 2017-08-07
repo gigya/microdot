@@ -23,6 +23,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.HttpService;
 
 namespace Gigya.Microdot.ServiceDiscovery
@@ -55,5 +56,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// of the service is provided, which Gator should be used to refresh the schema.
         /// </summary>
         ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged { get; }
+
+        //Returns all Endpoints that service discovery is aware of, it takes fallback enviroment logic into account.
+        Task<EndPoint[]> GetAllEndPoints();
     }
 }

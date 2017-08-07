@@ -40,7 +40,14 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class ConsulDiscoverySource : ServiceDiscoverySourceBase
     {
         public override Task InitCompleted => _initialized;
-        public override bool IsServiceDeploymentDefined => _lastConsulResult?.IsQueryDefined ?? true;
+        public override bool IsServiceDeploymentDefined =>  IsDeploymentDefined(_lastConsulResult);
+
+        private bool IsDeploymentDefined(EndPointsResult endPointsResult)
+        {
+            if(endPointsResult == null) return true;
+
+            return endPointsResult.IsQueryDefined;
+        }
 
         private IConsulClient ConsulClient { get; }
         private CancellationTokenSource ShutdownToken { get; }
@@ -96,36 +103,51 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task Load()
         {
-            var lastConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
+            var newConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
             lock (_lastResultLocker)
             {
-                if (lastConsulResult.Error != null)
+                var oldConsulResult = _lastConsulResult;
+                _lastConsulResult = newConsulResult;
+
+                if (newConsulResult.Error != null)
                 {
-                    _lastConsulResult = lastConsulResult;
+                    if (_firstTime)
+                    {
+                        _firstTime = false;
+                        Result = newConsulResult;
+                    }                
                     return;
                 }
-                var newEndPoints = lastConsulResult
-                    .EndPoints                    
+                
+                var newEndPoints = newConsulResult
+                    .EndPoints
                     .OrderBy(x => x.HostName)
                     .ThenBy(x => x.Port)
                     .ToArray();
-
-                if (newEndPoints.SequenceEqual(EndPoints) == false)
+                bool isEndPointChanged = false;
+                if (newEndPoints.SequenceEqual(Result.EndPoints) == false)
                 {
-                    EndPoints = newEndPoints;
+                    newConsulResult.EndPoints = newEndPoints;
+                    Result = newConsulResult;
 
                     _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
                     {
                         serviceName = DeploymentName,
-                        endpoints = string.Join(", ", EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
+                        endpoints = string.Join(", ", newEndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
                     }));
 
-                    if (!_firstTime || _lastConsulResult?.Error != null)
-                        EndPointsChanged?.Post(lastConsulResult);
+                    isEndPointChanged = true;
                 }
 
+                bool isDeploymentDefinedChanged = IsDeploymentDefined(oldConsulResult) != IsDeploymentDefined(newConsulResult);
+
+
+                if (!_firstTime && (isEndPointChanged || isDeploymentDefinedChanged))
+                    EndPointsChanged?.Post(newConsulResult);
+
+
                 _firstTime = false;
-                _lastConsulResult = lastConsulResult;
+
                 _initialized = Task.FromResult(1);
             }
         }
@@ -151,7 +173,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 else if (endPointsResult.Error != null)
                     return new EnvironmentException("Error calling Consul. See tags for details.", unencrypted: tags);
-                else if (endPointsResult.IsQueryDefined==false)
+                else if (endPointsResult.IsQueryDefined == false)
                     return new EnvironmentException("Query not exists on Consul. See tags for details.", unencrypted: tags);
                 else
                     return new EnvironmentException("No endpoint were specified in Consul for the requested service.", unencrypted: tags);
