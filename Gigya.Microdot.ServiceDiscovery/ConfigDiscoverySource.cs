@@ -45,7 +45,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             _serviceDiscoveryConfig = serviceDiscoveryConfig;
             Log = log;
-            EndPoints = GetEndPointsInitialValue();
+            Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue()};
         }
 
         private EndPoint[] GetEndPointsInitialValue()
@@ -60,7 +60,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 configPath = ConfigPath,
                 componentName = DeploymentName,
-                endPoints = EndPoints
+                endPoints = endPoints
             }));
 
             return endPoints;           
@@ -87,7 +87,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
 
-        public override bool IsServiceDeploymentDefined { get; } = true;
+        public override bool IsServiceDeploymentDefined => true;
+      
 
 
         public override Exception AllEndpointsUnreachable(EndPointsResult endPointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)

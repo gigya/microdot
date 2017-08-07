@@ -9,7 +9,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing;
-
+using Gigya.Microdot.Testing.Utils;
 using Ninject;
 
 using NSubstitute;
@@ -28,6 +28,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private ManualConfigurationEvents _configRefresh;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private IConsulClient _consulAdapterMock;
+        public const int Repeat = 1;
 
         [SetUp]
         public async Task Setup()
@@ -44,9 +45,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
             _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityChecker, ServiceDiscovery.ServiceDiscovery>>()("ServiceName", x => Task.FromResult(true));
-
-            await WaitForConfigChange(() => {});
-        }
+           }
 
         [TearDown]
         public void TearDown()
@@ -55,17 +54,22 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [TestCase("Services.ServiceName")]
+        [Repeat(Repeat)]
+
         public async Task DiscoveySettingAreUpdateOnConfigChange(string serviceName)
         {
             await WaitForConfigChange(() =>
-            {
-                _configDic[$"Discovery.{serviceName}.Source"] = "Config";
-                _configDic[$"Discovery.{serviceName}.Hosts"] = "localhost";
-            });
+                  {
+                      _configDic[$"Discovery.{serviceName}.Source"] = "Config";
+                      _configDic[$"Discovery.{serviceName}.Hosts"] = "localhost";
+                  });
+
             Assert.AreEqual(DiscoverySource.Config, _serviceDiscovery.LastConfig.Source);
         }
 
         [TestCase("Services.OtherServiceName")]
+        [Repeat(Repeat)]
+
         public void DiscoverySettingUpdatingUnrelatedConfig_ShouldNotChange(string serviceName)
         {
 
@@ -78,8 +82,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
             act.ShouldThrowAsync<TimeoutException>();
         }
 
- 
+
         [TestCase("Services.ServiceName")]
+        [Repeat(Repeat)]
+
         public async Task HostShouldUpdateFromConfig(string serviceName)
         {
 
@@ -93,29 +99,27 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [TestCase("Services.ServiceName")]
+        [Repeat(Repeat)]
+
         public async Task ServiceSourceIsLocal(string serviceName)
         {
-            await WaitForConfigChange(() => _configDic[$"Discovery.{serviceName}.Source"] = "Local");
-            var remotHostPull = _serviceDiscovery.GetNextHost();
-            remotHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.HostName);
+            await WaitForConfigChange(() =>
+            _configDic[$"Discovery.{serviceName}.Source"] = "Local"
+            );
+            var remoteHostPull = _serviceDiscovery.GetNextHost();
+            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.HostName);
         }
+
 
 
         private async Task WaitForConfigChange(Action update)
         {
-            var oldValue = _serviceDiscovery.LastConfig;
+            var waitForInit = await _serviceDiscovery.GetNextHost();
+            var task = _serviceDiscovery.EndPointsChanged.WhenEventReceived();
             update();
             _configRefresh.RaiseChangeEvent();
 
-            for (int i = 0; i < 500; i++)
-            {
-                if (_serviceDiscovery.LastConfig != null && Equals(oldValue, _serviceDiscovery.LastConfig) == false)
-                    return;
-
-                await Task.Delay(10);
-            }
-
-            throw new TimeoutException("time out");
+            await task;
         }
     }
 }

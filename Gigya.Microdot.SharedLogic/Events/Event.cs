@@ -153,6 +153,12 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
+        [EventField(EventConsts.exOneWordInnerMessages)]
+        public string OneWordInnerException => Exception?.InnerException?.RawMessage().Replace(' ', '_');
+
+        [EventField(EventConsts.exInnerType)]
+        public string InnerExceptionType => Exception?.InnerException?.GetType().FullName;
+
         /// <summary>If an exception occured, the exception stack trace.</summary>
         [EventField(EventConsts.exStackTrace)]
         public string ExceptionStackTrace
@@ -162,7 +168,10 @@ namespace Gigya.Microdot.SharedLogic.Events
                 if (ShouldExcludeStackTrace || Exception == null)
                     return null;
 
-                return Exception.StackTrace ?? Exception.InnerException?.StackTrace;
+                var ex = Exception;
+                while (ex.StackTrace == null && ex.InnerException != null)
+                    ex = ex.InnerException;
+                return ex.StackTrace;                
             }
         }
 

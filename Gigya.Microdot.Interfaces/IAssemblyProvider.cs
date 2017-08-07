@@ -31,7 +31,7 @@ namespace Gigya.Microdot.Interfaces
    public interface IAssemblyProvider
    {
       /// <summary>
-      /// Get a list of assemblies hat should be used for discovery via reflection.
+      /// GetObject a list of assemblies hat should be used for discovery via reflection.
       /// </summary>
       /// <returns></returns>
       Assembly[] GetAssemblies();

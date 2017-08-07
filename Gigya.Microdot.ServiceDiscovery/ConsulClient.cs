@@ -145,7 +145,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             return new EndPointsResult
             {
-                EndPoints = endpoints,
+                EndPoints = endpoints?? new ConsulEndPoint[0],
                 RequestDateTime = DateTime.Now,
                 RequestLog = requestLog,
                 ResponseLog = responseContent,
@@ -160,7 +160,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 EndPoints = new ConsulEndPoint[0],
                 RequestDateTime = DateTime.Now,
                 RequestLog = requestLog,
-                ResponseLog = ex?.ToString(),
+                ResponseLog = ex?.Message,
                 Error = ex,
                 IsQueryDefined = isQueryDefined
             };

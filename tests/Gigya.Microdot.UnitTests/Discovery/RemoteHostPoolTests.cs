@@ -13,7 +13,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.Testing;
-
+using Gigya.Microdot.Testing.Utils;
 using Metrics;
 
 using Ninject;
@@ -223,8 +223,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var isReachable = false;
             CreatePool("host2", host => Task.FromResult(isReachable));
 
-            (await Pool.ReachabilitySource.ShouldRaiseMessage(() =>
-                {
+            var wait = Pool.ReachabilitySource.WhenEventReceived();
+          
                     for (int i = 0; i < 2; i++)
                     {
                         var host = Pool.GetNextHost();
@@ -232,7 +232,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                         if (host.HostName == "host2")
                             host.ReportFailure();
                     }
-                })).Message.IsReachable.ShouldBeFalse();
+            (await wait).IsReachable.ShouldBeFalse();
 
             (await Pool.ReachabilitySource.ShouldRaiseMessage(() =>
                 {
@@ -342,19 +342,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public DiscoverySourceMock(string deploymentName, string initialEndPoints) : base(deploymentName)
         {
-            EndPoints = GetEndPointsInitialValue(initialEndPoints);
+            Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue(initialEndPoints)};
         }
 
         public void SetEndPoints(string endPoints)
         {
-            EndPoints = new EndPoint[0];
+            Result = new EndPointsResult {EndPoints = new EndPoint[0]};
             if (!string.IsNullOrWhiteSpace(endPoints))
-                EndPoints = endPoints.Split(',').Select(_ => _.Trim())
+                Result = new EndPointsResult {EndPoints= endPoints.Split(',').Select(_ => _.Trim())
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .Select(_ => new EndPoint { HostName = _ })
-                    .ToArray();
+                    .ToArray()};
 
-            EndPointsChanged.Post(new EndPointsResult { EndPoints=EndPoints});
+            EndPointsChanged.Post(Result);
             Task.Delay(100).Wait();
         }
 
@@ -371,7 +371,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public bool AlwaysThrowException=false;
 
-        public override bool IsServiceDeploymentDefined { get; } = true;
+        public override bool IsServiceDeploymentDefined => true;
         public override Exception AllEndpointsUnreachable(EndPointsResult endpointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)
         {
             return new EnvironmentException("All endpoints unreachable");

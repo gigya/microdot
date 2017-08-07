@@ -24,22 +24,22 @@ using System;
 using NUnit.Framework;
 
 [SetUpFixture]
-    public class AssemblyInitialize
+public class AssemblyInitialize
+{
+    [OneTimeSetUp]
+    public void SetUp()
     {
-       [OneTimeSetUp]
-        public void SetUp()
+        try
         {
-            try
-            {
-                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
-                Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
-                Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
-            }
-            catch(Exception ex)
-            {
-                Console.Write(ex);
-                throw;
-            }
+            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
         }
-
+        catch(Exception ex)
+        {
+            Console.Write(ex);
+            throw;
+        }
     }
+
+}
