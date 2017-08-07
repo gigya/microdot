@@ -15,14 +15,15 @@ namespace Gigya.Microdot.UnitTests
                 timeout = _defaultMaxTimeout;
 
             var messageSent = false;
-            var message=default(T);
+            var message = default(T);
             using (sourceBlock.LinkTo(new ActionBlock<T>(m => {
-                                                            messageSent = true;
-                                                            message = m;})))
+                messageSent = true;
+                message = m;
+            })))
             {
                 var task = new Task(actionWhichShouldSendMessage);
                 task.Start();
-                await task;                
+                await task;
 
                 var timeoutDateTime = DateTime.Now + timeout;
                 while (!messageSent)
@@ -56,7 +57,7 @@ namespace Gigya.Microdot.UnitTests
 
                 if (messageSent)
                     throw new Exception("Recieved a message which should have NOT been sent");
-            }            
+            }
         }
 
     }

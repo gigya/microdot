@@ -72,7 +72,7 @@ namespace Gigya.Microdot.ServiceProxy
         public string ServiceName { get; }
 
         /// <summary>
-        /// Get a value indicating if a secure will be used to connect to the remote service. This defaults to the
+        /// GetObject a value indicating if a secure will be used to connect to the remote service. This defaults to the
         /// value that was specified in the <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, overridden
         /// by service discovery.
         /// </summary>

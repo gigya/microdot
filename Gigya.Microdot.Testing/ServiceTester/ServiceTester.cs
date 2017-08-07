@@ -85,7 +85,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
 
         /// <summary>
-        /// Get a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
@@ -112,7 +112,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
         /// <summary>
-        /// Get a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
@@ -131,7 +131,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
         /// <summary>
-        /// Get a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="serviceName">Name of service </param>
@@ -152,7 +152,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
 
         /// <summary>
-        /// Get a GrainClient that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
@@ -167,7 +167,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
 
         /// <summary>
-        /// Get a GrainClient that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
@@ -182,7 +182,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
 
         /// <summary>
-        /// Get a GrainClient that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
@@ -196,7 +196,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
         /// <summary>
-        /// Get a GrainClient that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
@@ -211,7 +211,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
         /// <summary>
-        /// Get a GrainClient that is configured to call the service under test. Both the port and the hostname of
+        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
         /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
         /// </summary>
         /// <param name="primaryKey">The primary key of the grain that you want to call.</param>

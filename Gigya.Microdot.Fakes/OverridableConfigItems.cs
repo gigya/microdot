@@ -55,7 +55,6 @@ namespace Gigya.Microdot.Fakes
 
             if (FileBasedConfigItemsSource != null)
             configItemCollection = await FileBasedConfigItemsSource.GetConfiguration().ConfigureAwait(false);
-
             return new MockConfigItemsCollection(GetConfigItemsOverrides, configItemCollection);
         }
 
