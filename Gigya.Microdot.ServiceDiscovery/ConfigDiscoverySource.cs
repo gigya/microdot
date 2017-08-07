@@ -60,7 +60,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 configPath = ConfigPath,
                 componentName = DeploymentName,
-                result = Result
+                endPoints = endPoints
             }));
 
             return endPoints;           
