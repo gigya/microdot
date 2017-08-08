@@ -110,7 +110,13 @@ namespace Gigya.Microdot.SharedLogic.Events
             {
                 if ((ErrCode == 0 || ErrCode == null) && Exception != null)
                 {
-                    return (Exception as RequestException)?.ErrorCode ?? 500001;
+                    var errorCode = (Exception as RequestException)?.ErrorCode;
+                    if (errorCode == 0 || errorCode == null)
+                    {
+                        return 500001;//General server error
+                    }
+                    return errorCode;
+
                 }
                 return ErrCode;
             }
