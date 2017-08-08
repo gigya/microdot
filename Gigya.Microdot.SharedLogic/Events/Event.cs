@@ -104,9 +104,17 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// <summary>Returns the explicitly-set <see cref="ErrCode"/>, or an error code deduced from the
         /// <see cref="Exception"/>, or null if neither was set.</summary>
         [EventField(EventConsts.errCode)]
-        public int? ErrCode_ => ErrCode
-                                ?? ((Exception as RequestException)?.ErrorCode ?? (Exception != null ? 500001 //General Server Error
-                                        : (int?)null));
+        public int? ErrCode_
+        {
+            get
+            {
+                if ((ErrCode == 0 || ErrCode == null) && Exception != null)
+                {
+                    return (Exception as RequestException)?.ErrorCode ?? 500001;
+                }
+                return ErrCode;
+            }
+        }
 
         /// <summary>A short summary of the log event</summary>
         [EventField(EventConsts.message)]
