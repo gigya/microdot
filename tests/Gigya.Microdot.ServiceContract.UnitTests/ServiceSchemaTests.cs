@@ -29,16 +29,20 @@ using NUnit.Framework;
 
 namespace Gigya.Common.Contracts.UnitTests
 {
-
-    class Data
+    class DataParamBase
     {
-        string s;
-        Nested n;
+        [Sensitive]
+        public int BaseField;
+    }
+    class Data: DataParamBase
+    {
+        public string s;
+        public Nested n;
     }
 
     class Nested
     {
-        DateTime time;
+        public DateTime time;
     }
 
     public class SensitiveAttribute : Attribute {}
@@ -84,6 +88,12 @@ namespace Gigya.Common.Contracts.UnitTests
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[2].Name == "s");
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes[0].Attribute is SensitiveAttribute);
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].TypeName == schema.Types[0].Name);
+            Assert.IsTrue(schema.Types[0].Fields[0].Name == nameof(DataParamBase.BaseField));
+            Assert.IsTrue(schema.Types[0].Fields[0].Attributes[0].Attribute is SensitiveAttribute);
+            Assert.IsTrue(schema.Types[0].Fields[0].Type == typeof(int));
+            Assert.IsTrue(schema.Types[0].Fields[1].Name == "s");
+            Assert.IsTrue(schema.Types[0].Fields[1].Type == typeof(string));
         }
 
 
