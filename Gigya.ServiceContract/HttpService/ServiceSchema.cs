@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -40,11 +41,25 @@ namespace Gigya.Common.Contracts.HttpService
     {
         public InterfaceSchema[] Interfaces { get; set; }
 
+        public TypeSchema[] Types { get; set; }
+
         public ServiceSchema() {}
 
         public ServiceSchema(Type[] interfaces)
         {
             Interfaces = interfaces.Select(_ => new InterfaceSchema(_)).ToArray();
+            Types = Interfaces
+                        .SelectMany(_ => _.Methods)
+                        .SelectMany(_ => _.Parameters)
+                        .Select(_ => _.Type)
+                        .Where(CompositeType)
+                        .Distinct()
+                        .Select(_ => new TypeSchema(_)).ToArray();
+        }
+
+        private bool CompositeType(Type type)
+        {
+            return !type.IsValueType && !(type == typeof(string));
         }
     }
 
@@ -69,6 +84,27 @@ namespace Gigya.Common.Contracts.HttpService
         }
     }
 
+    public class TypeSchema
+    {
+        public string Name { get; set; }
+        public FieldSchema[] Fields { get; set; }
+
+        public TypeSchema() { }
+
+        public TypeSchema(Type type)
+        {
+            Name = type.AssemblyQualifiedName;
+            Fields = GetFields(type).ToArray();
+        }
+
+        private IEnumerable<FieldSchema> GetFields(Type type)
+        {
+            var baseFields = type.BaseType!=typeof(object) && type.BaseType != null ? GetFields(type.BaseType) : new FieldSchema[0];
+            var properties = type.GetProperties().Select(_ => new FieldSchema(_));
+            var fields = type.GetFields().Select(_ => new FieldSchema(_));
+            return baseFields.Concat(properties).Concat(fields);
+        }
+    }
 
     public class MethodSchema
     {
@@ -114,14 +150,17 @@ namespace Gigya.Common.Contracts.HttpService
 
         public ParameterSchema() { }
 
-        public ParameterSchema(ParameterInfo param)
+        public ParameterSchema(ParameterInfo param): this (param.Name, param.ParameterType, param.GetCustomAttributes())
         {
-            Type = param.ParameterType;
-            Name = param.Name;
-            TypeName = param.ParameterType.AssemblyQualifiedName;
-            Attributes = param.GetCustomAttributes().Select(_ => new AttributeSchema(_)).ToArray();
         }
 
+        protected ParameterSchema(string name, Type type, IEnumerable<Attribute> attributes)
+        {
+            Type = type;
+            Name = name;
+            TypeName = type.AssemblyQualifiedName;
+            Attributes = attributes.Select(_ => new AttributeSchema(_)).ToArray();
+        }
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
@@ -132,6 +171,17 @@ namespace Gigya.Common.Contracts.HttpService
             }
             catch {}
         }
+    }
+
+    public class FieldSchema : ParameterSchema
+    {
+        public FieldSchema() { }
+
+        public FieldSchema(FieldInfo field): base(field.Name, field.FieldType, field.GetCustomAttributes())
+        { }
+
+        public FieldSchema(PropertyInfo property) : base(property.Name, property.PropertyType, property.GetCustomAttributes())
+        { }
     }
 
 
