@@ -21,9 +21,11 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -46,6 +48,7 @@ namespace Gigya.Common.Contracts.HttpService
         {
             Interfaces = interfaces.Select(_ => new InterfaceSchema(_)).ToArray();
         }
+
     }
 
 
@@ -69,7 +72,6 @@ namespace Gigya.Common.Contracts.HttpService
         }
     }
 
-
     public class MethodSchema
     {
         public string Name { get; set; }
@@ -78,7 +80,10 @@ namespace Gigya.Common.Contracts.HttpService
 
         public bool IsRevocable { get; set; }
 
+        [Obsolete("Use Response.TypeName instead")]
         public string ResponseType { get; set; }
+
+        public TypeSchema Response { get; set; }
 
         public AttributeSchema[] Attributes { get; set; }
 
@@ -88,40 +93,40 @@ namespace Gigya.Common.Contracts.HttpService
         {
             Name = info.Name;
 
-            if (info.ReturnType.IsGenericType)
+            if (info.ReturnType.IsGenericType && info.ReturnType.GetGenericTypeDefinition()==typeof(Task<>))
             {
                 var resultType = info.ReturnType.GetGenericArguments().Single();
                 IsRevocable = typeof(IRevocable).IsAssignableFrom(resultType);
-                ResponseType = resultType.Name;
+                Response = new TypeSchema(resultType, info.ReturnType.GetCustomAttributes());
+            }
+            else
+            {
+                Response = new TypeSchema(info.ReturnType, info.ReturnType.GetCustomAttributes());
             }
 
+            ResponseType = Response.TypeName;
             Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
             Attributes = info.GetCustomAttributes().Select(a => new AttributeSchema(a)).ToArray();
         }
     }
 
-
-    public class ParameterSchema
+    public class SimpleTypeSchema
     {
         [JsonIgnore]
         public Type Type { get; set; }
-
-        public string Name { get; set; }
 
         public string TypeName { get; set; }
 
         public AttributeSchema[] Attributes { get; set; }
 
-        public ParameterSchema() { }
+        public SimpleTypeSchema() { }
 
-        public ParameterSchema(ParameterInfo param)
+        public SimpleTypeSchema(Type type, IEnumerable<Attribute> attributes)
         {
-            Type = param.ParameterType;
-            Name = param.Name;
-            TypeName = param.ParameterType.AssemblyQualifiedName;
-            Attributes = param.GetCustomAttributes().Select(_ => new AttributeSchema(_)).ToArray();
+            Type = type;
+            TypeName = type.AssemblyQualifiedName;
+            Attributes = attributes.Select(_ => new AttributeSchema(_)).ToArray();
         }
-
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
@@ -130,7 +135,66 @@ namespace Gigya.Common.Contracts.HttpService
             {
                 Type = Type.GetType(TypeName);
             }
-            catch {}
+            catch { }
+        }
+    }
+
+    public class TypeSchema: SimpleTypeSchema
+    {
+        public FieldSchema[] Fields { get; set; }
+
+        public TypeSchema() { }
+
+        public TypeSchema(Type type, IEnumerable<Attribute> attributes): base(type, attributes)
+        {
+            if (IsCompositeType(type))
+                Fields = GetFields(type).ToArray();
+        }
+
+        private IEnumerable<FieldSchema> GetFields(Type type)
+        {
+            var baseFields = type.BaseType != typeof(object) && type.BaseType != null ? GetFields(type.BaseType) : new FieldSchema[0];
+            var properties = type.GetProperties().Select(_ => new FieldSchema(_));
+            var fields = type.GetFields().Select(_ => new FieldSchema(_));
+            return baseFields.Concat(properties).Concat(fields);
+        }
+
+        private bool IsCompositeType(Type type)
+        {
+            return !type.IsValueType && !(type == typeof(string));
+        }
+    }
+
+    public class ParameterSchema: TypeSchema
+    {
+        public string Name { get; set; }
+
+        public ParameterSchema() { }
+
+        public ParameterSchema(ParameterInfo param): this (param.Name, param.ParameterType, param.GetCustomAttributes())
+        {
+        }
+
+        protected ParameterSchema(string name, Type type, IEnumerable<Attribute> attributes): base(type, attributes)
+        {
+            Name = name;
+        }
+    }
+
+    public class FieldSchema : SimpleTypeSchema
+    {
+        public string Name { get; set; }
+
+        public FieldSchema() { }
+
+        public FieldSchema(FieldInfo field) : base(field.FieldType, field.GetCustomAttributes())
+        {
+            Name = field.Name;
+        }
+
+        public FieldSchema(PropertyInfo property) : base(property.PropertyType, property.GetCustomAttributes())
+        {
+            Name = property.Name;
         }
     }
 
