@@ -99,11 +99,11 @@ namespace Gigya.Common.Contracts.UnitTests
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(int));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Name == nameof(Data.s));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Type == typeof(string));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Type == typeof(ResponseData));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[0].Name == nameof(ResponseData.a));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[0].Type == typeof(string));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[1].Name == nameof(ResponseData.b));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[1].Type == typeof(int));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Type == typeof(ResponseData));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Name == nameof(ResponseData.a));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Type == typeof(string));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[1].Name == nameof(ResponseData.b));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[1].Type == typeof(int));
         }
 
 
