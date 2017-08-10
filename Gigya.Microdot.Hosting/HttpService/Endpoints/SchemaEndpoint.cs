@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
         public SchemaEndpoint(IServiceInterfaceMapper mapper)
         {
-            _jsonSchema = JsonConvert.SerializeObject(new ServiceSchema(mapper.ServiceInterfaceTypes.ToArray()), Formatting.Indented);
+            _jsonSchema = JsonConvert.SerializeObject(new ServiceSchema(mapper.ServiceInterfaceTypes.ToArray()), new JsonSerializerSettings{Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore});
         }
 
 

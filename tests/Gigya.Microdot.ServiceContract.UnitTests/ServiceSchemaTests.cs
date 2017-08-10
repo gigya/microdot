@@ -45,13 +45,19 @@ namespace Gigya.Common.Contracts.UnitTests
         public DateTime time;
     }
 
+    class ResponseData
+    {
+        public string a;
+        public int b;
+    }
+
     public class SensitiveAttribute : Attribute {}
 
     [HttpService(100, Name = "ServiceName")]
     internal interface ITestInterface
     {
         [PublicEndpoint("demo.doSomething")]
-        Task DoSomething(int i, double? nd, string s, [Sensitive] Data data);
+        Task<ResponseData> DoSomething(int i, double? nd, string s, [Sensitive] Data data);
     }
 
     [TestFixture]
@@ -62,7 +68,7 @@ namespace Gigya.Common.Contracts.UnitTests
         public void TestSerialization()
         {
             ServiceSchema schema = new ServiceSchema(new[] { typeof(ITestInterface) });
-            string serialized = JsonConvert.SerializeObject(schema, Formatting.Indented);
+            string serialized = JsonConvert.SerializeObject(schema, new JsonSerializerSettings { Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore });
             schema = JsonConvert.DeserializeObject<ServiceSchema>(serialized);
 
             Assert.IsTrue(schema.Interfaces.Length == 1);
@@ -88,12 +94,16 @@ namespace Gigya.Common.Contracts.UnitTests
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[2].Name == "s");
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].TypeName == schema.Types[0].Name);
-            Assert.IsTrue(schema.Types[0].Fields[0].Name == nameof(DataParamBase.BaseField));
-            Assert.IsTrue(schema.Types[0].Fields[0].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Types[0].Fields[0].Type == typeof(int));
-            Assert.IsTrue(schema.Types[0].Fields[1].Name == "s");
-            Assert.IsTrue(schema.Types[0].Fields[1].Type == typeof(string));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Name == nameof(DataParamBase.BaseField));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Attributes[0].Attribute is SensitiveAttribute);
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(int));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Name == nameof(Data.s));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Type == typeof(string));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Type == typeof(ResponseData));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[0].Name == nameof(ResponseData.a));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[0].Type == typeof(string));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[1].Name == nameof(ResponseData.b));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].ResponseType.Fields[1].Type == typeof(int));
         }
 
 
