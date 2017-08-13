@@ -27,7 +27,6 @@ using System.Text.RegularExpressions;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.Hosting.Events
 {
@@ -66,8 +65,8 @@ namespace Gigya.Microdot.Hosting.Events
         public IEnumerable<KeyValuePair<string, string>> ServiceMethodArguments => LazyRequestParams.GetValue(this);
 
     
-        private readonly Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyRequestParams =
-            new Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams().ToList());
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyRequestParams =
+            new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams().ToList());
 
         public IEnumerable<Param> Params { get; set; }
 

@@ -43,7 +43,7 @@ namespace Gigya.Common.Contracts
         /// <returns></returns>
         public static object ConvertWeaklyTypedValue(object value, Type targetType)
         {
-            if (targetType == null)
+             if (targetType == null)
                 throw new ArgumentNullException(nameof(targetType));
 
             if (value == null || targetType.IsInstanceOfType(value))
