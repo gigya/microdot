@@ -3,3 +3,4 @@ Ninject.Extensions.Conventions
 Ninject.Extensions.Factory
 System.Threading.Tasks.Dataflow
 Metrics.NET
+Castle.Core
