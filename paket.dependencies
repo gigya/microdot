@@ -14,8 +14,6 @@ nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
 nuget System.ComponentModel.Annotations ~> 4.0
 nuget System.Collections.Immutable ~> 1.0
 nuget DataAnnotationsValidator ~> 2.0
-nuget Microsoft.NETCore.Platforms ~> 1.0
-nuget NETStandard.Library ~> 1.0
 
 # Orleans
 nuget Microsoft.Orleans.Core  1.3.1
