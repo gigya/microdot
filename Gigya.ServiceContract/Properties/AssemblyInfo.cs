@@ -40,7 +40,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 
 
-[assembly: AssemblyInformationalVersion("2.4.11-pre01")]// if pre-release should be in the format of "2.4.11-pre01".
+[assembly: AssemblyInformationalVersion("2.4.11")]// if pre-release should be in the format of "2.4.11-pre01".
 [assembly: AssemblyVersion("2.4.11")]
 [assembly: AssemblyFileVersion("2.4.11")]
 
