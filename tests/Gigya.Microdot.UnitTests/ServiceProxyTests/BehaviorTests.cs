@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
+using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
-
+using Castle.Core.Internal;
 using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing;
@@ -32,37 +36,328 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "host1,host2"},
-                {"Discovery.Services.DemoService.DefaultPort", "5555"}                
+                {"Discovery.Services.DemoService.DefaultPort", "5555"}
             };
 
-            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict);            
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+            )
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+
+
+
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond(req => HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'"));
+
+                serviceProxy.HttpMessageHandler = messageHandler;
+
+                //If we set Request Id we would like always to select same Host
+                TracingContext.SetRequestID("dumyId1");
+                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
+                string host;
+                for (int i = 0; i < 50; i++)
+                {
+                    host = (string)await serviceProxy.Invoke(request, typeof(string));
+                    host.ShouldBe(hostOfFirstReq);
+                }
+
+                TracingContext.SetRequestID("dumyId2");
+                host = (string)await serviceProxy.Invoke(request, typeof(string));
+                host.ShouldNotBe(hostOfFirstReq);
+            }
+        }
+
+        [Test]
+        public async Task RequestContextShouldOverridePortAndHost()
+        {
+            const string serviceName = "DemoService";
+            const int defaultPort = 5555;
+            var dict = new Dictionary<string, string>
+            {
+                {$"Discovery.Services.{serviceName}.Source", "Config"},
+                {$"Discovery.Services.{serviceName}.Hosts", "host1"},
+                {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict))
+            {
+
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory(serviceName);
+
+
+
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond(req => HttpResponseFactory.GetResponse(
+                        content: $"'{req.RequestUri.Host}:{req.RequestUri.Port}'"));
+
+                serviceProxy.HttpMessageHandler = messageHandler;
+                string overrideHost = "override-host";
+                int overridePort = 5318;
+
+                TracingContext.SetHostOverride(serviceName, overrideHost, overridePort);
+
+                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                for (int i = 0; i < 50; i++)
+                {
+                    var host = (string)await serviceProxy.Invoke(request, typeof(string));
+                    host.ShouldBe($"{overrideHost}:{overridePort}");
+                }
+
+            }
+        }
+
+        [Test]
+        public async Task RequestContextShouldOverrideHostOnly()
+        {
+            const string serviceName = "DemoService";
+            const int defaultPort = 5555;
+
+            var dict = new Dictionary<string, string> {
+                {$"Discovery.Services.{serviceName}.Source", "Config"},
+                {$"Discovery.Services.{serviceName}.Hosts", "host1"},
+                {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
+            };
+
+            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict);
             var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
-            var serviceProxy = providerFactory("DemoService");
+            var serviceProxy = providerFactory(serviceName);
 
-          
 
-            var messageHandler = new MockHttpMessageHandler();            
+
+            var messageHandler = new MockHttpMessageHandler();
             messageHandler
                 .When("*")
-                .Respond(req=> HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'"));
+                .Respond(req => HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}:{req.RequestUri.Port}'"));
+            string overrideHost = "override-host";
 
             serviceProxy.HttpMessageHandler = messageHandler;
 
-            //If we set Request Id we would like always to select same Host
-            TracingContext.SetRequestID("dumyId1");
+
+            TracingContext.SetHostOverride(serviceName, overrideHost);
+
             var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
-            var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
-            string host;
-            for(int i = 0;i < 50;i++)
+            for (int i = 0; i < 50; i++)
             {
-                host = (string)await serviceProxy.Invoke(request, typeof(string));
-                host.ShouldBe(hostOfFirstReq);
+                var host = (string)await serviceProxy.Invoke(request, typeof(string));
+                host.ShouldBe($"{overrideHost}:{defaultPort}");
             }
 
-            TracingContext.SetRequestID("dumyId2");
-            host = (string)await serviceProxy.Invoke(request, typeof(string));           
-            host.ShouldNotBe(hostOfFirstReq);
         }
+
+        
+        [Test]
+        public async Task AllHostsAreHavingNetworkErrorsShouldTryEachTwice()
+        {
+            var dict = new Dictionary<string, string> {
+                {"Discovery.Services.DemoService.Source", "Config"},
+                {"Discovery.Services.DemoService.Hosts", "host1,host2"},
+                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+            )
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+
+                int counter = 0;
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond(req =>
+                    {
+                        bool disableReachabilityChecker = req.Content == null;
+                        if (disableReachabilityChecker) throw new HttpRequestException();
+
+                        counter++;
+                        //HttpRequestException
+                        throw new HttpRequestException();
+                    });
+
+                serviceProxy.HttpMessageHandler = messageHandler;
+
+                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+
+                Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
+                await act.ShouldThrowAsync<MissingHostException>();
+                counter.ShouldBe(4);
+            }
+        }
+
+
+        [Test]
+        public async Task OneHostHasNetworkErrorShouldMoveToNextHost()
+        {
+            var dict = new Dictionary<string, string>
+            {
+                {"Discovery.Services.DemoService.Source", "Config"},
+                {"Discovery.Services.DemoService.Hosts", "host1,host2"},
+                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+            )
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+
+                //Disable  TracingContext.SetRequestID("1");
+                CallContext.FreeNamedDataSlot("#ORL_RC");
+
+                int counter = 0;
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond( req =>
+                    {
+                        bool disableReachabilityChecker = req.Content==null;
+                        if(disableReachabilityChecker) throw new HttpRequestException();
+
+                        counter++;
+                    
+                        if ( req.RequestUri.Host == "host1") throw new HttpRequestException();
+                        return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
+                    });
+
+                serviceProxy.HttpMessageHandler = messageHandler;
+
+                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+
+                for (int i = 0; i < 3; i++)
+                {
+                    var server = await serviceProxy.Invoke(request, typeof(string));
+                    server.ShouldBe("host2");
+                }
+                // should try first server 2 time
+                counter.ShouldBe(5);
+            }
+        }
+
+
+        [Test]
+        public async Task RequestContextOverrideShouldFailOnFirstAttempt()
+        {
+            var dict = new Dictionary<string, string>
+            {
+                {"Discovery.Services.DemoService.Source", "Config"},
+                {"Discovery.Services.DemoService.Hosts", "notImpotent"},
+                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+            )
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+
+                //Disable  TracingContext.SetRequestID("1");
+
+                CallContext.FreeNamedDataSlot("#ORL_RC");
+
+                int counter = 0;
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond(req =>
+                    {
+                        counter++;
+
+                        throw new HttpRequestException();
+                    });
+
+
+                string overrideHost = "override-host";
+                int overridePort = 5318;
+                TracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
+                serviceProxy.HttpMessageHandler = messageHandler;
+
+                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+
+                for (int i = 0; i < 3; i++)
+                {
+                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
+
+                    await act.ShouldThrowAsync<MissingHostException>();
+                }
+                counter.ShouldBe(3);
+            }
+        }
+
+        
+        [Test]
+        public async Task FailedHostShouldBeRemovedFromHostList()
+        {
+            var dict = new Dictionary<string, string>
+            {
+                {"Discovery.Services.DemoService.Source", "local"},
+                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+            )
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+
+                //Disable  TracingContext.SetRequestID("1");
+
+                CallContext.FreeNamedDataSlot("#ORL_RC");
+
+                int counter = 0;
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond(req =>
+                    {
+                        bool disableReachabilityChecker = req.Content == null;
+                        if (disableReachabilityChecker) throw new HttpRequestException();
+                        counter++;
+
+                        throw new HttpRequestException();
+                    });
+
+
+                serviceProxy.HttpMessageHandler = messageHandler;
+
+                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+
+                for (int i = 0; i < 10; i++)
+                {
+                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
+
+                    await act.ShouldThrowAsync<MissingHostException>();
+                }
+                counter.ShouldBe(2);
+            }
+        }
+
+
+        
 
         [Test]
         public async Task ToUpper_MethodCallSucceeds_ResultIsCorrect()
@@ -112,6 +407,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             actual.Message.ShouldBe(expected.Message);
         }
+
+
+
 
         [Test]
         public async Task ToUpper_MethodCallFailsWithRemoteServiceException_CorrectExceptionIsThrown()

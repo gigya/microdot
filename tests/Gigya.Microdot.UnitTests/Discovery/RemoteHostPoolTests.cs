@@ -208,7 +208,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
 
-        private void Run100times(Action<RemoteHost> act)
+        private void Run100times(Action<IEndPointHandle> act)
         {
             for (int i = 0; i < 100; i++)
             {

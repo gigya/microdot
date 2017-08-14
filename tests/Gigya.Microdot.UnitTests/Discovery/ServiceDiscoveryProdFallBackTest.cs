@@ -8,7 +8,6 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Utils;
 using Metrics;
@@ -16,7 +15,6 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
-using Gigya.Microdot.UnitTests;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {

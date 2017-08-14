@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-
+using System.Runtime.Remoting.Messaging;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
@@ -27,9 +27,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [SetUp]
         public virtual void SetUp()
         {
+            TracingContext.SetUpStorage();
+            
             unitTesting = new TestingKernel<ConsoleLog>(mockConfig: MockConfig);
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
-            TracingContext.SetUpStorage();
             TracingContext.SetRequestID("1");
         }
 
@@ -37,6 +38,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [TearDown]
         public virtual void TearDown()
         {
+            //clear TracingContext for testing only
+            CallContext.FreeNamedDataSlot("#ORL_RC");
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
         }
 

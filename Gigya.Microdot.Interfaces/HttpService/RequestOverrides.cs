@@ -41,5 +41,8 @@ namespace Gigya.Microdot.Interfaces.HttpService
 
         [JsonProperty]
         public string Host { get; set; }
+
+        [JsonProperty]
+        public int? Port { get; set; }
     }
 }
