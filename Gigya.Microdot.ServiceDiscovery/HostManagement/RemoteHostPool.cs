@@ -253,14 +253,14 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         /// </param>
         /// <returns>A reachable <see cref="RemoteHost"/>.</returns>
         /// <exception cref="EnvironmentException">Thrown when there is no reachable <see cref="RemoteHost"/> available.</exception>
-        public RemoteHost GetNextHost(string affinityToken = null)
+        public IEndPointHandle GetNextHost(string affinityToken = null)
         {
             LastEndpointRequest = DateTime.UtcNow;
 
             var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride, this);
+                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Host, hostOverride.Port?? GetConfig().DefaultPort);
 
             lock (_lock)
             {
@@ -282,12 +282,12 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             }
         }
 
-        public async Task<RemoteHost> GetOrWaitForNextHost(CancellationToken cancellationToken)
+        public async Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken)
         {
             var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride, this);
+                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);
 
             if (ReachableHosts.Count > 0)
                 return GetNextHost();

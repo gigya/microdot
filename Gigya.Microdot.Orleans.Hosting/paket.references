@@ -1,6 +1,8 @@
 Metrics.NET
 Microsoft.Orleans.OrleansCodeGenerator
 Microsoft.Orleans.OrleansCodeGenerator.Build
+Microsoft.CodeAnalysis.CSharp
+Microsoft.CodeAnalysis.Common
 
 Microsoft.Orleans.Core
 Microsoft.Orleans.OrleansRuntime

@@ -49,16 +49,15 @@ namespace Gigya.Microdot.SharedLogic.Events
         }
 
 
-        public static string GetHostOverride(string serviceName)
+        public static HostOverride GetHostOverride(string serviceName)
         {
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY)
                 ?.Hosts
-                ?.SingleOrDefault(o => o.ServiceName == serviceName)
-                ?.Host;
+                ?.SingleOrDefault(o => o.ServiceName == serviceName);
         }
 
 
-        public static void SetHostOverride(string serviceName, string host)
+        public static void SetHostOverride(string serviceName, string host,int? port=null)
         {
             SetUpStorage();
 
@@ -77,11 +76,13 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             if (hostOverride == null)
             {
-                hostOverride = new HostOverride { ServiceName = serviceName };
+                hostOverride = new HostOverride { ServiceName = serviceName, };
                 overrides.Hosts.Add(hostOverride);
             }
 
             hostOverride.Host = host;
+            hostOverride.Port = port;
+
         }
 
 

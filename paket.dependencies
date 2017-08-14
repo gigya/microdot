@@ -26,6 +26,8 @@ nuget Microsoft.Orleans.OrleansCodeGenerator.Build 1.3.1
 nuget Microsoft.Orleans.TestingHost 1.3.1
 nuget Microsoft.CodeAnalysis.CSharp 1.3.2
 nuget Microsoft.CodeAnalysis.Common 1.3.2
+nuget Microsoft.Extensions.DependencyInjection.Abstractions 1.1.1
+nuget Microsoft.Extensions.DependencyInjection 1.1.1
 
 #Ninject
 nuget Ninject ~> 3.2 >= 3.2.1
@@ -34,11 +36,9 @@ nuget Ninject.Extensions.Conventions ~> 3.2 >= 3.2.0
 nuget Castle.Core ~> 3.3 >= 3.3.0.0
 
 #Tests only dependencies
-nuget Ninject.MockingKernel ~> 3.0
-nuget Ninject.MockingKernel.NSubstitute ~> 3.0
 nuget NUnit ~> 3.0
 nuget RichardSzalay.MockHttp ~> 1.0
-nuget NSubstitute ~> 1.0
+nuget NSubstitute ~> 2.0
 nuget FluentAssertions ~> 4.0
 nuget Nuget.CommandLine ~> 4.0
 nuget Shouldly ~> 2.0
