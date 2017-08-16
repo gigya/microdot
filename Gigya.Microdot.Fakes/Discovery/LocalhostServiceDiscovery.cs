@@ -32,16 +32,19 @@ namespace Gigya.Microdot.Fakes.Discovery
     public class LocalhostServiceDiscovery : IServiceDiscovery
     {
         private static readonly IEndPointHandle handle = new LocalhostEndPointHandle();
+
         private readonly Task<IEndPointHandle> _source = Task.FromResult(handle);
 
+        private readonly Task<EndPoint[]> allHosts = Task.FromResult(new[] { new EndPoint { HostName = handle.HostName, Port = handle.Port } });
+
         public Task<IEndPointHandle> GetNextHost(string affinityToken = null) => _source;
+
         public Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken) => _source;
+
         public ISourceBlock<string> EndPointsChanged => new BroadcastBlock<string>(null);
+
         public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => new BroadcastBlock<ServiceReachabilityStatus>(null);
 
-        public async Task<EndPoint[]> GetAllEndPoints()
-        {
-            return new[] { new EndPoint {HostName = handle.HostName, Port = handle.Port } };
-        }
+        public Task<EndPoint[]> GetAllEndPoints() => allHosts;
     }
 }
