@@ -53,13 +53,13 @@ namespace Gigya.Microdot.ServiceProxy
         /// Gets or sets the port used to access the remote service. This defaults to the port that was specified in the
         /// <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, unless overridden by configuration.
         /// </summary>
-        public int? DefaultPort { get { return InnerProvider.DefaultPort; } set { InnerProvider.DefaultPort = value; } }
+        public int? DefaultPort { get => InnerProvider.DefaultPort; set => InnerProvider.DefaultPort = value; }
 
         /// <summary>
         /// Specifies a delegate that can be used to change a request in a user-defined way before it is sent over the
         /// network.
         /// </summary>
-        public Action<HttpServiceRequest> PrepareRequest { get { return InnerProvider.PrepareRequest; } set { InnerProvider.PrepareRequest = value; } }
+        public Action<HttpServiceRequest> PrepareRequest { get => InnerProvider.PrepareRequest; set => InnerProvider.PrepareRequest = value; }
 
         internal IServiceProxyProvider InnerProvider { get; }
 
