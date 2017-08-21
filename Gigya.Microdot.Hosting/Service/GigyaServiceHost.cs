@@ -50,6 +50,8 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         protected virtual string ServiceName => _serviceName;
 
+        protected Version infraVersion = null;
+
         protected GigyaServiceHost()
         {
             if (IntPtr.Size != 8)
@@ -71,7 +73,7 @@ namespace Gigya.Microdot.Hosting.Service
         public void Run(ServiceArguments argumentsOverride = null)
         {
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
-            CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName);
+            CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, infraVersion);
 
             if (Arguments.ProcessorAffinity != null)
             {
@@ -208,7 +210,7 @@ namespace Gigya.Microdot.Hosting.Service
             if (Arguments == null)
             {
                 Arguments = new ServiceArguments(args);
-                CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName);
+                CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, infraVersion);
             }
 
             try

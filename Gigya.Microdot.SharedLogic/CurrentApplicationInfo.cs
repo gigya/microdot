@@ -48,7 +48,7 @@ namespace Gigya.Microdot.SharedLogic {
 		public static Version Version { get; }
 
         /// <summary>The Infrastructure version.</summary>
-        public static Version InfraVersion { get;  }
+        public static Version InfraVersion { get; private set; }
 
         /// <summary>
         /// Name of host, the current process is runing on.
@@ -74,15 +74,15 @@ namespace Gigya.Microdot.SharedLogic {
 		    HasConsoleWindow = !IsRunningAsWindowsService && !Console.IsInputRedirected;
         }
 
-		public static void Init(string name, string instanceName = null)
+		public static void Init(string name, string instanceName = null, Version infraVersion = null )
 		{
 		    
 		    if (name == null)
 		        throw new ArgumentNullException(nameof(name));
             Name = name;
 
-
-		    InstanceName = instanceName
+			InfraVersion = infraVersion ?? typeof(CurrentApplicationInfo).Assembly.GetName().Version;
+			InstanceName = instanceName
 		                   ?? Environment.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME")
 		                   ?? DEFAULT_INSTANCE_NAME;
 
