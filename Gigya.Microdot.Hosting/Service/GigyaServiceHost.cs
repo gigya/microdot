@@ -45,10 +45,16 @@ namespace Gigya.Microdot.Hosting.Service
         private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
         private readonly string _serviceName;
+       
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
         protected virtual string ServiceName => _serviceName;
+
+        /// <summary>
+        /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
+        /// </summary>
+        protected virtual Version InfraVersion => null;
 
         protected GigyaServiceHost()
         {
@@ -71,7 +77,7 @@ namespace Gigya.Microdot.Hosting.Service
         public void Run(ServiceArguments argumentsOverride = null)
         {
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
-            CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName);
+            CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
 
             if (Arguments.ProcessorAffinity != null)
             {
@@ -208,7 +214,7 @@ namespace Gigya.Microdot.Hosting.Service
             if (Arguments == null)
             {
                 Arguments = new ServiceArguments(args);
-                CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName);
+                CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
             }
 
             try
