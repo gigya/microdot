@@ -52,7 +52,7 @@ namespace Gigya.Microdot.Hosting.Service
         protected virtual string ServiceName => _serviceName;
 
         /// <summary>
-        /// Version of underlying infrastructure framewor. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
+        /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
         /// </summary>
         protected virtual Version InfraVersion => null;
 
