@@ -48,7 +48,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public Task<string[]> GetAppDomainChain(int depth) { return Worker.GetAppDomainChain(depth); }
 
 
-        public Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset) { return Worker.ToUniversalTime(localDateTime, localDateTimeOffset); }
+        public Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset)
+        {
+            return Worker.ToUniversalTime(localDateTime, localDateTimeOffset);
+        }
+
+        public async Task<string> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "", JObject optional3 = null)
+        {
+            return optional1 + "|" + optional2 + "|" + optional3 ?? "NULL";
+        }
 
 
         public Task<JObject> Add(JObject jObject) { return Worker.Add(jObject); }

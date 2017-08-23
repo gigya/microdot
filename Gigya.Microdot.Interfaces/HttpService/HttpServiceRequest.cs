@@ -119,15 +119,9 @@ namespace Gigya.Microdot.Interfaces.HttpService
 		public string[] ParameterTypes { get; set; }
 
         [JsonIgnore]
-        public bool IsWeaklyTyped
-	    {
-	        get
-	        {
-	            return MethodName != null && ParameterTypes == null;
-	        }
-	    }
+        public bool IsWeaklyTyped => MethodName != null && ParameterTypes == null;
 
-	    public InvocationTarget() { }
+		public InvocationTarget() { }
 
         public InvocationTarget(string methodName, string typeName=null)
 	    {
@@ -135,11 +129,16 @@ namespace Gigya.Microdot.Interfaces.HttpService
             TypeName = typeName;
 	    }
 
-	    public InvocationTarget(MethodInfo method)
+		public InvocationTarget(MethodInfo method):this(method,null)
+		{
+			
+		}
+
+		public InvocationTarget(MethodInfo method, ParameterInfo[] parameterTypes)
 		{
 			TypeName = method.DeclaringType.FullName;
 			MethodName = method.Name;
-			ParameterTypes = method.GetParameters().Select(p => GetCleanTypeName(p.ParameterType)).ToArray();
+			ParameterTypes = (parameterTypes ?? method.GetParameters()).Select(p => GetCleanTypeName(p.ParameterType)).ToArray();
 		}
 
 

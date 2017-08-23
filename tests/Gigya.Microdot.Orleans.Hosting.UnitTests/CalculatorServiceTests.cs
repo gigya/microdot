@@ -22,6 +22,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
@@ -100,6 +102,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var actual = jObjectW.JObject["c"].Value<int>();
             actual.ShouldBe(8);
+        }
+
+        [Test]
+        public async Task AddWithOptions()
+        {
+            JObject jObject = new JObject();
+            await Service.AddWithOptions(jObject, optional3: jObject);
+            await Task.Delay(100000000);
         }
 
         [Test]

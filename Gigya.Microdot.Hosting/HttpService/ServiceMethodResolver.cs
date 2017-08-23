@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.HttpService;
 
@@ -48,14 +49,43 @@ namespace Gigya.Microdot.Hosting.HttpService
 				throw new ArgumentException("The specified assemblies contain service interfaces methods which have incompatible signatures:\n\n" + incompatibleMethodNames);
 			}
 
-            MethodCache = GrainMethods.ToDictionary(gm => new InvocationTarget(gm.ServiceInterfaceMethod));
+			MethodCache=new Dictionary<InvocationTarget, ServiceMethod>();
+			foreach (var grainMethod in GrainMethods)
+			{
+				foreach(var invocationTarget in ExpandInvocationTargets(grainMethod.ServiceInterfaceMethod))
+				{
+					MethodCache.Add(invocationTarget, grainMethod);
+				}
+			}
+			
 		    SimpleMethodCache = GrainMethods.GroupBy(gm => gm.ServiceInterfaceMethod.Name).ToDictionary(a => a.Key, a => a.ToArray(), StringComparer.OrdinalIgnoreCase);
             TypedMethodCache = GrainMethods.GroupBy(gm => GetTypedMethodKey(gm.ServiceInterfaceMethod.DeclaringType, gm.ServiceInterfaceMethod.Name)).ToDictionary(a => a.Key, a => a.ToArray(), StringComparer.OrdinalIgnoreCase);
         }
 
+		private static IEnumerable<InvocationTarget> ExpandInvocationTargets(MethodInfo methodInfo)
+		{			
+			var parameters = methodInfo.GetParameters();
+			
+			yield return new InvocationTarget(methodInfo, parameters.ToArray()); 
 
-	    private Dictionary<string, ServiceMethod[]> SimpleMethodCache { get; set; }
-        private Dictionary<string, ServiceMethod[]> TypedMethodCache { get; set; }
+			int i = parameters.Length - 1;
+			while (i > -1)
+			{
+				if (parameters[i].IsOptional)
+				{					
+					yield return new InvocationTarget(methodInfo, parameters.Take(i).ToArray());
+					i--;
+				}
+				else
+				{
+					yield break;
+				}
+			}		
+		}
+
+
+		private Dictionary<string, ServiceMethod[]> SimpleMethodCache { get;  }
+        private Dictionary<string, ServiceMethod[]> TypedMethodCache { get; }
 
         public ServiceMethod[] GrainMethods { get; } 
 
@@ -65,42 +95,46 @@ namespace Gigya.Microdot.Hosting.HttpService
 			if (target == null)
 				throw new ArgumentNullException(nameof(target), "An invocation target must be specified.");
 
-            if (target.IsWeaklyTyped)
-		    {
-                ServiceMethod[] methods;
-		        if (string.IsNullOrEmpty(target.TypeName))
-		            SimpleMethodCache.TryGetValue(target.MethodName, out methods);
-		        else
-		            TypedMethodCache.TryGetValue(GetTypedMethodKey(target.TypeName, target.MethodName), out methods);
+			if(target.IsWeaklyTyped)
+			{
+				ServiceMethod[] methods;
+				if(string.IsNullOrEmpty(target.TypeName))
+					SimpleMethodCache.TryGetValue(target.MethodName, out methods);
+				else
+					TypedMethodCache.TryGetValue(GetTypedMethodKey(target.TypeName, target.MethodName), out methods);
 
-                if (methods == null)
-                    throw new MissingMethodException("The specified request contains an unrecognized interface name, method name.");
+				if(methods == null)
+					throw new MissingMethodException("The specified request contains an unrecognized interface name, method name.");
 
-                if (methods.Length > 1)
-		        {
-		            throw  new ProgrammaticException("Weakly-typed requests cannot be used for methods with more than one overload (including methods that are only differentiated by letter case)", unencrypted:new Tags {{"method", target.MethodName }, { "type", target.TypeName}});
-		        }
+				if(methods.Length > 1)
+				{
+					throw new ProgrammaticException("Weakly-typed requests cannot be used for methods with more than one overload (including methods that are only differentiated by letter case)",
+						unencrypted: new Tags {{"method", target.MethodName}, {"type", target.TypeName}});
+				}
 
-                return methods.Single();
-            }
-          
-            if (string.IsNullOrEmpty(target.TypeName) || string.IsNullOrEmpty(target.MethodName) || target.ParameterTypes == null)
-				throw new ArgumentException("The specified invocation target is invalid.", nameof(target));
+				return methods.Single();
+			}
+			else
+			{
+				if(string.IsNullOrEmpty(target.TypeName) || string.IsNullOrEmpty(target.MethodName) || target.ParameterTypes == null)
+					throw new ArgumentException("The specified invocation target is invalid.", nameof(target));
 
-            MethodCache.TryGetValue(target, out ServiceMethod method);
+				MethodCache.TryGetValue(target, out ServiceMethod method);
 
-            if (method == null)
-				throw new MissingMethodException("The specified request contains an unrecognized interface name, method name or method overload.");
+				if(method == null)
+					throw new MissingMethodException("The specified request contains an unrecognized interface name, method name or method overload.");
 
-			return method;
+				return method;
+			}
 		}
 
 
-	    private string GetTypedMethodKey(Type type, string methodName)
+	    private static string GetTypedMethodKey(Type type, string methodName)
 	    {
 	        return GetTypedMethodKey(type.FullName, methodName);
 	    }
-        private string GetTypedMethodKey(string type, string methodName)
+
+        private static string GetTypedMethodKey(string type, string methodName)
 	    {
 	        return $"{type}|{methodName}";
 	    }
