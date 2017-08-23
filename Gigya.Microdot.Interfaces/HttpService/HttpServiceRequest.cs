@@ -94,14 +94,14 @@ namespace Gigya.Microdot.Interfaces.HttpService
 				throw new ArgumentNullException(nameof(arguments));
 
 			var parameters = targetMethod.GetParameters();
-
-			if (arguments.Length != parameters.Length)
+			
+			if (arguments.Length > parameters.Count(a => a.IsOptional == false))
 				throw new ArgumentException("An incorrect number of arguments was supplied for the specified target method.", nameof(arguments));
 
 			Target = new InvocationTarget(targetMethod);
 			Arguments = new OrderedDictionary(arguments.Length);
 
-			for (int i = 0; i < parameters.Length; i++)
+			for (int i = 0; i < arguments.Length; i++)
 				Arguments.Add(parameters[i].Name, arguments[i]);
 		}
 	}

@@ -38,7 +38,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         Task<string[]> GetAppDomainChain(int depth);
         Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset);
 
-        Task<string> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "", JObject optional3 = null);
+        Task<Tuple<int, string, JObject>> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "", JObject optional3 = null);
 
         Task<JObject> Add(JObject jObject);
 

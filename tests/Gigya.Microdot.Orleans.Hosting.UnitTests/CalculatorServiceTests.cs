@@ -105,11 +105,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public async Task AddWithOptions()
+        public async Task CallingMethodWithOptionalParametersWork()
         {
-            JObject jObject = new JObject();
-            await Service.AddWithOptions(jObject, optional3: jObject);
-            await Task.Delay(100000000);
+            var arguments = new object[] {new JObject()};
+
+            var res = await CallService(arguments);
+            res.Item1.ShouldBe(5);
+            res.Item2.ShouldBe("");
+            res.Item3.ShouldBe(null);
+        }
+
+        private async Task<Tuple<int, string, JObject>> CallService(object[] arguments)
+        {
+            var request = new HttpServiceRequest(typeof(ICalculatorService).GetMethod(nameof(ICalculatorService.AddWithOptions)), arguments);
+            var proxy = Tester.GetServiceProxyProvider("CalculatorService");
+            var res = (Tuple<int, string, JObject>)await proxy.Invoke(request, typeof(Tuple<int, string, JObject>));
+            return res;
         }
 
         [Test]

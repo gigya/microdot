@@ -53,9 +53,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return Worker.ToUniversalTime(localDateTime, localDateTimeOffset);
         }
 
-        public async Task<string> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "", JObject optional3 = null)
+        public async Task<Tuple<int,string,JObject>> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "", JObject optional3 = null)
         {
-            return optional1 + "|" + optional2 + "|" + optional3 ?? "NULL";
+            return Tuple.Create(optional1, optional2, optional3);
         }
 
 
