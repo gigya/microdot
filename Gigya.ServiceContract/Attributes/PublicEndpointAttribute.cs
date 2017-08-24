@@ -52,6 +52,9 @@ namespace Gigya.Common.Contracts.HttpService
         /// </summary>
         public string PropertyNameForResponseBody { get; }
 
+        /// <summary>
+        /// Whether method has one single parameter which its fields represent the request parameters
+        /// </summary>
         public bool UsingRequestObject { get; }
 
 
