@@ -49,39 +49,28 @@ namespace Gigya.Microdot.Hosting.HttpService
 				throw new ArgumentException("The specified assemblies contain service interfaces methods which have incompatible signatures:\n\n" + incompatibleMethodNames);
 			}
 
-			MethodCache=new Dictionary<InvocationTarget, ServiceMethod>();
-			foreach (var grainMethod in GrainMethods)
-			{
-				foreach(var invocationTarget in ExpandInvocationTargets(grainMethod.ServiceInterfaceMethod))
-				{
-					MethodCache.Add(invocationTarget, grainMethod);
-				}
-			}
+            MethodCache = GrainMethods
+                .SelectMany(gm => ExpandInvocationTargets(gm.ServiceInterfaceMethod), (method, target) => new { method, target })
+                .ToDictionary(x => x.target, x => x.method);
 			
 		    SimpleMethodCache = GrainMethods.GroupBy(gm => gm.ServiceInterfaceMethod.Name).ToDictionary(a => a.Key, a => a.ToArray(), StringComparer.OrdinalIgnoreCase);
             TypedMethodCache = GrainMethods.GroupBy(gm => GetTypedMethodKey(gm.ServiceInterfaceMethod.DeclaringType, gm.ServiceInterfaceMethod.Name)).ToDictionary(a => a.Key, a => a.ToArray(), StringComparer.OrdinalIgnoreCase);
         }
 
 		private static IEnumerable<InvocationTarget> ExpandInvocationTargets(MethodInfo methodInfo)
-		{			
-			var parameters = methodInfo.GetParameters();
+		{
+            var parameters = methodInfo.GetParameters();
 			
-			yield return new InvocationTarget(methodInfo, parameters.ToArray()); 
+			yield return new InvocationTarget(methodInfo, parameters.ToArray());
 
-			int i = parameters.Length - 1;
-			while (i > -1)
-			{
-				if (parameters[i].IsOptional)
-				{					
-					yield return new InvocationTarget(methodInfo, parameters.Take(i).ToArray());
-					i--;
-				}
-				else
-				{
-					yield break;
-				}
-			}		
-		}
+		    for (int i = parameters.Length - 1; i > -1; i--)
+		    {
+		        if (parameters[i].IsOptional)
+		            yield return new InvocationTarget(methodInfo, parameters.Take(i).ToArray());
+		        else
+		            yield break;
+		    }
+        }
 
 
 		private Dictionary<string, ServiceMethod[]> SimpleMethodCache { get;  }
@@ -95,18 +84,18 @@ namespace Gigya.Microdot.Hosting.HttpService
 			if (target == null)
 				throw new ArgumentNullException(nameof(target), "An invocation target must be specified.");
 
-			if(target.IsWeaklyTyped)
+			if (target.IsWeaklyTyped)
 			{
 				ServiceMethod[] methods;
-				if(string.IsNullOrEmpty(target.TypeName))
+				if (string.IsNullOrEmpty(target.TypeName))
 					SimpleMethodCache.TryGetValue(target.MethodName, out methods);
 				else
 					TypedMethodCache.TryGetValue(GetTypedMethodKey(target.TypeName, target.MethodName), out methods);
 
-				if(methods == null)
+				if (methods == null)
 					throw new MissingMethodException("The specified request contains an unrecognized interface name, method name.");
 
-				if(methods.Length > 1)
+				if (methods.Length > 1)
 				{
 					throw new ProgrammaticException("Weakly-typed requests cannot be used for methods with more than one overload (including methods that are only differentiated by letter case)",
 						unencrypted: new Tags {{"method", target.MethodName}, {"type", target.TypeName}});
@@ -116,12 +105,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 			}
 			else
 			{
-				if(string.IsNullOrEmpty(target.TypeName) || string.IsNullOrEmpty(target.MethodName) || target.ParameterTypes == null)
+				if (string.IsNullOrEmpty(target.TypeName) || string.IsNullOrEmpty(target.MethodName) || target.ParameterTypes == null)
 					throw new ArgumentException("The specified invocation target is invalid.", nameof(target));
 
 				MethodCache.TryGetValue(target, out ServiceMethod method);
 
-				if(method == null)
+				if (method == null)
 					throw new MissingMethodException("The specified request contains an unrecognized interface name, method name or method overload.");
 
 				return method;

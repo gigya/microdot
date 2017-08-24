@@ -95,7 +95,7 @@ namespace Gigya.Microdot.Interfaces.HttpService
 
 			var parameters = targetMethod.GetParameters();
 			
-			if (arguments.Length > parameters.Count(a => a.IsOptional == false))
+			if (arguments.Length < parameters.Count(a => a.IsOptional == false))
 				throw new ArgumentException("An incorrect number of arguments was supplied for the specified target method.", nameof(arguments));
 
 			Target = new InvocationTarget(targetMethod);

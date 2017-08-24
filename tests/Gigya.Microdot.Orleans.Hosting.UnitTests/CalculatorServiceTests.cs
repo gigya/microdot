@@ -111,13 +111,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var res = await CallService(arguments);
             res.Item1.ShouldBe(5);
-            res.Item2.ShouldBe("");
+            res.Item2.ShouldBe("test");
             res.Item3.ShouldBe(null);
         }
 
         private async Task<Tuple<int, string, JObject>> CallService(object[] arguments)
         {
             var request = new HttpServiceRequest(typeof(ICalculatorService).GetMethod(nameof(ICalculatorService.AddWithOptions)), arguments);
+            request.Target.ParameterTypes = request.Target.ParameterTypes.Take(arguments.Length).ToArray();
             var proxy = Tester.GetServiceProxyProvider("CalculatorService");
             var res = (Tuple<int, string, JObject>)await proxy.Invoke(request, typeof(Tuple<int, string, JObject>));
             return res;
