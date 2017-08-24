@@ -156,7 +156,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public async Task  SendRequestWithEnumParameter()
         {
-         await   _insecureClient.SendEnum(TestEnum.Enval1);
+            await _insecureClient.SendEnum(TestEnum.Enval1);
             await _testinghost.Instance.Received().SendEnum(TestEnum.Enval1);
         }
 
