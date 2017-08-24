@@ -61,7 +61,7 @@ namespace Gigya.Common.Contracts
                     return dto.LocalDateTime;
             }
 
-            if (value is string && Type.GetTypeCode(paramType) == TypeCode.Object && paramType != typeof(DateTimeOffset) && paramType != typeof(TimeSpan) && paramType != typeof(Guid))
+            if (value is string && Type.GetTypeCode(paramType) == TypeCode.Object && paramType != typeof(DateTimeOffset) && paramType != typeof(TimeSpan) && paramType != typeof(Guid) && paramType != typeof(byte[])) 
                 return JsonConvert.DeserializeObject((string)value, paramType);
 
             return JToken.FromObject(value).ToObject(targetType, Serializer);
