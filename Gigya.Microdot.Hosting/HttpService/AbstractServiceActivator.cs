@@ -51,10 +51,10 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             var invokeTarget = GetInvokeTarget(serviceMethod);
 
-            ConvertArgumentTypes(serviceMethod.ServiceInterfaceMethod, arguments);
+            object[] argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
 
             var sw = Stopwatch.StartNew();
-            var task = (Task)serviceMethod.ServiceInterfaceMethod.Invoke(invokeTarget, arguments);
+            var task = (Task)serviceMethod.ServiceInterfaceMethod.Invoke(invokeTarget, argumentsWithDefaults);
             await task.ConfigureAwait(false);
             var executionTime = sw.Elapsed;
             var result = task.GetType().GetProperty("Result").GetValue(task);
@@ -62,12 +62,40 @@ namespace Gigya.Microdot.Hosting.HttpService
             return new InvocationResult { Result = result, ExecutionTime = executionTime };
         }
 
-        private static void ConvertArgumentTypes(MethodInfo method, object[] arguments)
+        private static object[] GetConvertedAndDefaultArguments(MethodInfo method, object[] arguments)
         {
             var parameters = method.GetParameters();
 
+            object[] argumentsWithDefaults = new object[parameters.Length];
+
             for (int i = 0; i < parameters.Length; i++)
-                arguments[i] = JsonHelper.ConvertWeaklyTypedValue(arguments[i], parameters[i].ParameterType);
+            {
+                object argument = null;
+                var param = parameters[i];
+
+                if (i < arguments.Length)
+                {
+                    argument = JsonHelper.ConvertWeaklyTypedValue(arguments[i], param.ParameterType);
+                }
+                else
+                {                    
+                    if (param.IsOptional)
+                    {
+                        if (param.HasDefaultValue)
+                            argument = param.DefaultValue;
+                        else if (param.ParameterType.IsValueType)
+                            argument = Activator.CreateInstance(param.ParameterType);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Call to method {method.Name} is missing argument for {param.Name} and this paramater is not optional.");
+                    }                   
+                }
+
+                argumentsWithDefaults[i] = argument;
+            }
+
+            return argumentsWithDefaults;
         }
 
         protected abstract object GetInvokeTarget(ServiceMethod serviceMethod);        
