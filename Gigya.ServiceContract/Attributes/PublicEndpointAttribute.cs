@@ -52,24 +52,28 @@ namespace Gigya.Common.Contracts.HttpService
         /// </summary>
         public string PropertyNameForResponseBody { get; }
 
+        public bool UsingRequestObject { get; }
 
-        /// <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
-        /// <param name="requireHTTPS">
-        /// Whether Gator should reject requests from the outside world that were passed over http and not https, and
-        /// not forward them to the service.
-        ///</param>
-        /// <param name="propertyNameForResponseBody">
-        /// Defines how to map the response from this method to the response returned by Gator. If not specified, this
-        /// method's response will be returned as-is to the outside world, along with Gigya's standard response fields
-        /// (statusCode, errorCode, statusReason, callId, etc.), unless your response already includes them, or some of
-        /// them. If you do specify a name, all of your response will be put under that json property name, and the
-        /// standard response fields will be next to it.
+
+        ///  <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
+        ///  <param name="requireHTTPS">
+        ///  Whether Gator should reject requests from the outside world that were passed over http and not https, and
+        ///  not forward them to the service.
         /// </param>
-        public PublicEndpointAttribute(string endpointName, bool requireHTTPS = true, string propertyNameForResponseBody = null)
+        ///  <param name="propertyNameForResponseBody">
+        ///  Defines how to map the response from this method to the response returned by Gator. If not specified, this
+        ///  method's response will be returned as-is to the outside world, along with Gigya's standard response fields
+        ///  (statusCode, errorCode, statusReason, callId, etc.), unless your response already includes them, or some of
+        ///  them. If you do specify a name, all of your response will be put under that json property name, and the
+        ///  standard response fields will be next to it.
+        ///  </param>
+        /// <param name="usingRequestObject">Whether method has one single parameter which its fields represent the request parameters</param>
+        public PublicEndpointAttribute(string endpointName, bool requireHTTPS = true, string propertyNameForResponseBody = null, bool usingRequestObject=false)
         {
             EndpointName = endpointName;
             RequireHTTPS = requireHTTPS;
             PropertyNameForResponseBody = propertyNameForResponseBody;
+            UsingRequestObject = usingRequestObject;
         }
     }
 }
