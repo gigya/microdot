@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         Task<int> Add(int a, int b, bool shouldThrow = false);
 
-        [PublicEndpoint("test.calculator.getAppDomainChain")]
+        [PublicEndpoint("test.calculator.getAppDomainChain", RequireHTTPS = false, PropertyNameForResponseBody = "something")]
         Task<string[]> GetAppDomainChain(int depth);
         Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset);
 

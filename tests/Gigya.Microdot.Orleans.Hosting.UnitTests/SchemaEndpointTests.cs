@@ -78,10 +78,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var iface = schema.Interfaces.First(_ => _.Name == typeof(ICalculatorService).FullName);
             var schemaTestMethod = iface.Methods.FirstOrDefault(_ => _.Name == nameof(ICalculatorService.GetAppDomainChain));
             Assert.IsNotNull(schemaTestMethod, "Service schema did not return the method GetAppDomainChain");            
-            var attribute = schemaTestMethod.Attributes.FirstOrDefault(_ => _.Attribute is PublicEndpointAttribute);
+            var attribute = schemaTestMethod.Attributes.Select(x => x.Attribute).OfType<PublicEndpointAttribute>().Single();
             Assert.IsNotNull(attribute, "method GetAppDomainChain should include attribute of type PublicEndpoint");
-            Assert.IsTrue(((PublicEndpointAttribute)attribute.Attribute).EndpointName != null, $"PublicEndpoint attribute of SchemaTestMethod should include '{nameof(PublicEndpointAttribute.EndpointName)}' property");
-            Assert.AreEqual("test.calculator.getAppDomainChain", ((PublicEndpointAttribute)attribute.Attribute).EndpointName);
+            Assert.IsTrue(attribute.EndpointName != null, $"PublicEndpoint attribute of SchemaTestMethod should include '{nameof(PublicEndpointAttribute.EndpointName)}' property");
+            Assert.AreEqual("test.calculator.getAppDomainChain", attribute.EndpointName);
+            Assert.AreEqual(false, attribute.RequireHTTPS);
+            Assert.AreEqual("something", attribute.PropertyNameForResponseBody);
         }
 
     }

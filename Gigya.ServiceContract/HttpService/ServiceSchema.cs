@@ -224,7 +224,7 @@ namespace Gigya.Common.Contracts.HttpService
             try
             { 
                 Type t = Type.GetType(TypeName);
-                if (t != null)
+                if (t != null && TypeName.StartsWith("System.Diagnostics") == false)
                     Attribute = (Attribute)Data.ToObject(t);
             }
             catch { }
