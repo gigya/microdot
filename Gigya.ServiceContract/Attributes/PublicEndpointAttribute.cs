@@ -70,13 +70,18 @@ namespace Gigya.Common.Contracts.HttpService
         ///  them. If you do specify a name, all of your response will be put under that json property name, and the
         ///  standard response fields will be next to it.
         ///  </param>
-        /// <param name="usingRequestObject">Whether method has one single parameter which its fields represent the request parameters</param>
-        public PublicEndpointAttribute(string endpointName, bool requireHTTPS = true, string propertyNameForResponseBody = null, bool usingRequestObject=false)
+        [Obsolete("Please use the other constructor overload that accepts only an 'endpoint' parameter, and specify all other paramters with the attributes optional named parameter syntax (MyProp = 5)")]
+        public PublicEndpointAttribute(string endpointName, bool requireHTTPS = true, string propertyNameForResponseBody = null)
         {
             EndpointName = endpointName;
             RequireHTTPS = requireHTTPS;
             PropertyNameForResponseBody = propertyNameForResponseBody;
-            UsingRequestObject = usingRequestObject;
+        }
+
+        ///  <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
+        public PublicEndpointAttribute(string endpointName)
+        {
+            EndpointName = endpointName;
         }
     }
 }
