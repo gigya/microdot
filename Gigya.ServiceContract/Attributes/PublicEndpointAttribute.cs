@@ -35,13 +35,13 @@ namespace Gigya.Common.Contracts.HttpService
         /// <summary>
         /// Full endpoint name (e.g. "accounts.getPolicies")
         /// </summary>
-        public string EndpointName { get; }
+        public string EndpointName { get; set; }
 
         /// <summary>
         /// Whether Gator should reject requests from the outside world that were passed over http and not https, and
         /// not forward them to the service.
         /// </summary>
-        public bool RequireHTTPS { get; } = true;
+        public bool RequireHTTPS { get; set; } = true;
 
         /// <summary>
         /// Defines how to map the response from this method to the response returned by Gator. If not specified, this
@@ -50,12 +50,12 @@ namespace Gigya.Common.Contracts.HttpService
         /// them. If you do specify a name, all of your response will be put under that json property name, and the
         /// standard response fields will be next to it.
         /// </summary>
-        public string PropertyNameForResponseBody { get; }
+        public string PropertyNameForResponseBody { get; set; }
 
         /// <summary>
         /// Whether method has one single parameter which its fields represent the request parameters
         /// </summary>
-        public bool UsingRequestObject { get; }
+        public bool UsingRequestObject { get; set; }
 
 
         ///  <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
@@ -82,6 +82,11 @@ namespace Gigya.Common.Contracts.HttpService
         public PublicEndpointAttribute(string endpointName)
         {
             EndpointName = endpointName;
+        }
+
+        internal PublicEndpointAttribute()
+        {
+            
         }
     }
 }
