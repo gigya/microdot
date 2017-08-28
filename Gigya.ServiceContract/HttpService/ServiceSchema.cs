@@ -65,10 +65,15 @@ namespace Gigya.Common.Contracts.HttpService
         public InterfaceSchema(Type iface)
         {
             if (!iface.IsInterface)
-                throw new ArgumentException("Not an itnerface");
+                throw new ArgumentException("Not an interface");
+
             Name = iface.FullName;
-            Attributes = iface.GetCustomAttributes().Select(_ => new AttributeSchema(_)).ToArray();
-            Methods = iface.GetMethods().Select(_ => new MethodSchema(_)).ToArray();
+            Methods = iface.GetMethods().Select(m => new MethodSchema(m)).ToArray();
+            Attributes = iface
+                .GetCustomAttributes()
+                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Select(a => new AttributeSchema(a))
+                .ToArray();
         }
     }
 
@@ -106,7 +111,11 @@ namespace Gigya.Common.Contracts.HttpService
 
             ResponseType = Response.TypeName;
             Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
-            Attributes = info.GetCustomAttributes().Select(a => new AttributeSchema(a)).ToArray();
+            Attributes = info
+                .GetCustomAttributes()
+                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Select(a => new AttributeSchema(a))
+                .ToArray();
         }
     }
 
@@ -125,7 +134,10 @@ namespace Gigya.Common.Contracts.HttpService
         {
             Type = type;
             TypeName = type.AssemblyQualifiedName;
-            Attributes = attributes.Select(_ => new AttributeSchema(_)).ToArray();
+            Attributes = attributes
+                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Select(a => new AttributeSchema(a))
+                .ToArray();
         }
 
         [OnDeserialized]
@@ -224,7 +236,8 @@ namespace Gigya.Common.Contracts.HttpService
             try
             { 
                 Type t = Type.GetType(TypeName);
-                if (t != null && TypeName.StartsWith("System.Diagnostics") == false)
+
+                if (t != null)
                     Attribute = (Attribute)Data.ToObject(t);
             }
             catch { }
