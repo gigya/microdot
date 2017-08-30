@@ -22,7 +22,7 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Text;
+using System.Linq;
 using Metrics;
 
 namespace Gigya.Microdot.SharedLogic.Monitor
@@ -38,15 +38,15 @@ namespace Gigya.Microdot.SharedLogic.Monitor
 
         private HealthCheckResult HealthCheck()
         {
-            bool healthy = true;
-            StringBuilder messageBuilder = new StringBuilder();
-            foreach (var check in _checks)
-            {
-                var result = check.Value();
-                healthy &= result.IsHealthy;
-                messageBuilder.Append($"{check.Key} - {result.Message}\r\n");
-            }
-            var message = messageBuilder.ToString();
+            var results =_checks
+                .Select(c => new {c.Key, Result = c.Value()})
+                .OrderBy(c => c.Result.IsHealthy)
+                .ThenBy(c => c.Key)
+                .ToArray();
+
+            bool healthy = results.All(r => r.Result.IsHealthy);
+            string message = string.Join("\r\n", results.Select(r => r.Result.Message));
+
             return healthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
         }
 
