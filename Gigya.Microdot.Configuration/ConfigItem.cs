@@ -57,7 +57,7 @@ namespace Gigya.Microdot.Configuration
                     _overrides = new List<ConfigItemInfo>();
                 return _overrides;
             }
-            set { _overrides = value; }
+            set => _overrides = value;
         }
 
         public string Value

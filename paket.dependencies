@@ -33,13 +33,14 @@ nuget Microsoft.Extensions.DependencyInjection 1.1.1
 nuget Ninject ~> 3.2 >= 3.2.1
 nuget Ninject.Extensions.Factory ~> 3.2 >= 3.2.1
 nuget Ninject.Extensions.Conventions ~> 3.2 >= 3.2.0
-nuget Castle.Core ~> 3.3 >= 3.3.0.0
+nuget Castle.Core ~> 3.3 
 
 #Tests only dependencies
 nuget NUnit ~> 3.0
-nuget RichardSzalay.MockHttp ~> 1.0
-nuget NSubstitute ~> 2.0
-nuget FluentAssertions ~> 4.0
-nuget Nuget.CommandLine ~> 4.0
-nuget Shouldly ~> 2.0
+nuget RichardSzalay.MockHttp 
+nuget NSubstitute
+nuget FluentAssertions 
+nuget Nuget.CommandLine 
+nuget Shouldly
+
 nuget NLog ~> 4.0

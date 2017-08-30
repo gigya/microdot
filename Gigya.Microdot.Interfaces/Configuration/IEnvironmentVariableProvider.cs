@@ -33,6 +33,9 @@ namespace Gigya.Microdot.Interfaces.Configuration
         /// </summary>
         string DeploymentEnvironment { get; }
 
+        /// <summary>
+        /// Initialized with environment variable CONSUL
+        /// </summary>
         string ConsulAddress { get; }
 
         string GetEnvironmentVariable(string name);
