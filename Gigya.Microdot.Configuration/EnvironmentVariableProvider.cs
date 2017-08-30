@@ -43,17 +43,10 @@ namespace Gigya.Microdot.Configuration
                 throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %DC%, %ENV%");
         }
 
-        /// Initialized with environment variable CONSUL
         public string ConsulAddress { get; }
 
-        /// <summary>
-        /// Initialized with environment variable DC
-        /// </summary>
         public string DataCenter { get; }
 
-        /// <summary>
-        /// Initialized with environment variable ENV
-        /// </summary>
         public string DeploymentEnvironment { get; }
 
         public string GetEnvironmentVariable(string name) { return _environment.GetEnvironmentVariable(name); }
