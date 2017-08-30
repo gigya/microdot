@@ -264,7 +264,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             busSettings = extractor();
             busSettings.RequestTimeoutInMs.ShouldBe(30000);
 
-            const string healthComponentName = "BusSettings Configuration";
+            const string healthComponentName = "Configuration";
             var healthMonitor = (FakeHealthMonitor) infraKernel.Get<IHealthMonitor>();
             healthMonitor.Monitors.ShouldContainKey(healthComponentName);
             healthMonitor.Monitors[healthComponentName]().IsHealthy.ShouldBe(false);

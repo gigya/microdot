@@ -58,7 +58,9 @@ namespace Gigya.Microdot.Configuration.Objects
         private JObject Empty { get; } = new JObject();
         private DataAnnotationsValidator.DataAnnotationsValidator Validator { get; }
 
-        public ConfigObjectCreator(Type objectType, ConfigCache configCache, UsageTracking usageTracking, ILog log, IHealthMonitor healthMonitor)
+        private readonly AggregatingHealthStatus healthStatus;
+
+        public ConfigObjectCreator(Type objectType, ConfigCache configCache, UsageTracking usageTracking, ILog log, Func<string, AggregatingHealthStatus> getAggregatedHealthCheck)
         {
             UsageTracking = usageTracking;
             Log = log;
@@ -70,8 +72,8 @@ namespace Gigya.Microdot.Configuration.Objects
             Create();
             ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Create()));
             InitializeBroadcast();
-
-            healthMonitor.SetHealthFunction($"{ObjectType.Name} Configuration", HealthCheck);
+            healthStatus = getAggregatedHealthCheck("Configuration");
+            healthStatus.RegisterCheck(ObjectType.Name, HealthCheck);
         }
 
 

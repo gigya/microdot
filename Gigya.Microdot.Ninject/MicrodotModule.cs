@@ -26,6 +26,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
@@ -34,6 +35,7 @@ using Ninject.Modules;
 
 namespace Gigya.Microdot.Ninject
 {
+    /// <inheritdoc />
     /// <summary>
     /// Contains all binding except hosting layer
     /// </summary>
@@ -58,6 +60,7 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
+            Kernel.BindPerString<AggregatingHealthStatus>();
 
             Rebind<MetricsContext>()
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))

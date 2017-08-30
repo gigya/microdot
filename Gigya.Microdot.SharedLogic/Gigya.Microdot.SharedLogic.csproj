@@ -47,6 +47,7 @@
     <Compile Include="AssemblyProvider.cs" />
     <Compile Include="Events\Param.cs" />
     <Compile Include="Logging\LogBase.cs" />
+    <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
     <Compile Include="Utils\Assert.cs" />

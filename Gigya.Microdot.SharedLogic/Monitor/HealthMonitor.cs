@@ -31,7 +31,9 @@ namespace Gigya.Microdot.SharedLogic.Monitor
     {
         private static readonly ConcurrentDictionary<string, ComponentHealthMonitor> _componentMonitors = new ConcurrentDictionary<string, ComponentHealthMonitor>();
 
-        public ComponentHealthMonitor SetHealthFunction(string component, Func<HealthCheckResult> check, Func<Dictionary<string, string>> healthData=null)
+        public ComponentHealthMonitor SetHealthFunction(string component, 
+            Func<HealthCheckResult> check, 
+            Func<Dictionary<string, string>> healthData=null)
         {
             var componentHealthMonitor = _componentMonitors.GetOrAdd(component, _ => new ComponentHealthMonitor(component, check));
             componentHealthMonitor.Activate();
