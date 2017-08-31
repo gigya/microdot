@@ -21,37 +21,40 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Linq;
 using Metrics;
-using Metrics.Core;
 
-namespace Gigya.Microdot.Configuration
+namespace Gigya.Microdot.SharedLogic.Monitor
 {
-    public class ConfigurationHealthCheck : HealthCheck
+    public class AggregatingHealthStatus
     {
-        private bool _isHealthy;
-        private Exception _lastError;
+        private readonly ConcurrentDictionary<string, Func<HealthCheckResult>> _checks = new ConcurrentDictionary<string, Func<HealthCheckResult>>();
 
-        public ConfigurationHealthCheck()
-            :base("Configuration")
+        public AggregatingHealthStatus(string componentName, IHealthMonitor healthMonitor)
         {
-            HealthChecks.RegisterHealthCheck(this);            
+            healthMonitor.SetHealthFunction(componentName, HealthCheck);
         }
 
-        public void Healthy()
+        private HealthCheckResult HealthCheck()
         {
-            _isHealthy = true;
-        }
-        public void Unhealthy(Exception ex)
-        {
-            _lastError = ex;
-            _isHealthy = false;
+            var results =_checks
+                .Select(c => new {c.Key, Result = c.Value()})
+                .OrderBy(c => c.Result.IsHealthy)
+                .ThenBy(c => c.Key)
+                .ToArray();
+
+            bool healthy = results.All(r => r.Result.IsHealthy);
+            string message = string.Join("\r\n", results.Select(r => r.Result.Message));
+
+            return healthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
         }
 
-        protected override HealthCheckResult Check()
+
+        public void RegisterCheck(string name, Func<HealthCheckResult> checkFunc)
         {
-            return _isHealthy
-                ? HealthCheckResult.Healthy()
-                : HealthCheckResult.Unhealthy(_lastError);
+            _checks.AddOrUpdate(name, checkFunc, (a, b) => checkFunc);
         }
+
     }
 }

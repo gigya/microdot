@@ -45,13 +45,13 @@ namespace Gigya.Microdot.Configuration
             Log = log;
             ConfigChangedBroadcastBlock = new BroadcastBlock<ConfigItemsCollection>(null);
 
-            watcher.DataChanges.LinkTo(new ActionBlock<bool>(nothing => Refresh(nothing)));
+            watcher.DataChanges.LinkTo(new ActionBlock<bool>(nothing => Refresh()));
 
-            Refresh(true, false).GetAwaiter().GetResult();
+            Refresh(false).GetAwaiter().GetResult();
         }
 
 
-        private async Task Refresh(bool nothing, bool catchExceptions=true)
+        private async Task Refresh(bool catchExceptions=true)
         {
             //Prevents faulting of action block
             try
