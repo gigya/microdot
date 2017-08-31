@@ -84,6 +84,7 @@
     <Compile Include="ServiceProxyTests\JsonExceptionSerializerTests.cs" />
     <Compile Include="ServiceProxyTests\MetricsTests.cs" />
     <Compile Include="ServiceProxyTests\NinjectTest.cs" />
+    <Compile Include="ServiceSchema.cs" />
     <Compile Include="SourceBlockShould.cs" />
     <Compile Include="StringExtensionsTest.cs" />
     <Compile Include="TagsExtractorTests.cs" />
