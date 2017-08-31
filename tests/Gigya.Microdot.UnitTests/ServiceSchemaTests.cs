@@ -22,7 +22,6 @@ namespace Gigya.Microdot.UnitTests
 
         [TestCase(typeof(ISimpleReturnObjectString))]
         [TestCase(typeof(ISimpleReturnObject))]
-        [TestCase(typeof(INoRetrunObject))]
         public void ResponseShouldNotHaveFields(Type type)
         {
             InterfaceSchema schema = new InterfaceSchema(type);
@@ -52,6 +51,12 @@ namespace Gigya.Microdot.UnitTests
             schema.Methods.First().Parameters.Length.ShouldBe(1);
         }
 
+        public void ReqestParamShouldBeWithOutAttrbute11()
+        {
+            InterfaceSchema schema = new InterfaceSchema(typeof(INoRetrunObject));
+            schema.Methods.First().Response.ShouldBeNull();
+       
+        }
 
         public void ReqestParamWithComplexObjectShouldHaveAttrbute(Type type)
         {
@@ -61,49 +66,51 @@ namespace Gigya.Microdot.UnitTests
 
     }
 
-    internal interface ISimpleGetter
-    {
-        Task SimpleGet(int someValue);
-    }
 
-    internal interface ISimpleGetterString
-    {
-        Task SimpleGet(string someValue);
-    }
+        internal interface ISimpleGetter
+        {
+            Task SimpleGet(int someValue);
+        }
 
-    internal interface IComplexGetter
-    {
-        Task Getter(ComplexType someValue);
-    }
+        internal interface ISimpleGetterString
+        {
+            Task SimpleGet(string someValue);
+        }
 
-    internal interface ISimpleReturnObject
-    {
-        Task<int> SimpleReturnObject();
-    }
+        internal interface IComplexGetter
+        {
+            Task Getter(ComplexType someValue);
+        }
 
-    internal interface ISimpleReturnObjectString
-    {
-        Task<string> SimpleReturnObject();
+        internal interface ISimpleReturnObject
+        {
+            Task<int> SimpleReturnObject();
+        }
 
-    }
+        internal interface ISimpleReturnObjectString
+        {
+            Task<string> SimpleReturnObject();
 
-    internal interface INoRetrunObject
-    {
-        Task NoRetrunObject();
-    }
-    internal interface IHasReturnType
-    {
-        Task<ComplexType> HasReturnType();
-    }
+        }
+
+        internal interface INoRetrunObject
+        {
+            Task NoRetrunObject();
+        }
+        internal interface IHasReturnType
+        {
+            Task<ComplexType> HasReturnType();
+        }
 
 
-    internal class ComplexType
-    {
-        [JsonProperty]
+        internal class ComplexType
+        {
+            [JsonProperty]
 
-        public int HasAttribute { get; set; }
+            public int HasAttribute { get; set; }
 
-        [JsonProperty]
-        public int HasAttribute2 { get; set; }
-    }
+            [JsonProperty]
+            public int HasAttribute2 { get; set; }
+        }
+    
 }

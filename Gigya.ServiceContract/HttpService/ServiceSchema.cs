@@ -71,7 +71,7 @@ namespace Gigya.Common.Contracts.HttpService
             Methods = iface.GetMethods().Select(m => new MethodSchema(m)).ToArray();
             Attributes = iface
                 .GetCustomAttributes()
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -98,7 +98,13 @@ namespace Gigya.Common.Contracts.HttpService
         {
             Name = info.Name;
 
-            if (info.ReturnType.IsGenericType && info.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+
+            if (info.ReturnType == typeof(Task))
+            {
+                Response = null;
+
+            }
+            else if (info.ReturnType.IsGenericType && info.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 var resultType = info.ReturnType.GetGenericArguments().Single();
                 IsRevocable = typeof(IRevocable).IsAssignableFrom(resultType);
@@ -109,11 +115,11 @@ namespace Gigya.Common.Contracts.HttpService
                 Response = new TypeSchema(info.ReturnType, info.ReturnType.GetCustomAttributes());
             }
 
-            ResponseType = Response.TypeName;
+            ResponseType = Response?.TypeName;
             Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
             Attributes = info
                 .GetCustomAttributes()
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -161,7 +167,7 @@ namespace Gigya.Common.Contracts.HttpService
         {
             if (IsCompositeType(type))
                 Fields = GetFields(type).ToArray();
-            
+
         }
 
         private IEnumerable<FieldSchema> GetFields(Type type)
@@ -174,8 +180,8 @@ namespace Gigya.Common.Contracts.HttpService
 
         private bool IsCompositeType(Type type)
         {
-    
-            return !type.IsValueType && !(type == typeof(string)) && !(type == typeof(Task));
+
+            return !type.IsValueType && !(type == typeof(string));
         }
     }
 
