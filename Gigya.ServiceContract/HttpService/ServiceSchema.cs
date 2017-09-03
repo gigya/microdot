@@ -48,13 +48,7 @@ namespace Gigya.Common.Contracts.HttpService
         {
             Interfaces = interfaces.Select(_ => new InterfaceSchema(_)).ToArray();
         }
-
-        internal static bool FilterAttributes(Attribute a)
-        {
-            return a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false;
-        }
     }
-
 
     public class InterfaceSchema
     {
@@ -75,7 +69,7 @@ namespace Gigya.Common.Contracts.HttpService
             Methods = iface.GetMethods().Select(m => new MethodSchema(m)).ToArray();
             Attributes = iface
                 .GetCustomAttributes()
-                .Where(ServiceSchema.FilterAttributes)
+                .Where(AttributeSchema.FilterAttributes)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -123,7 +117,7 @@ namespace Gigya.Common.Contracts.HttpService
             Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
             Attributes = info
                 .GetCustomAttributes()
-                .Where(ServiceSchema.FilterAttributes)
+                .Where(AttributeSchema.FilterAttributes)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -145,12 +139,10 @@ namespace Gigya.Common.Contracts.HttpService
             Type = type;
             TypeName = type.AssemblyQualifiedName;
             Attributes = attributes
-                    .Where(ServiceSchema.FilterAttributes)
+                    .Where(AttributeSchema.FilterAttributes)
                     .Select(a => new AttributeSchema(a))
                     .ToArray();
         }
-
-   
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
@@ -234,7 +226,6 @@ namespace Gigya.Common.Contracts.HttpService
 
         public JObject Data { get; set; }
 
-
         public AttributeSchema() { }
 
         public AttributeSchema(Attribute attribute)
@@ -255,6 +246,11 @@ namespace Gigya.Common.Contracts.HttpService
                     Attribute = (Attribute)Data.ToObject(t);
             }
             catch { }
+        }
+
+        internal static bool FilterAttributes(Attribute a)
+        {
+            return a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false;
         }
     }
 
