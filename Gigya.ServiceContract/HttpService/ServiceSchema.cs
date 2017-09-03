@@ -49,6 +49,10 @@ namespace Gigya.Common.Contracts.HttpService
             Interfaces = interfaces.Select(_ => new InterfaceSchema(_)).ToArray();
         }
 
+        internal static bool FilterAttributes(Attribute a)
+        {
+            return a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false;
+        }
     }
 
 
@@ -71,7 +75,7 @@ namespace Gigya.Common.Contracts.HttpService
             Methods = iface.GetMethods().Select(m => new MethodSchema(m)).ToArray();
             Attributes = iface
                 .GetCustomAttributes()
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false)
+                .Where(ServiceSchema.FilterAttributes)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -119,7 +123,7 @@ namespace Gigya.Common.Contracts.HttpService
             Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
             Attributes = info
                 .GetCustomAttributes()
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false)
+                .Where(ServiceSchema.FilterAttributes)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -141,10 +145,12 @@ namespace Gigya.Common.Contracts.HttpService
             Type = type;
             TypeName = type.AssemblyQualifiedName;
             Attributes = attributes
-                    .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false)
+                    .Where(ServiceSchema.FilterAttributes)
                     .Select(a => new AttributeSchema(a))
                     .ToArray();
         }
+
+   
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
@@ -159,7 +165,7 @@ namespace Gigya.Common.Contracts.HttpService
 
     public class TypeSchema : SimpleTypeSchema
     {
-        public FieldSchema[] Fields { get; set; } = new FieldSchema[0];
+        public FieldSchema[] Fields { get; set; }
 
         public TypeSchema() { }
 

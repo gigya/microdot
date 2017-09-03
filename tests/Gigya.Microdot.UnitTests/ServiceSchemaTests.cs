@@ -13,7 +13,7 @@ namespace Gigya.Microdot.UnitTests
     {
 
         [Test]
-        public void ResponseShouldHaveFieldsWithAttributes()
+        public void ComplexResponseTypeShouldHaveFieldsWithAttributes()
         {
             InterfaceSchema schema = new InterfaceSchema(typeof(IHasReturnType));
             schema.Methods.First().Response.Fields.Length.ShouldBe(2);
@@ -22,16 +22,16 @@ namespace Gigya.Microdot.UnitTests
 
         [TestCase(typeof(ISimpleReturnObjectString))]
         [TestCase(typeof(ISimpleReturnObject))]
-        public void ResponseShouldNotHaveFields(Type type)
+        public void SimpleResponseTypeShouldNotHaveFields(Type type)
         {
             InterfaceSchema schema = new InterfaceSchema(type);
-            schema.Methods.First().Response.Fields.ShouldBeEmpty();
+            schema.Methods.First().Response.Fields.ShouldBeNull();
         }
 
         [TestCase(typeof(ISimpleGetter))]
         [TestCase(typeof(ISimpleGetterString))]
         [TestCase(typeof(ISimpleReturnObject))]
-        public void ReqestParamShouldBeWithOutAttrbute(Type type)
+        public void RequestParamShouldBeWithoutAttribute(Type type)
         {
             InterfaceSchema schema = new InterfaceSchema(type);
             foreach (var parameter in schema.Methods.First().Parameters)
@@ -45,13 +45,13 @@ namespace Gigya.Microdot.UnitTests
         [TestCase(typeof(ISimpleGetterString))]
         [TestCase(typeof(IComplexGetter))]
 
-        public void ReqestParamShouldHaveOneField(Type type)
+        public void MethodShouldHaveOneParam(Type type)
         {
             InterfaceSchema schema = new InterfaceSchema(type);
             schema.Methods.First().Parameters.Length.ShouldBe(1);
         }
 
-        public void ReqestParamShouldBeWithOutAttrbute11()
+        public void ResponseShouldBeNullForMethodWithoutResponseType()
         {
             InterfaceSchema schema = new InterfaceSchema(typeof(INoRetrunObject));
             schema.Methods.First().Response.ShouldBeNull();
