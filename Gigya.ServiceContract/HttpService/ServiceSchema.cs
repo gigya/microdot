@@ -105,7 +105,11 @@ namespace Gigya.Common.Contracts.HttpService
             else if (info.ReturnType.IsGenericType && info.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 var resultType = info.ReturnType.GetGenericArguments().Single();
-                IsRevocable = typeof(IRevocable).IsAssignableFrom(resultType);
+                if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Revocable<>))
+                {
+                    IsRevocable = true;
+                    resultType = resultType.GetGenericArguments().Single();
+                }
                 Response = new TypeSchema(resultType, info.ReturnType.GetCustomAttributes());
             }
             else
