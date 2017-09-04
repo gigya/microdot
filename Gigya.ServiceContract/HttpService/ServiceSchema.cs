@@ -42,15 +42,13 @@ namespace Gigya.Common.Contracts.HttpService
     {
         public InterfaceSchema[] Interfaces { get; set; }
 
-        public ServiceSchema() {}
+        public ServiceSchema() { }
 
         public ServiceSchema(Type[] interfaces)
         {
             Interfaces = interfaces.Select(_ => new InterfaceSchema(_)).ToArray();
         }
-
     }
-
 
     public class InterfaceSchema
     {
@@ -60,7 +58,7 @@ namespace Gigya.Common.Contracts.HttpService
 
         public MethodSchema[] Methods { get; set; }
 
-        public InterfaceSchema() {}
+        public InterfaceSchema() { }
 
         public InterfaceSchema(Type iface)
         {
@@ -71,7 +69,7 @@ namespace Gigya.Common.Contracts.HttpService
             Methods = iface.GetMethods().Select(m => new MethodSchema(m)).ToArray();
             Attributes = iface
                 .GetCustomAttributes()
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Where(AttributeSchema.FilterAttributes)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -98,7 +96,13 @@ namespace Gigya.Common.Contracts.HttpService
         {
             Name = info.Name;
 
-            if (info.ReturnType.IsGenericType && info.ReturnType.GetGenericTypeDefinition()==typeof(Task<>))
+
+            if (info.ReturnType == typeof(Task))
+            {
+                Response = null;
+
+            }
+            else if (info.ReturnType.IsGenericType && info.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 var resultType = info.ReturnType.GetGenericArguments().Single();
                 IsRevocable = typeof(IRevocable).IsAssignableFrom(resultType);
@@ -109,11 +113,11 @@ namespace Gigya.Common.Contracts.HttpService
                 Response = new TypeSchema(info.ReturnType, info.ReturnType.GetCustomAttributes());
             }
 
-            ResponseType = Response.TypeName;
+            ResponseType = Response?.TypeName;
             Parameters = info.GetParameters().Select(p => new ParameterSchema(p)).ToArray();
             Attributes = info
                 .GetCustomAttributes()
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
+                .Where(AttributeSchema.FilterAttributes)
                 .Select(a => new AttributeSchema(a))
                 .ToArray();
         }
@@ -135,9 +139,9 @@ namespace Gigya.Common.Contracts.HttpService
             Type = type;
             TypeName = type.AssemblyQualifiedName;
             Attributes = attributes
-                .Where(a => a.GetType().Namespace?.StartsWith("System.Diagnostics") == false)
-                .Select(a => new AttributeSchema(a))
-                .ToArray();
+                    .Where(AttributeSchema.FilterAttributes)
+                    .Select(a => new AttributeSchema(a))
+                    .ToArray();
         }
 
         [OnDeserialized]
@@ -151,16 +155,17 @@ namespace Gigya.Common.Contracts.HttpService
         }
     }
 
-    public class TypeSchema: SimpleTypeSchema
+    public class TypeSchema : SimpleTypeSchema
     {
         public FieldSchema[] Fields { get; set; }
 
         public TypeSchema() { }
 
-        public TypeSchema(Type type, IEnumerable<Attribute> attributes): base(type, attributes)
+        public TypeSchema(Type type, IEnumerable<Attribute> attributes) : base(type, attributes)
         {
             if (IsCompositeType(type))
                 Fields = GetFields(type).ToArray();
+
         }
 
         private IEnumerable<FieldSchema> GetFields(Type type)
@@ -173,21 +178,22 @@ namespace Gigya.Common.Contracts.HttpService
 
         private bool IsCompositeType(Type type)
         {
+
             return !type.IsValueType && !(type == typeof(string));
         }
     }
 
-    public class ParameterSchema: TypeSchema
+    public class ParameterSchema : TypeSchema
     {
         public string Name { get; set; }
 
         public ParameterSchema() { }
 
-        public ParameterSchema(ParameterInfo param): this (param.Name, param.ParameterType, param.GetCustomAttributes())
+        public ParameterSchema(ParameterInfo param) : this(param.Name, param.ParameterType, param.GetCustomAttributes())
         {
         }
 
-        protected ParameterSchema(string name, Type type, IEnumerable<Attribute> attributes): base(type, attributes)
+        protected ParameterSchema(string name, Type type, IEnumerable<Attribute> attributes) : base(type, attributes)
         {
             Name = name;
         }
@@ -220,8 +226,7 @@ namespace Gigya.Common.Contracts.HttpService
 
         public JObject Data { get; set; }
 
-
-        public AttributeSchema() {}
+        public AttributeSchema() { }
 
         public AttributeSchema(Attribute attribute)
         {
@@ -234,13 +239,18 @@ namespace Gigya.Common.Contracts.HttpService
         private void OnDeserialized(StreamingContext context)
         {
             try
-            { 
+            {
                 Type t = Type.GetType(TypeName);
 
                 if (t != null)
                     Attribute = (Attribute)Data.ToObject(t);
             }
             catch { }
+        }
+
+        internal static bool FilterAttributes(Attribute a)
+        {
+            return a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false;
         }
     }
 

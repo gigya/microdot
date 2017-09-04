@@ -94,11 +94,11 @@ namespace Gigya.Microdot.SharedLogic.Events
                 case TypeCode.String:
                     return fieldValue.ToString();
                 case TypeCode.Single:
-                    return Math.Round((float)fieldValue, 4).ToString(CultureInfo.InvariantCulture);
+                    return Math.Round((float)fieldValue, 3).ToString(CultureInfo.InvariantCulture);
                 case TypeCode.Double:
-                    return Math.Round((double)fieldValue, 4).ToString(CultureInfo.InvariantCulture);
+                    return Math.Round((double)fieldValue, 3).ToString(CultureInfo.InvariantCulture);
                 case TypeCode.Decimal:
-                    return Math.Round((decimal)fieldValue, 4).ToString(CultureInfo.InvariantCulture);
+                    return Math.Round((decimal)fieldValue, 3).ToString(CultureInfo.InvariantCulture);
                 case TypeCode.DateTime:
                     return ((DateTime)fieldValue).ToUniversalTime().ToString("o", CultureInfo.InvariantCulture);
                 case TypeCode.Boolean:

@@ -36,6 +36,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     internal class MetricsStatisticsPublisher : IConfigurableStatisticsPublisher , IConfigurableSiloMetricsDataPublisher, IConfigurableClientMetricsDataPublisher , IProvider
     {
         private readonly ConcurrentDictionary<string, double> latestMetricValues = new ConcurrentDictionary<string, double>();
+        private long latestRequestQueueLength = 0;
 
         /// <summary>Contains a set of gauges whose lambda getter methods fetch their values from <see cref="latestMetricValues"/></summary>
         private readonly MetricsContext context = Metric.Context("Silo");
@@ -82,6 +83,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                     }
                 }
             }
+
+            context.Gauge("Request queue length", ()=>latestRequestQueueLength, Unit.Items);
         }
 
         public Task Init(bool isSilo, string storageConnectionString, string deploymentId, string address, string siloName, string hostName)
@@ -99,9 +102,9 @@ namespace Gigya.Microdot.Orleans.Hosting
             return TaskDone.Done;
         }
 
-        public Task ReportMetrics(ISiloPerformanceMetrics metricsData)
+        public async Task ReportMetrics(ISiloPerformanceMetrics metricsData)
         {
-            return TaskDone.Done;
+            latestRequestQueueLength = metricsData.RequestQueueLength;
         }
 
         void IConfigurableSiloMetricsDataPublisher.AddConfiguration(string deploymentId, bool isSilo, string siloName, SiloAddress address, IPEndPoint gateway, string hostName)

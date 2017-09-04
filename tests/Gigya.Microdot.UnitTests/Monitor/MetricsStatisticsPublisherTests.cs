@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 using Gigya.Microdot.Orleans.Hosting;
@@ -12,6 +13,7 @@ using NUnit.Framework;
 
 using Orleans.Providers;
 using Orleans.Runtime;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests
 {
@@ -62,20 +64,14 @@ namespace Gigya.Microdot.UnitTests
         public void PublishEmptyListTest()
         {
             publisher.ReportStats(new List<ICounter>()).Wait();
-            GetMetricsData().AssertEquals(new MetricsDataEquatable
-            {                
-                Gauges = new List<MetricDataEquatable>()
-            });
+            GetMetricsData().Gauges.ShouldNotBeNull();
         }
 
         [Test]
         public void PublishNullTest()
         {
             publisher.ReportStats(null).Wait();
-            GetMetricsData().AssertEquals(new MetricsDataEquatable
-            {             
-                Gauges = new List<MetricDataEquatable>()
-            });
+            GetMetricsData().Gauges.ShouldNotBeNull();
         }
 
         [Test]
@@ -89,10 +85,7 @@ namespace Gigya.Microdot.UnitTests
             
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
 
-            GetMetricsData().AssertEquals(new MetricsDataEquatable
-            {
-                Gauges = new List<MetricDataEquatable>()
-            });
+            GetGauge("LogOnlyCounter").ShouldBeNull();
         }
 
         [Test]
@@ -106,9 +99,7 @@ namespace Gigya.Microdot.UnitTests
 
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
             
-            var mdata = GetMetricsRepresentation("NonDeltaCounter", 100);
-
-            GetMetricsData().AssertEquals(mdata);
+            GetGauge("NonDeltaCounter").Value.ShouldBe(100);
         }
         [Test]
         public void UpdateNonDeltaCounterTest()
@@ -120,15 +111,13 @@ namespace Gigya.Microdot.UnitTests
             counter.GetValueString().Returns("100");
             
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
-
-            var mdata = GetMetricsRepresentation("NonDeltaCounter", 100);
-            GetMetricsData().AssertEquals(mdata);
+            
+            GetGauge("NonDeltaCounter").Value.ShouldBe(100);
 
             counter.GetValueString().Returns("300");
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
 
-            mdata = GetMetricsRepresentation("NonDeltaCounter", 300);
-            GetMetricsData().AssertEquals(mdata);
+            GetGauge("NonDeltaCounter").Value.ShouldBe(300);
         }
 
         [Test]
@@ -142,9 +131,7 @@ namespace Gigya.Microdot.UnitTests
 
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
            
-            var mdata = GetMetricsRepresentation("DeltaCounter", 100);
-
-            GetMetricsData().AssertEquals(mdata);
+            GetGauge("DeltaCounter").Value.ShouldBe(100);
         }
 
         [Test]
@@ -158,13 +145,11 @@ namespace Gigya.Microdot.UnitTests
 
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
 
-            var mdata = GetMetricsRepresentation("DeltaCounter", 100);            
-            GetMetricsData().AssertEquals(mdata);
+            GetGauge("DeltaCounter").Value.ShouldBe(100);
 
             publisher.ReportStats(new List<ICounter> { counter }).Wait();
 
-            mdata = GetMetricsRepresentation("DeltaCounter", 200);
-            GetMetricsData().AssertEquals(mdata);
+            GetGauge("DeltaCounter").Value.ShouldBe(200);
         }
 
         private static MetricsDataEquatable GetMetricsRepresentation(string counterName,long val)
@@ -185,6 +170,12 @@ namespace Gigya.Microdot.UnitTests
                 Metric.Context("Silo")                    
                     .DataProvider.CurrentMetricsData;
         }
+
+        private static GaugeValueSource GetGauge(string gaugeName)
+        {
+            return GetMetricsData().Gauges.FirstOrDefault(g => g.Name == gaugeName);
+        }
+
     }
 
 }
