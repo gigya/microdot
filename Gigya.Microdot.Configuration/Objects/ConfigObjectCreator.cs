@@ -161,8 +161,11 @@ namespace Gigya.Microdot.Configuration.Objects
             {
                 config = ConfigCache.CreateJsonConfig(ConfigPath) ?? Empty;
 
-                if (JToken.DeepEquals(LatestNode, config))
+                if(JToken.DeepEquals(LatestNode, config))
+                {
+                    ValidationErrors = null;
                     return;
+                }
             }
             catch (Exception ex)
             {
