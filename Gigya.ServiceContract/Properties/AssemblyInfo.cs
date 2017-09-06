@@ -41,8 +41,8 @@ using System.Runtime.InteropServices;
 
 
 [assembly: AssemblyInformationalVersion("2.4.14")]// if pre-release should be in the format of "2.4.11-pre01".
-[assembly: AssemblyVersion("2.4.14")]
-[assembly: AssemblyFileVersion("2.4.14")]
+[assembly: AssemblyVersion("2.4.15")]
+[assembly: AssemblyFileVersion("2.4.15")]
 
 [assembly: AssemblyDescription("")]
 
