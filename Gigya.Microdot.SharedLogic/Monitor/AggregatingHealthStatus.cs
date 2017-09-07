@@ -45,7 +45,7 @@ namespace Gigya.Microdot.SharedLogic.Monitor
                 .ToArray();
 
             bool healthy = results.All(r => r.Result.IsHealthy);
-            string message = string.Join("\r\n", results.Select(r => r.Result.Message));
+            string message = string.Join("\r\n", results.Select(r => (r.Result.IsHealthy ? "[OK] " : "[Unhealthy] ") + r.Result.Message));
 
             return healthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
         }
