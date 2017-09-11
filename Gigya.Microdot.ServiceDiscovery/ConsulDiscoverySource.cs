@@ -106,8 +106,15 @@ namespace Gigya.Microdot.ServiceDiscovery
             var newConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
             lock (_lastResultLocker)
             {
+
                 var oldConsulResult = _lastConsulResult;
                 _lastConsulResult = newConsulResult;
+
+                if (IsDeploymentDefined(oldConsulResult) && !IsDeploymentDefined(newConsulResult))
+                    _log.Warn(x=>x("Service has become undefined on Consul", unencryptedTags: new
+                    {
+                        serviceName = DeploymentName                        
+                    }));
 
                 if (newConsulResult.Error != null)
                 {
