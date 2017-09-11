@@ -428,23 +428,22 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             var taskType = serviceMethod.ServiceInterfaceMethod.ReturnType;
             var resultType = taskType.IsGenericType ? taskType.GetGenericArguments().First() : null;
+            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
+            var settings = requestData.Target.IsWeaklyTyped ? JsonSettingsWeak : JsonSettings;
 
-            string response;
-            InvocationResult invocationResult;
-            if (requestData.Target.IsWeaklyTyped)
-            {
-                invocationResult = await Activator.Invoke(serviceMethod, requestData.Arguments);
-                response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, resultType, JsonSettingsWeak));
-            }
-            else
-            {
-                invocationResult = await Activator.Invoke(serviceMethod, requestData.Arguments.Values.Cast<object>().ToArray());
-                response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, resultType, JsonSettings));
-            }
-
+            var invocationResult = await Activator.Invoke(serviceMethod, arguments);
+            string response = _serializationTime.Time(() => JsonConvert.SerializeObject(invocationResult.Result, resultType, settings));
             context.Response.Headers.Add(GigyaHttpHeaders.ExecutionTime, invocationResult.ExecutionTime.ToString());
 
             return response;
+        }
+
+        private static object[] GetParametersByName(ServiceMethod serviceMethod, IDictionary args)
+        {
+            return serviceMethod.ServiceInterfaceMethod
+                .GetParameters()
+                .Select(p => args[p.Name] ?? (p.ParameterType.IsValueType ? System.Activator.CreateInstance(p.ParameterType) : null))
+                .ToArray();
         }
 
 
