@@ -64,7 +64,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                       _configDic[$"Discovery.{serviceName}.Hosts"] = "localhost";
                   });
 
-            Assert.AreEqual(DiscoverySource.Config, _serviceDiscovery.LastConfig.Source);
+            Assert.AreEqual(DiscoverySource.Config, _serviceDiscovery.LastServiceConfig.Source);
         }
 
         [TestCase("Services.OtherServiceName")]

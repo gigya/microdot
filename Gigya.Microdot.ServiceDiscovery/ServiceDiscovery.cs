@@ -38,7 +38,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         public ISourceBlock<string> EndPointsChanged => _endPointsChanged;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => _reachabilityChanged;
 
-        internal ServiceDiscoveryConfig LastConfig { get; private set; }
+        internal DiscoveryConfig LastConfig { get; private set; }
+        internal ServiceDiscoveryConfig LastServiceConfig { get; private set; }
 
         private RemoteHostPool MasterEnvironmentPool { get; set; }
         private List<IDisposable> _masterEnvironmentLinks = new List<IDisposable>();
@@ -110,7 +111,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             lock (_locker)
             {
-                if (newServiceConfig.Equals(LastConfig))
+                if (newServiceConfig.Equals(LastServiceConfig) &&
+                    newConfig.EnvironmentFallbackEnabled == LastConfig.EnvironmentFallbackEnabled)
                     return;
             }
 
@@ -129,7 +131,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 _suppressNotifications = true;
 
-                LastConfig = newServiceConfig;
+                LastConfig = newConfig;
+                LastServiceConfig = newServiceConfig;
 
                 RemoveOriginatingPool();
                 OriginatingEnvironmentPool = CreatePool(_originatingDeployment, _originatingEnvironmentLinks, originatingSource);
