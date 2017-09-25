@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
@@ -38,7 +37,7 @@ namespace Gigya.Microdot.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. 
     /// </summary>
     /// <typeparam name="TInterface">The interface of the service.</typeparam>
-    public abstract class MicrodotServiceHost<TInterface> : GigyaServiceHost
+    public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase
     {
         private bool disposed;
         
@@ -70,12 +69,11 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
-
-            PreConfigure(Kernel);
-           
+            
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
+            PreConfigure(Kernel);
             Configure(Kernel, Kernel.Get<BaseCommonConfig>());
 
             PreInitialize(Kernel);
