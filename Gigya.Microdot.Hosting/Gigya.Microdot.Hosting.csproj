@@ -72,7 +72,7 @@
     <Compile Include="HttpService\ServiceMethod.cs" />
     <Compile Include="HttpService\ServiceMethodResolver.cs" />
     <Compile Include="Metrics\MetricsInitializer.cs" />
-    <Compile Include="Service\GigyaServiceHost.cs" />
+    <Compile Include="Service\ServiceHostBase.cs" />
     <Compile Include="Service\HostExtensionMethods.cs" />
     <Compile Include="HttpService\Endpoints\HealthStatusResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
