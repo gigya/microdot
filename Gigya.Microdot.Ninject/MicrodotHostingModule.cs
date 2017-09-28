@@ -20,7 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Collections.Generic;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.HttpService;
 using Ninject.Modules;
 
 namespace Gigya.Microdot.Ninject
@@ -33,7 +36,7 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             this.BindClassesAsSingleton(assemblies: new[] { typeof(HostingAssembly) });
-            this.BindInterfacesAsSingleton(assemblies: new[] { typeof(HostingAssembly) });
+            this.BindInterfacesAsSingleton(new List<Type> { typeof(IServiceInterfaceMapper) }, assemblies: new[] { typeof(HostingAssembly) });
         }
     }
 }
