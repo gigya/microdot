@@ -21,9 +21,7 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
@@ -32,21 +30,6 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public abstract class AbstractServiceActivator : IActivator
     {
-        public async Task<InvocationResult> Invoke(ServiceMethod serviceMethod, IDictionary args)
-        {
-            var arguments = GetParametersByName(serviceMethod, args);
-
-            return await Invoke(serviceMethod, arguments).ConfigureAwait(false);
-        }
-
-        private static object[] GetParametersByName(ServiceMethod serviceMethod, IDictionary args)
-        {
-            return serviceMethod.ServiceInterfaceMethod
-                .GetParameters()
-                .Select(p => args[p.Name] ?? (p.ParameterType.IsValueType ? Activator.CreateInstance(p.ParameterType) : null))
-                .ToArray();
-        }
-
         public async Task<InvocationResult> Invoke(ServiceMethod serviceMethod, object[] arguments)
         {
             var invokeTarget = GetInvokeTarget(serviceMethod);

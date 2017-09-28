@@ -42,7 +42,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. Override
     /// <see cref="AfterOrleansStartup"/> to run initialization code after the silo starts.
     /// </summary>
-    public abstract class MicrodotOrleansServiceHost : GigyaServiceHost
+    public abstract class MicrodotOrleansServiceHost : ServiceHostBase
     {
         private bool disposed;
 
