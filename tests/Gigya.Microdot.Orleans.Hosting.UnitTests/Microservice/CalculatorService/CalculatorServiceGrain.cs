@@ -22,6 +22,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 using Orleans;
@@ -33,8 +34,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     [StatelessWorker, Reentrant]
     public class CalculatorServiceGrain : Grain, ICalculatorServiceGrain
     {
+        private readonly ILog _log;
         private ICalculatorWorkerGrain Worker { get; set; }
 
+        public CalculatorServiceGrain(ILog log)
+        {
+            _log = log;
+        }
+    
 
         public override Task OnActivateAsync()
         {
@@ -76,6 +83,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public Task<int> GetNextNum() { return Worker.GetNextNum(); }
 
         public Task<Revocable<int>> GetVersion(string id){return Worker.GetVersion(id);}
+
+
+        public Task LogData(string message)
+        {
+            _log.Warn(x => x(message));
+            return TaskDone.Done;
+        }
+        
     }
 
 }

@@ -50,6 +50,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
     public class ServiceTester<TServiceHost> : IDisposable where TServiceHost : MicrodotOrleansServiceHost, new()
     {
         private ILog Log { get; }
+
         private IResolutionRoot ResolutionRoot { get; }
         public AppDomain ServiceAppDomain { get; private set; }
 
@@ -60,7 +61,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         private HttpListener LogListener { get; set; }
 
 
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime=null)
+        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, bool writeLogToFile , TimeSpan? shutdownWaitTime = null)
         {
             Log = log;
             ResolutionRoot = resolutionRoot;
@@ -68,10 +69,10 @@ namespace Gigya.Microdot.Testing.ServiceTester
             InitializeInfrastructure();
 
             var serviceArguments = GetServiceArguments(basePortOverride, isSecondary, shutdownWaitTime);
-            
+
             BasePort = serviceArguments.BasePortOverride.Value;
             ServiceAppDomain = Common.CreateDomain(typeof(TServiceHost).Name + BasePort);
-            StartLogListener(BasePort, ServiceAppDomain);
+            StartLogListener(BasePort, ServiceAppDomain, writeLogToFile);
 
             ServiceAppDomain.RunOnContext(serviceArguments, args =>
             {
@@ -104,7 +105,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
             {
                 var cachingProxy = ResolutionRoot.Get<CachingProxyProvider<TServiceInterface>>(
                     new ConstructorArgument("dataSource", provider.Client),
-                    new ConstructorArgument("serviceName", (string) null));
+                    new ConstructorArgument("serviceName", (string)null));
 
                 return cachingProxy.Proxy;
             }
@@ -142,10 +143,10 @@ namespace Gigya.Microdot.Testing.ServiceTester
             var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxyProvider>>();
 
             var provider = factory(serviceName, (srName, r) => new LocalhostServiceDiscovery());
-            provider.DefaultPort = BasePort;      
-			if (timeout != null)
+            provider.DefaultPort = BasePort;
+            if (timeout != null)
                 provider.SetHttpTimeout(timeout.Value);
-               
+
             return provider;
         }
 
@@ -224,7 +225,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
             InitGrainClient(timeout);
             return GrainClient.GrainFactory.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
         }
-        
+
 
         /// <summary>
         /// Immediately unloads the service's AppDomain without graceful shutdown. You should still call
@@ -276,7 +277,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary,TimeSpan? shutdownWaitTime)
+        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, TimeSpan? shutdownWaitTime)
         {
             if (isSecondary && basePortOverride == null)
                 throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
@@ -287,7 +288,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
             if (basePortOverride != null)
                 return arguments;
 
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode,onStopWaitTimeInMs: shutdownWaitTime);
+            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode, onStopWaitTimeInMs: shutdownWaitTime);
             var commonConfig = new BaseCommonConfig(serviceArguments);
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
             var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
@@ -296,18 +297,23 @@ namespace Gigya.Microdot.Testing.ServiceTester
         }
 
 
-        protected virtual void StartLogListener(int basePort, AppDomain appDomain)
+        protected virtual void StartLogListener(int basePort, AppDomain appDomain,bool writeLogToFile)
         {
+            //Start Listen to http log
             var httpLogListenPort = basePort - 1;
             appDomain.SetData("HttpLogListenPort", httpLogListenPort);
             LogListener = new HttpListener { Prefixes = { $"http://localhost:{httpLogListenPort}/" } };
             LogListener.Start();
-            LogListenerLoop();
+            LogListenerLoop(writeLogToFile);
         }
 
 
-        private async void LogListenerLoop()
+        private async void LogListenerLoop(bool writeLogToFile)
         {
+            if (writeLogToFile)
+            {
+                File.WriteAllText("TestLog.txt","");
+            }
             while (true)
             {
                 try
@@ -324,6 +330,10 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
                         string log = await new StreamReader(context.Request.InputStream).ReadToEndAsync().ConfigureAwait(false);
                         Console.WriteLine(log);
+                        //write to file, nunit has problem that if it crath we don't have any log
+                        if(writeLogToFile)
+                            File.AppendAllLines("TestLog.txt",new []{log});
+
                         context.Response.StatusCode = 200;
                     }
                 }
@@ -380,14 +390,16 @@ namespace Gigya.Microdot.Testing.ServiceTester
 
     public static class ServiceTesterExtensions
     {
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime=null)
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
             ServiceTester<TServiceHost> tester = kernel.Get<ServiceTester<TServiceHost>>(
                 new ConstructorArgument(nameof(basePortOverride), basePortOverride),
                 new ConstructorArgument(nameof(isSecondary), isSecondary),
-                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime));
-            
+                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime),
+                new ConstructorArgument(nameof(writeLogToFile), writeLogToFile)
+                );
+
             return tester;
         }
     }
