@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System.Diagnostics;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
@@ -76,6 +77,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
+            kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
         }
     }
 }

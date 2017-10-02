@@ -52,5 +52,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         [Cached] Task<int> GetNextNum();
         [Cached] Task<Revocable<int>> GetVersion(string id);
+        Task LogData(string message);
     }
 }

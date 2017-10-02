@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -48,7 +49,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     public class JObjectWrapper
     {
-       
+
         public JObject JObject { get; private set; }
 
         public JObjectWrapper(JObject jObject)
@@ -70,8 +71,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                          
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
+
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile:true);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -80,9 +81,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 Console.WriteLine(e);
                 throw;
-            }           
+            }
         }
-        
+
 
         [OneTimeTearDown]
         public void TearDown()
@@ -107,7 +108,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CallingMethodWithOptionalParametersWork()
         {
-            var arguments = new object[] {new JObject()};
+            var arguments = new object[] { new JObject() };
 
             var res = await CallService(arguments);
             res.Item1.ShouldBe(5);
@@ -127,7 +128,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task Add_NumbersVia_JObject()
         {
-            JObject jObject=new JObject();
+            JObject jObject = new JObject();
             jObject["a"] = 5;
             jObject["b"] = 3;
 
@@ -167,7 +168,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const string localDateString = "2016-07-31T10:00:00+03:00";
             var localDateTime = DateTime.Parse(localDateString);
             var localDateTimeOffset = DateTimeOffset.Parse(localDateString);
-            var ukernel=new TestingKernel<ConsoleLog>();
+            var ukernel = new TestingKernel<ConsoleLog>();
 
             var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory("CalculatorService");
@@ -178,10 +179,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             };
             serviceProxy.DefaultPort = 6555;
 
-            var res=await serviceProxy.Invoke(new HttpServiceRequest("ToUniversalTime",typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await serviceProxy.Invoke(new HttpServiceRequest("ToUniversalTime", typeof(ICalculatorService).FullName, dict), typeof(JObject));
             var json = (JToken)res;
             DateTimeOffset.Parse(json["Item1"].Value<string>()).ShouldBe(DateTime.Parse(localDateString).ToUniversalTime());
-            DateTimeOffset.Parse(json["Item2"].Value<string>()).ShouldBe(localDateTimeOffset.DateTime);           
+            DateTimeOffset.Parse(json["Item2"].Value<string>()).ShouldBe(localDateTimeOffset.DateTime);
         }
 
         [Test]
@@ -191,11 +192,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory("CalculatorService");
-            var wrapper = new Wrapper {INT = 100, STR = "100"};
-            var dict = new Dictionary<string, object> {{ "wrapper", JsonConvert.SerializeObject(wrapper) }};
+            var wrapper = new Wrapper { INT = 100, STR = "100" };
+            var dict = new Dictionary<string, object> { { "wrapper", JsonConvert.SerializeObject(wrapper) } };
             serviceProxy.DefaultPort = 6555;
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("DoComplex",typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await serviceProxy.Invoke(new HttpServiceRequest("DoComplex", typeof(ICalculatorService).FullName, dict), typeof(JObject));
 
             ((JToken)res).ToObject<Wrapper>().INT.ShouldBe(wrapper.INT);
             ((JToken)res).ToObject<Wrapper>().STR.ShouldBe(wrapper.STR);
@@ -209,7 +210,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory("CalculatorService");
-            var dict = new Dictionary<string, object> {{"a", "5"}};
+            var dict = new Dictionary<string, object> { { "a", "5" } };
             serviceProxy.DefaultPort = 6555;
 
             var res = await serviceProxy.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JObject));
@@ -285,12 +286,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             secondValue.ShouldBe(firstValue);
 
             await AssemblyInitialize.ResolutionRoot.Get<ICacheRevoker>().Revoke(id);
-         
+
             //Items shouldBe remove from Cache
             await Task.Delay(200);
             var threadValue = await ServiceWithCaching.GetVersion(id);
-            
+
             threadValue.ShouldNotBe(secondValue);
         }
+
+        [Test]
+        public async Task LogTest()
+        {
+            var logMessage = $"log-{Guid.NewGuid()}";
+            await Service.LogData(logMessage);
+            await Task.Delay(100);
+            File.ReadAllText("TestLog.txt").ShouldContain(logMessage);
+        }
+
     }
 }
