@@ -61,7 +61,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
         private HttpListener LogListener { get; set; }
 
 
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, bool writeLogToFile , TimeSpan? shutdownWaitTime = null)
+        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false)
         {
             Log = log;
             ResolutionRoot = resolutionRoot;
