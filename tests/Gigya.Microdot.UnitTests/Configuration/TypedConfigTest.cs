@@ -281,8 +281,8 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             var extractor = infraKernel.Get<Func<BusSettings>>();
           
-            Should.Throw<ConfigurationException>(() => extractor());
-
+            var ex = Should.Throw<ConfigurationException>(() => extractor());
+            ex.UnencryptedTags["ValidationErrors"].ShouldNotBeNullOrEmpty();
             infraKernel.Dispose();
         }
 

@@ -163,7 +163,9 @@ namespace Gigya.Microdot.Configuration.Objects
 
                 if(JToken.DeepEquals(LatestNode, config))
                 {
-                    ValidationErrors = null;
+                    if (Latest != null)
+                        ValidationErrors = null;
+
                     return;
                 }
             }
