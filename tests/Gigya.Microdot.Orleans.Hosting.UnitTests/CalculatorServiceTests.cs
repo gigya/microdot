@@ -24,10 +24,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
@@ -72,7 +73,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile:true);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -303,5 +304,28 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             File.ReadAllText("TestLog.txt").ShouldContain(logMessage);
         }
 
+        [Test]
+        public async Task ShouldPublishEventWithCallParametersDefault()
+        {
+            var sensitive = "sensitive test";
+            var nonsensitive = "nonsensitive Test";
+            var notExists = "notExists Test";
+            var @default = "default Test";
+
+            await Service.LogPram(sensitive, nonsensitive, notExists, @default);
+            (await Service.IsLogPramSucceed(new List<string>{@default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
+        }
+
+        [Test]
+        public async Task ShouldPublishEventWithCallParametersMethodNonsensitive()
+        {
+            var sensitive = "sensitive test";
+            var nonsensitive = "nonsensitive Test";
+            var notExists = "notExists Test";
+            var @default = "default Test";
+
+            await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
+            (await Service.IsLogPramSucceed(new List<string> {  sensitive }, new List<string> { nonsensitive , @default }, new List<string> { notExists })).ShouldBeTrue();
+        }
     }
 }

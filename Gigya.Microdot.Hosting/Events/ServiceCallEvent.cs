@@ -60,23 +60,29 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.targetMethod)]
         public string ServiceMethod { get; set; }
 
-        /// <summary> Service method arguments </summary>
+        /// <summary>  Encrypted Service method arguments </summary>
         [EventField("params", Encrypt = true)]
-        public IEnumerable<KeyValuePair<string, string>> ServiceMethodArguments => LazyRequestParams.GetValue(this);
+        public IEnumerable<KeyValuePair<string, string>> EncryptedServiceMethodArguments => LazyEncryptedRequestParams.GetValue(this);
 
-    
-        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyRequestParams =
-            new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams().ToList());
+        /// <summary> Unencrypted Service method arguments </summary>
+
+        [EventField("params", Encrypt = false)]
+        public IEnumerable<KeyValuePair<string, string>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
+
+
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Encrypted).ToList());
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyUnencryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Unencrypted).ToList());
+
 
         public IEnumerable<Param> Params { get; set; }
 
 
-        private IEnumerable<KeyValuePair<string, string>> GetRequestParams()
+        private IEnumerable<KeyValuePair<string, string>> GetRequestParams(Sensitivity sensitivity)
         {
             
             if (!Configuration.ExcludeParams && Params != null)
             {
-                foreach (var param in Params.Where(param => param.Value != null))
+                foreach (var param in Params.Where(param => param.Value != null && param.Sensitivity == sensitivity))
                 {
                     var val = param.Value.Substring(0, Math.Min(param.Value.Length, Configuration.ParamTruncateLength));
 

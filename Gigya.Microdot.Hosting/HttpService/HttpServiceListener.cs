@@ -358,11 +358,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             callEvent.CalledServiceName = serviceMethod?.GrainInterfaceType.Name;
             callEvent.ClientMetadata = requestData.TracingData;
             callEvent.ServiceMethod = requestData.Target?.MethodName;
+
+            var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
+
             callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
             {
                 Name = arg.Key.ToString(),
-                Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value)
+                Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
+                Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Encrypted
             });
+
             callEvent.Exception = ex;
             callEvent.ActualTotalTime = requestTime;
             callEvent.ErrCode = ex != null ? null : (int?)0;
