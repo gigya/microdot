@@ -58,10 +58,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         [Cached] Task<Revocable<int>> GetVersion(string id);
         Task LogData(string message);
         
-        Task LogPram([Sensitive] string sensitive, [NonSensitive] string notSensitive,[Sensitive( DoNotLog = true)]string notExists,string @default );
+        Task LogPram([Sensitive] string sensitive, [NonSensitive] string notSensitive,[Sensitive( Secretive = true)]string notExists,string @default );
 
         [NonSensitive]
-        Task LogPram2([Sensitive] string sensitive, [NonSensitive] string notSensitive, [Sensitive(DoNotLog = true)]string notExists, string @default);
+        Task LogPram2([Sensitive] string sensitive, [NonSensitive] string notSensitive, [Sensitive(Secretive = true)]string notExists, string @default);
 
         Task<bool> IsLogPramSucceed(List<string> sensitives, List<string> NoneSensitives, List<string> NotExists);
     }

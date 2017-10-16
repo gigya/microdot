@@ -6,7 +6,7 @@ namespace Gigya.ServiceContract.Attributes
 
     public class SensitiveAttribute : Attribute
     {
-        public bool DoNotLog { get; set; }
+        public bool Secretive { get; set; }
     }
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method)]
 

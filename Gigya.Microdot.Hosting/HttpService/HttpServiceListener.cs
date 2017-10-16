@@ -365,7 +365,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 Name = arg.Key.ToString(),
                 Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
-                Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Encrypted
+                Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
             });
 
             callEvent.Exception = ex;

@@ -67,7 +67,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         /// <returns></returns>
 	    ServiceMethod[] GetAll();
 
-        EndPointMetaData GetMetaData(ServiceMethod method);
+        EndPointMetadata GetMetaData(ServiceMethod method);
 
     }
 }

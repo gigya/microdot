@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public Dictionary<Type, string> ServiceNames { get; }
 
-        private ConcurrentDictionary<ServiceMethod,  EndPointMetaData> _metadata= new ConcurrentDictionary<ServiceMethod, EndPointMetaData>();
+        private ConcurrentDictionary<ServiceMethod,  EndPointMetadata> _metadata= new ConcurrentDictionary<ServiceMethod, EndPointMetadata>();
 
         private readonly ServiceMethodResolver _serviceMethodResolver;
 
@@ -147,9 +147,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             return _serviceMethodResolver.Resolve(target);
         }
-        public EndPointMetaData GetMetaData(ServiceMethod method)
+        public EndPointMetadata GetMetaData(ServiceMethod method)
         {
-            return _metadata.GetOrAdd(method, m => new EndPointMetaData(m));
+            return _metadata.GetOrAdd(method, m => new EndPointMetadata(m));
 
         }
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
@@ -7,9 +6,9 @@ using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-    public class EndPointMetaData
+    public class EndPointMetadata
     {
-        public EndPointMetaData(ServiceMethod method)
+        public EndPointMetadata(ServiceMethod method)
         {
             MethodSensitivity = GetSensitivity(method.ServiceInterfaceMethod);
 
@@ -29,16 +28,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             var attribute = t.GetCustomAttributes(typeof(SensitiveAttribute),true).FirstOrDefault();
             if (attribute is SensitiveAttribute sensitiveAttribute)
             {
-                if (sensitiveAttribute.DoNotLog)
-                    return Sensitivity.NoLog;
-                return Sensitivity.Encrypted;
+                if (sensitiveAttribute.Secretive)
+                    return Sensitivity.Secretive;
+                return Sensitivity.Sensitive;
 
             }
 
             attribute = t.GetCustomAttributes(typeof(NonSensitiveAttribute), true).FirstOrDefault();
             if (attribute is NonSensitiveAttribute)
             {
-                return Sensitivity.Unencrypted;
+                return Sensitivity.NonSensitive;
             }
             return null;
         }

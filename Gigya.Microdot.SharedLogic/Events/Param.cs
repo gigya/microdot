@@ -37,6 +37,8 @@ namespace Gigya.Microdot.SharedLogic.Events
     [Serializable]
     public enum Sensitivity
     {
-        Encrypted, Unencrypted, NoLog
+        Sensitive,
+        NonSensitive,
+        Secretive
     }
 }
