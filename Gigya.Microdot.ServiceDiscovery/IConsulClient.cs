@@ -47,12 +47,25 @@ namespace Gigya.Microdot.ServiceDiscovery
         public Exception Error { get; set; }
 
         public bool IsQueryDefined { get; set; }
-    }
 
+        /// <summary>
+        /// Modification index. This index is increased when result was changed
+        /// </summary>
+        public ulong? ModifyIndex { get; set; }
+
+        /// <summary>
+        /// Service's active version. 
+        /// A service may be deployed on some different endpoints, each one with different version.
+        /// This property contains the active version of the service
+        /// </summary>
+        public string Version { get; set; }
+    }
 
     public interface IConsulClient
     {
-        Task<EndPointsResult> GetEndPoints(string serviceName);
+        Task<EndPointsResult> GetHealthyEndpoints(string serviceName, int index);
+        Task<EndPointsResult> GetServiceVersion(string serviceName, int index);
+        Task<EndPointsResult> GetQueryEndpoints(string serviceName);
         Uri ConsulAddress { get; }
     }
 
@@ -61,6 +74,11 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class ConsulEndPoint : EndPoint
     {
         public ulong ModifyIndex { get; set; }
+
+        /// <summary>
+        /// Service version which is installed on this endpoint
+        /// </summary>
+        public string Version { get; set; }
     }
 
 }

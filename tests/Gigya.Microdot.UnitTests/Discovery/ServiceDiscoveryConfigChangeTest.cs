@@ -39,7 +39,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                 k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
                 _consulAdapterMock = Substitute.For<IConsulClient>();
-                _consulAdapterMock.GetEndPoints(Arg.Any<string>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" } } }));
+                _consulAdapterMock.GetQueryEndpoints(Arg.Any<string>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" } } }));
                 k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
             }, _configDic);
 

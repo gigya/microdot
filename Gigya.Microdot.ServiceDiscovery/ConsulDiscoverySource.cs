@@ -103,7 +103,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task Load()
         {
-            var newConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
+            var newConsulResult = await ConsulClient.GetQueryEndpoints(DeploymentName).ConfigureAwait(false);
             lock (_lastResultLocker)
             {
 

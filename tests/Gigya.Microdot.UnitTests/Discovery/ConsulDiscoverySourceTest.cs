@@ -62,7 +62,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _consulTask = null;
             SetConsulEndpoints(_endpointsBeforeChange);
             _consulClientMock = Substitute.For<IConsulClient>();
-            _consulClientMock.GetEndPoints(Arg.Any<string>()).Returns(_ =>
+            _consulClientMock.GetQueryEndpoints(Arg.Any<string>()).Returns(_ =>
             {
                 _requestedConsulServiceName = (string)_.Args()[0];
                 return _consulTask = _getConsulEndPointsTask();

@@ -50,7 +50,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                 _consulAdapterMock = Substitute.For<IConsulClient>();
-                _consulAdapterMock.GetEndPoints(Arg.Any<string>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" } } }));
+                _consulAdapterMock.GetQueryEndpoints(Arg.Any<string>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" } } }));
                 k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
             }, _configDic);
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
@@ -319,17 +319,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private void SetMockToReturnHost(string query)
         {
-            _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.SuccessResult(new[] { new ConsulEndPoint { HostName = query } }, "<Mock consul request log>", "<Mock consul response>")));
+            _consulAdapterMock.GetQueryEndpoints(query).Returns(Task.FromResult(ConsulClient.SuccessResult(new[] { new ConsulEndPoint { HostName = query } }, "<Mock consul request log>", "<Mock consul response>")));
         }
 
         private void SetMockToReturnQueryNotFound(string query)
         {
-            _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.ErrorResult("<Mock consul request log>", null, false)));
+            _consulAdapterMock.GetQueryEndpoints(query).Returns(Task.FromResult(ConsulClient.ErrorResult("<Mock consul request log>", null, false)));
         }
 
         private void SetMockToReturnError(string query)
         {
-            _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.ErrorResult("<Mock consul request log>", new EnvironmentException("Mock: some error"), true)));
+            _consulAdapterMock.GetQueryEndpoints(query).Returns(Task.FromResult(ConsulClient.ErrorResult("<Mock consul request log>", new EnvironmentException("Mock: some error"), true)));
         }
 
         [Test]

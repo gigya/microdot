@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -74,50 +75,78 @@ namespace Gigya.Microdot.ServiceDiscovery
             }
         }
 
-        public async Task<EndPointsResult> GetEndPoints(string serviceName)
+        public Task<EndPointsResult> GetHealthyEndpoints(string serviceName, int index)
+        {            
+            var urlCommand = $"/v1/health/service/{serviceName}/?dc={DataCenter}&index={index}&passing";
+            return GetConsulResult<ServiceEntry[]>(urlCommand, serviceName, SetResultEndpoints);
+        }
+
+        public Task<EndPointsResult> GetServiceVersion(string serviceName, int index)
         {
+            var urlCommand = $"/v1/kv/service/{serviceName}/?dc={DataCenter}&index={index}";
+            return GetConsulResult<KeyValueResponse[]>(urlCommand, serviceName, (v,r) => r.Version = v.FirstOrDefault()?.DecodeValue().Version);
+        }
+
+        public async Task<EndPointsResult> GetQueryEndpoints(string serviceName)
+        {            
             var consulQuery = $"/v1/query/{serviceName}/execute?dc={DataCenter}";
-            var requestLog = _httpClient.BaseAddress + consulQuery;
+            var result = await GetConsulResult<ConsulQueryExecuteResponse>(consulQuery, serviceName, (n,r) => SetResultEndpoints(n.Nodes, r));
+
+            if (result.Error != null)
+                _failedQueries.TryAdd(consulQuery, result.Error);
+            else
+            {
+                _failedQueries.TryRemove(consulQuery, out Exception _);
+                _existingServices.AddOrUpdate(serviceName, result.IsQueryDefined, (_, __) => result.IsQueryDefined);
+            }
+
+            return result;
+        }
+
+        private async Task<EndPointsResult> GetConsulResult<TResponse>(string urlCommand, string serviceName, Action<TResponse, EndPointsResult> setResultByConsulResponse)
+        {
+            var requestLog = _httpClient.BaseAddress + urlCommand;
             string responseContent = null;
             HttpStatusCode? statusCode = null;
+            ulong? modifyIndex = null;
 
             try
             {
-                using (var response = await _httpClient.GetAsync(consulQuery).ConfigureAwait(false))
+                using (var response = await _httpClient.GetAsync(urlCommand).ConfigureAwait(false))
                 {
                     responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     statusCode = response.StatusCode;
 
-                    if (statusCode == HttpStatusCode.OK)
-                    {
-                        QueryIsOk(consulQuery, serviceName, queryExists: true);
-                    }
-                    else
+                    if (statusCode != HttpStatusCode.OK)
                     {
                         var exception = new EnvironmentException("Consul response not OK",
                             unencrypted: new Tags
                             {
                                 { "ConsulAddress", ConsulAddress.ToString() },
-                                    {"ServiceDeployment", serviceName},
-                                    {"ConsulQuery", consulQuery},
+                                {"ServiceDeployment", serviceName},
+                                {"ConsulQuery", urlCommand},
                                 { "ResponseCode", statusCode.ToString() },
                                 { "Content", responseContent }
                             });
-                        
-                        if (responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
+
+                        if (statusCode==HttpStatusCode.NotFound || responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            QueryIsOk(consulQuery, serviceName, queryExists: false);                            
-                            return ErrorResult(requestLog, ex: null , isQueryDefined: false);
+                            return ErrorResult(requestLog, ex: null, isQueryDefined: false);
                         }
 
                         Log.Error(_ => _("Error calling Consul", exception: exception));
-                        _failedQueries.TryAdd(consulQuery, exception);
+                        _failedQueries.TryAdd(urlCommand, exception);
                         return ErrorResult(requestLog, exception, true);
                     }
+
+                    response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
+                    if (ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
+                        modifyIndex = consulIndexValue;
                 }
-                var serializedResponse = (ConsulQueryExecuteResponse)JsonConvert.DeserializeObject(responseContent, typeof(ConsulQueryExecuteResponse), _jsonSettings);
-                var endpoints = serializedResponse.Nodes.Select(_ => new ConsulEndPoint { HostName = _.Node.Name, ModifyIndex = _.Node.ModifyIndex, Port = _.Service.Port }).ToArray();
-                return SuccessResult(endpoints, requestLog, responseContent);
+                var serializedResponse = (TResponse)JsonConvert.DeserializeObject(responseContent, typeof(TResponse), _jsonSettings);                                
+                var result = SuccessResult(modifyIndex, requestLog, responseContent);
+                setResultByConsulResponse(serializedResponse, result);
+                return result;
             }
             catch (Exception ex)
             {
@@ -125,31 +154,26 @@ namespace Gigya.Microdot.ServiceDiscovery
                 {
                     ServiceName = serviceName,
                     ConsulAddress = ConsulAddress.ToString(),
-                    consulQuery,
+                    consulQuery = urlCommand,
                     ResponseCode = statusCode,
                     Content = responseContent
                 });
 
-                _failedQueries.TryAdd(consulQuery, ex);
+                _failedQueries.TryAdd(urlCommand, ex);
                 return ErrorResult(requestLog, ex, true);
             }
         }
 
-        private void QueryIsOk(string consulQuery, string serviceName, bool queryExists)
-        {
-            _failedQueries.TryRemove(consulQuery, out Exception _);
-            _existingServices.AddOrUpdate(serviceName, queryExists, (_,__)=>queryExists);
-        }
-
-        internal static EndPointsResult SuccessResult(ConsulEndPoint[] endpoints, string requestLog, string responseContent)
+        internal static EndPointsResult SuccessResult(ulong? modifyIndex, string requestLog, string responseContent)
         {
             return new EndPointsResult
             {
-                EndPoints = endpoints?? new ConsulEndPoint[0],
+                EndPoints = new ConsulEndPoint[0],
                 RequestDateTime = DateTime.Now,
                 RequestLog = requestLog,
                 ResponseLog = responseContent,
-                IsQueryDefined = true
+                IsQueryDefined = true,
+                ModifyIndex = modifyIndex
             };
         }
 
@@ -164,6 +188,11 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Error = ex,
                 IsQueryDefined = isQueryDefined
             };
+        }
+
+        public static void SetResultEndpoints(ServiceEntry[] nodes, EndPointsResult result)
+        {
+            result.EndPoints = nodes.Select(_ => new ConsulEndPoint { HostName = _.Node.Name, ModifyIndex = _.Node.ModifyIndex, Port = _.Service.Port }).ToArray();
         }
     }
 
@@ -238,5 +267,39 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class QueryDNSOptions
     {
         public string TTL { get; set; }
+    }
+
+    public class KeyValueResponse
+    {
+        public int LockIndex { get; set; }
+        public string Key { get; set; }
+        public int Flags { get; set; }
+        public string Value { get; set; }
+        public ulong CreateIndex { get; set; }
+        public ulong ModifyIndex { get; set; }
+
+        public ServiceKeyValue DecodeValue()
+        {
+            if (Value == null)
+                return null;
+            var serialized = Convert.ToBase64String(Encoding.UTF8.GetBytes(Value));
+            return (ServiceKeyValue)JsonConvert.DeserializeObject(serialized, typeof(ServiceKeyValue));
+
+        }
+    }
+
+    public class ServiceKeyValue
+    {
+        [JsonProperty("basePort")]
+        public int BasePort { get; set; }
+
+        [JsonProperty("dc")]
+        public string DataCenter { get; set; }
+
+        [JsonProperty("env")]
+        public string Environment { get; set; }
+
+        [JsonProperty("version")]
+        public string Version { get; set; }
     }
 }
