@@ -41,7 +41,7 @@ namespace Gigya.Microdot.Ninject.Host
     {
         private bool disposed;
         
-        private readonly object disposeLockHandale = new object();
+        private readonly object disposeLockHandle = new object();
 
         private IKernel Kernel { get; set; }
 
@@ -85,9 +85,9 @@ namespace Gigya.Microdot.Ninject.Host
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
-        /// and should include common behaviour for a family of services. 
-        /// When overriden on the family services base, it is recommended to mark it as sealed, 
-        /// to prevent concrete services from overriding the common behaviour. 
+        /// and should include common behavior for a family of services. 
+        /// When overridden on the family services base, it is recommended to mark it as sealed, 
+        /// to prevent concrete services from overriding the common behavior. 
         /// </summary>
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
@@ -156,7 +156,7 @@ namespace Gigya.Microdot.Ninject.Host
      
         protected override void Dispose(bool disposing)
         {
-            lock (disposeLockHandale)
+            lock (disposeLockHandle)
             {
                 try
                 {
