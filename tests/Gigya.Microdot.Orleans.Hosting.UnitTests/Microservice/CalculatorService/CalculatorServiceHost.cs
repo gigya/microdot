@@ -48,7 +48,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             else
                 logBinding.To<ConsoleLog>();
 
-            eventPublisherBinding.To<NullEventPublisher>();
+            eventPublisherBinding.To<SpyEventPublisher>().InSingletonScope();
         }
     }
 

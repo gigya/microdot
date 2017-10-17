@@ -21,12 +21,19 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Events;
+using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
+using NUnit.Framework;
 using Orleans;
 using Orleans.Concurrency;
+using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
@@ -35,13 +42,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     public class CalculatorServiceGrain : Grain, ICalculatorServiceGrain
     {
         private readonly ILog _log;
+        private readonly IEventPublisher _eventPublisher;
         private ICalculatorWorkerGrain Worker { get; set; }
 
-        public CalculatorServiceGrain(ILog log)
+        public CalculatorServiceGrain(ILog log, IEventPublisher eventPublisher)
         {
             _log = log;
+            _eventPublisher = eventPublisher;
         }
-    
+
 
         public override Task OnActivateAsync()
         {
@@ -60,7 +69,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return Worker.ToUniversalTime(localDateTime, localDateTimeOffset);
         }
 
-        public async Task<Tuple<int,string,JObject>> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "test", JObject optional3 = null)
+        public async Task<Tuple<int, string, JObject>> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "test", JObject optional3 = null)
         {
             return Tuple.Create(optional1, optional2, optional3);
         }
@@ -82,7 +91,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public Task<int> GetNextNum() { return Worker.GetNextNum(); }
 
-        public Task<Revocable<int>> GetVersion(string id){return Worker.GetVersion(id);}
+        public Task<Revocable<int>> GetVersion(string id) { return Worker.GetVersion(id); }
 
 
         public Task LogData(string message)
@@ -90,7 +99,54 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             _log.Warn(x => x(message));
             return TaskDone.Done;
         }
-        
+
+        public Task LogPram(string sensitive, string notSensitive, string notExists, string @default)
+        {
+            return Task.FromResult(1);
+        }
+
+        public Task LogPram2(string sensitive, string notSensitive, string notExists, string @default)
+        {
+            return Task.FromResult(1);
+        }
+
+        public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive, List<string> NotExists)
+        {
+            await Task.Delay(150);
+            try
+            {
+                var eventPublisher = _eventPublisher as SpyEventPublisher;
+
+                var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
+                foreach (var s in sensitive)
+                {
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+
+                }
+
+                foreach (var s in NoneSensitive)
+                {
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+
+                }
+
+                foreach (var n in NotExists)
+                {
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                }
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
+        }
+
+ 
     }
 
 }
