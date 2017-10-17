@@ -31,5 +31,14 @@ namespace Gigya.Microdot.SharedLogic.Events
     {
         public string Name;
         public string Value;
+        public Sensitivity Sensitivity;
+    }
+
+    [Serializable]
+    public enum Sensitivity
+    {
+        Sensitive,
+        NonSensitive,
+        Secretive
     }
 }

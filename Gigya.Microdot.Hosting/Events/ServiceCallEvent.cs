@@ -48,7 +48,7 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.srvService)]
         internal string CalledServiceName { get; set; }
 
-        /// <summary>The name of the calling  system (comments/socialize/hades/mongo etc)</summary>
+        /// <summary>The name of the calling  system (comments/s ocialize/hades/mongo etc)</summary>
         [EventField("cln.system")]
         public string CallerServiceName => ClientMetadata?.ServiceName;
 
@@ -60,23 +60,29 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.targetMethod)]
         public string ServiceMethod { get; set; }
 
-        /// <summary> Service method arguments </summary>
+        /// <summary>  Sensitive Service method arguments </summary>
         [EventField("params", Encrypt = true)]
-        public IEnumerable<KeyValuePair<string, string>> ServiceMethodArguments => LazyRequestParams.GetValue(this);
+        public IEnumerable<KeyValuePair<string, string>> EncryptedServiceMethodArguments => LazyEncryptedRequestParams.GetValue(this);
 
-    
-        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyRequestParams =
-            new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams().ToList());
+        /// <summary> NonSensitive Service method arguments </summary>
+
+        [EventField("params", Encrypt = false)]
+        public IEnumerable<KeyValuePair<string, string>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
+
+
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Sensitive).ToList());
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyUnencryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.NonSensitive).ToList());
+
 
         public IEnumerable<Param> Params { get; set; }
 
 
-        private IEnumerable<KeyValuePair<string, string>> GetRequestParams()
+        private IEnumerable<KeyValuePair<string, string>> GetRequestParams(Sensitivity sensitivity)
         {
             
             if (!Configuration.ExcludeParams && Params != null)
             {
-                foreach (var param in Params.Where(param => param.Value != null))
+                foreach (var param in Params.Where(param => param.Value != null && param.Sensitivity == sensitivity))
                 {
                     var val = param.Value.Substring(0, Math.Min(param.Value.Length, Configuration.ParamTruncateLength));
 

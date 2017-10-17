@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes\CachedAttribute.cs" />
+    <Compile Include="Attributes\EventAttrubute.cs" />
     <Compile Include="Attributes\HttpServiceAttribute.cs" />
     <Compile Include="Attributes\PublicEndpointAttribute.cs" />
     <Compile Include="Exceptions\EnvironmentException.cs" />

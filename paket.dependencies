@@ -7,7 +7,7 @@ copy_content_to_output_dir: always
 
 # Misc
 nuget Metrics.NET ~> 0.0
-nuget Newtonsoft.Json ~> 9.0
+nuget Newtonsoft.Json ~> 10.0 >= 9 lowest_matching: true
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
@@ -38,7 +38,7 @@ nuget Castle.Core ~> 3.3
 #Tests only dependencies
 nuget NUnit ~> 3.0
 nuget RichardSzalay.MockHttp 
-nuget NSubstitute
+nuget NSubstitute  ~> 2.0
 nuget FluentAssertions 
 nuget Nuget.CommandLine 
 nuget Shouldly
