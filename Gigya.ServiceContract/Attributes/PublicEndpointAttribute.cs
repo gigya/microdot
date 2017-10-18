@@ -53,11 +53,20 @@ namespace Gigya.Common.Contracts.HttpService
         public string PropertyNameForResponseBody { get; set; }
 
         /// <summary>
+        /// Specifies the routing regex, only matching url paths(exploding domain and query string) will be forwarded.
+        /// </summary>
+        public string UrlPathRegex { get; set; }
+
+        /// <summary>
+        /// True if calls to this method should bypass authentication checks, otherwise false.
+        /// </summary>
+        public string SkipPermissionChecks { get; set; }
+
+        /// <summary>
         /// Whether method has one single parameter which its fields represent the request parameters
         /// </summary>
         public bool UsingRequestObject { get; set; }
-
-
+        
         ///  <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
         ///  <param name="requireHTTPS">
         ///  Whether Gator should reject requests from the outside world that were passed over http and not https, and
