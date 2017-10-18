@@ -33,13 +33,12 @@ namespace Gigya.Common.Contracts.HttpService
     {
 
         /// <summary>
-        /// Full endpoint name (e.g. "accounts.getPolicies")
+        /// Full endpoint name (e.g. "accounts.getPolicies") If <see cref="UrlPathRegex" /> is specified,<see cref="EndpointName" /> should specify the a logical name for in the same format, which will be used for logging and rate limit.
         /// </summary>
         public string EndpointName { get; set; }
 
         /// <summary>
-        /// Whether Gator should reject requests from the outside world that were passed over http and not https, and
-        /// not forward them to the service.
+        ///True if only HTTPS requests are allowed to call this endpoint, false if both HTTP and HTTPS requests are allowed.
         /// </summary>
         public bool RequireHTTPS { get; set; } = true;
 
@@ -66,11 +65,12 @@ namespace Gigya.Common.Contracts.HttpService
         public string SkipPermissionChecks { get; set; }
 
         /// <summary>
-        /// Whether method has one single parameter which its fields represent the request parameters
+        /// True if this method accepts a single parameter where the request parameters should be mapped to each of its properties,
+        /// false if request parameters should be directly mapped to the method's parameters.
         /// </summary>
         public bool UsingRequestObject { get; set; }
-        
-        ///  <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
+
+        ///  <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies") If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name for in the same format, which will be used for logging and rate limit.</param>
         ///  <param name="requireHTTPS">
         ///  Whether Gator should reject requests from the outside world that were passed over http and not https, and
         ///  not forward them to the service.
@@ -90,7 +90,7 @@ namespace Gigya.Common.Contracts.HttpService
             PropertyNameForResponseBody = propertyNameForResponseBody;
         }
 
-        ///  <param name="endpointName">Full endpoint name (e.g. "accounts.getPolicies")</param>
+        ///  <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies") If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name for in the same format, which will be used for logging and rate limit.</param>
         public PublicEndpointAttribute(string endpointName)
         {
             EndpointName = endpointName;
