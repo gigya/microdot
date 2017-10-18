@@ -53,7 +53,10 @@ namespace Gigya.Common.Contracts.HttpService
         public string PropertyNameForResponseBody { get; set; }
 
         /// <summary>
-        /// Specifies the routing regex, only matching url paths(exploding domain and query string) will be forwarded.
+        /// Specifies the routing regex that determines which matching URLs will be routed to this method.
+        /// Regex is matched against the path only, not the domain or query string.
+        ///  When specifying a value for this property, calls won't be routed to this method according to the command name.
+        ///  In this case, the command name is only used for logging and rate limit.
         /// </summary>
         public string UrlPathRegex { get; set; }
 
