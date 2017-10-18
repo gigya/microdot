@@ -38,6 +38,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
         private TestingHost<IDemoService> _testinghost;
         private Task _stopTask;
+        private JsonExceptionSerializer _exceptionSerializer;
 
 
         [SetUp]
@@ -45,6 +46,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             var kernel = new TestingKernel<ConsoleLog>();
             _insecureClient = kernel.Get<IDemoService>();
+            _exceptionSerializer = kernel.Get<JsonExceptionSerializer>();
 
             Metric.ShutdownContext("Service");
             TracingContext.SetUpStorage();
@@ -84,7 +86,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
-            var responseException = JsonExceptionSerializer.Deserialize(responseJson);
+            var responseException = _exceptionSerializer.Deserialize(responseJson);
             responseException.ShouldBeOfType<UnhandledException>();
         }
 
@@ -98,7 +100,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
-            var responseException = JsonExceptionSerializer.Deserialize(responseJson);
+            var responseException = _exceptionSerializer.Deserialize(responseJson);
             responseException.ShouldBeOfType(exceptionType);
         }
 

@@ -10,7 +10,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
    public static class HttpResponseFactory
     {
-       public static HttpResponseMessage GetResponseWithException(Exception ex, HttpStatusCode? statusCode = null, bool withGigyaHostHeader = true) 
+       public static HttpResponseMessage GetResponseWithException(JsonExceptionSerializer exceptionSerializer, Exception ex, HttpStatusCode? statusCode = null, bool withGigyaHostHeader = true) 
        {
            var resMessage = new HttpResponseMessage { StatusCode = statusCode ?? HttpServiceListener.GetExceptionStatusCode(ex) };
            
@@ -19,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                resMessage.Headers.Add(GigyaHttpHeaders.ServerHostname, "host");
            }
 
-           resMessage.Content = new StringContent(JsonExceptionSerializer.Serialize(ex));
+           resMessage.Content = new StringContent(exceptionSerializer.Serialize(ex));
 
            return resMessage; 
        }

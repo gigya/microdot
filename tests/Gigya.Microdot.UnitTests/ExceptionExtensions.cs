@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests
 {
@@ -14,6 +15,26 @@ namespace Gigya.Microdot.UnitTests
             {
                 return ex;
             }
+        }
+
+        public static T ThrowAndCatchAsync<T>(this T exception) where T : Exception
+        {
+            async Task AsyncThrow()
+            {
+                await Task.FromResult(0);
+                throw exception;
+            }
+
+            try
+            {
+                AsyncThrow().GetAwaiter().GetResult();
+            }
+            catch (T ex)
+            {
+                return ex;
+            }
+
+            return null;
         }
     }
 }
