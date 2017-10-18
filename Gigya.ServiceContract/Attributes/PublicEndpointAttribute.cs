@@ -31,14 +31,13 @@ namespace Gigya.Common.Contracts.HttpService
     [AttributeUsage(AttributeTargets.Method)]
     public class PublicEndpointAttribute : Attribute
     {
-
         /// <summary>
-        /// Full endpoint name (e.g. "accounts.getPolicies") If <see cref="UrlPathRegex" /> is specified,<see cref="EndpointName" /> should specify the a logical name for in the same format, which will be used for logging and rate limit.
+        /// Full endpoint name (e.g. "accounts.getPolicies"). If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name in the same format, which will be used for logging and rate limit.
         /// </summary>
         public string EndpointName { get; set; }
 
         /// <summary>
-        ///True if only HTTPS requests are allowed to call this endpoint, false if both HTTP and HTTPS requests are allowed.
+        /// True if only HTTPS requests are allowed to call this endpoint, false if both HTTP and HTTPS requests are allowed.
         /// </summary>
         public bool RequireHTTPS { get; set; } = true;
 
@@ -54,8 +53,8 @@ namespace Gigya.Common.Contracts.HttpService
         /// <summary>
         /// Specifies the routing regex that determines which matching URLs will be routed to this method.
         /// Regex is matched against the path only, not the domain or query string.
-        ///  When specifying a value for this property, calls won't be routed to this method according to the command name.
-        ///  In this case, the command name is only used for logging and rate limit.
+        /// When specifying a value for this property, calls won't be routed to this method according to the command name.
+        /// In this case, the command name is only used for logging and rate limit.
         /// </summary>
         public string UrlPathRegex { get; set; }
 
@@ -70,18 +69,18 @@ namespace Gigya.Common.Contracts.HttpService
         /// </summary>
         public bool UsingRequestObject { get; set; }
 
-        ///  <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies") If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name for in the same format, which will be used for logging and rate limit.</param>
-        ///  <param name="requireHTTPS">
-        ///  Whether Gator should reject requests from the outside world that were passed over http and not https, and
-        ///  not forward them to the service.
+        /// <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies"). If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name in the same format, which will be used for logging and rate limit.</param>
+        /// <param name="requireHTTPS">
+        /// Whether Gator should reject requests from the outside world that were passed over http and not https, and
+        /// not forward them to the service.
         /// </param>
-        ///  <param name="propertyNameForResponseBody">
-        ///  Defines how to map the response from this method to the response returned by Gator. If not specified, this
-        ///  method's response will be returned as-is to the outside world, along with Gigya's standard response fields
-        ///  (statusCode, errorCode, statusReason, callId, etc.), unless your response already includes them, or some of
-        ///  them. If you do specify a name, all of your response will be put under that json property name, and the
-        ///  standard response fields will be next to it.
-        ///  </param>
+        /// <param name="propertyNameForResponseBody">
+        /// Defines how to map the response from this method to the response returned by Gator. If not specified, this
+        /// method's response will be returned as-is to the outside world, along with Gigya's standard response fields
+        /// (statusCode, errorCode, statusReason, callId, etc.), unless your response already includes them, or some of
+        /// them. If you do specify a name, all of your response will be put under that json property name, and the
+        /// standard response fields will be next to it.
+        /// </param>
         [Obsolete("Please use the other constructor overload that accepts only an 'endpoint' parameter, and specify all other paramters with the attributes optional named parameter syntax (MyProp = 5)")]
         public PublicEndpointAttribute(string endpointName, bool requireHTTPS = true, string propertyNameForResponseBody = null)
         {
@@ -90,7 +89,7 @@ namespace Gigya.Common.Contracts.HttpService
             PropertyNameForResponseBody = propertyNameForResponseBody;
         }
 
-        ///  <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies") If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name for in the same format, which will be used for logging and rate limit.</param>
+        /// <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies"). If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name in the same format, which will be used for logging and rate limit.</param>
         public PublicEndpointAttribute(string endpointName)
         {
             EndpointName = endpointName;
