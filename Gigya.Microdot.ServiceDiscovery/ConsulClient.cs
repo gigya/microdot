@@ -207,7 +207,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private static string GetEndpointVersion(ServiceEntry node)
         {
             const string versionPrefix = "version:";
-            var versionTag = node.Service.Tags.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            var versionTag = node.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
             return versionTag?.Substring(versionPrefix.Length);
         }
     }
