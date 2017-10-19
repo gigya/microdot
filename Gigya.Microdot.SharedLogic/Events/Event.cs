@@ -27,6 +27,7 @@ using System.Text;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Logging;
 using Gigya.Microdot.SharedLogic.Utils;
 
@@ -46,6 +47,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     public class Event : IEvent
     {
         public IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
+        public IStackTraceEnhancer StackTraceEnhancer { get; set; }
 
         public IEventConfiguration Configuration { get; set; }
 
@@ -159,21 +161,35 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.exInnerType)]
         public string InnerExceptionType => Exception?.InnerException?.GetType().FullName;
 
+        private string _cleanStackTrace;
+
         /// <summary>If an exception occured, the exception stack trace.</summary>
         [EventField(EventConsts.exStackTrace)]
         public string ExceptionStackTrace
         {
             get
             {
+                if (_cleanStackTrace != null)
+                    return _cleanStackTrace;
+
                 if (ShouldExcludeStackTrace || Exception == null)
                     return null;
 
                 var ex = Exception;
                 while (ex.StackTrace == null && ex.InnerException != null)
                     ex = ex.InnerException;
-                return ex.StackTrace;                
+
+                _cleanStackTrace = StackTraceEnhancer.Clean(ex.StackTrace);
+
+                if (_cleanStackTrace?.Contains("__") == true)
+                    ExceptionStackTraceIsUnclean = true;
+
+                return _cleanStackTrace ?? ex.StackTrace;                
             }
         }
+
+        [EventField(EventConsts.exStackTraceUnclean)]
+        public bool? ExceptionStackTraceIsUnclean { get; private set; }
 
         /// <summary>The .Net type (full class name) of the exception.</summary>
         [EventField(EventConsts.exType)]

@@ -151,7 +151,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task NullExceptionReceivedTest()
         {
-            var resMessage = HttpResponseFactory.GetResponseWithException(new NullReferenceException());
+            var resMessage = HttpResponseFactory.GetResponseWithException(ExceptionSerializer, new NullReferenceException());
             
             var messageHandler = new MockHttpMessageHandler();
             messageHandler.When("*").Respond(resMessage);
@@ -174,7 +174,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task RequestExceptionReceivedTest()
         {
-            var resMessage = HttpResponseFactory.GetResponseWithException(new RequestException("Post not allowed"), HttpStatusCode.MethodNotAllowed);
+            var resMessage = HttpResponseFactory.GetResponseWithException(ExceptionSerializer, new RequestException("Post not allowed"), HttpStatusCode.MethodNotAllowed);
             
             var messageHandler = new MockHttpMessageHandler();
             messageHandler.When("*").Respond(resMessage);

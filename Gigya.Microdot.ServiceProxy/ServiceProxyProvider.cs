@@ -128,6 +128,7 @@ namespace Gigya.Microdot.ServiceProxy
         private ILog Log { get; }
         private ServiceDiscoveryConfig GetConfig() => GetDiscoveryConfig().Services[ServiceName];
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
+        private JsonExceptionSerializer ExceptionSerializer { get; }
 
         private IEventPublisher<ClientCallEvent> EventPublisher { get; }
 
@@ -141,7 +142,8 @@ namespace Gigya.Microdot.ServiceProxy
             ICertificateLocator certificateLocator,
             ILog log,
             Func<string, ReachabilityChecker, IServiceDiscovery> serviceDiscoveryFactory,
-            Func<DiscoveryConfig> getConfig)
+            Func<DiscoveryConfig> getConfig,
+            JsonExceptionSerializer exceptionSerializer)
         {
             EventPublisher = eventPublisher;
             CertificateLocator = certificateLocator;
@@ -150,6 +152,7 @@ namespace Gigya.Microdot.ServiceProxy
 
             ServiceName = serviceName;
             GetDiscoveryConfig = getConfig;
+            ExceptionSerializer = exceptionSerializer;
 
             var metricsContext = Metric.Context(METRICS_CONTEXT_NAME).Context(ServiceName);
             _serializationTime = metricsContext.Timer("Serialization", Unit.Calls);
@@ -439,7 +442,7 @@ namespace Gigya.Microdot.ServiceProxy
 
                             try
                             {
-                                remoteException = _deserializationTime.Time(() => JsonExceptionSerializer.Deserialize(responseContent));
+                                remoteException = _deserializationTime.Time(() => ExceptionSerializer.Deserialize(responseContent));
                             }
                             catch(Exception ex)
                             {

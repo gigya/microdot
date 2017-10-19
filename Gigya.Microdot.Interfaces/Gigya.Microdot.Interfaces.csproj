@@ -60,6 +60,7 @@
     <Compile Include="IMetricsInitializer.cs" />
     <Compile Include="IMetricsSettings.cs" />
     <Compile Include="Logging\ILog.cs" />
+    <Compile Include="Logging\IStackTraceEnhancer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SystemWrappers\IDateTime.cs" />
     <Compile Include="SystemWrappers\IDirectories.cs" />
@@ -70,6 +71,12 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="paket.template" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
+      <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
+      <Name>Gigya.ServiceContract</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
