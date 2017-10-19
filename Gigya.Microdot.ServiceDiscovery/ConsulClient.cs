@@ -77,13 +77,13 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public Task<EndPointsResult> GetHealthyEndpoints(string serviceName, ulong index, TimeSpan timeout)
         {            
-            var urlCommand = $"/v1/health/service/{serviceName}/?dc={DataCenter}&passing&index={index}&wait={timeout.Seconds}s";
+            var urlCommand = $"/v1/health/service/{serviceName}?dc={DataCenter}&passing&index={index}&wait={timeout.Seconds}s";
             return GetConsulResult<ServiceEntry[]>(urlCommand, serviceName, SetResultEndpoints, timeout);
         }
 
         public Task<EndPointsResult> GetServiceVersion(string serviceName, ulong index, TimeSpan timeout)
         {
-            var urlCommand = $"/v1/kv/service/{serviceName}/?dc={DataCenter}&index={index}&wait={timeout.Seconds}s";
+            var urlCommand = $"/v1/kv/service/{serviceName}?dc={DataCenter}&index={index}&wait={timeout.Seconds}s";
             return GetConsulResult<KeyValueResponse[]>(urlCommand, serviceName, (v,r) => r.ActiveVersion = v.FirstOrDefault()?.DecodeValue().Version, timeout);
         }
 
@@ -143,7 +143,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     }
 
                     response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
-                    if (ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
+                    if (consulIndexHeaders!=null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
                         modifyIndex = consulIndexValue;
                 }
                 var serializedResponse = (TResponse)JsonConvert.DeserializeObject(responseContent, typeof(TResponse), _jsonSettings);                                
@@ -195,7 +195,20 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public static void SetResultEndpoints(ServiceEntry[] nodes, EndPointsResult result)
         {
-            result.EndPoints = nodes.Select(_ => new ConsulEndPoint { HostName = _.Node.Name, ModifyIndex = _.Node.ModifyIndex, Port = _.Service.Port }).ToArray();
+            result.EndPoints = nodes.Select(_ => new ConsulEndPoint
+            {
+                HostName = _.Node.Name,
+                ModifyIndex = _.Node.ModifyIndex,
+                Port = _.Service.Port,
+                Version = GetEndpointVersion(_)
+            }).ToArray();
+        }
+
+        private static string GetEndpointVersion(ServiceEntry node)
+        {
+            const string versionPrefix = "version:";
+            var versionTag = node.Service.Tags.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            return versionTag?.Substring(versionPrefix.Length);
         }
     }
 
@@ -285,7 +298,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             if (Value == null)
                 return null;
-            var serialized = Convert.ToBase64String(Encoding.UTF8.GetBytes(Value));
+            var serialized = Encoding.UTF8.GetString(Convert.FromBase64String(Value));
             return (ServiceKeyValue)JsonConvert.DeserializeObject(serialized, typeof(ServiceKeyValue));
 
         }

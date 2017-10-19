@@ -173,7 +173,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 else if (endPointsResult.Error != null)
                     return new EnvironmentException("Error calling Consul. See tags for details.", unencrypted: tags);
                 else if (endPointsResult.IsQueryDefined == false)
-                    return new EnvironmentException("Query doesn't exists on Consul. See tags for details.", unencrypted: tags);
+                    return new EnvironmentException("Query doesn't exist on Consul. See tags for details.", unencrypted: tags);
                 else
                     return new EnvironmentException("No endpoint were specified in Consul for the requested service.", unencrypted: tags);
             }

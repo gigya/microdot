@@ -196,7 +196,14 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (_isDeploymentDefined == false || _activeVersion == null)
             {
                 if (_lastEndpointsResult == null)
-                    _lastEndpointsResult = new EndPointsResult {IsQueryDefined = _isDeploymentDefined};
+                    _lastEndpointsResult = new EndPointsResult
+                    {
+                        IsQueryDefined = _isDeploymentDefined,
+                        ActiveVersion = _activeVersion,
+                        Error = _lastVersionResult?.Error,
+                        RequestLog = _lastVersionResult?.RequestLog,
+                        ResponseLog = _lastVersionResult?.ResponseLog                        
+                    };
 
                 _initialized = Task.FromResult(1);                
                 return;
@@ -293,7 +300,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 else if (endPointsResult.Error != null)
                     return new EnvironmentException("Error calling Consul. See tags for details.", unencrypted: tags);
                 else if (endPointsResult.IsQueryDefined == false)
-                    return new EnvironmentException("Service doesn't exists on Consul. See tags for details.", unencrypted: tags);
+                    return new EnvironmentException("Service doesn't exist on Consul. See tags for details.", unencrypted: tags);
                 else
                     return new EnvironmentException("No endpoint were specified in Consul for the requested service.", unencrypted: tags);
             }
