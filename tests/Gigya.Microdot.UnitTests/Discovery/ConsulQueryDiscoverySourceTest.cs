@@ -21,7 +21,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery
 {
     [TestFixture]
-    public class ConsulDiscoverySourceTest
+    public class ConsulQueryDiscoverySourceTest
     {
         private const string SERVICE_NAME = "ServiceName";
         private const string ENV = "DeploymentEnvironment";
@@ -135,7 +135,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 Scope = _serviceScope,
                 ReloadInterval = _reloadInterval
             };
-            var sourceFactory = Kernel.Get<Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
+            var sourceFactory = Kernel.Get<Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulQueryDiscoverySource>>();
             var serviceContext = new ServiceDeployment(SERVICE_NAME, ENV);
             _consulDiscoverySource = sourceFactory(serviceContext, config);
             await WaitUntilConsulRespondsOrTimeout().ConfigureAwait(false);

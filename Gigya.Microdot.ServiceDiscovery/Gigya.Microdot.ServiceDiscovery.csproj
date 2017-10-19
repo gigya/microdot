@@ -56,6 +56,7 @@
     <Compile Include="Config\ServiceScope.cs" />
     <Compile Include="ConsulClient.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
+    <Compile Include="ConsulQueryDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
     <Compile Include="EndPoint.cs" />
     <Compile Include="HostManagement\MissingHostException.cs" />

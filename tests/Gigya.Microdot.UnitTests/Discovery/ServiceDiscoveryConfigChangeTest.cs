@@ -29,6 +29,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private IConsulClient _consulAdapterMock;
         public const int Repeat = 1;
+        private const string ServiceVersion = "1.0.0.0";
 
         [SetUp]
         public async Task Setup()
@@ -39,7 +40,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                 k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
                 _consulAdapterMock = Substitute.For<IConsulClient>();
-                _consulAdapterMock.GetQueryEndpoints(Arg.Any<string>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" } } }));
+                _consulAdapterMock.GetServiceVersion(Arg.Any<string>(), Arg.Any<ulong>(), Arg.Any<TimeSpan>()).Returns(Task.FromResult(new EndPointsResult {ActiveVersion = ServiceVersion, IsQueryDefined = true }));
+                _consulAdapterMock.GetHealthyEndpoints(Arg.Any<string>(), Arg.Any<ulong>(), Arg.Any<TimeSpan>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" , Version = ServiceVersion}}}));
                 k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
             }, _configDic);
 

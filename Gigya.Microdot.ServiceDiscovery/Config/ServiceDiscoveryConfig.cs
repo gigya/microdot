@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     {
 
 
-        public bool SupportsFallback => Source == DiscoverySource.Consul && Scope == ServiceScope.Environment;
+        public bool SupportsFallback => Scope == ServiceScope.Environment && (Source == DiscoverySource.Consul || Source==DiscoverySource.ConsulQuery);
 
         /// <summary>
         /// Scope where this service is installed.
@@ -71,6 +71,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// Interval for reloading endpoints from source (e.g. Consul), in Milliseconds
         /// </summary>
         public TimeSpan? ReloadInterval { get; set; }
+
+        /// <summary>
+        /// Time to wait for response from source (e.g. Consul).
+        /// </summary>
+        public TimeSpan ReloadTimeout { get; set; } = TimeSpan.FromMinutes(2);
+
+        /// <summary>
+        /// Interval for retrying acces to source (e.g. Consul) in case source is undefined (e.g. Service is not deployed)
+        /// </summary>
+        public TimeSpan UndefinedRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Interval for retrying access to Consul after an error has occured
+        /// </summary>
+        public TimeSpan? ErrorRetryInterval { get; set; }
 
         public string Hosts { get; set; }
 

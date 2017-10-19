@@ -28,6 +28,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     {
         Config,
         Consul,
+        ConsulQuery,
         Local
     }
 }

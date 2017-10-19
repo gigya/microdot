@@ -43,6 +43,7 @@ namespace Gigya.Microdot.Ninject
     {
         private readonly Type[] NonSingletonBaseTypes =
         {
+            typeof(ConsulQueryDiscoverySource),
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
             typeof(ConfigDiscoverySource)

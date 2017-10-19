@@ -29,14 +29,17 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class DiscoverySourceLoader : IDiscoverySourceLoader
     {
         public DiscoverySourceLoader(Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource>  getConfigDiscoverySource,
-                                     Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> getConsulDiscoverySourc)
+                                     Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> getConsulDiscoverySource,
+                                     Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulQueryDiscoverySource> getConsulQueryDiscoverySourc)
         {
             _getConfigDiscoverySource = getConfigDiscoverySource;
-            _getConsulDiscoverySource = getConsulDiscoverySourc;
+            _getConsulDiscoverySource = getConsulDiscoverySource;
+            _getConsulQueryDiscoverySource = getConsulQueryDiscoverySourc;
         }
 
         private readonly Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> _getConfigDiscoverySource;
         private readonly Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> _getConsulDiscoverySource;
+        private readonly Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulQueryDiscoverySource> _getConsulQueryDiscoverySource;
 
         public ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
         {
@@ -46,6 +49,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                     return _getConfigDiscoverySource(serviceDeployment.ServiceName, serviceDiscoverySettings);
                 case DiscoverySource.Consul:
                     return _getConsulDiscoverySource(serviceDeployment, serviceDiscoverySettings);
+                case DiscoverySource.ConsulQuery:
+                    return _getConsulQueryDiscoverySource(serviceDeployment, serviceDiscoverySettings);
                 case DiscoverySource.Local:
                     return new LocalDiscoverySource(serviceDeployment.ServiceName);
             }

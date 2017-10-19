@@ -58,13 +58,13 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// A service may be deployed on some different endpoints, each one with different version.
         /// This property contains the active version of the service
         /// </summary>
-        public string Version { get; set; }
+        public string ActiveVersion { get; set; }
     }
 
     public interface IConsulClient
     {
-        Task<EndPointsResult> GetHealthyEndpoints(string serviceName, int index);
-        Task<EndPointsResult> GetServiceVersion(string serviceName, int index);
+        Task<EndPointsResult> GetHealthyEndpoints(string serviceName, ulong index, TimeSpan timeout);
+        Task<EndPointsResult> GetServiceVersion(string serviceName, ulong index, TimeSpan timeout);
         Task<EndPointsResult> GetQueryEndpoints(string serviceName);
         Uri ConsulAddress { get; }
     }

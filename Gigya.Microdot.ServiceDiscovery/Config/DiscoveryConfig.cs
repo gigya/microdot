@@ -51,9 +51,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public TimeSpan? RequestTimeout { get; set; }
 
         /// <summary>
-        /// Interval for reloading endpoints from source (e.g. Consul), in Milliseconds
+        /// Interval for reloading endpoints from source (e.g. Consul), 
+        /// Used for a source that is reloading endpoints over and over all time (e.g. ConsulQuery source)
         /// </summary>
         public TimeSpan ReloadInterval { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Time to wait for response from source (e.g. Consul).
+        /// </summary>
+        public TimeSpan ReloadTimeout { get; set; } = TimeSpan.FromMinutes(2);
+
+        /// <summary>
+        /// Interval for retrying acces to source (e.g. Consul) in case source is undefined (e.g. Service is not deployed)
+        /// </summary>
+        public TimeSpan UndefinedRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
+
+            /// <summary>
+        /// Interval for retrying access to surce (e.g. Consul) after an error has occured
+        /// </summary>
+        public TimeSpan ErrorRetryInterval { get; set; } = TimeSpan.FromSeconds(1);
 
         /// <summary>
         /// When we lose connection to some endpoint, we wait this delay till we start trying to reconnect.
@@ -93,6 +109,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             DefaultItem = new ServiceDiscoveryConfig
             {
                 ReloadInterval = ReloadInterval,
+                ReloadTimeout = ReloadTimeout,
+                UndefinedRetryInterval = UndefinedRetryInterval,
+                ErrorRetryInterval = ErrorRetryInterval,
                 DelayMultiplier = DelayMultiplier,
                 FirstAttemptDelaySeconds = FirstAttemptDelaySeconds,
                 MaxAttemptDelaySeconds = MaxAttemptDelaySeconds,

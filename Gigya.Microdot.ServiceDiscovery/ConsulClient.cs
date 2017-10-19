@@ -75,16 +75,16 @@ namespace Gigya.Microdot.ServiceDiscovery
             }
         }
 
-        public Task<EndPointsResult> GetHealthyEndpoints(string serviceName, int index)
+        public Task<EndPointsResult> GetHealthyEndpoints(string serviceName, ulong index, TimeSpan timeout)
         {            
-            var urlCommand = $"/v1/health/service/{serviceName}/?dc={DataCenter}&index={index}&passing";
-            return GetConsulResult<ServiceEntry[]>(urlCommand, serviceName, SetResultEndpoints);
+            var urlCommand = $"/v1/health/service/{serviceName}/?dc={DataCenter}&passing&index={index}&wait={timeout.Seconds}s";
+            return GetConsulResult<ServiceEntry[]>(urlCommand, serviceName, SetResultEndpoints, timeout);
         }
 
-        public Task<EndPointsResult> GetServiceVersion(string serviceName, int index)
+        public Task<EndPointsResult> GetServiceVersion(string serviceName, ulong index, TimeSpan timeout)
         {
-            var urlCommand = $"/v1/kv/service/{serviceName}/?dc={DataCenter}&index={index}";
-            return GetConsulResult<KeyValueResponse[]>(urlCommand, serviceName, (v,r) => r.Version = v.FirstOrDefault()?.DecodeValue().Version);
+            var urlCommand = $"/v1/kv/service/{serviceName}/?dc={DataCenter}&index={index}&wait={timeout.Seconds}s";
+            return GetConsulResult<KeyValueResponse[]>(urlCommand, serviceName, (v,r) => r.ActiveVersion = v.FirstOrDefault()?.DecodeValue().Version, timeout);
         }
 
         public async Task<EndPointsResult> GetQueryEndpoints(string serviceName)
@@ -103,7 +103,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             return result;
         }
 
-        private async Task<EndPointsResult> GetConsulResult<TResponse>(string urlCommand, string serviceName, Action<TResponse, EndPointsResult> setResultByConsulResponse)
+        private async Task<EndPointsResult> GetConsulResult<TResponse>(string urlCommand, string serviceName, Action<TResponse, EndPointsResult> setResultByConsulResponse, TimeSpan? minTimeout=null)
         {
             var requestLog = _httpClient.BaseAddress + urlCommand;
             string responseContent = null;
@@ -112,6 +112,9 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             try
             {
+                if (minTimeout.HasValue && minTimeout.Value>_httpClient.Timeout)
+                    _httpClient.Timeout = minTimeout.Value + TimeSpan.FromSeconds(1);
+
                 using (var response = await _httpClient.GetAsync(urlCommand).ConfigureAwait(false))
                 {
                     responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
