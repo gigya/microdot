@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public class ConsulDiscoverySource : ServiceDiscoverySourceBase
     {
-        public override Task InitCompleted => _initialized;
+        public override Task InitCompleted => _initialized.Task;
         public override bool IsServiceDeploymentDefined => _isDeploymentDefined;
 
         private IConsulClient ConsulClient { get; }
@@ -51,8 +51,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private EndPointsResult _lastVersionResult;
 
-        private Task _initialized;
-        private Task _initializeVersion;
+        private readonly TaskCompletionSource<bool> _initialized;
+        private readonly TaskCompletionSource<bool> _initializedVersion;
 
         private Task _loadVersionTask;
         private Task _loadEndpointsTask;
@@ -79,10 +79,10 @@ namespace Gigya.Microdot.ServiceDiscovery
             ShutdownToken = new CancellationTokenSource();
             Task.Run(() => RefreshVersionForever(ShutdownToken.Token));
             Task.Run(() => RefreshEndpointsForever(ShutdownToken.Token));
-            
-            
-            _initializeVersion = Task.Run(LoadVersion); // Must be run in Task.Run() because of incorrect Orleans scheduling
-            _initialized = Task.Run(LoadEndpoints);  // Must be run in Task.Run() because of incorrect Orleans scheduling
+
+
+            _initializedVersion = new TaskCompletionSource<bool>();
+            _initialized = new TaskCompletionSource<bool>();
         }
 
         private async Task RefreshVersionForever(CancellationToken shutdownToken)
@@ -150,7 +150,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                         _firstTime = false;
                     }
 
-                    _initializeVersion = Task.FromResult(1);
+                    _initializedVersion.SetResult(true);
                     return;
                 }
 
@@ -174,13 +174,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                     _isDeploymentDefined = true;
                 }
 
-                _initializeVersion = Task.FromResult(1);
-
                 if (_lastVersionResult.ActiveVersion != null && _activeVersion != _lastVersionResult.ActiveVersion)
                 {
                     _activeVersion = _lastVersionResult.ActiveVersion;
                     _shouldReportChanges = true;
                 }
+
+                _initializedVersion.SetResult(true);
 
                 LoadEndpointsAsync();
             }
@@ -194,7 +194,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task LoadEndpointsAsync()
         {
-            await _initializeVersion.ConfigureAwait(false);
+            await _initializedVersion.Task;
             if (_isDeploymentDefined == false || _activeVersion == null)
             {
                 if (_lastEndpointsResult == null)
@@ -207,7 +207,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                         ResponseLog = _lastVersionResult?.ResponseLog                        
                     };
 
-                _initialized = Task.FromResult(1);                
+                _initialized.SetResult(true);
                 return;
             }
 
@@ -232,7 +232,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                         _firstTime = false;
                     }
 
-                    _initialized = Task.FromResult(1);                    
+                    _initialized.SetResult(true);
                     return;
                 }
                 
@@ -253,7 +253,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 _firstTime = false;
 
-                _initialized = Task.FromResult(1);
+                _initialized.SetResult(true);
             }
         }
 
