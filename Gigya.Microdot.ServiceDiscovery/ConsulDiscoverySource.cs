@@ -102,7 +102,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 if (_lastVersionResult.Error != null)
                     delay = _config.ErrorRetryInterval.Value;
                 else if (!_lastVersionResult.IsQueryDefined)
-                    delay = _config.UndefinedRetryInterval;
+                    delay = _config.UndefinedRetryInterval.Value;
 
                 await _dateTime.Delay(delay).ConfigureAwait(false);
             }
@@ -134,7 +134,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task LoadVersionAsync()
         {
-            var newVersionResult = await ConsulClient.GetServiceVersion(DeploymentName, _versionModifyIndex, _config.ReloadTimeout).ConfigureAwait(false);
+            var newVersionResult = await ConsulClient.GetServiceVersion(DeploymentName, _versionModifyIndex, _config.ReloadTimeout.Value).ConfigureAwait(false);
             lock (_lastResultLocker)
             {
                 _lastVersionResult = newVersionResult;
@@ -211,7 +211,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return;
             }
 
-            var newConsulResult = await ConsulClient.GetHealthyEndpoints(DeploymentName, _endpointsModifyIndex, _config.ReloadTimeout).ConfigureAwait(false);
+            var newConsulResult = await ConsulClient.GetHealthyEndpoints(DeploymentName, _endpointsModifyIndex, _config.ReloadTimeout.Value).ConfigureAwait(false);
             _endpointsModifyIndex = newConsulResult.ModifyIndex ?? 0;
 
             newConsulResult.EndPoints = newConsulResult.EndPoints

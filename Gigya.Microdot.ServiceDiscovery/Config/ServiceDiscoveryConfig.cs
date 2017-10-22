@@ -75,12 +75,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// Time to wait for response from source (e.g. Consul).
         /// </summary>
-        public TimeSpan ReloadTimeout { get; set; } = TimeSpan.FromMinutes(2);
+        public TimeSpan? ReloadTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
         /// <summary>
         /// Interval for retrying acces to source (e.g. Consul) in case source is undefined (e.g. Service is not deployed)
         /// </summary>
-        public TimeSpan UndefinedRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
+        public TimeSpan? UndefinedRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Interval for retrying access to Consul after an error has occured

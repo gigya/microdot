@@ -41,6 +41,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             item.FirstAttemptDelaySeconds = item.FirstAttemptDelaySeconds ?? DefaultItem.FirstAttemptDelaySeconds;
             item.MaxAttemptDelaySeconds = item.MaxAttemptDelaySeconds ?? DefaultItem.MaxAttemptDelaySeconds;
             item.RequestTimeout = item.RequestTimeout ?? DefaultItem.RequestTimeout;
+            item.ReloadTimeout = item.ReloadTimeout ?? DefaultItem.ReloadTimeout;
+            item.UndefinedRetryInterval = item.UndefinedRetryInterval ?? DefaultItem.UndefinedRetryInterval;
+            item.ErrorRetryInterval = item.ErrorRetryInterval ?? DefaultItem.ErrorRetryInterval;
             item.Scope = item.Scope ?? DefaultItem.Scope;
             item.Source = item.Source ?? DefaultItem.Source;
 
