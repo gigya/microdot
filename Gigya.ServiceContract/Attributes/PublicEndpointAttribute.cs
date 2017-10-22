@@ -61,7 +61,7 @@ namespace Gigya.Common.Contracts.HttpService
         /// <summary>
         /// True if calls to this method should bypass authentication checks, otherwise false.
         /// </summary>
-        public string SkipPermissionChecks { get; set; }
+        public bool SkipPermissionChecks { get; set; }
 
         /// <summary>
         /// True if this method accepts a single parameter where the request parameters should be mapped to each of its properties,
