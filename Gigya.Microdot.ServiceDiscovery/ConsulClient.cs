@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class ConsulClient : IConsulClient
     {
         private ILog Log { get; }
-        private readonly HttpClient _httpClient;
+        private HttpClient _httpClient;
         private readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto, NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented };
         private readonly ConcurrentDictionary<string, Exception> _failedQueries = new ConcurrentDictionary<string, Exception>();
         private readonly ConcurrentDictionary<string, bool> _existingServices = new ConcurrentDictionary<string, bool>();
@@ -113,7 +113,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             try
             {
                 if (minTimeout.HasValue && minTimeout.Value>_httpClient.Timeout)
-                    _httpClient.Timeout = minTimeout.Value + TimeSpan.FromSeconds(1);
+                    _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = minTimeout.Value };                
 
                 using (var response = await _httpClient.GetAsync(urlCommand).ConfigureAwait(false))
                 {
