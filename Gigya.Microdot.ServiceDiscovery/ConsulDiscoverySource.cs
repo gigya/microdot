@@ -128,7 +128,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private Task LoadVersion()
         {
-            return _loadVersionTask ?? (_loadVersionTask = Task.Run(LoadVersionAsync).ContinueWith(t => _loadVersionTask = null));
+            lock (_lastResultLocker)
+                return _loadVersionTask ?? (_loadVersionTask = Task.Run(LoadVersionAsync).ContinueWith(t => _loadVersionTask = null));
         }
 
         private async Task LoadVersionAsync()
@@ -187,7 +188,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private Task LoadEndpoints()
         {
-            return _loadEndpointsTask ?? (_loadEndpointsTask = Task.Run(LoadEndpointsAsync).ContinueWith(t=>_loadEndpointsTask=null));
+            lock (_lastResultLocker)
+                return _loadEndpointsTask ?? (_loadEndpointsTask = Task.Run(LoadEndpointsAsync).ContinueWith(t=>_loadEndpointsTask=null));
         }
 
         private async Task LoadEndpointsAsync()
