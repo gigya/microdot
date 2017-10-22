@@ -150,7 +150,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                         _firstTime = false;
                     }
 
-                    _initializedVersion.SetResult(true);
+                    _initializedVersion.TrySetResult(true);
                     return;
                 }
 
@@ -180,7 +180,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     _shouldReportChanges = true;
                 }
 
-                _initializedVersion.SetResult(true);
+                _initializedVersion.TrySetResult(true);
 
                 LoadEndpointsAsync();
             }
@@ -207,7 +207,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                         ResponseLog = _lastVersionResult?.ResponseLog                        
                     };
 
-                _initialized.SetResult(true);
+                _initialized.TrySetResult(true);
                 return;
             }
 
@@ -232,7 +232,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                         _firstTime = false;
                     }
 
-                    _initialized.SetResult(true);
+                    _initialized.TrySetResult(true);
                     return;
                 }
                 
@@ -253,7 +253,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 _firstTime = false;
 
-                _initialized.SetResult(true);
+                _initialized.TrySetResult(true);
             }
         }
 
