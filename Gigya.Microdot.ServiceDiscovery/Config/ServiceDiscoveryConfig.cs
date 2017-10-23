@@ -65,7 +65,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.
         /// </summary>
-        public DiscoverySource? Source { get; set; }
+        public DiscoverySource? Source
+        {
+            get { return Source_V1_7 ?? _source; }
+            set { _source = value; }
+        }
+        private DiscoverySource? _source;
+
+        /// <summary>
+        /// This key is for backwards-compatibility of old versions with new configuration. 
+        /// Should be removed when all services are deployed with version 1.7 or up.
+        /// </summary>
+        [Obsolete]
+        public DiscoverySource? Source_V1_7 { get; set; }
 
         /// <summary>
         /// Interval for reloading endpoints from source (e.g. Consul), in Milliseconds
