@@ -179,7 +179,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 while (ex.StackTrace == null && ex.InnerException != null)
                     ex = ex.InnerException;
 
-                _cleanStackTrace = StackTraceEnhancer.Clean(ex.StackTrace);
+                _cleanStackTrace = StackTraceEnhancer?.Clean(ex.StackTrace);
 
                 if (_cleanStackTrace?.Contains("__") == true)
                     ExceptionStackTraceIsUnclean = true;
