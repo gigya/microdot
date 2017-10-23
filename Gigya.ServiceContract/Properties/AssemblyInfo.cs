@@ -40,9 +40,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 
 
-[assembly: AssemblyInformationalVersion("2.4.15")]// if pre-release should be in the format of "2.4.11-pre01".
-[assembly: AssemblyVersion("2.4.15")]
-[assembly: AssemblyFileVersion("2.4.15")]
+[assembly: AssemblyInformationalVersion("2.4.17")]// if pre-release should be in the format of "2.4.11-pre01".
+[assembly: AssemblyVersion("2.4.17")]
+[assembly: AssemblyFileVersion("2.4.17")]
 
 [assembly: AssemblyDescription("")]
 
@@ -52,3 +52,5 @@ using System.Runtime.InteropServices;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 [assembly: CLSCompliant(false)]
+
+[assembly: InternalsVisibleTo("Gigya.Microdot.SharedLogic")] 

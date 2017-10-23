@@ -80,6 +80,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEventPublisher<ServiceCallEvent> EventPublisher { get; }
         private IEnumerable<ICustomEndpoint> CustomEndpoints { get; }
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
+        private JsonExceptionSerializer ExceptionSerializer { get; }
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -92,7 +93,8 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
-                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider)
+                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
+                                   JsonExceptionSerializer exceptionSerializer)
         {
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
@@ -101,6 +103,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             EventPublisher = eventPublisher;
             CustomEndpoints = customEndpoints.ToArray();
             EnvironmentVariableProvider = environmentVariableProvider;
+            ExceptionSerializer = exceptionSerializer;
 
             if (serviceEndPointDefinition.UseSecureChannel)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -202,7 +205,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 catch (Exception e)
                 {
                     var ex = GetRelevantException(e);
-                    await TryWriteResponse(context, JsonExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
+                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
                     return;
                 }
 
@@ -216,6 +219,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     Exception actualException = null;
                     string methodName = null;
                     // Initialize with empty object for protocol backwards-compatibility.
+
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
                     
                     ServiceMethod serviceMethod = null;
@@ -253,7 +257,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _failureCounter.Increment();
                         ex = GetRelevantException(e);
 
-                        string json = _serializationTime.Time(() => JsonExceptionSerializer.Serialize(ex));
+                        string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
                         await TryWriteResponse(context, json, GetExceptionStatusCode(ex));
                     }
                     finally
@@ -358,11 +362,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             callEvent.CalledServiceName = serviceMethod?.GrainInterfaceType.Name;
             callEvent.ClientMetadata = requestData.TracingData;
             callEvent.ServiceMethod = requestData.Target?.MethodName;
+
+            var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
+
             callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
             {
                 Name = arg.Key.ToString(),
-                Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value)
+                Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
+                Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
             });
+
             callEvent.Exception = ex;
             callEvent.ActualTotalTime = requestTime;
             callEvent.ErrCode = ex != null ? null : (int?)0;

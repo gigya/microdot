@@ -4,18 +4,17 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
 using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.Testing;
 using Newtonsoft.Json;
 using Ninject;
@@ -376,7 +375,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new RequestException("You request is invalid.").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(expected));
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
 
             Func<Task> action = async () => await CreateClient(messageHandler).ToUpper("aaaa");
 
@@ -388,7 +387,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new RequestException("You action is invalid, Mr. Customer.", 30000).ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(expected));
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RequestException>();
 
@@ -401,7 +400,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new EnvironmentException("You environment is invalid.").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(expected));
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<EnvironmentException>();
 
@@ -416,7 +415,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new RemoteServiceException("A service is invalid.", "someUri").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(expected));
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
@@ -430,7 +429,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new ProgrammaticException("You code is invalid.").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(expected));
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 

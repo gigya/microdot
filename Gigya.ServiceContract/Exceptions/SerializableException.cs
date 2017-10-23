@@ -28,6 +28,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using Gigya.ServiceContract.Exceptions;
 
 namespace Gigya.Common.Contracts.Exceptions
 {
@@ -112,8 +113,10 @@ namespace Gigya.Common.Contracts.Exceptions
 	{
 	    private const string EXTENDED_PROPERTIES_NAMES_KEY = "ExtendedPropertiesNames";
 	    private const string EXTENDED_PROPERTIES_VALUES_KEY = "ExtendedPropertiesValues";
+	    private const string BREADCRUMBS_KEY = "Breadcrumbs";
 
         private readonly Dictionary<string, object> _extendedProperties;
+	    private Breadcrumb[] _breadcrumbs;
 
 		/// <summary>
 		/// A read-only dictionary of tags that must be encrypted when stored. They are, however, serialized (and
@@ -132,6 +135,8 @@ namespace Gigya.Common.Contracts.Exceptions
 		/// serialized property's value.
 		/// </summary>
 		public IReadOnlyDictionary<string, object> ExtendedProperties => new ReadOnlyDictionary<string, object>(_extendedProperties);
+
+        public IReadOnlyList<Breadcrumb> Breadcrumbs => new ReadOnlyCollection<Breadcrumb>(_breadcrumbs);
 
 	    /// <summary>
         /// Initializes a new instance of the <see cref="SerializableException"/> class with a specified error message
@@ -152,6 +157,7 @@ namespace Gigya.Common.Contracts.Exceptions
 				UnencryptedTags = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(unencrypted));
 
 			_extendedProperties = new Dictionary<string, object>();
+            _breadcrumbs = new Breadcrumb[0];
 		}
 
 		/// <summary>Initializes a new instance of the <see cref="SerializableException"/> class with serialized
@@ -206,20 +212,22 @@ namespace Gigya.Common.Contracts.Exceptions
                     }
                 }
             }
+
+		    _breadcrumbs = (Breadcrumb[])info.GetValue(BREADCRUMBS_KEY, typeof(Breadcrumb[]));
         }
 
 
-	    /// <summary>
-	    /// When overridden in a derived class, sets the <see cref="T:System.Runtime.Serialization.SerializationInfo"/>
-	    /// with information about the exception.
-	    /// </summary>
-	    /// <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the
-	    /// serialized object data about the exception being thrown. </param>
-	    /// <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains
-	    /// contextual information about the source or destination. </param>
-	    /// <exception cref="T:System.ArgumentNullException">The <paramref name="info"/> parameter is a null reference
-	    /// (Nothing in Visual Basic). </exception>
-	    public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        /// <summary>
+        /// When overridden in a derived class, sets the <see cref="T:System.Runtime.Serialization.SerializationInfo"/>
+        /// with information about the exception.
+        /// </summary>
+        /// <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the
+        /// serialized object data about the exception being thrown. </param>
+        /// <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains
+        /// contextual information about the source or destination. </param>
+        /// <exception cref="T:System.ArgumentNullException">The <paramref name="info"/> parameter is a null reference
+        /// (Nothing in Visual Basic). </exception>
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
 			info.AddValue("_Messages", string.Join(" --> ", GetAllExceptions(this).Reverse().Select(e => $"[{e.GetType().Name}] {e.Message}")));
 			
@@ -234,7 +242,9 @@ namespace Gigya.Common.Contracts.Exceptions
             // objects in the object graph. See http://stackoverflow.com/a/18379360/149265.
             info.AddValue(EXTENDED_PROPERTIES_NAMES_KEY, properties.Keys.ToArray());
             info.AddValue(EXTENDED_PROPERTIES_VALUES_KEY, properties.Values.ToArray());
-		}
+
+		    info.AddValue(BREADCRUMBS_KEY, _breadcrumbs);
+        }
 
         private static IEnumerable<Exception> GetAllExceptions(Exception ex)
         {
@@ -289,6 +299,11 @@ namespace Gigya.Common.Contracts.Exceptions
                                               .Aggregate(new StringBuilder(), (sb, pair) => sb.Append($"{(sb.Length == 0 ? "; " : ", ")}{pair.Key}={pair.Value}"));
 
 	    public string RawMessage => base.Message;
+
+	    internal void AddBreadcrumb(Breadcrumb breadcrumb)
+	    {
+	        _breadcrumbs = _breadcrumbs.Concat(new[] { breadcrumb }).ToArray();
+	    }
 	}
 
 	[Serializable]

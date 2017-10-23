@@ -13,6 +13,7 @@ namespace Gigya.Microdot.Logging.NLog
     {
         private ILog Log { get; }
         private IEnvironmentVariableProvider EnvProvider { get; }
+        private IStackTraceEnhancer StackTraceEnhancer { get; }
 
         private PublishingTasks PublishingTasks { get; } = new PublishingTasks
         {
@@ -20,16 +21,18 @@ namespace Gigya.Microdot.Logging.NLog
             PublishAudit = Task.FromResult(false)
         };
 
-        public LogEventPublisher(ILog log, IEnvironmentVariableProvider envProvider)
+        public LogEventPublisher(ILog log, IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer)
         {
             Log = log;
             EnvProvider = envProvider;
+            StackTraceEnhancer = stackTraceEnhancer;
         }
 
         public PublishingTasks TryPublish(IEvent evt)
         {
             evt.Configuration = new EventConfig();
             evt.EnvironmentVariableProvider = EnvProvider;
+            evt.StackTraceEnhancer = StackTraceEnhancer;
             Log.Debug(l => l("Tracing event", unencryptedTags: evt));
             return PublishingTasks;
         }

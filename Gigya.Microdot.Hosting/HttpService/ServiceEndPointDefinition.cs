@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -52,6 +53,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         public int SiloNetworkingPortOfPrimaryNode { get; }
 
         public Dictionary<Type, string> ServiceNames { get; }
+
+        private ConcurrentDictionary<ServiceMethod,  EndPointMetadata> _metadata= new ConcurrentDictionary<ServiceMethod, EndPointMetadata>();
 
         private readonly ServiceMethodResolver _serviceMethodResolver;
 
@@ -132,12 +135,22 @@ namespace Gigya.Microdot.Hosting.HttpService
                 SiloNetworkingPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloNetworking).Value;
                 SiloNetworkingPortOfPrimaryNode = config.PortAllocation.GetPort(serviceConfig.DefaultSlotNumber, PortOffsets.SiloNetworking).Value;
             }
+
+            foreach (var method in _serviceMethodResolver.GrainMethods)
+            {
+                GetMetaData(method);
+            }
         }
 
 
         public ServiceMethod Resolve(InvocationTarget target)
         {
             return _serviceMethodResolver.Resolve(target);
+        }
+        public EndPointMetadata GetMetaData(ServiceMethod method)
+        {
+            return _metadata.GetOrAdd(method, m => new EndPointMetadata(m));
+
         }
 
 

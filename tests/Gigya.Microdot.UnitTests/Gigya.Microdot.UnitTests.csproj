@@ -93,6 +93,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="loadpaths.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="paket.references" />
     <None Include="TestCert\CreateTestCert.cmd" />
     <None Include="TestCert\OtherTestClientCer.cer" />
