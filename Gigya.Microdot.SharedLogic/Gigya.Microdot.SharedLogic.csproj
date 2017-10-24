@@ -46,6 +46,9 @@
     <Compile Include="ApplicationDirectoryProvider.cs" />
     <Compile Include="AssemblyProvider.cs" />
     <Compile Include="Events\Param.cs" />
+    <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />
+    <Compile Include="Exceptions\StackTraceEnhancer.cs" />
+    <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />
     <Compile Include="Logging\LogBase.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />

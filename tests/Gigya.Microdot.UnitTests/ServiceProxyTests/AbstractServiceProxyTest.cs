@@ -5,6 +5,7 @@ using System.Runtime.Remoting.Messaging;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.Testing;
 
 using Metrics;
@@ -23,6 +24,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         internal const string SERVICE_NAME = "Demonstration";
         protected TestingKernel<ConsoleLog> unitTesting;
         protected Dictionary<string, string> MockConfig { get; } = new Dictionary<string, string>();
+        protected JsonExceptionSerializer ExceptionSerializer { get; set; }
 
         [SetUp]
         public virtual void SetUp()
@@ -32,6 +34,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             unitTesting = new TestingKernel<ConsoleLog>(mockConfig: MockConfig);
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
             TracingContext.SetRequestID("1");
+            ExceptionSerializer = unitTesting.Get<JsonExceptionSerializer>();
         }
 
 
