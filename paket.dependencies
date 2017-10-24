@@ -30,10 +30,10 @@ nuget Microsoft.Extensions.DependencyInjection.Abstractions 1.1.1
 nuget Microsoft.Extensions.DependencyInjection 1.1.1
 
 #Ninject
-nuget Ninject ~> 3.2 >= 3.2.1
-nuget Ninject.Extensions.Factory ~> 3.2 >= 3.2.1
-nuget Ninject.Extensions.Conventions ~> 3.2 >= 3.2.0
-nuget Castle.Core ~> 3.3 
+nuget Ninject ~> 3.3
+nuget Ninject.Extensions.Factory ~> 3.3
+nuget Ninject.Extensions.Conventions ~> 3.3
+nuget Castle.Core ~> 4.0
 
 #Tests only dependencies
 nuget NUnit ~> 3.0

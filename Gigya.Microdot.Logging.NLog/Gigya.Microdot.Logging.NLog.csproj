@@ -68,7 +68,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
         <Reference Include="Ninject">
-          <HintPath>..\packages\Ninject\lib\net45-full\Ninject.dll</HintPath>
+          <HintPath>..\packages\Ninject\lib\net45\Ninject.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
