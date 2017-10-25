@@ -30,7 +30,8 @@ namespace Gigya.Microdot.ServiceDiscovery
     /// Provides an up-to-date list of endpoints.
     /// </summary>
     public abstract class ServiceDiscoverySourceBase : IDisposable
-    {
+    {        
+
         public string DeploymentName { get; }
         public EndPointsResult Result { get; protected set; } = new EndPointsResult{EndPoints = new EndPoint[0]};
         public BroadcastBlock<EndPointsResult> EndPointsChanged { get; } = new BroadcastBlock<EndPointsResult>(null);

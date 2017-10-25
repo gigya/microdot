@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
+using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -30,6 +30,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private IConsulClient _consulAdapterMock;
         public const int Repeat = 1;
         private const string ServiceVersion = "1.0.0.0";
+        private EndPointsResult _result;
+        private BroadcastBlock<EndPointsResult> _resultChanged;
 
         [SetUp]
         public async Task Setup()
@@ -39,10 +41,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
             {
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                 k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
+                _result = new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, ActiveVersion = ServiceVersion, IsQueryDefined = true };
+                _resultChanged = new BroadcastBlock<EndPointsResult>(null);
                 _consulAdapterMock = Substitute.For<IConsulClient>();
-                _consulAdapterMock.GetServiceVersion(Arg.Any<string>(), Arg.Any<ulong>(), Arg.Any<TimeSpan>()).Returns(Task.FromResult(new EndPointsResult {ActiveVersion = ServiceVersion, IsQueryDefined = true }));
-                _consulAdapterMock.GetHealthyEndpoints(Arg.Any<string>(), Arg.Any<ulong>(), Arg.Any<TimeSpan>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" , Version = ServiceVersion}}}));
-                k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
+                _consulAdapterMock.Result.Returns(_=>_result);
+                _consulAdapterMock.ResultChanged.Returns(_resultChanged);
+                k.Rebind<Func<string,IConsulClient>>().ToMethod(c=>s=>_consulAdapterMock);
             }, _configDic);
 
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
@@ -66,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                       _configDic[$"Discovery.{serviceName}.Hosts"] = "localhost";
                   });
 
-            Assert.AreEqual(DiscoverySource.Config, _serviceDiscovery.LastServiceConfig.Source);
+            Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
         }
 
         [TestCase("Services.OtherServiceName")]
@@ -116,6 +120,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task WaitForConfigChange(Action update)
         {
+            _resultChanged.Post(_result);
             var waitForInit = await _serviceDiscovery.GetNextHost();
             var task = _serviceDiscovery.EndPointsChanged.WhenEventReceived();
             update();

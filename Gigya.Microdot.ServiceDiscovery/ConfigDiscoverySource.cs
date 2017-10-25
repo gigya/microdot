@@ -29,6 +29,22 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
+    public class ConfigDiscoverySourceFactory : IDiscoverySourceFactory
+    {
+        private readonly Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> _createSource;
+        public string SourceName => "Config";
+
+        public ConfigDiscoverySourceFactory(Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> createSource)
+        {
+            _createSource = createSource;
+        }
+
+        public ServiceDiscoverySourceBase CreateSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        {
+            return _createSource(serviceDeployment.ServiceName, serviceDiscoveryConfig);
+        }
+    }
+
     /// <summary>
     /// Returns a list of endpoints from configuration. Note: When the configuration changes, this object is recreated
     /// with updated settings, hence we don't listen to changes ourselves.

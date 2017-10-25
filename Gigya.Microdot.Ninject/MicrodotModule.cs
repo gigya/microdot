@@ -43,7 +43,6 @@ namespace Gigya.Microdot.Ninject
     {
         private readonly Type[] NonSingletonBaseTypes =
         {
-            typeof(ConsulQueryDiscoverySource),
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
             typeof(ConfigDiscoverySource)
@@ -66,6 +65,10 @@ namespace Gigya.Microdot.Ninject
             Rebind<MetricsContext>()
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))
                 .InScope(GetTypeOfTarget);
+            Rebind<ConsulDiscoverySource>().ToSelf().InTransientScope();
+            Rebind<LocalDiscoverySource>().ToSelf().InTransientScope();
+            Rebind<ConfigDiscoverySource>().ToSelf().InTransientScope();
+            Kernel.BindPerString<IConsulClient, ConsulClient>();
 
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();

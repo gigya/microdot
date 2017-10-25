@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Exceptions;
 
@@ -28,39 +29,26 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public class DiscoverySourceLoader : IDiscoverySourceLoader
     {
-        public DiscoverySourceLoader(Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource>  getConfigDiscoverySource,
-                                     Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> getConsulDiscoverySource,
-                                     Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulQueryDiscoverySource> getConsulQueryDiscoverySourc)
+        private readonly IDiscoverySourceFactory[] _discoverySourceFactories;
+
+        public DiscoverySourceLoader(IDiscoverySourceFactory[] discoverySourceFactories)
         {
-            _getConfigDiscoverySource = getConfigDiscoverySource;
-            _getConsulDiscoverySource = getConsulDiscoverySource;
-            _getConsulQueryDiscoverySource = getConsulQueryDiscoverySourc;
+            _discoverySourceFactories = discoverySourceFactories;
         }
 
-        private readonly Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> _getConfigDiscoverySource;
-        private readonly Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> _getConsulDiscoverySource;
-        private readonly Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulQueryDiscoverySource> _getConsulQueryDiscoverySource;
-
-        public ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        public ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            switch (serviceDiscoverySettings.Source)
-            {
-                case DiscoverySource.Config:
-                    return _getConfigDiscoverySource(serviceDeployment.ServiceName, serviceDiscoverySettings);
-                case DiscoverySource.Consul:
-                    return _getConsulDiscoverySource(serviceDeployment, serviceDiscoverySettings);
-                case DiscoverySource.ConsulQuery:
-                    return _getConsulQueryDiscoverySource(serviceDeployment, serviceDiscoverySettings);
-                case DiscoverySource.Local:
-                    return new LocalDiscoverySource(serviceDeployment.ServiceName);
-            }
+            var sourceFactory = _discoverySourceFactories.FirstOrDefault(f=>f.SourceName==serviceDiscoveryConfig.Source);
 
-            throw new ConfigurationException($"Source '{serviceDiscoverySettings.Source}' is not supported by any configuration.");
+            if (sourceFactory==null)
+                throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");
+
+            return sourceFactory.CreateSource(serviceDeployment, serviceDiscoveryConfig);
         }
     }
 
     public interface IDiscoverySourceLoader
     {
-        ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings);
+        ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig);
     }
 }

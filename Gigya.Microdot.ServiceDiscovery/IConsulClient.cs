@@ -22,6 +22,7 @@
 
 using System;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
@@ -49,11 +50,6 @@ namespace Gigya.Microdot.ServiceDiscovery
         public bool IsQueryDefined { get; set; }
 
         /// <summary>
-        /// Modification index. This index is increased when result was changed
-        /// </summary>
-        public ulong? ModifyIndex { get; set; }
-
-        /// <summary>
         /// Service's active version. 
         /// A service may be deployed on some different endpoints, each one with different version.
         /// This property contains the active version of the service
@@ -63,9 +59,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
     public interface IConsulClient
     {
-        Task<EndPointsResult> GetHealthyEndpoints(string serviceName, ulong index, TimeSpan timeout);
-        Task<EndPointsResult> GetServiceVersion(string serviceName, ulong index, TimeSpan timeout);
-        Task<EndPointsResult> GetQueryEndpoints(string serviceName);
+        EndPointsResult Result { get; }
+        ISourceBlock<EndPointsResult> ResultChanged { get; }
         Uri ConsulAddress { get; }
     }
 

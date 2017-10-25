@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     {
 
 
-        public bool SupportsFallback => Scope == ServiceScope.Environment && (Source == DiscoverySource.Consul || Source==DiscoverySource.ConsulQuery);
+        public bool SupportsFallback => Scope == ServiceScope.Environment && Source == ConsulDiscoverySource.Name;
 
         /// <summary>
         /// Scope where this service is installed.
@@ -65,39 +65,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.
         /// </summary>
-        public DiscoverySource? Source
-        {
-            get { return Source_V1_7 ?? _source; }
-            set { _source = value; }
-        }
-        private DiscoverySource? _source;
-
-        /// <summary>
-        /// This key is for backwards-compatibility of old versions with new configuration. 
-        /// Should be removed when all services are deployed with version 1.7 or up.
-        /// </summary>
-        [Obsolete]
-        public DiscoverySource? Source_V1_7 { get; set; }
-
-        /// <summary>
-        /// Interval for reloading endpoints from source (e.g. Consul), in Milliseconds
-        /// </summary>
-        public TimeSpan? ReloadInterval { get; set; }
-
-        /// <summary>
-        /// Time to wait for response from source (e.g. Consul).
-        /// </summary>
-        public TimeSpan? ReloadTimeout { get; set; } = TimeSpan.FromMinutes(2);
-
-        /// <summary>
-        /// Interval for retrying acces to source (e.g. Consul) in case source is undefined (e.g. Service is not deployed)
-        /// </summary>
-        public TimeSpan? UndefinedRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
-
-        /// <summary>
-        /// Interval for retrying access to Consul after an error has occured
-        /// </summary>
-        public TimeSpan? ErrorRetryInterval { get; set; }
+        public string Source { get; set; }
 
         public string Hosts { get; set; }
 
@@ -141,7 +109,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                    MaxAttemptDelaySeconds.Equals(other.MaxAttemptDelaySeconds) &&
                    DelayMultiplier.Equals(other.DelayMultiplier) &&
                    Source == other.Source &&
-                   ReloadInterval.Equals(other.ReloadInterval) &&
                    string.Equals(Hosts, other.Hosts) &&
                    DefaultPort == other.DefaultPort &&
                    DefaultSlotNumber == other.DefaultSlotNumber &&
@@ -161,8 +128,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                 hashCode = (hashCode * 397) ^ FirstAttemptDelaySeconds.GetHashCode();
                 hashCode = (hashCode * 397) ^ MaxAttemptDelaySeconds.GetHashCode();
                 hashCode = (hashCode * 397) ^ DelayMultiplier.GetHashCode();
-                hashCode = (hashCode * 397) ^ Source.GetHashCode();
-                hashCode = (hashCode * 397) ^ ReloadInterval.GetHashCode();
+                hashCode = (hashCode * 397) ^ Source.GetHashCode();                
                 hashCode = (hashCode * 397) ^ (Hosts != null ? Hosts.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ DefaultPort.GetHashCode();
                 hashCode = (hashCode * 397) ^ DefaultSlotNumber.GetHashCode();
