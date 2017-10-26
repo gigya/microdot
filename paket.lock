@@ -4,7 +4,7 @@ CONTENT: ONCE
 RESTRICTION: == net451
 NUGET
   remote: https://www.nuget.org/api/v2
-    Castle.Core (3.3.3)
+    Castle.Core (4.2.1)
     DataAnnotationsValidator (2.0)
     FluentAssertions (4.19.4)
     Metrics.NET (0.5.3)
@@ -56,12 +56,12 @@ NUGET
       Microsoft.NETCore.Platforms (>= 1.1)
       System.Runtime.InteropServices.RuntimeInformation (>= 4.3)
     Newtonsoft.Json (9.0.1)
-    Ninject (3.2.2)
-    ninject.extensions.conventions (3.2)
-      Ninject (>= 3.2 < 3.3)
-    Ninject.Extensions.Factory (3.2.1)
-      Castle.Core (>= 3.2 < 4.0)
-      Ninject (>= 3.2 < 3.3)
+    Ninject (3.3.3)
+    Ninject.Extensions.Conventions (3.3)
+      Ninject.Extensions.Factory (>= 3.3.2)
+    Ninject.Extensions.Factory (3.3.2)
+      Castle.Core (>= 4.2)
+      Ninject (>= 3.3.3)
     Nito.AsyncEx (4.0.1)
       Microsoft.Bcl (>= 1.1.10)
       Microsoft.Bcl.Async (>= 1.0.168)
