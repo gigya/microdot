@@ -215,9 +215,12 @@ namespace Gigya.Common.Contracts.Exceptions
 
 		    try
 		    {
-                _breadcrumbs = (Breadcrumb[])info.GetValue(BREADCRUMBS_KEY, typeof(Breadcrumb[]));
+		        _breadcrumbs = (Breadcrumb[])info.GetValue(BREADCRUMBS_KEY, typeof(Breadcrumb[]));
+		    }
+		    catch (SerializationException)
+		    {
+		        _breadcrumbs = new Breadcrumb[0];
             }
-            catch (SerializationException) { }
         }
 
 

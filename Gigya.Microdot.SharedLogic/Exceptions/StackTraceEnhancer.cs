@@ -38,7 +38,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 return jobject;
 
             var breadcrumbTarget = jobject.Property("RemoteStackTraceString");
-            breadcrumbTarget = breadcrumbTarget.Value.Type == JTokenType.String ? breadcrumbTarget : jobject.Property("StackTraceString");
+            breadcrumbTarget = breadcrumbTarget?.Value.Type == JTokenType.String ? breadcrumbTarget : jobject.Property("StackTraceString");
 
             if (breadcrumbTarget == null)
             {
