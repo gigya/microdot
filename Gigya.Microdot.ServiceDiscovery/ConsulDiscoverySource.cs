@@ -88,15 +88,6 @@ namespace Gigya.Microdot.ServiceDiscovery
             lock (_resultLocker)
             {
                 var shouldReportChanges = false;
-                if (!OrderedEndpoints(newResult.EndPoints).SequenceEqual(Result.EndPoints))
-                {
-                    shouldReportChanges = true;
-                    _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
-                    {
-                        serviceName = DeploymentName,
-                        endpoints = string.Join(", ", newResult.EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
-                    }));
-                }
                 if (newResult.IsQueryDefined != Result.IsQueryDefined)
                 {
                     shouldReportChanges = true;
@@ -105,6 +96,15 @@ namespace Gigya.Microdot.ServiceDiscovery
                         {
                             serviceName = DeploymentName
                         }));
+                }
+                else if (!OrderedEndpoints(newResult.EndPoints).SequenceEqual(OrderedEndpoints(Result.EndPoints)))
+                {
+                    shouldReportChanges = true;
+                    _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
+                    {
+                        serviceName = DeploymentName,
+                        endpoints = string.Join(", ", newResult.EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
+                    }));
                 }
 
                 if (_firstTime || newResult.Error == null || Result.Error != null)

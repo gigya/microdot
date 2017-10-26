@@ -196,11 +196,10 @@ namespace Gigya.Microdot.ServiceDiscovery
             var response = await CallConsul(urlCommand, config.ReloadTimeout, i => _versionModifyIndex = i).ConfigureAwait(false);
             var keyValue = TryDeserialize<KeyValueResponse[]>(response);
             var version = keyValue?.FirstOrDefault()?.DecodeValue()?.Version;
-            if (version == null)
-            {
+
+            if (version == null && Result.IsQueryDefined)
                 SetErrorResult(urlCommand, new EnvironmentException("Cannot extract service's active version from Consul response"), null, response);
-                return null;
-            }
+
             return version;
         }
 
@@ -357,6 +356,9 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private void SetResult(ServiceEntry[] nodes, string requestLog, string responseContent, string activeVersion = null)
         {
+            if (!_isDeploymentDefined)
+                return;
+
             var endpoints = nodes.Select(ep => new ConsulEndPoint
             {
                 HostName = ep.Node.Name,
