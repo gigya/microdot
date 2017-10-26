@@ -38,7 +38,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            var sourceFactory = _discoverySourceFactories.FirstOrDefault(f=>f.SourceName==serviceDiscoveryConfig.Source);
+            var sourceFactory = _discoverySourceFactories.FirstOrDefault(f=>f.SourceName.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
 
             if (sourceFactory==null)
                 throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");

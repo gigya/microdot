@@ -47,7 +47,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public Exception Error { get; set; }
 
-        public bool IsQueryDefined { get; set; }
+        public bool IsQueryDefined { get; set; } = true;
 
         /// <summary>
         /// Service's active version. 
