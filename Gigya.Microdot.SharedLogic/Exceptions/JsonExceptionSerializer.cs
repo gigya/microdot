@@ -84,25 +84,21 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         /// <exception cref="Newtonsoft.Json.JsonSerializationException">Thrown when the exception failed to serialize.</exception>
         public string Serialize(Exception ex)
         {
-            var outerStackTrace = ex.StackTrace;
-
-            if (ex is SerializableException serializableEx)
-                outerStackTrace = StackTraceEnhancer.AddBreadcrumb(serializableEx);
-
-            var exception = JObject.FromObject(ex, Serializer);
-            exception["StackTraceString"] = outerStackTrace;
-
-            var current = exception;
+            var root = StackTraceEnhancer.ToJObjectWithBreadcrumb(ex);
+            var current = root;
 
             while (current != null)
             {
-                if (current.Property("StackTraceString") is JProperty stackTrace && stackTrace.Value.Type != JTokenType.Null)
+                if (current.Property("StackTraceString") is JProperty stackTrace && stackTrace.Value.Type == JTokenType.String)
                     stackTrace.Value = StackTraceEnhancer.Clean(stackTrace.Value.Value<string>());
+
+                if (current.Property("RemoteStackTraceString") is JProperty remoteStackTrace && remoteStackTrace.Value.Type != JTokenType.Null)
+                    remoteStackTrace.Value = StackTraceEnhancer.Clean(remoteStackTrace.Value.Value<string>()) + "\r\n";
 
                 current = current["InnerException"] is JObject inner ? inner : null;
             }
 
-			return JsonConvert.SerializeObject(exception, Settings);
+			return JsonConvert.SerializeObject(root, Settings);
 		}
     }
 }

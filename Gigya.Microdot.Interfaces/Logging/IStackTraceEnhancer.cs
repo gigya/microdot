@@ -1,10 +1,11 @@
-﻿using Gigya.Common.Contracts.Exceptions;
+﻿using System;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Interfaces.Logging
 {
     public interface IStackTraceEnhancer
     {
         string Clean(string stackTrace);
-        string AddBreadcrumb(SerializableException exception);
+        JObject ToJObjectWithBreadcrumb(Exception exception);
     }
 }

@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public void SetUp()
         {
             var unitTesting = new TestingKernel<ConsoleLog>(k => 
-                k.Rebind<Func<StackTraceCleanerSettings>>().ToConstant<Func<StackTraceCleanerSettings>>(() => new StackTraceCleanerSettings
+                k.Rebind<Func<StackTraceEnhancerSettings>>().ToConstant<Func<StackTraceEnhancerSettings>>(() => new StackTraceEnhancerSettings
                 {
                     RegexReplacements =
                     {
