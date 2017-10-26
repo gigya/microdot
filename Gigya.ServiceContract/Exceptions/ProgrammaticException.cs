@@ -69,7 +69,7 @@ namespace Gigya.Common.Contracts.Exceptions
     /// as an RemoteServiceException, having an inner exception copied over. You should never throw this exception from
     /// your code.
     /// </summary>
-    [Serializable]
+    [Serializable, Obsolete("No longer used, preserved for backwards compatibility with older servers.")]
     public class UnhandledException : ProgrammaticException
     {
         /// <summary>

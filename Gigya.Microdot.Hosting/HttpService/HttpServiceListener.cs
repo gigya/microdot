@@ -279,8 +279,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                 return e;
 
             var ex = GetAllExceptions(e).FirstOrDefault(x => (x is TargetInvocationException || x is AggregateException) == false);
-            if (ex is SerializableException == false)
-                ex = new UnhandledException(ex);
 
             return ex;
         }

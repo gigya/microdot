@@ -6,22 +6,46 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.ServiceContract.Exceptions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {
     public class StackTraceEnhancer : IStackTraceEnhancer
     {
-        private Func<StackTraceCleanerSettings> GetConfig { get; }
+        private Func<StackTraceEnhancerSettings> GetConfig { get; }
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
+        private static readonly JsonSerializer Serializer = new JsonSerializer
+        {
+            TypeNameHandling = TypeNameHandling.All,
+            Binder = new ExceptionHierarchySerializationBinder(),
+            Formatting = Formatting.Indented,
+            DateParseHandling = DateParseHandling.DateTimeOffset,
+            Converters = { new StripHttpRequestExceptionConverter() }
+        };
 
-        public StackTraceEnhancer(Func<StackTraceCleanerSettings> getConfig, IEnvironmentVariableProvider environmentVariableProvider)
+        public StackTraceEnhancer(Func<StackTraceEnhancerSettings> getConfig, IEnvironmentVariableProvider environmentVariableProvider)
         {
             GetConfig = getConfig;
             EnvironmentVariableProvider = environmentVariableProvider;
         }
 
-        public string AddBreadcrumb(SerializableException exception)
+        public JObject ToJObjectWithBreadcrumb(Exception exception)
         {
+            var jobject = JObject.FromObject(exception, Serializer);
+
+            if (GetConfig().Enabled == false)
+                return jobject;
+
+            var breadcrumbTarget = jobject.Property("RemoteStackTraceString");
+            breadcrumbTarget = breadcrumbTarget.Value.Type == JTokenType.String ? breadcrumbTarget : jobject.Property("StackTraceString");
+
+            if (breadcrumbTarget == null)
+            {
+                jobject.Add("StackTraceString", null);
+                breadcrumbTarget = jobject.Property("StackTraceString");
+            }
+
             var breadcrumb = new Breadcrumb
             {
                 ServiceName = CurrentApplicationInfo.Name,
@@ -31,20 +55,25 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 DeploymentEnvironment = EnvironmentVariableProvider.DeploymentEnvironment
             };
 
-            exception.AddBreadcrumb(breadcrumb);
+            if (exception is SerializableException serEx)
+                serEx.AddBreadcrumb(breadcrumb);
 
-            return $"--- End of stack trace from {breadcrumb} ---\r\n{exception.StackTrace}";
+            breadcrumbTarget.Value = $"\r\n--- End of stack trace from {breadcrumb} ---\r\n{breadcrumbTarget.Value}";
+
+            return jobject;
         }
 
         public string Clean(string stackTrace)
         {
-            if (string.IsNullOrEmpty(stackTrace))
+            var config = GetConfig();
+
+            if (config.Enabled == false || string.IsNullOrEmpty(stackTrace))
                 return stackTrace;
 
-            var replacements = GetConfig().RegexReplacements.Values.ToArray();
+            var replacements = config.RegexReplacements.Values.ToArray();
             var frames = stackTrace
                 .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(f => f.StartsWith("   at System.Runtime") == false && f != "--- End of stack trace from previous location where exception was thrown ---")
+                .Where(f => f.StartsWith("   at System.Runtime") == false && f.StartsWith("Exception rethrown at ") == false && f.StartsWith("Server stack trace:") == false && f != "--- End of stack trace from previous location where exception was thrown ---")
                 .Select(f => ApplyRegexs(f, replacements));
 
             return string.Join("\r\n", frames);
@@ -61,8 +90,9 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         }
     }
 
-    public class StackTraceCleanerSettings : IConfigObject
+    public class StackTraceEnhancerSettings : IConfigObject
     {
+        public bool Enabled { get; set; } = true;
         public Dictionary<string, RegexReplace> RegexReplacements { get; set; } = new Dictionary<string, RegexReplace>();
     }
 

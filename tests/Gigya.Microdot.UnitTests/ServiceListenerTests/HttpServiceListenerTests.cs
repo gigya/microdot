@@ -80,14 +80,14 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
 
         [Test]
-        public async Task  RequestWithException_ShouldWrapWithUnhandledException()
+        public async Task  RequestWithException_ShouldNotWrapWithUnhandledException()
         {
             _testinghost.Instance.When(a => a.DoSomething()).Throw(x => new ArgumentException("MyEx"));
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
             var responseException = _exceptionSerializer.Deserialize(responseJson);
-            responseException.ShouldBeOfType<UnhandledException>();
+            responseException.ShouldBeOfType<ArgumentException>();
         }
 
 
