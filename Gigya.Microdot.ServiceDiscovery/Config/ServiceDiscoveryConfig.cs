@@ -30,10 +30,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     [Serializable]
     public class ServiceDiscoveryConfig
     {
-
-
-        public bool SupportsFallback => Scope == ServiceScope.Environment && Source == ConsulDiscoverySource.Name;
-
         /// <summary>
         /// Scope where this service is installed.
         /// Some services are installed for current environment only (itg1, prod, etc.)

@@ -47,7 +47,7 @@
     <Compile Include="Config\CachingPolicyCollection.cs" />
     <Compile Include="Config\CachingPolicyConfig.cs" />
     <Compile Include="Config\ConfigCollection.cs" />
-    <Compile Include="Config\ConsulDiscoveryConfig.cs" />
+    <Compile Include="Config\ConsulConfig.cs" />
     <Compile Include="Config\DiscoveryConfig.cs" />
     <Compile Include="Config\MethodCachingPolicyConfig.cs" />
     <Compile Include="Config\PortAllocationConfig.cs" />

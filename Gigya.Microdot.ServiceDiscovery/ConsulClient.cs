@@ -51,17 +51,9 @@ namespace Gigya.Microdot.ServiceDiscovery
         private ILog Log { get; }
         private HttpClient _httpClient;
 
-        private readonly JsonSerializerSettings _jsonSettings =
-            new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.Auto,
-                NullValueHandling = NullValueHandling.Ignore,
-                Formatting = Formatting.Indented
-            };
-
         private readonly AggregatingHealthStatus _aggregatedHealthStatus;
 
-        private Func<ConsulDiscoveryConfig> GetConfig { get; }
+        private Func<ConsulConfig> GetConfig { get; }
 
         public Uri ConsulAddress { get; }
 
@@ -81,8 +73,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private bool _disposed;
 
-        public ConsulClient(string serviceName, Func<ConsulDiscoveryConfig> getConfig,
-            ISourceBlock<ConsulDiscoveryConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
+        public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
+            ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
             ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
         {
             _serviceName = serviceName;
@@ -92,7 +84,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             DataCenter = environmentVariableProvider.DataCenter;
 
             _waitForConfigChange = new TaskCompletionSource<bool>();
-            configChanged.LinkTo(new ActionBlock<ConsulDiscoveryConfig>(ConfigChanged));
+            configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
 
             var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
             ConsulAddress = new Uri($"http://{address}");
@@ -129,7 +121,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     _initializedVersion.TrySetResult(true);
                 }
                 else if (_isDeploymentDefined == false)
-                    delay = config.UndefinedRetryInterval;
+                    delay = config.ServiceMissingRetryInterval;
                 else
                     delay = config.ErrorRetryInterval;
 
@@ -161,7 +153,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 var delay = TimeSpan.FromMilliseconds(100);
                 if (_isDeploymentDefined == false)
-                    delay = config.UndefinedRetryInterval;
+                    delay = config.ServiceMissingRetryInterval;
                 else if (!success)
                     delay = config.ErrorRetryInterval;
                 else if (config.UseLongPolling == false)
@@ -183,7 +175,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             }
         }
 
-        private async Task ConfigChanged(ConsulDiscoveryConfig c)
+        private async Task ConfigChanged(ConsulConfig c)
         {
             _waitForConfigChange.TrySetResult(true);
             _waitForConfigChange = new TaskCompletionSource<bool>();
@@ -192,8 +184,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<string> GetServiceVersion()
         {
             var config = GetConfig();
-            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.ReloadTimeout.Seconds}s";
-            var response = await CallConsul(urlCommand, config.ReloadTimeout, i => _versionModifyIndex = i).ConfigureAwait(false);
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.HttpTimeout.Seconds}s";
+            var response = await CallConsul(urlCommand, config.HttpTimeout, i => _versionModifyIndex = i).ConfigureAwait(false);
             var keyValue = TryDeserialize<KeyValueResponse[]>(response);
             var version = keyValue?.FirstOrDefault()?.DecodeValue()?.Version;
 
@@ -209,8 +201,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return false;
 
             var config = GetConfig();            
-            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.ReloadTimeout.Seconds}s";
-            var response = await CallConsul(urlCommand, config.ReloadTimeout, i => _endpointsModifyIndex = i).ConfigureAwait(false);
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.HttpTimeout.Seconds}s";
+            var response = await CallConsul(urlCommand, config.HttpTimeout, i => _endpointsModifyIndex = i).ConfigureAwait(false);
             var deserializedResponse = TryDeserialize<ServiceEntry[]>(response);
             if (deserializedResponse != null)
             {
@@ -224,7 +216,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             var config = GetConfig();
             var consulQuery = $"v1/query/{_serviceName}/execute?dc={DataCenter}";
-            var response = await CallConsul(consulQuery, config.ReloadTimeout, null);
+            var response = await CallConsul(consulQuery, config.HttpTimeout, null);
             var deserializedResponse = TryDeserialize<ConsulQueryExecuteResponse>(response);
             if (deserializedResponse != null)
             {                
@@ -304,7 +296,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return default(T);
             try
             {
-                return (T) JsonConvert.DeserializeObject(response, typeof(T), _jsonSettings);
+                return (T) JsonConvert.DeserializeObject(response, typeof(T));
             }
             catch
             {
@@ -362,7 +354,6 @@ namespace Gigya.Microdot.ServiceDiscovery
             var endpoints = nodes.Select(ep => new ConsulEndPoint
             {
                 HostName = ep.Node.Name,
-                ModifyIndex = ep.Node.ModifyIndex,
                 Port = ep.Service.Port,
                 Version = GetEndpointVersion(ep)
             });

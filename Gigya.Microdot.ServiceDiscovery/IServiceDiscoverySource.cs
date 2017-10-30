@@ -7,6 +7,7 @@ namespace Gigya.Microdot.ServiceDiscovery
     public interface IServiceDiscoverySource : IDisposable
     {
         string SourceName { get; }
+        bool SupportsFallback { get; }
         Task Init();
 
         string Deployment { get; }

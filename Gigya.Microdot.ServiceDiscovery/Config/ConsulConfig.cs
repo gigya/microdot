@@ -4,8 +4,8 @@ using Gigya.Microdot.Interfaces.Configuration;
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
     [Serializable]
-    [ConfigurationRoot("ConsulDiscovery", RootStrategy.ReplaceClassNameWithPath)]
-    public class ConsulDiscoveryConfig : IConfigObject
+    [ConfigurationRoot("Consul", RootStrategy.ReplaceClassNameWithPath)]
+    public class ConsulConfig : IConfigObject
     {
         /// <summary>
         /// Whether to Call Consul with long-polling, waiting for changes to occur, or to call it periodically
@@ -14,19 +14,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         /// <summary>
         /// Interval for reloading endpoints from Consul, 
-        /// Used for a source that is reloading endpoints over and over all time (e.g. ConsulQuery source)
+        /// Used only when UseLongPolling=false
         /// </summary>
         public TimeSpan ReloadInterval { get; set; } = TimeSpan.FromSeconds(1);
 
         /// <summary>
-        /// Time to wait for response from Consul.
+        /// Time to wait for http response from Consul.
+        /// When UseLongPolling=true,  defines the maximum time to wait on long-polling.
+        /// When UseLongPolling=false, defines the timeout for Consul http requests.
         /// </summary>
-        public TimeSpan ReloadTimeout { get; set; } = TimeSpan.FromMinutes(2);
+        public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
         /// <summary>
-        /// Interval for retrying acces to Consul in case source is undefined (e.g. Service is not deployed)
+        /// Interval for retrying acces to Consul in case service is missing on Consul (e.g. service is not deployed)
         /// </summary>
-        public TimeSpan UndefinedRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
+        public TimeSpan ServiceMissingRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// Interval for retrying access to surce (e.g. Consul) after an error has occured

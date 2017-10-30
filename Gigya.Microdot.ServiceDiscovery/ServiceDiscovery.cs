@@ -117,13 +117,14 @@ namespace Gigya.Microdot.ServiceDiscovery
                     return;
             }
 
+            var originatingSource = await GetDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
+
             var shouldCreateMasterPool = newConfig.EnvironmentFallbackEnabled &&
-                                         newServiceConfig.SupportsFallback &&
+                                         newServiceConfig.Scope == ServiceScope.Environment &&
+                                         originatingSource.SupportsFallback &&
                                          _originatingDeployment.Equals(_masterDeployment) == false;
 
             IServiceDiscoverySource masterSource = null;
-
-            var originatingSource = await GetDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
 
             if (shouldCreateMasterPool)
                 masterSource = await GetDiscoverySource(_masterDeployment, newServiceConfig).ConfigureAwait(false);

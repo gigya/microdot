@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         public const string Name = "Consul";
 
         public override string SourceName => Name;
-        
+        public override bool SupportsFallback => true;
         public override bool IsServiceDeploymentDefined => ConsulClient.Result.IsQueryDefined;
 
         private IConsulClient ConsulClient { get; set; }

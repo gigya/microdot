@@ -40,6 +40,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public abstract bool IsServiceDeploymentDefined { get; }
         public abstract string SourceName { get; }
+        public virtual bool SupportsFallback => false;
 
 
         public virtual Task Init() => Task.FromResult(1);
