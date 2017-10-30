@@ -84,5 +84,6 @@ namespace Gigya.Microdot.Fakes
         {
             Data[key] = value;
         }
+
     }
 }

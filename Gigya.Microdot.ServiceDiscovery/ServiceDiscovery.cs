@@ -30,6 +30,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.SharedLogic.Exceptions;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
@@ -53,7 +54,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private readonly string _serviceName;
         private readonly ReachabilityChecker _reachabilityChecker;
         private readonly IRemoteHostPoolFactory _remoteHostPoolFactory;
-        private readonly IDiscoverySourceLoader _discoverySourceLoader;
+        private readonly IDiscoverySourceLoader _serviceDiscoveryLoader;
         private readonly object _locker = new object();
         private readonly IDisposable _configBlockLink;
         private readonly BroadcastBlock<string> _endPointsChanged = new BroadcastBlock<string>(null);
@@ -66,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         public ServiceDiscovery(string serviceName,
                                 ReachabilityChecker reachabilityChecker,
                                 IRemoteHostPoolFactory remoteHostPoolFactory,
-                                IDiscoverySourceLoader discoverySourceLoader,
+                                IDiscoverySourceLoader serviceDiscoveryLoader,
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory)
@@ -77,7 +78,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             _reachabilityChecker = reachabilityChecker;
             _remoteHostPoolFactory = remoteHostPoolFactory;
-            _discoverySourceLoader = discoverySourceLoader;
+            _serviceDiscoveryLoader = serviceDiscoveryLoader;
 
             // Must be run in Task.Run() because of incorrect Orleans scheduling
             _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
@@ -120,12 +121,12 @@ namespace Gigya.Microdot.ServiceDiscovery
                                          newServiceConfig.SupportsFallback &&
                                          _originatingDeployment.Equals(_masterDeployment) == false;
 
-            ServiceDiscoverySourceBase masterSource = null;
+            IServiceDiscoverySource masterSource = null;
 
-            var originatingSource = await GetServiceDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
+            var originatingSource = await GetDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
 
             if (shouldCreateMasterPool)
-                masterSource = await GetServiceDiscoverySource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
+                masterSource = await GetDiscoverySource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
 
             lock (_locker)
             {
@@ -171,7 +172,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private RemoteHostPool CreatePool(
             ServiceDeployment serviceDeployment,
             List<IDisposable> blockLinks,
-            ServiceDiscoverySourceBase discoverySource)
+            IServiceDiscoverySource discoverySource)
         {
             var result = _remoteHostPoolFactory.Create(serviceDeployment, discoverySource, _reachabilityChecker);
 
@@ -199,13 +200,14 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
 
-        private async Task<ServiceDiscoverySourceBase> GetServiceDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
+        private async Task<IServiceDiscoverySource> GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
         {
-            var discoverySource = _discoverySourceLoader.GetDiscoverySource(serviceDeployment, config);
+            var source = _serviceDiscoveryLoader.GetDiscoverySource(serviceDeployment, config);
 
-            // TODO: RemoteHostPool should either deal with uninitialized source or request different class which represents initialized source
-            await discoverySource.InitCompleted.ConfigureAwait(false);
-            return discoverySource;
+            await source.Init().ConfigureAwait(false);
+
+            return source;
+
         }
 
 

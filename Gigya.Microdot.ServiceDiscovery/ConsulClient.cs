@@ -192,7 +192,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<string> GetServiceVersion()
         {
             var config = GetConfig();
-            var urlCommand = $"/v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.ReloadTimeout.Seconds}s";
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.ReloadTimeout.Seconds}s";
             var response = await CallConsul(urlCommand, config.ReloadTimeout, i => _versionModifyIndex = i).ConfigureAwait(false);
             var keyValue = TryDeserialize<KeyValueResponse[]>(response);
             var version = keyValue?.FirstOrDefault()?.DecodeValue()?.Version;
@@ -209,7 +209,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return false;
 
             var config = GetConfig();            
-            var urlCommand = $"/v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.ReloadTimeout.Seconds}s";
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.ReloadTimeout.Seconds}s";
             var response = await CallConsul(urlCommand, config.ReloadTimeout, i => _endpointsModifyIndex = i).ConfigureAwait(false);
             var deserializedResponse = TryDeserialize<ServiceEntry[]>(response);
             if (deserializedResponse != null)
@@ -223,7 +223,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         public async Task<bool> GetEndpointsByQuery()
         {
             var config = GetConfig();
-            var consulQuery = $"/v1/query/{_serviceName}/execute?dc={DataCenter}";
+            var consulQuery = $"v1/query/{_serviceName}/execute?dc={DataCenter}";
             var response = await CallConsul(consulQuery, config.ReloadTimeout, null);
             var deserializedResponse = TryDeserialize<ConsulQueryExecuteResponse>(response);
             if (deserializedResponse != null)

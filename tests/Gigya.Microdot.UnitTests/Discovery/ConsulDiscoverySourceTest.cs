@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
@@ -15,8 +15,6 @@ using Ninject;
 using NSubstitute;
 
 using NUnit.Framework;
-
-using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
@@ -40,11 +38,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private ServiceScope _serviceScope;
         private string _requestedConsulServiceName;
         private TimeSpan _reloadInterval = TimeSpan.FromSeconds(1);
+        private Dictionary<string, string> _configDic;
 
         [SetUp]
         public void Setup()
         {
-            _unitTestingKernel = new TestingKernel<ConsoleLog>();
+            _configDic = new Dictionary<string, string>();
+            _unitTestingKernel = new TestingKernel<ConsoleLog>(k=>k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>(), _configDic);
 
             var environmentVarialbesMock = Substitute.For<IEnvironmentVariableProvider>();
             environmentVarialbesMock.DeploymentEnvironment.Returns(ENV);
@@ -85,7 +85,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public async Task ServiceInEnvironmentScope()
         {
-            _serviceScope = ServiceScope.Environment;
+            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "Environment";            
             await GetFirstResult().ConfigureAwait(false);
             Assert.AreEqual($"{SERVICE_NAME}-{ENV}", _requestedConsulServiceName);
         }
@@ -93,7 +93,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public async Task ServiceInDataCenterScope()
         {
-            _serviceScope = ServiceScope.DataCenter;
+            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "DataCenter";            
             await GetFirstResult().ConfigureAwait(false);
             Assert.AreEqual($"{SERVICE_NAME}", _requestedConsulServiceName);
         }
@@ -107,6 +107,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var sourceFactory = Kernel.Get<Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
             var serviceContext = new ServiceDeployment(SERVICE_NAME, ENV);
             _consulDiscoverySource = sourceFactory(serviceContext, config);
+            _consulDiscoverySource.Init();
             await GetNewResult();
         }
 

@@ -340,7 +340,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
     internal class DiscoverySourceMock : ServiceDiscoverySourceBase
     {
 
-        public DiscoverySourceMock(string deploymentName, string initialEndPoints) : base(deploymentName)
+        public DiscoverySourceMock(string deployment, string initialEndPoints) : base(deployment)
         {
             Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue(initialEndPoints)};
         }
@@ -354,7 +354,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     .Select(_ => new EndPoint { HostName = _ })
                     .ToArray()};
 
-            EndPointsChanged.Post(Result);
+            EndpointsChangedBroadcast.Post(Result);
             Task.Delay(100).Wait();
         }
 
@@ -372,6 +372,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public bool AlwaysThrowException=false;
 
         public override bool IsServiceDeploymentDefined => true;
+        public override string SourceName => "Mock";
+
+        public override Task Init()
+        {
+            return Task.FromResult(true);
+        }
+
         public override Exception AllEndpointsUnreachable(EndPointsResult endpointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)
         {
             return new EnvironmentException("All endpoints unreachable");

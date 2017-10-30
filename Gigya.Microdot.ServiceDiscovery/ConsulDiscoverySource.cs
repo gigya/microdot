@@ -23,43 +23,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-
-    public class ConsulDiscoverySourceFactory : IDiscoverySourceFactory
-    {
-        public string SourceName => ConsulDiscoverySource.Name;
-
-        private readonly Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> _createSource;
-
-        public ConsulDiscoverySourceFactory(Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> createSource)
-        {
-            _createSource = createSource;
-        }
-
-        public ServiceDiscoverySourceBase CreateSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
-        {
-            return _createSource(serviceDeployment, serviceDiscoveryConfig);
-        }
-    }
-
     public class ConsulDiscoverySource : ServiceDiscoverySourceBase
     {
         public const string Name = "Consul";
-        public override Task InitCompleted => _initialized.Task;
+
+        public override string SourceName => Name;
+        
         public override bool IsServiceDeploymentDefined => ConsulClient.Result.IsQueryDefined;
 
-        private IConsulClient ConsulClient { get; }
+        private IConsulClient ConsulClient { get; set; }
 
+        private readonly Func<string, IConsulClient> _getConsulClient;
         private readonly ILog _log;
 
         private readonly object _resultLocker = new object();
@@ -69,18 +52,31 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _firstTime = true;
 
         private EndPointsResult _lastResult;
-        private readonly IDisposable _resultChangedLink;
+        private IDisposable _resultChangedLink;
+        private readonly object _initLock = new object();
+
+        private bool _disposed; 
 
         public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
-            ServiceDiscoveryConfig serviceDiscoveryConfig, Func<string, IConsulClient> getConsulClient, ILog log)
-            : base(GetDeploymentName(serviceDeployment, serviceDiscoveryConfig))
+            Func<DiscoveryConfig> getConfig,
+            Func<string, IConsulClient> getConsulClient, ILog log)
+            : base(GetDeploymentName(serviceDeployment, getConfig().Services[serviceDeployment.ServiceName]))
 
-        {
+        {            
+            _getConsulClient = getConsulClient;            
             _log = log;
-            ConsulClient = getConsulClient(DeploymentName);
 
-            _initialized = new TaskCompletionSource<bool>();
-            _resultChangedLink = ConsulClient.ResultChanged.LinkTo(new ActionBlock<EndPointsResult>(r=>ConsulResultChanged(r)));
+            _initialized = new TaskCompletionSource<bool>();            
+        }
+
+        public override Task Init()
+        {
+            ConsulClient = _getConsulClient(Deployment);
+            lock (_initLock)
+                if (_resultChangedLink==null)
+                    _resultChangedLink = ConsulClient.ResultChanged.LinkTo(new ActionBlock<EndPointsResult>(r => ConsulResultChanged(r)));
+
+            return _initialized.Task;
         }
 
         private void ConsulResultChanged(EndPointsResult newResult)
@@ -94,7 +90,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     if (newResult.IsQueryDefined==false)
                         _log.Warn(x => x("Service has become undefined on Consul", unencryptedTags: new
                         {
-                            serviceName = DeploymentName
+                            serviceName = Deployment
                         }));
                 }
                 else if (!OrderedEndpoints(newResult.EndPoints).SequenceEqual(OrderedEndpoints(Result.EndPoints)))
@@ -102,7 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     shouldReportChanges = true;
                     _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
                     {
-                        serviceName = DeploymentName,
+                        serviceName = Deployment,
                         endpoints = string.Join(", ", newResult.EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
                     }));
                 }
@@ -111,7 +107,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     Result = newResult;
 
                 if (shouldReportChanges && !_firstTime)
-                    EndPointsChanged?.Post(Result);
+                    EndpointsChangedBroadcast.Post(Result);
 
                 _lastResult = newResult;
                 _firstTime = false;
@@ -130,7 +126,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 var tags = new Tags
                 {
-                    {"requestedService", DeploymentName},
+                    {"requestedService", Deployment},
                     {"consulAddress", ConsulClient?.ConsulAddress?.ToString()},
                     { "requestTime", endPointsResult.RequestDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") },
                     { "requestLog", endPointsResult.RequestLog },
@@ -162,7 +158,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     {
                         {"consulAddress", ConsulClient.ConsulAddress.ToString()},
                         { "unreachableHosts", unreachableHosts },
-                        {"requestedService", DeploymentName},
+                        {"requestedService", Deployment},
                         { "innerExceptionIsForEndPoint", lastExceptionEndPoint }
                     });
             }
@@ -170,7 +166,10 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public override void ShutDown()
         {
-            _resultChangedLink.Dispose();
+            if (!_disposed)
+                _resultChangedLink?.Dispose();
+
+            _disposed = true;
         }
 
         public static string GetDeploymentName(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)

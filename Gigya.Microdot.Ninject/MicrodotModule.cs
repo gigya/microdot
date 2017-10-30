@@ -65,9 +65,11 @@ namespace Gigya.Microdot.Ninject
             Rebind<MetricsContext>()
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))
                 .InScope(GetTypeOfTarget);
-            Rebind<ConsulDiscoverySource>().ToSelf().InTransientScope();
-            Rebind<LocalDiscoverySource>().ToSelf().InTransientScope();
-            Rebind<ConfigDiscoverySource>().ToSelf().InTransientScope();
+
+            Rebind<IServiceDiscoverySource>().To<ConsulDiscoverySource>().InTransientScope();
+            Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
+            Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
+
             Kernel.BindPerString<IConsulClient, ConsulClient>();
 
             Kernel.Load<ServiceProxyModule>();

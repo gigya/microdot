@@ -29,37 +29,23 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    public class ConfigDiscoverySourceFactory : IDiscoverySourceFactory
-    {
-        private readonly Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> _createSource;
-        public string SourceName => "Config";
-
-        public ConfigDiscoverySourceFactory(Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> createSource)
-        {
-            _createSource = createSource;
-        }
-
-        public ServiceDiscoverySourceBase CreateSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
-        {
-            return _createSource(serviceDeployment.ServiceName, serviceDiscoveryConfig);
-        }
-    }
-
     /// <summary>
     /// Returns a list of endpoints from configuration. Note: When the configuration changes, this object is recreated
     /// with updated settings, hence we don't listen to changes ourselves.
     /// </summary>
     public class ConfigDiscoverySource : ServiceDiscoverySourceBase
     {
+        public override string SourceName => "Config";
+
         private readonly ServiceDiscoveryConfig _serviceDiscoveryConfig;
 
         private ILog Log { get; }
 
-        private string ConfigPath => $"Discovery.{DeploymentName}";
+        private string ConfigPath => $"Discovery.{Deployment}";
 
-        public ConfigDiscoverySource(string deploymentName, ServiceDiscoveryConfig serviceDiscoveryConfig, ILog log) : base(deploymentName)
-        {
-            _serviceDiscoveryConfig = serviceDiscoveryConfig;
+        public ConfigDiscoverySource(ServiceDeployment deployment, Func<DiscoveryConfig> getConfig, ILog log) : base(deployment.ServiceName)
+        {            
+            _serviceDiscoveryConfig = getConfig().Services[deployment.ServiceName];
             Log = log;
             Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue()};
         }
@@ -75,7 +61,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             Log.Debug(_ => _("Loaded RemoteHosts instance. See tags for details.", unencryptedTags: new
             {
                 configPath = ConfigPath,
-                componentName = DeploymentName,
+                componentName = Deployment,
                 endPoints = endPoints
             }));
 
@@ -119,8 +105,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                                                 "configuration path where the list of endpoints are expected to be specified.",
                     unencrypted: new Tags
                     {
-                        {"requestedService", DeploymentName},
-                        {"missingConfigPath", $"Discovery.{DeploymentName}.Hosts"}
+                        {"requestedService", Deployment},
+                        {"missingConfigPath", $"Discovery.{Deployment}.Hosts"}
                     });
             }
             else
@@ -134,8 +120,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                     unencrypted: new Tags
                     {
                         { "unreachableHosts", unreachableHosts },
-                        {"configPath", $"Discovery.{DeploymentName}.Hosts"},
-                        {"requestedService", DeploymentName},
+                        {"configPath", $"Discovery.{Deployment}.Hosts"},
+                        {"requestedService", Deployment},
                         { "innerExceptionIsForEndPoint", lastExceptionEndPoint }
                     });
             }

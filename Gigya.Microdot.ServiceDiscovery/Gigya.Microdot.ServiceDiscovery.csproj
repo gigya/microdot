@@ -63,9 +63,9 @@
     <Compile Include="HostManagement\RemoteHost.cs" />
     <Compile Include="HostManagement\RemoteHostPool.cs" />
     <Compile Include="IConsulClient.cs" />
-    <Compile Include="IDiscoverySourceFactory.cs" />
     <Compile Include="IEndPointHandle.cs" />
     <Compile Include="IServiceDiscovery.cs" />
+    <Compile Include="IServiceDiscoverySource.cs" />
     <Compile Include="LocalDiscoverySource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceDeployment.cs" />

@@ -22,37 +22,19 @@
 
 using System;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    public class LocalDiscoverySourceFactory : IDiscoverySourceFactory
-    {
-        public string SourceName => "Local";
-
-        private readonly Func<string, LocalDiscoverySource> _createSource;
-
-
-        public LocalDiscoverySourceFactory(Func<string, LocalDiscoverySource> createSource)
-        {
-            _createSource = createSource;
-        }
-
-        public ServiceDiscoverySourceBase CreateSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
-        {
-            return _createSource(serviceDeployment.ServiceName);
-        }
-    }
-
     /// <summary>
     /// Returns the current computer as the sole node in the list of endpoints. Never changes.
     /// </summary>
     public class LocalDiscoverySource : ServiceDiscoverySourceBase
     {
+        public override string SourceName => "Local";
 
-        public LocalDiscoverySource(string serviceName) : base($"{CurrentApplicationInfo.HostName}-{serviceName}")
+        public LocalDiscoverySource(ServiceDeployment serviceDeployment) : base($"{CurrentApplicationInfo.HostName}-{serviceDeployment.ServiceName}")
         {
             Result = new EndPointsResult{EndPoints  = new[] { new EndPoint { HostName = CurrentApplicationInfo.HostName }}} ;
         }
@@ -64,8 +46,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                 unencrypted: new Tags
                 {
                     {"unreachableHosts", unreachableHosts},
-                    {"configPath", $"Discovery.{DeploymentName}.Source"},
-                    {"requestedService", DeploymentName},
+                    {"configPath", $"Discovery.{Deployment}.Source"},
+                    {"requestedService", Deployment},
                     {"innerExceptionIsForEndPoint", lastExceptionEndPoint}
                 });
         }
