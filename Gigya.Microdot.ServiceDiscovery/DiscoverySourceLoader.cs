@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Exceptions;
 
@@ -28,34 +29,26 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public class DiscoverySourceLoader : IDiscoverySourceLoader
     {
-        public DiscoverySourceLoader(Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource>  getConfigDiscoverySource,
-                                     Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> getConsulDiscoverySourc)
+        private readonly Func<ServiceDeployment, IServiceDiscoverySource[]> _getSources;
+
+        public DiscoverySourceLoader(Func<ServiceDeployment, IServiceDiscoverySource[]> getSources)
         {
-            _getConfigDiscoverySource = getConfigDiscoverySource;
-            _getConsulDiscoverySource = getConsulDiscoverySourc;
+            _getSources = getSources;
         }
 
-        private readonly Func<string, ServiceDiscoveryConfig, ConfigDiscoverySource> _getConfigDiscoverySource;
-        private readonly Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource> _getConsulDiscoverySource;
-
-        public ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        public IServiceDiscoverySource GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            switch (serviceDiscoverySettings.Source)
-            {
-                case DiscoverySource.Config:
-                    return _getConfigDiscoverySource(serviceDeployment.ServiceName, serviceDiscoverySettings);
-                case DiscoverySource.Consul:
-                    return _getConsulDiscoverySource(serviceDeployment, serviceDiscoverySettings);
-                case DiscoverySource.Local:
-                    return new LocalDiscoverySource(serviceDeployment.ServiceName);
-            }
+            var source = _getSources(serviceDeployment).FirstOrDefault(f=>f.SourceName.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
 
-            throw new ConfigurationException($"Source '{serviceDiscoverySettings.Source}' is not supported by any configuration.");
+            if (source==null)
+                throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");
+
+            return source;
         }
     }
 
     public interface IDiscoverySourceLoader
     {
-        ServiceDiscoverySourceBase GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings);
+        IServiceDiscoverySource GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig);
     }
 }

@@ -69,7 +69,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         private MetricsContext Metrics { get; }
         private IDisposable EndPointsChangedBlockLink { get; }
         private BroadcastBlock<ServiceReachabilityStatus> ReachabilityBroadcaster { get; }
-        private ServiceDiscoverySourceBase DiscoverySource { get; }
+        private IServiceDiscoverySource DiscoverySource { get; }
 
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         /// <param name="log">An implementation of <see cref="ILog"/> used for logging.</param>
         public RemoteHostPool(
             ServiceDeployment serviceDeployment
-            , ServiceDiscoverySourceBase discovery
+            , IServiceDiscoverySource discovery
             , ReachabilityChecker reachabilityChecker
             , Func<DiscoveryConfig> getDiscoveryConfig
             , ILog log
@@ -94,7 +94,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             GetDiscoveryConfig = getDiscoveryConfig;
             Log = log;
             ReachabilityBroadcaster = new BroadcastBlock<ServiceReachabilityStatus>(null);
-            Health = healthMonitor.Get(discovery.DeploymentName);
+            Health = healthMonitor.Get(discovery.Deployment);
             Health.SetHealthData(HealthData);
 
             ReachableHosts = new List<RemoteHost>();
@@ -102,7 +102,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             EndPointsChangedBlockLink = discovery.EndPointsChanged.LinkTo(new ActionBlock<EndPointsResult>(_ => ReloadEndpoints(_)));
             ReloadEndpoints(discovery.Result);
             Metrics = metrics;
-            var metricsContext = Metrics.Context(DiscoverySource.DeploymentName);
+            var metricsContext = Metrics.Context(DiscoverySource.Deployment);
             metricsContext.Gauge("ReachableHosts", () => ReachableHosts.Count, Unit.Custom("EndPoints"));
             metricsContext.Gauge("UnreachableHosts", () => UnreachableHosts.Count, Unit.Custom("EndPoints"));
 
@@ -367,8 +367,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         {
             lock (_lock)
             {
-                EndPointsChangedBlockLink.Dispose();
-                DiscoverySource.ShutDown();
+                EndPointsChangedBlockLink.Dispose();                
                 foreach (var host in ReachableHosts.Concat(UnreachableHosts))
                     host.StopMonitoring();
                 ReachabilityBroadcaster.Complete();
@@ -388,7 +387,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
     public interface IRemoteHostPoolFactory
     {
-        RemoteHostPool Create(ServiceDeployment serviceDeployment, ServiceDiscoverySourceBase discovery,
+        RemoteHostPool Create(ServiceDeployment serviceDeployment, IServiceDiscoverySource discovery,
                               ReachabilityChecker reachabilityChecker);
     }
 }

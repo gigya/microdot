@@ -30,10 +30,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     [Serializable]
     public class ServiceDiscoveryConfig
     {
-
-
-        public bool SupportsFallback => Source == DiscoverySource.Consul && Scope == ServiceScope.Environment;
-
         /// <summary>
         /// Scope where this service is installed.
         /// Some services are installed for current environment only (itg1, prod, etc.)
@@ -65,12 +61,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.
         /// </summary>
-        public DiscoverySource? Source { get; set; }
-
-        /// <summary>
-        /// Interval for reloading endpoints from source (e.g. Consul), in Milliseconds
-        /// </summary>
-        public TimeSpan? ReloadInterval { get; set; }
+        public string Source { get; set; }
 
         public string Hosts { get; set; }
 
@@ -114,7 +105,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                    MaxAttemptDelaySeconds.Equals(other.MaxAttemptDelaySeconds) &&
                    DelayMultiplier.Equals(other.DelayMultiplier) &&
                    Source == other.Source &&
-                   ReloadInterval.Equals(other.ReloadInterval) &&
                    string.Equals(Hosts, other.Hosts) &&
                    DefaultPort == other.DefaultPort &&
                    DefaultSlotNumber == other.DefaultSlotNumber &&
@@ -134,8 +124,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                 hashCode = (hashCode * 397) ^ FirstAttemptDelaySeconds.GetHashCode();
                 hashCode = (hashCode * 397) ^ MaxAttemptDelaySeconds.GetHashCode();
                 hashCode = (hashCode * 397) ^ DelayMultiplier.GetHashCode();
-                hashCode = (hashCode * 397) ^ Source.GetHashCode();
-                hashCode = (hashCode * 397) ^ ReloadInterval.GetHashCode();
+                hashCode = (hashCode * 397) ^ Source.GetHashCode();                
                 hashCode = (hashCode * 397) ^ (Hosts != null ? Hosts.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ DefaultPort.GetHashCode();
                 hashCode = (hashCode * 397) ^ DefaultSlotNumber.GetHashCode();

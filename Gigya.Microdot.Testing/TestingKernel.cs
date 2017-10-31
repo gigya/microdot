@@ -38,16 +38,16 @@ using NSubstitute;
 
 namespace Gigya.Microdot.Testing
 {
-   
-    public class TestingKernel<T>: StandardKernel where T : ILog, new()
+
+    public class TestingKernel<T> : StandardKernel where T : ILog, new()
     {
         public const string APPNAME = "InfraTests";
 
         public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
-        {            
+        {
             CurrentApplicationInfo.Init(APPNAME);
-          
-            
+
+
             this.Load<MicrodotModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
@@ -61,13 +61,13 @@ namespace Gigya.Microdot.Testing
             additionalBindings?.Invoke(this);
 
             Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
-                  .To<ManualConfigurationEvents>()
-                  .InSingletonScope();
+                .To<ManualConfigurationEvents>()
+                .InSingletonScope();
 
             Rebind<IConfigItemsSource, OverridableConfigItems>()
-                  .To<OverridableConfigItems>()
-                  .InSingletonScope()
-                  .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
+                .To<OverridableConfigItems>()
+                .InSingletonScope()
+                .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
 
 
 
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.Testing
         {
             return this.Get<OverridableConfigItems>();
         }
-       
+
         public void RaiseConfigChangeEvent()
         {
             this.Get<ManualConfigurationEvents>().RaiseChangeEvent();

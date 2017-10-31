@@ -48,8 +48,8 @@
     <Compile Include="Config\CachingPolicyCollection.cs" />
     <Compile Include="Config\CachingPolicyConfig.cs" />
     <Compile Include="Config\ConfigCollection.cs" />
+    <Compile Include="Config\ConsulConfig.cs" />
     <Compile Include="Config\DiscoveryConfig.cs" />
-    <Compile Include="Config\DiscoverySource.cs" />
     <Compile Include="Config\MethodCachingPolicyConfig.cs" />
     <Compile Include="Config\PortAllocationConfig.cs" />
     <Compile Include="Config\ServiceDiscoveryCollection.cs" />
@@ -66,6 +66,7 @@
     <Compile Include="IConsulClient.cs" />
     <Compile Include="IEndPointHandle.cs" />
     <Compile Include="IServiceDiscovery.cs" />
+    <Compile Include="IServiceDiscoverySource.cs" />
     <Compile Include="LocalDiscoverySource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceDeployment.cs" />

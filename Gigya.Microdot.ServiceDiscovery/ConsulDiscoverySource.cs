@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,142 +21,102 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    /// <summary>
-    /// Reads a list of endpoints from Consul based on the service name it was initialized with and continuously listens/
-    /// polls Consul for endpoint changes.
-    /// </summary>
     public class ConsulDiscoverySource : ServiceDiscoverySourceBase
     {
-        public override Task InitCompleted => _initialized;
-        public override bool IsServiceDeploymentDefined =>  IsDeploymentDefined(_lastConsulResult);
+        public const string Name = "Consul";
 
-        private bool IsDeploymentDefined(EndPointsResult endPointsResult)
-        {
-            if(endPointsResult == null) return true;
+        public override string SourceName => Name;
+        public override bool SupportsFallback => true;
+        public override bool IsServiceDeploymentDefined => ConsulClient.Result.IsQueryDefined;
 
-            return endPointsResult.IsQueryDefined;
-        }
+        private IConsulClient ConsulClient { get; set; }
 
-        private IConsulClient ConsulClient { get; }
-        private CancellationTokenSource ShutdownToken { get; }
-        private readonly ServiceDiscoveryConfig _config;
-        private readonly IDateTime _dateTime;
+        private readonly Func<string, IConsulClient> _getConsulClient;
         private readonly ILog _log;
-        private EndPointsResult _lastConsulResult;
-        private readonly object _lastResultLocker = new object();
-        private Task _initialized;
+
+        private readonly object _resultLocker = new object();
+
+        private readonly TaskCompletionSource<bool> _initialized;
+
         private bool _firstTime = true;
 
+        private EndPointsResult _lastResult;
+        private IDisposable _resultChangedLink;
+        private readonly object _initLock = new object();
+
+        private bool _disposed; 
+
         public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
-                                     ServiceDiscoveryConfig serviceDiscoveryConfig,
-                                     IConsulClient consulClient,
-                                     IDateTime dateTime, ILog log)
-            : base(GetDeploymentName(serviceDeployment, serviceDiscoveryConfig))
+            Func<DiscoveryConfig> getConfig,
+            Func<string, IConsulClient> getConsulClient, ILog log)
+            : base(GetDeploymentName(serviceDeployment, getConfig().Services[serviceDeployment.ServiceName]))
 
-        {
-            ConsulClient = consulClient;
-            _config = serviceDiscoveryConfig;
-            _dateTime = dateTime;
+        {            
+            _getConsulClient = getConsulClient;            
             _log = log;
-            ShutdownToken = new CancellationTokenSource();
-            Task.Run(() => RefreshHostForever(ShutdownToken.Token));
-            _initialized = Task.Run(Load); // Must be run in Task.Run() because of incorrect Orleans scheduling
+
+            _initialized = new TaskCompletionSource<bool>();            
         }
 
-        private static string GetDeploymentName(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        public override Task Init()
         {
-            if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
-            {
-                return serviceDeployment.ServiceName;
-            }
-            return $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+            ConsulClient = _getConsulClient(Deployment);
+            lock (_initLock)
+                if (_resultChangedLink==null)
+                    _resultChangedLink = ConsulClient.ResultChanged.LinkTo(new ActionBlock<EndPointsResult>(r => ConsulResultChanged(r)));
+
+            return _initialized.Task;
         }
 
-        private async Task RefreshHostForever(CancellationToken shutdownToken)
+        private void ConsulResultChanged(EndPointsResult newResult)
         {
-            while (shutdownToken.IsCancellationRequested == false)
+            lock (_resultLocker)
             {
-                try
+                var shouldReportChanges = false;
+                if (newResult.IsQueryDefined != Result.IsQueryDefined)
                 {
-                    await Load().ConfigureAwait(false);
+                    shouldReportChanges = true;
+                    if (newResult.IsQueryDefined==false)
+                        _log.Warn(x => x("Service has become undefined on Consul", unencryptedTags: new {serviceName = Deployment}));
+                    else
+                        _log.Info(x => x("Service has become defined on Consul", unencryptedTags: new { serviceName = Deployment }));
                 }
-                catch (Exception e)
+                else if (!OrderedEndpoints(newResult.EndPoints).SequenceEqual(OrderedEndpoints(Result.EndPoints)))
                 {
-                    _log.Critical("Failed to load endpoints from Consul", e);
-                }
-
-                await _dateTime.Delay(_config.ReloadInterval.Value).ConfigureAwait(false);
-            }
-        }
-
-        private async Task Load()
-        {
-            var newConsulResult = await ConsulClient.GetEndPoints(DeploymentName).ConfigureAwait(false);
-            lock (_lastResultLocker)
-            {
-
-                var oldConsulResult = _lastConsulResult;
-                _lastConsulResult = newConsulResult;
-
-                if (IsDeploymentDefined(oldConsulResult) && !IsDeploymentDefined(newConsulResult))
-                    _log.Warn(x=>x("Service has become undefined on Consul", unencryptedTags: new
+                    shouldReportChanges = true;
+                    _log.Info(_ => _("Obtained a new list of endpoints for service from Consul", unencryptedTags: new
                     {
-                        serviceName = DeploymentName                        
+                        serviceName = Deployment,
+                        endpoints = string.Join(", ", newResult.EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
                     }));
-
-                if (newConsulResult.Error != null)
-                {
-                    if (_firstTime)
-                    {
-                        _firstTime = false;
-                        Result = newConsulResult;
-                    }                
-                    return;
-                }
-                
-                var newEndPoints = newConsulResult
-                    .EndPoints
-                    .OrderBy(x => x.HostName)
-                    .ThenBy(x => x.Port)
-                    .ToArray();
-                bool isEndPointChanged = false;
-                if (newEndPoints.SequenceEqual(Result.EndPoints) == false)
-                {
-                    newConsulResult.EndPoints = newEndPoints;
-                    Result = newConsulResult;
-
-                    _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
-                    {
-                        serviceName = DeploymentName,
-                        endpoints = string.Join(", ", newEndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))
-                    }));
-
-                    isEndPointChanged = true;
                 }
 
-                bool isDeploymentDefinedChanged = IsDeploymentDefined(oldConsulResult) != IsDeploymentDefined(newConsulResult);
+                if (_firstTime || newResult.Error == null || Result.Error != null)
+                    Result = newResult;
 
+                if (shouldReportChanges && !_firstTime)
+                    EndpointsChangedBroadcast.Post(Result);
 
-                if (!_firstTime && (isEndPointChanged || isDeploymentDefinedChanged))
-                    EndPointsChanged?.Post(newConsulResult);
-
-
+                _lastResult = newResult;
                 _firstTime = false;
-
-                _initialized = Task.FromResult(1);
+                _initialized.TrySetResult(true);
             }
+        }
+
+        private IEnumerable<EndPoint> OrderedEndpoints(IEnumerable<EndPoint> endpoints)
+        {
+            return endpoints.OrderBy(x => x.HostName).ThenBy(x => x.Port);
         }
 
         public override Exception AllEndpointsUnreachable(EndPointsResult endPointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)
@@ -165,25 +125,26 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 var tags = new Tags
                 {
-                    {"requestedService", DeploymentName},
+                    {"requestedService", Deployment},
                     {"consulAddress", ConsulClient?.ConsulAddress?.ToString()},
                     { "requestTime", endPointsResult.RequestDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff") },
                     { "requestLog", endPointsResult.RequestLog },
                     { "responseLog", endPointsResult.ResponseLog },
                     { "queryDefined", endPointsResult.IsQueryDefined.ToString() },
-                    { "consulError", endPointsResult.Error?.ToString() }
+                    { "consulError", endPointsResult.Error?.ToString() },
+                    { "activeVersion", endPointsResult.ActiveVersion }
                 };
 
-                if (_lastConsulResult == null)
+                if (_lastResult == null)
                     return new ProgrammaticException("Response not arrived from Consul. " +
                                                      "This should not happen, ConsulDiscoverySource should await until a result is returned from Consul.", unencrypted: tags);
 
                 else if (endPointsResult.Error != null)
                     return new EnvironmentException("Error calling Consul. See tags for details.", unencrypted: tags);
                 else if (endPointsResult.IsQueryDefined == false)
-                    return new EnvironmentException("Query doesn't exists on Consul. See tags for details.", unencrypted: tags);
+                    return new EnvironmentException("Service doesn't exist on Consul. See tags for details.", unencrypted: tags);
                 else
-                    return new EnvironmentException("No endpoint were specified in Consul for the requested service.", unencrypted: tags);
+                    return new EnvironmentException("No endpoint were specified in Consul for the requested service and service's active version.", unencrypted: tags);
             }
             else
             {
@@ -196,7 +157,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     {
                         {"consulAddress", ConsulClient.ConsulAddress.ToString()},
                         { "unreachableHosts", unreachableHosts },
-                        {"requestedService", DeploymentName},
+                        {"requestedService", Deployment},
                         { "innerExceptionIsForEndPoint", lastExceptionEndPoint }
                     });
             }
@@ -204,7 +165,20 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public override void ShutDown()
         {
-            ShutdownToken.Cancel();
+            if (!_disposed)
+                _resultChangedLink?.Dispose();
+
+            _disposed = true;
         }
+
+        public static string GetDeploymentName(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        {
+            if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
+            {
+                return serviceDeployment.ServiceName;
+            }
+            return $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+        }
+
     }
 }

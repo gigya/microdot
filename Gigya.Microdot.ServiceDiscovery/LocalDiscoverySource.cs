@@ -32,7 +32,9 @@ namespace Gigya.Microdot.ServiceDiscovery
     /// </summary>
     public class LocalDiscoverySource : ServiceDiscoverySourceBase
     {
-        public LocalDiscoverySource(string serviceName) : base($"{CurrentApplicationInfo.HostName}-{serviceName}")
+        public override string SourceName => "Local";
+
+        public LocalDiscoverySource(ServiceDeployment serviceDeployment) : base($"{CurrentApplicationInfo.HostName}-{serviceDeployment.ServiceName}")
         {
             Result = new EndPointsResult{EndPoints  = new[] { new EndPoint { HostName = CurrentApplicationInfo.HostName }}} ;
         }
@@ -44,8 +46,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                 unencrypted: new Tags
                 {
                     {"unreachableHosts", unreachableHosts},
-                    {"configPath", $"Discovery.{DeploymentName}.Source"},
-                    {"requestedService", DeploymentName},
+                    {"configPath", $"Discovery.{Deployment}.Source"},
+                    {"requestedService", Deployment},
                     {"innerExceptionIsForEndPoint", lastExceptionEndPoint}
                 });
         }

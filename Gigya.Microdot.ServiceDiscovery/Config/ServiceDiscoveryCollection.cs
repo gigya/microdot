@@ -36,7 +36,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         protected override ServiceDiscoveryConfig ApplyDefaults(ServiceDiscoveryConfig item)
         {
-            item.ReloadInterval = item.ReloadInterval ?? DefaultItem.ReloadInterval;
             item.DelayMultiplier = item.DelayMultiplier ?? DefaultItem.DelayMultiplier;
             item.FirstAttemptDelaySeconds = item.FirstAttemptDelaySeconds ?? DefaultItem.FirstAttemptDelaySeconds;
             item.MaxAttemptDelaySeconds = item.MaxAttemptDelaySeconds ?? DefaultItem.MaxAttemptDelaySeconds;
