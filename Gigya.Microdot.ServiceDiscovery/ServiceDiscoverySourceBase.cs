@@ -29,19 +29,27 @@ namespace Gigya.Microdot.ServiceDiscovery
     /// <summary>
     /// Provides an up-to-date list of endpoints.
     /// </summary>
-    public abstract class ServiceDiscoverySourceBase : IDisposable
-    {
-        public string DeploymentName { get; }
+    public abstract class ServiceDiscoverySourceBase : IServiceDiscoverySource
+    {        
+
+        public string Deployment { get; }
         public EndPointsResult Result { get; protected set; } = new EndPointsResult{EndPoints = new EndPoint[0]};
-        public BroadcastBlock<EndPointsResult> EndPointsChanged { get; } = new BroadcastBlock<EndPointsResult>(null);
+
+        protected BroadcastBlock<EndPointsResult> EndpointsChangedBroadcast = new BroadcastBlock<EndPointsResult>(null);
+        public ISourceBlock<EndPointsResult> EndPointsChanged => EndpointsChangedBroadcast;
+
         public abstract bool IsServiceDeploymentDefined { get; }
-        public virtual Task InitCompleted { get; } = Task.FromResult(1);
+        public abstract string SourceName { get; }
+        public virtual bool SupportsFallback => false;
 
 
-        protected ServiceDiscoverySourceBase(string deploymentName)
+        public virtual Task Init() => Task.FromResult(1);
+
+        protected ServiceDiscoverySourceBase(string deployment)
         {
-            DeploymentName = deploymentName;
+            Deployment = deployment;
         }
+
 
 
         public abstract Exception AllEndpointsUnreachable(

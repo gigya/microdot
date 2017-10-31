@@ -51,11 +51,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public TimeSpan? RequestTimeout { get; set; }
 
         /// <summary>
-        /// Interval for reloading endpoints from source (e.g. Consul), in Milliseconds
-        /// </summary>
-        public TimeSpan ReloadInterval { get; set; } = TimeSpan.FromSeconds(1);
-
-        /// <summary>
         /// When we lose connection to some endpoint, we wait this delay till we start trying to reconnect.
         /// </summary>
         public double FirstAttemptDelaySeconds { get; set; } = 0.001;
@@ -74,7 +69,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.
         /// </summary>
-        public DiscoverySource Source { get; set; } = DiscoverySource.Consul;
+        public string Source { get; set; } = ConsulDiscoverySource.Name;
 
         /// <summary>
         /// The discovery configuration for the various services.
@@ -92,7 +87,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         {
             DefaultItem = new ServiceDiscoveryConfig
             {
-                ReloadInterval = ReloadInterval,
                 DelayMultiplier = DelayMultiplier,
                 FirstAttemptDelaySeconds = FirstAttemptDelaySeconds,
                 MaxAttemptDelaySeconds = MaxAttemptDelaySeconds,

@@ -7,6 +7,7 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Utils;
@@ -19,19 +20,24 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery
 {
     [TestFixture]
-    public class ServiceDiscoveryMasterFallBackTest
+    public class ConsulDiscoveryMasterFallBackTest
     {
+        private const string ServiceVersion = "1.2.30.1234";
         private string _serviceName;
         private const string MASTER_ENVIRONMENT = "prod";
         private const string ORIGINATING_ENVIRONMENT = "MyFakeEnv";
         private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(5);
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
-        private IConsulClient _consulAdapterMock;
+        private Dictionary<string, IConsulClient> _consulClients;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ManualConfigurationEvents _configRefresh;
+        private IDateTime _dateTimeMock;
         private int id;
         private const int Repeat = 1;
+
+        private Dictionary<string, BroadcastBlock<EndPointsResult>> _resultChanged;
+        private Dictionary<string, EndPointsResult> _consulResult;
 
         [SetUp]
         public void SetUp()
@@ -49,14 +55,40 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
 
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
-                _consulAdapterMock = Substitute.For<IConsulClient>();
-                _consulAdapterMock.GetEndPoints(Arg.Any<string>()).Returns(Task.FromResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy" } } }));
-                k.Rebind<IConsulClient>().ToConstant(_consulAdapterMock);
+                SetupConsulClientMocks();
+                k.Rebind<Func<string, IConsulClient>>().ToMethod(_ => (s=> _consulClients[s]));
+
+                _dateTimeMock = Substitute.For<IDateTime>();
+                _dateTimeMock.Delay(Arg.Any<TimeSpan>()).Returns(c=>Task.Delay(TimeSpan.FromMilliseconds(100)));
+                k.Rebind<IDateTime>().ToConstant(_dateTimeMock);
             }, _configDic);
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
    
             var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
             Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
+        }
+
+        private void SetupConsulClientMocks()
+        {
+            _consulClients = new Dictionary<string, IConsulClient>();
+            _consulResult = new Dictionary<string, EndPointsResult>();
+            _resultChanged = new Dictionary<string, BroadcastBlock<EndPointsResult>>();
+
+            CreateConsulMock(MasterService);
+            CreateConsulMock(OriginatingService);
+        }
+
+        private void CreateConsulMock(string serviceName)
+        {
+            var mock = Substitute.For<IConsulClient>();
+
+            _consulResult[serviceName] = new EndPointsResult { EndPoints = new EndPoint[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, IsQueryDefined = true };
+            _resultChanged[serviceName] = new BroadcastBlock<EndPointsResult>(null);
+
+            mock.ResultChanged.Returns(t=>_resultChanged[serviceName]);
+            mock.Result.Returns(t=>_consulResult[serviceName]);
+
+            _consulClients[serviceName] = mock;
         }
 
         [TearDown]
@@ -70,8 +102,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void QueryNotDefinedShouldFallBackToMaster()
         {
             SetMockToReturnHost(MasterService);
-            SetMockToReturnQueryNotFound(OriginatingService);
-            var nextHost = GetServiceDiscovey.GetNextHost();
+            SetMockToReturnServiceNotDefined(OriginatingService);
+            var nextHost = GetServiceDiscovey().GetNextHost();
             nextHost.Result.HostName.ShouldBe(MasterService);
         }
 
@@ -80,8 +112,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task FallBackToMasterShouldNotHaveOriginatingServiceHealth()
         {
             SetMockToReturnHost(MasterService);
-            SetMockToReturnQueryNotFound(OriginatingService);
-            var nextHost = await GetServiceDiscovey.GetNextHost();
+            SetMockToReturnServiceNotDefined(OriginatingService);
+            var nextHost = await GetServiceDiscovey().GetNextHost();
             HealthChecks.GetStatus().Results.Single(_ => _.Name == MasterService).Check.IsHealthy.ShouldBeTrue();
             HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService);
         }
@@ -90,9 +122,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task NoFallBackShouldNotHavMasterServiceHealth()
         {
-            SetMockToReturnQueryNotFound(MasterService);
+            SetMockToReturnServiceNotDefined(MasterService);
             SetMockToReturnHost(OriginatingService);
-            var nextHost = await GetServiceDiscovey.GetNextHost();
+            var nextHost = await GetServiceDiscovey().GetNextHost();
             HealthChecks.GetStatus().Results.Single(_ => _.Name == OriginatingService).Check.IsHealthy.ShouldBeTrue();
             HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService);
         }
@@ -102,8 +134,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void CreateServiceDiscoveyWithoutGetNextHostNoServiceHealthShouldAppear()
         {
             SetMockToReturnHost(MasterService);
-            SetMockToReturnQueryNotFound(OriginatingService);
-            var serviceDiscovey = GetServiceDiscovey;
+            SetMockToReturnServiceNotDefined(OriginatingService);
+            var serviceDiscovey = GetServiceDiscovey();
             HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService);
             HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService);
         }
@@ -114,7 +146,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "DataCenter";
             SetMockToReturnHost(_serviceName);
-            var nextHost = GetServiceDiscovey.GetNextHost();
+            var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);
         }
 
@@ -128,13 +160,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var discovey = GetServiceDiscovey;
+            var discovey = GetServiceDiscovey();
             var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(OriginatingService);
 
-            SetMockToReturnQueryNotFound(OriginatingService);
+            SetMockToReturnServiceNotDefined(OriginatingService);
             await waitForEvents;
 
             nextHost = discovey.GetNextHost();
@@ -149,28 +181,29 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
 
             SetMockToReturnHost(MasterService);
-            SetMockToReturnQueryNotFound(OriginatingService);
+            SetMockToReturnServiceNotDefined(OriginatingService);
 
-            var discovey = GetServiceDiscovey;
-            var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
+            var discovey = GetServiceDiscovey();
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(MasterService);
-            SetMockToReturnHost(OriginatingService);
 
+            var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
+            SetMockToReturnHost(OriginatingService);
             await waitForEvents;
-            nextHost = GetServiceDiscovey.GetNextHost();
+
+            nextHost = GetServiceDiscovey().GetNextHost();
             nextHost.Result.HostName.ShouldBe(OriginatingService);
         }
 
         [Test]
         [Repeat(Repeat)]
-        public void ShouldNotFallBackToMasterOnConsulError()
+        public async Task ShouldNotFallBackToMasterOnConsulError()
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            var exception = Should.Throw<EnvironmentException>(() => GetServiceDiscovey.GetNextHost());
-            exception.UnencryptedTags["responseLog"].ShouldBe("Mock: some error");
+            var exception = Should.Throw<EnvironmentException>(()=>GetServiceDiscovey().GetNextHost());
+            exception.UnencryptedTags["responseLog"].ShouldBe("Error response log");
             exception.UnencryptedTags["queryDefined"].ShouldBe("True");
             exception.UnencryptedTags["consulError"].ShouldNotBeNullOrEmpty();
             exception.UnencryptedTags["requestedService"].ShouldBe(OriginatingService);
@@ -184,7 +217,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var nextHost = GetServiceDiscovey.GetNextHost();
+            var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(OriginatingService);
         }
 
@@ -197,9 +230,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _environmentVariableProvider.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
             _unitTestingKernel.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
 
-            SetMockToReturnQueryNotFound(MasterService);
+            SetMockToReturnServiceNotDefined(MasterService);
 
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovey.GetNextHost());
+            Should.Throw<EnvironmentException>(() => GetServiceDiscovey().GetNextHost());
         }
 
         [Test]
@@ -213,7 +246,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovey;
+            var discovey = GetServiceDiscovey();
             discovey.GetNextHost();
             discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => numOfEvent++));
             Thread.Sleep(200);
@@ -235,7 +268,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovey;
+            var discovey = GetServiceDiscovey();
             var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
 
             await discovey.GetNextHost();
@@ -259,7 +292,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovey;
+            var discovey = GetServiceDiscovey();
 
             //wait for discovey to be initialize!!
             var endPoints = await discovey.GetAllEndPoints();
@@ -291,24 +324,23 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
-            var discovey = GetServiceDiscovey;
+            var discovey = GetServiceDiscovey();
             await discovey.GetAllEndPoints();
 
-            var wait = discovey.EndPointsChanged.StartCountingEvents();
-
+            var wait = discovey.EndPointsChanged.StartCountingEvents();            
             bool UseOriginatingService(int i) => i % 2 == 0;
             for (int i = 1; i < 6; i++)
             {
-                //act
+                var waitForNextEvent = wait.WhenNextEventReceived();
+                //act                
                 if (UseOriginatingService(i))
                     SetMockToReturnHost(OriginatingService);
                 else
-                    SetMockToReturnQueryNotFound(OriginatingService);
+                    SetMockToReturnServiceNotDefined(OriginatingService);
 
-                await wait.WhenNextEventReceived();
+                await waitForNextEvent;
                 //assert
                 wait.ReceivedEvents.Count.ShouldBe(i);
-
                 var nextHost = (await discovey.GetNextHost()).HostName;
                 if (UseOriginatingService(i))
                     nextHost.ShouldBe(OriginatingService);
@@ -319,27 +351,42 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private void SetMockToReturnHost(string query)
         {
-            _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.SuccessResult(new[] { new ConsulEndPoint { HostName = query } }, "<Mock consul request log>", "<Mock consul response>")));
+            if (!_consulClients.ContainsKey(query))
+                CreateConsulMock(query);
+            var result = new EndPointsResult
+            {
+                EndPoints = new EndPoint[] { new ConsulEndPoint { HostName = query, Version=ServiceVersion } },
+                RequestLog = "<Mock consul request log>",
+                ResponseLog = "<Mock consul response>",
+                ActiveVersion = ServiceVersion,
+                IsQueryDefined = true
+            };
+            _consulResult[query] = result;
+            _resultChanged[query].Post(result);
         }
 
-        private void SetMockToReturnQueryNotFound(string query)
+        private void SetMockToReturnServiceNotDefined(string query)
         {
-            _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.ErrorResult("<Mock consul request log>", null, false)));
+            var result = new EndPointsResult {IsQueryDefined = false};
+            _consulResult[query] = result;
+            _resultChanged[query].Post(result);
         }
 
         private void SetMockToReturnError(string query)
         {
-            _consulAdapterMock.GetEndPoints(query).Returns(Task.FromResult(ConsulClient.ErrorResult("<Mock consul request log>", new EnvironmentException("Mock: some error"), true)));
+            var result = new EndPointsResult { Error = new EnvironmentException("Mock: some error"), IsQueryDefined = true, ResponseLog = "Error response log" };
+            _consulResult[query] = result;
+            _resultChanged[query].Post(result);
         }
 
         [Test]
         public void ServiceDiscoveySameNameShouldBeTheSame()
         {
-            Assert.AreEqual(GetServiceDiscovey, GetServiceDiscovey);
+            Assert.AreEqual(GetServiceDiscovey(), GetServiceDiscovey());
         }
 
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
-        private IServiceDiscovery GetServiceDiscovey => _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
+        private IServiceDiscovery GetServiceDiscovey() => _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
 
         private string MasterService => ConsulServiceName(_serviceName, MASTER_ENVIRONMENT);
         private string OriginatingService => ConsulServiceName(_serviceName, ORIGINATING_ENVIRONMENT);

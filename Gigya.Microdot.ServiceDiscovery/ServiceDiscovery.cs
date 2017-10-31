@@ -28,13 +28,14 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
     public sealed class ServiceDiscovery : IServiceDiscovery, IDisposable
-    {
+    {        
         public ISourceBlock<string> EndPointsChanged => _endPointsChanged;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => _reachabilityChanged;
 
@@ -46,6 +47,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         private readonly ServiceDeployment _masterDeployment;
 
         private RemoteHostPool OriginatingEnvironmentPool { get; set; }
+        private ILog Log { get; }
+
         private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
         private readonly ServiceDeployment _originatingDeployment;
 
@@ -53,7 +56,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private readonly string _serviceName;
         private readonly ReachabilityChecker _reachabilityChecker;
         private readonly IRemoteHostPoolFactory _remoteHostPoolFactory;
-        private readonly IDiscoverySourceLoader _discoverySourceLoader;
+        private readonly IDiscoverySourceLoader _serviceDiscoveryLoader;
         private readonly object _locker = new object();
         private readonly IDisposable _configBlockLink;
         private readonly BroadcastBlock<string> _endPointsChanged = new BroadcastBlock<string>(null);
@@ -66,18 +69,20 @@ namespace Gigya.Microdot.ServiceDiscovery
         public ServiceDiscovery(string serviceName,
                                 ReachabilityChecker reachabilityChecker,
                                 IRemoteHostPoolFactory remoteHostPoolFactory,
-                                IDiscoverySourceLoader discoverySourceLoader,
+                                IDiscoverySourceLoader serviceDiscoveryLoader,
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
-                                Func<DiscoveryConfig> discoveryConfigFactory)
+                                Func<DiscoveryConfig> discoveryConfigFactory,
+                                ILog log)
         {
+            Log = log;
             _serviceName = serviceName;
             _originatingDeployment = new ServiceDeployment(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new ServiceDeployment(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityChecker = reachabilityChecker;
             _remoteHostPoolFactory = remoteHostPoolFactory;
-            _discoverySourceLoader = discoverySourceLoader;
+            _serviceDiscoveryLoader = serviceDiscoveryLoader;
 
             // Must be run in Task.Run() because of incorrect Orleans scheduling
             _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
@@ -116,16 +121,17 @@ namespace Gigya.Microdot.ServiceDiscovery
                     return;
             }
 
+            var originatingSource = await GetDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
+
             var shouldCreateMasterPool = newConfig.EnvironmentFallbackEnabled &&
-                                         newServiceConfig.SupportsFallback &&
+                                         newServiceConfig.Scope == ServiceScope.Environment &&
+                                         originatingSource.SupportsFallback &&
                                          _originatingDeployment.Equals(_masterDeployment) == false;
 
-            ServiceDiscoverySourceBase masterSource = null;
-
-            var originatingSource = await GetServiceDiscoverySource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
+            IServiceDiscoverySource masterSource = null;
 
             if (shouldCreateMasterPool)
-                masterSource = await GetServiceDiscoverySource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
+                masterSource = await GetDiscoverySource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
 
             lock (_locker)
             {
@@ -171,7 +177,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private RemoteHostPool CreatePool(
             ServiceDeployment serviceDeployment,
             List<IDisposable> blockLinks,
-            ServiceDiscoverySourceBase discoverySource)
+            IServiceDiscoverySource discoverySource)
         {
             var result = _remoteHostPoolFactory.Create(serviceDeployment, discoverySource, _reachabilityChecker);
 
@@ -199,13 +205,14 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
 
-        private async Task<ServiceDiscoverySourceBase> GetServiceDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
+        private async Task<IServiceDiscoverySource> GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
         {
-            var discoverySource = _discoverySourceLoader.GetDiscoverySource(serviceDeployment, config);
+            var source = _serviceDiscoveryLoader.GetDiscoverySource(serviceDeployment, config);
 
-            // TODO: RemoteHostPool should either deal with uninitialized source or request different class which represents initialized source
-            await discoverySource.InitCompleted.ConfigureAwait(false);
-            return discoverySource;
+            await source.Init().ConfigureAwait(false);
+
+            return source;
+
         }
 
 
@@ -220,8 +227,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 if (newActivePool != _activePool)
                 {
+                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activePool.ServiceDeployment.ToString(), newPool = newActivePool.ServiceDeployment.ToString()}));
                     _activePool = newActivePool;
-
                     FireEndPointChange();
 
                     if (shouldFallBack)

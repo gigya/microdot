@@ -1,4 +1,5 @@
 ﻿#region Copyright 
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -18,6 +19,7 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+
 #endregion
 
 using System;
@@ -26,10 +28,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
@@ -37,133 +44,417 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    public class ConsulClient : IConsulClient
+    public class ConsulClient : IConsulClient, IDisposable
     {
+        private readonly string _serviceName;
+        private readonly IDateTime _dateTime;
         private ILog Log { get; }
-        private readonly HttpClient _httpClient;
-        private readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto, NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented };
-        private readonly ConcurrentDictionary<string, Exception> _failedQueries = new ConcurrentDictionary<string, Exception>();
-        private readonly ConcurrentDictionary<string, bool> _existingServices = new ConcurrentDictionary<string, bool>();
+        private HttpClient _httpClient;
+
+        private readonly AggregatingHealthStatus _aggregatedHealthStatus;
+
+        private Func<ConsulConfig> GetConfig { get; }
 
         public Uri ConsulAddress { get; }
 
         private string DataCenter { get; }
 
-        public ConsulClient(IEnvironmentVariableProvider environmentVariableProvider, ILog log, HealthMonitor healthMonitor)
+        private CancellationTokenSource ShutdownToken { get; }
+
+        private readonly BroadcastBlock<EndPointsResult> _resultChanged;
+
+        private readonly TaskCompletionSource<bool> _initializedVersion;
+        private TaskCompletionSource<bool> _waitForConfigChange;
+
+        private ulong _endpointsModifyIndex = 0;
+        private ulong _versionModifyIndex = 0;
+        private string _activeVersion;
+        private bool _isDeploymentDefined = true;
+
+        private bool _disposed;
+
+        public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
+            ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
+            ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
         {
+            _serviceName = serviceName;
+            GetConfig = getConfig;
+            _dateTime = dateTime;
             Log = log;
             DataCenter = environmentVariableProvider.DataCenter;
+
+            _waitForConfigChange = new TaskCompletionSource<bool>();
+            configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
+
             var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
             ConsulAddress = new Uri($"http://{address}");
-            _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = TimeSpan.FromSeconds(5) };
-            healthMonitor.SetHealthFunction("ConsulClient", HealthCheck);
+            _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = getConfig().HttpTimeout};
+            _aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
+
+            _resultChanged = new BroadcastBlock<EndPointsResult>(null);
+            _initializedVersion = new TaskCompletionSource<bool>();
+            ShutdownToken = new CancellationTokenSource();
+            Task.Run(LoadVersionLoop);
+            Task.Run(LoadEndpointsLoop);
         }
 
-        private HealthCheckResult HealthCheck()
+        private async Task LoadVersionLoop()
         {
-            var failedQueries = _failedQueries.ToArray();
-            var nonExistQueries = _existingServices.Where(_ => _.Value == false).Select(_ => _.Key).ToArray();
-            var nonExistQueriesStr = nonExistQueries.Any() ? $"The following queries do not exist: {string.Join(", ", nonExistQueries)}" : string.Empty;
-
-            if (failedQueries.Any() == false)
-                return HealthCheckResult.Healthy(nonExistQueriesStr);
-            else
+            while (ShutdownToken.IsCancellationRequested == false)
             {
-                var failedQueriesStr = "The following queries failed: " + string.Join(", ", failedQueries.Select(q => $"\"{q.Key}\": {HealthMonitor.GetMessages(q.Value)}"));
-                return HealthCheckResult.Unhealthy(nonExistQueriesStr + "\r\n" + failedQueriesStr);
+                ConsulResponse response = null;
+                var config = GetConfig();
+
+                if (config.UseLongPolling)
+                    response = await LoadServiceVersion().ConfigureAwait(false);
+                else
+                {
+                    await _waitForConfigChange.Task.ConfigureAwait(false);
+                    continue;
+                }
+
+                var delay = TimeSpan.FromMilliseconds(0);
+
+                if (response.Success)
+                    _initializedVersion.TrySetResult(true);
+                else if (response.IsDeploymentDefined == false)
+                    delay = config.ServiceMissingRetryInterval;
+                else
+                    delay = config.ErrorRetryInterval;
+
+                await _dateTime.Delay(delay).ConfigureAwait(false);
             }
         }
 
-        public async Task<EndPointsResult> GetEndPoints(string serviceName)
+        private async Task LoadEndpointsLoop()
         {
-            var consulQuery = $"/v1/query/{serviceName}/execute?dc={DataCenter}";
-            var requestLog = _httpClient.BaseAddress + consulQuery;
+            while (ShutdownToken.IsCancellationRequested == false)
+            {
+                ConsulResponse consulResponse = null;
+                var config = GetConfig();
+
+                var delay = TimeSpan.FromMilliseconds(0);
+                if (config.UseLongPolling)
+                {
+                    await _initializedVersion.Task;
+                    consulResponse = await LoadEndpointsByHealth().ConfigureAwait(false);
+                }
+                else
+                {
+                    consulResponse = await LoadEndpointsByQuery().ConfigureAwait(false);
+                    delay = config.ReloadInterval;
+                }
+
+                if (consulResponse.IsDeploymentDefined == false)
+                    delay = config.ServiceMissingRetryInterval;
+                else if (consulResponse.Error!=null)
+                    delay = config.ErrorRetryInterval;
+
+                await _dateTime.Delay(delay).ConfigureAwait(false);
+            }
+        }
+
+        private EndPointsResult _result;
+
+        public EndPointsResult Result
+        {
+            get => _result;
+            set
+            {
+                _result = value;
+                _resultChanged?.Post(_result);
+            }
+        }
+
+        private async Task ConfigChanged(ConsulConfig c)
+        {
+            _waitForConfigChange.TrySetResult(true);
+            _waitForConfigChange = new TaskCompletionSource<bool>();
+        }
+
+        private async Task<ConsulResponse> LoadServiceVersion()
+        {
+            var config = GetConfig();
+            var maxSecondsToWaitForResponse = Math.Min(0, config.HttpTimeout.TotalSeconds - 2);
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var response = await CallConsul(urlCommand).ConfigureAwait(false);
+
+            if (response.ModifyIndex.HasValue)
+                _versionModifyIndex = response.ModifyIndex.Value;
+
+            if (response.Success)
+            {
+                var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
+                var version = keyValue?.SingleOrDefault()?.DecodeValue()?.Version;
+
+                if (version != null)
+                {
+                    _activeVersion = version;
+                    _isDeploymentDefined = true;
+                }
+                else
+                {
+                    var exception = new EnvironmentException("Cannot extract service's active version from Consul response");
+                    SetErrorResult(urlCommand, exception, null, response.ResponseContent);
+                    response.Error = exception;
+                }
+            }
+            return response;
+        }
+
+        private async Task<ConsulResponse> LoadEndpointsByHealth()
+        {
+            if (!_isDeploymentDefined)
+                return new ConsulResponse {IsDeploymentDefined = false};
+
+            var config = GetConfig();
+            var maxSecondsToWaitForResponse = Math.Min(0, config.HttpTimeout.TotalSeconds - 2);
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var response = await CallConsul(urlCommand).ConfigureAwait(false);
+
+            if (response.ModifyIndex.HasValue)
+                _endpointsModifyIndex = response.ModifyIndex.Value;
+
+            if (response.Success)
+            {
+                var deserializedResponse = TryDeserialize<ServiceEntry[]>(response.ResponseContent);
+                if (deserializedResponse != null)
+                    SetResult(deserializedResponse, urlCommand, response.ResponseContent, _activeVersion);                    
+                else
+                {
+                    var exception = new EnvironmentException("Cannot extract service's nodes from Consul response");
+                    SetErrorResult(urlCommand, exception, null, response.ResponseContent);
+                    response.Error = exception;
+                }
+            }
+            return response;
+        }
+
+        private async Task<ConsulResponse> LoadEndpointsByQuery()
+        {            
+            var consulQuery = $"v1/query/{_serviceName}/execute?dc={DataCenter}";
+            var response = await CallConsul(consulQuery);
+
+            if (response.Success)
+            {
+                var deserializedResponse = TryDeserialize<ConsulQueryExecuteResponse>(response.ResponseContent);
+                if (deserializedResponse != null)
+                    SetResult(deserializedResponse.Nodes, consulQuery, response.ResponseContent);
+                else
+                {
+                    var exception = new EnvironmentException("Cannot extract service's nodes from Consul query response");
+                    SetErrorResult(consulQuery, exception, null, response.ResponseContent);
+                    response.Error = exception;
+                }
+            }
+            return response;
+        }
+
+        private async Task<ConsulResponse> CallConsul(string urlCommand)
+        {
+            var timeout = GetConfig().HttpTimeout;
+            ulong? modifyIndex = 0;
+            var requestLog = _httpClient.BaseAddress + urlCommand;
             string responseContent = null;
             HttpStatusCode? statusCode = null;
 
             try
             {
-                using (var response = await _httpClient.GetAsync(consulQuery).ConfigureAwait(false))
+                if (timeout != _httpClient.Timeout)
+                    _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+
+                using (var response = await _httpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false))
                 {
                     responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     statusCode = response.StatusCode;
+                    Log.Debug(x => x("Response received from Consul", unencryptedTags: new { ConsulAddress, serviceDeployment = _serviceName, requestLog = urlCommand, responseCode = statusCode, responseContent, activeVersion = _activeVersion }));
 
-                    if (statusCode == HttpStatusCode.OK)
-                    {
-                        QueryIsOk(consulQuery, serviceName, queryExists: true);
-                    }
-                    else
+                    if (statusCode != HttpStatusCode.OK)
                     {
                         var exception = new EnvironmentException("Consul response not OK",
                             unencrypted: new Tags
                             {
-                                { "ConsulAddress", ConsulAddress.ToString() },
-                                    {"ServiceDeployment", serviceName},
-                                    {"ConsulQuery", consulQuery},
-                                { "ResponseCode", statusCode.ToString() },
-                                { "Content", responseContent }
+                                {"ConsulAddress", ConsulAddress.ToString()},
+                                {"ServiceDeployment", _serviceName},
+                                {"ConsulQuery", urlCommand},
+                                {"ResponseCode", statusCode.ToString()},
+                                {"Content", responseContent}
                             });
-                        
-                        if (responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
+
+                        if (statusCode == HttpStatusCode.NotFound || responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            QueryIsOk(consulQuery, serviceName, queryExists: false);                            
-                            return ErrorResult(requestLog, ex: null , isQueryDefined: false);
+                            var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
+                            SetServiceMissingResult(requestLog, responseStr);
+                            return new ConsulResponse {IsDeploymentDefined = false};
                         }
 
                         Log.Error(_ => _("Error calling Consul", exception: exception));
-                        _failedQueries.TryAdd(consulQuery, exception);
-                        return ErrorResult(requestLog, exception, true);
+                        SetErrorResult(requestLog, exception, statusCode, responseContent);
+                        return new ConsulResponse{Error = exception};
                     }
+
+                    modifyIndex = GetConsulIndex(response);
                 }
-                var serializedResponse = (ConsulQueryExecuteResponse)JsonConvert.DeserializeObject(responseContent, typeof(ConsulQueryExecuteResponse), _jsonSettings);
-                var endpoints = serializedResponse.Nodes.Select(_ => new ConsulEndPoint { HostName = _.Node.Name, ModifyIndex = _.Node.ModifyIndex, Port = _.Service.Port }).ToArray();
-                return SuccessResult(endpoints, requestLog, responseContent);
+
+                return new ConsulResponse {ModifyIndex = modifyIndex, ResponseContent = responseContent};
             }
             catch (Exception ex)
             {
                 Log.Error("Error calling Consul", exception: ex, unencryptedTags: new
                 {
-                    ServiceName = serviceName,
+                    ServiceName = _serviceName,
                     ConsulAddress = ConsulAddress.ToString(),
-                    consulQuery,
+                    consulQuery = urlCommand,
                     ResponseCode = statusCode,
                     Content = responseContent
                 });
-
-                _failedQueries.TryAdd(consulQuery, ex);
-                return ErrorResult(requestLog, ex, true);
+                
+                SetErrorResult(requestLog, ex, statusCode, responseContent);
+                return new ConsulResponse{Error = ex};
             }
         }
 
-        private void QueryIsOk(string consulQuery, string serviceName, bool queryExists)
+        private static ulong? GetConsulIndex(HttpResponseMessage response)
         {
-            _failedQueries.TryRemove(consulQuery, out Exception _);
-            _existingServices.AddOrUpdate(serviceName, queryExists, (_,__)=>queryExists);
+            ulong? modifyIndex=null;
+            response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
+            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
+                modifyIndex = consulIndexValue;
+            return modifyIndex;
         }
 
-        internal static EndPointsResult SuccessResult(ConsulEndPoint[] endpoints, string requestLog, string responseContent)
+        protected T TryDeserialize<T>(string response)
         {
-            return new EndPointsResult
+            if (response == null)
+                return default(T);
+            try
             {
-                EndPoints = endpoints?? new ConsulEndPoint[0],
-                RequestDateTime = DateTime.Now,
+                return JsonConvert.DeserializeObject<T>(response);
+            }
+            catch
+            {
+                return default(T);
+            }
+        }
+
+        internal void SetErrorResult(string requestLog, Exception ex, HttpStatusCode? responseCode, string responseContent)
+        {
+            Log.Error("Error calling Consul", exception: ex, unencryptedTags: new
+            {
+                ServiceName = _serviceName,
+                ConsulAddress = ConsulAddress.ToString(),
+                consulQuery = requestLog,
+                ResponseCode = responseCode,
+                Content = responseContent
+            });
+
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, ()=>HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
+
+            if (Result != null && Result.Error == null)
+                return;
+
+            Result = new EndPointsResult
+            {
+                EndPoints = new ConsulEndPoint[0],
+                RequestDateTime = DateTime.UtcNow,
                 RequestLog = requestLog,
-                ResponseLog = responseContent,
+                ResponseLog = ex.Message,
+                Error = ex,
                 IsQueryDefined = true
             };
         }
 
-        internal static EndPointsResult ErrorResult(string requestLog, Exception ex, bool isQueryDefined)
+        internal void SetServiceMissingResult(string requestLog, string responseContent)
         {
-            return new EndPointsResult
+            _isDeploymentDefined = false;
+            Result = new EndPointsResult
             {
                 EndPoints = new ConsulEndPoint[0],
-                RequestDateTime = DateTime.Now,
+                RequestDateTime = DateTime.UtcNow,
                 RequestLog = requestLog,
-                ResponseLog = ex?.Message,
-                Error = ex,
-                IsQueryDefined = isQueryDefined
+                ResponseLog = responseContent,
+                IsQueryDefined = false
             };
+
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy($"{_serviceName} - Service doesn't exist on Consul"));
+        }
+
+        private void SetResult(ServiceEntry[] nodes, string requestLog, string responseContent, string activeVersion = null)
+        {
+            if (!_isDeploymentDefined)
+                return;
+
+            var endpoints = nodes.Select(ep => new ConsulEndPoint
+            {
+                HostName = ep.Node.Name,
+                Port = ep.Service.Port,
+                Version = GetEndpointVersion(ep)
+            }).ToArray();
+
+            ConsulEndPoint[] activeVersionEndpoints;
+            string healthMessage=null;
+            if (activeVersion == null)
+            {
+                activeVersionEndpoints = endpoints.ToArray();
+                healthMessage = $"{activeVersionEndpoints.Length} endpoints";
+            }
+            else
+            {
+                activeVersionEndpoints = endpoints.Where(ep => ep.Version == activeVersion).ToArray();
+                healthMessage = $"{activeVersionEndpoints.Length} endpoints";
+                if (activeVersionEndpoints.Length != endpoints.Length)
+                    healthMessage += $" matching to version {activeVersion} from total of {endpoints.Length} endpoints";
+            }
+            
+
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy($"{_serviceName} - {healthMessage}"));
+
+            Result = new EndPointsResult
+            {
+                EndPoints = activeVersionEndpoints.ToArray(),
+                RequestDateTime = DateTime.UtcNow,
+                RequestLog = requestLog,
+                ResponseLog = responseContent,
+                IsQueryDefined = true,
+                ActiveVersion = activeVersion ?? GetEndpointVersion(nodes.FirstOrDefault())
+            };
+        }
+
+        private static string GetEndpointVersion(ServiceEntry node)
+        {
+            const string versionPrefix = "version:";
+            var versionTag = node?.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            return versionTag?.Substring(versionPrefix.Length);
+        }
+
+        public ISourceBlock<EndPointsResult> ResultChanged => _resultChanged;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+            _disposed = true;
+
+            ShutdownToken.Cancel();
+            _waitForConfigChange.TrySetResult(false);
+            _initializedVersion.TrySetResult(false);            
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private class ConsulResponse
+        {
+            public bool IsDeploymentDefined { get; set; } = true;
+            public Exception Error { get; set; }
+
+            public bool Success => Error == null && IsDeploymentDefined;
+
+            public string ResponseContent { get; set; }
+            public ulong? ModifyIndex { get; set; }
+
         }
     }
 
@@ -238,5 +529,38 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class QueryDNSOptions
     {
         public string TTL { get; set; }
+    }
+
+    public class KeyValueResponse
+    {
+        public int LockIndex { get; set; }
+        public string Key { get; set; }
+        public int Flags { get; set; }
+        public string Value { get; set; }
+        public ulong CreateIndex { get; set; }
+        public ulong ModifyIndex { get; set; }
+
+        public ServiceKeyValue DecodeValue()
+        {
+            if (Value == null)
+                return null;
+            var serialized = Encoding.UTF8.GetString(Convert.FromBase64String(Value));
+            return JsonConvert.DeserializeObject<ServiceKeyValue>(serialized);
+        }
+    }
+
+    public class ServiceKeyValue
+    {
+        [JsonProperty("basePort")]
+        public int BasePort { get; set; }
+
+        [JsonProperty("dc")]
+        public string DataCenter { get; set; }
+
+        [JsonProperty("env")]
+        public string Environment { get; set; }
+
+        [JsonProperty("version")]
+        public string Version { get; set; }
     }
 }

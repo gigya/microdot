@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
 
@@ -42,7 +43,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void DefaultDiscoverySourceIsConsul()
         {
             var settings = _settingsFactory(SERVICE_NAME);
-            settings.Source.ShouldBe(DiscoverySource.Consul);
+            settings.Source.ShouldBe(ConsulDiscoverySource.Name);
         }
 
         [Test]
@@ -51,7 +52,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.Services.{SERVICE_NAME}.Hosts"] = "localhost";
             _configDic["Discovery.Source"] = "Config";
             var settings = _settingsFactory(SERVICE_NAME);
-            settings.Source.ShouldBe(DiscoverySource.Config);
+            settings.Source.ShouldBe("Config");
         }
 
         [Test]
@@ -59,7 +60,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetServiceSourceConfig();
             var settings = _settingsFactory(SERVICE_NAME);
-            settings.Source.ShouldBe(DiscoverySource.Config);
+            settings.Source.ShouldBe("Config");
         }
 
 
@@ -196,34 +197,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void DefaultReloadInterval()
-        {
-            var settings = _settingsFactory(SERVICE_NAME);
-            settings.ReloadInterval.Value.TotalMilliseconds.ShouldBe(1000);
-        }
-
-        [Test]
-        public  void ReloadInterval()
-        {
-            var expectedValue = TimeSpan.FromMilliseconds(2500);
-
-            ChangeConfig("Discovery.ReloadInterval", expectedValue.ToString());
-            var settings = _settingsFactory(SERVICE_NAME);
-
-            settings.ReloadInterval.ShouldBe(expectedValue);
-        }
-
-        [Test]
-        public void ServiceReloadInterval()
-        {
-            var expectedValue = TimeSpan.FromMilliseconds(2300);
-            ChangeConfig($"Discovery.Services.{SERVICE_NAME}.ReloadInterval", expectedValue.ToString());
-            var settings = _settingsFactory(SERVICE_NAME);
-
-            settings.ReloadInterval.ShouldBe(expectedValue);
-        }
-
-        [Test]
         public void DefaultPort()
         {
             const int expectedValue = 89940;
@@ -237,7 +210,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetServiceSourceConfig();
             var settings = _settingsFactory(SERVICE_NAME);
-            Assert.AreEqual(DiscoverySource.Config, settings.Source);
+            Assert.AreEqual("Config", settings.Source);
         }
 
         [Test]
@@ -257,7 +230,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void ServiceNotExistRetunDefultSource()
         {
             var settings = _settingsFactory("not exists");
-            Assert.AreEqual(DiscoverySource.Consul, settings.Source);
+            Assert.AreEqual(ConsulDiscoverySource.Name, settings.Source);
         }
 
         private void SetServiceSourceLocal()

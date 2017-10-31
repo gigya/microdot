@@ -43,10 +43,10 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Discovery\AlwaysLocalHost.cs" />
     <Compile Include="MetricsInitializerFake.cs" />
     <Compile Include="ConsoleLog.cs" />
     <Compile Include="DateTimeFake.cs" />
-    <Compile Include="Discovery\AlwaysLocalHost.cs" />
     <Compile Include="Discovery\LocalhostServiceDiscovery.cs" />
     <Compile Include="Discovery\LocalhostEndPointHandle.cs" />
     <Compile Include="FakeHealthMonitor.cs" />

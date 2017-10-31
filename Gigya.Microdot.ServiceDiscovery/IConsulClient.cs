@@ -22,6 +22,7 @@
 
 using System;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
@@ -46,13 +47,19 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public Exception Error { get; set; }
 
-        public bool IsQueryDefined { get; set; }
-    }
+        public bool IsQueryDefined { get; set; } = true;
 
+        /// <summary>
+        /// The version of the service that all traffic should be directed to. 
+        /// There may be deployed other versions which are undergoing deployment or maintenance and shouldn't be used.
+        /// </summary>
+        public string ActiveVersion { get; set; }
+    }
 
     public interface IConsulClient
     {
-        Task<EndPointsResult> GetEndPoints(string serviceName);
+        EndPointsResult Result { get; }
+        ISourceBlock<EndPointsResult> ResultChanged { get; }
         Uri ConsulAddress { get; }
     }
 
@@ -60,7 +67,10 @@ namespace Gigya.Microdot.ServiceDiscovery
 
     public class ConsulEndPoint : EndPoint
     {
-        public ulong ModifyIndex { get; set; }
+        /// <summary>
+        /// Service version which is installed on this endpoint
+        /// </summary>
+        public string Version { get; set; }
     }
 
 }

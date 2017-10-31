@@ -56,7 +56,7 @@
     <Compile Include="Discovery\DiscoveryConfigTests.cs" />
     <Compile Include="Discovery\RemoteHostPoolTests.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
-    <Compile Include="Discovery\ServiceDiscoveryProdFallBackTest.cs" />
+    <Compile Include="Discovery\ConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Monitor\HealthStatusTests.cs" />
     <Compile Include="HttpServiceRequestTests.cs" />
     <Compile Include="IDemoService.cs" />
