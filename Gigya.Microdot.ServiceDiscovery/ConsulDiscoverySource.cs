@@ -88,15 +88,14 @@ namespace Gigya.Microdot.ServiceDiscovery
                 {
                     shouldReportChanges = true;
                     if (newResult.IsQueryDefined==false)
-                        _log.Warn(x => x("Service has become undefined on Consul", unencryptedTags: new
-                        {
-                            serviceName = Deployment
-                        }));
+                        _log.Warn(x => x("Service has become undefined on Consul", unencryptedTags: new {serviceName = Deployment}));
+                    else
+                        _log.Info(x => x("Service has become defined on Consul", unencryptedTags: new { serviceName = Deployment }));
                 }
                 else if (!OrderedEndpoints(newResult.EndPoints).SequenceEqual(OrderedEndpoints(Result.EndPoints)))
                 {
                     shouldReportChanges = true;
-                    _log.Info(_ => _("Obtained new list endpoints for service from Consul", unencryptedTags: new
+                    _log.Info(_ => _("Obtained a new list of endpoints for service from Consul", unencryptedTags: new
                     {
                         serviceName = Deployment,
                         endpoints = string.Join(", ", newResult.EndPoints.Select(e => e.HostName + ':' + (e.Port?.ToString() ?? "")))

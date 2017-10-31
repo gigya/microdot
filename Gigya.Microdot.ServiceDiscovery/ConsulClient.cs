@@ -267,6 +267,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 {
                     responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     statusCode = response.StatusCode;
+                    Log.Debug(x => x("Response received from Consul", unencryptedTags: new { ConsulAddress, serviceDeployment = _serviceName, requestLog = urlCommand, responseCode = statusCode, responseContent, activeVersion = _activeVersion }));
 
                     if (statusCode != HttpStatusCode.OK)
                     {
@@ -347,7 +348,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Content = responseContent
             });
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceName, ()=>HealthCheckResult.Unhealthy("Consul error: " + ex.Message));
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, ()=>HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
 
             if (Result != null && Result.Error == null)
                 return;
@@ -375,7 +376,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 IsQueryDefined = false
             };
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy("Service doesn't exist on Consul"));
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy($"{_serviceName} - Service doesn't exist on Consul"));
         }
 
         private void SetResult(ServiceEntry[] nodes, string requestLog, string responseContent, string activeVersion = null)
@@ -388,15 +389,29 @@ namespace Gigya.Microdot.ServiceDiscovery
                 HostName = ep.Node.Name,
                 Port = ep.Service.Port,
                 Version = GetEndpointVersion(ep)
-            });
-            if (activeVersion != null)
-                endpoints = endpoints.Where(ep => ep.Version == activeVersion);
+            }).ToArray();
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy($"{endpoints.Count()} endpoints"));
+            ConsulEndPoint[] activeVersionEndpoints;
+            string healthMessage=null;
+            if (activeVersion == null)
+            {
+                activeVersionEndpoints = endpoints.ToArray();
+                healthMessage = $"{activeVersionEndpoints.Length} endpoints";
+            }
+            else
+            {
+                activeVersionEndpoints = endpoints.Where(ep => ep.Version == activeVersion).ToArray();
+                healthMessage = $"{activeVersionEndpoints.Length} endpoints";
+                if (activeVersionEndpoints.Length != endpoints.Length)
+                    healthMessage += $" matching to version {activeVersion} from total of {endpoints.Length} endpoints";
+            }
+            
+
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy($"{_serviceName} - {healthMessage}"));
 
             Result = new EndPointsResult
             {
-                EndPoints = endpoints.ToArray(),
+                EndPoints = activeVersionEndpoints.ToArray(),
                 RequestDateTime = DateTime.UtcNow,
                 RequestLog = requestLog,
                 ResponseLog = responseContent,

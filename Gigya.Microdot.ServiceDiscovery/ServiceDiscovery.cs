@@ -28,14 +28,14 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
-using Gigya.Microdot.SharedLogic.Exceptions;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
     public sealed class ServiceDiscovery : IServiceDiscovery, IDisposable
-    {
+    {        
         public ISourceBlock<string> EndPointsChanged => _endPointsChanged;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => _reachabilityChanged;
 
@@ -47,6 +47,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         private readonly ServiceDeployment _masterDeployment;
 
         private RemoteHostPool OriginatingEnvironmentPool { get; set; }
+        private ILog Log { get; }
+
         private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
         private readonly ServiceDeployment _originatingDeployment;
 
@@ -70,8 +72,10 @@ namespace Gigya.Microdot.ServiceDiscovery
                                 IDiscoverySourceLoader serviceDiscoveryLoader,
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
-                                Func<DiscoveryConfig> discoveryConfigFactory)
+                                Func<DiscoveryConfig> discoveryConfigFactory,
+                                ILog log)
         {
+            Log = log;
             _serviceName = serviceName;
             _originatingDeployment = new ServiceDeployment(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new ServiceDeployment(serviceName, MASTER_ENVIRONMENT);
@@ -223,8 +227,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 if (newActivePool != _activePool)
                 {
+                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activePool.ServiceDeployment.ToString(), newPool = newActivePool.ServiceDeployment.ToString()}));
                     _activePool = newActivePool;
-
                     FireEndPointChange();
 
                     if (shouldFallBack)
