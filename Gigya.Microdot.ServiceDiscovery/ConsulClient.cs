@@ -88,39 +88,36 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
             ConsulAddress = new Uri($"http://{address}");
-            _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = TimeSpan.FromSeconds(5)};
+            _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = getConfig().HttpTimeout};
             _aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 
             _resultChanged = new BroadcastBlock<EndPointsResult>(null);
             _initializedVersion = new TaskCompletionSource<bool>();
             ShutdownToken = new CancellationTokenSource();
-            Task.Run(RefreshVersionForever);
-            Task.Run(RefreshEndpointsForever);
+            Task.Run(LoadVersionLoop);
+            Task.Run(LoadEndpointsLoop);
         }
 
-        private async Task RefreshVersionForever()
+        private async Task LoadVersionLoop()
         {
             while (ShutdownToken.IsCancellationRequested == false)
             {
-                string version = null;
+                ConsulResponse response = null;
                 var config = GetConfig();
 
                 if (config.UseLongPolling)
-                    version = await GetServiceVersion().ConfigureAwait(false);
+                    response = await LoadServiceVersion().ConfigureAwait(false);
                 else
                 {
                     await _waitForConfigChange.Task.ConfigureAwait(false);
                     continue;
                 }
 
-                var delay = TimeSpan.FromMilliseconds(100);
-                if (version != null)
-                {
-                    _activeVersion = version;
-                    _isDeploymentDefined = true;
+                var delay = TimeSpan.FromMilliseconds(0);
+
+                if (response.Success)
                     _initializedVersion.TrySetResult(true);
-                }
-                else if (_isDeploymentDefined == false)
+                else if (response.IsDeploymentDefined == false)
                     delay = config.ServiceMissingRetryInterval;
                 else
                     delay = config.ErrorRetryInterval;
@@ -129,35 +126,29 @@ namespace Gigya.Microdot.ServiceDiscovery
             }
         }
 
-        private async Task RefreshEndpointsForever()
+        private async Task LoadEndpointsLoop()
         {
             while (ShutdownToken.IsCancellationRequested == false)
             {
-                bool success = false;
+                ConsulResponse consulResponse = null;
                 var config = GetConfig();
-                try
-                {
-                    if (config.UseLongPolling)
-                    {
-                        await _initializedVersion.Task;
-                        success = await GetEndpointsByHealth().ConfigureAwait(false);
-                    }
-                    else
-                        success = await GetEndpointsByQuery().ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    Log.Critical("Failed to load endpoints from Consul", e);
-                }
 
-
-                var delay = TimeSpan.FromMilliseconds(100);
-                if (_isDeploymentDefined == false)
-                    delay = config.ServiceMissingRetryInterval;
-                else if (!success)
-                    delay = config.ErrorRetryInterval;
-                else if (config.UseLongPolling == false)
+                var delay = TimeSpan.FromMilliseconds(0);
+                if (config.UseLongPolling)
+                {
+                    await _initializedVersion.Task;
+                    consulResponse = await LoadEndpointsByHealth().ConfigureAwait(false);
+                }
+                else
+                {
+                    consulResponse = await LoadEndpointsByQuery().ConfigureAwait(false);
                     delay = config.ReloadInterval;
+                }
+
+                if (consulResponse.IsDeploymentDefined == false)
+                    delay = config.ServiceMissingRetryInterval;
+                else if (consulResponse.Error!=null)
+                    delay = config.ErrorRetryInterval;
 
                 await _dateTime.Delay(delay).ConfigureAwait(false);
             }
@@ -181,53 +172,88 @@ namespace Gigya.Microdot.ServiceDiscovery
             _waitForConfigChange = new TaskCompletionSource<bool>();
         }
 
-        private async Task<string> GetServiceVersion()
+        private async Task<ConsulResponse> LoadServiceVersion()
         {
             var config = GetConfig();
-            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.HttpTimeout.Seconds}s";
-            var response = await CallConsul(urlCommand, config.HttpTimeout, i => _versionModifyIndex = i).ConfigureAwait(false);
-            var keyValue = TryDeserialize<KeyValueResponse[]>(response);
-            var version = keyValue?.FirstOrDefault()?.DecodeValue()?.Version;
+            var maxSecondsToWaitForResponse = Math.Min(0, config.HttpTimeout.TotalSeconds - 2);
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var response = await CallConsul(urlCommand).ConfigureAwait(false);
 
-            if (version == null && Result.IsQueryDefined)
-                SetErrorResult(urlCommand, new EnvironmentException("Cannot extract service's active version from Consul response"), null, response);
+            if (response.ModifyIndex.HasValue)
+                _versionModifyIndex = response.ModifyIndex.Value;
 
-            return version;
+            if (response.Success)
+            {
+                var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
+                var version = keyValue?.SingleOrDefault()?.DecodeValue()?.Version;
+
+                if (version != null)
+                {
+                    _activeVersion = version;
+                    _isDeploymentDefined = true;
+                }
+                else
+                {
+                    var exception = new EnvironmentException("Cannot extract service's active version from Consul response");
+                    SetErrorResult(urlCommand, exception, null, response.ResponseContent);
+                    response.Error = exception;
+                }
+            }
+            return response;
         }
 
-        private async Task<bool> GetEndpointsByHealth()
+        private async Task<ConsulResponse> LoadEndpointsByHealth()
         {
             if (!_isDeploymentDefined)
-                return false;
+                return new ConsulResponse {IsDeploymentDefined = false};
 
-            var config = GetConfig();            
-            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.HttpTimeout.Seconds}s";
-            var response = await CallConsul(urlCommand, config.HttpTimeout, i => _endpointsModifyIndex = i).ConfigureAwait(false);
-            var deserializedResponse = TryDeserialize<ServiceEntry[]>(response);
-            if (deserializedResponse != null)
-            {
-                SetResult(deserializedResponse, urlCommand, response, _activeVersion);
-                return true;
-            }
-            return false;
-        }
-
-        public async Task<bool> GetEndpointsByQuery()
-        {
             var config = GetConfig();
-            var consulQuery = $"v1/query/{_serviceName}/execute?dc={DataCenter}";
-            var response = await CallConsul(consulQuery, config.HttpTimeout, null);
-            var deserializedResponse = TryDeserialize<ConsulQueryExecuteResponse>(response);
-            if (deserializedResponse != null)
-            {                
-                SetResult(deserializedResponse.Nodes, consulQuery, response);
-                return true;
+            var maxSecondsToWaitForResponse = Math.Min(0, config.HttpTimeout.TotalSeconds - 2);
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var response = await CallConsul(urlCommand).ConfigureAwait(false);
+
+            if (response.ModifyIndex.HasValue)
+                _endpointsModifyIndex = response.ModifyIndex.Value;
+
+            if (response.Success)
+            {
+                var deserializedResponse = TryDeserialize<ServiceEntry[]>(response.ResponseContent);
+                if (deserializedResponse != null)
+                    SetResult(deserializedResponse, urlCommand, response.ResponseContent, _activeVersion);                    
+                else
+                {
+                    var exception = new EnvironmentException("Cannot extract service's nodes from Consul response");
+                    SetErrorResult(urlCommand, exception, null, response.ResponseContent);
+                    response.Error = exception;
+                }
             }
-            return false;
+            return response;
         }
 
-        private async Task<string> CallConsul(string urlCommand, TimeSpan timeout, Action<ulong> setModifyIndex)
+        private async Task<ConsulResponse> LoadEndpointsByQuery()
+        {            
+            var consulQuery = $"v1/query/{_serviceName}/execute?dc={DataCenter}";
+            var response = await CallConsul(consulQuery);
+
+            if (response.Success)
+            {
+                var deserializedResponse = TryDeserialize<ConsulQueryExecuteResponse>(response.ResponseContent);
+                if (deserializedResponse != null)
+                    SetResult(deserializedResponse.Nodes, consulQuery, response.ResponseContent);
+                else
+                {
+                    var exception = new EnvironmentException("Cannot extract service's nodes from Consul query response");
+                    SetErrorResult(consulQuery, exception, null, response.ResponseContent);
+                    response.Error = exception;
+                }
+            }
+            return response;
+        }
+
+        private async Task<ConsulResponse> CallConsul(string urlCommand)
         {
+            var timeout = GetConfig().HttpTimeout;
+            ulong? modifyIndex = 0;
             var requestLog = _httpClient.BaseAddress + urlCommand;
             string responseContent = null;
             HttpStatusCode? statusCode = null;
@@ -237,7 +263,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 if (timeout != _httpClient.Timeout)
                     _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
 
-                using (var response = await _httpClient.GetAsync(urlCommand).ConfigureAwait(false))
+                using (var response = await _httpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false))
                 {
                     responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     statusCode = response.StatusCode;
@@ -254,25 +280,22 @@ namespace Gigya.Microdot.ServiceDiscovery
                                 {"Content", responseContent}
                             });
 
-                        if (statusCode == HttpStatusCode.NotFound ||
-                            responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
+                        if (statusCode == HttpStatusCode.NotFound || responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            SetUndefinedResult(requestLog, string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent);
-                            return null;
+                            var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
+                            SetServiceMissingResult(requestLog, responseStr);
+                            return new ConsulResponse {IsDeploymentDefined = false};
                         }
 
                         Log.Error(_ => _("Error calling Consul", exception: exception));
                         SetErrorResult(requestLog, exception, statusCode, responseContent);
-                        return null;
+                        return new ConsulResponse{Error = exception};
                     }
 
-                    response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
-                    if (consulIndexHeaders != null &&
-                        ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
-                        setModifyIndex?.Invoke(consulIndexValue);
+                    modifyIndex = GetConsulIndex(response);
                 }
 
-                return responseContent;
+                return new ConsulResponse {ModifyIndex = modifyIndex, ResponseContent = responseContent};
             }
             catch (Exception ex)
             {
@@ -286,8 +309,17 @@ namespace Gigya.Microdot.ServiceDiscovery
                 });
                 
                 SetErrorResult(requestLog, ex, statusCode, responseContent);
-                return null;
+                return new ConsulResponse{Error = ex};
             }
+        }
+
+        private static ulong? GetConsulIndex(HttpResponseMessage response)
+        {
+            ulong? modifyIndex=null;
+            response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
+            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
+                modifyIndex = consulIndexValue;
+            return modifyIndex;
         }
 
         protected T TryDeserialize<T>(string response)
@@ -296,7 +328,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return default(T);
             try
             {
-                return (T) JsonConvert.DeserializeObject(response, typeof(T));
+                return JsonConvert.DeserializeObject<T>(response);
             }
             catch
             {
@@ -323,7 +355,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             Result = new EndPointsResult
             {
                 EndPoints = new ConsulEndPoint[0],
-                RequestDateTime = DateTime.Now,
+                RequestDateTime = DateTime.UtcNow,
                 RequestLog = requestLog,
                 ResponseLog = ex.Message,
                 Error = ex,
@@ -331,19 +363,19 @@ namespace Gigya.Microdot.ServiceDiscovery
             };
         }
 
-        internal void SetUndefinedResult(string requestLog, string responseContent)
+        internal void SetServiceMissingResult(string requestLog, string responseContent)
         {
             _isDeploymentDefined = false;
             Result = new EndPointsResult
             {
                 EndPoints = new ConsulEndPoint[0],
-                RequestDateTime = DateTime.Now,
+                RequestDateTime = DateTime.UtcNow,
                 RequestLog = requestLog,
                 ResponseLog = responseContent,
                 IsQueryDefined = false
             };
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy("Service not exists on Consul"));
+            _aggregatedHealthStatus.RegisterCheck(_serviceName, () => HealthCheckResult.Healthy("Service doesn't exist on Consul"));
         }
 
         private void SetResult(ServiceEntry[] nodes, string requestLog, string responseContent, string activeVersion = null)
@@ -365,7 +397,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             Result = new EndPointsResult
             {
                 EndPoints = endpoints.ToArray(),
-                RequestDateTime = DateTime.Now,
+                RequestDateTime = DateTime.UtcNow,
                 RequestLog = requestLog,
                 ResponseLog = responseContent,
                 IsQueryDefined = true,
@@ -386,17 +418,28 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             if (_disposed)
                 return;
+            _disposed = true;
 
             ShutdownToken.Cancel();
             _waitForConfigChange.TrySetResult(false);
             _initializedVersion.TrySetResult(false);            
-            _disposed = true;
         }
 
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
+        }
+
+        private class ConsulResponse
+        {
+            public bool IsDeploymentDefined { get; set; } = true;
+            public Exception Error { get; set; }
+
+            public bool Success => Error == null && IsDeploymentDefined;
+
+            public string ResponseContent { get; set; }
+            public ulong? ModifyIndex { get; set; }
+
         }
     }
 
@@ -487,7 +530,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (Value == null)
                 return null;
             var serialized = Encoding.UTF8.GetString(Convert.FromBase64String(Value));
-            return (ServiceKeyValue) JsonConvert.DeserializeObject(serialized, typeof(ServiceKeyValue));
+            return JsonConvert.DeserializeObject<ServiceKeyValue>(serialized);
         }
     }
 
