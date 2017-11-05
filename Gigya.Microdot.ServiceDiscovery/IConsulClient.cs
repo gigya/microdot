@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -54,6 +55,17 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// There may be deployed other versions which are undergoing deployment or maintenance and shouldn't be used.
         /// </summary>
         public string ActiveVersion { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is EndPointsResult other))
+                return false;
+
+            return EndPoints.SequenceEqual(other.EndPoints)
+                   && IsQueryDefined == other.IsQueryDefined
+                   && Error?.Message == other.Error?.Message;
+        }
+
     }
 
     public interface IConsulClient
@@ -71,6 +83,17 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// Service version which is installed on this endpoint
         /// </summary>
         public string Version { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is ConsulEndPoint other))
+                return false;
+
+            if (Version != other.Version)
+                return false;
+
+            return base.Equals(obj);
+        }
     }
 
 }
