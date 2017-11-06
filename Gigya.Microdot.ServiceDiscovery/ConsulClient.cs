@@ -249,7 +249,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var nodes = TryDeserialize<ServiceEntry[]>(response.ResponseContent);
                 if (nodes != null)
                 {
-                    if (nodes.Length == 0 && Result?.EndPoints?.Length > 0 && _isDeploymentDefined)
+                    if (nodes.Length == 0 && Result?.EndPoints?.Length != 0 && _isDeploymentDefined)
                     {
                         // Service is deployed, but it has no nodes, although it did have nodes before. 
                         // Wait for version reload, to check if service really is undefined.
