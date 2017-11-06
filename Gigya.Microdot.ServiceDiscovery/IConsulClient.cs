@@ -63,7 +63,20 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             return EndPoints.SequenceEqual(other.EndPoints)
                    && IsQueryDefined == other.IsQueryDefined
-                   && Error?.Message == other.Error?.Message;
+                   && Error?.Message == other.Error?.Message
+                   && ActiveVersion == other.ActiveVersion;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = EndPoints.FirstOrDefault()?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (Error != null ? Error.Message.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IsQueryDefined.GetHashCode();
+                hashCode = (hashCode * 397) ^ (ActiveVersion != null ? ActiveVersion.GetHashCode() : 0);
+                return hashCode;
+            }
         }
 
         public override string ToString()
@@ -97,6 +110,14 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return false;
 
             return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (Version != null ? Version.GetHashCode() : 0);
+            }
         }
     }
 

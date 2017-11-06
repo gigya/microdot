@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
@@ -69,13 +70,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             return new ConsulResponse{ ModifyIndex = _healthModifyIndex,  Content = 
             "[" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
                 @"{
-                    ""Node"": {
-                        ""Node"": """ + ep.HostName + @""",
+                    'Node': {
+                        'Node': '" + ep.HostName + @"',
                     },
-                    ""Service"": {
-                            ""Service"":""" + serviceName + @""",
-                            ""Tags"": [""version:" + ep.Version + @"""],
-                            ""Port"": " + ep.Port + @",
+                    'Service': {
+                            'Service':' + serviceName + @',
+                            'Tags': ['version:" + ep.Version + @"'],
+                            'Port': " + ep.Port + @",
                     }
                 }")) + 
             "]"};
@@ -92,8 +93,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
             return new ConsulResponse {ModifyIndex = _keyValueModifyIndex, Content =
                 @"[
                     {
-                        ""Key"": ""service/" + serviceName + @""",
-                        ""Value"": """ + Convert.ToBase64String(Encoding.UTF8.GetBytes(@"{""version"" : """+_serviceActiveVersion[serviceName] + @"""}"))+ @"""
+                        'Key': 'service/" + serviceName + @"',
+                        'Value': '" + Convert.ToBase64String(Encoding.UTF8.GetBytes(@"{'version' : '"+_serviceActiveVersion[serviceName] + @"'}"))+ @"'
                     }
                   ]"
              };
@@ -104,9 +105,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
             if (index >= _keyValueModifyIndex)
                 await _waitForKeyValueIndexModification.Task;
 
-            return new ConsulResponse {ModifyIndex = _keyValueModifyIndex, Content =
-                    "[" + string.Join(",", _serviceNodes.Keys.Select(k=>$@"""{k}""")) + "]"
+            return new ConsulResponse
+            {
+                ModifyIndex = _keyValueModifyIndex,
+                Content = new JArray(_serviceNodes.Keys.ToArray()).ToString()
             };
+        
         }
 
         private async Task<ConsulResponse> GetQueryResponse(string serviceName, ulong index)
@@ -115,19 +119,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 return new ConsulResponse
                 {
                     StatusCode = HttpStatusCode.InternalServerError,
-                    Content = "rpc error: rpc error: Query not found"
+                    Content = "rpc error: Query not found"
                 };
 
             return new ConsulResponse {Content =
-                @"{""Nodes"" : [" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
+                @"{'Nodes' : [" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
                                 @"{
-                                        ""Node"": {
-                                            ""Node"": """ + ep.HostName + @""",
+                                        'Node': {
+                                            'Node': '" + ep.HostName + @"',
                                         },
-                                        ""Service"": {
-                                                ""Service"":""" + serviceName + @""",
-                                                ""Tags"": [""version:" + ep.Version + @"""],
-                                                ""Port"": " + ep.Port + @",
+                                        'Service': {
+                                                'Service':'" + serviceName + @"',
+                                                'Tags': ['version:" + ep.Version + @"'],
+                                                'Port': " + ep.Port + @",
                                         }
                                     }")) +
                              @"]
