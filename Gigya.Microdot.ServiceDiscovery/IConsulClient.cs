@@ -66,6 +66,10 @@ namespace Gigya.Microdot.ServiceDiscovery
                    && Error?.Message == other.Error?.Message;
         }
 
+        public override string ToString()
+        {
+            return $"EndpointsResult: {EndPoints.Length} Endpoints, IsQueryDefined: {IsQueryDefined}, Error: {Error?.Message ?? "null"}";
+        }
     }
 
     public interface IConsulClient

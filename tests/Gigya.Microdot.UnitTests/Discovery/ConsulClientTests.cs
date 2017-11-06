@@ -26,8 +26,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private const int Port1 = 1234;
         private const string Version = "1.0.0.1";
 
-        private const bool UseLongPolling = true;
-        private const bool UseQueries = false;
+        public enum ConsulMethod { LongPolling, Queries}
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private IConsulClient _consulClient;
@@ -73,19 +72,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _consulSimulator.Reset();            
         }
 
-        private void Start(bool useLongPolling)
+        private void Start(ConsulMethod consulMethod)
         {
-            _consulConfig.UseLongPolling = useLongPolling;
+            _consulConfig.UseLongPolling = (consulMethod==ConsulMethod.LongPolling);
             _consulClient = _testingKernel.Get<Func<string, IConsulClient>>()(_serviceName);            
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task EndpointExists(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]
+        public async Task EndpointExists(ConsulMethod consulMethod)
         {           
             AddServiceEndPoint();
 
-            Start(useLongPolling);
+            Start(consulMethod);
 
             var result = await GetResult();
 
@@ -95,8 +94,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public async Task EndpointAdded_LongPolling()
         {
-            Start(UseLongPolling);
-
+            Start(ConsulMethod.LongPolling);
             var result = await GetResultAfter(() => AddServiceEndPoint());
 
             AssertOneDefaultEndpoint(result);
@@ -108,7 +106,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public async Task EndpointAdded_Query()
         {
-            Start(UseQueries);
+            Start(ConsulMethod.Queries);
 
             var result = await GetResultAfter(()=>AddServiceEndPoint());
 
@@ -118,14 +116,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
             delays.ShouldAllBe(d => d.Equals(_consulConfig.ReloadInterval));
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task EndpointRemoved(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]
+        public async Task EndpointRemoved(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
             AddServiceEndPoint("endpointToRemove");
 
-            Start(useLongPolling);
+            Start(consulMethod);
             var result = await GetResult();
             result.EndPoints.Length.ShouldBe(2);
             
@@ -133,24 +131,24 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AssertOneDefaultEndpoint(result);
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task StartWithError(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]
+        public async Task StartWithError(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
             SetConsulIsDown();
 
-            Start(useLongPolling);
+            Start(consulMethod);
             var result = await GetResult();
             result.Error.ShouldNotBeNull();
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task ErrorAfterStart_UseLastKnownEndpoints(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]
+        public async Task ErrorAfterStart_UseLastKnownEndpoints(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
-            Start(UseLongPolling);
+            Start(ConsulMethod.LongPolling);
 
             var resultBeforeError = await GetResult();
 
@@ -166,36 +164,35 @@ namespace Gigya.Microdot.UnitTests.Discovery
             result.EndPoints.Length.ShouldBe(2);
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task ServiceMissingOnStart(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]
+        public async Task ServiceMissingOnStart(ConsulMethod consulMethod)
         {
-            Start(useLongPolling);
+            Start(consulMethod);
             var result = await GetResult();
             result.IsQueryDefined.ShouldBeFalse();
             result.Error.ShouldBeNull();
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task ServiceBecomesMissing(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]        
+        public async Task ServiceBecomesMissing(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
-            Start(useLongPolling);
-            await GetResult();
+            Start(consulMethod);
+            var result = await GetResult();
+            result.IsQueryDefined.ShouldBeTrue();
 
-            var result = await GetResultAfter(RemoveService);
+            result = await GetResultAfter(()=>RemoveService());
             result.IsQueryDefined.ShouldBeFalse();
             result.Error.ShouldBeNull();
         }
 
-        [TestCase(UseLongPolling)]
-        [TestCase(UseQueries)]
-        public async Task ServiceIsBackAfterBeingMissing(bool useLongPolling)
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]        
+        public async Task ServiceIsBackAfterBeingMissing(ConsulMethod consulMethod)
         {
-            _consulConfig.ServiceMissingRetryInterval = TimeSpan.FromSeconds(3);
-
-            Start(useLongPolling);
+            Start(consulMethod);
             var result = await GetResult();
             result.IsQueryDefined.ShouldBeFalse();
 
@@ -211,7 +208,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AddServiceEndPoint(hostName: "newVersionHost", version: "2.0.0");
             SetServiceVersion("1.0.0");
 
-            Start(UseLongPolling);
+            Start(ConsulMethod.LongPolling);
             var result = await GetResult();
             result.EndPoints.Length.ShouldBe(1);
             result.EndPoints[0].HostName.ShouldBe("oldVersionHost");
