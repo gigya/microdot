@@ -35,10 +35,21 @@ namespace Gigya.Microdot.Fakes
 
         public List<TimeSpan> DelaysRequested { get; } = new List<TimeSpan>();
 
+        public DateTimeFake() : this(true)
+        {
+        }
+
+        private readonly bool _manualDelay;
+        /// <param name="manualDelay">whether delays should be handled manually. If True, the delay method will return a task which will be finished only after calling the "StopDelay" method</param>
+        public DateTimeFake(bool manualDelay)
+        {
+            _manualDelay = manualDelay;
+        }
+
         public Task Delay(TimeSpan delay)
         {
             DelaysRequested.Add(delay);
-            return _delayTask.Task;
+            return _manualDelay ? _delayTask.Task : Task.Delay(delay);
         }
 
         /// <summary>

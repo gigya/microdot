@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -54,6 +55,34 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// There may be deployed other versions which are undergoing deployment or maintenance and shouldn't be used.
         /// </summary>
         public string ActiveVersion { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is EndPointsResult other))
+                return false;
+
+            return EndPoints.SequenceEqual(other.EndPoints)
+                   && IsQueryDefined == other.IsQueryDefined
+                   && Error?.Message == other.Error?.Message
+                   && ActiveVersion == other.ActiveVersion;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = EndPoints.FirstOrDefault()?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (Error != null ? Error.Message.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IsQueryDefined.GetHashCode();
+                hashCode = (hashCode * 397) ^ (ActiveVersion != null ? ActiveVersion.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"EndpointsResult: {EndPoints.Length} Endpoints, IsQueryDefined: {IsQueryDefined}, Error: {Error?.Message ?? "null"}";
+        }
     }
 
     public interface IConsulClient
@@ -71,6 +100,25 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// Service version which is installed on this endpoint
         /// </summary>
         public string Version { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is ConsulEndPoint other))
+                return false;
+
+            if (Version != other.Version)
+                return false;
+
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (Version != null ? Version.GetHashCode() : 0);
+            }
+        }
     }
 
 }
