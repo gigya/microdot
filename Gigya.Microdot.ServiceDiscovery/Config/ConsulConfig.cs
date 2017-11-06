@@ -26,11 +26,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
         /// <summary>
-        /// Interval for retrying acces to Consul in case service is missing on Consul (e.g. service is not deployed)
-        /// </summary>
-        public TimeSpan ServiceMissingRetryInterval { get; set; } = TimeSpan.FromSeconds(30);
-
-        /// <summary>
         /// Interval for retrying access to surce (e.g. Consul) after an error has occured
         /// </summary>
         public TimeSpan ErrorRetryInterval { get; set; } = TimeSpan.FromSeconds(1);

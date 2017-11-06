@@ -60,11 +60,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<ConsulResponse> GetHealthResponse(string serviceName, ulong index)
         {
-            if (!_serviceNodes.ContainsKey(serviceName))
-                return new ConsulResponse{Content = "[]"};
-
             if (index >= _healthModifyIndex)
                 await _waitForHealthIndexModification.Task;
+
+            if (!_serviceNodes.ContainsKey(serviceName))
+                return new ConsulResponse{Content = "[]"};
 
             return new ConsulResponse{ ModifyIndex = _healthModifyIndex,  Content = 
             "[" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
@@ -83,11 +83,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<ConsulResponse> GetKeyValueResponse(string serviceName, ulong index)
         {
-            if (!_serviceActiveVersion.ContainsKey(serviceName))
-                return new ConsulResponse{StatusCode = HttpStatusCode.NotFound};
-
             if (index >= _keyValueModifyIndex)
                 await _waitForKeyValueIndexModification.Task;
+
+            if (!_serviceActiveVersion.ContainsKey(serviceName))
+                return new ConsulResponse{StatusCode = HttpStatusCode.NotFound};
 
             return new ConsulResponse {ModifyIndex = _keyValueModifyIndex, Content =
                 @"[
@@ -105,7 +105,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 await _waitForKeyValueIndexModification.Task;
 
             return new ConsulResponse {ModifyIndex = _keyValueModifyIndex, Content =
-                    "[" + string.Join(",", _serviceNodes.Keys) + "]"
+                    "[" + string.Join(",", _serviceNodes.Keys.Select(k=>$@"""{k}""")) + "]"
             };
         }
 
@@ -164,10 +164,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public void RemoveService(string serviceName)
         {
-            _serviceNodes.TryRemove(serviceName, out List<ConsulEndPoint> _);
-            IncreaseHealthModifyIndex();
             _serviceActiveVersion.TryRemove(serviceName, out string _);            
+            _serviceNodes.TryRemove(serviceName, out List<ConsulEndPoint> _);
             IncreaseKeyValueModifyIndex();
+            IncreaseHealthModifyIndex();
         }
 
         public void SetError(Exception error)
@@ -286,7 +286,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
     public class ConsulResponse
     {
-        public string Content { get; set; }
+        public string Content { get; set; } = string.Empty;
         public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
         public ulong? ModifyIndex { get; set; }
     }
