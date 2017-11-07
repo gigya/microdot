@@ -220,6 +220,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
             result.ActiveVersion.ShouldBe("2.0.0");
         }
 
+        [TestCase(ConsulMethod.LongPolling)]
+        [TestCase(ConsulMethod.Queries)]
+        public async Task ServiceIsDeployedWithNoNodes(ConsulMethod consulMethod)
+        {
+            Start(consulMethod);
+            var result = await GetResultAfter(()=> SetServiceVersion("1.0.0"));
+            result.IsQueryDefined.ShouldBeTrue();
+            result.EndPoints.Length.ShouldBe(0);
+
+            var delays = _dateTimeFake.DelaysRequested.ToArray();
+            delays.Length.ShouldBeLessThan(4); // shouldn't take too many loops to get the result
+        }
+
         private static void AssertOneDefaultEndpoint(EndPointsResult result)
         {
             result.EndPoints.Length.ShouldBe(1);
@@ -260,7 +273,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<EndPointsResult> GetResultAfter(Action doSomethingToCauseResultChange)
         {            
-            var waitForEvent = _consulClient.ResultChanged.WhenEventReceived();
+            var waitForEvent = _consulClient.ResultChanged.WhenEventReceived(TimeSpan.FromDays(1));
             doSomethingToCauseResultChange();
             return await waitForEvent;
         }

@@ -65,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 await _waitForHealthIndexModification.Task;
 
             if (!_serviceNodes.ContainsKey(serviceName))
-                return new ConsulResponse{Content = "[]"};
+                return new ConsulResponse{Content = "[]", ModifyIndex = _healthModifyIndex};
 
             return new ConsulResponse{ ModifyIndex = _healthModifyIndex,  Content = 
             "[" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
@@ -115,7 +115,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<ConsulResponse> GetQueryResponse(string serviceName, ulong index)
         {
-            if (!_serviceNodes.ContainsKey(serviceName))
+            if (!_serviceNodes.ContainsKey(serviceName) && !_serviceActiveVersion.ContainsKey(serviceName))
                 return new ConsulResponse
                 {
                     StatusCode = HttpStatusCode.InternalServerError,

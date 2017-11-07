@@ -69,6 +69,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private ulong _endpointsModifyIndex = 0;
         private ulong _versionModifyIndex = 0;
+        private ulong _allKeysModifyIndex = 0;
         private string _activeVersion;
         private bool _isDeploymentDefined = true;
 
@@ -222,11 +223,11 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             var config = GetConfig();
             var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={_versionModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={_allKeysModifyIndex}&wait={maxSecondsToWaitForResponse}s";
             var response = await CallConsul(urlCommand).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
-                _versionModifyIndex = response.ModifyIndex.Value;
+                _allKeysModifyIndex = response.ModifyIndex.Value;
         }
 
         private async Task<ConsulResponse> LoadEndpointsByHealth()
@@ -249,10 +250,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var nodes = TryDeserialize<ServiceEntry[]>(response.ResponseContent);
                 if (nodes != null)
                 {
-                    if (nodes.Length == 0 && Result?.EndPoints?.Length != 0 && _isDeploymentDefined)
-                    {
-                        // Service is deployed, but it has no nodes, although it did have nodes before. 
-                        // Wait for version reload, to check if service really is undefined.
+                    if  (
+                        // Service has no nodes, but it did did have nodes before, and it is not deployed
+                        (nodes.Length == 0 && Result?.EndPoints?.Length != 0 && _isDeploymentDefined) 
+                        // Service has nodes, but it is not deployed
+                        || (nodes.Length>0 && !_isDeploymentDefined))
+                    {                        
+                        // Try to reload version, to check if service deployment has changed
                         await ReloadServiceVersion();
                     }
                     SetResult(nodes, urlCommand, response.ResponseContent, _activeVersion);
