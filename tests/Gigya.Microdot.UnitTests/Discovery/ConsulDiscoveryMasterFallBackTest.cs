@@ -16,6 +16,7 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
@@ -36,8 +37,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private int id;
         private const int Repeat = 1;
 
-        private Dictionary<string, BroadcastBlock<EndPointsResult>> _resultChanged;
+        private Dictionary<string, BufferBlock<EndPointsResult>> _resultChanged;
         private Dictionary<string, EndPointsResult> _consulResult;
+        private Timer _consulResultsTimer;
 
         [SetUp]
         public void SetUp()
@@ -72,10 +74,18 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _consulClients = new Dictionary<string, IConsulClient>();
             _consulResult = new Dictionary<string, EndPointsResult>();
-            _resultChanged = new Dictionary<string, BroadcastBlock<EndPointsResult>>();
+            _resultChanged = new Dictionary<string, BufferBlock<EndPointsResult>>();
 
             CreateConsulMock(MasterService);
             CreateConsulMock(OriginatingService);
+
+            _consulResultsTimer =  new Timer(_ =>
+            {
+                foreach (var service in _resultChanged.Keys)
+                {
+                    _resultChanged[service].Post(_consulResult[service]);
+                }
+            }, null, 100, Timeout.Infinite);
         }
 
         private void CreateConsulMock(string serviceName)
@@ -83,11 +93,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var mock = Substitute.For<IConsulClient>();
 
             _consulResult[serviceName] = new EndPointsResult { EndPoints = new EndPoint[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, IsQueryDefined = true };
-            _resultChanged[serviceName] = new BroadcastBlock<EndPointsResult>(null);
+            _resultChanged[serviceName] = new BufferBlock<EndPointsResult>();
 
             mock.ResultChanged.Returns(t=>_resultChanged[serviceName]);
             mock.Result.Returns(t=>_consulResult[serviceName]);
-
+            
             _consulClients[serviceName] = mock;
         }
 
@@ -95,11 +105,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void TearDown()
         {
             _unitTestingKernel.Dispose();
+            _consulResultsTimer.Dispose();
         }
 
         [Test]
         [Repeat(Repeat)]
-        public void QueryNotDefinedShouldFallBackToMaster()
+        public async Task QueryNotDefinedShouldFallBackToMaster()
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
@@ -131,7 +142,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         [Test]
         [Repeat(Repeat)]
-        public void CreateServiceDiscoveyWithoutGetNextHostNoServiceHealthShouldAppear()
+        public async Task CreateServiceDiscoveyWithoutGetNextHostNoServiceHealthShouldAppear()
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
@@ -202,7 +213,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            var exception = Should.Throw<EnvironmentException>(()=>GetServiceDiscovey().GetNextHost());
+            var exception = Should.Throw<EnvironmentException>(() => GetServiceDiscovey().GetNextHost());
             exception.UnencryptedTags["responseLog"].ShouldBe("Error response log");
             exception.UnencryptedTags["queryDefined"].ShouldBe("True");
             exception.UnencryptedTags["consulError"].ShouldNotBeNullOrEmpty();
@@ -237,7 +248,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         [Test]
         [Repeat(Repeat)]
-        public void EndPointsChangedShouldNotFireWhenNothingChange()
+        public async Task EndPointsChangedShouldNotFireWhenNothingChange()
         {
             TimeSpan reloadInterval = TimeSpan.FromMilliseconds(5);
             _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
@@ -374,7 +385,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private void SetMockToReturnError(string query)
         {
-            var result = new EndPointsResult { Error = new EnvironmentException("Mock: some error"), IsQueryDefined = true, ResponseLog = "Error response log" };
+            var result = new EndPointsResult { Error = new EnvironmentException("Mock: some error"), IsQueryDefined = true, ResponseLog = "Error response log" };            
             _consulResult[query] = result;
             _resultChanged[query].Post(result);
         }
@@ -386,7 +397,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
+
         private IServiceDiscovery GetServiceDiscovey() => _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
+        
 
         private string MasterService => ConsulServiceName(_serviceName, MASTER_ENVIRONMENT);
         private string OriginatingService => ConsulServiceName(_serviceName, ORIGINATING_ENVIRONMENT);
