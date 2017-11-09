@@ -34,21 +34,30 @@ namespace Gigya.Microdot.Testing.Utils
         public static async Task<T> WhenEventReceived<T>(this ISourceBlock<T> sourceBlock, TimeSpan? timeout = null)
         {
             var countDown = StartCountingEvents(sourceBlock);
-            return await countDown.WhenNextEventReceived(timeout);            
+            var result = await countDown.WhenNextEventReceived(timeout);
+            countDown.Dispose();
+            return result;
         }
 
         public static EventWaiter<T> StartCountingEvents<T>(this ISourceBlock<T> sourceBlock)
         {
-            var countDown = new EventWaiter<T>();
-            sourceBlock.LinkTo(new ActionBlock<T>(_ => countDown.ReceivedEvent(_)));
-            return countDown;
+            return new EventWaiter<T>(sourceBlock);            
         }
     }
 
-    public class EventWaiter<T>
+    public sealed class EventWaiter<T>: IDisposable
     {
         private readonly List<T> _events = new List<T>();
         private readonly List<KeyValuePair<int, TaskCompletionSource<List<T>>>> _waiting = new List<KeyValuePair<int, TaskCompletionSource<List<T>>>>();
+
+        public EventWaiter()
+        {
+        }
+
+        public EventWaiter(ISourceBlock<T> sourceBlock)
+        {
+            _sourceBlockLink = sourceBlock.LinkTo(new ActionBlock<T>(_ => this.ReceivedEvent(_)));            
+        }
 
         public async Task<T> WhenNextEventReceived(TimeSpan? timeout = null)
         {
@@ -56,6 +65,8 @@ namespace Gigya.Microdot.Testing.Utils
         }
 
         private readonly object _locker = new object();
+        private readonly IDisposable _sourceBlockLink;
+
         public Task<List<T>> WhenEventsReceived(int? expectedNumberOfEvents, TimeSpan? timeout)
         {
             timeout = timeout ?? TimeSpan.FromSeconds(5);
@@ -120,5 +131,9 @@ namespace Gigya.Microdot.Testing.Utils
             }
         }
 
+        public void Dispose()
+        {
+            _sourceBlockLink?.Dispose();
+        }
     }
     }
