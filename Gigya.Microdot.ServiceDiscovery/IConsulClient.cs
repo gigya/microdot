@@ -85,7 +85,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
     }
 
-    public interface IConsulClient
+    public interface IConsulClient: IDisposable
     {
         EndPointsResult Result { get; }
         ISourceBlock<EndPointsResult> ResultChanged { get; }
