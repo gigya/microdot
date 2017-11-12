@@ -31,6 +31,7 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
@@ -446,14 +447,12 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
         private static object[] GetParametersByName(ServiceMethod serviceMethod, IDictionary args)
-        {
+        {            
             return serviceMethod.ServiceInterfaceMethod
                 .GetParameters()
-                .Select(p => args[p.Name] ?? (p.ParameterType.IsValueType ? System.Activator.CreateInstance(p.ParameterType) : null))
+                .Select(p => JsonHelper.ConvertWeaklyTypedValue(args[p.Name], p.ParameterType))
                 .ToArray();
         }
-
-
 
         internal static HttpStatusCode GetExceptionStatusCode(Exception exception)
         {
