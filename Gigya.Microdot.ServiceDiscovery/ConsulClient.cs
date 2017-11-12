@@ -43,7 +43,7 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    public class ConsulClient : IConsulClient, IDisposable
+    public class ConsulClient : IConsulClient
     {
         private readonly string _serviceName;
         private readonly IDateTime _dateTime;
