@@ -287,8 +287,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
 
+            Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
             _configRefresh.RaiseChangeEvent();
-            await waitForEvents.WhenNextEventReceived();
+            await waitForChangeEvent;
             var host = await discovey.GetNextHost();
             host.HostName.ShouldBe("localhost");
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
@@ -296,7 +297,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Repeat(30)]
         public async Task GetAllEndPointsChangedShouldFireConfigChange()
         {
             SetMockToReturnHost(MasterService);
@@ -311,20 +312,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
 
-
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
             Console.WriteLine("RaiseChangeEvent");
-            _configRefresh.RaiseChangeEvent();
 
-            await waitForEvents.WhenNextEventReceived();
+            Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
+            _configRefresh.RaiseChangeEvent();
+            await waitForChangeEvent;
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
 
 
             endPoints = await discovey.GetAllEndPoints();
             endPoints.Single().HostName.ShouldBe("localhost");
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
-
         }
 
         [Test]
