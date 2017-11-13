@@ -399,9 +399,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
 
         private IServiceDiscovery GetServiceDiscovey()
-        {
-            Task.Delay(100).GetAwaiter().GetResult(); // let ConsulClient return the expected result before getting the dicovery object
-            return _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
+        {                        
+            var discovery = _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
+            Task.Delay(200).GetAwaiter().GetResult(); // let ConsulClient return the expected result before getting the dicovery object
+            return discovery;
         }
         
 
