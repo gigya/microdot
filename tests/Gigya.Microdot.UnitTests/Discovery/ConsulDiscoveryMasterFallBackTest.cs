@@ -297,7 +297,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(30)]
+        [Repeat(Repeat)]
         public async Task GetAllEndPointsChangedShouldFireConfigChange()
         {
             SetMockToReturnHost(MasterService);
