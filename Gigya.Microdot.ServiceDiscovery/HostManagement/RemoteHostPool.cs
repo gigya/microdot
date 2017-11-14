@@ -368,7 +368,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             lock (_lock)
             {
                 EndPointsChangedBlockLink.Dispose();                
-                foreach (var host in ReachableHosts.Concat(UnreachableHosts))
+                foreach (var host in ReachableHosts.Concat(UnreachableHosts).ToArray())
                     host.StopMonitoring();
                 ReachabilityBroadcaster.Complete();
                 DiscoverySource.Dispose();

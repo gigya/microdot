@@ -287,8 +287,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
 
+            Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
             _configRefresh.RaiseChangeEvent();
-            await waitForEvents.WhenNextEventReceived();
+            await waitForChangeEvent;
             var host = await discovey.GetNextHost();
             host.HostName.ShouldBe("localhost");
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
@@ -311,20 +312,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
 
-
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
             Console.WriteLine("RaiseChangeEvent");
-            _configRefresh.RaiseChangeEvent();
 
-            await waitForEvents.WhenNextEventReceived();
+            Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
+            _configRefresh.RaiseChangeEvent();
+            await waitForChangeEvent;
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
 
 
             endPoints = await discovey.GetAllEndPoints();
             endPoints.Single().HostName.ShouldBe("localhost");
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
-
         }
 
         [Test]
@@ -399,9 +399,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
 
         private IServiceDiscovery GetServiceDiscovey()
-        {
-            Task.Delay(100).GetAwaiter().GetResult(); // let ConsulClient return the expected result before getting the dicovery object
-            return _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
+        {                        
+            var discovery = _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
+            Task.Delay(200).GetAwaiter().GetResult(); // let ConsulClient return the expected result before getting the dicovery object
+            return discovery;
         }
         
 
