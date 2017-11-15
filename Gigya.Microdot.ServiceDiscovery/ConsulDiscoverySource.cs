@@ -84,7 +84,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             lock (_resultLocker)
             {
                 var shouldReportChanges = false;
-                if (newResult.IsQueryDefined != Result.IsQueryDefined)
+                if (newResult.IsQueryDefined != Result.IsQueryDefined && !_firstTime)
                 {
                     shouldReportChanges = true;
                     if (newResult.IsQueryDefined==false)
