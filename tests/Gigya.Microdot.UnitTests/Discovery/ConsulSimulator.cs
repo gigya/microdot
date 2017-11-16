@@ -122,8 +122,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     Content = "rpc error: Query not found"
                 };
 
+            if (!_serviceNodes.TryGetValue(serviceName, out var nodes))
+                nodes = new List<ConsulEndPoint>();
+
             return new ConsulResponse {Content =
-                @"{'Nodes' : [" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
+                @"{'Nodes' : [" + string.Join("\n,", nodes.Select(ep =>
                                 @"{
                                         'Node': {
                                             'Node': '" + ep.HostName + @"',
