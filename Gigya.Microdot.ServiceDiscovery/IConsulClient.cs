@@ -87,6 +87,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
     public interface IConsulClient: IDisposable
     {
+        Task Init();
         EndPointsResult Result { get; }
         ISourceBlock<EndPointsResult> ResultChanged { get; }
         Uri ConsulAddress { get; }

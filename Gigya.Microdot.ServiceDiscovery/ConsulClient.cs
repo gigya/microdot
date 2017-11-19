@@ -74,6 +74,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _isDeploymentDefined = true;
 
         private bool _disposed;
+        private int _initialized = 0;
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
             ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
@@ -95,8 +96,18 @@ namespace Gigya.Microdot.ServiceDiscovery
             _resultChanged = new BufferBlock<EndPointsResult>();
             _initializedVersion = new TaskCompletionSource<bool>();
             ShutdownToken = new CancellationTokenSource();
-            Task.Run(LoadVersionLoop);
-            Task.Run(LoadEndpointsLoop);
+        }
+
+        public async Task Init()
+        {
+            if (Interlocked.Increment(ref _initialized) != 1)
+                return;
+
+#pragma warning disable 4014
+            // Run these loops in background
+            LoadVersionLoop();
+            LoadEndpointsLoop();
+#pragma warning restore 4014
         }
 
         private async Task LoadVersionLoop()

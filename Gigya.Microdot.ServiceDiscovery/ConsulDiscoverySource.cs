@@ -76,6 +76,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 if (_resultChangedLink==null)
                     _resultChangedLink = ConsulClient.ResultChanged.LinkTo(new ActionBlock<EndPointsResult>(r => ConsulResultChanged(r)));
 
+            ConsulClient.Init();
             return _initialized.Task;
         }
 
