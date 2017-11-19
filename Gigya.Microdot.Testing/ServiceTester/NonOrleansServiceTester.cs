@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,20 +20,33 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System;
+using System.Threading.Tasks;
+using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic;
+using Ninject.Syntax;
 
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Microdot.ServiceProxy")]
-[assembly: AssemblyProduct("Gigya.Microdot.ServiceProxy")]
-[assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.TestingTools")]
-[assembly: InternalsVisibleTo("Gigya.Common.Application.UnitTests")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Testing")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Testing.Orleans")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.UnitTests")]
+namespace Gigya.Microdot.Testing.ServiceTester
+{
+    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
+    {
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("1fcb2569-a640-4292-9cdc-821aeef14813")]
+        private readonly TServiceHost _host = new TServiceHost();
+
+        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
+        {
+            BasePort = basePortOverride;
+            ResolutionRoot = resolutionRoot;
+
+            Task.Run(() =>
+                _host.Run(new ServiceArguments(basePortOverride: basePortOverride, onStopWaitTimeInMs: shutdownWaitTime)));
+            _host.WaitForServiceStartedAsync().Wait();
+        }
+
+      
+        public override void Dispose()
+        {
+            _host.Dispose();
+        }
+    }
+}

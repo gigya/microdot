@@ -33,7 +33,7 @@ using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.ServiceTester;
+using Gigya.Microdot.Testing.Orleans.ServiceTester;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;

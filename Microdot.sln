@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
 	ProjectSection(SolutionItems) = preProject
@@ -53,6 +53,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting.UnitTests", "tests\Gigya.Microdot.Orleans.Hosting.UnitTests\Gigya.Microdot.Orleans.Hosting.UnitTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.UnitTests", "tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj", "{0A24AE97-EE88-4E8B-8B92-092884D41399}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing.Orleans", "Gigya.Microdot.Testing.Orleans\Gigya.Microdot.Testing.Orleans.csproj", "{D37E359C-170E-4D67-AD49-45002B48987E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Hosting.UnitTests", "tests\Gigya.Microdot.Hosting.UnitTests\Gigya.Microdot.Hosting.UnitTests.csproj", "{A17C9A6D-317D-441C-B33A-3807B67B4FA2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -128,6 +132,14 @@ Global
 		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A24AE97-EE88-4E8B-8B92-092884D41399}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D37E359C-170E-4D67-AD49-45002B48987E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D37E359C-170E-4D67-AD49-45002B48987E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D37E359C-170E-4D67-AD49-45002B48987E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D37E359C-170E-4D67-AD49-45002B48987E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -136,8 +148,10 @@ Global
 		{C224F79A-EAB5-48B8-B587-65772B0966EF} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 		{8E548D57-5880-4283-BDF5-7386886D481D} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 		{0A24AE97-EE88-4E8B-8B92-092884D41399} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
+		{A17C9A6D-317D-441C-B33A-3807B67B4FA2} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8A847321-B6B0-4BA9-9AC3-0DB91FA99B90}
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
 	EndGlobalSection
 EndGlobal

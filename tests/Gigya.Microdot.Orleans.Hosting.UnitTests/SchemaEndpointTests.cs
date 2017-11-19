@@ -26,7 +26,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.Testing.ServiceTester;
+using Gigya.Microdot.Testing.Orleans.ServiceTester;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests

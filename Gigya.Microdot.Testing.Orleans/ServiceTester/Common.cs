@@ -24,7 +24,7 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace Gigya.Microdot.Testing.ServiceTester
+namespace Gigya.Microdot.Testing.Orleans.ServiceTester
 {
     public class Common
     {
