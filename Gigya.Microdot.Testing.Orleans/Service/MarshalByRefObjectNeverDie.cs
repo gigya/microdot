@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,32 +21,23 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.SharedLogic;
-using Ninject.Syntax;
+using System.Security.Permissions;
 
-namespace Gigya.Microdot.Testing.ServiceTester
+namespace Gigya.Microdot.Testing.Orleans.Service
 {
-    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
+
+    /// <summary>
+    /// If we desire to achieve singleton semantics for the remote object, it’s simplest to ensure that it never dies.  This can be done by overriding the InitializeLifetimeService method on your MarshalByRefObject-derived class and returning null .
+    /// Otherwise you may get System.Runtime.Remoting.RemotingException: Object [...] has been disconnected or does not exist at the server.
+    /// http://stackoverflow.com/questions/2410221/appdomain-and-marshalbyrefobject-life-time-how-to-avoid-remotingexceptions
+    /// http://blogs.microsoft.co.il/sasha/2008/07/19/appdomains-and-remoting-life-time-service/
+    /// </summary>
+    public abstract class MarshalByRefObjectThatNeverDie : MarshalByRefObject
     {
-
-        private readonly TServiceHost _host = new TServiceHost();
-
-        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
+        [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.Infrastructure)]
+        public override object InitializeLifetimeService()
         {
-            BasePort = basePortOverride;
-            ResolutionRoot = resolutionRoot;
-
-            Task.Run(() =>
-                _host.Run(new ServiceArguments(basePortOverride: basePortOverride, onStopWaitTimeInMs: shutdownWaitTime)));
-            _host.WaitForServiceStartedAsync().Wait();
-        }
-
-      
-        public override void Dispose()
-        {
-            _host.Dispose();
+            return null;
         }
     }
 }

@@ -28,17 +28,13 @@ using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing.ServiceTester;
+using Gigya.Microdot.Testing.Service;
 using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
@@ -46,7 +42,7 @@ using Orleans;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
 
-namespace Gigya.Microdot.Testing.Orleans.ServiceTester
+namespace Gigya.Microdot.Testing.Orleans.Service
 {
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {

@@ -21,25 +21,32 @@
 #endregion
 
 using System;
-using System.IO;
-using System.Reflection;
+using System.Threading.Tasks;
+using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic;
+using Ninject.Syntax;
 
-namespace Gigya.Microdot.Testing.Orleans.ServiceTester
+namespace Gigya.Microdot.Testing.Service
 {
-    public class Common
+    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
-        public static AppDomain CreateDomain(string TestAppDomainName = "TestAppDomain")
-        {
-            AppDomain currentAppDomain = AppDomain.CurrentDomain;
 
-            return AppDomain.CreateDomain(TestAppDomainName, null, new AppDomainSetup
-            {
-                ApplicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                ConfigurationFile = currentAppDomain.SetupInformation.ConfigurationFile,
-                ShadowCopyFiles = currentAppDomain.SetupInformation.ShadowCopyFiles,
-                ShadowCopyDirectories = currentAppDomain.SetupInformation.ShadowCopyDirectories,
-                CachePath = currentAppDomain.SetupInformation.CachePath
-            });
+        private readonly TServiceHost _host = new TServiceHost();
+
+        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
+        {
+            BasePort = basePortOverride;
+            ResolutionRoot = resolutionRoot;
+
+            Task.Run(() =>
+                _host.Run(new ServiceArguments(basePortOverride: basePortOverride, onStopWaitTimeInMs: shutdownWaitTime)));
+            _host.WaitForServiceStartedAsync().Wait();
+        }
+
+      
+        public override void Dispose()
+        {
+            _host.Dispose();
         }
     }
 }

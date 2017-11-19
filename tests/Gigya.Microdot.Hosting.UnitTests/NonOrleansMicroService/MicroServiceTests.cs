@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.ServiceTester;
+using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;
 using Shouldly;
 

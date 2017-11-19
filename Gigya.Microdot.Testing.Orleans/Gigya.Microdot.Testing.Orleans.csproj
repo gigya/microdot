@@ -48,11 +48,11 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="ServiceTester\AppDomainExtentions.cs" />
-    <Compile Include="ServiceTester\Common.cs" />
-    <Compile Include="ServiceTester\MarshalByRefObjectNeverDie.cs" />
+    <Compile Include="Service\AppDomainExtentions.cs" />
+    <Compile Include="Service\Common.cs" />
+    <Compile Include="Service\MarshalByRefObjectNeverDie.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceTester\ServiceTester.cs" />
+    <Compile Include="Service\ServiceTester.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
