@@ -28,16 +28,13 @@ using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Testing.Service;
 using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
@@ -45,21 +42,18 @@ using Orleans;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
 
-namespace Gigya.Microdot.Testing.ServiceTester
+namespace Gigya.Microdot.Testing.Orleans.Service
 {
-    public class ServiceTester<TServiceHost> : IDisposable where TServiceHost : MicrodotOrleansServiceHost, new()
+    public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
         private ILog Log { get; }
 
-        private IResolutionRoot ResolutionRoot { get; }
         public AppDomain ServiceAppDomain { get; private set; }
 
         public static TServiceHost Host { get; private set; }
         private static Task StopTask;
 
-        private int BasePort { get; }
         private HttpListener LogListener { get; set; }
-
 
         public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false)
         {
@@ -81,73 +75,6 @@ namespace Gigya.Microdot.Testing.ServiceTester
                 Host = new TServiceHost();
                 StopTask = Host.RunAsync(args);
             });
-        }
-
-
-
-        /// <summary>
-        /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
-        /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TServiceInterface"></typeparam>
-        /// <returns>An ServiceProxy with caching <see cref="TServiceInterface"/>.</returns>
-        public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
-        {
-            var factory = ResolutionRoot
-                .Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
-            var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));
-
-            provider.DefaultPort = BasePort;
-            if (timeout != null)
-                provider.InnerProvider.SetHttpTimeout(timeout.Value);
-            if (ResolutionRoot.Get<IMetadataProvider>().HasCachedMethods(typeof(TServiceInterface)))
-            {
-                var cachingProxy = ResolutionRoot.Get<CachingProxyProvider<TServiceInterface>>(
-                    new ConstructorArgument("dataSource", provider.Client),
-                    new ConstructorArgument("serviceName", (string)null));
-
-                return cachingProxy.Proxy;
-            }
-            return provider.Client;
-        }
-
-        /// <summary>
-        /// GetObject a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
-        /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TServiceInterface"></typeparam>
-        /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
-        public virtual TServiceInterface GetServiceProxy<TServiceInterface>(TimeSpan? timeout = null)
-        {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
-
-            var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));
-            provider.DefaultPort = BasePort;
-            if (timeout != null)
-                provider.InnerProvider.SetHttpTimeout(timeout.Value);
-
-            return provider.Client;
-        }
-
-        /// <summary>
-        /// GetObject a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
-        /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="serviceName">Name of service </param>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
-        public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
-        {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxyProvider>>();
-
-            var provider = factory(serviceName, (srName, r) => new LocalhostServiceDiscovery());
-            provider.DefaultPort = BasePort;
-            if (timeout != null)
-                provider.SetHttpTimeout(timeout.Value);
-
-            return provider;
         }
 
 
@@ -244,7 +171,7 @@ namespace Gigya.Microdot.Testing.ServiceTester
             }
         }
 
-        public virtual void Dispose()
+        public override void Dispose()
         {
             if (GrainClient.IsInitialized)
                 GrainClient.Uninitialize();

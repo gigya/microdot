@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,20 +20,26 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Microdot.ServiceProxy")]
-[assembly: AssemblyProduct("Gigya.Microdot.ServiceProxy")]
-[assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.TestingTools")]
-[assembly: InternalsVisibleTo("Gigya.Common.Application.UnitTests")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Testing")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Testing.Orleans")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.UnitTests")]
+namespace Gigya.Microdot.Testing.Orleans.Service
+{
+    public class Common
+    {
+        public static AppDomain CreateDomain(string TestAppDomainName = "TestAppDomain")
+        {
+            AppDomain currentAppDomain = AppDomain.CurrentDomain;
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("1fcb2569-a640-4292-9cdc-821aeef14813")]
+            return AppDomain.CreateDomain(TestAppDomainName, null, new AppDomainSetup
+            {
+                ApplicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                ConfigurationFile = currentAppDomain.SetupInformation.ConfigurationFile,
+                ShadowCopyFiles = currentAppDomain.SetupInformation.ShadowCopyFiles,
+                ShadowCopyDirectories = currentAppDomain.SetupInformation.ShadowCopyDirectories,
+                CachePath = currentAppDomain.SetupInformation.CachePath
+            });
+        }
+    }
+}

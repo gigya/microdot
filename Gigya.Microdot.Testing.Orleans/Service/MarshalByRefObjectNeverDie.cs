@@ -20,20 +20,24 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System;
+using System.Security.Permissions;
 
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Microdot.ServiceProxy")]
-[assembly: AssemblyProduct("Gigya.Microdot.ServiceProxy")]
-[assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.TestingTools")]
-[assembly: InternalsVisibleTo("Gigya.Common.Application.UnitTests")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Testing")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Testing.Orleans")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.UnitTests")]
+namespace Gigya.Microdot.Testing.Orleans.Service
+{
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("1fcb2569-a640-4292-9cdc-821aeef14813")]
+    /// <summary>
+    /// If we desire to achieve singleton semantics for the remote object, it’s simplest to ensure that it never dies.  This can be done by overriding the InitializeLifetimeService method on your MarshalByRefObject-derived class and returning null .
+    /// Otherwise you may get System.Runtime.Remoting.RemotingException: Object [...] has been disconnected or does not exist at the server.
+    /// http://stackoverflow.com/questions/2410221/appdomain-and-marshalbyrefobject-life-time-how-to-avoid-remotingexceptions
+    /// http://blogs.microsoft.co.il/sasha/2008/07/19/appdomains-and-remoting-life-time-service/
+    /// </summary>
+    public abstract class MarshalByRefObjectThatNeverDie : MarshalByRefObject
+    {
+        [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.Infrastructure)]
+        public override object InitializeLifetimeService()
+        {
+            return null;
+        }
+    }
+}

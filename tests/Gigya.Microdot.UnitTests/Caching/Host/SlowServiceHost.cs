@@ -8,7 +8,6 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing;
 using Ninject;
 using Ninject.Syntax;
 
