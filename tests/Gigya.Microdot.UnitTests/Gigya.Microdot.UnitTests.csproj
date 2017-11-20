@@ -52,6 +52,7 @@
     <Compile Include="Configuration\EnviromentVariablesFileReaderTests.cs" />
     <Compile Include="Configuration\MasterConfigParserTests.cs" />
     <Compile Include="Configuration\TypedConfigTest.cs" />
+    <Compile Include="Discovery\ConsulClientMock.cs" />
     <Compile Include="Discovery\ConsulClientTests.cs" />
     <Compile Include="Discovery\ConsulDiscoverySourceTest.cs" />
     <Compile Include="Discovery\ConsulSimulator.cs" />
