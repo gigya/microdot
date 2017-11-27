@@ -45,7 +45,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public class ConsulClient : IConsulClient
     {
-        private readonly string _serviceName;
+        private string _serviceName;
         private readonly IDateTime _dateTime;
         private ILog Log { get; }
         private HttpClient _httpClient;
@@ -117,10 +117,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var delay = TimeSpan.FromMilliseconds(0);
 
                 if (response.Success)
-                    _initializedVersion.TrySetResult(true);
-                else if (response.IsDeploymentDefined == false)
-                    await WaitForDeploymentVersionChange().ConfigureAwait(false);
-                else
+                    _initializedVersion.TrySetResult(true);                
+                else if (response.Error!=null)
                     delay = config.ErrorRetryInterval;
 
                 await _dateTime.Delay(delay).ConfigureAwait(false);
@@ -188,7 +186,9 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (response.ModifyIndex.HasValue)
                 _versionModifyIndex = response.ModifyIndex.Value;
 
-            if (response.Success)
+            if (response.IsDeploymentDefined==false)                
+                    await SearchServiceInAllKeys().ConfigureAwait(false);
+            else if (response.Success)
             {
                 var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
                 var version = keyValue?.SingleOrDefault()?.TryDecodeValue()?.Version;
@@ -218,7 +218,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             return LoadServiceVersion();
         }
 
-        private async Task WaitForDeploymentVersionChange()
+        private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
             var config = GetConfig();
             var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
@@ -227,6 +227,28 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             if (response.ModifyIndex.HasValue)
                 _allKeysModifyIndex = response.ModifyIndex.Value;
+
+            if (response.Success)
+            {
+                var services = TryDeserialize<string[]>(response.ResponseContent);
+                var serviceNameMatchByCase = services.FirstOrDefault(s =>
+                    s.Equals(_serviceName, StringComparison.InvariantCultureIgnoreCase));
+
+                var serviceExists = serviceNameMatchByCase != null;
+                response.IsDeploymentDefined = serviceExists;
+
+                if (!serviceExists)
+                    SetServiceMissingResult(urlCommand, response.ResponseContent);
+
+                var tryReloadServiceWithCaseMatching = serviceExists && _serviceName != serviceNameMatchByCase;
+                if (tryReloadServiceWithCaseMatching)
+                {
+                    _serviceName = serviceNameMatchByCase;
+                    _allKeysModifyIndex = 0;
+                }
+            }
+
+            return response;
         }
 
         private async Task<ConsulResponse> LoadEndpointsByHealth()
@@ -340,26 +362,27 @@ namespace Gigya.Microdot.ServiceDiscovery
                         {
                             var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
                             SetServiceMissingResult(requestLog, responseStr);
-                            return new ConsulResponse {IsDeploymentDefined = false};
+                            return new ConsulResponse { IsDeploymentDefined = false };
                         }
 
                         SetErrorResult(requestLog, exception, statusCode, responseContent);
-                        return new ConsulResponse{Error = exception};
+                        return new ConsulResponse { Error = exception };
                     }
 
                     modifyIndex = GetConsulIndex(response);
                 }
 
-                return new ConsulResponse {ModifyIndex = modifyIndex, ResponseContent = responseContent};
+                return new ConsulResponse { ModifyIndex = modifyIndex, ResponseContent = responseContent };
             }
             catch (Exception ex)
             {
                 if (!(ex is TaskCanceledException))
                     SetErrorResult(requestLog, ex, statusCode, responseContent);
 
-                return new ConsulResponse{Error = ex};
+                return new ConsulResponse { Error = ex };
             }
         }
+
 
         private static ulong? GetConsulIndex(HttpResponseMessage response)
         {
@@ -413,6 +436,10 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         internal void SetServiceMissingResult(string requestLog, string responseContent)
         {
+            var stillNeedToCheckIfServiceExistOnAllKeysList = GetConfig().UseLongPolling && _allKeysModifyIndex == 0;
+            if (stillNeedToCheckIfServiceExistOnAllKeysList)
+                return;
+
             lock (_setResultLocker)
             {
                 _isDeploymentDefined = false;
