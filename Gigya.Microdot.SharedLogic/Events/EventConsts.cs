@@ -41,7 +41,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string srvService = "srv.service";
         public const string srvSystemInstance = "srv.systemInstance";
         public const string srvVersion = "srv.version";
-        public const string infrVersion = "infr.version";
+        public const string infrVersion = "srv.infraVersion";
 
         public const string message = "message";
         public const string details = "details";
