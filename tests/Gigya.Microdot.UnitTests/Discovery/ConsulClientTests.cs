@@ -85,7 +85,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 return _consulConfig;
             };
 
-            _consulConfig.UseLongPolling = (consulMethod == ConsulMethod.LongPolling);
+            _consulConfig.LongPolling = (consulMethod == ConsulMethod.LongPolling);
             _consulClient = _testingKernel.Get<Func<string, IConsulClient>>()(_serviceName);
 
             return GetResultAfter(() => waitForStart.SetResult(true));

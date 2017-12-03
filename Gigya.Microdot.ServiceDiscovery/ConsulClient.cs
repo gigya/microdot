@@ -106,7 +106,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 ConsulResponse response = null;
                 var config = GetConfig();
 
-                if (config.UseLongPolling)
+                if (config.LongPolling)
                     response = await LoadServiceVersion().ConfigureAwait(false);
                 else
                 {
@@ -133,7 +133,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var config = GetConfig();
 
                 var delay = TimeSpan.FromMilliseconds(0);
-                if (config.UseLongPolling)
+                if (config.LongPolling)
                 {
                     await _initializedVersion.Task;
                     consulResponse = await LoadEndpointsByHealth().ConfigureAwait(false);
@@ -436,7 +436,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         internal void SetServiceMissingResult(string requestLog, string responseContent)
         {
-            var stillNeedToCheckIfServiceExistOnAllKeysList = GetConfig().UseLongPolling && _allKeysModifyIndex == 0;
+            var stillNeedToCheckIfServiceExistOnAllKeysList = GetConfig().LongPolling && _allKeysModifyIndex == 0;
             if (stillNeedToCheckIfServiceExistOnAllKeysList)
                 return;
 
