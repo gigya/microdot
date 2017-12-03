@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
 using Ninject;
 using Ninject.Parameters;
@@ -37,7 +38,7 @@ namespace Gigya.Microdot.Testing.Service
                 new ConstructorArgument(nameof(basePortOverride), basePortOverride),
                 new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime)
             );
-
+         
             return tester;
         }
     }

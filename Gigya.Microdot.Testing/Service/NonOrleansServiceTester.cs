@@ -32,21 +32,25 @@ namespace Gigya.Microdot.Testing.Service
     {
 
         private readonly TServiceHost _host = new TServiceHost();
+        private Task _stopTask;
 
         public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
         {
+            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime);
+
             BasePort = basePortOverride;
             ResolutionRoot = resolutionRoot;
-
-            Task.Run(() =>
-                _host.Run(new ServiceArguments(basePortOverride: basePortOverride, onStopWaitTimeInMs: shutdownWaitTime)));
-            _host.WaitForServiceStartedAsync().Wait();
+            _stopTask = _host.RunAsync(serviceArguments);
         }
 
-      
         public override void Dispose()
         {
+            _host.Stop();
             _host.Dispose();
+            var completed = _stopTask.Wait(60000);
+
+            if (!completed)
+                throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
         }
     }
 }
