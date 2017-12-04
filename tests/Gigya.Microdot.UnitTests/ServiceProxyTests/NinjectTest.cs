@@ -3,6 +3,7 @@ using FluentAssertions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing;
+using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
 

@@ -10,6 +10,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.Microdot.Testing;
+using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;
 

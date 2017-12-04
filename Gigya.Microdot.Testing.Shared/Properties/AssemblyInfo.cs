@@ -20,26 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Service;
-using Ninject;
-using Ninject.Parameters;
-using Ninject.Syntax;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
-namespace Gigya.Microdot.Testing.Service
-{
-    public static class ServiceTesterExtensions
-    {
-        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, TimeSpan? shutdownWaitTime = null)
-            where TServiceHost : ServiceHostBase, new()
-        {
-            NonOrleansServiceTester<TServiceHost> tester = kernel.Get<NonOrleansServiceTester<TServiceHost>>(
-                new ConstructorArgument(nameof(basePortOverride), basePortOverride),
-                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime)
-            );
-         
-            return tester;
-        }
-    }
-}
+// General Information about an assembly is controlled through the following
+// set of attributes. Change these attribute values to modify the information
+// associated with an assembly.
+[assembly: AssemblyTitle("Gigya.Microdot.Testing.Shared")]
+[assembly: AssemblyProduct("Gigya.Microdot.Testing.Shared")]
+
+// The following GUID is for the ID of the typelib if this project is exposed to COM
+[assembly: Guid("6d6a62a1-15b5-44c2-ad37-698ab31863e4")]

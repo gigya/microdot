@@ -22,7 +22,7 @@
 
 using System;
 
-namespace Gigya.Microdot.Testing.Orleans.Service
+namespace Gigya.Microdot.Testing.Service
 {
     /// <summary>
     /// OrleansTestingSilo creates an AppDomain for each silo.

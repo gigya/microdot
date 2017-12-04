@@ -10,7 +10,7 @@ using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing;
-
+using Gigya.Microdot.Testing.Shared;
 using Metrics;
 using Metrics.MetricData;
 

@@ -10,7 +10,8 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Utils;
+using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Utils;
 using Metrics;
 using Ninject;
 using NSubstitute;
@@ -26,7 +27,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private const string ServiceVersion = "1.2.30.1234";
         private string _serviceName;
         private const string MASTER_ENVIRONMENT = "prod";
-        private const string ORIGINATING_ENVIRONMENT = "MyFakeEnv";
+        private const string ORIGINATING_ENVIRONMENT = "fake_env";
         private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(5);
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;

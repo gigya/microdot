@@ -36,7 +36,7 @@ using Gigya.Microdot.SharedLogic.Monitor;
 using Ninject;
 using NSubstitute;
 
-namespace Gigya.Microdot.Testing
+namespace Gigya.Microdot.Testing.Shared
 {
 
     public class TestingKernel<T> : StandardKernel where T : ILog, new()

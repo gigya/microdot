@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D37E359C-170E-4D67-AD49-45002B48987E}</ProjectGuid>
+    <ProjectGuid>{6D6A62A1-15B5-44C2-AD37-698AB31863E4}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Gigya.Microdot.Testing.Orleans</RootNamespace>
-    <AssemblyName>Gigya.Microdot.Testing.Orleans</AssemblyName>
+    <RootNamespace>Gigya.Microdot.Testing.Shared</RootNamespace>
+    <AssemblyName>Gigya.Microdot.Testing.Shared</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -21,7 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Gigya.Microdot.Testing.Orleans.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\Gigya.Microdot.Testing.Shared.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -48,11 +48,12 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Service\AppDomainExtentions.cs" />
-    <Compile Include="Service\Common.cs" />
-    <Compile Include="Service\MarshalByRefObjectNeverDie.cs" />
+    <Compile Include="Service\ServiceTesterExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service\ServiceTester.cs" />
+    <Compile Include="Service\NonOrleansServiceTester.cs" />
+    <Compile Include="Service\ServiceTesterBase.cs" />
+    <Compile Include="TestingKernel.cs" />
+    <Compile Include="Utils\EventWaiter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
@@ -98,10 +99,6 @@
     <ProjectReference Include="..\Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj">
       <Project>{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}</Project>
       <Name>Gigya.Microdot.Orleans.Ninject.Host</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj">
-      <Project>{6d6a62a1-15b5-44c2-ad37-698ab31863e4}</Project>
-      <Name>Gigya.Microdot.Testing</Name>
     </ProjectReference>
     <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
       <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>

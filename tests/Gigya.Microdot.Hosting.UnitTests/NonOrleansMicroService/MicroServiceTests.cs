@@ -4,6 +4,8 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
 

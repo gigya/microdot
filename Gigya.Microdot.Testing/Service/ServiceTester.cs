@@ -34,7 +34,7 @@ using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
@@ -42,7 +42,7 @@ using Orleans;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
 
-namespace Gigya.Microdot.Testing.Orleans.Service
+namespace Gigya.Microdot.Testing.Service
 {
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {

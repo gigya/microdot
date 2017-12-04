@@ -37,7 +37,7 @@ using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
 
-namespace Gigya.Microdot.Testing.Service
+namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {

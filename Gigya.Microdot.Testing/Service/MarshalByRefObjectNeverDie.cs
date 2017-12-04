@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,36 +21,23 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.SharedLogic;
-using Ninject.Syntax;
+using System.Security.Permissions;
 
 namespace Gigya.Microdot.Testing.Service
 {
-    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
+
+    /// <summary>
+    /// If we desire to achieve singleton semantics for the remote object, it’s simplest to ensure that it never dies.  This can be done by overriding the InitializeLifetimeService method on your MarshalByRefObject-derived class and returning null .
+    /// Otherwise you may get System.Runtime.Remoting.RemotingException: Object [...] has been disconnected or does not exist at the server.
+    /// http://stackoverflow.com/questions/2410221/appdomain-and-marshalbyrefobject-life-time-how-to-avoid-remotingexceptions
+    /// http://blogs.microsoft.co.il/sasha/2008/07/19/appdomains-and-remoting-life-time-service/
+    /// </summary>
+    public abstract class MarshalByRefObjectThatNeverDie : MarshalByRefObject
     {
-
-        private readonly TServiceHost _host = new TServiceHost();
-        private Task _stopTask;
-
-        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
+        [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.Infrastructure)]
+        public override object InitializeLifetimeService()
         {
-            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime);
-
-            BasePort = basePortOverride;
-            ResolutionRoot = resolutionRoot;
-            _stopTask = _host.RunAsync(serviceArguments);
-        }
-
-        public override void Dispose()
-        {
-            _host.Stop();
-            _host.Dispose();
-            var completed = _stopTask.Wait(60000);
-
-            if (!completed)
-                throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
+            return null;
         }
     }
 }
