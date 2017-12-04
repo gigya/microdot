@@ -46,6 +46,8 @@ namespace Gigya.Microdot.ServiceDiscovery
     public class ConsulClient : IConsulClient
     {
         private string _serviceName;
+        private readonly string _serviceNameOrigin;
+
         private readonly IDateTime _dateTime;
         private ILog Log { get; }
         private HttpClient _httpClient;
@@ -80,6 +82,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
         {
             _serviceName = serviceName;
+            _serviceNameOrigin = serviceName;
+
             GetConfig = getConfig;
             _dateTime = dateTime;
             Log = log;
@@ -232,7 +236,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 var services = TryDeserialize<string[]>(response.ResponseContent);
                 var serviceNameMatchByCase = services.FirstOrDefault(s =>
-                    s.Equals(_serviceName, StringComparison.InvariantCultureIgnoreCase));
+                    s.Equals($"service/{_serviceName}", StringComparison.InvariantCultureIgnoreCase))?.Substring("service/".Length);
 
                 var serviceExists = serviceNameMatchByCase != null;
                 response.IsDeploymentDefined = serviceExists;
@@ -243,6 +247,12 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var tryReloadServiceWithCaseMatching = serviceExists && _serviceName != serviceNameMatchByCase;
                 if (tryReloadServiceWithCaseMatching)
                 {
+                    Log.Warn("Requested service found on Consul with different case", unencryptedTags: new
+                    {
+                        requestedService = _serviceNameOrigin,
+                        serviceOnConsul = serviceNameMatchByCase,
+                        consulResponse = response.ResponseContent
+                    });
                     _serviceName = serviceNameMatchByCase;
                     _allKeysModifyIndex = 0;
                 }
@@ -418,7 +428,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Content = responseContent
             });
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceName, ()=>HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
+            _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, ()=>HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
 
             if (Result != null && Result.Error == null)
                 return;
@@ -452,8 +462,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                     IsQueryDefined = false
                 };
 
-                _aggregatedHealthStatus.RegisterCheck(_serviceName,
-                    () => HealthCheckResult.Healthy($"{_serviceName} - Service doesn't exist on Consul"));
+                _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin,
+                    () => HealthCheckResult.Healthy($"{_serviceNameOrigin} - Service doesn't exist on Consul"));
             }
         }
 
@@ -488,8 +498,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                 }
 
 
-                _aggregatedHealthStatus.RegisterCheck(_serviceName,
-                    () => HealthCheckResult.Healthy($"{_serviceName} - {healthMessage}"));
+                _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () =>
+                    {
+                        if (_serviceName == _serviceNameOrigin)
+                            return HealthCheckResult.Healthy($"{_serviceNameOrigin} - {healthMessage}");
+                        else
+                            return HealthCheckResult.Healthy($"{_serviceNameOrigin} - Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
+                    });
 
                 Result = new EndPointsResult
                 {
@@ -521,7 +536,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             ShutdownToken.Cancel();
             _loadEndpointsByHealthCancellationTokenSource?.Cancel();
             _waitForConfigChange.TrySetResult(false);
-            _initializedVersion.TrySetResult(false);            
+            _initializedVersion.TrySetResult(false);  
+            _aggregatedHealthStatus.RemoveCheck(_serviceNameOrigin);
         }
 
         public void Dispose()

@@ -108,7 +108,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             return new ConsulResponse
             {
                 ModifyIndex = _keyValueModifyIndex,
-                Content = new JArray(_serviceNodes.Keys.ToArray()).ToString()
+                Content = new JArray(_serviceNodes.Keys.Select(s=>$"service/{s}").ToArray()).ToString()
             };
         
         }
