@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Concurrent;
 using Ninject;
+using Ninject.Activation;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -40,15 +41,15 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerKey<TKey, TService, TImplementation>(this IKernel kernel)
             where TImplementation : TService
         {
-            var dict = new ConcurrentDictionary<TKey, TService>();
+            var dict = kernel.Get<ConcurrentDictionary<TKey, TService>>();
 
             kernel.Rebind<TService>().To<TImplementation>();
 
             var factory = kernel.Get<Func<TKey, TService>>();
 
             kernel.Rebind<Func<TKey, TService>>()
-                  .ToMethod(c => key => dict.GetOrAdd(key, _ => factory(key)))
-                  .InSingletonScope();
+                .ToMethod(c => key => dict.GetOrAdd(key, _ => factory(key)))
+                .InSingletonScope();                  
 
             if (typeof(TImplementation) != typeof(TService))
             {
@@ -56,8 +57,8 @@ namespace Gigya.Microdot.Ninject
                       .ToMethod(c => key => (TImplementation)dict.GetOrAdd(key, _ => factory(key)))
                       .InSingletonScope();
             }
-        }
 
+        }
 
         /// <summary>
         /// Binds <see cref="TService"/> to <see cref="TImplementation"/> and configures Ninject factories in the form
@@ -75,7 +76,7 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerKey<TKey, TParam, TService, TImplementation>(this IKernel kernel)
             where TImplementation : TService
         {
-            var dict = new ConcurrentDictionary<TKey, TService>();
+            var dict = kernel.Get<ConcurrentDictionary<TKey, TService>>();
 
             kernel.Rebind<TService>().To<TImplementation>();
 
@@ -110,7 +111,7 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerMultiKey<TKey1, TKey2, TService, TImplementation>(this IKernel kernel)
             where TImplementation : TService
         {
-            var dict = new ConcurrentDictionary<Tuple<TKey1, TKey2>, TService>();
+            var dict = kernel.Get<ConcurrentDictionary<Tuple<TKey1, TKey2>, TService>>();
 
             kernel.Rebind<TService>().To<TImplementation>();
 
@@ -164,6 +165,25 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerString<TImplementation>(this IKernel kernel)
         {
             kernel.BindPerString<TImplementation, TImplementation>();
+        }
+
+    }
+
+    public class DisposableConcurrentDictionary<TKey, TValue> : ConcurrentDictionary<TKey, TValue>, IDisposable
+    {
+        public void Dispose()
+        {
+            foreach (var val in Values)
+            {
+                try
+                {
+                    (val as IDisposable)?.Dispose();
+                }
+                catch
+                {
+                    // ignored
+                }
+            }
         }
     }
 }
