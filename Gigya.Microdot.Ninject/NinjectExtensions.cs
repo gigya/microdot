@@ -175,15 +175,14 @@ namespace Gigya.Microdot.Ninject
         {
             foreach (var val in Values)
             {
-                if (val is IDisposable disposableVal)
-                    try
-                    {
-                        disposableVal.Dispose();
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
+                try
+                {
+                    (val as IDisposable)?.Dispose();
+                }
+                catch
+                {
+                    // ignored
+                }
             }
         }
     }
