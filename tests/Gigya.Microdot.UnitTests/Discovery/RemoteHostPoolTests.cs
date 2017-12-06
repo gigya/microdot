@@ -326,7 +326,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 var host = Pool.GetNextHost();
 
                 if (host.HostName == "host2")
-                    host.ReportFailure();
+                    host.ReportFailure(ex);
             }
 
             Thread.Sleep(200);
