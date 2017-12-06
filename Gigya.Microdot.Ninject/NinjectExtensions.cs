@@ -41,7 +41,7 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerKey<TKey, TService, TImplementation>(this IKernel kernel)
             where TImplementation : TService
         {
-            var dict = CreateDisposableDictionary<TKey, TService>(kernel);
+            var dict = kernel.Get<ConcurrentDictionary<TKey, TService>>();
 
             kernel.Rebind<TService>().To<TImplementation>();
 
@@ -76,7 +76,7 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerKey<TKey, TParam, TService, TImplementation>(this IKernel kernel)
             where TImplementation : TService
         {
-            var dict = CreateDisposableDictionary<TKey, TService>(kernel);
+            var dict = kernel.Get<ConcurrentDictionary<TKey, TService>>();
 
             kernel.Rebind<TService>().To<TImplementation>();
 
@@ -111,7 +111,7 @@ namespace Gigya.Microdot.Ninject
         public static void BindPerMultiKey<TKey1, TKey2, TService, TImplementation>(this IKernel kernel)
             where TImplementation : TService
         {
-            var dict = CreateDisposableDictionary<Tuple<TKey1, TKey2>, TService>(kernel);
+            var dict = kernel.Get<ConcurrentDictionary<Tuple<TKey1, TKey2>, TService>>();
 
             kernel.Rebind<TService>().To<TImplementation>();
 
@@ -167,37 +167,23 @@ namespace Gigya.Microdot.Ninject
             kernel.BindPerString<TImplementation, TImplementation>();
         }
 
-        /// <summary>
-        /// Create a dictionary which will be disposed when kernel is disposed
-        /// </summary>
-        private static ConcurrentDictionary<TKey, TValue> CreateDisposableDictionary<TKey, TValue>(IKernel kernel)
-        {
-            var dict = new ConcurrentDictionary<TKey, TValue>();
-
-            kernel
-                .Rebind<DisposableDictionaryWrapper<TKey, TValue>>()
-                .ToConstant(new DisposableDictionaryWrapper<TKey, TValue>(dict)).InSingletonScope();
-
-            kernel.Get<DisposableDictionaryWrapper<TKey, TValue>>();
-            return dict;
-        }
     }
 
-    public class DisposableDictionaryWrapper<TKey, TValue> : IDisposable
+    public class DisposableConcurrentDictionary<TKey, TValue> : ConcurrentDictionary<TKey, TValue>, IDisposable
     {
-        private readonly ConcurrentDictionary<TKey, TValue> _dict;
-
-        public DisposableDictionaryWrapper(ConcurrentDictionary<TKey, TValue> dict)
-        {
-            _dict = dict;            
-        }
-
         public void Dispose()
         {
-            foreach (var val in _dict.Values)
+            foreach (var val in Values)
             {
                 if (val is IDisposable disposableVal)
-                    disposableVal.Dispose();
+                    try
+                    {
+                        disposableVal.Dispose();
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
             }
         }
     }
