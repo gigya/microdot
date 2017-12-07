@@ -1,0 +1,10 @@
+type
+	project
+description
+	Tools to help write tests for Microdot services.
+projectUrl
+	https://github.com/gigya/microdot
+licenseUrl
+	https://github.com/gigya/microdot/blob/master/LICENSE.md
+tags
+	gigya microdot microservice microservices fakes mocks mocking unit-testing

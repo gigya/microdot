@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,21 +21,25 @@
 #endregion
 
 using System;
+using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
+namespace Gigya.Microdot.Testing.Service
+{
+    public class Common
+    {
+        public static AppDomain CreateDomain(string TestAppDomainName = "TestAppDomain")
+        {
+            AppDomain currentAppDomain = AppDomain.CurrentDomain;
 
-[assembly: AssemblyVersion("1.7.4.0")]
-[assembly: AssemblyFileVersion("1.7.4.0")] 
-[assembly: AssemblyInformationalVersion("1.7.4.0")]
-
-
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
-
+            return AppDomain.CreateDomain(TestAppDomainName, null, new AppDomainSetup
+            {
+                ApplicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                ConfigurationFile = currentAppDomain.SetupInformation.ConfigurationFile,
+                ShadowCopyFiles = currentAppDomain.SetupInformation.ShadowCopyFiles,
+                ShadowCopyDirectories = currentAppDomain.SetupInformation.ShadowCopyDirectories,
+                CachePath = currentAppDomain.SetupInformation.CachePath
+            });
+        }
+    }
+}

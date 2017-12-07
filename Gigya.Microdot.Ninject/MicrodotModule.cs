@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
@@ -50,6 +51,11 @@ namespace Gigya.Microdot.Ninject
 
         public override void Load()
         {
+            Kernel
+                .Bind(typeof(ConcurrentDictionary<,>))
+                .To(typeof(DisposableConcurrentDictionary<,>))
+                .InSingletonScope();
+
             if (Kernel.CanResolve<Func<long, DateTime>>() == false)
                 Kernel.Load<FuncModule>();
 

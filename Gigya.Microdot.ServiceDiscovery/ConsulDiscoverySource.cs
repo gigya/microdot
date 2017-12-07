@@ -167,7 +167,10 @@ namespace Gigya.Microdot.ServiceDiscovery
         public override void ShutDown()
         {
             if (!_disposed)
+            {
                 _resultChangedLink?.Dispose();
+                ConsulClient?.Dispose();
+            }
 
             _disposed = true;
         }

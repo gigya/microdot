@@ -26,7 +26,7 @@ using System.Net.Http;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing.ServiceTester;
+using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;
 using Shouldly;
 

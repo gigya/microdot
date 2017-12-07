@@ -9,7 +9,8 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Utils;
+using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 
 using NSubstitute;
@@ -22,7 +23,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
     public class ConsulDiscoverySourceTest
     {
         private const string SERVICE_NAME = "ServiceName";
-        private const string ENV = "DeploymentEnvironment";
+        private const string ENV = "env";
 
         private readonly string[] _endpointsBeforeChange = { "Endpoint1", "Endpoint2", "Endpoint3" };
         private readonly string[] _endpointsAfterChange = { "NewEndpoint1", "NewEndpoint2", "NewEndpoint3", "NewEndpoint4" };

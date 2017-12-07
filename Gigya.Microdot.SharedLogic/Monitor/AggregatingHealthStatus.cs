@@ -56,5 +56,9 @@ namespace Gigya.Microdot.SharedLogic.Monitor
             _checks.AddOrUpdate(name, checkFunc, (a, b) => checkFunc);
         }
 
+        public void RemoveCheck(string name)
+        {
+            _checks.TryRemove(name, out var _);
+        }
     }
 }

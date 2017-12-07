@@ -21,21 +21,24 @@
 #endregion
 
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using Gigya.Microdot.Hosting.Service;
+using Ninject;
+using Ninject.Parameters;
+using Ninject.Syntax;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
-
-[assembly: AssemblyVersion("1.7.4.0")]
-[assembly: AssemblyFileVersion("1.7.4.0")] 
-[assembly: AssemblyInformationalVersion("1.7.4.0")]
-
-
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
-
+namespace Gigya.Microdot.Testing.Shared.Service
+{
+    public static class ServiceTesterExtensions
+    {
+        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, TimeSpan? shutdownWaitTime = null)
+            where TServiceHost : ServiceHostBase, new()
+        {
+            NonOrleansServiceTester<TServiceHost> tester = kernel.Get<NonOrleansServiceTester<TServiceHost>>(
+                new ConstructorArgument(nameof(basePortOverride), basePortOverride),
+                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime)
+            );
+         
+            return tester;
+        }
+    }
+}

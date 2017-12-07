@@ -6,7 +6,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
-
+using Gigya.Microdot.Testing.Shared;
 using Ninject;
 
 using NUnit.Framework;

@@ -20,22 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
+// General Information about an assembly is controlled through the following
+// set of attributes. Change these attribute values to modify the information
+// associated with an assembly.
+[assembly: AssemblyTitle("Gigya.Microdot.Testing.Shared")]
+[assembly: AssemblyProduct("Gigya.Microdot.Testing.Shared")]
 
-[assembly: AssemblyVersion("1.7.4.0")]
-[assembly: AssemblyFileVersion("1.7.4.0")] 
-[assembly: AssemblyInformationalVersion("1.7.4.0")]
-
-
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
-
+// The following GUID is for the ID of the typelib if this project is exposed to COM
+[assembly: Guid("6d6a62a1-15b5-44c2-ad37-698ab31863e4")]

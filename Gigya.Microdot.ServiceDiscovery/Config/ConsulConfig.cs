@@ -10,18 +10,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// Whether to Call Consul with long-polling, waiting for changes to occur, or to call it periodically
         /// </summary>
-        public bool UseLongPolling { get; set; } = false;
+        public bool LongPolling { get; set; } = false;
 
         /// <summary>
         /// Interval for reloading endpoints from Consul, 
-        /// Used only when UseLongPolling=false
+        /// Used only when LongPolling=false
         /// </summary>
         public TimeSpan ReloadInterval { get; set; } = TimeSpan.FromSeconds(1);
 
         /// <summary>
         /// Time to wait for http response from Consul.
-        /// When UseLongPolling=true,  defines the maximum time to wait on long-polling.
-        /// When UseLongPolling=false, defines the timeout for Consul http requests.
+        /// When LongPolling=true,  defines the maximum time to wait on long-polling.
+        /// When LongPolling=false, defines the timeout for Consul http requests.
         /// </summary>
         public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
