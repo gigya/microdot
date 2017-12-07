@@ -20,26 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.IO;
-using System.Reflection;
+using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
 
-namespace Gigya.Microdot.Testing.ServiceTester
+namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
-    public class Common
+    [HttpService(12323)]
+    public interface ICalculatorService
     {
-        public static AppDomain CreateDomain(string TestAppDomainName = "TestAppDomain")
-        {
-            AppDomain currentAppDomain = AppDomain.CurrentDomain;
-
-            return AppDomain.CreateDomain(TestAppDomainName, null, new AppDomainSetup
-            {
-                ApplicationBase = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                ConfigurationFile = currentAppDomain.SetupInformation.ConfigurationFile,
-                ShadowCopyFiles = currentAppDomain.SetupInformation.ShadowCopyFiles,
-                ShadowCopyDirectories = currentAppDomain.SetupInformation.ShadowCopyDirectories,
-                CachePath = currentAppDomain.SetupInformation.CachePath
-            });
-        }
+        Task<int> Add(int a, int b);
     }
 }

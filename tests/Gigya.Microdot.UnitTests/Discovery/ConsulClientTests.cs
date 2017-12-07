@@ -7,7 +7,8 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Utils;
+using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -35,7 +36,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private string _serviceName;
         private DateTimeFake _dateTimeFake;
         private ConsulConfig _consulConfig;
-        private Func<ConsulConfig> _getConfigMethod;
 
         [OneTimeSetUp]
         public void SetupConsulListener()
@@ -51,7 +51,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
 
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_getConfigMethod());
+                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
 
         }
@@ -75,20 +75,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private Task<EndPointsResult> Start(ConsulMethod consulMethod)
         {
-            var waitForStart = new TaskCompletionSource<bool>();
-            _getConfigMethod = () =>
-            {
-                // When ConsulClient is started, it tries to get config. 
-                // We make it wait (for config) on start in order to make sure we get the first result right after the ConsulClient is up
-                waitForStart.Task.GetAwaiter().GetResult();
-                _getConfigMethod = () => _consulConfig;
-                return _consulConfig;
-            };
-
-            _consulConfig.UseLongPolling = (consulMethod == ConsulMethod.LongPolling);
+            _consulConfig.LongPolling = (consulMethod == ConsulMethod.LongPolling);
             _consulClient = _testingKernel.Get<Func<string, IConsulClient>>()(_serviceName);
-
-            return GetResultAfter(() => waitForStart.SetResult(true));
+            return GetResultAfter(() => _consulClient.Init());
         }
 
         [TestCase(ConsulMethod.LongPolling)]
@@ -110,7 +99,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             AssertOneDefaultEndpoint(result);
             var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBe(3); // one kv call (find that service not deployed), one more kv call (after endpoint added), and one health call (to get endpoints)
+            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), and one health call (to get endpoints)
             delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
         }
 
@@ -241,6 +230,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
             delays.Length.ShouldBeLessThan(4); // shouldn't take too many loops to get the result
         }
 
+        [TestCase(ConsulMethod.LongPolling)]        
+        public async Task ServiceIsDeployedInLowerCase(ConsulMethod consulMethod)
+        {
+            AddServiceEndPoint(serviceName: _serviceName.ToLower());
+            var result = await Start(consulMethod);
+            AssertOneDefaultEndpoint(result);
+        }
+
         private static void AssertOneDefaultEndpoint(EndPointsResult result)
         {
             result.EndPoints.Length.ShouldBe(1);
@@ -249,19 +246,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
             result.ActiveVersion.ShouldBe(Version);
         }
 
-        private async void AddServiceEndPoint(string hostName=Host1, int port=Port1, string version=Version)
+        private async void AddServiceEndPoint(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
         {            
-            _consulSimulator.AddServiceEndpoint(_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceEndpoint(serviceName??_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
-        private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1)
+        private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1, string serviceName=null)
         {
-            _consulSimulator.RemoveServiceEndpoint(_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceEndpoint(serviceName??_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
-        private void SetServiceVersion(string version)
+        private void SetServiceVersion(string version, string serviceName=null)
         {
-            _consulSimulator.SetServiceVersion(_serviceName, version);
+            _consulSimulator.SetServiceVersion(serviceName??_serviceName, version);
         }
 
         private void SetConsulIsDown()

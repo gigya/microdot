@@ -16,6 +16,7 @@ using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.Testing;
+using Gigya.Microdot.Testing.Shared;
 using Newtonsoft.Json;
 using Ninject;
 using NUnit.Framework;

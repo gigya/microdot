@@ -8,6 +8,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing;
+using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;

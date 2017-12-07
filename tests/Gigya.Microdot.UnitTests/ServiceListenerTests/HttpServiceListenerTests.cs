@@ -14,6 +14,7 @@ using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.Testing;
+using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
 
 using Metrics;

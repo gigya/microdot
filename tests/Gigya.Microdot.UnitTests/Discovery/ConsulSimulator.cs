@@ -108,7 +108,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             return new ConsulResponse
             {
                 ModifyIndex = _keyValueModifyIndex,
-                Content = new JArray(_serviceNodes.Keys.ToArray()).ToString()
+                Content = new JArray(_serviceNodes.Keys.Select(s=>$"service/{s}").ToArray()).ToString()
             };
         
         }
@@ -122,8 +122,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     Content = "rpc error: Query not found"
                 };
 
+            if (!_serviceNodes.TryGetValue(serviceName, out var nodes))
+                nodes = new List<ConsulEndPoint>();
+
             return new ConsulResponse {Content =
-                @"{'Nodes' : [" + string.Join("\n,", _serviceNodes[serviceName].Select(ep =>
+                @"{'Nodes' : [" + string.Join("\n,", nodes.Select(ep =>
                                 @"{
                                         'Node': {
                                             'Node': '" + ep.HostName + @"',

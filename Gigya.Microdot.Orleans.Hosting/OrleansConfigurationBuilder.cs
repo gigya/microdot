@@ -73,6 +73,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 	        globals.RegisterBootstrapProvider<DelegatingBootstrapProvider>(nameof(DelegatingBootstrapProvider));
 	        defaults.ProxyGatewayEndpoint = new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloGatewayPort);
 	        defaults.Port = endPointDefinition.SiloNetworkingPort;
+	        defaults.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
 	        if (serviceArguments.ProcessorAffinity != null)
 	            defaults.MaxActiveThreads = serviceArguments.ProcessorAffinity.Length;

@@ -32,6 +32,7 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.TestingTools")]
 [assembly: InternalsVisibleTo("Gigya.Common.Application.UnitTests")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Testing")]
+[assembly: InternalsVisibleTo("Gigya.Microdot.Testing.Shared")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.UnitTests")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM

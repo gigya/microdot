@@ -29,7 +29,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public ServiceDeployment(string serviceName, string deploymentEnvironment)
         {
-            DeploymentEnvironment = deploymentEnvironment;
+            DeploymentEnvironment = deploymentEnvironment.ToLower();
             ServiceName = serviceName;
         }
 

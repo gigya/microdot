@@ -10,7 +10,8 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Utils;
+using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Utils;
 using Metrics;
 using Ninject;
 using NSubstitute;
@@ -26,20 +27,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private const string ServiceVersion = "1.2.30.1234";
         private string _serviceName;
         private const string MASTER_ENVIRONMENT = "prod";
-        private const string ORIGINATING_ENVIRONMENT = "MyFakeEnv";
+        private const string ORIGINATING_ENVIRONMENT = "fake_env";
         private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(5);
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
-        private Dictionary<string, IConsulClient> _consulClients;
+        private Dictionary<string, ConsulClientMock> _consulClient;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ManualConfigurationEvents _configRefresh;
         private IDateTime _dateTimeMock;
         private int id;
         private const int Repeat = 1;
-
-        private Dictionary<string, BufferBlock<EndPointsResult>> _resultChanged;
-        private Dictionary<string, EndPointsResult> _consulResult;
-        private Timer _consulResultsTimer;
 
         [SetUp]
         public void SetUp()
@@ -51,61 +48,54 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _environmentVariableProvider.DataCenter.Returns("il3");
             _environmentVariableProvider.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
 
-            _configDic = new Dictionary<string, string> { { "Discovery.EnvironmentFallbackEnabled", "true" } };
+            _configDic = new Dictionary<string, string> {{"Discovery.EnvironmentFallbackEnabled", "true"}};
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
 
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                 SetupConsulClientMocks();
-                k.Rebind<Func<string, IConsulClient>>().ToMethod(_ => (s=> _consulClients[s]));
+                k.Rebind<Func<string, IConsulClient>>().ToMethod(_ => (s => _consulClient[s]));
 
                 _dateTimeMock = Substitute.For<IDateTime>();
-                _dateTimeMock.Delay(Arg.Any<TimeSpan>()).Returns(c=>Task.Delay(TimeSpan.FromMilliseconds(100)));
+                _dateTimeMock.Delay(Arg.Any<TimeSpan>()).Returns(c => Task.Delay(TimeSpan.FromMilliseconds(100)));
                 k.Rebind<IDateTime>().ToConstant(_dateTimeMock);
             }, _configDic);
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
-   
+
             var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
             Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
         }
 
         private void SetupConsulClientMocks()
         {
-            _consulClients = new Dictionary<string, IConsulClient>();
-            _consulResult = new Dictionary<string, EndPointsResult>();
-            _resultChanged = new Dictionary<string, BufferBlock<EndPointsResult>>();
+            _consulClient = new Dictionary<string, ConsulClientMock>();
 
             CreateConsulMock(MasterService);
             CreateConsulMock(OriginatingService);
 
-            _consulResultsTimer =  new Timer(_ =>
-            {
-                foreach (var service in _resultChanged.Keys)
-                {
-                    _resultChanged[service].Post(_consulResult[service]);
-                }
-            }, null, 100, Timeout.Infinite);
         }
 
         private void CreateConsulMock(string serviceName)
         {
-            var mock = Substitute.For<IConsulClient>();
+            var mock = new ConsulClientMock();
+            mock.SetResult(new EndPointsResult
+            {
+                EndPoints = new EndPoint[] {new ConsulEndPoint {HostName = "dumy", Version = ServiceVersion}},
+                IsQueryDefined = true
+            });            
 
-            _consulResult[serviceName] = new EndPointsResult { EndPoints = new EndPoint[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, IsQueryDefined = true };
-            _resultChanged[serviceName] = new BufferBlock<EndPointsResult>();
-
-            mock.ResultChanged.Returns(t=>_resultChanged[serviceName]);
-            mock.Result.Returns(t=>_consulResult[serviceName]);
-            
-            _consulClients[serviceName] = mock;
+            _consulClient[serviceName] = mock;
         }
 
         [TearDown]
         public void TearDown()
         {
             _unitTestingKernel.Dispose();
-            _consulResultsTimer.Dispose();
+            foreach (var consulClient in _consulClient)
+            {
+                consulClient.Value.Dispose();
+            }
         }
 
         [Test]
@@ -266,7 +256,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             for (int i = 0; i < 5; i++)
             {
                 discovey.GetNextHost();
-                Thread.Sleep((int)reloadInterval.TotalMilliseconds * 10);
+                Thread.Sleep((int) reloadInterval.TotalMilliseconds * 10);
             }
             numOfEvent.ShouldBe(0);
         }
@@ -338,7 +328,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var discovey = GetServiceDiscovey();
             await discovey.GetAllEndPoints();
 
-            var wait = discovey.EndPointsChanged.StartCountingEvents();            
+            var wait = discovey.EndPointsChanged.StartCountingEvents();
             bool UseOriginatingService(int i) => i % 2 == 0;
             for (int i = 1; i < 6; i++)
             {
@@ -360,34 +350,36 @@ namespace Gigya.Microdot.UnitTests.Discovery
             }
         }
 
-        private void SetMockToReturnHost(string query)
+        private void SetMockToReturnHost(string serviceName)
         {
-            if (!_consulClients.ContainsKey(query))
-                CreateConsulMock(query);
-            var result = new EndPointsResult
-            {
-                EndPoints = new EndPoint[] { new ConsulEndPoint { HostName = query, Version=ServiceVersion } },
-                RequestLog = "<Mock consul request log>",
-                ResponseLog = "<Mock consul response>",
-                ActiveVersion = ServiceVersion,
-                IsQueryDefined = true
-            };
-            _consulResult[query] = result;
-            _resultChanged[query].Post(result);
+            if (!_consulClient.ContainsKey(serviceName))
+                CreateConsulMock(serviceName);
+
+            _consulClient[serviceName].SetResult(
+                new EndPointsResult
+                {
+                    EndPoints = new EndPoint[] {new ConsulEndPoint {HostName = serviceName, Version = ServiceVersion}},
+                    RequestLog = "<Mock consul request log>",
+                    ResponseLog = "<Mock consul response>",
+                    ActiveVersion = ServiceVersion,
+                    IsQueryDefined = true
+                });            
         }
 
-        private void SetMockToReturnServiceNotDefined(string query)
+        private void SetMockToReturnServiceNotDefined(string serviceName)
         {
-            var result = new EndPointsResult {IsQueryDefined = false};
-            _consulResult[query] = result;
-            _resultChanged[query].Post(result);
+            _consulClient[serviceName].SetResult(new EndPointsResult {IsQueryDefined = false});            
         }
 
-        private void SetMockToReturnError(string query)
+        private void SetMockToReturnError(string serviceName)
         {
-            var result = new EndPointsResult { Error = new EnvironmentException("Mock: some error"), IsQueryDefined = true, ResponseLog = "Error response log" };            
-            _consulResult[query] = result;
-            _resultChanged[query].Post(result);
+            _consulClient[serviceName].SetResult(
+                new EndPointsResult
+                {
+                    Error = new EnvironmentException("Mock: some error"),
+                    IsQueryDefined = true,
+                    ResponseLog = "Error response log"
+                });
         }
 
         [Test]
@@ -399,16 +391,20 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
 
         private IServiceDiscovery GetServiceDiscovey()
-        {                        
-            var discovery = _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName, _reachabilityChecker);
-            Task.Delay(200).GetAwaiter().GetResult(); // let ConsulClient return the expected result before getting the dicovery object
+        {
+            var discovery =
+                _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName,
+                    _reachabilityChecker);
+            Task.Delay(200).GetAwaiter()
+                .GetResult(); // let ConsulClient return the expected result before getting the dicovery object
             return discovery;
         }
-        
+
 
         private string MasterService => ConsulServiceName(_serviceName, MASTER_ENVIRONMENT);
         private string OriginatingService => ConsulServiceName(_serviceName, ORIGINATING_ENVIRONMENT);
 
-        private static string ConsulServiceName(string serviceName, string deploymentEnvironment) => $"{serviceName}-{deploymentEnvironment}";
+        private static string ConsulServiceName(string serviceName, string deploymentEnvironment) =>
+            $"{serviceName}-{deploymentEnvironment}";
     }
 }

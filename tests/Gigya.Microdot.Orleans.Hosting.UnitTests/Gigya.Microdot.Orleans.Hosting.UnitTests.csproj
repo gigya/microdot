@@ -110,8 +110,12 @@
       <Name>Gigya.Microdot.Orleans.Hosting</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj">
-      <Project>{6D6A62A1-15B5-44C2-AD37-698AB31863E4}</Project>
+      <Project>{d37e359c-170e-4d67-ad49-45002b48987e}</Project>
       <Name>Gigya.Microdot.Testing</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj">
+      <Project>{6D6A62A1-15B5-44C2-AD37-698AB31863E4}</Project>
+      <Name>Gigya.Microdot.Testing.Shared</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
       <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>

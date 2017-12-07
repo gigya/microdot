@@ -76,6 +76,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 if (_resultChangedLink==null)
                     _resultChangedLink = ConsulClient.ResultChanged.LinkTo(new ActionBlock<EndPointsResult>(r => ConsulResultChanged(r)));
 
+            ConsulClient.Init();
             return _initialized.Task;
         }
 
@@ -84,7 +85,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             lock (_resultLocker)
             {
                 var shouldReportChanges = false;
-                if (newResult.IsQueryDefined != Result.IsQueryDefined)
+                if (newResult.IsQueryDefined != Result.IsQueryDefined && !_firstTime)
                 {
                     shouldReportChanges = true;
                     if (newResult.IsQueryDefined==false)
@@ -166,7 +167,10 @@ namespace Gigya.Microdot.ServiceDiscovery
         public override void ShutDown()
         {
             if (!_disposed)
+            {
                 _resultChangedLink?.Dispose();
+                ConsulClient?.Dispose();
+            }
 
             _disposed = true;
         }

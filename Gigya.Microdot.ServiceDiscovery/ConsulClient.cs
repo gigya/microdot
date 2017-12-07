@@ -45,7 +45,9 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public class ConsulClient : IConsulClient
     {
-        private readonly string _serviceName;
+        private string _serviceName;
+        private readonly string _serviceNameOrigin;
+
         private readonly IDateTime _dateTime;
         private ILog Log { get; }
         private HttpClient _httpClient;
@@ -74,12 +76,15 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _isDeploymentDefined = true;
 
         private bool _disposed;
+        private int _initialized = 0;
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
             ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
             ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
         {
             _serviceName = serviceName;
+            _serviceNameOrigin = serviceName;
+
             GetConfig = getConfig;
             _dateTime = dateTime;
             Log = log;
@@ -95,8 +100,18 @@ namespace Gigya.Microdot.ServiceDiscovery
             _resultChanged = new BufferBlock<EndPointsResult>();
             _initializedVersion = new TaskCompletionSource<bool>();
             ShutdownToken = new CancellationTokenSource();
-            Task.Run(LoadVersionLoop);
-            Task.Run(LoadEndpointsLoop);
+        }
+
+        public async Task Init()
+        {
+            if (Interlocked.Increment(ref _initialized) != 1)
+                return;
+
+#pragma warning disable 4014
+            // Run these loops in background
+            LoadVersionLoop();
+            LoadEndpointsLoop();
+#pragma warning restore 4014
         }
 
         private async Task LoadVersionLoop()
@@ -106,7 +121,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 ConsulResponse response = null;
                 var config = GetConfig();
 
-                if (config.UseLongPolling)
+                if (config.LongPolling)
                     response = await LoadServiceVersion().ConfigureAwait(false);
                 else
                 {
@@ -117,10 +132,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var delay = TimeSpan.FromMilliseconds(0);
 
                 if (response.Success)
-                    _initializedVersion.TrySetResult(true);
-                else if (response.IsDeploymentDefined == false)
-                    await WaitForDeploymentVersionChange().ConfigureAwait(false);
-                else
+                    _initializedVersion.TrySetResult(true);                
+                else if (response.Error!=null)
                     delay = config.ErrorRetryInterval;
 
                 await _dateTime.Delay(delay).ConfigureAwait(false);
@@ -135,7 +148,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var config = GetConfig();
 
                 var delay = TimeSpan.FromMilliseconds(0);
-                if (config.UseLongPolling)
+                if (config.LongPolling)
                 {
                     await _initializedVersion.Task;
                     consulResponse = await LoadEndpointsByHealth().ConfigureAwait(false);
@@ -188,7 +201,9 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (response.ModifyIndex.HasValue)
                 _versionModifyIndex = response.ModifyIndex.Value;
 
-            if (response.Success)
+            if (response.IsDeploymentDefined==false)                
+                    await SearchServiceInAllKeys().ConfigureAwait(false);
+            else if (response.Success)
             {
                 var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
                 var version = keyValue?.SingleOrDefault()?.TryDecodeValue()?.Version;
@@ -218,7 +233,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             return LoadServiceVersion();
         }
 
-        private async Task WaitForDeploymentVersionChange()
+        private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
             var config = GetConfig();
             var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
@@ -227,6 +242,34 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             if (response.ModifyIndex.HasValue)
                 _allKeysModifyIndex = response.ModifyIndex.Value;
+
+            if (response.Success)
+            {
+                var services = TryDeserialize<string[]>(response.ResponseContent);
+                var serviceNameMatchByCase = services.FirstOrDefault(s =>
+                    s.Equals($"service/{_serviceName}", StringComparison.InvariantCultureIgnoreCase))?.Substring("service/".Length);
+
+                var serviceExists = serviceNameMatchByCase != null;
+                response.IsDeploymentDefined = serviceExists;
+
+                if (!serviceExists)
+                    SetServiceMissingResult(urlCommand, response.ResponseContent);
+
+                var tryReloadServiceWithCaseMatching = serviceExists && _serviceName != serviceNameMatchByCase;
+                if (tryReloadServiceWithCaseMatching)
+                {
+                    Log.Warn("Requested service found on Consul with different case", unencryptedTags: new
+                    {
+                        requestedService = _serviceNameOrigin,
+                        serviceOnConsul = serviceNameMatchByCase,
+                        consulResponse = response.ResponseContent
+                    });
+                    _serviceName = serviceNameMatchByCase;
+                    _allKeysModifyIndex = 0;
+                }
+            }
+
+            return response;
         }
 
         private async Task<ConsulResponse> LoadEndpointsByHealth()
@@ -340,26 +383,27 @@ namespace Gigya.Microdot.ServiceDiscovery
                         {
                             var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
                             SetServiceMissingResult(requestLog, responseStr);
-                            return new ConsulResponse {IsDeploymentDefined = false};
+                            return new ConsulResponse { IsDeploymentDefined = false };
                         }
 
                         SetErrorResult(requestLog, exception, statusCode, responseContent);
-                        return new ConsulResponse{Error = exception};
+                        return new ConsulResponse { Error = exception };
                     }
 
                     modifyIndex = GetConsulIndex(response);
                 }
 
-                return new ConsulResponse {ModifyIndex = modifyIndex, ResponseContent = responseContent};
+                return new ConsulResponse { ModifyIndex = modifyIndex, ResponseContent = responseContent };
             }
             catch (Exception ex)
             {
                 if (!(ex is TaskCanceledException))
                     SetErrorResult(requestLog, ex, statusCode, responseContent);
 
-                return new ConsulResponse{Error = ex};
+                return new ConsulResponse { Error = ex };
             }
         }
+
 
         private static ulong? GetConsulIndex(HttpResponseMessage response)
         {
@@ -395,7 +439,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Content = responseContent
             });
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceName, ()=>HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
+            _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, ()=>HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
 
             if (Result != null && Result.Error == null)
                 return;
@@ -413,6 +457,10 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         internal void SetServiceMissingResult(string requestLog, string responseContent)
         {
+            var stillNeedToCheckIfServiceExistOnAllKeysList = GetConfig().LongPolling && _allKeysModifyIndex == 0;
+            if (stillNeedToCheckIfServiceExistOnAllKeysList)
+                return;
+
             lock (_setResultLocker)
             {
                 _isDeploymentDefined = false;
@@ -425,8 +473,8 @@ namespace Gigya.Microdot.ServiceDiscovery
                     IsQueryDefined = false
                 };
 
-                _aggregatedHealthStatus.RegisterCheck(_serviceName,
-                    () => HealthCheckResult.Healthy($"{_serviceName} - Service doesn't exist on Consul"));
+                _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin,
+                    () => HealthCheckResult.Healthy($"{_serviceNameOrigin} - Service doesn't exist on Consul"));
             }
         }
 
@@ -461,8 +509,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                 }
 
 
-                _aggregatedHealthStatus.RegisterCheck(_serviceName,
-                    () => HealthCheckResult.Healthy($"{_serviceName} - {healthMessage}"));
+                _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () =>
+                    {
+                        if (_serviceName == _serviceNameOrigin)
+                            return HealthCheckResult.Healthy($"{_serviceNameOrigin} - {healthMessage}");
+                        else
+                            return HealthCheckResult.Healthy($"{_serviceNameOrigin} - Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
+                    });
 
                 Result = new EndPointsResult
                 {
@@ -494,7 +547,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             ShutdownToken.Cancel();
             _loadEndpointsByHealthCancellationTokenSource?.Cancel();
             _waitForConfigChange.TrySetResult(false);
-            _initializedVersion.TrySetResult(false);            
+            _initializedVersion.TrySetResult(false);  
+            _aggregatedHealthStatus.RemoveCheck(_serviceNameOrigin);
         }
 
         public void Dispose()
