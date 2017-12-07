@@ -36,7 +36,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private string _serviceName;
         private DateTimeFake _dateTimeFake;
         private ConsulConfig _consulConfig;
-        private Func<ConsulConfig> _getConfigMethod;
 
         [OneTimeSetUp]
         public void SetupConsulListener()
@@ -52,7 +51,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
 
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_getConfigMethod());
+                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
 
         }
@@ -76,20 +75,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private Task<EndPointsResult> Start(ConsulMethod consulMethod)
         {
-            var waitForStart = new TaskCompletionSource<bool>();
-            _getConfigMethod = () =>
-            {
-                // When ConsulClient is started, it tries to get config. 
-                // We make it wait (for config) on start in order to make sure we get the first result right after the ConsulClient is up
-                waitForStart.Task.GetAwaiter().GetResult();
-                _getConfigMethod = () => _consulConfig;
-                return _consulConfig;
-            };
-
             _consulConfig.LongPolling = (consulMethod == ConsulMethod.LongPolling);
             _consulClient = _testingKernel.Get<Func<string, IConsulClient>>()(_serviceName);
-
-            return GetResultAfter(() => waitForStart.SetResult(true));
+            return GetResultAfter(() => _consulClient.Init());
         }
 
         [TestCase(ConsulMethod.LongPolling)]
