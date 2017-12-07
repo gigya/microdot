@@ -51,7 +51,7 @@ namespace Gigya.Microdot.ServiceProxy
 {
     public class ServiceProxyProvider : IDisposable, IServiceProxyProvider
     {
-        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
+        public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
             NullValueHandling = NullValueHandling.Ignore,
