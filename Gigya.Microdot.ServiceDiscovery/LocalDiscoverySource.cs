@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public override Exception AllEndpointsUnreachable(EndPointsResult endPointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)
         {
-            return new MissingHostException("Service source is configured to 'Local' Discovery mode, but is not reachable on local machine. See tags for more details.",
+            return new ServiceUnreachableException("Service source is configured to 'Local' Discovery mode, but is not reachable on local machine. See tags for more details.",
                 lastException,
                 unencrypted: new Tags
                 {

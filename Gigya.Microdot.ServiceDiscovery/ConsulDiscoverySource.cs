@@ -143,13 +143,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                 else if (endPointsResult.Error != null)
                     return new EnvironmentException("Error calling Consul. See tags for details.", unencrypted: tags);
                 else if (endPointsResult.IsQueryDefined == false)
-                    return new EnvironmentException("Service doesn't exist on Consul. See tags for details.", unencrypted: tags);
+                    return new ServiceUnreachableException("Service doesn't exist on Consul. See tags for details.", unencrypted: tags);
                 else
                     return new EnvironmentException("No endpoint were specified in Consul for the requested service and service's active version.", unencrypted: tags);
             }
             else
             {
-                return new MissingHostException("All endpoints defined by Consul for the requested service are unreachable. " +
+                return new ServiceUnreachableException("All endpoints defined by Consul for the requested service are unreachable. " +
                                                 "Please make sure the endpoints on Consul are correct and are functioning properly. " +
                                                 "See tags for the name of the requested service, and address of consul from which they were loaded. " +
                                                 "exception for one of the causes a remote host was declared unreachable.",
