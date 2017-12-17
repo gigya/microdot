@@ -195,7 +195,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
 
                 Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
-                await act.ShouldThrowAsync<MissingHostException>();
+                await act.ShouldThrowAsync<ServiceUnreachableException>();
                 counter.ShouldBe(4);
             }
         }
@@ -299,7 +299,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {
                     Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
 
-                    await act.ShouldThrowAsync<MissingHostException>();
+                    await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
                 counter.ShouldBe(3);
             }
@@ -350,7 +350,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {
                     Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
 
-                    await act.ShouldThrowAsync<MissingHostException>();
+                    await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
                 counter.ShouldBe(2);
             }
