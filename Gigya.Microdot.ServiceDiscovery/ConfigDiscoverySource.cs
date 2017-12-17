@@ -111,7 +111,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             }
             else
             {
-                return new MissingHostException("All defined hosts for the requested service are unreachable. " +
+                return new ServiceUnreachableException("All endpoints defined by the configuration for the requested service are unreachable. " +
                                                 "Please make sure the remote hosts specified in the configuration are correct and are " +
                                                 "functioning properly. See tags for the name of the requested service, the list of hosts " +
                                                 "that are unreachable, and the configuration path they were loaded from. See the inner " +

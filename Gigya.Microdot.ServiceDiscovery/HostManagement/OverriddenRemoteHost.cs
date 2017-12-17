@@ -44,7 +44,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
         public bool ReportFailure(Exception ex = null)
         {
-            throw new MissingHostException("Failed to reach an overridden remote host. Please make sure the " +
+            throw new ServiceUnreachableException("Failed to reach an overridden remote host. Please make sure the " +
                                            "overrides specified are reachable from all services that participate in the request. See inner " +
                                            "exception for details and tags for information on which override caused this issue.",
                 ex,
