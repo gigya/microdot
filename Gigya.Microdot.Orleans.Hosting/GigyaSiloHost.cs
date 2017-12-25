@@ -49,17 +49,17 @@ namespace Gigya.Microdot.Orleans.Hosting
         private ILog Log { get; }
         private OrleansConfigurationBuilder ConfigBuilder { get; }
         private HttpServiceListener HttpServiceListener { get; }
-        private IEventPublisher<GrainCallEvent> EventPublisher { get; }        
+        private IEventPublisher<GrainCallEvent> EventPublisher { get; }
 
 
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
-                             HttpServiceListener httpServiceListener, 
+                             HttpServiceListener httpServiceListener,
                              IEventPublisher<GrainCallEvent> eventPublisher)
         {
             Log = log;
             ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
-            EventPublisher = eventPublisher;            
+            EventPublisher = eventPublisher;
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
                 throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             };
             Silo.InitializeOrleansSilo();
 
-            
+
             bool siloStartedSuccessfully = Silo.StartOrleansSilo(false);
 
             if (siloStartedSuccessfully)
@@ -96,7 +96,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         }
 
 
-        
+
         public void Stop()
         {
             HttpServiceListener.Dispose();
@@ -118,7 +118,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private async Task BootstrapInit(IProviderRuntime providerRuntime)
         {
             GrainTaskScheduler = TaskScheduler.Current;
-            GrainFactory = providerRuntime.GrainFactory;            
+            GrainFactory = providerRuntime.GrainFactory;
             providerRuntime.SetInvokeInterceptor(Interceptor);
 
             try
@@ -139,7 +139,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             catch (Exception ex)
             {
                 BootstrapException = ex;
-                Log.Error("Failed to start HttpServiceListener",exception:ex);                
+                Log.Error("Failed to start HttpServiceListener", exception: ex);
                 throw;
             }
         }
@@ -154,11 +154,11 @@ namespace Gigya.Microdot.Orleans.Hosting
                 throw new ArgumentNullException(nameof(targetMethod));
 
             var declaringNameSpace = targetMethod.DeclaringType?.Namespace;
-            
+
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
-            if(targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>()!=null ||
+            if (targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null ||
                declaringNameSpace?.StartsWith("Orleans") == true)
-                 return await invoker.Invoke(target, request);
+                return await invoker.Invoke(target, request);
 
             RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
 
@@ -178,6 +178,30 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 RequestTimings.Current.Request.Stop();
                 var grainEvent = EventPublisher.CreateEvent();
+
+                if (target.GetPrimaryKeyString() != null)
+                {
+                    grainEvent.GrainIdAsString = target.GetPrimaryKeyString();
+                }
+                else if(target.IsPrimaryKeyBasedOnLong())
+                {
+                    grainEvent.GrainIdAsLong = target.GetPrimaryKeyLong(out var keyExt);
+                    grainEvent.GrainKeyExtension = keyExt;
+                }
+                else
+                {
+                    grainEvent.GrainIdAsGuid = target.GetPrimaryKey(out var keyExt);
+                    grainEvent.GrainKeyExtension = keyExt;
+                }
+
+                if (target is Grain grainTarget)
+                {
+                    grainEvent.siloAddress = grainTarget.RuntimeIdentity;
+                }
+
+                grainEvent.SiloDeploymentId =  ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
+
+
                 grainEvent.TargetType = targetMethod.DeclaringType?.FullName;
                 grainEvent.TargetMethod = targetMethod.Name;
                 grainEvent.Exception = ex;

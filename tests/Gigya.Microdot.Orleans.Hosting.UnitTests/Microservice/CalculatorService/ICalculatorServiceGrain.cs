@@ -25,4 +25,6 @@ using Orleans;
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     public interface ICalculatorServiceGrain : ICalculatorService, IGrainWithIntegerKey { }
+
+    
 }

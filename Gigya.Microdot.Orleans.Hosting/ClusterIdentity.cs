@@ -39,7 +39,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         public Guid ServiceId { get; }
 
         /// <summary>
-        /// Provides the DeploymentId for this orleans cluster.
+        /// Provides the SiloDeploymentId for this orleans cluster.
         /// </summary>
         public string DeploymentId { get; }
 
