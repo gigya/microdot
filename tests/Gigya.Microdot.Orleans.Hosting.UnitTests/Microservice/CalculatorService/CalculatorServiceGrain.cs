@@ -28,6 +28,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -59,39 +60,68 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
 
 
-        public Task<int> Add(int a, int b, bool shouldThrow = false) { return Worker.Add(a, b, shouldThrow); }
+        public Task<int> Add(int a, int b, bool shouldThrow = false)
+        {
+            return Worker.Add(a, b, shouldThrow);
+        }
 
-        public Task<string[]> GetAppDomainChain(int depth) { return Worker.GetAppDomainChain(depth); }
+        public Task<string[]> GetAppDomainChain(int depth)
+        {
+            return Worker.GetAppDomainChain(depth);
+        }
 
 
-        public Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime, DateTimeOffset localDateTimeOffset)
+        public Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime,
+            DateTimeOffset localDateTimeOffset)
         {
             return Worker.ToUniversalTime(localDateTime, localDateTimeOffset);
         }
 
-        public async Task<Tuple<int, string, JObject>> AddWithOptions(JObject jObject, int optional1 = 5, string optional2 = "test", JObject optional3 = null)
+        public async Task<Tuple<int, string, JObject>> AddWithOptions(JObject jObject, int optional1 = 5,
+            string optional2 = "test", JObject optional3 = null)
         {
             return Tuple.Create(optional1, optional2, optional3);
         }
 
 
-        public Task<JObject> Add(JObject jObject) { return Worker.Add(jObject); }
+        public Task<JObject> Add(JObject jObject)
+        {
+            return Worker.Add(jObject);
+        }
 
 
-        public Task<JObjectWrapper> Add(JObjectWrapper jObjectW) { return Worker.Add(jObjectW); }
+        public Task<JObjectWrapper> Add(JObjectWrapper jObjectW)
+        {
+            return Worker.Add(jObjectW);
+        }
 
 
-        public Task Do() { return Worker.Do(); }
+        public Task Do()
+        {
+            return Worker.Do();
+        }
 
 
-        public Task<Wrapper> DoComplex(Wrapper wrapper) { return Worker.DoComplex(wrapper); }
+        public Task<Wrapper> DoComplex(Wrapper wrapper)
+        {
+            return Worker.DoComplex(wrapper);
+        }
 
 
-        public Task<int> DoInt(int a) { return Worker.DoInt(a); }
+        public Task<int> DoInt(int a)
+        {
+            return Worker.DoInt(a);
+        }
 
-        public Task<int> GetNextNum() { return Worker.GetNextNum(); }
+        public Task<int> GetNextNum()
+        {
+            return Worker.GetNextNum();
+        }
 
-        public Task<Revocable<int>> GetVersion(string id) { return Worker.GetVersion(id); }
+        public Task<Revocable<int>> GetVersion(string id)
+        {
+            return Worker.GetVersion(id);
+        }
 
 
         public Task LogData(string message)
@@ -110,7 +140,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return Task.FromResult(1);
         }
 
-        public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive, List<string> NotExists)
+        public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive,
+            List<string> NotExists)
         {
             await Task.Delay(150);
             try
@@ -143,10 +174,58 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             {
                 return false;
             }
+
             return true;
         }
 
- 
+
+
+        public async Task LogGrainId()
+        {
+
+            var eventPublisher = _eventPublisher as SpyEventPublisher;
+            await GrainFactory.GetGrain<ICalculatorServiceGrain>(0).Do();
+
+            await Task.Delay(150);
+
+            var serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
+            serviceCallEvent.GrainKeyLong.ShouldBe(0);
+            serviceCallEvent.GrainKeyGuid.ShouldBeNull();
+            serviceCallEvent.GrainKeyString.ShouldBeNull();
+
+            var id = await GrainFactory.GetGrain<IUserGrainWithGuid>(Guid.NewGuid()).GetIdentety();
+            await Task.Delay(150);
+
+             serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
+            serviceCallEvent.GrainKeyGuid.ToString().ShouldBe(id);
+            serviceCallEvent.GrainKeyString.ShouldBeNull();
+            serviceCallEvent.GrainKeyLong.ShouldBeNull();
+
+
+            id = await GrainFactory.GetGrain<IUserGrainWithLong>(123).GetIdentety();
+            await Task.Delay(150);
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent.GrainKeyLong.ShouldBe(123);
+            serviceCallEvent.GrainKeyString.ShouldBeNull();
+            serviceCallEvent.GrainKeyGuid.ShouldBeNull();
+            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
+
+
+            id = await GrainFactory.GetGrain<IUserGrainWithString>("test").GetIdentety();
+            await Task.Delay(150);
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+
+            serviceCallEvent.GrainKeyString.ShouldBe("test");
+            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
+            serviceCallEvent.GrainKeyLong.ShouldBeNull();
+            serviceCallEvent.GrainKeyGuid.ShouldBeNull();
+
+
+        }
+
+
     }
 
 }

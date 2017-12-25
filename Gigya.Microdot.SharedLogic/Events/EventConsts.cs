@@ -23,7 +23,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 {
     public static class EventConsts
     {
-        
+
         public const string type = "type";
         public const string ServerReqType = "serverReq";
         public const string ClientReqType = "clientReq";
@@ -74,6 +74,11 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string siteID = "siteID";
         public const string apikey = "apikey";
         public const string partnerID = "partnerID";
+        public const string grainKeyExtention = "grain.keyExtention";
+        public const string grainPrimaryKey = "grain.primaryKey";
+        public const string siloAddress="silo.address";
+        public const string siloDeploymentId="silo.deploymentId";
+
 
     }
 }

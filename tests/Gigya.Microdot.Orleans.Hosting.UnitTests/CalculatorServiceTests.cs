@@ -328,5 +328,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
             (await Service.IsLogPramSucceed(new List<string> {  sensitive }, new List<string> { nonsensitive , @default }, new List<string> { notExists })).ShouldBeTrue();
         }
+
+        [Test]
+        public async Task LogGrainId()
+        {
+             await Service.LogGrainId();
+           
+        }
+
     }
 }
