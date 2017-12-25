@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
 
@@ -80,6 +81,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 stream.Seek(0, SeekOrigin.Begin);
                 return Convert.ToBase64String(sha.ComputeHash(stream));
             }
+        }
+
+        public void Dispose()
+        {
+            Cache.TryDispose();
+            Metrics.TryDispose();
         }
     }
 }

@@ -24,6 +24,7 @@ using System;
 using System.IO;
 
 using Gigya.Common.Contracts.Exceptions;
+
 namespace Gigya.Microdot.SharedLogic.Utils
 {
     public static class StringExtensions
@@ -91,6 +92,22 @@ namespace Gigya.Microdot.SharedLogic.Utils
 
     public static class Extensions
     {
+        public static bool TryDispose(this IDisposable disposable)
+        {
+            if (disposable == null)
+                return false;
+
+            try
+            {
+                disposable.Dispose();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
 
         public static string RawMessage(this Exception ex) => (ex as SerializableException)?.RawMessage ?? ex.Message;
 

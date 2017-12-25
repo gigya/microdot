@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using Gigya.Common.Contracts.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -29,10 +28,6 @@ namespace Gigya.Microdot.ServiceProxy
     {
         public static string GetServiceName(this Type serviceInterfaceType)
         {
-            var attribute = (HttpServiceAttribute)Attribute.GetCustomAttribute(serviceInterfaceType, typeof(HttpServiceAttribute));
-            if (attribute?.Name != null)
-                return attribute.Name;
-
             var assemblyName = serviceInterfaceType.Assembly.GetName().Name;
             var endIndex = assemblyName.IndexOf(".Interface", StringComparison.OrdinalIgnoreCase);
             if (endIndex <= 0)

@@ -70,7 +70,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             ServiceNames = serviceInterfaces
                 .Where(i => i.GetCustomAttribute<HttpServiceAttribute>() != null)
-                .ToDictionary(x => x, x => x.GetCustomAttribute<HttpServiceAttribute>().Name ?? x.Name);
+                .ToDictionary(x => x, x => x.Name);
 
             var interfacePorts = serviceInterfaces.Select(i =>
             {
