@@ -74,9 +74,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string siteID = "siteID";
         public const string apikey = "apikey";
         public const string partnerID = "partnerID";
-        public const string grainKeyExtension = "grain.primaryKey";
-
-        public const string grainPrimaryKey = "grain.keyExtantion";
+        public const string grainKeyExtention = "grain.keyExtention";
+        public const string grainPrimaryKey = "grain.primaryKey";
         public const string siloAddress="silo.address";
         public const string siloDeploymentId="silo.deploymentId";
 

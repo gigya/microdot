@@ -181,22 +181,22 @@ namespace Gigya.Microdot.Orleans.Hosting
 
                 if (target.GetPrimaryKeyString() != null)
                 {
-                    grainEvent.GrainIdAsString = target.GetPrimaryKeyString();
+                    grainEvent.GrainKeyString = target.GetPrimaryKeyString();
                 }
                 else if(target.IsPrimaryKeyBasedOnLong())
                 {
-                    grainEvent.GrainIdAsLong = target.GetPrimaryKeyLong(out var keyExt);
-                    grainEvent.GrainKeyExtension = keyExt;
+                    grainEvent.GrainKeyLong = target.GetPrimaryKeyLong(out var keyExt);
+                    grainEvent.GrainKeyExtention = keyExt;
                 }
                 else
                 {
-                    grainEvent.GrainIdAsGuid = target.GetPrimaryKey(out var keyExt);
-                    grainEvent.GrainKeyExtension = keyExt;
+                    grainEvent.GrainKeyGuid = target.GetPrimaryKey(out var keyExt);
+                    grainEvent.GrainKeyExtention = keyExt;
                 }
 
                 if (target is Grain grainTarget)
                 {
-                    grainEvent.siloAddress = grainTarget.RuntimeIdentity;
+                    grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
                 }
 
                 grainEvent.SiloDeploymentId =  ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;

@@ -38,19 +38,19 @@ namespace Gigya.Microdot.Orleans.Hosting.Events
         public string TargetMethod { get; set; }
         
         [EventField(EventConsts.grainPrimaryKey,Encrypt = true)]
-        public string GrainIdAsString { get; set; }
+        public string GrainKeyString { get; set; }
 
         [EventField(EventConsts.grainPrimaryKey)]
-        public long? GrainIdAsLong { get; set; } = null;
+        public long? GrainKeyLong { get; set; } = null;
      
         [EventField(EventConsts.grainPrimaryKey)]
-        public Guid? GrainIdAsGuid { get; set; }
+        public Guid? GrainKeyGuid { get; set; }
 
-        [EventField(EventConsts.grainKeyExtension,Encrypt = true)]
-        public string GrainKeyExtension { get; set; }
+        [EventField(EventConsts.grainKeyExtention,Encrypt = true)]
+        public string GrainKeyExtention { get; set; }
 
         [EventField(EventConsts.siloAddress)]
-        public string siloAddress { get; set; }
+        public string SiloAddress { get; set; }
         
         [EventField(EventConsts.siloDeploymentId)]
         public string SiloDeploymentId { get; set; }
