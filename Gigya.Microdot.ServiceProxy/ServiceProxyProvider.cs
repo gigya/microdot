@@ -65,8 +65,7 @@ namespace Gigya.Microdot.ServiceProxy
         public int? DefaultPort { get; set; }
 
         /// <summary>
-        /// Gets the name of the remote service. This defaults to the friendly name that was specified in the
-        /// <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>. If none were specified, the interface name
+        /// Gets the name of the remote service from the interface name.
         /// is used.
         /// </summary>
         public string ServiceName { get; }
@@ -76,7 +75,7 @@ namespace Gigya.Microdot.ServiceProxy
         /// value that was specified in the <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, overridden
         /// by service discovery.
         /// </summary>
-        public bool UseHttpsDefault { get;  set; }
+        public bool UseHttpsDefault { get; set; }
 
 
         /// <summary>

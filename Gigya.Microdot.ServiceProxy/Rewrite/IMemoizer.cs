@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,23 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Reflection;
-using System.Reflection.DispatchProxy;
+using System.Threading.Tasks;
+using Gigya.Microdot.ServiceProxy.Caching;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public interface IProxyable
+    interface IMemoizer : IProxyable, IDisposable
     {
-        object Invoke(MethodInfo targetMethod, object[] args);
-    }
-
-    public static class ProxyableExtentions
-    {
-        public static TInterface ToProxy<TInterface>(IProxyable proxyable)
-        {
-            var proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
-            ((DelegatingDispatchProxy)(object)proxy).InvokeDelegate = proxyable.Invoke;
-            return proxy;
-        }
+        object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
+        object GetOrAdd(string key, Func<Task> factory, CacheItemPolicyEx policy);
     }
 }

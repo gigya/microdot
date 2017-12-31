@@ -49,7 +49,7 @@ namespace Gigya.Microdot.Interfaces.HttpService
 
 		public HttpServiceRequest() { }
 
-        public HttpServiceRequest(string targetMethod, string typeName, Dictionary<string,object> arguments)
+        public HttpServiceRequest(string targetMethod, string typeName, Dictionary<string, object> arguments)
         {
             if (targetMethod == null)
                 throw new ArgumentNullException(nameof(targetMethod));
@@ -62,24 +62,6 @@ namespace Gigya.Microdot.Interfaces.HttpService
             Arguments = new OrderedDictionary();
 
             foreach(var argument in arguments)
-            {
-                Arguments.Add(argument.Key, argument.Value);
-            }
-        }
-
-        public HttpServiceRequest(string targetMethod, Dictionary<string, object> arguments)
-        {
-            if (targetMethod == null)
-                throw new ArgumentNullException(nameof(targetMethod));
-
-            if (arguments == null)
-                throw new ArgumentNullException(nameof(arguments));
-
-
-            Target = new InvocationTarget(targetMethod);
-            Arguments = new OrderedDictionary();
-
-            foreach (var argument in arguments)
             {
                 Arguments.Add(argument.Key, argument.Value);
             }
@@ -123,7 +105,7 @@ namespace Gigya.Microdot.Interfaces.HttpService
 
 		public InvocationTarget() { }
 
-        public InvocationTarget(string methodName, string typeName=null)
+        public InvocationTarget(string methodName, string typeName = null)
 	    {
 	        MethodName = methodName;
             TypeName = typeName;

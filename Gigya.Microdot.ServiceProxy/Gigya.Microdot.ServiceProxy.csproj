@@ -62,7 +62,7 @@
     <Compile Include="Caching\IRevokeListener.cs" />
     <Compile Include="IServiceProxyProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rewrite\ICache.cs" />
+    <Compile Include="Rewrite\IMemoizer.cs" />
     <Compile Include="Rewrite\IProxyable.cs" />
     <Compile Include="Rewrite\IServiceProxyProvider.cs" />
     <Compile Include="ServiceProxyExtensions.cs" />

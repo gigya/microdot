@@ -59,7 +59,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 //If we set Request Id we would like always to select same Host
                 TracingContext.SetRequestID("dumyId1");
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
                 string host;
                 for (int i = 0; i < 50; i++)
@@ -109,7 +109,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 TracingContext.SetHostOverride(serviceName, overrideHost, overridePort);
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 for (int i = 0; i < 50; i++)
                 {
                     var host = (string)await serviceProxy.Invoke(request, typeof(string));
@@ -148,7 +148,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             TracingContext.SetHostOverride(serviceName, overrideHost);
 
-            var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+            var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
             for (int i = 0; i < 50; i++)
             {
                 var host = (string)await serviceProxy.Invoke(request, typeof(string));
@@ -192,7 +192,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
                 await act.ShouldThrowAsync<ServiceUnreachableException>();
@@ -240,7 +240,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -293,7 +293,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 TracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -344,7 +344,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 for (int i = 0; i < 10; i++)
                 {

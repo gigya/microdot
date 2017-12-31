@@ -43,7 +43,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             });
 
             serviceProxy.HttpMessageHandler = handlerMock;
-            await serviceProxy.Invoke(new HttpServiceRequest("myMethod", new Dictionary<string, object>()), typeof(int?));
+            await serviceProxy.Invoke(new HttpServiceRequest("myMethod", null, new Dictionary<string, object>()), typeof(int?));
         }
 
         

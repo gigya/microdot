@@ -48,7 +48,11 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY);
         }
 
-
+        /// <summary>
+        /// Retrieves the host override for the specified service, or returns null if no override was set.
+        /// </summary>
+        /// <param name="serviceName">The name of the service for which to retrieve the host override.</param>
+        /// <returns>A <see cref="HostOverride"/> instace with information about the overidden host for the specified service, or null if no override was set.</returns>
         public static HostOverride GetHostOverride(string serviceName)
         {
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY)
