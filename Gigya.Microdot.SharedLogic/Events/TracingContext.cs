@@ -24,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
-using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 overrides.Hosts.Add(hostOverride);
             }
 
-            hostOverride.Host = host;
+            hostOverride.Hostname = host;
             hostOverride.Port = port;
 
         }

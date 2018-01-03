@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -19,30 +19,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-
-using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
-
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.SharedLogic.HttpService
 {
-    [Serializable]
-    public class RequestOverrides
+    public class ServiceReachabilityStatus
     {
-        [JsonProperty]
-        public List<HostOverride> Hosts { get; set; }
-    }
-
-    [Serializable]
-    public class HostOverride
-    {
-        [JsonProperty]
-        public string ServiceName { get; set; }
-
-        [JsonProperty]
-        public string Host { get; set; }
-
-        [JsonProperty]
-        public int? Port { get; set; }
+        public bool IsReachable { get; set; }
     }
 }

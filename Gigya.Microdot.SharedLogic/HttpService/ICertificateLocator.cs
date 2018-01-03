@@ -22,7 +22,7 @@
 
 using System.Security.Cryptography.X509Certificates;
 
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.SharedLogic.HttpService
 {
     public interface ICertificateLocator
     {

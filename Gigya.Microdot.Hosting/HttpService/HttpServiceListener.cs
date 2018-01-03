@@ -37,11 +37,11 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
@@ -295,12 +295,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private void ValidateRequest(HttpListenerContext context)
         {
-            var clientVersion = context.Request.Headers[GigyaHttpHeaders.Version];
+            var clientVersion = context.Request.Headers[GigyaHttpHeaders.ProtocolVersion];
 
-            if (clientVersion != null && clientVersion != HttpServiceRequest.Version)
+            if (clientVersion != null && clientVersion != HttpServiceRequest.ProtocolVersion)
             {
                 _failureCounter.Increment("ProtocolVersionMismatch");
-                throw new RequestException($"Client protocol version {clientVersion} is not supported by the server protocol version {HttpServiceRequest.Version}.");
+                throw new RequestException($"Client protocol version {clientVersion} is not supported by the server protocol version {HttpServiceRequest.ProtocolVersion}.");
             }
 
             if (context.Request.HttpMethod != "POST")
@@ -381,7 +381,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
         {
-            context.Response.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
+            context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
             var body = Encoding.UTF8.GetBytes(data ?? "");
 

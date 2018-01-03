@@ -21,20 +21,10 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Interfaces.HttpService;
-using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
-using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 
@@ -45,95 +35,6 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);
         Task<ServiceSchema> GetSchema();
         HttpServiceAttribute HttpSettings { get; }
-    }
-
-    public class ServiceProxyProvider : IServiceProxyProvider
-    {
-        public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Auto,
-            NullValueHandling = NullValueHandling.Ignore,
-            Formatting = Formatting.Indented,
-            DateParseHandling = DateParseHandling.None
-        };
-
-        public HttpServiceAttribute HttpSettings { get; }
-        
-        /// <summary>
-        /// Gets the name of the remote service from the interface name.
-        /// is used.
-        /// </summary>
-        public string ServiceName { get; }
-
-        private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
-
-        public ServiceProxyProvider(string serviceName)
-        {
-            ServiceName = serviceName;
-        }
-
-        public object Invoke(MethodInfo targetMethod, object[] args)
-        {
-            // TODO: Add caching to this step to prevent using reflection every call
-            var resultReturnType = targetMethod.ReturnType.GetGenericArguments().SingleOrDefault() ?? typeof(object);
-            var request = new HttpServiceRequest(targetMethod, args);
-
-            return TaskConverter.ToStronglyTypedTask(Invoke(request, resultReturnType), resultReturnType);
-        }
-
-        public async Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-            if (resultReturnType == null)
-                throw new ArgumentNullException(nameof(resultReturnType));
-
-
-            request.Overrides = TracingContext.TryGetOverrides();
-            request.TracingData = new TracingData
-            {
-                HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
-                ServiceName = CurrentApplicationInfo.Name,
-                RequestID = TracingContext.TryGetRequestID(),
-                SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID()
-            };
-
-            var hostOverride = TracingContext.GetHostOverride(ServiceName);
-
-
-            if (hostOverride != null)
-            {
-                
-            }
-            else
-            {
-                
-            }
-
-            return null;
-        }
-
-        private HttpRequestMessage CreateHttpRequest(HttpServiceRequest serviceRequest, JsonSerializerSettings jsonSettings, string hostName, int port)
-        {
-    
-            
-            string uri = $"{(HttpSettings.UseHttps ? "https" : "http")}://{hostName}:{port}/{ServiceName}.{serviceRequest.Target.MethodName}";
-            
-            return new HttpRequestMessage(HttpMethod.Post, uri)
-            {
-                Content = new StringContent(JsonConvert.SerializeObject(serviceRequest, jsonSettings), Encoding.UTF8, "application/json")
-                {
-                    Headers = { { GigyaHttpHeaders.Version, HttpServiceRequest.Version } }
-                }
-            };
-        }
-
-        // TBD: What do we do if different environment return different schemas? Should we return all of them, should we merge them?
-        public Task<ServiceSchema> GetSchema()
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class DeployedService : IDisposable

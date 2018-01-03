@@ -36,13 +36,13 @@ using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Newtonsoft.Json;
@@ -150,7 +150,7 @@ namespace Gigya.Microdot.ServiceProxy
             Log = log;
 
             ServiceName = serviceName;
-            GetDiscoveryConfig = getConfig;
+            GetDiscoveryConfig = getConfig; 
             ExceptionSerializer = exceptionSerializer;
 
             var metricsContext = Metric.Context(METRICS_CONTEXT_NAME).Context(ServiceName);
@@ -364,7 +364,7 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.TargetPort = effectivePort.Value;
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
-                    httpContent.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
+                    httpContent.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
@@ -419,7 +419,7 @@ namespace Gigya.Microdot.ServiceProxy
                     throw rex;
                 }
 
-                if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) || response.Headers.Contains(GigyaHttpHeaders.Version))
+                if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) || response.Headers.Contains(GigyaHttpHeaders.ProtocolVersion))
                 {
                     try
                     {

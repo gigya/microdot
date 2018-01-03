@@ -27,10 +27,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 
@@ -260,7 +260,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Host, hostOverride.Port?? GetConfig().DefaultPort);
+                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Hostname, hostOverride.Port?? GetConfig().DefaultPort);
 
             lock (_lock)
             {
@@ -287,7 +287,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);
+                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().DefaultPort);
 
             if (ReachableHosts.Count > 0)
                 return GetNextHost();
