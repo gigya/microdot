@@ -33,11 +33,11 @@ namespace Gigya.Microdot.UnitTests.Caching
         private MethodInfo ThingifyVoidMethod { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyVoid));
         private IThingFrobber EmptyThingFrobber { get; } = Substitute.For<IThingFrobber>();
 
-        private CacheItemPolicyEx GetPolicy(double ttlSeconds = 60 * 60 * 6, double refreshTimeSeconds = 60) => new CacheItemPolicyEx
+        private CacheItemPolicyEx GetPolicy(double expirationTime = 60 * 60 * 6, double refreshTimeSeconds = 60, double failedRefreshDelaySeconds = 1) => new CacheItemPolicyEx
         {
-            AbsoluteExpiration = DateTime.UtcNow + TimeSpan.FromSeconds(ttlSeconds),
+            AbsoluteExpiration = DateTime.UtcNow + TimeSpan.FromSeconds(expirationTime),
             RefreshTime = TimeSpan.FromSeconds(refreshTimeSeconds),
-            FailedRefreshDelay = TimeSpan.FromSeconds(1)
+            FailedRefreshDelay = TimeSpan.FromSeconds(failedRefreshDelaySeconds)
         };
 
         private DateTimeFake TimeFake { get; set; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
@@ -179,10 +179,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(5, 7);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(0.05))).Id.ShouldBe(5);
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Id.ShouldBe(5);
-            await Task.Delay(100);
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Id.ShouldBe(7);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(1))).Id.ShouldBe(5);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(1))).Id.ShouldBe(5);
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(1))).Id.ShouldBe(7);
 
             dataSource.Received(2).ThingifyTaskThing("someString");
         }
@@ -278,25 +278,28 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener()), new MetadataProvider(), Metric.Context("Tests"));
 
+            // T = 0s. No data in cache, should retrieve value from source (5).
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // Refresh just triggered, should get old value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5); // value is not refreshed yet. it is running on background
+            // T = 2s. Refresh just triggered, should get old value (5).
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(0.5));
 
-            // Complete refresh task and verify new value
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(7); // value is not refreshed yet. it is running on background
+            // T = 2.5s. Refresh task should have completed by now, verify new value. Should not trigger another refresh.
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(7);
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            await Task.Delay(TimeSpan.FromSeconds(2.5));
 
-            // We're past the original TTL, should still be the refreshed value (7), not another (9).
-            // If 9 was returned, it means the data source was accessed again, probably because the TTL expired
-            // (it shouldn't, every refresh should extend the TTL).
+            // T = 5s. We're past the original TTL (from T=0s) but not past the refreshed TTL (from T=2s). Should still
+            // return the refreshed value (7), not another (9). If (9) was returned, it means the data source was accessed
+            // again, probably because the TTL expired (it shouldn't, every refresh should extend the TTL). This should also
+            // trigger another refresh.
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(7); // new value is expected now
-            dataSource.Received(2).ThingifyTaskThing(Arg.Any<string>());
+            
+            dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
         }
 
 
@@ -305,29 +308,30 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             var args = new object[] { "someString" };
             var refreshTask = new TaskCompletionSource<Thing>();
-            refreshTask.SetException(new Exception("Boo!!"));
-            var dataSource = CreateDataSource(5, refreshTask, 7);
+            refreshTask.SetException(new MissingFieldException("Boo!!"));
+            var dataSource = CreateDataSource(870, refreshTask, 1002);
 
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener()), new MetadataProvider(), Metric.Context("Tests"));
 
-            // T = 0. No data in cache, should retrieve value from source (5).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
+            // T = 0s. No data in cache, should retrieve value from source (870).
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(870);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // T = 2. Past refresh time (1s), this triggers refresh in background, should get existing value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
-
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // T = 3. Background refresh failed, but TTL (4s) not expired yet. Should still give old value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
+            // T = 2s. Past refresh time (1s), this triggers refresh in background (that will fail), should get existing value (870)
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(870);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // T = 5. We're past the original TTL (4s), and refresh task failed. Items should have been evicted from cache by now.
-            // New item (7) should come in.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(7);
+            // T = 4s. Background refresh failed, but TTL (5s) not expired yet. Should still give old value (870) but won't
+            // trigger additional background refresh because of very long FailedRefreshDelay that was spcified (100s).
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(870);
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
+
+            // T = 6s. We're past the original TTL (5s), and refresh task failed. Items should have been evicted from cache by now
+            // according to 5s expiery from T=0s, not from T=2s of the failed refresh. New item (1002) should come in.
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1))).Id.ShouldBe(1002);
             dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
         }
 
