@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
@@ -29,11 +32,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var unitTesting = new TestingKernel<ConsoleLog>(k => 
                 k.Rebind<Func<StackTraceEnhancerSettings>>().ToConstant<Func<StackTraceEnhancerSettings>>(() => new StackTraceEnhancerSettings
                 {
-                    RegexReplacements =
+                    RegexReplacements = new Dictionary<string, RegexReplace>
                     {
-                        ["TidyAsyncMethodNames"] = new RegexReplace { Pattern = @"\.<(\w+)>d__\d+(?:`\d)?.MoveNext\(\)", Replacement = @".$1(async)" },
-                        ["TidyAsyncLocalFunctionNames"] = new RegexReplace { Pattern = @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\d>d.MoveNext\(\)", Replacement = @".$1.$2(async)" },
-                        ["RemoveBuildServerPath"] = new RegexReplace { Pattern = @"C:\\BuildAgent\\work\\\w+\\", Replacement = @"\" }
+                        ["TidyAsyncLocalFunctionNames"] = new RegexReplace
+                        {
+                            Pattern = @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\|?\d>d.MoveNext\(\)",
+                            Replacement = @".$1.$2(async)"
+                        }
                     }
                 })
             );

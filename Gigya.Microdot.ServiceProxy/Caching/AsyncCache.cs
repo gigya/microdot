@@ -227,7 +227,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                         resultTask = existingItem.CurrentValueTask;
 
                         // Start refresh if an existing refresh ins't in progress and we've passed the next refresh time.
-                        if (existingItem.RefreshTask == null && DateTime.UtcNow >= existingItem.NextRefreshTime)
+                        if (existingItem.RefreshTask?.IsCompleted != false && DateTime.UtcNow >= existingItem.NextRefreshTime)
                         {
                             existingItem.RefreshTask = ((Func<Task>)(async () =>
                                 {
@@ -237,13 +237,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                         await getNewValue.ConfigureAwait(false);
                                         existingItem.CurrentValueTask = getNewValue;
                                         existingItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
-                                        existingItem.RefreshTask = null;
                                         MemoryCache.Set(new CacheItem(key, existingItem), policy);
                                     }
                                     catch
                                     {
                                         existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
-                                        existingItem.RefreshTask = null;
                                     }
                                 })).Invoke();
                         }

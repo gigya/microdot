@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic.Events;
@@ -35,5 +36,23 @@ namespace Gigya.Microdot.Orleans.Hosting.Events
 
         [EventField(EventConsts.targetMethod)]
         public string TargetMethod { get; set; }
+        
+        [EventField(EventConsts.grainPrimaryKey,Encrypt = true)]
+        public string GrainKeyString { get; set; }
+
+        [EventField(EventConsts.grainPrimaryKey)]
+        public long? GrainKeyLong { get; set; } = null;
+     
+        [EventField(EventConsts.grainPrimaryKey)]
+        public Guid? GrainKeyGuid { get; set; }
+
+        [EventField(EventConsts.grainKeyExtention,Encrypt = true)]
+        public string GrainKeyExtention { get; set; }
+
+        [EventField(EventConsts.siloAddress)]
+        public string SiloAddress { get; set; }
+        
+        [EventField(EventConsts.siloDeploymentId)]
+        public string SiloDeploymentId { get; set; }
     }
 }
