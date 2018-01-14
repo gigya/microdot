@@ -356,12 +356,13 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             try
             {
-                if (_httpClient==null || timeout != _httpClient.Timeout)
-                    _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+                if (_httpClient==null)
+                    _httpClient = new HttpClient {BaseAddress = ConsulAddress};
 
                 requestLog = _httpClient.BaseAddress + urlCommand;
 
-                using (var response = await _httpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+                var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, new CancellationTokenSource(timeout).Token);
+                using (var response = await _httpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false))
                 {
                     responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     statusCode = response.StatusCode;
