@@ -126,8 +126,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 _lastResult = newResult;
                 _firstTime = false;
-                _firstResultInitialized.TrySetResult(true);
             }
+            _firstResultInitialized.TrySetResult(true);
         }
 
         private IEnumerable<EndPoint> OrderedEndpoints(IEnumerable<EndPoint> endpoints)
