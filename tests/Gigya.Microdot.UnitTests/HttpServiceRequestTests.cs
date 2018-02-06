@@ -8,6 +8,7 @@ using Gigya.Microdot.Interfaces.HttpService;
 using Newtonsoft.Json;
 
 using NUnit.Framework;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests {
 
@@ -40,9 +41,11 @@ namespace Gigya.Microdot.UnitTests {
             };
             var requestDataReturned = SerializeDeserialize(requestData);
 
-            requestDataReturned.ShouldBeEquivalentTo(requestData);
+            requestDataReturned.TracingData.RequestID.ShouldBe(requestData.TracingData.RequestID);
+            requestDataReturned.TracingData.HostName.ShouldBe(requestData.TracingData.HostName);
+            requestDataReturned.TracingData.ServiceName.ShouldBe(requestData.TracingData.ServiceName);
         }
-        
+
         private HttpServiceRequest SerializeDeserialize(HttpServiceRequest requestData) {
 
             MemoryStream ms = new MemoryStream();
