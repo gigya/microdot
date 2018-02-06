@@ -114,7 +114,7 @@
           <Paket>True</Paket>
         </Reference>
         <Reference Include="DataAnnotationsValidator">
-          <HintPath>..\packages\DataAnnotationsValidator\lib\net40\DataAnnotationsValidator.dll</HintPath>
+          <HintPath>..\packages\DataAnnotationsValidator\lib\net471\DataAnnotationsValidator.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
