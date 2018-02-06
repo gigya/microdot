@@ -5,7 +5,7 @@ RESTRICTION: == net451
 NUGET
   remote: https://www.nuget.org/api/v2
     Castle.Core (4.2.1)
-    DataAnnotationsValidator (2.2)
+    DataAnnotationsValidator (2.1)
     FluentAssertions (5.0)
       System.ValueTuple (>= 4.3)
     Metrics.NET (0.5.3)
