@@ -60,8 +60,6 @@ namespace Gigya.Microdot.UnitTests
             schema.Methods.First().Response.Fields.Length.ShouldBe(2);
             InterfaceSchema schema2 = new InterfaceSchema(typeof(IHasReturnType));
 
-
-            schema2.Methods.First().ShouldBeEquivalentTo(schema.Methods.First(), x => x.Excluding(m => m.IsRevocable));
             schema2.Methods.First().IsRevocable.ShouldNotBe(schema.Methods.First().IsRevocable);
         }
 
