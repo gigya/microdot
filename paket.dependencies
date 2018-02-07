@@ -13,7 +13,7 @@ nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
 nuget System.ComponentModel.Annotations ~> 4.0
 nuget System.Collections.Immutable ~> 1.0
-nuget DataAnnotationsValidator ~> 2.1
+nuget DataAnnotationsValidator ~> 2.1.0
 
 # Orleans
 nuget Microsoft.Orleans.Core  1.3.1
@@ -38,7 +38,7 @@ nuget Castle.Core ~> 4.0
 #Tests only dependencies
 nuget NUnit ~> 3.0
 nuget RichardSzalay.MockHttp 
-nuget NSubstitute  ~> 2.0
+nuget NSubstitute  
 nuget FluentAssertions 
 nuget Nuget.CommandLine 
 nuget Shouldly
