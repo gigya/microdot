@@ -56,7 +56,7 @@ NUGET
     NETStandard.Library (2.0.1)
       Microsoft.NETCore.Platforms (>= 1.1)
       System.Runtime.InteropServices.RuntimeInformation (>= 4.3)
-    Newtonsoft.Json (10.0.3)
+    Newtonsoft.Json (9.0.1)
     Ninject (3.3.4)
     Ninject.Extensions.Conventions (3.3)
       Ninject.Extensions.Factory (>= 3.3.2)
