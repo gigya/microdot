@@ -117,7 +117,7 @@ namespace Gigya.Microdot.Hosting.Service
                     }
                     catch (ArgumentException e)
                     {
-                        Console.WriteLine($"Service can not start because monitored PID:{Arguments.ShutdownWhenPidExits} is not running. Exception: {e}");
+                        Console.WriteLine($"Service cannot start because monitored PID {Arguments.ShutdownWhenPidExits} is not running. Exception: {e}");
                         return;
                     }
                     
