@@ -105,7 +105,6 @@ namespace Gigya.Microdot.Hosting.Service
 
                 if (Arguments.ShutdownWhenPidExits != null)
                 {
-                    Console.WriteLine($"Will perform graceful shutdown when PID {Arguments.ShutdownWhenPidExits} exits.");
                     try
                     {
                         MonitoredShutdownProcess = Process.GetProcessById(Arguments.ShutdownWhenPidExits.Value);
@@ -114,12 +113,11 @@ namespace Gigya.Microdot.Hosting.Service
                             Console.WriteLine($"PID {Arguments.ShutdownWhenPidExits} has exited, shutting down...");
                             Stop();
                         };
+                        Console.WriteLine($"Will perform graceful shutdown when PID {Arguments.ShutdownWhenPidExits} exits.");
                     }
-                    catch (Exception e)
+                    catch (ArgumentException e)
                     {
-                        Console.WriteLine($"Service will be Shutdown since Process [PID:{Arguments.ShutdownWhenPidExits}] can not be monitored.{Environment.NewLine}Exception: {e}");
-                        Console.WriteLine("   ***   Shutdown complete. Press any key to exit.   ***   ");
-                        Console.ReadKey(true);
+                        Console.WriteLine($"Service can not start because monitored PID:{Arguments.ShutdownWhenPidExits} is not running. Exception: {e}");
                         return;
                     }
                     
