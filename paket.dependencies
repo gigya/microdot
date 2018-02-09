@@ -7,7 +7,7 @@ copy_content_to_output_dir: always
 
 # Misc
 nuget Metrics.NET ~> 0.0
-nuget Newtonsoft.Json ~> 10.0 >= 9 lowest_matching: true
+nuget Newtonsoft.Json >= 9 < 11 lowest_matching: true
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
