@@ -3,7 +3,7 @@ COPY-CONTENT-TO-OUTPUT-DIR: ALWAYS
 CONTENT: ONCE
 RESTRICTION: == net451
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     Castle.Core (4.2.1)
     DataAnnotationsValidator (2.1)
     FluentAssertions (5.0)
@@ -71,7 +71,7 @@ NUGET
     NSubstitute (3.1)
       Castle.Core (>= 4.2)
       System.Threading.Tasks.Extensions (>= 4.3)
-    NuGet.CommandLine (4.5.1)
+    Nuget.CommandLine (4.5.1)
     NUnit (3.9)
     RichardSzalay.MockHttp (3.2.1)
       System.Net.Http (>= 4.0)
