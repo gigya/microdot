@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Utils;
+using Gigya.ServiceContract.HttpService;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,16 +31,22 @@ namespace Gigya.Microdot.UnitTests.Caching
         private ICachingTestService _serviceMock;
         private DateTime _now;
         private string _serviceResult;
+        private ICacheRevoker _cacheRevoker;
+        private Task _revokeDelay;
+        private IRevokeListener _revokeListener;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
-        {
+        { 
             _configDic = new Dictionary<string,string>();
             _kernel = new TestingKernel<ConsoleLog>(mockConfig: _configDic);
 
             _kernel.Rebind(typeof(CachingProxyProvider<>))
                 .ToSelf()      
                 .InTransientScope();
+            var fakeRevokingManager =new FakeRevokingManager();
+            _kernel.Rebind<IRevokeListener>().ToConstant(fakeRevokingManager);
+            _kernel.Rebind<ICacheRevoker>().ToConstant(fakeRevokingManager);
         }
 
         [SetUp]
@@ -45,8 +54,11 @@ namespace Gigya.Microdot.UnitTests.Caching
         {            
             SetupServiceMock();
             SetupDateTime();
-
+            _revokeDelay =Task.Delay(0);
+            
             _proxy = _kernel.Get<ICachingTestService>();
+            _cacheRevoker = _kernel.Get<ICacheRevoker>();
+            _revokeListener = _kernel.Get<IRevokeListener>();
         }
 
         [TearDown]
@@ -56,13 +68,25 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         private void SetupServiceMock()
-        {
+        {             
             _serviceMock = Substitute.For<ICachingTestService>();
             _serviceMock.CallService().Returns(_ => Task.FromResult(_serviceResult));
+            _serviceMock.CallRevocableService(Arg.Any<string>()).Returns(async s =>
+            {
+                var result = _serviceResult;
+                await _revokeDelay;
+                return new Revocable<string>
+                {
+                    Value = result,
+                    RevokeKeys = new[] {s.Args()[0].ToString()}
+                };
+            });
+        
             _serviceResult = FirstResult;
             var serviceProxyMock = Substitute.For<IServiceProxyProvider<ICachingTestService>>();
             serviceProxyMock.Client.Returns(_serviceMock);
             _kernel.Rebind<IServiceProxyProvider<ICachingTestService>>().ToConstant(serviceProxyMock);
+         
         }
 
         private void SetupDateTime()
@@ -76,7 +100,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Test]
         public async Task CachingEnabledByDefault()
         {
-            await ClearCahingPolicyConfig();
+            await ClearCachingPolicyConfig();
             await ServiceResultShouldBeCached();
         }
 
@@ -117,6 +141,39 @@ namespace Gigya.Microdot.UnitTests.Caching
             await ServiceResultShouldRefreshOnBackgroundAfter(expectedRefreshTime);
         }
 
+        [Test]
+        public async Task CachedDataShouldBeRevoked()
+        {
+            var key = Guid.NewGuid().ToString();
+            await ClearCachingPolicyConfig();
+
+            await ResultlRevocableServiceShouldBe(FirstResult, key);
+            _serviceResult = SecondResult;
+            await ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
+            await _cacheRevoker.Revoke(key);
+            _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
+            await Task.Delay(5);
+            await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
+        }
+
+        [Test]
+        [Ignore("missing feature. This behavior is not supported yet. Should be fixed in the future")]
+        public async Task RevokeBeforeServiceResultReceivedShouldRevokeStaleValue()
+        {
+            var key = Guid.NewGuid().ToString();
+            await ClearCachingPolicyConfig();
+            var deay = new TaskCompletionSource<int>();
+            _revokeDelay = deay.Task;
+            var serviceCallWillCompleteOnlyAfterRevoke = ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
+            _serviceResult = SecondResult;
+            await _cacheRevoker.Revoke(key);
+            _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
+            deay.SetResult(1);
+            await serviceCallWillCompleteOnlyAfterRevoke;
+
+            await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
+        }
+
         private async Task SetCachingPolicyConfig(params string[][] keyValues)
         {
             _configDic.Clear();
@@ -131,7 +188,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             await Task.Delay(200);
         }
 
-        private async Task ClearCahingPolicyConfig()
+        private async Task ClearCachingPolicyConfig()
         {
             await SetCachingPolicyConfig();
         }
@@ -169,6 +226,12 @@ namespace Gigya.Microdot.UnitTests.Caching
             var result = await _proxy.CallService();
             result.ShouldBe(expectedResult, message);
         }
+
+        private async Task ResultlRevocableServiceShouldBe(string expectedResult,string key ,string message = null)
+        {
+            var result = await _proxy.CallRevocableService(key);
+            result.Value.ShouldBe(expectedResult, message);
+        }
     }
 
     [HttpService(1234, Name="CachingTestService")]
@@ -179,5 +242,21 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         [Cached]
         Task<string> OtherMethod();
+
+        [Cached]
+        Task<Revocable<string>> CallRevocableService(string keyToRevock);
+
     }
+
+    public class FakeRevokingManager : ICacheRevoker, IRevokeListener
+    {
+        private readonly BroadcastBlock<string> _broadcastBlock = new BroadcastBlock<string>(null);
+        public Task Revoke(string key)
+        {
+            return _broadcastBlock.SendAsync(key);
+        }
+
+        public ISourceBlock<string> RevokeSource => _broadcastBlock;
+    }
+
 }
