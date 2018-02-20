@@ -45,6 +45,12 @@ namespace Gigya.Microdot.Hosting.Metrics
             }, true);
 
             MetricsConfig = Metric.Config.WithHttpEndpoint($"http://+:{metricsPort}/");
+            var initTask = MetricsConfig.WhenEndpointInitialized();
+            initTask.Wait(TimeSpan.FromSeconds(30));
+            if (!initTask.IsCompleted)
+            {
+                throw new EnvironmentException("Metrics.NET could not be initialized. Timeout after 30 seconds.");
+            }
 
             if (metricsException != null)
             {
