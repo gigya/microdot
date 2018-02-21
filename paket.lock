@@ -3,12 +3,12 @@ COPY-CONTENT-TO-OUTPUT-DIR: ALWAYS
 CONTENT: ONCE
 RESTRICTION: == net451
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     Castle.Core (4.2.1)
     DataAnnotationsValidator (2.1)
-    FluentAssertions (5.0)
+    FluentAssertions (5.1.2)
       System.ValueTuple (>= 4.3)
-    Metrics.NET (0.5.3)
+    Metrics.NET (0.5.5)
     Microsoft.Bcl (1.1.10)
       Microsoft.Bcl.Build (>= 1.0.14)
     Microsoft.Bcl.Async (1.0.168)
@@ -56,7 +56,7 @@ NUGET
     NETStandard.Library (2.0.1)
       Microsoft.NETCore.Platforms (>= 1.1)
       System.Runtime.InteropServices.RuntimeInformation (>= 4.3)
-    Newtonsoft.Json (9.0.1)
+    Newtonsoft.Json (10.0.3)
     Ninject (3.3.4)
     Ninject.Extensions.Conventions (3.3)
       Ninject.Extensions.Factory (>= 3.3.2)
@@ -71,7 +71,7 @@ NUGET
     NSubstitute (3.1)
       Castle.Core (>= 4.2)
       System.Threading.Tasks.Extensions (>= 4.3)
-    NuGet.CommandLine (4.5.1)
+    Nuget.CommandLine (4.5.1)
     NUnit (3.9)
     RichardSzalay.MockHttp (3.2.1)
       System.Net.Http (>= 4.0)

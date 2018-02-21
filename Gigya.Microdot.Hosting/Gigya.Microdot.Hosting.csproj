@@ -48,6 +48,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="CrashHandler.cs" />
     <Compile Include="HttpService\EndPointMetaData.cs" />
     <Compile Include="HttpService\Endpoints\ConfigurationResponseBuilder.cs" />
     <Compile Include="HostingAssembly.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="HttpService\ServiceEndPointDefinition.cs" />
     <Compile Include="HttpService\ServiceMethod.cs" />
     <Compile Include="HttpService\ServiceMethodResolver.cs" />
+    <Compile Include="Metrics\MetricsConfiguration.cs" />
     <Compile Include="Metrics\MetricsInitializer.cs" />
     <Compile Include="Service\ServiceHostBase.cs" />
     <Compile Include="Service\HostExtensionMethods.cs" />
