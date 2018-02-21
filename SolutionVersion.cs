@@ -28,9 +28,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("© 2018 Gigya Inc.")]
 [assembly: AssemblyDescription("Microdot Framework")]
 
-[assembly: AssemblyVersion("1.7.12.0")]
-[assembly: AssemblyFileVersion("1.7.12.0")] 
-[assembly: AssemblyInformationalVersion("1.7.12.0")]
+[assembly: AssemblyVersion("1.8.0.0")]
+[assembly: AssemblyFileVersion("1.8.0.0")] 
+[assembly: AssemblyInformationalVersion("1.8.0.0")]
 
 
 // Setting ComVisible to false makes the types in this assembly not visible 
