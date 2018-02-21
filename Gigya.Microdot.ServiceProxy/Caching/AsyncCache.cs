@@ -41,6 +41,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     public sealed class AsyncCache : IMemoryCacheManager, IServiceProvider, IDisposable
     {
         private IDateTime DateTime { get; }
+        private Func<RevokeConfig> GetRevokeConfig { get; }
         private ILog Log { get; }
         private MemoryCache MemoryCache { get; set; }
         private long LastCacheSizeBytes { get; set; }
@@ -71,9 +72,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         internal int CacheKeyCount => RevokeKeyToCacheKeysIndex.Sum(item => item.Value.Count);
 
 
-        public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener)
+        public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener, Func<RevokeConfig> getRevokeConfig)
         {
             DateTime = dateTime;
+            GetRevokeConfig = getRevokeConfig;
             Log = log;
 
             if (ObjectCache.Host == null)
@@ -92,6 +94,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private Task OnRevoke(string revokeKey)
         {
+            var shouldLog = GetRevokeConfig().LogRequests;
+
             if (string.IsNullOrEmpty(revokeKey))
             {
                 Log.Warn("Error while revoking cache, revokeKey can't be null");
@@ -99,14 +103,23 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             }
 
             try
-            {                 
+            {    
+                if (shouldLog)
+                    Log.Info(x=>x("Revoke request received", unencryptedTags: new {revokeKey}));
+
                 if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out HashSet<string>  cacheKeys))
                 {
                     lock (cacheKeys)
                     {
                         var arrayOfCacheKeys = cacheKeys.ToArray();// To prevent iteration over modified collection.
+                        if (shouldLog && arrayOfCacheKeys.Length==0)
+                            Log.Info(x => x("There is no CacheKey to Revoke", unencryptedTags: new { revokeKey }));
+
                         foreach (var cacheKey in arrayOfCacheKeys)
                         {
+                            if (shouldLog)
+                                Log.Info(x => x("Revoking cacheKey", unencryptedTags: new { revokeKey, cacheKey }));
+
                             var unused = (AsyncCacheItem)MemoryCache.Remove(cacheKey);                            
                         }
                     }
@@ -114,6 +127,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 }
                 else
                 {
+                    if (shouldLog)
+                        Log.Info(x => x("Key is not cached. No revoke is needed", unencryptedTags: new { revokeKey }));
+
                     Revokes.Meter("Discarded", Unit.Events).Mark();
                 }                
             }

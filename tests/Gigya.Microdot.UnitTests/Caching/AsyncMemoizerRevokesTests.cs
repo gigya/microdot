@@ -30,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         private AsyncCache CreateCache(ISourceBlock<string> revokeSource = null)
         {
             
-            return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource });
+            return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new RevokeConfig());
         }
 
         private IMemoizer CreateMemoizer(AsyncCache cache)
