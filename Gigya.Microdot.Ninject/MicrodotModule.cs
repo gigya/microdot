@@ -23,6 +23,8 @@
 using System;
 using System.Collections.Concurrent;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Metrics;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
@@ -71,6 +73,8 @@ namespace Gigya.Microdot.Ninject
             Rebind<MetricsContext>()
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))
                 .InScope(GetTypeOfTarget);
+
+            Rebind<IMetricsInitializer>().To<MetricsInitializer>().InSingletonScope();
 
             Rebind<IServiceDiscoverySource>().To<ConsulDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
