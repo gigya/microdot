@@ -74,8 +74,6 @@ namespace Gigya.Microdot.Ninject
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))
                 .InScope(GetTypeOfTarget);
 
-            Rebind<IMetricsInitializer>().To<MetricsInitializer>().InSingletonScope();
-
             Rebind<IServiceDiscoverySource>().To<ConsulDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
