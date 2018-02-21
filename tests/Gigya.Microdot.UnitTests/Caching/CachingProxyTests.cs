@@ -7,8 +7,10 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Gigya.ServiceContract.HttpService;
@@ -40,13 +42,14 @@ namespace Gigya.Microdot.UnitTests.Caching
         { 
             _configDic = new Dictionary<string,string>();
             _kernel = new TestingKernel<ConsoleLog>(mockConfig: _configDic);
-
             _kernel.Rebind(typeof(CachingProxyProvider<>))
                 .ToSelf()      
                 .InTransientScope();
             var fakeRevokingManager =new FakeRevokingManager();
             _kernel.Rebind<IRevokeListener>().ToConstant(fakeRevokingManager);
             _kernel.Rebind<ICacheRevoker>().ToConstant(fakeRevokingManager);
+            var getDiscoveryConfigToEnableConfigEventsToBeRaised = _kernel.Get<DiscoveryConfig>();
+
         }
 
         [SetUp]
@@ -176,16 +179,28 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         private async Task SetCachingPolicyConfig(params string[][] keyValues)
         {
+            var changed = false;
+
+            if (_configDic.Values.Count != 0 && keyValues.Length==0)
+                changed = true;
+
             _configDic.Clear();
             foreach (var keyValue in keyValues)
             {
                 var key = keyValue[0];
                 var value = keyValue[1];
                 if (key != null && value != null)
-                    _configDic[$"Discovery.Services.CachingTestService.CachingPolicy.{key}"] = value;
+                {
+                    _kernel.Get<OverridableConfigItems>()
+                        .SetValue($"Discovery.Services.CachingTestService.CachingPolicy.{key}", value);
+                    changed = true;
+                }
             }
-            _kernel.RaiseConfigChangeEvent();
-            await Task.Delay(200);
+            if (changed)
+            {
+                await _kernel.Get<ManualConfigurationEvents>().ApplyChanges<DiscoveryConfig>();
+                await Task.Delay(200);
+            }
         }
 
         private async Task ClearCachingPolicyConfig()
