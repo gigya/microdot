@@ -47,7 +47,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private readonly object _resultLocker = new object();
 
-        private readonly TaskCompletionSource<bool> _initialized;
+        private readonly TaskCompletionSource<bool> _firstResultInitialized;
+        private Task _initializationTimeout;
 
         private bool _firstTime = true;
 
@@ -55,7 +56,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         private IDisposable _resultChangedLink;
         private readonly object _initLock = new object();
 
-        private bool _disposed; 
+        private bool _disposed;
+        
 
         public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
             Func<DiscoveryConfig> getConfig,
@@ -66,7 +68,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             _getConsulClient = getConsulClient;            
             _log = log;
 
-            _initialized = new TaskCompletionSource<bool>();            
+            _firstResultInitialized = new TaskCompletionSource<bool>();            
         }
 
         public override Task Init()
@@ -77,7 +79,20 @@ namespace Gigya.Microdot.ServiceDiscovery
                     _resultChangedLink = ConsulClient.ResultChanged.LinkTo(new ActionBlock<EndPointsResult>(r => ConsulResultChanged(r)));
 
             ConsulClient.Init();
-            return _initialized.Task;
+
+            _initializationTimeout = TimeoutIfNotReceivedFirstResult();
+            return Task.WhenAny(_firstResultInitialized.Task, _initializationTimeout);            
+        }
+
+        private async Task TimeoutIfNotReceivedFirstResult()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10));
+            if (_firstResultInitialized.Task.GetAwaiter().IsCompleted)
+                return;
+            ConsulResultChanged(new EndPointsResult
+            {
+                Error = new Exception("ConsulClient did not respond. Cannot obtain list of available nodes.")
+            });
         }
 
         private void ConsulResultChanged(EndPointsResult newResult)
@@ -111,8 +126,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 _lastResult = newResult;
                 _firstTime = false;
-                _initialized.TrySetResult(true);
             }
+            _firstResultInitialized.TrySetResult(true);
         }
 
         private IEnumerable<EndPoint> OrderedEndpoints(IEnumerable<EndPoint> endpoints)

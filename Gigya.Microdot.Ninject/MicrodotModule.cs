@@ -23,6 +23,8 @@
 using System;
 using System.Collections.Concurrent;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Metrics;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
@@ -76,8 +78,7 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
-            Kernel.BindPerString<IConsulClient, ConsulClient>();
-
+            Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();
         }

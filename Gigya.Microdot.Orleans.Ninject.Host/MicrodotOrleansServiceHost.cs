@@ -21,8 +21,9 @@
 #endregion
 
 
-
+using System;
 using System.Threading.Tasks;
+using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
@@ -83,6 +84,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
+            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
         }

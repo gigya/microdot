@@ -227,7 +227,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 if (newActivePool != _activePool)
                 {
-                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activePool.ServiceDeployment.ToString(), newPool = newActivePool.ServiceDeployment.ToString()}));
+                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activePool?.ServiceDeployment?.ToString(), newPool = newActivePool.ServiceDeployment.ToString()}));
                     _activePool = newActivePool;
                     FireEndPointChange();
 

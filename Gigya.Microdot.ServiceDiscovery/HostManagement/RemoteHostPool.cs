@@ -86,7 +86,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             , ILog log
             , HealthMonitor healthMonitor
             , MetricsContext metrics
-            )
+        )
         {
             DiscoverySource = discovery;
             ServiceDeployment = serviceDeployment;
@@ -105,7 +105,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             var metricsContext = Metrics.Context(DiscoverySource.Deployment);
             metricsContext.Gauge("ReachableHosts", () => ReachableHosts.Count, Unit.Custom("EndPoints"));
             metricsContext.Gauge("UnreachableHosts", () => UnreachableHosts.Count, Unit.Custom("EndPoints"));
-
+            
         }
 
 
@@ -129,13 +129,15 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         {
                             var config = GetConfig();
                             if (IsHealthCheckSuppressed(config))
-                                return HealthCheckResult.Healthy($"No endpoints were discovered from source '{config.Source}' but the remote service was not in use for more than {config.SuppressHealthCheckAfterServiceUnused?.TotalSeconds} seconds.");
+                                return HealthCheckResult.Healthy(
+                                    $"No endpoints were discovered from source '{config.Source}' but the remote service was not in use for more than {config.SuppressHealthCheckAfterServiceUnused.TotalSeconds} seconds.");
                             else
-                                return HealthCheckResult.Unhealthy($"No endpoints were discovered from source '{config.Source}'.");
+                                return HealthCheckResult.Unhealthy(
+                                    $"No endpoints were discovered from source '{config.Source}'.");
                         });
 
-                        EndPointsResult = updatedEndPointsResult;                        
-                        
+                        EndPointsResult = updatedEndPointsResult;
+
                         ReachableHosts = new List<RemoteHost>();
                         UnreachableHosts = new List<RemoteHost>();
                     }
@@ -170,7 +172,9 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                 catch (Exception ex)
                 {
                     Log.Warn("Failed to process newly discovered endpoints", exception: ex);
-                    Health.SetHealthFunction(() => HealthCheckResult.Unhealthy("Failed to process newly discovered endpoints: " + HealthMonitor.GetMessages(ex)));
+                    Health.SetHealthFunction(() =>
+                        HealthCheckResult.Unhealthy("Failed to process newly discovered endpoints: " +
+                                                    HealthMonitor.GetMessages(ex)));
                 }
             }
         }
@@ -182,8 +186,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             {
                 return new Dictionary<string, string>
                 {
-                    { "ReachableHosts", string.Join(",", ReachableHosts.Select(_ => _.HostName)) },
-                    { "UnreachableHosts", string.Join(",", UnreachableHosts.Select(_ => _.HostName)) }
+                    {"ReachableHosts", string.Join(",", ReachableHosts.Select(_ => _.HostName))},
+                    {"UnreachableHosts", string.Join(",", UnreachableHosts.Select(_ => _.HostName))}
                 };
             }
         }
@@ -191,24 +195,21 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
         private bool IsHealthCheckSuppressed(ServiceDiscoveryConfig config)
         {
-            if (config.SuppressHealthCheckAfterServiceUnused.HasValue)
-            {
-                var serviceUnuseTime = DateTime.Now.Subtract(LastEndpointRequest);
+            var serviceUnuseTime = DateTime.UtcNow.Subtract(LastEndpointRequest);
 
-                //If a service was unused for pre-defined time period, always treat it as healthy.
-                if (serviceUnuseTime > config.SuppressHealthCheckAfterServiceUnused.Value)
-                    return true;
-            }
+            //If a service was unused for pre-defined time period, always treat it as healthy.
+            if (serviceUnuseTime > config.SuppressHealthCheckAfterServiceUnused)
+                return true;
 
             return false;
         }
-
+        
         private HealthCheckResult CheckHealth()
         {
             var config = GetConfig();
 
             if (IsHealthCheckSuppressed(config))
-                return HealthCheckResult.Healthy($"Health check suppressed because service was not in use for more than {config.SuppressHealthCheckAfterServiceUnused.Value.TotalSeconds} seconds.");
+                return HealthCheckResult.Healthy($"Health check suppressed because service was not in use for more than {config.SuppressHealthCheckAfterServiceUnused.TotalSeconds} seconds.");
 
             int reachableCount;
             int unreachableCount;
@@ -367,7 +368,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         {
             lock (_lock)
             {
-                EndPointsChangedBlockLink.Dispose();                
+                EndPointsChangedBlockLink.Dispose();
                 foreach (var host in ReachableHosts.Concat(UnreachableHosts).ToArray())
                     host.StopMonitoring();
                 ReachabilityBroadcaster.Complete();

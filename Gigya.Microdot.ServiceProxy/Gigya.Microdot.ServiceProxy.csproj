@@ -55,6 +55,7 @@
     <Compile Include="Caching\MetadataProvider.cs" />
     <Compile Include="Caching\AsyncCache.cs" />
     <Compile Include="Caching\MetricsExtensions.cs" />
+    <Compile Include="Caching\RevokeConfig.cs" />
     <Compile Include="CoreFX\DispatchProxy\DispatchProxy.cs" />
     <Compile Include="CoreFX\DispatchProxy\DispatchProxyGenerator.cs" />
     <Compile Include="DelegatingDispatchProxy.cs" />
@@ -99,7 +100,6 @@
       <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

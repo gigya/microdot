@@ -43,9 +43,11 @@ namespace Gigya.Microdot.Hosting.Service
         private DelegatingServiceBase WindowsService { get; set; }
         private ManualResetEvent StopEvent { get; }
         private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
+        private TaskCompletionSource<object> ServiceStoppedEvent { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
         private readonly string _serviceName;
-       
+        protected CrashHandler CrashHandler { get; set; }
+
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
@@ -63,6 +65,8 @@ namespace Gigya.Microdot.Hosting.Service
 
             StopEvent = new ManualResetEvent(true);
             ServiceStartedEvent = new TaskCompletionSource<object>();
+            ServiceStoppedEvent = new TaskCompletionSource<object>();
+            ServiceStoppedEvent.SetResult(null);
 
             _serviceName = GetType().Name;
 
@@ -76,6 +80,7 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         public void Run(ServiceArguments argumentsOverride = null)
         {
+            ServiceStoppedEvent = new TaskCompletionSource<object>();
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
             CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
 
@@ -101,21 +106,30 @@ namespace Gigya.Microdot.Hosting.Service
             }
             else
             {
-                OnStart();
-
                 if (Arguments.ShutdownWhenPidExits != null)
                 {
+                    try
+                    {
+                        MonitoredShutdownProcess = Process.GetProcessById(Arguments.ShutdownWhenPidExits.Value);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        Console.WriteLine($"Service cannot start because monitored PID {Arguments.ShutdownWhenPidExits} is not running. Exception: {e}");
+                        Environment.ExitCode = 1;
+                        return;
+                    }
+
                     Console.WriteLine($"Will perform graceful shutdown when PID {Arguments.ShutdownWhenPidExits} exits.");
-                    MonitoredShutdownProcess = Process.GetProcessById(Arguments.ShutdownWhenPidExits.Value);
                     MonitoredShutdownProcess.Exited += (s, a) =>
                     {
                         Console.WriteLine($"PID {Arguments.ShutdownWhenPidExits} has exited, shutting down...");
                         Stop();
                     };
+
                     MonitoredShutdownProcess.EnableRaisingEvents = true;
                 }
 
-
+                OnStart();
                 if (Arguments.ServiceStartupMode == ServiceStartupMode.CommandLineInteractive)
                 {
                     Thread.Sleep(10); // Allow any startup log messages to flush to Console.
@@ -166,6 +180,7 @@ namespace Gigya.Microdot.Hosting.Service
                 Task.Run(() => OnStop()).Wait(Arguments.OnStopWaitTime ?? TimeSpan.FromSeconds(10));
              
                 ServiceStartedEvent = new TaskCompletionSource<object>();
+                ServiceStoppedEvent.SetResult(null);
                 MonitoredShutdownProcess?.Dispose();
 
                 if (Arguments.ServiceStartupMode == ServiceStartupMode.CommandLineInteractive)
@@ -196,6 +211,11 @@ namespace Gigya.Microdot.Hosting.Service
             return ServiceStartedEvent.Task;
         }
 
+        public Task WaitForServiceStoppedAsync()
+        {
+            return ServiceStoppedEvent.Task;
+        }
+
 
         /// <summary>
         /// Signals the service to stop.
@@ -206,6 +226,13 @@ namespace Gigya.Microdot.Hosting.Service
                 throw new InvalidOperationException("Service is already stopped, or is running in an unsupported mode.");
 
             StopEvent.Set();
+        }
+
+        protected virtual void OnCrash()
+        {
+            Stop();
+            WaitForServiceStoppedAsync().Wait(5000);
+            Dispose();
         }
 
 

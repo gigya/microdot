@@ -88,7 +88,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         public CachingPolicyConfig CachingPolicy { get; set; }
 
-        public TimeSpan? SuppressHealthCheckAfterServiceUnused { get; set; }
+        /// <summary>
+        /// If the service was not in use for this amount of time, always report it as healthy.
+        /// </summary>
+        public TimeSpan SuppressHealthCheckAfterServiceUnused { get; set; } = TimeSpan.FromMinutes(15);
 
         public override bool Equals(object obj)
         {
