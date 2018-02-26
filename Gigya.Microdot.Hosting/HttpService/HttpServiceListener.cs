@@ -54,6 +54,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
+
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -83,6 +84,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
 
+        private ISchemaProvider SchemaProvider { get; }
+
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
         private readonly Timer _roundtripTime;
@@ -95,8 +98,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   JsonExceptionSerializer exceptionSerializer)
+                                   JsonExceptionSerializer exceptionSerializer, ISchemaProvider schemaProvider)
         {
+            SchemaProvider = schemaProvider;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -392,6 +396,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, EnvironmentVariableProvider.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, SchemaProvider.Schema.HashCode);
+
             try
             {
                 await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
