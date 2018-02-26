@@ -59,6 +59,7 @@
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
     <Compile Include="Properties\orleans.codegen.cs" />
     <Compile Include="ReflectionMetaDataExtensionTests.cs" />
+    <Compile Include="SchemaProviderTests.cs" />
     <Compile Include="SchemaEndpointTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpyEventPublisher.cs" />

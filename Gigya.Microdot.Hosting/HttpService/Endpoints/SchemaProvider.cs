@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -19,16 +19,19 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.SharedLogic
+
+using System.Linq;
+using Gigya.Common.Contracts.HttpService;
+
+namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {
-    public static class GigyaHttpHeaders
+    public class SchemaProvider: ISchemaProvider
     {
-        public const string Version = "X-Gigya-ProtocolVersion";
-        public const string ServerHostname = "X-Gigya-ServerHostname";
-        public const string ExecutionTime = "X-Gigya-ExecutionTime";
-        public const string DataCenter = "X-Gigya-DC";
-        public const string Environment = "X-Gigya-ENV";
-        public const string ServiceVersion = "X-Gigya-ServiceVersion";
-        public const string SchemaHash = "X-Gigya-SchemaHash";
+        public SchemaProvider(IServiceInterfaceMapper mapper)
+        {
+            Schema = new ServiceSchema(mapper.ServiceInterfaceTypes.ToArray());
+        }
+
+        public ServiceSchema Schema { get; }
     }
 }

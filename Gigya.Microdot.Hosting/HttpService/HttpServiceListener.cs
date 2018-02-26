@@ -85,6 +85,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
 
+        private ISchemaProvider SchemaProvider { get; }
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -98,9 +99,11 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   IServerRequestPublisher serverRequestPublisher,
-                                   JsonExceptionSerializer exceptionSerializer)
+                                   JsonExceptionSerializer exceptionSerializer, 
+                                   ISchemaProvider schemaProvider,
+                                   IServerRequestPublisher serverRequestPublisher)
         {
+            SchemaProvider = schemaProvider;
             _serverRequestPublisher = serverRequestPublisher;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
@@ -371,6 +374,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, EnvironmentVariableProvider.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, SchemaProvider.Schema.HashCode);
+
             try
             {
                 await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
