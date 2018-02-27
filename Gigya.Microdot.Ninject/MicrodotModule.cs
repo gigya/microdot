@@ -22,7 +22,10 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceDiscovery;
@@ -81,6 +84,9 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();
+
+            Kernel.Rebind<ServiceSchema>().ToMethod(c => 
+                            new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
         }
 
 

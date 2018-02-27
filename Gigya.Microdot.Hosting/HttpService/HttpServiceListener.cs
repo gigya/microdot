@@ -33,6 +33,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -54,6 +55,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
+
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -83,6 +85,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
 
+        private ServiceSchema ServiceSchema { get; }
+
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
         private readonly Timer _roundtripTime;
@@ -95,8 +99,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   JsonExceptionSerializer exceptionSerializer)
+                                   JsonExceptionSerializer exceptionSerializer, ServiceSchema serviceSchema)
         {
+            ServiceSchema = serviceSchema;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -392,6 +397,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, EnvironmentVariableProvider.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
+
             try
             {
                 await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
