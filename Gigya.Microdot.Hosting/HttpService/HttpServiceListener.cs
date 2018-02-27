@@ -33,6 +33,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -84,7 +85,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
 
-        private ISchemaProvider SchemaProvider { get; }
+        private ServiceSchema ServiceSchema { get; }
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -98,9 +99,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   JsonExceptionSerializer exceptionSerializer, ISchemaProvider schemaProvider)
+                                   JsonExceptionSerializer exceptionSerializer, ServiceSchema serviceSchema)
         {
-            SchemaProvider = schemaProvider;
+            ServiceSchema = serviceSchema;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -396,7 +397,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, EnvironmentVariableProvider.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
-            context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, SchemaProvider.Schema.HashCode);
+            context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
 
             try
             {

@@ -22,6 +22,7 @@
 
 using System.Net;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
@@ -30,9 +31,9 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
     {
         private readonly string _jsonSchema;
 
-        public SchemaEndpoint(ISchemaProvider schemaProvider)
+        public SchemaEndpoint(ServiceSchema schemaProvider)
         {
-            _jsonSchema = JsonConvert.SerializeObject(schemaProvider.Schema, new JsonSerializerSettings{Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore});
+            _jsonSchema = JsonConvert.SerializeObject(schemaProvider, new JsonSerializerSettings{Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore});
         }        
 
         public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)

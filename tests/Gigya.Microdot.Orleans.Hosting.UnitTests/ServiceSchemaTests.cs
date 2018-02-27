@@ -20,87 +20,47 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
-using Gigya.Microdot.Testing.Shared;
 using Newtonsoft.Json;
-using Ninject;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     [TestFixture]
-    public class SchemaProviderTests
+    public class ServiceSchemaTests
     {
-        private TestingKernel<ConsoleLog> _kernel;
-        private Type[] _services;
-
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            try
-            {
-                _kernel = new TestingKernel<ConsoleLog>((kernel) =>
-                {
-                    kernel.Rebind<IServiceInterfaceMapper>().ToMethod(_=> new IdentityServiceInterfaceMapper(_services));                    
-                });
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-        }
-
-        [OneTimeTearDown]
-        public void TearDown()
-        {
-            _kernel.Dispose();
-        }
-
         [Test]
         public void ReturnSameHashCodeForSameSchema()
         {
-            _services = new[] { typeof(ITestService) };
-            var firstSchema = GetSchema();
-            var secondSchema = GetSchema(); 
+            var firstSchema = GetSchema<ITestService>();
+            var secondSchema = GetSchema<ITestService>(); 
             Assert.AreNotEqual(firstSchema, secondSchema);
-            Assert.AreEqual(firstSchema.HashCode, secondSchema.HashCode);
+            Assert.AreEqual(firstSchema.Hash, secondSchema.Hash);
         }
 
         [Test]
         public void ReturnDifferentHashCodeForDifferentSchema()
         {
-            _services = new[] {typeof(ITestService)};
-            var firstSchema = GetSchema();
-
-            _services = new[] {typeof(ICalculatorService)};
-            var secondSchema = GetSchema();
+            var firstSchema = GetSchema<ITestService>();
+            var secondSchema = GetSchema<ICalculatorService>();
             
-            Assert.AreNotEqual(firstSchema.HashCode, secondSchema.HashCode);
+            Assert.AreNotEqual(firstSchema.Hash, secondSchema.Hash);
         }
 
         [Test]
         public void ReturnSameHashCodeAfterSerialization()
         {
-            _services = new[] { typeof(ITestService) };
-            var firstSchema = GetSchema();
+            var firstSchema = GetSchema<ICalculatorService>();
             var serialized = JsonConvert.SerializeObject(firstSchema);
             var secondSchema = JsonConvert.DeserializeObject<ServiceSchema>(serialized);
-            Assert.AreEqual(firstSchema.HashCode, secondSchema.HashCode);
+            Assert.AreEqual(firstSchema.Hash, secondSchema.Hash);
         }
 
-        private ServiceSchema GetSchema()
+        private ServiceSchema GetSchema<TService>()
         {
-            _kernel.Rebind<ISchemaProvider>().To<SchemaProvider>(); // create a new instance of SchemaProvider
-            var schemaProvider = _kernel.Get<ISchemaProvider>();
-            return schemaProvider.Schema;
+            return new ServiceSchema(new[]{typeof(TService)});
         }
     }
 

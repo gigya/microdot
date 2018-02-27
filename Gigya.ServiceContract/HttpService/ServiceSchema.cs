@@ -52,7 +52,7 @@ namespace Gigya.Common.Contracts.HttpService
             SetHashCode();
         }
 
-        public string HashCode { get; set; }
+        public string Hash { get; set; }
 
         private void SetHashCode()
         {
@@ -62,7 +62,7 @@ namespace Gigya.Common.Contracts.HttpService
             {
                 JsonSerializer.Create().Serialize(writer, this);
                 stream.Seek(0, SeekOrigin.Begin);
-                HashCode = Convert.ToBase64String(sha.ComputeHash(stream));
+                Hash = Convert.ToBase64String(sha.ComputeHash(stream));
             }
         }
     }
