@@ -67,7 +67,7 @@ NUGET
       Microsoft.Bcl (>= 1.1.10)
       Microsoft.Bcl.Async (>= 1.0.168)
       Microsoft.Bcl.Build (>= 1.0.21)
-    NLog (4.4.12)
+    NLog (4.4.13)
     NSubstitute (3.1)
       Castle.Core (>= 4.2)
       System.Threading.Tasks.Extensions (>= 4.3)
