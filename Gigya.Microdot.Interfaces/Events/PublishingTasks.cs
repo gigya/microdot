@@ -20,13 +20,28 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Interfaces.Events
 {
+
+    // TODO: rename class, to reflect it now also contains serialized fields
     public class PublishingTasks
     {
-        public Task<bool> PublishEvent = null;
+        /// <summary>
+        /// A task indicating whether the event was published (true), explicitly suppressed due to configuration (false),
+        /// or an exception in case the queue got full. Beware of awaiting on that task; it may take a long time to
+        /// complete (depending on the event publisher; it might retry sending the event until successful).
+        /// </summary>
+        public Task<bool> PublishEvent;
         public Task<bool> PublishAudit = null;
+
+        /// <summary>
+        /// A lazy collection representing the set of fields that were found in the event object and their serialized
+        /// values, that are being published.
+        /// </summary>
+        public IEnumerable<SerializedEventField> SerializedEventFields;
+        public IEnumerable<SerializedEventField> SerializedAuditEventFields = null;
     }
 }
