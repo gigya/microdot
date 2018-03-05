@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,19 +20,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
 
-namespace Gigya.Microdot.Interfaces.Events
+namespace CalculatorService.Interface
 {
-    // TODO: Remove
-    [Obsolete]
-	public interface IEventConfiguration
-	{		
-		Regex ExcludeStackTraceRule { get; set; }
 
-		bool ExcludeParams { get; set; }
-
-		int ParamTruncateLength { get; set; }
-	}
+    [HttpService(12323)]
+    public interface ICalculatorService
+    {
+        Task<int> Add(int a, int b);
+    }
 }

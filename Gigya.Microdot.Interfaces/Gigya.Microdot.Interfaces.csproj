@@ -46,7 +46,9 @@
     <Compile Include="Configuration\IConfigItem.cs" />
     <Compile Include="Configuration\IConfigObject.cs" />
     <Compile Include="Configuration\IEnvironmentVariableProvider.cs" />
+    <Compile Include="Events\EventConfiguration.cs" />
     <Compile Include="Events\EventFieldAttribute.cs" />
+    <Compile Include="Events\IEventSerializer.cs" />
     <Compile Include="Events\PublishingTasks.cs" />
     <Compile Include="Events\IEvent.cs" />
     <Compile Include="Events\IEventConfiguration.cs" />

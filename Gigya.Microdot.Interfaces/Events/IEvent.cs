@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Interfaces.Events
         
         DateTime Timestamp { get;  }
 
-        IEventConfiguration Configuration { get; set; }
+        EventConfiguration Configuration { get; set; }
 
         IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
 
