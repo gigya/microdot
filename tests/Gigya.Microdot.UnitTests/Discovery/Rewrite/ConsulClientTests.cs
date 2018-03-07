@@ -5,16 +5,17 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
-using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using ConsulClient = Gigya.Microdot.ServiceDiscovery.Rewrite.ConsulClient;
+using IConsulClient = Gigya.Microdot.ServiceDiscovery.Rewrite.IConsulClient;
 
-namespace Gigya.Microdot.UnitTests.Discovery
+namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
     public class ConsulClientTests
@@ -27,8 +28,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private const int Port1 = 1234;
         private const string Version = "1.0.0.1";
 
-        public enum ConsulMethod { LongPolling, Queries}
-
         private TestingKernel<ConsoleLog> _testingKernel;
         private IConsulClient _consulClient;
         private IEnvironmentVariableProvider _environmentVariableProvider;
@@ -36,6 +35,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private string _serviceName;
         private DateTimeFake _dateTimeFake;
         private ConsulConfig _consulConfig;
+        private ConsulServiceState _serviceState;
+        public enum ConsulMethod { LongPolling, Queries }
 
         [OneTimeSetUp]
         public void SetupConsulListener()
@@ -52,6 +53,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
 
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
+                k.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();    // for testing - use a new instance for each test
             });
 
         }
@@ -70,65 +72,79 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig();
 
+            _serviceState = new ConsulServiceState(_serviceName);
+            _consulClient = _testingKernel.Get<IConsulClient>();
+
             _consulSimulator.Reset();            
         }
 
-        private Task<EndPointsResult> Start(ConsulMethod consulMethod)
+        [TearDown]
+        public void Teardown()
         {
-            _consulConfig.LongPolling = (consulMethod == ConsulMethod.LongPolling);
-            _consulClient = _testingKernel.Get<Func<string, IConsulClient>>()(_serviceName);
-            return GetResultAfter(() => _consulClient.Init());
+            _consulClient.Dispose();
         }
 
+        public async Task LoadNodes(ConsulMethod consulMethod)
+        {
+            switch (consulMethod)
+            {
+                case ConsulMethod.LongPolling:
+                    await Task.WhenAny(_consulClient.LoadNodes(_serviceState), Task.Delay(5000)).ConfigureAwait(false);
+                    break;
+                case ConsulMethod.Queries:
+                    await Task.WhenAny(_consulClient.LoadNodesByQuery(_serviceState), Task.Delay(5000)).ConfigureAwait(false);
+                    break;
+            }
+        }
+
+        [Test]
         [TestCase(ConsulMethod.LongPolling)]
         [TestCase(ConsulMethod.Queries)]
-        public async Task EndpointExists(ConsulMethod consulMethod)
+        public async Task NodeExists(ConsulMethod consulMethod)
         {           
             AddServiceEndPoint();
 
-            var result = await Start(consulMethod);
+            await LoadNodes(consulMethod);
 
-            AssertOneDefaultEndpoint(result);
+            AssertOneDefaultNode();
         }
 
         [Test]
-        public async Task EndpointAdded_LongPolling()
+        public async Task NodeAdded_LongPolling()
         {
-            await Start(ConsulMethod.LongPolling);
-            var result = await GetResultAfter(() => AddServiceEndPoint());
+            SetServiceVersion(Version);
+            await LoadNodes(ConsulMethod.LongPolling);
+            AddServiceEndPoint();
+            await LoadNodes(ConsulMethod.LongPolling);            
 
-            AssertOneDefaultEndpoint(result);
-            var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), and one health call (to get endpoints)
-            delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
+            AssertOneDefaultNode();
         }
 
         [Test]
-        public async Task EndpointAdded_Query()
+        public async Task NodeAdded_Query()
         {
-            await Start(ConsulMethod.Queries);
+            await LoadNodes(ConsulMethod.Queries);
+            AddServiceEndPoint();
+            await LoadNodes(ConsulMethod.Queries);
 
-            var result = await GetResultAfter(()=>AddServiceEndPoint());
-
-            AssertOneDefaultEndpoint(result);
-            var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBeLessThan(4); // shouldn't take too many loops to get the result
-            delays.ShouldAllBe(d => d.Equals(_consulConfig.ReloadInterval));
+            AssertOneDefaultNode();
         }
 
         [TestCase(ConsulMethod.LongPolling)]
         [TestCase(ConsulMethod.Queries)]
-        public async Task EndpointRemoved(ConsulMethod consulMethod)
+        public async Task NodeRemoved(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
             AddServiceEndPoint("endpointToRemove");
 
-            var result = await Start(consulMethod);
+            await LoadNodes(consulMethod);
 
-            result.EndPoints.Length.ShouldBe(2);
+            _serviceState.Nodes.Length.ShouldBe(2);
             
-            result = await GetResultAfter(()=>RemoveServiceEndPoint("endpointToRemove"));            
-            AssertOneDefaultEndpoint(result);
+            RemoveServiceEndPoint("endpointToRemove");
+            await LoadNodes(consulMethod);
+
+            AssertOneDefaultNode();
         }
 
         [TestCase(ConsulMethod.LongPolling)]
@@ -138,37 +154,40 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AddServiceEndPoint();
             SetConsulIsDown();
 
-            var result = await Start(consulMethod);
-            result.Error.ShouldNotBeNull();
+            await LoadNodes(consulMethod);
+            _serviceState.LastResult.Error.ShouldNotBeNull();
         }
 
         [TestCase(ConsulMethod.LongPolling)]
         [TestCase(ConsulMethod.Queries)]
-        public async Task ErrorAfterStart_UseLastKnownEndpoints(ConsulMethod consulMethod)
+        public async Task ErrorAfterStart_UseLastKnownNodes(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
 
-            var resultBeforeError = await Start(ConsulMethod.LongPolling);
+            await LoadNodes(ConsulMethod.LongPolling);
+            var nodesBeforeError = _serviceState.Nodes;
 
-            SetConsulIsDown();
+            SetConsulIsDown();            
             AddServiceEndPoint("another host");
+            await LoadNodes(ConsulMethod.LongPolling);
 
-            await Task.Delay(1000);
-            var resultAfterError = _consulClient.Result;
-            resultAfterError.EndPoints.ShouldBe(resultBeforeError.EndPoints);
+            var nodesAfterError = _serviceState.Nodes;
+            nodesAfterError.ShouldBe(nodesBeforeError);
 
-            var result = await GetResultAfter(SetConsulIsUpAgain);
-            result.Error.ShouldBeNull();
-            result.EndPoints.Length.ShouldBe(2);
+            SetConsulIsUpAgain();
+            await LoadNodes(ConsulMethod.LongPolling);
+
+            _serviceState.LastResult.Error.ShouldBeNull();
+            _serviceState.Nodes.Length.ShouldBe(2);
         }
 
         [TestCase(ConsulMethod.LongPolling)]
         [TestCase(ConsulMethod.Queries)]
         public async Task ServiceMissingOnStart(ConsulMethod consulMethod)
         {
-            var result = await Start(consulMethod);
-            result.IsQueryDefined.ShouldBeFalse();
-            result.Error.ShouldBeNull();
+            await LoadNodes(consulMethod);
+            _serviceState.IsDeployed.ShouldBeFalse();
+            _serviceState.LastResult.Error.ShouldBeNull();
         }
 
         [TestCase(ConsulMethod.LongPolling)]
@@ -176,25 +195,29 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task ServiceBecomesMissing(ConsulMethod consulMethod)
         {
             AddServiceEndPoint();
-            var result = await Start(consulMethod);
+            await LoadNodes(consulMethod);
 
-            result.IsQueryDefined.ShouldBeTrue();
+            _serviceState.IsDeployed.ShouldBeTrue();
 
-            result = await GetResultAfter(()=>RemoveService());
-            result.IsQueryDefined.ShouldBeFalse();
-            result.Error.ShouldBeNull();
+            RemoveService();
+            await LoadNodes(consulMethod);
+
+            _serviceState.IsDeployed.ShouldBeFalse();
+            _serviceState.LastResult.Error.ShouldBeNull();
         }
-
-        [TestCase(ConsulMethod.LongPolling)]
+        
         [TestCase(ConsulMethod.Queries)]        
         public async Task ServiceIsBackAfterBeingMissing(ConsulMethod consulMethod)
         {
-            var result = await Start(consulMethod);
+            await LoadNodes(consulMethod);
 
-            result.IsQueryDefined.ShouldBeFalse();
+            _serviceState.IsDeployed.ShouldBeFalse();
+            await LoadNodes(consulMethod);
 
-            result = await GetResultAfter(()=>AddServiceEndPoint());
-            AssertOneDefaultEndpoint(result);
+            AddServiceEndPoint();
+            await LoadNodes(consulMethod);
+
+            AssertOneDefaultNode();
         }
 
 
@@ -205,16 +228,18 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AddServiceEndPoint(hostName: "newVersionHost", version: "2.0.0");
             SetServiceVersion("1.0.0");
 
-            var result = await Start(ConsulMethod.LongPolling);
+            await LoadNodes(ConsulMethod.LongPolling);
             
-            result.EndPoints.Length.ShouldBe(1);
-            result.EndPoints[0].HostName.ShouldBe("oldVersionHost");
-            result.ActiveVersion.ShouldBe("1.0.0");
+            _serviceState.Nodes.Length.ShouldBe(1);
+            _serviceState.Nodes[0].Hostname.ShouldBe("oldVersionHost");
+            _serviceState.ActiveVersion.ShouldBe("1.0.0");
 
-            result = await GetResultAfter(()=> SetServiceVersion("2.0.0"));
-            result.EndPoints.Length.ShouldBe(1);
-            result.EndPoints[0].HostName.ShouldBe("newVersionHost");
-            result.ActiveVersion.ShouldBe("2.0.0");
+            SetServiceVersion("2.0.0");
+            await LoadNodes(ConsulMethod.LongPolling);
+
+            _serviceState.Nodes.Length.ShouldBe(1);
+            _serviceState.Nodes[0].Hostname.ShouldBe("newVersionHost");
+            _serviceState.ActiveVersion.ShouldBe("2.0.0");
         }
 
         [TestCase(ConsulMethod.LongPolling)]
@@ -222,28 +247,28 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task ServiceIsDeployedWithNoNodes(ConsulMethod consulMethod)
         {
             SetServiceVersion("1.0.0");
-            var result = await Start(consulMethod);            
-            result.IsQueryDefined.ShouldBeTrue();
-            result.EndPoints.Length.ShouldBe(0);
+            await LoadNodes(consulMethod);
+            _serviceState.IsDeployed.ShouldBeTrue();
+            _serviceState.Nodes.Length.ShouldBe(0);
 
             var delays = _dateTimeFake.DelaysRequested.ToArray();
             delays.Length.ShouldBeLessThan(4); // shouldn't take too many loops to get the result
         }
 
-        [TestCase(ConsulMethod.LongPolling)]        
+        [TestCase(ConsulMethod.LongPolling)]                
         public async Task ServiceIsDeployedInLowerCase(ConsulMethod consulMethod)
         {
-            AddServiceEndPoint(serviceName: _serviceName.ToLower());
-            var result = await Start(consulMethod);
-            AssertOneDefaultEndpoint(result);
+            AddServiceEndPoint(serviceName: _serviceName.ToLower());            
+            await LoadNodes(consulMethod);
+            
+            AssertOneDefaultNode();
         }
 
-        private static void AssertOneDefaultEndpoint(EndPointsResult result)
+        private void AssertOneDefaultNode()
         {
-            result.EndPoints.Length.ShouldBe(1);
-            result.EndPoints[0].HostName.ShouldBe(Host1);
-            result.EndPoints[0].Port.ShouldBe(Port1);
-            result.ActiveVersion.ShouldBe(Version);
+            _serviceState.Nodes.Length.ShouldBe(1);
+            _serviceState.Nodes[0].Hostname.ShouldBe(Host1);
+            _serviceState.Nodes[0].Port.ShouldBe(Port1);
         }
 
         private async void AddServiceEndPoint(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
@@ -275,15 +300,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _consulSimulator.RemoveService(_serviceName);
         }
-
-        private async Task<EndPointsResult> GetResultAfter(Action doSomethingToCauseResultChange)
-        {            
-            var waitForEvent = _consulClient.ResultChanged.WhenEventReceived(TimeSpan.FromDays(1));
-            doSomethingToCauseResultChange();
-            return await waitForEvent;
-        }
-
-        private Task<EndPointsResult> GetResult() => GetResultAfter(() => { });
 
     }
 }

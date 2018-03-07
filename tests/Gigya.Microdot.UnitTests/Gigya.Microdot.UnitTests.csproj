@@ -52,12 +52,16 @@
     <Compile Include="Configuration\EnviromentVariablesFileReaderTests.cs" />
     <Compile Include="Configuration\MasterConfigParserTests.cs" />
     <Compile Include="Configuration\TypedConfigTest.cs" />
+    <Compile Include="Discovery\ConfigNodeSourceTests.cs" />
     <Compile Include="Discovery\ConsulClientMock.cs" />
     <Compile Include="Discovery\ConsulClientTests.cs" />
     <Compile Include="Discovery\ConsulDiscoverySourceTest.cs" />
     <Compile Include="Discovery\ConsulSimulator.cs" />
     <Compile Include="Discovery\DiscoveryConfigTests.cs" />
+    <Compile Include="Discovery\LocalNodeSourceTests.cs" />
     <Compile Include="Discovery\RemoteHostPoolTests.cs" />
+    <Compile Include="Discovery\Rewrite\ConsulClientTests.cs" />
+    <Compile Include="Discovery\Rewrite\ConsulNodeSourceTests.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
     <Compile Include="Discovery\ConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Monitor\HealthStatusTests.cs" />
@@ -177,6 +181,7 @@
       <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>

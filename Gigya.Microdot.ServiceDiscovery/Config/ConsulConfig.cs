@@ -25,8 +25,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// </summary>
         public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
+        public TimeSpan InitializationTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
         /// <summary>
-        /// Interval for retrying access to surce (e.g. Consul) after an error has occured
+        /// Interval for retrying access to Consul after an error has occured
         /// </summary>
         public TimeSpan ErrorRetryInterval { get; set; } = TimeSpan.FromSeconds(1);
     }

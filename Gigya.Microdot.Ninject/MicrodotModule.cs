@@ -30,14 +30,18 @@ using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
+using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
+using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -80,6 +84,11 @@ namespace Gigya.Microdot.Ninject
             Rebind<IServiceDiscoverySource>().To<ConsulDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
+
+            Rebind<INodeSource>().To<ConsulNodeSource>().InTransientScope();
+            Bind<INodeSource>().To<ConfigNodeSource>().InTransientScope();
+            Bind<INodeSource>().To<LocalNodeSource>().InTransientScope();
+
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
