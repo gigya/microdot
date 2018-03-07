@@ -12,13 +12,12 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
-using ConsulClient = Gigya.Microdot.ServiceDiscovery.Rewrite.ConsulClient;
 using IConsulClient = Gigya.Microdot.ServiceDiscovery.Rewrite.IConsulClient;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class ConsulClientTests
+    public class ConsulQueryClientTests
     {
         private const string ServiceName = "MyService-prod";
         private const int ConsulPort = 8501;
@@ -52,7 +51,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
 
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
-                k.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();    // for testing - use a new instance for each test
+                k.Rebind<IConsulClient>().To<ConsulQueryClient>().InTransientScope();    // for testing - use a new instance for each test
             });
 
         }
@@ -101,10 +100,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task NodeAdded()
         {
-            SetServiceVersion(Version);
             await LoadNodes();
             AddServiceEndPoint();
-            await LoadNodes();            
+            await LoadNodes();
 
             AssertOneDefaultNode();
         }
@@ -157,27 +155,21 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _serviceState.IsDeployed.ShouldBeFalse();
             _serviceState.LastResult.Error.ShouldBeNull();
         }
-        
+
         [Test]
-        public async Task UpgradeVersion()
+        public async Task ServiceIsBackAfterBeingMissing()
         {
-            AddServiceEndPoint(hostName: "oldVersionHost", version: "1.0.0");
-            AddServiceEndPoint(hostName: "newVersionHost", version: "2.0.0");
-            SetServiceVersion("1.0.0");
-
-            await LoadNodes();
-            
-            _serviceState.Nodes.Length.ShouldBe(1);
-            _serviceState.Nodes[0].Hostname.ShouldBe("oldVersionHost");
-            _serviceState.ActiveVersion.ShouldBe("1.0.0");
-
-            SetServiceVersion("2.0.0");
             await LoadNodes();
 
-            _serviceState.Nodes.Length.ShouldBe(1);
-            _serviceState.Nodes[0].Hostname.ShouldBe("newVersionHost");
-            _serviceState.ActiveVersion.ShouldBe("2.0.0");
+            _serviceState.IsDeployed.ShouldBeFalse();
+            await LoadNodes();
+
+            AddServiceEndPoint();
+            await LoadNodes();
+
+            AssertOneDefaultNode();
         }
+
 
         [Test]
         public async Task ServiceIsDeployedWithNoNodes()
@@ -186,15 +178,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await LoadNodes();
             _serviceState.IsDeployed.ShouldBeTrue();
             _serviceState.Nodes.Length.ShouldBe(0);
-        }
 
-        [Test]
-        public async Task ServiceIsDeployedInLowerCase()
-        {
-            AddServiceEndPoint(serviceName: _serviceName.ToLower());            
-            await LoadNodes();
-            
-            AssertOneDefaultNode();
+            var delays = _dateTimeFake.DelaysRequested.ToArray();
+            delays.Length.ShouldBeLessThan(4); // shouldn't take too many loops to get the result
         }
 
         private void AssertOneDefaultNode()

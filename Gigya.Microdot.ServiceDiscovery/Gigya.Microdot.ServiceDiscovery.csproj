@@ -71,7 +71,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rewrite\ConfigNodeSource.cs" />
     <Compile Include="Rewrite\ConsulClient.cs" />
+    <Compile Include="Rewrite\ConsulClientBase.cs" />
     <Compile Include="Rewrite\ConsulNodeSource.cs" />
+    <Compile Include="Rewrite\ConsulQueryClient.cs" />
+    <Compile Include="Rewrite\ConsulQueryNodeSource.cs" />
     <Compile Include="Rewrite\ConsulResult.cs" />
     <Compile Include="Rewrite\ConsulServiceState.cs" />
     <Compile Include="Rewrite\IConsulClient.cs" />

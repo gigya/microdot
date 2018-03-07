@@ -1,31 +1,16 @@
 ﻿using System;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Rewrite;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public sealed class ConsulClient: IConsulClient, IDisposable
+    public sealed class ConsulClient: ConsulClientBase, IConsulClient
     {
-        private HttpClient _httpClient;
-
-        private ILog Log { get; }
-        public IDateTime DateTime { get; }
-        private Func<ConsulConfig> GetConfig { get; }
-        private Uri ConsulAddress { get; set; }
-        public string DataCenter { get; set; }
-
-
         private CancellationTokenSource ShutdownToken { get; }
 
         /// <summary>
@@ -39,15 +24,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private string[] _allKeys;
 
         private Task _getAllKeys;
+        private int _disposed;
 
-        public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig):
+            base(log,environmentVariableProvider,dateTime,getConfig)
         {
-            Log = log;
-            DateTime = dateTime;
-            GetConfig = getConfig;
-            var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
-            ConsulAddress = new Uri($"http://{address}");
-            DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
             _getAllKeys = GetAllKeys();
         }
@@ -229,29 +210,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             SetErrorResult(serviceState, response, "Cannot extract service's nodes from Consul response");            
         }
 
-        public async Task LoadNodesByQuery(ConsulServiceState serviceState)
-        {
-            var consulQuery = $"v1/query/{serviceState.ServiceName}/execute?dc={DataCenter}";
-            var response = await CallConsul(consulQuery, serviceState.ShutdownToken).ConfigureAwait(false);
-
-            if (response.IsDeployed == false)
-            {
-                SetServiceMissingResult(serviceState, response);
-                return;
-            }
-            else if (response.Success)
-            {
-                var deserializedResponse = TryDeserialize<ConsulQueryExecuteResponse>(response.ResponseContent);
-                if (deserializedResponse != null)
-                {
-                    SetConsulNodes(deserializedResponse.Nodes, serviceState, response, filterByVersion: false);
-                    return;
-                }
-            }
-
-            SetErrorResult(serviceState, response, "Cannot extract service's nodes from Consul query response");
-        }
-
         private async Task WaitIfErrorOccuredOnPreviousCall(ConsulServiceState serviceState)
         {
             if (serviceState.LastResult?.Error != null)
@@ -264,149 +222,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }            
         }
 
-        private async Task<ConsulResult> CallConsul(string urlCommand, CancellationToken cancellationToken)
-        {
-            var timeout = GetConfig().HttpTimeout;
-            ulong? modifyIndex = 0;
-            string requestLog = string.Empty;
-            string responseContent = null;
-            HttpStatusCode? statusCode = null;
-
-            try
-            {
-                if (_httpClient == null)
-                    _httpClient = new HttpClient { BaseAddress = ConsulAddress };
-
-                requestLog = _httpClient.BaseAddress + urlCommand;
-                using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
-                using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
-                using (var response = await _httpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false))
-                {
-                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    statusCode = response.StatusCode;
-                    Log.Debug(x => x("Response received from Consul", unencryptedTags: new { ConsulAddress, requestLog = urlCommand, responseCode = statusCode, responseContent}));
-
-                    var consulResponse = new ConsulResult {RequestLog = requestLog, StatusCode = statusCode, ResponseContent = responseContent, ResponseDateTime = DateTime.UtcNow};
-
-                    if (statusCode == HttpStatusCode.OK)
-                        consulResponse.ModifyIndex = GetConsulIndex(response);
-                    else
-                    {
-                        var exception = new EnvironmentException("Consul response not OK",
-                            unencrypted: new Tags
-                            {
-                                {"ConsulAddress", ConsulAddress.ToString()},
-                                {"ConsulQuery", urlCommand},
-                                {"ResponseCode", statusCode.ToString()},
-                                {"Content", responseContent}
-                            });
-
-                        if (statusCode == HttpStatusCode.NotFound || responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
-                            consulResponse.ResponseContent = responseStr;
-                            consulResponse.IsDeployed = false;
-                        }
-                        else
-                            consulResponse.Error = exception;
-
-                    }
-
-                    return consulResponse;
-                }
-            }
-            catch (Exception ex)
-            {
-                return new ConsulResult {RequestLog = requestLog, ResponseContent = responseContent, Error = ex, StatusCode = statusCode};
-            }
-        }
-
-
-        private static ulong? GetConsulIndex(HttpResponseMessage response)
-        {
-            ulong? modifyIndex = null;
-            response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
-            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
-                modifyIndex = consulIndexValue;
-            return modifyIndex;
-        }
-
-        protected T TryDeserialize<T>(string response)
-        {
-            if (response == null)
-                return default(T);
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(response);
-            }
-            catch
-            {
-                return default(T);
-            }
-        }
-
-        internal void SetErrorResult(ConsulServiceState serviceState, ConsulResult result, string errorMessage)
-        {
-            if (result.Error==null)
-                result.Error = new EnvironmentException(errorMessage);
-
-            if (!(result.Error is TaskCanceledException))
-                Log.Error("Error calling Consul", exception: result.Error, unencryptedTags: new
-                {
-                    ServiceName = serviceState.ServiceName,
-                    ConsulAddress = ConsulAddress.ToString(),
-                    consulQuery = result.RequestLog,
-                    ResponseCode = result.StatusCode,
-                    Content = result.ResponseContent
-                });
-
-            lock (serviceState)
-            {
-                serviceState.IsDeployed = true;
-                serviceState.Nodes = new INode[0];
-                serviceState.LastResult = result;
-            }
-        }
-
-        internal void SetServiceMissingResult(ConsulServiceState serviceState, ConsulResult consulResult)
-        {
-            lock (serviceState)
-            {
-                serviceState.IsDeployed = false;
-                serviceState.Nodes = new INode[0];
-                serviceState.LastResult = consulResult;
-            }
-        }
-
-        private void SetConsulNodes(ServiceEntry[] consulNodes, ConsulServiceState serviceState, ConsulResult consulResult, bool filterByVersion)
-        {
-            lock (serviceState)
-            {
-                var nodes = consulNodes.Select(n => new Node(n.Node.Name, n.Service.Port, GetNodeVersion(n))).ToArray();
-
-                serviceState.NodesOfAllVersions = nodes;
-                serviceState.LastResult = consulResult;
-                serviceState.IsDeployed = true;                
-            }
-        }
-
-        
-
-        private static string GetNodeVersion(ServiceEntry node)
-        {
-            const string versionPrefix = "version:";
-            var versionTag = node?.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
-            return versionTag?.Substring(versionPrefix.Length);
-        }
-
-
-        private int _disposed=0;
         public void Dispose()
         {
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            _httpClient?.Dispose();
+            base.Dispose();
+            HttpClient?.Dispose();
             ShutdownToken?.Cancel();
             ShutdownToken?.Dispose();
         }

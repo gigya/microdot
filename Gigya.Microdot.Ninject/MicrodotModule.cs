@@ -85,10 +85,13 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
-            Rebind<INodeSource>().To<ConsulNodeSource>().InTransientScope();
+            Rebind<INodeSource>().To<LocalNodeSource>().InTransientScope();
             Bind<INodeSource>().To<ConfigNodeSource>().InTransientScope();
-            Bind<INodeSource>().To<LocalNodeSource>().InTransientScope();
-
+            Bind<INodeSource>().To<ConsulNodeSource>().InTransientScope();
+            Bind<INodeSource>().To<ConsulQueryNodeSource>().InTransientScope();
+            Rebind<ServiceDiscovery.Rewrite.IConsulClient>()
+                .To<ServiceDiscovery.Rewrite.ConsulClient>()
+                .InSingletonScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();

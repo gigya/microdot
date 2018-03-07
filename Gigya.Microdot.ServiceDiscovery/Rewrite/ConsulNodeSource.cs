@@ -12,7 +12,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private readonly ConsulServiceState _serviceState;
 
-        public string Name => "Consul";
+        public virtual string Name => "Consul";
 
         public bool SupportsMultipleEnvironments => true;
 
@@ -22,7 +22,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<ConsulConfig> GetConfig { get; }        
         private CancellationTokenSource ShutdownToken { get; }
 
-        private int _disposed = 0;
+        private bool _disposed;
         private INode[] _lastKnownNodes;
         private bool _isActive;
 
@@ -116,12 +116,23 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void Dispose()
         {
-            if (Interlocked.Increment(ref _disposed) == 1)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
             {
                 ShutdownToken.Cancel();
                 ShutdownToken.Dispose();
                 _serviceState.Dispose();
             }
+
+            _disposed = true;
         }
     }
 }
