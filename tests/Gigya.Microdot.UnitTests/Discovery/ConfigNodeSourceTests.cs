@@ -42,7 +42,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var deployment = new ServiceDeployment(ServiceName, "prod");
 
             var sources = _kernel.Get<Func<ServiceDeployment, INodeSource[]>>()(deployment);
-            _configNodeSource = sources.Single(x => x.Name == "Config");
+            _configNodeSource = sources.Single(x => x.Type == "Config");
         }
 
         private async Task SetConfigHosts(string hosts)
@@ -122,6 +122,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void NotSupportsMultipleEnvironments()
         {
             _configNodeSource.SupportsMultipleEnvironments.ShouldBeFalse();
+        }
+
+        [Test]
+        public void IsNeverUndeployed()
+        {
+            _configNodeSource.WasUndeployed.ShouldBeFalse();
         }
 
         private INode[] GetNodes()

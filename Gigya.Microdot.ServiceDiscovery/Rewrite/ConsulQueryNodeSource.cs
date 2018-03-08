@@ -6,7 +6,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class ConsulQueryNodeSource : ConsulNodeSource
     {
-        public override string Name => "ConsulQuery";
+        public override string Type => "ConsulQuery";
 
         public ConsulQueryNodeSource(ServiceDeployment serviceDeployment, ConsulQueryClient consulClient, Func<ConsulConfig> getConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus) :
             base(serviceDeployment, consulClient, getConfig, getAggregatingHealthStatus)

@@ -74,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupOneDefaultNode();
 
-            CreateConsulSource();
+            Start();
             
             AssertOneDefaultNode();
         }
@@ -88,7 +88,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 s.ActiveVersion = Version;
             };
 
-            CreateConsulSource();
+            Start();
 
             AssertOneDefaultNode();
         }
@@ -98,24 +98,24 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _consulClientResult = s => { s.IsDeployed = false; };
             CreateConsulSource();
-            _consulSource.IsActive.ShouldBeFalse();
+            _consulSource.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]
         public async Task ServiceBecomesNotDeployedOnConsul_ReturnIsActiveFalse()
         {
             SetupOneDefaultNode();
-            Start();
+            await Start();
             await SetupConsulResult(s => { s.IsDeployed = false; });            
-            _consulSource.IsActive.ShouldBeFalse();
+            _consulSource.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]
         public void ConsulErrorOnStart_ReturnEmptyNodesList()
         {
             SetupConsulError();
-            CreateConsulSource();
-            _consulSource.IsActive.ShouldBeTrue();
+            Start();
+            _consulSource.WasUndeployed.ShouldBeFalse();
             _consulSource.GetNodes().ShouldBeEmpty();
         }
 
@@ -123,7 +123,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ConsulError_UseLastKnownResult()
         {
             SetupOneDefaultNode();
-            Start();
+            await Start();
             await SetupConsulError();
             AssertOneDefaultNode();
         }
@@ -132,14 +132,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task GetResultAfterConsulError_UseLastKnownResult()
         {
             SetupOneDefaultNode();
-            Start();
+            await Start();
             await SetupConsulError();
             await SetupConsulResult(s => s.Nodes = new INode[]{new Node(Host1, Port1)});
             AssertOneDefaultNode();
         }
 
         [Test]
-        public async Task CallConsulClientOnlyWhenIsNeededAndNotAutomaticallyOnStart()
+        public async Task CallConsulClientOnlyAfterInitAndNotOnCreation()
         {
             bool consulClientCalled = false;
             _consulClient = Substitute.For<IConsulClient>();
@@ -151,7 +151,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             CreateConsulSource();
             await Task.Delay(200);
             consulClientCalled.ShouldBeFalse("ConsulClient was called before GetNodes() was requested");
-            _consulSource.GetNodes();
+            await _consulSource.Init();
             consulClientCalled.ShouldBeTrue("ConsulClient should be called when GetNodes() is requested");
         }
 
@@ -163,21 +163,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             AssertActionTakesAtLeast(consulInitializationDelay, () =>
             {
-                CreateConsulSource();
+                Start();
                 _consulSource.GetNodes();
-            });
-        }
-
-        [Test]
-        public void WaitForConsulResultBeforeFirstIsActive()
-        {
-            var consulInitializationDelay = TimeSpan.FromMilliseconds(200);
-            SetupConsulDelay(consulInitializationDelay);
-
-            AssertActionTakesAtLeast(consulInitializationDelay, () =>
-            {
-                CreateConsulSource();
-                var _ = _consulSource.IsActive;
             });
         }
 
@@ -229,10 +216,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             };
         }
 
-        private void Start()
+        private async Task Start()
         {
             CreateConsulSource();
-            _consulSource.GetNodes();
+            await _consulSource.Init();
         }
 
         private void CreateConsulSource()
@@ -240,12 +227,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var deployment = new ServiceDeployment("MyService", "prod");
 
             var sources = _testingKernel.Get<Func<ServiceDeployment, INodeSource[]>>()(deployment);
-            _consulSource = sources.Single(x => x.Name == "Consul");
+            _consulSource = sources.Single(x => x.Type == "Consul");
         }
 
         private void AssertOneDefaultNode()
         {
-            _consulSource.IsActive.ShouldBeTrue();
+            _consulSource.WasUndeployed.ShouldBeFalse();
             var nodes = _consulSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe(Host1);

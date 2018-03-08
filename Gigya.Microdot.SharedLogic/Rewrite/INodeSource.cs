@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.SharedLogic.Rewrite
 {
@@ -8,20 +9,26 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
     public interface INodeSource: IDisposable
     {
         /// <summary>
-        /// Name of this source (used as discovery's "Source" entry on configuration)
+        /// Initialize this source (e.g. Consul source needs initialization to start monitoring Consul)
         /// </summary>
-        string Name { get; }
+        /// <returns></returns>
+        Task Init();
 
         /// <summary>
-        /// Returns current list of available nodes
+        /// Type of this source (used as discovery's "Source" entry on configuration)
+        /// </summary>
+        string Type { get; }
+
+        /// <summary>
+        /// Returns current list of available nodes. Throws exception if no nodes are available.
         /// </summary>
         /// <returns></returns>
         INode[] GetNodes();
 
         /// <summary>
-        /// Whether this source is active for current service and environment
+        /// Returns true only if service was undeployed on the nodes source (e.g. Consul)
         /// </summary>
-        bool IsActive { get; }
+        bool WasUndeployed { get; }
 
         /// <summary>
         /// Whether this source supports services which are deployed on multiple environemnts

@@ -12,7 +12,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private readonly ConsulServiceState _serviceState;
 
-        public virtual string Name => "Consul";
+        public virtual string Type => "Consul";
 
         public bool SupportsMultipleEnvironments => true;
 
@@ -44,7 +44,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             AggregatingHealthStatus.RegisterCheck(_serviceState.ServiceName, CheckHealth);            
         }
 
-        private void Init()
+        public async Task Init()
         {
             lock (_initLock)
             {
@@ -76,19 +76,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         public INode[] GetNodes()
-        {
-            Init();
+        {            
             return _lastKnownNodes;
         }
 
-        public bool IsActive
-        {
-            get
-            {
-                Init();
-                return _isActive;
-            }
-        }
+        public bool WasUndeployed => !_isActive;
 
         private HealthCheckResult CheckHealth()
         {

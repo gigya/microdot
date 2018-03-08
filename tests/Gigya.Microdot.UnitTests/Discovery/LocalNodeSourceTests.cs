@@ -34,7 +34,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var deployment = new ServiceDeployment("MyService", "prod");
 
             var sources = _kernel.Get<Func<ServiceDeployment,INodeSource[]>>()(deployment);
-            _localNodeSource = sources.Single(x => x.Name == "Local");
+            _localNodeSource = sources.Single(x => x.Type == "Local");
         }
 
         [Test]
@@ -50,5 +50,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _localNodeSource.SupportsMultipleEnvironments.ShouldBeFalse();
         }
+
+        [Test]
+        public void IsNeverUndeployed()
+        {
+            _localNodeSource.WasUndeployed.ShouldBeFalse();
+        }
+
     }
 }

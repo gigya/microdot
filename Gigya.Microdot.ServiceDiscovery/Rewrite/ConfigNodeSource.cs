@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -22,7 +23,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private readonly object _updateLocker = new object();
 
-        public string Name => "Config";
+        public string Type => "Config";
 
         public bool SupportsMultipleEnvironments => false;
 
@@ -33,13 +34,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Log = log;
         }
 
-        public bool IsActive => true;
+        public bool WasUndeployed => false;
 
         public INode[] GetNodes()
         {
             var config = GetConfig();
             if (_lastConfig == config)
-                return _nodes;
+                return GetNonEmptyNodesList();
 
             lock (_updateLocker)
             {
@@ -58,6 +59,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     nodes = string.Join(",", _nodes.Select(n => n.ToString()))
                 }));
             }
+
+            return GetNonEmptyNodesList();
+        }
+
+        private INode[] GetNonEmptyNodesList()
+        {
+            if (_nodes.Length==0)
+                throw new EnvironmentException("No nodes were specified in the configuration for the " +
+                                                "requested service. Please make sure you've specified a list of hosts for the requested " +
+                                                "service in the configuration. If you're a developer and want to access a service on your " +
+                                                "local machine, change service configuration to Discovery.[ServiceName].Mode=\"Local\". " +
+                                                "See tags for the name of the service requested, and for the " +
+                                                "configuration path where the list of nodes are expected to be specified.",
+                    unencrypted: new Tags
+                    {
+                        {"requestedService", _serviceName},
+                        {"missingConfigPath", $"Discovery.{_serviceName}.Hosts"}
+                    });
 
             return _nodes;
         }
@@ -78,6 +97,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             return new Node(hostName, port);
         }
+
+        public async Task Init()
+        {
+            // nothing to init
+        }
+
         public void Dispose()
         {
             // nothing to dispose

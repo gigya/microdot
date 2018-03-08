@@ -13,6 +13,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public string Hostname { get; }
         public int? Port { get; }
+        
+        /// <summary>
+        /// Version of this node (relevant only for Consul nodes)
+        /// </summary>
         public string Version { get; }
 
         public override string ToString()

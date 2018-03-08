@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
@@ -30,20 +31,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     public class LocalNodeSource : INodeSource
     {
-        private readonly INode[] _nodes;
+        private static readonly INode[] _nodes;
 
-        public LocalNodeSource(ServiceDeployment usedOnlyForCompatabilityWithOtherNodesSourcesOnNinject)
+        static LocalNodeSource()
         {
             _nodes = new []{new Node(CurrentApplicationInfo.HostName)};
         }
 
-        public string Name => "Local";
+        public string Type => "Local";
 
-        public bool IsActive => true;
+        public bool WasUndeployed => false;
 
         public INode[] GetNodes() => _nodes;
 
         public bool SupportsMultipleEnvironments => false;
+
+        public async Task Init()
+        {
+            // nothing to init
+        }
 
         public void Dispose()
         {
