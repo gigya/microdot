@@ -70,13 +70,13 @@ namespace Gigya.Microdot.Configuration
             }
             catch (Exception e)
             {
-                var type = configObject?.GetType();
+                var currentMemberType = currentMember?.GetType();
                 _log.Error("An attempt to track the usage of a configuration object threw an exception. See tags for details.", exception: e, unencryptedTags: new
                 {
                     configKey,
-                    configObjectType = type,
-                    currentObjectType = type?.DeclaringType?.Name,
-                    currentMember = type?.Name
+                    configObjectType =  configObject?.GetType(),
+                    currentObjectType = currentMemberType?.DeclaringType?.Name,
+                    currentMember = currentMemberType?.Name
                 });
             }
 
