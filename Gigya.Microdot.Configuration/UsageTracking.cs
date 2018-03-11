@@ -59,12 +59,10 @@ namespace Gigya.Microdot.Configuration
                 foreach (var pathPart in pathParts.Take(pathParts.Length))
                 {
                     var proprty = currentMember?.GetType().GetProperty(pathPart);
-                    var canRead = proprty?.CanRead;
-                    if (canRead == true)
-                    {
-                        currentMember = proprty?.GetValue(currentMember);
-                        break;
-                    }
+
+                    if (proprty?.CanRead == false)
+                        return null;
+                    currentMember = proprty?.GetValue(currentMember);
                 }
                 return currentMember?.GetType();
             }
