@@ -23,34 +23,57 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.Configuration
 {
     public class UsageTracking
     {
-        private readonly ConcurrentDictionary<string,Type> _usageTracing = new ConcurrentDictionary<string, Type>();
+        private readonly ILog _log;
+        private readonly ConcurrentDictionary<string, Type> _usageTracing = new ConcurrentDictionary<string, Type>();
         private readonly ConcurrentDictionary<string, object> _objectTracking = new ConcurrentDictionary<string, object>();
+
+        public UsageTracking(ILog log)
+        {
+            _log = log;
+        }
 
         public Type Get(string configKey)
         {
             if (_usageTracing.TryGetValue(configKey, out Type result))
                 return result;
 
-            var kvp = _objectTracking.FirstOrDefault(p => configKey.StartsWith(p.Key));
-            var prefix = kvp.Key;
-            var configObject = kvp.Value;
+            try
+            {
+                var kvp = _objectTracking.FirstOrDefault(p => configKey.StartsWith(p.Key));
+                var prefix = kvp.Key;
+                var configObject = kvp.Value;
 
-            if (configObject == null)
-                return null;
+                if (configObject == null)
+                    return null;
 
-            var pathParts = configKey.Substring(prefix.Length + 1).Split('.');
+                var pathParts = configKey.Substring(prefix.Length + 1).Split('.');
 
-            var currentMember = configObject;
+                var currentMember = configObject;
 
-            foreach (var pathPart in pathParts.Take(pathParts.Length))
-                currentMember = currentMember?.GetType().GetProperty(pathPart)?.GetValue(currentMember);
+                foreach (var pathPart in pathParts.Take(pathParts.Length))
+                {
+                    var proprty = currentMember?.GetType().GetProperty(pathPart);
+                    var canRead = proprty?.CanRead;
+                    if (canRead == true)
+                    {
+                        currentMember = proprty?.GetValue(currentMember);
+                        break;
+                    }
+                }
+                return currentMember?.GetType();
+            }
+            catch (Exception e)
+            {
+                _log.Error("Config usage tracking faild", exception: e, unencryptedTags: new { configKey = configKey });
+            }
 
-            return currentMember?.GetType();
+            return null;
         }
 
 
