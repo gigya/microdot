@@ -1,4 +1,4 @@
-﻿#region Copyright 
+﻿#region ctor
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -186,7 +186,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private async Task HandleRequest(HttpListenerContext context)
         {
             RequestTimings.ClearCurrentTimings();
-            using (context.Response)            
+            using (context.Response)
             {
                 var sw = Stopwatch.StartNew();
 
@@ -222,7 +222,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
-                    
+
                     ServiceMethod serviceMethod = null;
                     try
                     {
@@ -284,7 +284,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             return ex;
         }
 
-        private static IEnumerable<Exception> GetAllExceptions( Exception ex)
+        private static IEnumerable<Exception> GetAllExceptions(Exception ex)
         {
             while (ex != null)
             {
@@ -364,12 +364,17 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
 
+
+           
+
+
             callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
             {
                 Name = arg.Key.ToString(),
                 Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
                 Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
             });
+
 
             callEvent.Exception = ex;
             callEvent.ActualTotalTime = requestTime;
@@ -427,7 +432,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
 
             TracingContext.SetRequestID(request.TracingData.RequestID);
-            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);            
+            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
             return request;
         }
 
@@ -447,7 +452,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
         private static object[] GetParametersByName(ServiceMethod serviceMethod, IDictionary args)
-        {            
+        {
             return serviceMethod.ServiceInterfaceMethod
                 .GetParameters()
                 .Select(p => JsonHelper.ConvertWeaklyTypedValue(args[p.Name], p.ParameterType))

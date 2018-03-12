@@ -82,7 +82,6 @@ namespace Gigya.Microdot.Hosting
         public Func<TType, object> Invokation { get; set; }
 
         public bool IsSensitive { get; set; }
-        //Sensitive
     }
 
 
