@@ -42,30 +42,25 @@ namespace Gigya.Microdot.Configuration
         {
             if (_usageTracing.TryGetValue(configKey, out Type result))
                 return result;
-          
+
             object configObject = null;
             object currentMember = null;
             try
             {
                 var kvp = _objectTracking.FirstOrDefault(p => configKey.StartsWith(p.Key));
                 var prefix = kvp.Key;
-                 configObject = kvp.Value;
+                configObject = kvp.Value;
 
                 if (configObject == null)
                     return null;
 
                 var pathParts = configKey.Substring(prefix.Length + 1).Split('.');
 
-                 currentMember = configObject;
+                currentMember = configObject;
 
                 foreach (var pathPart in pathParts.Take(pathParts.Length))
-                {
-                    var proprty = currentMember?.GetType().GetProperty(pathPart);
-
-                    if (proprty?.CanRead == false)
-                        return null;
-                    currentMember = proprty?.GetValue(currentMember);
-                }
+                    currentMember = currentMember?.GetType().GetProperty(pathPart)?.GetValue(currentMember);
+                
                 return currentMember?.GetType();
             }
             catch (Exception e)
@@ -74,13 +69,12 @@ namespace Gigya.Microdot.Configuration
                 _log.Error("An attempt to track the usage of a configuration object threw an exception. See tags for details.", exception: e, unencryptedTags: new
                 {
                     configKey,
-                    configObjectType =  configObject?.GetType(),
+                    configObjectType = configObject?.GetType(),
                     currentObjectType = currentMemberType?.DeclaringType?.Name,
                     currentMember = currentMemberType?.Name
                 });
+                return null;
             }
-
-            return null;
         }
 
 
