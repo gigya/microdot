@@ -11,12 +11,12 @@ using Gigya.Microdot.Interfaces.HttpService;
 
 namespace Gigya.Microdot.Hosting
 {
-    public class CacheMetaData
+    public class CacheMetadata
     {
         // Instead of HttpServiceRequest should be a base class
         private readonly Dictionary<Type, IList<Func<HttpServiceRequest, object>>> _cacheMetaData;
 
-        public CacheMetaData()
+        public CacheMetadata()
         {
             _cacheMetaData = new Dictionary<Type, IList<Func<HttpServiceRequest, object>>>();
         }
@@ -31,9 +31,9 @@ namespace Gigya.Microdot.Hosting
             {
                 _cacheMetaData[type] = new List<Func<HttpServiceRequest, object>>();
 
-                foreach (var property in ReflectionMetaDataExtension.GetProperties(instance))
+                foreach (var property in ReflectionMetadataExtension.GetProperties(instance))
                 {
-                    _cacheMetaData[type].Add((Func<HttpServiceRequest, object>)property);
+                    _cacheMetaData[type].Add((Func<HttpServiceRequest, object>)property.Invokation);
                 }
             }
 
@@ -43,30 +43,56 @@ namespace Gigya.Microdot.Hosting
     }
 
 
-
-    public static class ReflectionMetaDataExtension
+    public class ReflectionInfo
     {
-        public static IEnumerable<Func<TType, object>> GetProperties<TType>(TType instance)
+        public string PropertyName { get; set; }
+
+        public object Value { get; set; }
+    }
+
+
+    public class ReflectionMetadataInfo<TType> where TType :class 
+    {
+        public string PropertyName { get; set; }
+        public Func<TType, object> Invokation { get; set; }
+    }
+
+
+    public static class ReflectionMetadataExtension
+    {
+
+        public static ReflectionMetadataInfo<TType> GetProperty<TType>(PropertyInfo propertyInfo) 
+            where TType : class
+        {
+
+            MethodInfo getterMethodInfo = propertyInfo.GetGetMethod();
+            ParameterExpression entity = Expression.Parameter(typeof(TType));
+            MethodCallExpression getterCall = Expression.Call(entity, getterMethodInfo);
+
+            UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
+            LambdaExpression lambda = Expression.Lambda(castToObject, entity);
+
+
+            return new ReflectionMetadataInfo<TType>
+            {
+                PropertyName = propertyInfo.Name,
+                Invokation = (Func<TType, object>)lambda.Compile()
+            };
+        }
+
+
+        
+
+        public static IEnumerable<ReflectionMetadataInfo<TType>> GetProperties<TType>(TType instance)
+            where TType : class
         {
             var type = typeof(TType);
 
-            var properties = type.GetProperties().Where(p => p.CanRead);
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead);
 
             foreach (var propertyInfo in properties)
             {
-                MethodInfo getterMethodInfo = propertyInfo.GetGetMethod();
-                ParameterExpression entity = Expression.Parameter(typeof(TType));
-                MethodCallExpression getterCall = Expression.Call(entity, getterMethodInfo);
-
-                UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
-                LambdaExpression lambda = Expression.Lambda(castToObject, entity);
-
-                var functionThatGetsValue = (Func<TType, object>)lambda.Compile();
-
-                //if (type)
-                //var result = functionThatGetsValue(instance);
-
-                yield return functionThatGetsValue;
+                yield return GetProperty<TType>(propertyInfo);
             }
         }
     }
