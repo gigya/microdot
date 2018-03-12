@@ -1,28 +1,30 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net;
 using System.Reflection;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Hosting
 {
-
-    public class CacheMetadata
+    public interface ICacheMetadata
     {
-        private readonly Dictionary<Type, IList<object>> _cache = new Dictionary<Type, IList<object>>();
+        void Register<TType>() where TType : class;
+        IEnumerable<Param> Resolve<TType>(TType instance) where TType : class;
+    }
+
+    public class CacheMetadata : ICacheMetadata
+    {
+        private readonly ConcurrentDictionary<Type, IList<object>> _cache;
 
         public CacheMetadata()
         {
-
+            _cache = new ConcurrentDictionary<Type, IList<object>>();
         }
 
-        public void Add<TType>(TType instance) where TType : class
+        public void Register<TType>() where TType : class
         {
             var type = typeof(TType);
             if (_cache.ContainsKey(type) == false)
@@ -30,7 +32,7 @@ namespace Gigya.Microdot.Hosting
                 var list = new List<object>();
                 _cache[type] = list;
 
-                var properties = ReflectionMetadataExtension.GetProperties(instance);
+                var properties = ReflectionMetadataExtension.GetProperties<TType>();
 
                 foreach (var property in properties)
                 {
@@ -79,6 +81,7 @@ namespace Gigya.Microdot.Hosting
         public string PropertyName { get; set; }
         public Func<TType, object> Invokation { get; set; }
 
+        public bool IsSensitive { get; set; }
         //Sensitive
     }
 
@@ -91,6 +94,8 @@ namespace Gigya.Microdot.Hosting
         {
 
             MethodInfo getterMethodInfo = propertyInfo.GetGetMethod();
+            bool isCryptic = Attribute.IsDefined(getterMethodInfo, typeof(SensitiveAttribute));
+
             ParameterExpression entity = Expression.Parameter(typeof(TType));
             MethodCallExpression getterCall = Expression.Call(entity, getterMethodInfo);
 
@@ -101,14 +106,15 @@ namespace Gigya.Microdot.Hosting
             return new ReflectionMetadataInfo<TType>
             {
                 PropertyName = propertyInfo.Name,
-                Invokation = (Func<TType, object>)lambda.Compile()
+                Invokation = (Func<TType, object>)lambda.Compile(),
+                IsSensitive = isCryptic
             };
         }
 
 
 
 
-        public static IEnumerable<ReflectionMetadataInfo<TType>> GetProperties<TType>(TType instance)
+        public static IEnumerable<ReflectionMetadataInfo<TType>> GetProperties<TType>()
             where TType : class
         {
             var type = typeof(TType);

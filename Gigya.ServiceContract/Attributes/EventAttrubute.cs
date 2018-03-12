@@ -5,7 +5,7 @@ namespace Gigya.ServiceContract.Attributes
     /// <summary>Mark the parameter as containing sensitive data.
     /// When sensitive data is automaticity logged (e.g. event publisher) it will be encrypted.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter| AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Parameter| AttributeTargets.Method | AttributeTargets.Property)]
 
     public class SensitiveAttribute : Attribute
     {

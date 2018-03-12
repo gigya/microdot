@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using Gigya.Microdot.Hosting;
 using NUnit.Framework;
-using org.apache.zookeeper;
-using System.Reflection;
-using Gigya.Microdot.SharedLogic.Events;
+using Gigya.ServiceContract.Attributes;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
@@ -16,13 +10,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     [TestFixture]
     public class ReflectionMetaDataExtensionTests
     {
+        private int _numOfProperties;
+
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            _numOfProperties = typeof(PersonMockData).GetProperties().Length;
+        }
+
         [Test]
         public void GetProperties_Extract_All_Public_Properties()
         {
             var mock = new PersonMockData();
 
-            var properties = ReflectionMetadataExtension.GetProperties(mock).ToList();
-            properties.Count.ShouldBe(3);
+            var properties = ReflectionMetadataExtension.GetProperties<PersonMockData>().ToList();
+            properties.Count.ShouldBe(_numOfProperties);
 
             foreach (var property in properties)
             {
@@ -44,18 +46,16 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var cache = new CacheMetadata();
             var mock = new PersonMockData();
 
-             cache.Add(mock);
+            cache.Register<PersonMockData>();
 
             var @params = cache.Resolve(mock).ToList();
 
 
-            @params.Count.ShouldBe(3);
+            @params.Count.ShouldBe(_numOfProperties);
 
             foreach (var param in @params)
             {
                 var propertyInfo = typeof(PersonMockData).GetProperty(param.Name);
-
-                
 
                 if (propertyInfo.GetValue(mock).ToString().Equals(param.Value) == false)
                 {
@@ -109,6 +109,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public int ID { get; set; } = 10;
         public string Name { get; set; } = "Mocky";
         public bool IsMale { get; set; } = false;
+
+        [SensitiveAttribute]
+        public bool Cryptic { get; set; } = true;
 
         //public bool IsPercluded {private get; set; } = true;
 
