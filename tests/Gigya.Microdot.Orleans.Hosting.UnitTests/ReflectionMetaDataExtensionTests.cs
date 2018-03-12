@@ -35,23 +35,38 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                     throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
                 }
             }
-
         }
+
 
         [Test]
-        public void GetProperties_Full_Tree_Expression()
+        public void CacheMetadata_Extract_All_Public_Properties()
         {
-            var prms = new List<Param>();
+            var cache = new CacheMetadata();
+            var mock = new PersonMockData();
 
-            var type = typeof(PersonMockData);
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead);
+             cache.Add(mock);
+
+            var @params = cache.Resolve(mock).ToList();
 
 
+            @params.Count.ShouldBe(3);
 
+            foreach (var param in @params)
+            {
+                var propertyInfo = typeof(PersonMockData).GetProperty(param.Name);
 
+                
+
+                if (propertyInfo.GetValue(mock).ToString().Equals(param.Value) == false)
+                {
+                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
+                }
+            }
 
 
         }
+
+
 
 
         //private IEnumerable<Param> CreateParamDelegat<TType>(TType instance) where TType : class
@@ -89,7 +104,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         //}
     }
 
-   internal class PersonMockData
+    internal class PersonMockData
     {
         public int ID { get; set; } = 10;
         public string Name { get; set; } = "Mocky";

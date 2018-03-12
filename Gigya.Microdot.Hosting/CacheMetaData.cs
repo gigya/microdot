@@ -8,37 +8,56 @@ using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Hosting
 {
+
     public class CacheMetadata
     {
-        // Instead of HttpServiceRequest should be a base class
-        private readonly Dictionary<Type, IList<Func<HttpServiceRequest, object>>> _cacheMetaData;
+        private readonly Dictionary<Type, IList<object>> _cache = new Dictionary<Type, IList<object>>();
 
         public CacheMetadata()
         {
-            _cacheMetaData = new Dictionary<Type, IList<Func<HttpServiceRequest, object>>>();
+
         }
 
-
-
-        public bool Add<TType>(TType instance) where TType : class
+        public void Add<TType>(TType instance) where TType : class
         {
             var type = typeof(TType);
-
-            if (_cacheMetaData.ContainsKey(type) == false)
+            if (_cache.ContainsKey(type) == false)
             {
-                _cacheMetaData[type] = new List<Func<HttpServiceRequest, object>>();
+                var list = new List<object>();
+                _cache[type] = list;
 
-                foreach (var property in ReflectionMetadataExtension.GetProperties(instance))
+                var properties = ReflectionMetadataExtension.GetProperties(instance);
+
+                foreach (var property in properties)
                 {
-                    _cacheMetaData[type].Add((Func<HttpServiceRequest, object>)property.Invokation);
+                    list.Add(property);
                 }
             }
-
-            return true;
         }
+
+        public IEnumerable<Param> Resolve<TType>(TType instance) where TType : class
+        {
+            var list = new List<Param>();
+
+            foreach (var item in _cache[typeof(TType)])
+            {
+                var workinItem = (ReflectionMetadataInfo<TType>)item;
+                var value = workinItem.Invokation(instance);
+
+                list.Add(new Param
+                {
+                    Name = workinItem.PropertyName,
+                    Value = value.ToString()
+                });
+            }
+
+            return list;
+        }
+
 
     }
 
@@ -50,18 +69,24 @@ namespace Gigya.Microdot.Hosting
         public object Value { get; set; }
     }
 
+    class ReflectionMetadataInput
+    {
+        public object Metadata { get; set; }
+    }
 
-    public class ReflectionMetadataInfo<TType> where TType :class 
+    public class ReflectionMetadataInfo<TType> where TType : class
     {
         public string PropertyName { get; set; }
         public Func<TType, object> Invokation { get; set; }
+
+        //Sensitive
     }
 
 
     public static class ReflectionMetadataExtension
     {
 
-        public static ReflectionMetadataInfo<TType> GetProperty<TType>(PropertyInfo propertyInfo) 
+        public static ReflectionMetadataInfo<TType> GetProperty<TType>(PropertyInfo propertyInfo)
             where TType : class
         {
 
@@ -81,7 +106,7 @@ namespace Gigya.Microdot.Hosting
         }
 
 
-        
+
 
         public static IEnumerable<ReflectionMetadataInfo<TType>> GetProperties<TType>(TType instance)
             where TType : class
