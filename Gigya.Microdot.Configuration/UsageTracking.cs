@@ -23,34 +23,58 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.Configuration
 {
     public class UsageTracking
     {
-        private readonly ConcurrentDictionary<string,Type> _usageTracing = new ConcurrentDictionary<string, Type>();
+        private readonly ILog _log;
+        private readonly ConcurrentDictionary<string, Type> _usageTracing = new ConcurrentDictionary<string, Type>();
         private readonly ConcurrentDictionary<string, object> _objectTracking = new ConcurrentDictionary<string, object>();
+
+        public UsageTracking(ILog log)
+        {
+            _log = log;
+        }
 
         public Type Get(string configKey)
         {
             if (_usageTracing.TryGetValue(configKey, out Type result))
                 return result;
 
-            var kvp = _objectTracking.FirstOrDefault(p => configKey.StartsWith(p.Key));
-            var prefix = kvp.Key;
-            var configObject = kvp.Value;
+            object configObject = null;
+            object currentMember = null;
+            try
+            {
+                var kvp = _objectTracking.FirstOrDefault(p => configKey.StartsWith(p.Key));
+                var prefix = kvp.Key;
+                configObject = kvp.Value;
 
-            if (configObject == null)
+                if (configObject == null)
+                    return null;
+
+                var pathParts = configKey.Substring(prefix.Length + 1).Split('.');
+
+                currentMember = configObject;
+
+                foreach (var pathPart in pathParts.Take(pathParts.Length))
+                    currentMember = currentMember?.GetType().GetProperty(pathPart)?.GetValue(currentMember);
+                
+                return currentMember?.GetType();
+            }
+            catch (Exception e)
+            {
+                var currentMemberType = currentMember?.GetType();
+                _log.Error("An attempt to track the usage of a configuration object threw an exception. See tags for details.", exception: e, unencryptedTags: new
+                {
+                    configKey,
+                    configObjectType = configObject?.GetType(),
+                    currentObjectType = currentMemberType?.DeclaringType?.Name,
+                    currentMember = currentMemberType?.Name
+                });
                 return null;
-
-            var pathParts = configKey.Substring(prefix.Length + 1).Split('.');
-
-            var currentMember = configObject;
-
-            foreach (var pathPart in pathParts.Take(pathParts.Length))
-                currentMember = currentMember?.GetType().GetProperty(pathPart)?.GetValue(currentMember);
-
-            return currentMember?.GetType();
+            }
         }
 
 
