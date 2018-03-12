@@ -30,6 +30,7 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing;
@@ -327,6 +328,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
             (await Service.IsLogPramSucceed(new List<string> {  sensitive }, new List<string> { nonsensitive , @default }, new List<string> { notExists })).ShouldBeTrue();
+        }
+
+
+        [Test]
+        public async Task SendComplexRequest()
+        {
+            await Service.CreateMockPerson(new PersonMock());
         }
 
         [Test]

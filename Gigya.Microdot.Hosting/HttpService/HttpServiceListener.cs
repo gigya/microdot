@@ -54,6 +54,8 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
+        private readonly ICacheMetadata _cacheMetadata;
+
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -95,8 +97,10 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
+            ICacheMetadata cacheMetadata,
                                    JsonExceptionSerializer exceptionSerializer)
         {
+            _cacheMetadata = cacheMetadata;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -365,15 +369,38 @@ namespace Gigya.Microdot.Hosting.HttpService
             var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
 
 
-           
-
-
-            callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
+            var @params = new List<Param>();
+            if (requestData.Arguments != null)
             {
-                Name = arg.Key.ToString(),
-                Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
-                Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
-            });
+                foreach (var dictionaryEntry in requestData.Arguments.Cast<DictionaryEntry>().Where(x => x.Value is string))
+                {
+
+                    @params.Add(new Param
+                    {
+                        Name = dictionaryEntry.Key.ToString(),
+                        Value = dictionaryEntry.Value.ToString(),
+                        Sensitivity = metaData.ParametersSensitivity[dictionaryEntry.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
+                    });
+                }
+
+                foreach (var dictionaryEntry in requestData.Arguments.Cast<DictionaryEntry>().Where(x => (x.Value is string) == false))
+                {
+                   var tmpParams =  _cacheMetadata.ParseIntoParams(dictionaryEntry.Value);
+
+                    @params.AddRange(tmpParams);
+                }
+
+            }
+
+            callEvent.Params = @params;
+
+
+            //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
+            //{
+            //    Name = arg.Key.ToString(),
+            //    Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
+            //    Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
+            //});
 
 
             callEvent.Exception = ex;

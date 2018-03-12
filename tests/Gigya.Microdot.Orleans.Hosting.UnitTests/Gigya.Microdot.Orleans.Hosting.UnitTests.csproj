@@ -51,6 +51,7 @@
     <Compile Include="Microservice\CalculatorService\ICalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\ICalculatorWorkerGrain.cs" />
     <Compile Include="Microservice\CalculatorService\IUserGrainWithGuid.cs" />
+    <Compile Include="Microservice\PersonMock.cs" />
     <Compile Include="Microservice\FakeRevokingManager.cs" />
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
     <Compile Include="Properties\orleans.codegen.cs" />

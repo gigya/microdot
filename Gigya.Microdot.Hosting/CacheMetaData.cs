@@ -13,6 +13,7 @@ namespace Gigya.Microdot.Hosting
     {
         void Register<TType>() where TType : class;
         IEnumerable<Param> Resolve<TType>(TType instance) where TType : class;
+        IEnumerable<Param> ParseIntoParams<TType>(TType dictionaryEntryValue) where TType : class;
     }
 
     public class CacheMetadata : ICacheMetadata
@@ -38,6 +39,7 @@ namespace Gigya.Microdot.Hosting
                 {
                     list.Add(property);
                 }
+
             }
         }
 
@@ -45,6 +47,7 @@ namespace Gigya.Microdot.Hosting
         {
             var list = new List<Param>();
 
+            //foreach (var item in _cache[instance.GetType()])
             foreach (var item in _cache[typeof(TType)])
             {
                 var workinItem = (ReflectionMetadataInfo<TType>)item;
@@ -59,6 +62,30 @@ namespace Gigya.Microdot.Hosting
 
             return list;
         }
+
+        public IEnumerable<Param> ParseIntoParams<TType>(TType instance) where TType : class
+        {
+            var type = instance.GetType();
+            if (_cache.ContainsKey(type) == false)
+
+            {
+                MethodInfo method = this.GetType().GetMethod("Register");
+                MethodInfo generic = method.MakeGenericMethod(instance.GetType());
+                generic.Invoke(this, null);
+            }
+
+
+
+            MethodInfo methodResolve = this.GetType().GetMethod("Resolve");
+            MethodInfo genericResolve = methodResolve.MakeGenericMethod(type);
+            var properties = (IEnumerable<Param>)genericResolve.Invoke(this, new[] { instance });
+
+
+            return properties;
+
+            //return Resolve(instance);
+        }
+
 
 
     }
