@@ -17,6 +17,7 @@ namespace Gigya.Microdot.Hosting
     public class CacheMetadata : ICacheMetadata
     {
         private readonly ConcurrentDictionary<Type, object[]> _cache;
+        private readonly ConcurrentDictionary<Type, Func<object, object[]>> _cachess;
 
         public CacheMetadata()
         {
@@ -28,7 +29,7 @@ namespace Gigya.Microdot.Hosting
             var type = typeof(TType);
             if (_cache.ContainsKey(type) == false)
             {
-                _cache[type] = ReflectionMetadataExtension.GetProperties<TType>().Cast<object>().ToArray();
+                _cache[type] = ReflectionMetadataExtension.ExtracMetadata<TType>().Cast<object>().ToArray();
             }
 
         }
@@ -46,7 +47,8 @@ namespace Gigya.Microdot.Hosting
                 list.Add(new Param
                 {
                     Name = workinItem.PropertyName,
-                    Value = value.ToString()
+                    Value = value.ToString(),
+                    Sensitivity =workinItem.Sensitivity
                 });
             }
 

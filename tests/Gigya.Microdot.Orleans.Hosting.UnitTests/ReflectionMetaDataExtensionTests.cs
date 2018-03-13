@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
-            _numOfProperties = typeof(PersonMockData).GetProperties().Length;
+            _numOfProperties = typeof(PersonMockData).GetProperties().Count(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)));
         }
 
         [Test]
@@ -28,19 +29,38 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var mock = new PersonMockData();
 
-            var properties = ReflectionMetadataExtension.GetProperties<PersonMockData>().ToList();
-            properties.Count.ShouldBe(_numOfProperties);
+            var reflectionMetadataInfos = ReflectionMetadataExtension.ExtracMetadata<PersonMockData>().ToList();
+            reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
-            foreach (var property in properties)
+            foreach (var reflectionMetadata in reflectionMetadataInfos)
             {
-                var propertyInfo = typeof(PersonMockData).GetProperty(property.PropertyName);
+                var propertyInfo = typeof(PersonMockData).GetProperty(reflectionMetadata.PropertyName);
 
-                var result = property.ValueExtractor(mock);
+                var result = reflectionMetadata.ValueExtractor(mock);
 
                 if (propertyInfo.GetValue(mock).Equals(result) == false)
                 {
                     throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
                 }
+
+                if (reflectionMetadata.Sensitivity != Sensitivity.NonSensitive)
+                {
+                    var attribute = propertyInfo.GetCustomAttribute<SensitiveAttribute>();
+
+                    if (attribute.Secretive == true)
+                    {
+                        reflectionMetadata.Sensitivity.ShouldBe(Sensitivity.Secretive);
+                    }
+                    else
+                    {
+                        reflectionMetadata.Sensitivity.ShouldBe(Sensitivity.Sensitive);
+
+                    }
+
+
+                }
+
+                
             }
         }
 
@@ -76,7 +96,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var people = GeneratePeople(10000).ToList();
 
-           var stopWatch = new Stopwatch();
+            var stopWatch = new Stopwatch();
             stopWatch.Start();
             foreach (var person in people)
             {
@@ -85,7 +105,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
                 @params.Count.ShouldBe(_numOfProperties);
             }
-           stopWatch.Stop();
+            stopWatch.Stop();
         }
 
 
@@ -94,7 +114,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             for (int i = 0; i < amount; i++)
             {
-                yield return  new PersonMockData {ID = i , Name = "Name" , Cryptic = true};
+                yield return new PersonMockData { ID = i, Name = "Name", Cryptic = true };
             }
         }
 
@@ -136,26 +156,30 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class PersonMockData
     {
+        [LogFields]
         public int ID { get; set; } = 10;
+        [LogFields]
+
         public string Name { get; set; } = "Mocky";
+        [LogFields]
+
         public bool IsMale { get; set; } = false;
 
-        [SensitiveAttribute]
+        [Sensitive(Secretive = true)]
+        [LogFields]
+
+        public bool Sensitive { get; set; } = true;
+
+        [Sensitive(Secretive = false)]
+        [LogFields]
+
         public bool Cryptic { get; set; } = true;
 
-        //public bool IsPercluded {private get; set; } = true;
+
+
+        public short NotWorking { get; set; } = 0;
+
 
     }
-
-    internal class CarData
-    {
-        public int Year { get; set; } = 10;
-        public string Model { get; set; } = "Mocky";
-
-        //public bool IsPercluded {private get; set; } = true;
-
-    }
-
-
 
 }

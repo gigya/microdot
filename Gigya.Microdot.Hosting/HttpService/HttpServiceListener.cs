@@ -370,42 +370,39 @@ namespace Gigya.Microdot.Hosting.HttpService
 
 
             var @params = new List<Param>();
-            if (requestData.Arguments != null)
-            {
-                foreach (var dictionaryEntry in requestData.Arguments.Cast<DictionaryEntry>().Where(x => x.Value is string))
-                {
-
-                    @params.Add(new Param
-                    {
-                        Name = dictionaryEntry.Key.ToString(),
-                        Value = dictionaryEntry.Value.ToString(),
-                        Sensitivity = metaData.ParametersSensitivity[dictionaryEntry.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
-                    });
-                }
-
-                foreach (var dictionaryEntry in requestData.Arguments.Cast<DictionaryEntry>().Where(x => (x.Value is string) == false))
-                {
-                    //MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
-                    //MethodInfo generic = method.MakeGenericMethod(dictionaryEntry.Value.GetType());
-                    //var tmpParams  = (IEnumerable<Param>)generic.Invoke(_cacheMetadata, new []{ dictionaryEntry.Value });
-
-
-                    var tmpParams = _cacheMetadata.ParseIntoParams(dictionaryEntry.Value);
-
-                    @params.AddRange(tmpParams);
-                }
-
-            }
-
-            callEvent.Params = @params;
-
-
             //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
             //{
             //    Name = arg.Key.ToString(),
             //    Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
             //    Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
             //});
+
+
+
+            var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
+
+            foreach (var argument in arguments)
+            {
+                if (argument.Value is string)
+                {
+                    @params.Add(new Param
+                    {
+                        Name = argument.Key.ToString(),
+                        Value = argument.Value.ToString(),
+                        Sensitivity = metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
+                    });
+                }
+                else
+                {
+                    MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+                    MethodInfo generic = method.MakeGenericMethod(arguments.GetType());
+                    var tmpParams = (IEnumerable<Param>)generic.Invoke(_cacheMetadata, new[] { arguments });
+
+                    @params.AddRange(tmpParams);
+                }
+            }
+
+            callEvent.Params = @params;
 
 
             callEvent.Exception = ex;

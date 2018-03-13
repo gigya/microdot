@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Hosting
@@ -12,44 +13,96 @@ namespace Gigya.Microdot.Hosting
         public string PropertyName { get; set; }
         public Func<TType, object> ValueExtractor { get; set; }
 
-        public bool IsSensitive { get; set; }
+        public Sensitivity Sensitivity { get; set; }
     }
     public static class ReflectionMetadataExtension
     {
 
-        public static ReflectionMetadataInfo<TType> GetProperty<TType>(PropertyInfo propertyInfo)
-            where TType : class
-        {
 
-            MethodInfo getterMethodInfo = propertyInfo.GetGetMethod();
-            bool isCryptic = Attribute.IsDefined(getterMethodInfo, typeof(SensitiveAttribute));
-
-            ParameterExpression entity = Expression.Parameter(typeof(TType));
-            MethodCallExpression getterCall = Expression.Call(entity, getterMethodInfo);
-
-            UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
-            LambdaExpression lambda = Expression.Lambda(castToObject, entity);
-
-
-            return new ReflectionMetadataInfo<TType>
-            {
-                PropertyName = propertyInfo.Name,
-                ValueExtractor = (Func<TType, object>)lambda.Compile(),
-                IsSensitive = isCryptic
-            };
-        }
-
-        public static IEnumerable<ReflectionMetadataInfo<TType>> GetProperties<TType>()
+        public static IEnumerable<ReflectionMetadataInfo<TType>> ExtracMetadata<TType>()
             where TType : class
         {
             var type = typeof(TType);
+            var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
+                .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
+                .Select(x => new
+                {
+                    Getter = x.GetGetMethod(),
+                    PropertyName = x.Name,
+                    Sensitivity = ExtractSensitivity(x)
+                });
 
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead);
 
-            foreach (var propertyInfo in properties)
+            var metadatas = new List<ReflectionMetadataInfo<TType>>();
+
+
+            foreach (var getter in getters)
             {
-                yield return GetProperty<TType>(propertyInfo);
+                ParameterExpression entity = Expression.Parameter(typeof(TType));
+                MethodCallExpression getterCall = Expression.Call(entity, getter.Getter);
+
+                UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
+                LambdaExpression lambda = Expression.Lambda(castToObject, entity);
+
+                metadatas.Add(new ReflectionMetadataInfo<TType>
+                {
+                    PropertyName = getter.PropertyName,
+                    ValueExtractor = (Func<TType, object>)lambda.Compile(),
+                    Sensitivity = getter.Sensitivity
+                });
             }
+
+            return metadatas;
         }
+
+
+        private static Sensitivity ExtractSensitivity(PropertyInfo methodInfo)
+        {
+            if (Attribute.IsDefined(methodInfo, typeof(SensitiveAttribute)))
+            {
+                if (methodInfo.GetCustomAttribute<SensitiveAttribute>().Secretive)
+                {
+                    return Sensitivity.Secretive;
+                }
+                return Sensitivity.Sensitive;
+
+            }
+            return Sensitivity.NonSensitive;
+        }
+
+
+        //public static ReflectionMetadataInfo<TType> GetProperty<TType>(PropertyInfo propertyInfo)
+        //    where TType : class
+        //{
+
+        //    MethodInfo getterMethodInfo = propertyInfo.GetGetMethod();
+        //    ParameterExpression entity = Expression.Parameter(typeof(TType));
+        //    MethodCallExpression getterCall = Expression.Call(entity, getterMethodInfo);
+
+        //    UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
+        //    LambdaExpression lambda = Expression.Lambda(castToObject, entity);
+
+
+        //    return new ReflectionMetadataInfo<TType>
+        //    {
+        //        PropertyName = propertyInfo.Name,
+        //        ValueExtractor = (Func<TType, object>)lambda.Compile(),
+        //        Sensitivity = Sensitivity.NonSensitive
+        //    };
+        //}
+
+        //public static IEnumerable<ReflectionMetadataInfo<TType>> GetProperties<TType>()
+        //    where TType : class
+        //{
+        //    var type = typeof(TType);
+
+        //    var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead);
+
+
+        //    foreach (var propertyInfo in properties)
+        //    {
+        //        yield return GetProperty<TType>(propertyInfo);
+        //    }
+        //}
     }
 }
