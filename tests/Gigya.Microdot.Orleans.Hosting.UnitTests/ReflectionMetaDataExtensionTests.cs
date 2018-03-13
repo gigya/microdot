@@ -1,6 +1,11 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.SharedLogic.Events;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
 using Shouldly;
@@ -30,7 +35,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 var propertyInfo = typeof(PersonMockData).GetProperty(property.PropertyName);
 
-                var result = property.Invokation(mock);
+                var result = property.ValueExtractor(mock);
 
                 if (propertyInfo.GetValue(mock).Equals(result) == false)
                 {
@@ -62,11 +67,36 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                     throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
                 }
             }
+        }
 
+        [Test]
+        public void CacheMetadata_Strength_Test()
+        {
+            var cache = new CacheMetadata();
 
+            var people = GeneratePeople(10000).ToList();
+
+           var stopWatch = new Stopwatch();
+            stopWatch.Start();
+            foreach (var person in people)
+            {
+                cache.Register<PersonMockData>();
+                var @params = cache.Resolve(person).ToList();
+
+                @params.Count.ShouldBe(_numOfProperties);
+            }
+           stopWatch.Stop();
         }
 
 
+
+        private IEnumerable<PersonMockData> GeneratePeople(int amount)
+        {
+            for (int i = 0; i < amount; i++)
+            {
+                yield return  new PersonMockData {ID = i , Name = "Name" , Cryptic = true};
+            }
+        }
 
 
         //private IEnumerable<Param> CreateParamDelegat<TType>(TType instance) where TType : class
@@ -76,12 +106,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         //    var propertiesExpression = Expression.Constant(properties);
 
-        //    ParameterExpression count = Expression.Variable(typeof(int),"count");
+        //    ParameterExpression count = Expression.Variable(typeof(int), "count");
         //    ConstantExpression totoalProps = Expression.Constant(properties.Length);
         //    ParameterExpression entity = Expression.Parameter(typeof(TType));
         //    var result = Expression.New(paramListType); //typeof(List<Param>)
 
-        //    Expression.Block(new ParameterExpression[] {count},
+        //    Expression.Block(new ParameterExpression[] { count },
         //        Expre
 
         //    );

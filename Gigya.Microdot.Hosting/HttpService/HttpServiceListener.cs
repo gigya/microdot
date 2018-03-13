@@ -385,7 +385,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                 foreach (var dictionaryEntry in requestData.Arguments.Cast<DictionaryEntry>().Where(x => (x.Value is string) == false))
                 {
-                   var tmpParams =  _cacheMetadata.ParseIntoParams(dictionaryEntry.Value);
+                    //MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+                    //MethodInfo generic = method.MakeGenericMethod(dictionaryEntry.Value.GetType());
+                    //var tmpParams  = (IEnumerable<Param>)generic.Invoke(_cacheMetadata, new []{ dictionaryEntry.Value });
+
+
+                    var tmpParams = _cacheMetadata.ParseIntoParams(dictionaryEntry.Value);
 
                     @params.AddRange(tmpParams);
                 }

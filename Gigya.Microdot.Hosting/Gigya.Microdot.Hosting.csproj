@@ -76,6 +76,7 @@
     <Compile Include="HttpService\ServiceMethodResolver.cs" />
     <Compile Include="Metrics\MetricsConfiguration.cs" />
     <Compile Include="Metrics\MetricsInitializer.cs" />
+    <Compile Include="ReflectionMetadataExtension.cs" />
     <Compile Include="Service\ServiceHostBase.cs" />
     <Compile Include="Service\HostExtensionMethods.cs" />
     <Compile Include="HttpService\Endpoints\HealthStatusResult.cs" />
