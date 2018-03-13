@@ -17,7 +17,6 @@ namespace Gigya.Microdot.Hosting
     public class CacheMetadata : ICacheMetadata
     {
         private readonly ConcurrentDictionary<Type, object[]> _cache;
-        private readonly ConcurrentDictionary<Type, Func<object, object[]>> _cachess;
 
         public CacheMetadata()
         {
