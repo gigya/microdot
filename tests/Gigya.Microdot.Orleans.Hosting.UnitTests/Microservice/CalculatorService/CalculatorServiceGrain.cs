@@ -29,6 +29,7 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
+using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -178,7 +179,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return true;
         }
 
-        public async Task CreateMockPerson(PersonMock personMock)
+        public async Task CreateMockPerson([LogFields] PersonMock personMock , int x)
         {
             await Task.Delay(150);
         }
@@ -201,7 +202,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             var id = await GrainFactory.GetGrain<IUserGrainWithGuid>(Guid.NewGuid()).GetIdentety();
             await Task.Delay(150);
 
-             serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
             serviceCallEvent.GrainKeyGuid.ToString().ShouldBe(id);
             serviceCallEvent.GrainKeyString.ShouldBeNull();

@@ -24,12 +24,12 @@ namespace Gigya.Microdot.Hosting
         {
             var type = typeof(TType);
             var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
-                .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
+                //.Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
                 .Select(x => new
                 {
                     Getter = x.GetGetMethod(),
                     PropertyName = x.Name,
-                    Sensitivity = ExtractSensitivity(x)
+                    Sensitivity = ExtractSensitivity(x) // nullable
                 });
 
 

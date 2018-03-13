@@ -44,6 +44,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
+using Gigya.ServiceContract.Attributes;
 using Metrics;
 using Newtonsoft.Json;
 
@@ -369,6 +370,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
 
 
+            //
+
+
             var @params = new List<Param>();
             //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
             //{
@@ -377,6 +381,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             //    Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
             //});
 
+
+            // foreach
+            //    Sensitivity = property.sensitivity ?? metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
 
 
             var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
@@ -392,14 +399,27 @@ namespace Gigya.Microdot.Hosting.HttpService
                         Sensitivity = metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
                     });
                 }
-                else
+                else // todo: only if attribute
                 {
-                    MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
-                    MethodInfo generic = method.MakeGenericMethod(arguments.GetType());
-                    var tmpParams = (IEnumerable<Param>)generic.Invoke(_cacheMetadata, new[] { arguments });
+                    var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters()
+                        .Where(x=>Attribute.IsDefined(x,typeof(LogFieldsAttribute)))
+                        .SingleOrDefault(x => x.Name.Equals(argument.Key));
 
-                    @params.AddRange(tmpParams);
+                    if (parameterInfo != null)
+                    {
+                        if (Attribute.IsDefined(parameterInfo, typeof(LogFieldsAttribute)))
+                        {
+                            MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+                            MethodInfo genericMethod = method.MakeGenericMethod(argument.Value.GetType());
+                            var tmpParams = (IEnumerable<Param>) genericMethod.Invoke(_cacheMetadata, new []{argument.Value});
+
+                            @params.AddRange(tmpParams);
+
+                        }
+                    }
+                    
                 }
+                //todo:jason serializer implrement
             }
 
             callEvent.Params = @params;

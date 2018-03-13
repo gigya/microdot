@@ -334,7 +334,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task SendComplexRequest()
         {
-            await Service.CreateMockPerson(new PersonMock());
+            await Service.CreateMockPerson(new PersonMock() , 10);
         }
 
         [Test]

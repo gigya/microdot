@@ -9,49 +9,36 @@ namespace Gigya.Microdot.Hosting
 {
     public interface ICacheMetadata
     {
-        void Register<TType>() where TType : class;
-        IEnumerable<Param> Resolve<TType>(TType instance) where TType : class;
-        IEnumerable<Param> ParseIntoParams<TType>(TType dictionaryEntryValue) where TType : class;
+        IEnumerable<Param> ParseIntoParams<TType>(TType instance) where TType : class;
     }
 
-    public class CacheMetadata : ICacheMetadata
+    public class CacheMetadata : ICacheMetadata //todo: rename cahcemetadata 
     {
-        private readonly ConcurrentDictionary<Type, object[]> _cache;
+        private readonly ConcurrentDictionary<Type, object[]> _cache = new ConcurrentDictionary<Type, object[]>();
 
-        public CacheMetadata()
-        {
-            _cache = new ConcurrentDictionary<Type, object[]>();
-        }
-
-        public void Register<TType>() where TType : class
+        private void Register<TType>() where TType : class
         {
             var type = typeof(TType);
-            if (_cache.ContainsKey(type) == false)
-            {
-                _cache[type] = ReflectionMetadataExtension.ExtracMetadata<TType>().Cast<object>().ToArray();
-            }
 
+            _cache.GetOrAdd(type, x => ReflectionMetadataExtension.ExtracMetadata<TType>().Cast<object>().ToArray());
         }
 
 
-        public IEnumerable<Param> Resolve<TType>(TType instance) where TType : class
+        private IEnumerable<Param> Resolve<TType>(TType instance) where TType : class
         {
-            var list = new List<Param>();
-
             foreach (var item in _cache[typeof(TType)])
             {
                 var workinItem = (ReflectionMetadataInfo<TType>)item;
                 var value = workinItem.ValueExtractor(instance);
 
-                list.Add(new Param
+                //todo: return with object value
+                yield return new Param
                 {
                     Name = workinItem.PropertyName,
-                    Value = value.ToString(),
-                    Sensitivity =workinItem.Sensitivity
-                });
+                    Value = value.ToString(), // serialize same as in publishEvent
+                    Sensitivity = workinItem.Sensitivity
+                };
             }
-
-            return list;
         }
 
         public IEnumerable<Param> ParseIntoParams<TType>(TType instance) where TType : class

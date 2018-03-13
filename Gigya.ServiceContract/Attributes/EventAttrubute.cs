@@ -22,7 +22,7 @@ namespace Gigya.ServiceContract.Attributes
     public class NonSensitiveAttribute : Attribute{}
 
 
-    [AttributeUsage(AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Parameter)]
     public class LogFieldsAttribute : Attribute{}
 
 
