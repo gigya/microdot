@@ -402,22 +402,20 @@ namespace Gigya.Microdot.Hosting.HttpService
                 else // todo: only if attribute
                 {
                     var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters()
-                        .Where(x=>Attribute.IsDefined(x,typeof(LogFieldsAttribute)))
+                        .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
                         .SingleOrDefault(x => x.Name.Equals(argument.Key));
 
                     if (parameterInfo != null)
                     {
-                        if (Attribute.IsDefined(parameterInfo, typeof(LogFieldsAttribute)))
+                        if (argument.Value.GetType().IsClass)
                         {
                             MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
                             MethodInfo genericMethod = method.MakeGenericMethod(argument.Value.GetType());
-                            var tmpParams = (IEnumerable<Param>) genericMethod.Invoke(_cacheMetadata, new []{argument.Value});
+                            var tmpParams = (IEnumerable<Param>)genericMethod.Invoke(_cacheMetadata, new[] { argument.Value });
 
                             @params.AddRange(tmpParams);
-
                         }
                     }
-                    
                 }
                 //todo:jason serializer implrement
             }

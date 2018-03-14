@@ -9,12 +9,35 @@ namespace Gigya.Microdot.Hosting
 {
     public interface ICacheMetadata
     {
-        IEnumerable<Param> ParseIntoParams<TType>(TType instance) where TType : class;
+        IEnumerable<MetadataCacheParam> ParseIntoParams<TType>(TType instance) where TType : class;
     }
+
+    public class MetadataCacheParam
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public Sensitivity? Sensitivity { get; set; }
+
+    }
+
 
     public class CacheMetadata : ICacheMetadata //todo: rename cahcemetadata 
     {
         private readonly ConcurrentDictionary<Type, object[]> _cache = new ConcurrentDictionary<Type, object[]>();
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------------------------------
+
+
+        public IEnumerable<MetadataCacheParam> ParseIntoParams<TType>(TType instance) where TType : class
+        {
+
+            Register<TType>();
+            return Resolve(instance);
+        }
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------------------------------
 
         private void Register<TType>() where TType : class
         {
@@ -24,7 +47,7 @@ namespace Gigya.Microdot.Hosting
         }
 
 
-        private IEnumerable<Param> Resolve<TType>(TType instance) where TType : class
+        private IEnumerable<MetadataCacheParam> Resolve<TType>(TType instance) where TType : class
         {
             foreach (var item in _cache[typeof(TType)])
             {
@@ -32,7 +55,7 @@ namespace Gigya.Microdot.Hosting
                 var value = workinItem.ValueExtractor(instance);
 
                 //todo: return with object value
-                yield return new Param
+                yield return new MetadataCacheParam
                 {
                     Name = workinItem.PropertyName,
                     Value = value.ToString(), // serialize same as in publishEvent
@@ -40,16 +63,6 @@ namespace Gigya.Microdot.Hosting
                 };
             }
         }
-
-        public IEnumerable<Param> ParseIntoParams<TType>(TType instance) where TType : class
-        {
-
-            Register<TType>();
-            return Resolve(instance);
-        }
-
-
-
     }
 
 
