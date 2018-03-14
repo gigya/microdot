@@ -15,7 +15,7 @@ namespace Gigya.Microdot.Hosting
     public class MetadataCacheParam
     {
         public string Name { get; set; }
-        public string Value { get; set; }
+        public object Value { get; set; }
         public Sensitivity? Sensitivity { get; set; }
 
     }
@@ -52,13 +52,11 @@ namespace Gigya.Microdot.Hosting
             foreach (var item in _cache[typeof(TType)])
             {
                 var workinItem = (ReflectionMetadataInfo<TType>)item;
-                var value = workinItem.ValueExtractor(instance);
 
-                //todo: return with object value
                 yield return new MetadataCacheParam
                 {
                     Name = workinItem.PropertyName,
-                    Value = value.ToString(), // serialize same as in publishEvent
+                    Value = workinItem.ValueExtractor(instance),
                     Sensitivity = workinItem.Sensitivity
                 };
             }

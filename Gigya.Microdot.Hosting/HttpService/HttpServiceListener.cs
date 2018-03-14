@@ -374,7 +374,8 @@ namespace Gigya.Microdot.Hosting.HttpService
 
 
             var @params = new List<Param>();
-            //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
+            //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => 
+            //new Param
             //{
             //    Name = arg.Key.ToString(),
             //    Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
@@ -399,8 +400,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                         Sensitivity = metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
                     });
                 }
-                else // todo: only if attribute
+                else
                 {
+                    // todo: only if attribute
                     var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters()
                         .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
                         .SingleOrDefault(x => x.Name.Equals(argument.Key));
@@ -411,13 +413,30 @@ namespace Gigya.Microdot.Hosting.HttpService
                         {
                             MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
                             MethodInfo genericMethod = method.MakeGenericMethod(argument.Value.GetType());
-                            var tmpParams = (IEnumerable<Param>)genericMethod.Invoke(_cacheMetadata, new[] { argument.Value });
+                            var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { argument.Value });
 
-                            @params.AddRange(tmpParams);
+                            foreach (var metaParam in metaParams)
+                            {
+                                @params.Add(new Param
+                                {
+                                    Value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value),
+                                    Sensitivity = metaParam.Sensitivity ?? metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive,
+                                    Name = metaParam.Name
+                                });
+                            }
                         }
                     }
+                    else
+                    {
+                        //todo:jason serializer implrement
+                        @params.Add(new Param
+                        {
+                            Name = argument.Key.ToString(),
+                            Value = JsonConvert.SerializeObject(argument.Value),
+                            Sensitivity = metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
+                        });
+                    }
                 }
-                //todo:jason serializer implrement
             }
 
             callEvent.Params = @params;

@@ -13,8 +13,10 @@ namespace Gigya.Microdot.Hosting
         public string PropertyName { get; set; }
         public Func<TType, object> ValueExtractor { get; set; }
 
-        public Sensitivity Sensitivity { get; set; }
+        public Sensitivity ? Sensitivity { get; set; }
     }
+
+
     public static class ReflectionMetadataExtension
     {
 
@@ -24,7 +26,6 @@ namespace Gigya.Microdot.Hosting
         {
             var type = typeof(TType);
             var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
-                //.Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
                 .Select(x => new
                 {
                     Getter = x.GetGetMethod(),
@@ -55,19 +56,30 @@ namespace Gigya.Microdot.Hosting
             return metadatas;
         }
 
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------------------------------
 
-        private static Sensitivity ExtractSensitivity(PropertyInfo methodInfo)
+        private static Sensitivity ? ExtractSensitivity(PropertyInfo propertyInfo)
         {
-            if (Attribute.IsDefined(methodInfo, typeof(SensitiveAttribute)))
-            {
-                if (methodInfo.GetCustomAttribute<SensitiveAttribute>().Secretive)
-                {
-                    return Sensitivity.Secretive;
-                }
-                return Sensitivity.Sensitive;
+            var attribute = propertyInfo.GetCustomAttributes() 
+                .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
 
+            if (attribute != null)
+            {
+                if (attribute is SensitiveAttribute sensitiveAttibute)
+                {
+                    if (sensitiveAttibute.Secretive)
+                    {
+                        return Sensitivity.Secretive;
+                    }
+
+                    return Sensitivity.Sensitive;
+
+                }
+                return Sensitivity.NonSensitive;
             }
-            return Sensitivity.NonSensitive;
+
+            return null;
         }
 
 

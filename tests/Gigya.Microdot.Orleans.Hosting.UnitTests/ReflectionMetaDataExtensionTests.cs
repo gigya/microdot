@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
+using Castle.Core.Internal;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.SharedLogic.Events;
 using NUnit.Framework;
@@ -22,9 +21,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void OneTimeSetup()
         {
             _numOfProperties = typeof(PersonMockData).GetProperties().Length;
-            //_numOfProperties = typeof(PersonMockData).GetProperties().Count(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)));
-
-            //_numOfProperties = typeof(PersonMockData).GetMethod("PersonMockData").GetParameters().Count(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)));
         }
 
         [Test]
@@ -53,26 +49,38 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                     throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
                 }
 
-                //if (reflectionMetadata.Sensitivity != Sensitivity.NonSensitive)
-                //{
-                //    var attribute = propertyInfo.GetCustomAttribute<SensitiveAttribute>();
-
-                //    if (attribute.Secretive == true)
-                //    {
-                //        reflectionMetadata.Sensitivity.ShouldBe(Sensitivity.Secretive);
-                //    }
-                //    else
-                //    {
-                //        reflectionMetadata.Sensitivity.ShouldBe(Sensitivity.Sensitive);
-
-                //    }
-
-
-                //}
-
-
             }
         }
+        [Test]
+        public void GetProperties_Extract_Sensitive_Attribute()
+        {
+            const string crypticPropertyName = nameof(PersonMockData.Cryptic);
+            const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
+
+            //--------------------------------------------------------------------------------------------------------------------------------------
+
+            var cache = new CacheMetadata();
+            var mock = new PersonMockData();
+
+            var @params = cache.ParseIntoParams(mock);
+
+            foreach (var metadataInfo in @params.Where(x => x.Sensitivity != null))
+            {
+                if (metadataInfo.Name == crypticPropertyName)
+                {
+                    metadataInfo.Sensitivity.ShouldBe(Sensitivity.Secretive);
+                    typeof(PersonMockData).GetProperty(crypticPropertyName).GetValue(mock).ShouldBe(mock.Cryptic);
+                }
+
+                if (metadataInfo.Name == sensitivePropertyName)
+                {
+                    metadataInfo.Sensitivity.ShouldBe(Sensitivity.Sensitive);
+                    typeof(PersonMockData).GetProperty(sensitivePropertyName).GetValue(mock).ShouldBe(mock.Sensitive);
+
+                }
+            }
+        }
+
 
 
         [Test]
@@ -91,7 +99,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 var propertyInfo = typeof(PersonMockData).GetProperty(param.Name);
 
-                if (propertyInfo.GetValue(mock).ToString().Equals(param.Value) == false)
+                if (propertyInfo.GetValue(mock).ToString().Equals(param.Value.ToString()) == false)
                 {
                     throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
                 }
@@ -146,11 +154,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         public bool IsMale { get; set; } = false;
 
-        [Sensitive(Secretive = true)]
+        [Sensitive(Secretive = false)]
 
         public bool Sensitive { get; set; } = true;
 
-        [Sensitive(Secretive = false)]
+        [Sensitive(Secretive = true)]
 
         public bool Cryptic { get; set; } = true;
 
