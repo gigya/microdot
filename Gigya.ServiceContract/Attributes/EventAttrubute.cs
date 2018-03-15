@@ -18,7 +18,7 @@ namespace Gigya.ServiceContract.Attributes
     /// <summary>Mark the parameter as containing nonsensitive data.
     /// When nonsensitive data is automaticity logged (e.g. event publisher) it wont be encrypted.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method | AttributeTargets.Property)]
     public class NonSensitiveAttribute : Attribute{}
 
 

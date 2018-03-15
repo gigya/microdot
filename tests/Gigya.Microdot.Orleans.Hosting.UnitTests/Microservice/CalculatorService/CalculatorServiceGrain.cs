@@ -29,6 +29,7 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
@@ -144,44 +145,85 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive,
             List<string> NotExists)
         {
-            await Task.Delay(150);
+            await Task.Delay(1500);
+            var eventPublisher = _eventPublisher as SpyEventPublisher;
+            eventPublisher.Events.OfType<ServiceCallEvent>().Select(x => x.ServiceMethod).ToArray();
+
+            var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
             try
             {
-                var eventPublisher = _eventPublisher as SpyEventPublisher;
 
-                var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
                 foreach (var s in sensitive)
                 {
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Key == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Key == s);
 
                 }
 
                 foreach (var s in NoneSensitive)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Key == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Key == s);
 
                 }
 
                 foreach (var n in NotExists)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Key == n);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Key == n);
                 }
 
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                throw;
                 return false;
             }
 
             return true;
         }
 
-        public async Task CreateMockPerson([LogFields] PersonMock personMock , int x)
+        public async Task CreateMockPerson([LogFields] PersonMock personMock)
         {
             await Task.Delay(150);
+        }
+
+        public Task CreateMockPerson2(PersonMock personMock)
+        {
+            return Task.FromResult(1);
+        }
+
+
+        public async Task<bool> IsCreateMockPerson(PersonMock personMock)
+        {
+            await Task.Delay(150);
+
+            var personMetadata = DissectPropertyInfoMetadata.DissectPropertis(personMock);
+
+            var eventPublisher = _eventPublisher as SpyEventPublisher;
+
+            var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>();
+
+
+            foreach (var callEvent in serviceCallEvent)
+            {
+                foreach (var argument in callEvent.EncryptedServiceMethodArguments)
+                {
+
+                    var metadata = personMetadata.Single(x => x.propertyInfo.Name.Equals(argument.Key));
+                    //metadata.sensitivity.ShouldBe(Sensitivity.Secretive);
+                }
+
+                foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
+                {
+                    var metadata = personMetadata.Single(x => x.propertyInfo.Name.Equals(argument.Key));
+                    metadata.sensitivity.ShouldBe(Sensitivity.NonSensitive);
+                }
+
+            }
+
+            return true;
+
         }
 
 

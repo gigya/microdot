@@ -8,3 +8,4 @@ Shouldly
 Castle.Core
 ZooKeeperNetEx
 System.Threading.Tasks.Dataflow
+System.ValueTuple

@@ -44,6 +44,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
+using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.ServiceContract.Attributes;
 using Metrics;
 using Newtonsoft.Json;
@@ -373,8 +374,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             //
 
 
-            var @params = new List<Param>();
-            //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => 
+            //var @params = new List<Param>();
+            //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg =>
             //new Param
             //{
             //    Name = arg.Key.ToString(),
@@ -382,12 +383,23 @@ namespace Gigya.Microdot.Hosting.HttpService
             //    Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
             //});
 
-
-            // foreach
-            //    Sensitivity = property.sensitivity ?? metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
-
-
             var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
+            callEvent.Params = ExtractParams(arguments, serviceMethod, metaData);
+
+
+
+            callEvent.Exception = ex;
+            callEvent.ActualTotalTime = requestTime;
+            callEvent.ErrCode = ex != null ? null : (int?)0;
+
+            EventPublisher.TryPublish(callEvent); // fire and forget!
+        }
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
+
+        private IEnumerable<Param> ExtractParams(IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod, EndPointMetadata metaData)
+        {
+            var @params = new List<Param>();
 
             foreach (var argument in arguments)
             {
@@ -419,9 +431,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                             {
                                 @params.Add(new Param
                                 {
-                                    Value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value),
+                                    Value = metaParam.Value is string ? metaParam.Value.ToString(): JsonConvert.SerializeObject(metaParam.Value),
                                     Sensitivity = metaParam.Sensitivity ?? metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive,
-                                    Name = metaParam.Name
+                                    Name =string.Format($"{((string)argument.Key).ToPascalCase() }.{metaParam.Name}")
                                 });
                             }
                         }
@@ -439,14 +451,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
             }
 
-            callEvent.Params = @params;
-
-
-            callEvent.Exception = ex;
-            callEvent.ActualTotalTime = requestTime;
-            callEvent.ErrCode = ex != null ? null : (int?)0;
-
-            EventPublisher.TryPublish(callEvent); // fire and forget!
+            return @params;
         }
 
 

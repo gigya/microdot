@@ -1,4 +1,4 @@
-﻿#region Copyright 
+﻿#region Tester
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,12 +34,14 @@ using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;
+using Ninject.Syntax;
 using NUnit.Framework;
 using Shouldly;
 
@@ -334,8 +337,32 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task SendComplexRequest()
         {
-            await Service.CreateMockPerson(new PersonMock() , 10);
+
+            var person = new PersonMock();
+
+
+
+            await Service.CreateMockPerson(person);
+
+            (await Service.IsLogPramSucceed(new List<string> { "PersonMock.ID", "PersonMock.IsMale" }, new List<string> { "PersonMock.Name" }, new List<string> { "PersonMock.Password" })).ShouldBeTrue();
+
+
         }
+
+        //[Test]
+        //public async Task SendComplexRequest2()
+        //{
+
+        //    var person = new PersonMock();
+
+
+
+        //    await Service.CreateMockPerson2(person);
+
+        //    (await Service.IsLogPramSucceed(new List<string> {  "PersonMock.IsMale" }, new List<string> { "PersonMock.Name", "PersonMock.ID" }, new List<string> { "PersonMock.Password" })).ShouldBeTrue();
+
+
+        //}
 
         [Test]
         public async Task LogGrainId()

@@ -86,6 +86,19 @@ namespace Gigya.Microdot.SharedLogic.Utils
 
             return length < value.Length ? value.Substring(value.Length - length) : value;
         }
+
+
+        public static string ToPascalCase(this string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            return $"{value.Substring(0, 1).ToUpper()}{value.Substring(1)}";
+
+        }
+
     }
 
 
@@ -101,15 +114,16 @@ namespace Gigya.Microdot.SharedLogic.Utils
         /// it wasn't collected, the function call your lambda, passing it the object, and returns you lambda's result.
         /// Otherwise, the function returns the default value of your lambda's return type.
         /// </summary>
-        internal static Func<V> IfNotGarbageCollected<T, V>(this T instance, Func<T, V> getter) where T:class
+        internal static Func<V> IfNotGarbageCollected<T, V>(this T instance, Func<T, V> getter) where T : class
         {
             var weakRef = new WeakReference<T>(instance);
-            return () => {
+            return () =>
+            {
                 if (weakRef.TryGetTarget(out T inst))
                     return getter(inst);
                 else
                     return default(V);
             };
-        } 
+        }
     }
 }

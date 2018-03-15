@@ -59,7 +59,7 @@ namespace Gigya.Microdot.Hosting
         //--------------------------------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------------------------------
 
-        private static Sensitivity ? ExtractSensitivity(PropertyInfo propertyInfo)
+        public static Sensitivity ? ExtractSensitivity(PropertyInfo propertyInfo)
         {
             var attribute = propertyInfo.GetCustomAttributes() 
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
