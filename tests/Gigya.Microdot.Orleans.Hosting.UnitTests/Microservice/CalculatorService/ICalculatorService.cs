@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Events;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.MockData;
 using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
@@ -65,10 +66,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         Task<bool> IsLogPramSucceed(List<string> sensitives, List<string> NoneSensitives, List<string> NotExists);
         Task CreateMockPerson([LogFields] PersonMock personMock);
-        [NonSensitive]
-        Task CreateMockPerson2([LogFields] PersonMock personMock);
-        Task<bool> IsCreateMockPerson([LogFields] PersonMock personMock);
-        //Task CreateMockPerson([LogFields] PersonMock personMock, int x);
+
+
+
+        Task<bool> CreateDynamicMockPerson([LogFields] PersonMock personMock);
+        Task<bool> IsCreateDynamicMockPerson([LogFields] PersonMock personMock);
 
 
 

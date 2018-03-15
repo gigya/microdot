@@ -33,6 +33,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.MockData;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing;
@@ -309,45 +310,54 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             File.ReadAllText("TestLog.txt").ShouldContain(logMessage);
         }
 
-        [Test]
-        public async Task ShouldPublishEventWithCallParametersDefault()
-        {
-            var sensitive = "sensitive test";
-            var nonsensitive = "nonsensitive Test";
-            var notExists = "notExists Test";
-            var @default = "default Test";
+        //[Test]
+        //public async Task ShouldPublishEventWithCallParametersDefault()
+        //{
+        //    var sensitive = "sensitive test";
+        //    var nonsensitive = "nonsensitive Test";
+        //    var notExists = "notExists Test";
+        //    var @default = "default Test";
 
-            await Service.LogPram(sensitive, nonsensitive, notExists, @default);
-            (await Service.IsLogPramSucceed(new List<string>{@default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
-        }
+        //    await Service.LogPram(sensitive, nonsensitive, notExists, @default);
+        //    (await Service.IsLogPramSucceed(new List<string> { @default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
+        //}
 
-        [Test]
-        public async Task ShouldPublishEventWithCallParametersMethodNonsensitive()
-        {
-            var sensitive = "sensitive test";
-            var nonsensitive = "nonsensitive Test";
-            var notExists = "notExists Test";
-            var @default = "default Test";
+        //[Test]
+        //public async Task ShouldPublishEventWithCallParametersMethodNonsensitive()
+        //{
+        //    var sensitive = "sensitive test";
+        //    var nonsensitive = "nonsensitive Test";
+        //    var notExists = "notExists Test";
+        //    var @default = "default Test";
 
-            await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
-            (await Service.IsLogPramSucceed(new List<string> {  sensitive }, new List<string> { nonsensitive , @default }, new List<string> { notExists })).ShouldBeTrue();
-        }
+        //    await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
+        //    (await Service.IsLogPramSucceed(new List<string> { sensitive }, new List<string> { nonsensitive, @default }, new List<string> { notExists })).ShouldBeTrue();
+        //}
 
 
         [Test]
         public async Task SendComplexRequest()
         {
-
             var person = new PersonMock();
 
-
-
             await Service.CreateMockPerson(person);
-
-            (await Service.IsLogPramSucceed(new List<string> { "PersonMock.ID", "PersonMock.IsMale" }, new List<string> { "PersonMock.Name" }, new List<string> { "PersonMock.Password" })).ShouldBeTrue();
-
+            (await Service.IsLogPramSucceed(
+                sensitives: new List<string> { "PersonMock.ID", "PersonMock.Gender" },
+                NoneSensitives: new List<string> { "PersonMock.Name" },
+                NotExists: new List<string> { "PersonMock.Password" })).ShouldBeTrue();
 
         }
+        [Test]
+        public async Task CreateDynamicallyMockPerson()
+        {
+            var person = new PersonMock();
+
+            await Service.CreateDynamicMockPerson(person);
+            (await Service.IsCreateDynamicMockPerson(person)).ShouldBeTrue();
+
+        }
+
+
 
         //[Test]
         //public async Task SendComplexRequest2()
@@ -367,8 +377,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task LogGrainId()
         {
-             await Service.LogGrainId();
-           
+            await Service.LogGrainId();
+
         }
 
     }
