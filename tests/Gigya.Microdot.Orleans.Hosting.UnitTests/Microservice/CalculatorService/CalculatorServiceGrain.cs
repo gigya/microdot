@@ -150,7 +150,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive,
             List<string> NotExists)
         {
-            await Task.Delay(1500);
+            await Task.Delay(150);
             var eventPublisher = _eventPublisher as SpyEventPublisher;
             eventPublisher.Events.OfType<ServiceCallEvent>().Select(x => x.ServiceMethod).ToArray();
 
@@ -161,7 +161,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 foreach (var s in sensitive)
                 {
                     serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
 
                 }
 
@@ -189,14 +189,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public async Task CreateMockPerson([LogFields] PersonMock personMock)
         {
-            await Task.Delay(150);
+            await Task.FromResult(1); // why?
         }
 
         public async Task<bool> CreateDynamicMockPerson(PersonMock personMock)
         {
-            await Task.Delay(150);
-
-
+            await Task.FromResult(1); // why?
 
             return true;
         }

@@ -386,7 +386,18 @@ namespace Gigya.Microdot.Hosting.HttpService
             var @params = new List<Param>();
             foreach (var argument in arguments)
             {
-                @params.AddRange(ExtractParamValues(argument, serviceMethod, metaData));
+                foreach (var (name, value, sensitivity) in ExtractParamValues(argument, metaData, serviceMethod))
+                {
+
+                    @params.Add(new Param
+                    {
+                        Name = name,
+                        Value = value is string ? value.ToString() : JsonConvert.SerializeObject(value),
+                        Sensitivity = sensitivity
+
+                    });
+                }
+
             }
 
             callEvent.Params = @params;
@@ -403,19 +414,16 @@ namespace Gigya.Microdot.Hosting.HttpService
         //--------------------------------------------------------------------------------------------------------------------------------------
 
 
-        private IEnumerable<Param> ExtractParamValues(DictionaryEntry pair, ServiceMethod serviceMethod, EndPointMetadata metaData)
+        private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData, ServiceMethod serviceMethod = null)
         {
+            var defualtSensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
             if (pair.Value is string)
             {
-                var sensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-                return new List<Param>
-                {
-                    new Param { Name = pair.Key.ToString(), Value = pair.Value.ToString(), Sensitivity = sensitivity }
-                };
+                yield return (pair.Key.ToString(), pair.Value, defualtSensitivity);
             }
 
-            var defualtSensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-
+            //TODO:any
+            // TODO: cache reflection
             var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters().Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute))).SingleOrDefault(x => x.Name.Equals(pair.Key));
 
             if (parameterInfo != null)
@@ -426,25 +434,22 @@ namespace Gigya.Microdot.Hosting.HttpService
                     MethodInfo genericMethod = method.MakeGenericMethod(pair.Value.GetType());
                     var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { pair.Value });
 
-                    var @params = new List<Param>();
 
                     foreach (var metaParam in metaParams)
                     {
-                        var value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value);
-                        @params.Add(new Param
-                        {
-                            Name = ConstructNewPropertyName(pair.Key.ToString(), metaParam.Name),
-                            Value = value,
-                            Sensitivity = metaParam.Sensitivity ?? defualtSensitivity
-                        });
+                        var tuple = new ValueTuple<string, object, Sensitivity>(
+                            ConstructNewPropertyName(pair.Key.ToString(), metaParam.Name),
+                            metaParam.Value,
+                            metaParam.Sensitivity ?? defualtSensitivity);
+                        yield return tuple;
                     }
-                    return @params;
                 }
             }
-            return new List<Param>
+
+            else
             {
-                new Param { Name = pair.Key.ToString(), Value = JsonConvert.SerializeObject(pair.Value), Sensitivity = defualtSensitivity }
-            };
+                yield return new ValueTuple<string, object, Sensitivity>(pair.Key.ToString(), pair.Value, defualtSensitivity);
+            }
 
         }
 
