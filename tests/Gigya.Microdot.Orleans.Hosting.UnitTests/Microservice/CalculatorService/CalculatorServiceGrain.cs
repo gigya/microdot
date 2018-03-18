@@ -218,7 +218,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
 
 
-            //var (expectedSensitiveProperties, expectedSecritiveProperties, expectedNonSensitiveProperties) = Given_Data(personMock);
 
 
             var eventPublisher = _eventPublisher as SpyEventPublisher;
@@ -228,32 +227,32 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
             //foreach (var callEvent in serviceCallEvent)
             //{
-                expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
+            expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
 
-                foreach (var argument in callEvent.EncryptedServiceMethodArguments)
+            foreach (var argument in callEvent.EncryptedServiceMethodArguments)
+            {
+                var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
+
+                if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
                 {
-                    var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
-
-                    if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
-                    {
-                        JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(personMock, null)).ShouldBe(argument.Value); //Json validation
-                    }
-                    else
-                    {
-                        metadata.PropertyInfo.GetValue(personMock, null).ToString().ShouldBe(argument.Value);
-                    }
-
-                    expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(personMock, null)).ShouldBe(argument.Value); //Json validation
+                }
+                else
+                {
+                    metadata.PropertyInfo.GetValue(personMock, null).ToString().ShouldBe(argument.Value);
                 }
 
-                foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
-                {
-                    var tmp = argument.Key;
-                    var metadata = expectedNonSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
-                    metadata.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
+                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+            }
 
-                    expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
-                }
+            foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
+            {
+                var tmp = argument.Key;
+                var metadata = expectedNonSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
+                metadata.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
+
+                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+            }
 
             //}
 
@@ -261,7 +260,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         }
 
-        //private IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity ,string NewPropertyName)> Given_Data<TType>(TType instance) where TType : class
+        //private DissectReport Given_Data<TType>(TType instance) where TType : class
         //{
         //    string prefixClassName = typeof(PersonMock).Name;
 
@@ -272,37 +271,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         //        NewPropertyName = AddPrifix(prefixClassName, x.PropertyInfo.Name)
         //    });
 
+        //    //var tmp = new List<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>(expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).Select(item=>
+        //    //    new ValueTuple<PropertyInfo, Sensitivity, string>(item.PropertyInfo, item.Sensitivity, item.NewPropertyName)));
 
-        //    return expectedMetadata.Cast<IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>>();
-        //    //return DissectPropertyInfoMetadata.DissectPropertis(instance).Select(x => new
+        //    //foreach (var item in expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive))
         //    //{
-        //    //    PropertyInfo = x.PropertyInfo,
-        //    //    Sensitivity = x.Sensitivity,
-        //    //    NewPropertyName = AddPrifix(prefixClassName, x.PropertyInfo.Name)
-        //    //}).ToList();
 
-        //    //IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> tmp =
-        //    //    expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
+        //    //    tmp.Add(new ValueTuple<PropertyInfo, Sensitivity, string>(item.PropertyInfo, item.Sensitivity, item.NewPropertyName));
+        //    //}
 
 
-        //    //var expectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
-        //    //var expectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).ToList();
-        //    //var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
-
-
-
-
-        //    ////var list = new List<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>();
-        //    ////list.Add(expectedMetadataf);
-
-        //    //return new DissectReport
-        //    //{
-        //    //    ExpectedSensitiveProperties = new List<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>{expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive)},
-        //    //    //ExpectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).Cast<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>().ToList(),
-        //    //    ExpectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).Cast<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>().ToList(),
-        //    //    ExpectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).Cast<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)>().ToList()
-
-        //    //};
+        //    return new DissectReport
+        //    {
+        //        ExpectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).Select(item =>(PropertyInfo:item.PropertyInfo, Sensitivity:item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
+        //        ExpectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).Select(item => (PropertyInfo: item.PropertyInfo, Sensitivity: item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
+        //        ExpectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).Select(item => (PropertyInfo: item.PropertyInfo, Sensitivity: item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
+        //    };
         //}
 
 
@@ -359,23 +343,23 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
 
 
-        internal class DissectReport
-        {
-            public IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> ExpectedSensitiveProperties { get; set; }
-            public IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> ExpectedSecritiveProperties { get; set; }
-            public IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> ExpectedNonSensitiveProperties { get; set; }
+        //internal class DissectReport
+        //{
+        //    public IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> ExpectedSensitiveProperties { get; set; }
+        //    public IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> ExpectedSecritiveProperties { get; set; }
+        //    public IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> ExpectedNonSensitiveProperties { get; set; }
 
 
-            public void Deconstruct(
-                out IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> expectedSensitiveProperties,
-                out IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> expectedSecritiveProperties,
-                out IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> expectedNonSensitiveProperties)
-            {
-                expectedSensitiveProperties    = ExpectedSensitiveProperties;
-                expectedSecritiveProperties    = ExpectedSecritiveProperties;
-                expectedNonSensitiveProperties = ExpectedNonSensitiveProperties;
-            }
-        }
+        //    public void Deconstruct(
+        //        out IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> expectedSensitiveProperties,
+        //        out IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> expectedSecritiveProperties,
+        //        out IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity, string NewPropertyName)> expectedNonSensitiveProperties)
+        //    {
+        //        expectedSensitiveProperties = ExpectedSensitiveProperties;
+        //        expectedSecritiveProperties = ExpectedSecritiveProperties;
+        //        expectedNonSensitiveProperties = ExpectedNonSensitiveProperties;
+        //    }
+        //}
     }
 
 }

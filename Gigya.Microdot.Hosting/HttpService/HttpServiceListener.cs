@@ -382,7 +382,14 @@ namespace Gigya.Microdot.Hosting.HttpService
             //});
 
             var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-            callEvent.Params = ExtractParams(arguments, serviceMethod, metaData);
+
+            var @params = new List<Param>();
+            foreach (var argument in arguments)
+            {
+                @params.AddRange(ExtractParamValues(argument, serviceMethod, metaData));
+            }
+
+            callEvent.Params = @params;
 
 
 
@@ -395,107 +402,55 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         //--------------------------------------------------------------------------------------------------------------------------------------
 
-        private IEnumerable<Param> ExtractParams(IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod, EndPointMetadata metaData)
-        {
-            var @params = new List<Param>();
 
-            foreach (var argument in arguments)
-            {
-
-                var defualtSensitivity = metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-                if (argument.Value is string)
-                {
-                    var (name, value, _) = GetParamStringValue(argument, serviceMethod, metaData).First();
-                    @params.Add(new Param
-                    {
-                        Name = name,
-                        Value = value,
-                        Sensitivity = defualtSensitivity
-                    });
-                }
-                else
-                {
-                    // todo: only if attribute
-                    var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters()
-                        .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
-                        .SingleOrDefault(x => x.Name.Equals(argument.Key));
-
-                    if (parameterInfo != null)
-                    {
-                        if (argument.Value.GetType().IsClass)
-                        {
-                            MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
-                            MethodInfo genericMethod = method.MakeGenericMethod(argument.Value.GetType());
-                            var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { argument.Value });
-
-                            foreach (var metaParam in metaParams)
-                            {
-                                @params.Add(new Param
-                                {
-                                    Value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value),
-                                    Name = AssembleNewPropertyName((string)argument.Key, metaParam.Name),
-                                    Sensitivity = metaParam.Sensitivity ?? defualtSensitivity
-                                });
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //todo:jason serializer implrement
-                        @params.Add(new Param
-                        {
-                            Name = argument.Key.ToString(),
-                            Value = JsonConvert.SerializeObject(argument.Value),
-                            Sensitivity = defualtSensitivity
-                        });
-                    }
-                }
-            }
-
-            return @params;
-        }
-
-        //--------------------------------------------------------------------------------------------------------------------------------------
-
-        private IEnumerable<(string name, string value, Sensitivity sensitivity)> GetParamStringValue(DictionaryEntry pair, ServiceMethod serviceMethod, EndPointMetadata metaData)
+        private IEnumerable<Param> ExtractParamValues(DictionaryEntry pair, ServiceMethod serviceMethod, EndPointMetadata metaData)
         {
             if (pair.Value is string)
             {
                 var sensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-                yield return (pair.Key.ToString(), pair.Value.ToString(), sensitivity);
+                return new List<Param>
+                {
+                    new Param { Name = pair.Key.ToString(), Value = pair.Value.ToString(), Sensitivity = sensitivity }
+                };
             }
-            else
+
+            var defualtSensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+
+            var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters().Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute))).SingleOrDefault(x => x.Name.Equals(pair.Key));
+
+            if (parameterInfo != null)
             {
-                var defualtSensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-
-                var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters()
-                    .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
-                    .SingleOrDefault(x => x.Name.Equals(pair.Key));
-                if (parameterInfo != null)
+                if (pair.Value.GetType().IsClass)
                 {
-                    if (pair.Value.GetType().IsClass)
+                    MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+                    MethodInfo genericMethod = method.MakeGenericMethod(pair.Value.GetType());
+                    var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { pair.Value });
+
+                    var @params = new List<Param>();
+
+                    foreach (var metaParam in metaParams)
                     {
-                        MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
-                        MethodInfo genericMethod = method.MakeGenericMethod(pair.Value.GetType());
-                        var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { pair.Value });
-
-                        foreach (var metaParam in metaParams)
+                        var value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value);
+                        @params.Add(new Param
                         {
-                            var value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value);
-                            yield return new ValueTuple<string, string, Sensitivity>(AssembleNewPropertyName(pair.Key.ToString(),metaParam.Name), value, metaParam.Sensitivity ?? defualtSensitivity);
-                        }
+                            Name = ConstructNewPropertyName(pair.Key.ToString(), metaParam.Name),
+                            Value = value,
+                            Sensitivity = metaParam.Sensitivity ?? defualtSensitivity
+                        });
                     }
-                }
-                else
-                {
-                    yield return new ValueTuple<string, string, Sensitivity>(pair.Key.ToString(), JsonConvert.SerializeObject(pair.Value), defualtSensitivity);
+                    return @params;
                 }
             }
+            return new List<Param>
+            {
+                new Param { Name = pair.Key.ToString(), Value = JsonConvert.SerializeObject(pair.Value), Sensitivity = defualtSensitivity }
+            };
+
         }
 
         //--------------------------------------------------------------------------------------------------------------------------------------
 
-        private string AssembleNewPropertyName(string prefix, string propName)
+        private string ConstructNewPropertyName(string prefix, string propName)
         {
             return string.Format($"{prefix.ToPascalCase()}.{propName}");
         }
