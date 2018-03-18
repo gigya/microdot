@@ -160,29 +160,28 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 foreach (var s in sensitive)
                 {
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Key == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Key == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
 
                 }
 
                 foreach (var s in NoneSensitive)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Key == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Key == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
 
                 }
 
                 foreach (var n in NotExists)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Key == n);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Key == n);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
                 }
 
             }
             catch (Exception exception)
             {
-                throw;
-                return false;
+                throw exception;
             }
 
             return true;

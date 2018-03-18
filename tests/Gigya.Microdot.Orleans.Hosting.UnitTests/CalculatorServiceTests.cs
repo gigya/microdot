@@ -21,28 +21,21 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.MockData;
 using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;
-using Ninject.Syntax;
 using NUnit.Framework;
 using Shouldly;
 
@@ -310,29 +303,29 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             File.ReadAllText("TestLog.txt").ShouldContain(logMessage);
         }
 
-        //[Test]
-        //public async Task ShouldPublishEventWithCallParametersDefault()
-        //{
-        //    var sensitive = "sensitive test";
-        //    var nonsensitive = "nonsensitive Test";
-        //    var notExists = "notExists Test";
-        //    var @default = "default Test";
+        [Test]
+        public async Task ShouldPublishEventWithCallParametersDefault()
+        {
+            var sensitive = "sensitive test";
+            var nonsensitive = "nonsensitive Test";
+            var notExists = "notExists Test";
+            var @default = "default Test";
 
-        //    await Service.LogPram(sensitive, nonsensitive, notExists, @default);
-        //    (await Service.IsLogPramSucceed(new List<string> { @default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
-        //}
+            await Service.LogPram(sensitive, nonsensitive, notExists, @default);
+            (await Service.IsLogPramSucceed(new List<string> { @default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
+        }
 
-        //[Test]
-        //public async Task ShouldPublishEventWithCallParametersMethodNonsensitive()
-        //{
-        //    var sensitive = "sensitive test";
-        //    var nonsensitive = "nonsensitive Test";
-        //    var notExists = "notExists Test";
-        //    var @default = "default Test";
+        [Test]
+        public async Task ShouldPublishEventWithCallParametersMethodNonsensitive()
+        {
+            var sensitive = "sensitive test";
+            var nonsensitive = "nonsensitive Test";
+            var notExists = "notExists Test";
+            var @default = "default Test";
 
-        //    await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
-        //    (await Service.IsLogPramSucceed(new List<string> { sensitive }, new List<string> { nonsensitive, @default }, new List<string> { notExists })).ShouldBeTrue();
-        //}
+            await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
+            (await Service.IsLogPramSucceed(new List<string> { sensitive }, new List<string> { nonsensitive, @default }, new List<string> { notExists })).ShouldBeTrue();
+        }
 
 
         [Test]
@@ -342,9 +335,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             await Service.CreateMockPerson(person);
             (await Service.IsLogPramSucceed(
-                sensitives: new List<string> { "PersonMock.ID", "PersonMock.Gender" },
-                NoneSensitives: new List<string> { "PersonMock.Name" },
-                NotExists: new List<string> { "PersonMock.Password" })).ShouldBeTrue();
+                sensitives: new List<string> { person.ID.ToString(), person.Gender},
+                NoneSensitives: new List<string> { person.Name },
+                NotExists: new List<string> { person.Password })).ShouldBeTrue();
 
         }
         [Test]
@@ -357,22 +350,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         }
 
-
-
-        //[Test]
-        //public async Task SendComplexRequest2()
-        //{
-
-        //    var person = new PersonMock();
-
-
-
-        //    await Service.CreateMockPerson2(person);
-
-        //    (await Service.IsLogPramSucceed(new List<string> {  "PersonMock.IsMale" }, new List<string> { "PersonMock.Name", "PersonMock.ID" }, new List<string> { "PersonMock.Password" })).ShouldBeTrue();
-
-
-        //}
 
         [Test]
         public async Task LogGrainId()
