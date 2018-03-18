@@ -371,8 +371,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
 
 
-            //
-
 
             //var @params = new List<Param>();
             //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg =>
@@ -405,10 +403,11 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 if (argument.Value is string)
                 {
+                    var (name, value, _) = GetParamStringValue(argument, serviceMethod, metaData).First();
                     @params.Add(new Param
                     {
-                        Name = argument.Key.ToString(),
-                        Value = argument.Value.ToString(),
+                        Name = name,
+                        Value = value,
                         Sensitivity = metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
                     });
                 }
@@ -431,9 +430,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                             {
                                 @params.Add(new Param
                                 {
-                                    Value = metaParam.Value is string ? metaParam.Value.ToString(): JsonConvert.SerializeObject(metaParam.Value),
-                                    Sensitivity = metaParam.Sensitivity ?? metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive,
-                                    Name =string.Format($"{((string)argument.Key).ToPascalCase() }.{metaParam.Name}")
+                                    Value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value),
+                                    Name = AssembleNewPropertyName((string)argument.Key, metaParam.Name),
+                                    Sensitivity = metaParam.Sensitivity ?? metaData.ParametersSensitivity[argument.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
                                 });
                             }
                         }
@@ -452,6 +451,52 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
 
             return @params;
+        }
+
+
+        private IEnumerable<(string name, string value, Sensitivity sensitivity)> GetParamStringValue(DictionaryEntry pair, ServiceMethod serviceMethod, EndPointMetadata metaData)
+        {
+            if (pair.Value is string)
+            {
+                var sensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+                yield return (pair.Key.ToString(), pair.Value.ToString(), sensitivity);
+            }
+
+            var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters()
+                .Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute)))
+                .SingleOrDefault(x => x.Name.Equals(pair.Key));
+
+            if (parameterInfo != null)
+            {
+                if (pair.Value.GetType().IsClass)
+                {
+                    MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+                    MethodInfo genericMethod = method.MakeGenericMethod(pair.Value.GetType());
+                    var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { pair.Value });
+
+                    foreach (var metaParam in metaParams)
+                    {
+                        var value = metaParam.Value is string ? metaParam.Value.ToString() : JsonConvert.SerializeObject(metaParam.Value);
+                        var sensitivity = metaParam.Sensitivity ?? metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+                        yield return new ValueTuple<string, string, Sensitivity>(metaParam.Name, value, sensitivity);
+                    }
+                }
+            }
+            else
+            {
+                var sensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+                yield return new ValueTuple<string, string, Sensitivity>(pair.Key.ToString(), JsonConvert.SerializeObject(pair.Value), sensitivity);
+            }
+
+
+
+
+
+        }
+
+        private string AssembleNewPropertyName(string prefix, string propName)
+        {
+            return string.Format($"{((string)prefix).ToPascalCase()}.{propName}");
         }
 
 

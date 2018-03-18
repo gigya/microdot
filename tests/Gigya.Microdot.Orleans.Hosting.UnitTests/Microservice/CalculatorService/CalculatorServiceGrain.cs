@@ -237,12 +237,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                     if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
                     {
-                        JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(personMock, null)).ShouldBe(argument.Value);
+                        JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(personMock, null)).ShouldBe(argument.Value); //Json validation
                     }
                     else
                     {
                         metadata.PropertyInfo.GetValue(personMock, null).ToString().ShouldBe(argument.Value);
-                     //JsonSerializer.Create(metadata.PropertyInfo.GetValue(personMock, null))   
                     }
 
                     expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
