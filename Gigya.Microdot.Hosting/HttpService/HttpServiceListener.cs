@@ -228,7 +228,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
-
+                    Debugger.Launch();
                     ServiceMethod serviceMethod = null;
                     try
                     {
@@ -416,17 +416,18 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData, ServiceMethod serviceMethod = null)
         {
-            var defualtSensitivity = metaData.ParametersSensitivity[pair.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+            var key = pair.Key.ToString();
+            var defualtSensitivity = metaData.ParamaerAttributes[key].Visibility ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+            //var defualtSensitivity = metaData.ParametersSensitivity[key] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
             if (pair.Value is string)
             {
-                yield return (pair.Key.ToString(), pair.Value, defualtSensitivity);
+                yield return (key, pair.Value, defualtSensitivity);
             }
 
             //TODO:any
             // TODO: cache reflection
-            var parameterInfo = serviceMethod?.ServiceInterfaceMethod.GetParameters().Where(x => Attribute.IsDefined(x, typeof(LogFieldsAttribute))).SingleOrDefault(x => x.Name.Equals(pair.Key));
 
-            if (parameterInfo != null)
+            if (metaData.ParamaerAttributes[key].IsLogFieldAttributeExists == true)
             {
                 if (pair.Value.GetType().IsClass)
                 {
@@ -438,7 +439,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     foreach (var metaParam in metaParams)
                     {
                         var tuple = new ValueTuple<string, object, Sensitivity>(
-                            ConstructNewPropertyName(pair.Key.ToString(), metaParam.Name),
+                            ConstructNewPropertyName(key, metaParam.Name),
                             metaParam.Value,
                             metaParam.Sensitivity ?? defualtSensitivity);
                         yield return tuple;
@@ -448,7 +449,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             else
             {
-                yield return new ValueTuple<string, object, Sensitivity>(pair.Key.ToString(), pair.Value, defualtSensitivity);
+                yield return new ValueTuple<string, object, Sensitivity>(key, pair.Value, defualtSensitivity);
             }
 
         }

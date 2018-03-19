@@ -23,8 +23,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
@@ -38,7 +36,6 @@ using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
 using Orleans;
 using Orleans.Concurrency;
 using Shouldly;
@@ -192,6 +189,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             await Task.FromResult(1); // why?
         }
 
+
         public async Task<bool> CreateDynamicMockPerson(PersonMock personMock)
         {
             await Task.FromResult(1); // why?
@@ -200,7 +198,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
 
 
-        public async Task<bool> IsCreateDynamicMockPerson(PersonMock personMock)
+        public async Task<bool> IsCreateDynamicMockPerson([LogFields]PersonMock personMock)
         {
             await Task.Delay(150);
 
@@ -281,7 +279,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         //    return new DissectReport
         //    {
-        //        ExpectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).Select(item =>(PropertyInfo:item.PropertyInfo, Sensitivity:item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
+        //        ExpectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).Select(item => (PropertyInfo: item.PropertyInfo, Sensitivity: item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
         //        ExpectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).Select(item => (PropertyInfo: item.PropertyInfo, Sensitivity: item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
         //        ExpectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).Select(item => (PropertyInfo: item.PropertyInfo, Sensitivity: item.Sensitivity, NewPropertyName: item.NewPropertyName)).ToArray(),
         //    };

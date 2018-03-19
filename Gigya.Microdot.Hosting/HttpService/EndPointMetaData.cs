@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
@@ -10,22 +11,44 @@ namespace Gigya.Microdot.Hosting.HttpService
     {
         public EndPointMetadata(ServiceMethod method)
         {
+            Initialize(method);
+        }
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------------------------------
+
+        public ImmutableDictionary<string, (Sensitivity? Visibility, bool IsLogFieldAttributeExists)> ParamaerAttributes { get; private set; }
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
+
+        public Sensitivity? MethodSensitivity { get; private set; }
+
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------------------------------
+
+        private void Initialize(ServiceMethod method)
+        {
+
             MethodSensitivity = GetSensitivity(method.ServiceInterfaceMethod);
 
-            var parametersSensitivity = ImmutableDictionary.CreateBuilder<string, Sensitivity?>();
+            var parameterAttributes = ImmutableDictionary.CreateBuilder<string, (Sensitivity? visibility, bool isLogFieldAttributeExists)>();
 
-            foreach (var pram in method.ServiceInterfaceMethod.GetParameters())
+            foreach (var param in method.ServiceInterfaceMethod.GetParameters())
             {
-                parametersSensitivity.Add(pram.Name, GetSensitivity(pram));
+                var tuple = (Visibility: GetSensitivity(param), IsLogFieldAttributeExists: param.GetCustomAttribute<LogFieldsAttribute>() != null);
+                parameterAttributes.Add(param.Name, tuple);
             }
 
-            ParametersSensitivity = parametersSensitivity.ToImmutable();
+            ParamaerAttributes = parameterAttributes.ToImmutable();
         }
+
+        //--------------------------------------------------------------------------------------------------------------------------------------
 
         private Sensitivity? GetSensitivity(ICustomAttributeProvider t)
         {
 
-            var attribute = t.GetCustomAttributes(typeof(SensitiveAttribute),true).FirstOrDefault();
+            var attribute = t.GetCustomAttributes(typeof(SensitiveAttribute), true).FirstOrDefault();
             if (attribute is SensitiveAttribute sensitiveAttribute)
             {
                 if (sensitiveAttribute.Secretive)
@@ -42,10 +65,10 @@ namespace Gigya.Microdot.Hosting.HttpService
             return null;
         }
 
-        public ImmutableDictionary<string, Sensitivity?> ParametersSensitivity { get; }
 
-        public Sensitivity? MethodSensitivity { get; }
+        //--------------------------------------------------------------------------------------------------------------------------------------
 
+        
     }
 
 }

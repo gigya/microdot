@@ -25,12 +25,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.MockData;
 using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
@@ -68,12 +66,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         Task CreateMockPerson([LogFields] PersonMock personMock);
 
 
-
+        Task LogGrainId();
         Task<bool> CreateDynamicMockPerson([LogFields] PersonMock personMock);
         Task<bool> IsCreateDynamicMockPerson([LogFields] PersonMock personMock);
-
-
-
-        Task LogGrainId();
     }
 }

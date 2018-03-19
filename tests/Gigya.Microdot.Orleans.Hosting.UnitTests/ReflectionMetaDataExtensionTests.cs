@@ -29,13 +29,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var mock = new PersonMockData();
 
 
+
             //MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
             //MethodInfo genericMethod = method.MakeGenericMethod(typeof(PersonMockData));
             //var tmpParams = (IEnumerable<Param>)genericMethod.Invoke(mock, new[] { argument.Value });
 
 
 
-            var reflectionMetadataInfos = ReflectionMetadataExtension.ExtracMetadata<PersonMockData>().ToList();
+            var reflectionMetadataInfos = CacheMetadata.ExtracMetadata<PersonMockData>().ToList();
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
             foreach (var reflectionMetadata in reflectionMetadataInfos)
@@ -51,6 +52,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             }
         }
+
+
         [Test]
         public void GetProperties_Extract_Sensitive_Attribute()
         {
