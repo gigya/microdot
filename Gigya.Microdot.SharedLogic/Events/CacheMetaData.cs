@@ -4,10 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Gigya.Microdot.SharedLogic.Events;
 using Gigya.ServiceContract.Attributes;
 
-namespace Gigya.Microdot.Hosting
+namespace Gigya.Microdot.SharedLogic.Events
 {
     public class ReflectionMetadataInfo<TType> where TType : class
     {

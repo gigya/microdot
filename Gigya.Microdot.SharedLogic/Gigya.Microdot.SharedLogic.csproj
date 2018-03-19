@@ -45,6 +45,7 @@
     </Compile>
     <Compile Include="ApplicationDirectoryProvider.cs" />
     <Compile Include="AssemblyProvider.cs" />
+    <Compile Include="Events\CacheMetaData.cs" />
     <Compile Include="Events\EventSerializer.cs" />
     <Compile Include="Events\Param.cs" />
     <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />

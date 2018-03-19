@@ -48,7 +48,6 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="CacheMetaData.cs" />
     <Compile Include="CrashHandler.cs" />
     <Compile Include="HttpService\EndPointMetaData.cs" />
     <Compile Include="HttpService\Endpoints\ConfigurationResponseBuilder.cs" />
