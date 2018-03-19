@@ -49,7 +49,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
         public IStackTraceEnhancer StackTraceEnhancer { get; set; }
 
-        public IEventConfiguration Configuration { get; set; }
+        public EventConfiguration Configuration { get; set; }
 
         /// <summary>The type of the event, for publishing. Overridden by derived classes.</summary>
         [EventField(EventConsts.type)]

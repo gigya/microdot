@@ -88,7 +88,7 @@ namespace Gigya.Microdot.SharedLogic.Logging
                                                    .Concat(exception.GetEncryptedTagsAndExtendedProperties())
                                                    .Where(_ => _.Value != null)
                                                    .FormatTagsWithoutTypeSuffix()
-                            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                                                   .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                         WriteLog(level, logCallSiteInfo, message, encTags, unencTags, exception, stackTrace);
                     });

@@ -1,6 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 
@@ -12,36 +12,29 @@ namespace Gigya.Microdot.Logging.NLog
     public class LogEventPublisher : IEventPublisher
     {
         private ILog Log { get; }
-        private IEnvironmentVariableProvider EnvProvider { get; }
-        private IStackTraceEnhancer StackTraceEnhancer { get; }
+        private IEventSerializer Serializer { get; }
 
-        private PublishingTasks PublishingTasks { get; } = new PublishingTasks
-        {
-            PublishEvent = Task.FromResult(true),
-            PublishAudit = Task.FromResult(false)
-        };
-
-        public LogEventPublisher(ILog log, IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer)
+        public LogEventPublisher(ILog log, IEventSerializer serializer)
         {
             Log = log;
-            EnvProvider = envProvider;
-            StackTraceEnhancer = stackTraceEnhancer;
+            Serializer = serializer;
         }
 
         public PublishingTasks TryPublish(IEvent evt)
         {
-            evt.Configuration = new EventConfig();
-            evt.EnvironmentVariableProvider = EnvProvider;
-            evt.StackTraceEnhancer = StackTraceEnhancer;
-            Log.Debug(l => l("Tracing event", unencryptedTags: evt));
-            return PublishingTasks;
+            var fields = Serializer.Serialize(evt);
+
+            Log.Debug(l => l("Tracing event",
+                unencryptedTags: fields.Where(_ => !_.Attribute.Encrypt).Select(_ => new KeyValuePair<string, object>(_.Name, _.Value)),
+                encryptedTags:   fields.Where(_ =>  _.Attribute.Encrypt).Select(_ => new KeyValuePair<string, object>(_.Name, _.Value))));
+
+            return new PublishingTasks
+            {
+                PublishEvent = Task.FromResult(true),
+                PublishAudit = Task.FromResult(false),
+                SerializedEventFields = fields,
+            };
         }
 
-        private class EventConfig : IEventConfiguration
-        {
-            public Regex ExcludeStackTraceRule { get; set; }
-            public bool ExcludeParams { get; set; }
-            public int ParamTruncateLength { get; set; }
-        }
     }
 }

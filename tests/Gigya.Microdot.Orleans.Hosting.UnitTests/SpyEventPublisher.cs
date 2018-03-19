@@ -12,9 +12,9 @@ namespace Gigya.Microdot.Fakes
 
         public PublishingTasks TryPublish(IEvent evt)
         {
-            evt.Configuration = Substitute.For<IEventConfiguration>();
+            evt.Configuration = Substitute.For<EventConfiguration>();
             evt.Configuration.ParamTruncateLength = 1000000; 
-          Events.Enqueue(evt);
+            Events.Enqueue(evt);
             return PublishingTasks;
         }
     }

@@ -38,9 +38,13 @@ namespace Gigya.Microdot.SharedLogic.Logging
 
         public static IEnumerable<KeyValuePair<string, object>> GetTagsFromObject(object tagsObject)
         {
-            if(tagsObject==null)
+            if (tagsObject == null)
                 return Enumerable.Empty<KeyValuePair<string, object>>();
-            return TagsObjectCache.GetOrAdd(tagsObject.GetType(), t => CreateObjectCachedReflectionFuncs(t).ToList())
+            else if (tagsObject is IEnumerable<KeyValuePair<string, object>> objectsList)
+                return objectsList;
+            else if (tagsObject is IEnumerable<KeyValuePair<string, string>> stringsList)
+                return stringsList.Select(_ => new KeyValuePair<string, object>(_.Key, _.Value));
+            else return TagsObjectCache.GetOrAdd(tagsObject.GetType(), t => CreateObjectCachedReflectionFuncs(t).ToList())
                    .Select(_ => new KeyValuePair<string, object>(_.Name, _.GetValueFunc(tagsObject)));
         }
 
