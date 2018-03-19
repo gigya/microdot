@@ -431,7 +431,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 if (pair.Value.GetType().IsClass)
                 {
-                    MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+                    MethodInfo method = typeof(MetadataPropertiesCache).GetMethod("ParseIntoParams");
                     MethodInfo genericMethod = method.MakeGenericMethod(pair.Value.GetType());
                     var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { pair.Value });
 

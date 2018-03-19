@@ -30,13 +30,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
 
 
-            //MethodInfo method = typeof(CacheMetadata).GetMethod("ParseIntoParams");
+            //MethodInfo method = typeof(MetadataPropertiesCache).GetMethod("ParseIntoParams");
             //MethodInfo genericMethod = method.MakeGenericMethod(typeof(PersonMockData));
             //var tmpParams = (IEnumerable<Param>)genericMethod.Invoke(mock, new[] { argument.Value });
 
 
 
-            var reflectionMetadataInfos = CacheMetadata.ExtracMetadata<PersonMockData>().ToList();
+            var reflectionMetadataInfos = MetadataPropertiesCache.ExtracMetadata<PersonMockData>().ToList();
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
             foreach (var reflectionMetadata in reflectionMetadataInfos)
@@ -62,7 +62,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             //--------------------------------------------------------------------------------------------------------------------------------------
 
-            var cache = new CacheMetadata();
+            var cache = new MetadataPropertiesCache();
             var mock = new PersonMockData();
 
             var @params = cache.ParseIntoParams(mock);
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void CacheMetadata_Extract_All_Public_Properties()
         {
-            var cache = new CacheMetadata();
+            var cache = new MetadataPropertiesCache();
             var mock = new PersonMockData();
 
 
@@ -112,7 +112,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void CacheMetadata_Strength_Test()
         {
-            var cache = new CacheMetadata();
+            var cache = new MetadataPropertiesCache();
 
             var people = GeneratePeople(10000).ToList();
 

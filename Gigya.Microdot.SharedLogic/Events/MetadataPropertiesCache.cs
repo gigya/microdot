@@ -31,7 +31,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     }
 
 
-    public class CacheMetadata : ICacheMetadata //todo: rename cahcemetadata 
+    public class MetadataPropertiesCache : ICacheMetadata 
     {
         private readonly ConcurrentDictionary<Type, object[]> _cache = new ConcurrentDictionary<Type, object[]>();
 
