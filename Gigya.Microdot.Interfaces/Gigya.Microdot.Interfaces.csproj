@@ -51,6 +51,7 @@
     <Compile Include="Events\IEvent.cs" />
     <Compile Include="Events\IEventConfiguration.cs" />
     <Compile Include="Events\IEventPublisher.cs" />
+    <Compile Include="Events\SerializedEventField.cs" />
     <Compile Include="IApplicationDirectoryProvider.cs" />
     <Compile Include="IAssemblyProvider.cs" />
     <Compile Include="ICacheRevoker.cs" />
