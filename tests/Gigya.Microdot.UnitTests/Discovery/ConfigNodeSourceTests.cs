@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -53,10 +54,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void NoConfigNoHosts()
+        public void ThrowExceptionIfConfigIsEmpty()
         {
             SetConfigHosts(null);
-            GetNodes().ShouldBeEmpty();
+            var getNodes = (Action)(() => GetNodes());
+            getNodes.ShouldThrow<EnvironmentException>();
         }
 
         [Test]

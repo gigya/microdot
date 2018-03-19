@@ -1,15 +1,52 @@
 ﻿using System;
-using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.SharedLogic.Monitor;
+using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ConsulQueryNodeSource : ConsulNodeSource
+    public class ConsulQueryNodeSource : INodeSource
     {
-        public override string Type => "ConsulQuery";
+        private bool _disposed;
+        public string ServiceName { get; set; }
 
-        public ConsulQueryNodeSource(ServiceDeployment serviceDeployment, ConsulQueryClient consulClient, Func<ConsulConfig> getConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus) :
-            base(serviceDeployment, consulClient, getConfig, getAggregatingHealthStatus)
-        { }
+        public IQueryBasedConsulNodeMonitor NodeMonitor { get; set; }
+
+        public ConsulQueryNodeSource(ServiceDeployment serviceDeployment, Func<string, IQueryBasedConsulNodeMonitor> getNodeMonitor)
+        {
+            ServiceName = $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+            NodeMonitor = getNodeMonitor(ServiceName);
+        }
+
+        public Task Init()
+        {
+            return NodeMonitor.Init();
+        }
+
+        public string Type => "ConsulQuery";
+
+        public INode[] GetNodes() => NodeMonitor.Nodes;
+
+        public bool WasUndeployed => !NodeMonitor.IsDeployed;
+
+        public bool SupportsMultipleEnvironments => true;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                NodeMonitor?.Dispose();
+            }
+
+            _disposed = true;
+        }
     }
 }

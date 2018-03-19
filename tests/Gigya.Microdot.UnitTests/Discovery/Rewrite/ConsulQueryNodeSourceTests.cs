@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
@@ -18,7 +16,7 @@ using ServiceDeployment = Gigya.Microdot.ServiceDiscovery.ServiceDeployment;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    public class ConsulNodeSourceTests
+    public class ConsulQueryNodeSourceTests
     {
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
@@ -28,19 +26,17 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _consulSource;
         private ConsulConfig _consulConfig;
-        private IConsulNodeMonitor _consulNodeMonitor;
+        private IQueryBasedConsulNodeMonitor _queryBasedConsulNodeMonitor;
         private INode[] _consulNodes;
-        private HashSet<string> _consulServicesList;
-        private IConsulServiceListMonitor _consulServiceListMonitor;
         private Func<INode[]> _getConsulNodes;
+        private bool _serviceIsDeployed;
 
         [OneTimeSetUp]
         public void SetupConsulListener()
         {
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IConsulNodeMonitor>().ToMethod(_ => _consulNodeMonitor);
-                k.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
+                k.Rebind<IQueryBasedConsulNodeMonitor>().ToMethod(_ => _queryBasedConsulNodeMonitor);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
         }
@@ -55,13 +51,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void Setup()
         {
             _consulNodes = new INode[0];
+            _serviceIsDeployed = true;
             _getConsulNodes = () => _consulNodes;
-            _consulServicesList = new HashSet<string>(new[]{_deployment.ToString()});
-            _consulNodeMonitor = Substitute.For<IConsulNodeMonitor>();
-            _consulNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
-            _consulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
-            _consulServiceListMonitor.Services.Returns(_ => _consulServicesList.ToImmutableHashSet());
-
+            _queryBasedConsulNodeMonitor = Substitute.For<IQueryBasedConsulNodeMonitor>();
+            _queryBasedConsulNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
+            _queryBasedConsulNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
             _consulConfig = new ConsulConfig();
         }
 
@@ -84,7 +78,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public void ServiceNotDeployedOnConsul_ReturnWasUndeployedTrue()
         {
-            _consulServicesList.Clear();
+            _serviceIsDeployed = false;
             CreateConsulSource();
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
@@ -94,22 +88,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupOneDefaultNode();
             await Start();
-            _consulServicesList.Clear();            
+            _serviceIsDeployed = false;
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
-
-        [Test]
-        public async Task ServiceIsDeployedInLowerCase()
-        {
-            var lowerCaseServiceName = _deployment.ToString().ToLower();
-            _consulServicesList = new HashSet<string>(new[] { lowerCaseServiceName });
-            SetupOneDefaultNode();
-
-            await Start();
-
-            AssertOneDefaultNode();
-        }
-
 
         [Test]
         public void ConsulErrorOnStart_ThrowErrorWhenGettingNodesList()
@@ -124,23 +105,16 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task InitMonitorsOnlyAfterInitAndNotOnCreation()
         {
             bool nodesMonitorInitiated = false;
-            bool serviceListMonitorInitiated = false;
 
-            _consulNodeMonitor.Init().Returns(_=>{
+            _queryBasedConsulNodeMonitor.Init().Returns(_=>{
                                                     nodesMonitorInitiated = true;
                                                     return Task.FromResult(1);});
-            _consulServiceListMonitor.Init().Returns(_ => {
-                                                    serviceListMonitorInitiated = true;
-                                                    return Task.FromResult(1);
-                                                });
 
             CreateConsulSource();
             await Task.Delay(200);
-            nodesMonitorInitiated.ShouldBeFalse("ConsulNodeMonitor.Init() was called before Init() was called");
-            serviceListMonitorInitiated.ShouldBeFalse("ConsulServiceListMonitor.Init() was called before Init() was called");
+            nodesMonitorInitiated.ShouldBeFalse("QueryBasedConsulNodeMonitor.Init() was called before Init() was called");
             await _consulSource.Init();
-            nodesMonitorInitiated.ShouldBeTrue("ConsulNodeMonitor.Init() should be called when Init() is called");
-            serviceListMonitorInitiated.ShouldBeTrue("ConsulServiceListMonitor.Init() should be called when Init() is called");
+            nodesMonitorInitiated.ShouldBeTrue("QueryBasedConsulNodeMonitor.Init() should be called when Init() is called");
         }
 
         [Test]
@@ -169,7 +143,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private void CreateConsulSource()
         {            
             var sources = _testingKernel.Get<Func<ServiceDeployment, INodeSource[]>>()(_deployment);
-            _consulSource = sources.Single(x => x.Type == "Consul");            
+            _consulSource = sources.Single(x => x.Type == "ConsulQuery");            
         }
 
         private void AssertOneDefaultNode()

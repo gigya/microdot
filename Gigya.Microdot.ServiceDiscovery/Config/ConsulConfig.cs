@@ -14,7 +14,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         /// <summary>
         /// Interval for reloading endpoints from Consul, 
-        /// Used only when LongPolling=false
+        /// Used for Consul queries loop
         /// </summary>
         public TimeSpan ReloadInterval { get; set; } = TimeSpan.FromSeconds(1);
 

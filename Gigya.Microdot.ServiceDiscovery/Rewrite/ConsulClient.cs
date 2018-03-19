@@ -1,237 +1,155 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Rewrite;
+using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public sealed class ConsulClient: ConsulClientBase, IConsulClient
+    public class ConsulClient: IDisposable
     {
-        private CancellationTokenSource ShutdownToken { get; }
+        private bool _disposed;
 
-        /// <summary>
-        /// Current ModifyIndex of get-all-keys api on Consul (/v1/kv/service?keys)
-        /// </summary>
-        private ulong _allKeysModifyIndex = 0;
+        protected HttpClient HttpClient { get; private set; }
 
-        /// <summary>
-        /// Result of all keys on Consul
-        /// </summary>
-        private string[] _allKeys;
+        protected ILog Log { get; }
+        protected IDateTime DateTime { get; }
+        protected Func<ConsulConfig> GetConfig { get; }
+        public Uri ConsulAddress { get; set; }
+        protected string DataCenter { get; set; }
 
-        private Task _getAllKeys;
-        private int _disposed;
-
-        public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig):
-            base(log,environmentVariableProvider,dateTime,getConfig)
+        public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            ShutdownToken = new CancellationTokenSource();
-            _getAllKeys = GetAllKeys();
+            Log = log;
+            DateTime = dateTime;
+            GetConfig = getConfig;
+            var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
+            ConsulAddress = new Uri($"http://{address}");
+            DataCenter = environmentVariableProvider.DataCenter;
         }
 
-        private async Task GetAllKeys()
+        public async Task<ConsulResult<TResponse>> Call<TResponse>(string urlCommand, CancellationToken cancellationToken)
         {
-            var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand =
-                $"v1/kv/service?dc={DataCenter}&keys&index={_allKeysModifyIndex}&wait={maxSecondsToWaitForResponse}s";
-            var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
+            var timeout = GetConfig().HttpTimeout;
+            ulong? modifyIndex = 0;
+            string requestLog = string.Empty;
+            string responseContent = null;
+            HttpStatusCode? statusCode = null;
 
-            if (response.ModifyIndex.HasValue)
-                _allKeysModifyIndex = response.ModifyIndex.Value;
-
-            if (response.Success)
+            try
             {
-                _allKeys = TryDeserialize<string[]>(response.ResponseContent);
-            }
-            else
-            {
-                Log.Warn("Error calling Consul all-keys", unencryptedTags: new
+                if (HttpClient == null)
+                    HttpClient = new HttpClient { BaseAddress = ConsulAddress };
+
+                requestLog = HttpClient.BaseAddress + urlCommand;
+                using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
+                using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
+                using (var response = await HttpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false))
                 {
-                    requestLog = urlCommand,
-                    consulResponse = response.ResponseContent,
-                    ConsulAddress
-                });
-                await DateTime.Delay(config.ErrorRetryInterval).ConfigureAwait(false);
-            }
+                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    statusCode = response.StatusCode;
+                    Log.Debug(x => x("Response received from Consul", unencryptedTags: new { ConsulAddress, requestLog = urlCommand, responseCode = statusCode, responseContent }));
 
-            if (!ShutdownToken.IsCancellationRequested)
-                _getAllKeys = GetAllKeys();
-        }
+                    var consulResult = new ConsulResult<TResponse> { RequestLog = requestLog, StatusCode = statusCode, ResponseContent = responseContent, ResponseDateTime = DateTime.UtcNow };
 
-        public async Task LoadNodes(ConsulServiceState serviceState)
-        {
-            InitGetAllKeys();
-            await WaitIfErrorOccuredOnPreviousCall(serviceState).ConfigureAwait(false);
-
-            if (!serviceState.IsDeployed)
-                return;
-
-            if (serviceState.ActiveVersion == null)
-                await LoadServiceVersion(serviceState).ConfigureAwait(false);
-
-            if (serviceState.NodesLoading == null || serviceState.NodesLoading.IsCompleted)
-                serviceState.NodesLoading = LoadNodesByHealth(serviceState);
-            if (serviceState.VersionLoading == null || serviceState.VersionLoading.IsCompleted)
-                serviceState.VersionLoading = LoadServiceVersion(serviceState);
-
-            await Task.WhenAny(serviceState.NodesLoading, serviceState.VersionLoading);
-        }
-
-        private async Task LoadServiceVersion(ConsulServiceState serviceState)
-        {
-            InitGetAllKeys();
-            await WaitIfErrorOccuredOnPreviousCall(serviceState).ConfigureAwait(false);
-
-            var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand = $"v1/kv/service/{serviceState.ServiceName}?dc={DataCenter}&index={serviceState.VersionModifyIndex}&wait={maxSecondsToWaitForResponse}s";
-            var response = await CallConsul(urlCommand, serviceState.ShutdownToken).ConfigureAwait(false);
-
-            if (response.ModifyIndex.HasValue)
-                serviceState.VersionModifyIndex = response.ModifyIndex.Value;
-
-            if (response.IsDeployed == false)
-            {
-                var serviceExists = await SearchServiceInAllKeys(serviceState).ConfigureAwait(false);
-                if (serviceExists)
-                {
-                    await ReloadServiceVersion(serviceState).ConfigureAwait(false);
-                    return;
-                }
-                else
-                {
-                    SetServiceMissingResult(serviceState, response);
-                    return;
-                }
-            }
-            else if (response.Success)
-            {
-                var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
-                var version = keyValue?.SingleOrDefault()?.TryDecodeValue()?.Version;
-
-                if (version != null)
-                {
-                    lock (serviceState)
+                    if (statusCode == HttpStatusCode.OK)
+                        consulResult.ModifyIndex = GetConsulIndex(response);
+                    else
                     {
-                        serviceState.ActiveVersion = version;
-                        serviceState.IsDeployed = true;
-                    }
-                    return;
-                }
-            }
-            SetErrorResult(serviceState, response, "Cannot extract service's active version from Consul response");
-        }
+                        var exception = new EnvironmentException("Consul response not OK",
+                            unencrypted: new Tags
+                            {
+                                {"ConsulAddress", ConsulAddress.ToString()},
+                                {"ConsulQuery", urlCommand},
+                                {"ResponseCode", statusCode.ToString()},
+                                {"Content", responseContent}
+                            });
 
-        private void InitGetAllKeys()
-        {
-            if (_getAllKeys == null)
-                _getAllKeys = GetAllKeys();
-        }
-
-        private Task ReloadServiceVersion(ConsulServiceState serviceState)
-        {
-            serviceState.VersionModifyIndex = 0;
-            return LoadServiceVersion(serviceState);
-        }
-
-        private async Task<bool> SearchServiceInAllKeys(ConsulServiceState serviceState)
-        {
-            if (_allKeys == null)
-            {
-                InitGetAllKeys();
-                await _getAllKeys.ConfigureAwait(false);
-            }
-
-            var serviceNameMatchByCase = _allKeys?.FirstOrDefault(s =>
-                    s.Equals($"service/{serviceState.ServiceName}", StringComparison.InvariantCultureIgnoreCase))
-                    ?.Substring("service/".Length);
-
-            var serviceExists = serviceNameMatchByCase != null;
-
-            if (!serviceExists)
-                return false;
-
-            if (serviceState.ServiceName != serviceNameMatchByCase)
-            {
-                Log.Warn("Requested service found on Consul with different case", unencryptedTags: new
-                {
-                    requestedService = serviceState.ServiceNameOrigin,
-                    serviceOnConsul = serviceNameMatchByCase
-                });
-                serviceState.ServiceName = serviceNameMatchByCase;
-            }
-
-            return true;
-        }
-
-        private async Task LoadNodesByHealth(ConsulServiceState serviceState)
-        {
-            if (!serviceState.IsDeployed)
-                return;
-
-            await WaitIfErrorOccuredOnPreviousCall(serviceState).ConfigureAwait(false);
-
-            var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand = $"v1/health/service/{serviceState.ServiceName}?dc={DataCenter}&passing&index={serviceState.HealthModifyIndex}&wait={maxSecondsToWaitForResponse}s";
-            var response = await CallConsul(urlCommand, serviceState.ShutdownToken).ConfigureAwait(false);
-
-            if (response.ModifyIndex.HasValue)
-                serviceState.HealthModifyIndex = response.ModifyIndex.Value;
-
-            if (response.Success)
-            {
-                var nodes = TryDeserialize<ServiceEntry[]>(response.ResponseContent);
-                if (nodes != null)
-                {
-                    if (
-                        // Service has no nodes, but it did did have nodes before, and it is deployed
-                        (nodes.Length == 0 && serviceState.Nodes.Length != 0 && serviceState.IsDeployed)
-                        // Service has nodes, but it is not deployed
-                        || (nodes.Length > 0 && !serviceState.IsDeployed))
-                    {
-                        // Try to reload version, to check if service deployment has changed
-                        await ReloadServiceVersion(serviceState).ConfigureAwait(false);
-                        if (serviceState.IsDeployed)
+                        if (statusCode == HttpStatusCode.NotFound || responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            await LoadNodesByHealth(serviceState).ConfigureAwait(false);
-                            return;
+                            var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
+                            consulResult.ResponseContent = responseStr;
+                            consulResult.IsDeployed = false;
+                        }
+                        else
+                            consulResult.Error = exception;
+
+                    }
+                    if (consulResult.Success)
+                    {
+                        try
+                        {
+                            consulResult.Response = JsonConvert.DeserializeObject<TResponse>(responseContent);
+                        }
+                        catch (Exception ex)
+                        {
+                            consulResult.Error = new EnvironmentException("Error serializing Consul response",
+                                innerException: ex, unencrypted: new Tags
+                                {
+                                    {"requestLog", requestLog},
+                                    {"responseContent", responseContent},
+                                    {"responseType", typeof(TResponse).Name}
+                                });
                         }
                     }
-                    SetConsulNodes(nodes, serviceState, response, filterByVersion: true);
-                    return;
+                    return consulResult;
                 }
-            }            
-            SetErrorResult(serviceState, response, "Cannot extract service's nodes from Consul response");            
+            }
+            catch (Exception ex)
+            {
+                return new ConsulResult<TResponse> { RequestLog = requestLog, ResponseContent = responseContent, Error = ex, StatusCode = statusCode };
+            }
         }
 
-        private async Task WaitIfErrorOccuredOnPreviousCall(ConsulServiceState serviceState)
+
+        private static ulong? GetConsulIndex(HttpResponseMessage response)
         {
-            if (serviceState.LastResult?.Error != null)
-            {
-                var config = GetConfig();
-                var now = DateTime.UtcNow;
-                var timeElapsed = serviceState.LastResult.ResponseDateTime - now;
-                if (timeElapsed < config.ErrorRetryInterval)
-                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed).ConfigureAwait(false);
-            }            
+            ulong? modifyIndex = null;
+            response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
+            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
+                modifyIndex = consulIndexValue;
+            return modifyIndex;
+        }
+
+        private static string GetNodeVersion(ServiceEntry node)
+        {
+            const string versionPrefix = "version:";
+            var versionTag = node?.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            return versionTag?.Substring(versionPrefix.Length);
+        }
+
+
+
+        public Node[] ReadConsulNodes(ServiceEntry[] consulNodes)
+        {
+            return consulNodes.Select(n => new Node(n.Node.Name, n.Service.Port, GetNodeVersion(n))).ToArray();
         }
 
         public void Dispose()
         {
-            if (Interlocked.Increment(ref _disposed) != 1)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
                 return;
 
-            base.Dispose();
-            HttpClient?.Dispose();
-            ShutdownToken?.Cancel();
-            ShutdownToken?.Dispose();
+            if (disposing)
+                HttpClient?.Dispose();
+
+            _disposed = true;
         }
+
     }
 }
-
