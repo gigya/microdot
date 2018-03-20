@@ -228,7 +228,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
-                    Debugger.Launch();
                     ServiceMethod serviceMethod = null;
                     try
                     {
