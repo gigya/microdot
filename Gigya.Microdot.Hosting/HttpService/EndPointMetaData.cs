@@ -39,7 +39,6 @@ namespace Gigya.Microdot.Hosting.HttpService
 
 
         public ImmutableDictionary<string, (Sensitivity? Visibility, bool IsLogFieldAttributeExists)> ParamaerAttributes { get; private set; }
-
         public Sensitivity? MethodSensitivity { get; private set; }
 
 
@@ -59,8 +58,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             ParamaerAttributes = parameterAttributes.ToImmutable();
         }
 
-
-
         private Sensitivity? GetSensitivity(ICustomAttributeProvider t)
         {
 
@@ -69,8 +66,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 if (sensitiveAttribute.Secretive)
                     return Sensitivity.Secretive;
-                return Sensitivity.Sensitive;
 
+                return Sensitivity.Sensitive;
             }
 
             attribute = t.GetCustomAttributes(typeof(NonSensitiveAttribute), true).FirstOrDefault();

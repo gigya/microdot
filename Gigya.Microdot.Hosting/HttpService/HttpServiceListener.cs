@@ -44,8 +44,6 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
-using Gigya.Microdot.SharedLogic.Utils;
-using Gigya.ServiceContract.Attributes;
 using Metrics;
 using Newtonsoft.Json;
 
@@ -368,10 +366,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             callEvent.ServiceMethod = requestData.Target?.MethodName;
 
             var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
-
             var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-
             var @params = new List<Param>();
+
             foreach (var argument in arguments)
             {
                 foreach (var (name, value, sensitivity) in ExtractParamValues(argument, metaData, serviceMethod))
@@ -385,7 +382,6 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     });
                 }
-
             }
 
             callEvent.Params = @params;

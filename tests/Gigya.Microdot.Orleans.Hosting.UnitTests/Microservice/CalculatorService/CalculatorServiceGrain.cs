@@ -211,16 +211,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             var expectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
             var expectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).ToList();
             var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
-
-
-
-
             var eventPublisher = _eventPublisher as SpyEventPublisher;
             var callEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
 
 
             expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
-
             foreach (var argument in callEvent.EncryptedServiceMethodArguments)
             {
                 var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
