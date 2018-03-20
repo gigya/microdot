@@ -1,4 +1,4 @@
-﻿#region ctor
+﻿#region Copyright
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -370,17 +370,6 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
 
-
-
-            //var @params = new List<Param>();
-            //callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg =>
-            //new Param
-            //{
-            //    Name = arg.Key.ToString(),
-            //    Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
-            //    Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
-            //});
-
             var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
 
             var @params = new List<Param>();
@@ -401,9 +390,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
 
             callEvent.Params = @params;
-
-
-
             callEvent.Exception = ex;
             callEvent.ActualTotalTime = requestTime;
             callEvent.ErrCode = ex != null ? null : (int?)0;
@@ -411,21 +397,14 @@ namespace Gigya.Microdot.Hosting.HttpService
             EventPublisher.TryPublish(callEvent); // fire and forget!
         }
 
-        //--------------------------------------------------------------------------------------------------------------------------------------
-
-
         private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData, ServiceMethod serviceMethod = null)
         {
             var key = pair.Key.ToString();
             var defualtSensitivity = metaData.ParamaerAttributes[key].Visibility ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-            //var defualtSensitivity = metaData.ParametersSensitivity[key] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
             if (pair.Value is string)
             {
                 yield return (key, pair.Value, defualtSensitivity);
             }
-
-            //TODO:any
-            // TODO: cache reflection
 
             if (metaData.ParamaerAttributes[key].IsLogFieldAttributeExists == true)
             {
@@ -454,14 +433,10 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         }
 
-        //--------------------------------------------------------------------------------------------------------------------------------------
-
         private string ConstructNewPropertyName(string prefix, string propName)
         {
             return string.Format($"{prefix.ToPascalCase()}.{propName}");
         }
-
-        //--------------------------------------------------------------------------------------------------------------------------------------
 
 
         private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")

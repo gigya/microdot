@@ -32,8 +32,8 @@ namespace Gigya.Microdot.UnitTests
             path.IsSubPathOf(baseDirPath).ShouldBe(isSubPath);
         }
 
-        [TestCase(@"stam", @"Stam")]
-        [TestCase(@"Stam", @"Stam")]
+        [TestCase(@"value", @"Value")]
+        [TestCase(@"Value", @"Value")]
         [TestCase(@"", @"")]
 
 

@@ -1,10 +1,29 @@
-﻿using System;
+﻿#region Copyright 
+// Copyright 2017 Gigya Inc.  All rights reserved.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License.  
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+#endregion
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Castle.Core.Internal;
-using Gigya.Microdot.Hosting;
 using Gigya.Microdot.SharedLogic.Events;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
@@ -27,16 +46,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void GetProperties_Extract_All_Public_Properties()
         {
             var mock = new PersonMockData();
-
-
-
-            //MethodInfo method = typeof(MetadataPropertiesCache).GetMethod("ParseIntoParams");
-            //MethodInfo genericMethod = method.MakeGenericMethod(typeof(PersonMockData));
-            //var tmpParams = (IEnumerable<Param>)genericMethod.Invoke(mock, new[] { argument.Value });
-
-
-
             var reflectionMetadataInfos = MetadataPropertiesCache.ExtracMetadata<PersonMockData>().ToList();
+
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
             foreach (var reflectionMetadata in reflectionMetadataInfos)
@@ -60,11 +71,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);
             const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
 
-            //--------------------------------------------------------------------------------------------------------------------------------------
-
             var cache = new MetadataPropertiesCache();
             var mock = new PersonMockData();
-
             var @params = cache.ParseIntoParams(mock);
 
             foreach (var metadataInfo in @params.Where(x => x.Sensitivity != null))
@@ -91,13 +99,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var cache = new MetadataPropertiesCache();
             var mock = new PersonMockData();
-
-
             var @params = cache.ParseIntoParams(mock).ToList();
 
-
             @params.Count.ShouldBe(_numOfProperties);
-
             foreach (var param in @params)
             {
                 var propertyInfo = typeof(PersonMockData).GetProperty(param.Name);
@@ -127,8 +131,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             stopWatch.Stop();
         }
 
-
-
         private IEnumerable<PersonMockData> GeneratePeople(int amount)
         {
             for (int i = 0; i < amount; i++)
@@ -150,7 +152,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class PersonMockData
     {
-
         public int ID { get; set; } = 10;
 
         public string Name { get; set; } = "Mocky";
@@ -165,47 +166,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         public bool Cryptic { get; set; } = true;
 
-
-
-        //public short NotWorking { get; set; } = 0;
-
-
     }
 
 }
 
-
-
-//private IEnumerable<Param> CreateParamDelegat<TType>(TType instance) where TType : class
-//{
-//    var paramListType = typeof(List<Param>);
-//    var properties = instance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);//Cached!
-
-//    var propertiesExpression = Expression.Constant(properties);
-
-//    ParameterExpression count = Expression.Variable(typeof(int), "count");
-//    ConstantExpression totoalProps = Expression.Constant(properties.Length);
-//    ParameterExpression entity = Expression.Parameter(typeof(TType));
-//    var result = Expression.New(paramListType); //typeof(List<Param>)
-
-//    Expression.Block(new ParameterExpression[] { count },
-//        Expre
-
-//    );
-
-
-//    foreach (var propertyInfo in instance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-//    {
-//        var @param = Expression.Constant(new Param());
-
-//        var methodInfo = propertyInfo.GetGetMethod();
-//        var getterCall = Expression.Call(entity, methodInfo);
-//        var castToObject = Expression.Convert(getterCall, typeof(object));
-
-
-
-
-//    }
-
-//    return new List<Param>();
-//}
