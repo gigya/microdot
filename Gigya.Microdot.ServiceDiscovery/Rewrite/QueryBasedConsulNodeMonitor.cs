@@ -48,8 +48,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_nodes.Length==0 && Error != null)
                     throw Error;
                 return _nodes;
-            }
-            set => _nodes = value;
+            }            
         }
 
         public bool IsDeployed { get; set; } = true;
@@ -79,13 +78,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (!consulResult.IsDeployed)
             {
                 IsDeployed = false;
-                Nodes = new INode[0];
+                _nodes = new INode[0];
             }
             else if (consulResult.Success)
             {
                 var queryResult = consulResult.Response;
-                Nodes = ConsulClient.ReadConsulNodes(queryResult.Nodes);
-                if (Nodes.Length == 0)
+                _nodes = ConsulClient.ReadConsulNodes(queryResult.Nodes);
+                if (_nodes.Length == 0)
                     ErrorResult(consulResult, "No endpoints were specified in Consul for the requested service and service's active version.");
 
                 IsDeployed = true;

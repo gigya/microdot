@@ -20,7 +20,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     public class ConsulNodeMonitorTests
     {
         private const string ServiceName = "MyService";
-        private const int ConsulPort = 8501;
+        private const int ConsulPort = 8506;
         private const string DataCenter = "us1";
 
         private const string Host1 = "Host1";
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AssertOneDefaultNode();
         }
 
-        [Test]
+        [Test]        
         public async Task ServiceAdded()
         {
             await Init();

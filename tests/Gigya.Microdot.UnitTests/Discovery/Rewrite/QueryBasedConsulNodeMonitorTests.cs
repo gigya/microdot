@@ -20,7 +20,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     public class QueryBasedConsulNodeMonitorTests
     {
         private const string ServiceName = "MyService-prod";
-        private const int ConsulPort = 8501;
+        private const int ConsulPort = 8508;
         private const string DataCenter = "us1";
 
         private const string Host1 = "Host1";
@@ -68,7 +68,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _serviceName = $"{ServiceName}_{Guid.NewGuid()}-prod";
 
             _dateTimeFake = new DateTimeFake(false);
-            _consulConfig = new ConsulConfig();
+            _consulConfig = new ConsulConfig{ReloadInterval = TimeSpan.FromMilliseconds(100)};
 
             _consulQueryNodeMonitor = _testingKernel.Get<Func<string,IQueryBasedConsulNodeMonitor>>()(_serviceName);
         }
@@ -82,7 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         public async Task WaitForUpdates()
         {
-            await Task.Delay(1500).ConfigureAwait(false);
+            await Task.Delay(300).ConfigureAwait(false);
         }
 
         [Test]
@@ -180,7 +180,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulQueryNodeMonitor.IsDeployed.ShouldBeFalse();
         }
 
-        [Test]
+        [Test]        
         public async Task ServiceIsDeployedWithNoNodes()
         {
             AddServiceNode();
