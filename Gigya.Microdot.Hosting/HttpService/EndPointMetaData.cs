@@ -37,8 +37,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             Initialize(method);
         }
 
+        public ImmutableDictionary<string, (Sensitivity? Sensitivity, bool IsLogFieldAttributeExists)> ParameterAttributes { get; private set; }
 
-        public ImmutableDictionary<string, (Sensitivity? Visibility, bool IsLogFieldAttributeExists)> ParamaerAttributes { get; private set; }
         public Sensitivity? MethodSensitivity { get; private set; }
 
 
@@ -47,15 +47,15 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             MethodSensitivity = GetSensitivity(method.ServiceInterfaceMethod);
 
-            var parameterAttributes = ImmutableDictionary.CreateBuilder<string, (Sensitivity? visibility, bool isLogFieldAttributeExists)>();
+            var parameterAttributes = ImmutableDictionary.CreateBuilder<string, (Sensitivity? sensitivity, bool isLogFieldAttributeExists)>();
 
             foreach (var param in method.ServiceInterfaceMethod.GetParameters())
             {
-                var tuple = (Visibility: GetSensitivity(param), IsLogFieldAttributeExists: param.GetCustomAttribute<LogFieldsAttribute>() != null);
+                var tuple = (Sensitivity: GetSensitivity(param), IsLogFieldAttributeExists: param.GetCustomAttribute<LogFieldsAttribute>() != null);
                 parameterAttributes.Add(param.Name, tuple);
             }
 
-            ParamaerAttributes = parameterAttributes.ToImmutable();
+            ParameterAttributes = parameterAttributes.ToImmutable();
         }
 
         private Sensitivity? GetSensitivity(ICustomAttributeProvider t)

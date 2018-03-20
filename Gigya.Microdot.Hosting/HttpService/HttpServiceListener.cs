@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
-        private readonly ICacheMetadata _cacheMetadata;
+        private readonly IPropertiesMetadataPropertiesCache _metadataPropertiesCache;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -85,6 +85,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
 
+
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
         private readonly Timer _roundtripTime;
@@ -93,14 +94,15 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
+        private readonly MethodInfo _method;
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-            ICacheMetadata cacheMetadata,
+            IPropertiesMetadataPropertiesCache metadataPropertiesCache,
                                    JsonExceptionSerializer exceptionSerializer)
         {
-            _cacheMetadata = cacheMetadata;
+            _metadataPropertiesCache = metadataPropertiesCache;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -131,6 +133,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             _failureCounter = context.Counter("Failed", Unit.Calls);
             _activeRequestsCounter = context.Timer("ActiveRequests", Unit.Requests);
             _endpointContext = context.Context("Endpoints");
+
+
+            _method = typeof(PropertiesMetadataPropertiesCache).GetMethod("ParseIntoParams");
         }
 
 
@@ -371,7 +376,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             foreach (var argument in arguments)
             {
-                foreach (var (name, value, sensitivity) in ExtractParamValues(argument, metaData, serviceMethod))
+                foreach (var (name, value, sensitivity) in ExtractParamValues(argument, metaData))
                 {
 
                     @params.Add(new Param
@@ -379,7 +384,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                         Name = name,
                         Value = value is string ? value.ToString() : JsonConvert.SerializeObject(value),
                         Sensitivity = sensitivity
-
                     });
                 }
             }
@@ -392,47 +396,35 @@ namespace Gigya.Microdot.Hosting.HttpService
             EventPublisher.TryPublish(callEvent); // fire and forget!
         }
 
-        private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData, ServiceMethod serviceMethod = null)
+        private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData)
         {
             var key = pair.Key.ToString();
-            var defualtSensitivity = metaData.ParamaerAttributes[key].Visibility ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-            if (pair.Value is string)
+            var sensitivity = metaData.ParameterAttributes[key].Sensitivity ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+            if (metaData.ParameterAttributes[key].IsLogFieldAttributeExists == true && (pair.Value is string) == false)
             {
-                yield return (key, pair.Value, defualtSensitivity);
-            }
-
-            if (metaData.ParamaerAttributes[key].IsLogFieldAttributeExists == true)
-            {
-                if (pair.Value.GetType().IsClass)
+                var type = pair.Value.GetType();
+                if (type.IsClass)
                 {
-                    MethodInfo method = typeof(MetadataPropertiesCache).GetMethod("ParseIntoParams");
-                    MethodInfo genericMethod = method.MakeGenericMethod(pair.Value.GetType());
-                    var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_cacheMetadata, new[] { pair.Value });
+                    var genericMethod = _method.MakeGenericMethod(type);
+                    var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_metadataPropertiesCache, new[] { pair.Value });
 
 
                     foreach (var metaParam in metaParams)
                     {
-                        var tuple = new ValueTuple<string, object, Sensitivity>(
-                            ConstructNewPropertyName(key, metaParam.Name),
-                            metaParam.Value,
-                            metaParam.Sensitivity ?? defualtSensitivity);
+                        var tuple = (
+                               name: $"{key}.{metaParam.Name}",
+                               value: metaParam.Value,
+                               sensitivity: metaParam.Sensitivity ?? sensitivity);
+
                         yield return tuple;
                     }
                 }
             }
-
             else
             {
-                yield return new ValueTuple<string, object, Sensitivity>(key, pair.Value, defualtSensitivity);
+                yield return (key, pair.Value, sensitivity);
             }
-
         }
-
-        private string ConstructNewPropertyName(string prefix, string propName)
-        {
-            return string.Format($"{prefix}.{propName}");
-        }
-
 
         private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
         {

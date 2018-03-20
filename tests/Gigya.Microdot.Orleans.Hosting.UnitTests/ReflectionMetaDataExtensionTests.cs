@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = MetadataPropertiesCache.ExtracPropertiesValues<PersonMockData>().ToList();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues<PersonMockData>().ToList();
 
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
@@ -71,7 +71,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);
             const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
 
-            var cache = new MetadataPropertiesCache();
+            var cache = new PropertiesMetadataPropertiesCache();
             var mock = new PersonMockData();
             var arguments = cache.ParseIntoParams(mock);
 
@@ -92,11 +92,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
         }
 
-
         [Test]
         public void PropertyMetadata_Extract_All_Public_Properties()
         {
-            var cache = new MetadataPropertiesCache();
+            var cache = new PropertiesMetadataPropertiesCache();
             var mock = new PersonMockData();
             var arguments = cache.ParseIntoParams(mock).ToList();
 
@@ -115,16 +114,20 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void LoadTest()
         {
-            var cache = new MetadataPropertiesCache();
+            var cache = new PropertiesMetadataPropertiesCache();
             var people = GeneratePeople(10000).ToList();
             var stopWatch = new Stopwatch();
 
+            var type = typeof(PersonMockData);
+            var method = typeof(PropertiesMetadataPropertiesCache).GetMethod("ParseIntoParams");
+
             stopWatch.Start();
+
             foreach (var person in people)
             {
-                var @params = cache.ParseIntoParams(person).ToList();
-
-                @params.Count.ShouldBe(_numOfProperties);
+                var genericMethod = method.MakeGenericMethod(type);
+                var tmpParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(cache, new[] { person });
+                tmpParams.Count().ShouldBe(_numOfProperties);
             }
             stopWatch.Stop();
         }

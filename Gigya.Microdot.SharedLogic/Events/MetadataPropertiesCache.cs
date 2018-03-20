@@ -40,7 +40,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     }
 
 
-    public interface ICacheMetadata
+    public interface IPropertiesMetadataPropertiesCache
     {
         IEnumerable<MetadataCacheParam> ParseIntoParams<TType>(TType instance) where TType : class;
     }
@@ -54,7 +54,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     }
 
 
-    public class MetadataPropertiesCache : ICacheMetadata 
+    public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
         private readonly ConcurrentDictionary<Type, object[]> _cache = new ConcurrentDictionary<Type, object[]>();
 
