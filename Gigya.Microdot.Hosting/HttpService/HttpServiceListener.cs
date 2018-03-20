@@ -434,7 +434,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private string ConstructNewPropertyName(string prefix, string propName)
         {
-            return string.Format($"{prefix.ToPascalCase()}.{propName}");
+            return string.Format($"{prefix}.{propName}");
         }
 
 

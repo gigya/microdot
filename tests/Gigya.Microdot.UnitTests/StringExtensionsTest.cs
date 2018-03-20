@@ -31,18 +31,5 @@ namespace Gigya.Microdot.UnitTests
         {
             path.IsSubPathOf(baseDirPath).ShouldBe(isSubPath);
         }
-
-        [TestCase(@"value", @"Value")]
-        [TestCase(@"Value", @"Value")]
-        [TestCase(@"", @"")]
-
-
-        public void ToPascalCaseTest(string value, string expectedValue)
-        {
-            value.ToPascalCase().ShouldBe(expectedValue);
-        }
-
-
-
     }
 }

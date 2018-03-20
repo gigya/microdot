@@ -86,19 +86,6 @@ namespace Gigya.Microdot.SharedLogic.Utils
 
             return length < value.Length ? value.Substring(value.Length - length) : value;
         }
-
-
-        public static string ToPascalCase(this string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            return $"{value.Substring(0, 1).ToUpper()}{value.Substring(1)}";
-
-        }
-
     }
 
 

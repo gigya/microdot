@@ -43,10 +43,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void GetProperties_Extract_All_Public_Properties()
+        public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = MetadataPropertiesCache.ExtracMetadata<PersonMockData>().ToList();
+            var reflectionMetadataInfos = MetadataPropertiesCache.ExtracPropertiesValues<PersonMockData>().ToList();
 
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
@@ -66,26 +66,26 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
 
         [Test]
-        public void GetProperties_Extract_Sensitive_Attribute()
+        public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);
             const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
 
             var cache = new MetadataPropertiesCache();
             var mock = new PersonMockData();
-            var @params = cache.ParseIntoParams(mock);
+            var arguments = cache.ParseIntoParams(mock);
 
-            foreach (var metadataInfo in @params.Where(x => x.Sensitivity != null))
+            foreach (var arg in arguments.Where(x => x.Sensitivity != null))
             {
-                if (metadataInfo.Name == crypticPropertyName)
+                if (arg.Name == crypticPropertyName)
                 {
-                    metadataInfo.Sensitivity.ShouldBe(Sensitivity.Secretive);
+                    arg.Sensitivity.ShouldBe(Sensitivity.Secretive);
                     typeof(PersonMockData).GetProperty(crypticPropertyName).GetValue(mock).ShouldBe(mock.Cryptic);
                 }
 
-                if (metadataInfo.Name == sensitivePropertyName)
+                if (arg.Name == sensitivePropertyName)
                 {
-                    metadataInfo.Sensitivity.ShouldBe(Sensitivity.Sensitive);
+                    arg.Sensitivity.ShouldBe(Sensitivity.Sensitive);
                     typeof(PersonMockData).GetProperty(sensitivePropertyName).GetValue(mock).ShouldBe(mock.Sensitive);
 
                 }
@@ -93,16 +93,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
 
-
         [Test]
-        public void CacheMetadata_Extract_All_Public_Properties()
+        public void PropertyMetadata_Extract_All_Public_Properties()
         {
             var cache = new MetadataPropertiesCache();
             var mock = new PersonMockData();
-            var @params = cache.ParseIntoParams(mock).ToList();
+            var arguments = cache.ParseIntoParams(mock).ToList();
 
-            @params.Count.ShouldBe(_numOfProperties);
-            foreach (var param in @params)
+            arguments.Count.ShouldBe(_numOfProperties);
+            foreach (var param in arguments)
             {
                 var propertyInfo = typeof(PersonMockData).GetProperty(param.Name);
 
@@ -114,13 +113,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void CacheMetadata_Strength_Test()
+        public void LoadTest()
         {
             var cache = new MetadataPropertiesCache();
-
             var people = GeneratePeople(10000).ToList();
-
             var stopWatch = new Stopwatch();
+
             stopWatch.Start();
             foreach (var person in people)
             {

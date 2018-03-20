@@ -69,7 +69,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             var type = typeof(TType);
 
-            _cache.GetOrAdd(type, x => ExtracMetadata<TType>().Cast<object>().ToArray());
+            _cache.GetOrAdd(type, x => ExtracPropertiesValues<TType>().Cast<object>().ToArray());
         }
 
         private IEnumerable<MetadataCacheParam> Resolve<TType>(TType instance) where TType : class
@@ -87,7 +87,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-        public static IEnumerable<ReflectionMetadataInfo<TType>> ExtracMetadata<TType>()
+        public static IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
             where TType : class
         {
             var type = typeof(TType);
