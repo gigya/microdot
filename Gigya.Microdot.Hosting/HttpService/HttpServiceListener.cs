@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
-        private readonly IPropertiesMetadataPropertiesCache _metadataPropertiesCache;
+        private readonly IServerRequestPublisher _serverRequestPublisher;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -94,15 +94,14 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
-        private readonly MethodInfo _method;
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-            IPropertiesMetadataPropertiesCache metadataPropertiesCache,
+                                   IServerRequestPublisher serverRequestPublisher,
                                    JsonExceptionSerializer exceptionSerializer)
         {
-            _metadataPropertiesCache = metadataPropertiesCache;
+            _serverRequestPublisher = serverRequestPublisher;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -134,8 +133,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             _activeRequestsCounter = context.Timer("ActiveRequests", Unit.Requests);
             _endpointContext = context.Context("Endpoints");
 
-
-            _method = typeof(PropertiesMetadataPropertiesCache).GetMethod("ParseIntoParams");
         }
 
 
@@ -275,7 +272,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
-                        PublishEvent(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
+
+                        _serverRequestPublisher.ConstructEvent(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
                     }
                 }
             }
@@ -358,71 +356,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 _failureCounter.Increment("InvalidClientCertificate");
                 throw new SecureRequestException("Client certificate is not valid.");
-            }
-        }
-
-
-        private void PublishEvent(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime)
-        {
-            var callEvent = EventPublisher.CreateEvent();
-
-            callEvent.CalledServiceName = serviceMethod?.GrainInterfaceType.Name;
-            callEvent.ClientMetadata = requestData.TracingData;
-            callEvent.ServiceMethod = requestData.Target?.MethodName;
-
-            var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
-            var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-            var @params = new List<Param>();
-
-            foreach (var argument in arguments)
-            {
-                foreach (var (name, value, sensitivity) in ExtractParamValues(argument, metaData))
-                {
-
-                    @params.Add(new Param
-                    {
-                        Name = name,
-                        Value = value is string ? value.ToString() : JsonConvert.SerializeObject(value),
-                        Sensitivity = sensitivity
-                    });
-                }
-            }
-
-            callEvent.Params = @params;
-            callEvent.Exception = ex;
-            callEvent.ActualTotalTime = requestTime;
-            callEvent.ErrCode = ex != null ? null : (int?)0;
-
-            EventPublisher.TryPublish(callEvent); // fire and forget!
-        }
-
-        private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData)
-        {
-            var key = pair.Key.ToString();
-            var sensitivity = metaData.ParameterAttributes[key].Sensitivity ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-            if (metaData.ParameterAttributes[key].IsLogFieldAttributeExists == true && (pair.Value is string) == false)
-            {
-                var type = pair.Value.GetType();
-                if (type.IsClass)
-                {
-                    var genericMethod = _method.MakeGenericMethod(type);
-                    var metaParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(_metadataPropertiesCache, new[] { pair.Value });
-
-
-                    foreach (var metaParam in metaParams)
-                    {
-                        var tuple = (
-                               name: $"{key}.{metaParam.Name}",
-                               value: metaParam.Value,
-                               sensitivity: metaParam.Sensitivity ?? sensitivity);
-
-                        yield return tuple;
-                    }
-                }
-            }
-            else
-            {
-                yield return (key, pair.Value, sensitivity);
             }
         }
 

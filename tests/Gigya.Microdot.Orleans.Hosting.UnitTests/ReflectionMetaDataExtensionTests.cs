@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -47,7 +48,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [TestCase(nameof(PersonMockData.Cryptic), Sensitivity.Secretive)]
         [TestCase(nameof(PersonMockData.Name), Sensitivity.NonSensitive)]
         [TestCase(nameof(PersonMockData.ID), null)]
-        public void ExtracPropertiesSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity ? expected)
+        public void ExtracPropertiesSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity? expected)
         {
             var expectedSensitiveProperty = typeof(PersonMockData).GetProperty(actualValue);
 
@@ -56,10 +57,31 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
 
         [Test]
+        public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent2()
+        {
+            var mock = new PersonMockData();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues(mock, mock.GetType()).ToList();
+
+            reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
+
+            foreach (var reflectionMetadata in reflectionMetadataInfos)
+            {
+                var propertyInfo = typeof(PersonMockData).GetProperty(reflectionMetadata.PropertyName);
+
+                var result = reflectionMetadata.ValueExtractor(mock);
+
+                if (propertyInfo.GetValue(mock).Equals(result) == false)
+                {
+                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
+                }
+            }
+        }
+
+        [Test]
         public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues<PersonMockData>().ToList();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues(mock, mock.GetType()).ToList();
 
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
@@ -75,6 +97,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 }
 
             }
+        }
+
+        [Test]
+        public void ExtracPropertiesSensitivity_ExtractSensitivity_ThrowNotImplementedException()
+        {
+            var cache = new PropertiesMetadataPropertiesCache();
+
+            var mock = new PersonMockData();
+
+            int x = 10;
+            Assert.Throws<NotImplementedException>(() => cache.ParseIntoParams(x));
+
         }
 
         [Test]
@@ -137,8 +171,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             foreach (var person in people)
             {
-                var genericMethod = method.MakeGenericMethod(type);
-                var tmpParams = (IEnumerable<MetadataCacheParam>)genericMethod.Invoke(cache, new[] { person });
+                var tmpParams = cache.ParseIntoParams(person);
                 tmpParams.Count().ShouldBe(_numOfProperties);
             }
             stopWatch.Stop();

@@ -58,6 +58,7 @@
     <Compile Include="HttpService\Endpoints\HealthEndpoint.cs" />
     <Compile Include="HttpService\Endpoints\ICustomEndpoint.cs" />
     <Compile Include="Events\ServiceCallEvent.cs" />
+    <Compile Include="HttpService\ServerRequestPublisher.cs" />
     <Compile Include="HttpService\IdentityServiceInterfaceMapper.cs" />
     <Compile Include="HttpService\Endpoints\IHealthStatus.cs" />
     <Compile Include="HttpService\ServiceInterfaceMapper.cs" />

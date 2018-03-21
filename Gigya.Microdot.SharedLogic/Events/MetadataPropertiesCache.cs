@@ -31,18 +31,30 @@ using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
-    public class ReflectionMetadataInfo<TType> where TType : class
+    //public class ReflectionMetadataInfo<TType> where TType : class
+    //{
+    //    public string PropertyName { get; set; }
+    //    public Func<TType, object> ValueExtractor { get; set; }
+
+    //    public Sensitivity? Sensitivity { get; set; }
+    //}
+
+
+    public class ReflectionMetadataInfo
     {
         public string PropertyName { get; set; }
-        public Func<TType, object> ValueExtractor { get; set; }
+        public Func<object, object> ValueExtractor { get; set; }
 
         public Sensitivity? Sensitivity { get; set; }
     }
 
 
+
+
+
     public interface IPropertiesMetadataPropertiesCache
     {
-        IEnumerable<MetadataCacheParam> ParseIntoParams<TType>(TType instance) where TType : class;
+        IEnumerable<MetadataCacheParam> ParseIntoParams(object instance);
     }
 
     public class MetadataCacheParam
@@ -56,27 +68,41 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
-        private readonly ConcurrentDictionary<Type, object[]> _cache = new ConcurrentDictionary<Type, object[]>();
+        private readonly ConcurrentDictionary<Type, object[]> _cache;
+        private readonly MethodInfo _method;
 
-        public IEnumerable<MetadataCacheParam> ParseIntoParams<TType>(TType instance) where TType : class
+        public PropertiesMetadataPropertiesCache()
         {
+            _method = typeof(PropertiesMetadataPropertiesCache).GetMethod(nameof(Register), BindingFlags.NonPublic | BindingFlags.Instance);
+            _cache = new ConcurrentDictionary<Type, object[]>();
 
-            Register<TType>();
-            return Resolve(instance);
         }
 
-        private void Register<TType>() where TType : class
+        public IEnumerable<MetadataCacheParam> ParseIntoParams(object instance)
         {
-            var type = typeof(TType);
+            var type = instance.GetType();
 
-            _cache.GetOrAdd(type, x => ExtracPropertiesValues<TType>().Cast<object>().ToArray());
-        }
-
-        private IEnumerable<MetadataCacheParam> Resolve<TType>(TType instance) where TType : class
-        {
-            foreach (var item in _cache[typeof(TType)])
+            if (type.IsClass == false)
             {
-                var workinItem = (ReflectionMetadataInfo<TType>)item;
+                throw new NotImplementedException("Solely class types.");
+            }
+
+            Register(instance, type);
+            var result = Resolve(instance, type);
+
+            return result;
+        }
+
+        private void Register(object instance, Type type)
+        {
+            _cache.GetOrAdd(type, x => ExtracPropertiesValues(instance, type).Cast<object>().ToArray());
+        }
+
+        private IEnumerable<MetadataCacheParam> Resolve(object instance, Type type)
+        {
+            foreach (var item in _cache[type])
+            {
+                var workinItem = (ReflectionMetadataInfo)item;
 
                 yield return new MetadataCacheParam
                 {
@@ -87,10 +113,8 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-        internal static IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
-             where TType : class
+        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesValues(object instance, Type type)
         {
-            var type = typeof(TType);
             var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
                 .Select(x => new
                 {
@@ -100,27 +124,66 @@ namespace Gigya.Microdot.SharedLogic.Events
                 });
 
 
-            var metadatas = new List<ReflectionMetadataInfo<TType>>();
+            var metadatas = new List<ReflectionMetadataInfo>();
 
 
             foreach (var getter in getters)
             {
-                ParameterExpression entity = Expression.Parameter(type);
-                MethodCallExpression getterCall = Expression.Call(entity, getter.Getter);
+                ParameterExpression entity = Expression.Parameter(typeof(object));
+                MethodCallExpression getterCall = Expression.Call(Expression.Convert(entity, type), getter.Getter);
 
                 UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
-                LambdaExpression lambda = Expression.Lambda(castToObject, entity);
+                LambdaExpression lambda = Expression.Lambda<Func<object, object>>(castToObject, entity);
 
-                metadatas.Add(new ReflectionMetadataInfo<TType>
+                metadatas.Add(new ReflectionMetadataInfo
                 {
                     PropertyName = getter.PropertyName,
-                    ValueExtractor = (Func<TType, object>)lambda.Compile(),
+                    ValueExtractor = (Func<object, object>)lambda.Compile(),
                     Sensitivity = getter.Sensitivity
                 });
             }
 
             return metadatas;
         }
+
+
+
+
+
+        //internal static IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
+        //     where TType : class
+        //{
+        //    var type = typeof(TType);
+        //    var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
+        //        .Select(x => new
+        //        {
+        //            Getter = x.GetGetMethod(),
+        //            PropertyName = x.Name,
+        //            Sensitivity = ExtractSensitivity(x) // nullable
+        //        });
+
+
+        //    var metadatas = new List<ReflectionMetadataInfo<TType>>();
+
+
+        //    foreach (var getter in getters)
+        //    {
+        //        ParameterExpression entity = Expression.Parameter(type);
+        //        MethodCallExpression getterCall = Expression.Call(entity, getter.Getter);
+
+        //        UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
+        //        LambdaExpression lambda = Expression.Lambda(castToObject, entity);
+
+        //        metadatas.Add(new ReflectionMetadataInfo<TType>
+        //        {
+        //            PropertyName = getter.PropertyName,
+        //            ValueExtractor = (Func<TType, object>)lambda.Compile(),
+        //            Sensitivity = getter.Sensitivity
+        //        });
+        //    }
+
+        //    return metadatas;
+        //}
 
         internal static Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
         {
