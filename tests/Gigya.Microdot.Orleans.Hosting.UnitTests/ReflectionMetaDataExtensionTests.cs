@@ -43,29 +43,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
-        {
-            var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues<PersonMockData>().ToList();
-
-            reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
-
-            foreach (var reflectionMetadata in reflectionMetadataInfos)
-            {
-                var propertyInfo = typeof(PersonMockData).GetProperty(reflectionMetadata.PropertyName);
-
-                var result = reflectionMetadata.ValueExtractor(mock);
-
-                if (propertyInfo.GetValue(mock).Equals(result) == false)
-                {
-                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
-                }
-
-            }
-        }
-
-
-        [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);

@@ -87,7 +87,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-        public static IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
+       private  IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
             where TType : class
         {
             var type = typeof(TType);
@@ -122,7 +122,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             return metadatas;
         }
 
-        public static Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
+        private Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
         {
             var attribute = propertyInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
