@@ -26,17 +26,19 @@ using System.Runtime.CompilerServices;
 
 namespace Gigya.Microdot.Interfaces.Logging
 {
-	/// <summary>
-	/// A deledate that will be executed to get the actual logging information, if it is needed.
-	/// </summary>
-	/// <param name="message">The message of the log. This message should be a fixed, without any variabel parts (i.e, avoid concatenation or string.Format)</param>
-	/// <param name="encryptedTags">Optional. An anonymous object with properties, where each property is the key of the tag and each value's 
-	/// .ToString() result is the tag value, which must be encrypted upon storage. Defaults to null, which means no tags will be recored.</param>
-	/// <param name="unencryptedTags">An anonymous object with properties, where each property is the key of the tag and each value's 
-	/// .ToString() result is the tag value, which doesn't have to be encrypted upon storage. Defaults to null, which means no tags will be recored.</param>
-	/// <param name="exception">Optional An exception to be logged, if logging an error.  Defaults to null, which means no exeption will be recored.</param>
-	/// <param name="includeStack">True to include the full stack trace of the point where the logging occures, otherwise false. This incures a performance overhead.</param>
-	public delegate void LogDelegate(string message, object encryptedTags = null, object unencryptedTags = null, Exception exception = null, bool includeStack = false);
+    /// <summary>
+    /// A deledate that will be executed to get the actual logging information, if it is needed.
+    /// </summary>
+    /// <param name="message">The message of the log. This message should be a fixed, without any variabel parts (i.e, avoid concatenation or string.Format)</param>
+    /// <param name="encryptedTags">Optional. An anonymous object with properties, where each property is the key of the tag and each value's 
+    /// .ToString() result is the tag value, which must be encrypted upon storage. You can also pass an IEnumerable&lt;KeyValuePair&lt;string, string&gt;&gt;
+    /// or IEnumerable&lt;KeyValuePair&lt;string, object&gt;&gt;. Defaults to null, which means no tags will be recored.</param>
+    /// <param name="unencryptedTags">An anonymous object with properties, where each property is the key of the tag and each value's 
+    /// .ToString() result is the tag value, which doesn't have to be encrypted upon storage. You can also pass an IEnumerable&lt;KeyValuePair&lt;string, string&gt;&gt;
+    /// or IEnumerable&lt;KeyValuePair&lt;string, object&gt;&gt;. Defaults to null, which means no tags will be recored.</param>
+    /// <param name="exception">Optional An exception to be logged, if logging an error.  Defaults to null, which means no exeption will be recored.</param>
+    /// <param name="includeStack">True to include the full stack trace of the point where the logging occures, otherwise false. This incures a performance overhead.</param>
+    public delegate void LogDelegate(string message, object encryptedTags = null, object unencryptedTags = null, Exception exception = null, bool includeStack = false);
 
 
 	/// <summary>

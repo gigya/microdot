@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.12
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
 	ProjectSection(SolutionItems) = preProject
@@ -57,6 +57,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing", "Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj", "{D37E359C-170E-4D67-AD49-45002B48987E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Hosting.UnitTests", "tests\Gigya.Microdot.Hosting.UnitTests\Gigya.Microdot.Hosting.UnitTests.csproj", "{A17C9A6D-317D-441C-B33A-3807B67B4FA2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sample", "Sample", "{79538186-DFAD-463C-B4D1-CD0917CF5954}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Interface", "Sample\CalculatorService.Interface\CalculatorService.Interface.csproj", "{1FB8E464-6A36-44A2-A343-8E95B51B4542}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService", "Sample\CalculatorService\CalculatorService.csproj", "{5B1BA713-F5BA-466B-B79E-95261DB27FA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Client", "Sample\CalculatorService.Client\CalculatorService.Client.csproj", "{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -140,6 +148,18 @@ Global
 		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A17C9A6D-317D-441C-B33A-3807B67B4FA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FB8E464-6A36-44A2-A343-8E95B51B4542}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FB8E464-6A36-44A2-A343-8E95B51B4542}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FB8E464-6A36-44A2-A343-8E95B51B4542}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FB8E464-6A36-44A2-A343-8E95B51B4542}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B1BA713-F5BA-466B-B79E-95261DB27FA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B1BA713-F5BA-466B-B79E-95261DB27FA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B1BA713-F5BA-466B-B79E-95261DB27FA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B1BA713-F5BA-466B-B79E-95261DB27FA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -149,6 +169,9 @@ Global
 		{8E548D57-5880-4283-BDF5-7386886D481D} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 		{0A24AE97-EE88-4E8B-8B92-092884D41399} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 		{A17C9A6D-317D-441C-B33A-3807B67B4FA2} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
+		{1FB8E464-6A36-44A2-A343-8E95B51B4542} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
+		{5B1BA713-F5BA-466B-B79E-95261DB27FA9} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
+		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
