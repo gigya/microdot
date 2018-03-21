@@ -24,12 +24,13 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    interface IMemoizer : IProxyable, IDisposable
+    public interface IMemoizer : IProxyable, IDisposable
     {
         object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
-        object GetOrAdd(string key, Func<Task> factory, CacheItemPolicyEx policy);
+        Task GetOrAdd(string key, Func<Task> factory, CacheItemPolicyEx policy);
     }
 }

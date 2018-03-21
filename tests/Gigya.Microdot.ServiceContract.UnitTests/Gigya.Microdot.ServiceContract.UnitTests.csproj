@@ -56,6 +56,10 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
+      <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
+      <Name>Gigya.Microdot.SharedLogic</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
       <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
       <Name>Gigya.ServiceContract</Name>

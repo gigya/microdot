@@ -218,19 +218,27 @@ namespace Gigya.Microdot.Hosting.Service
 
 
         /// <summary>
-        /// Signals the service to stop.
+        /// Signals the service to stop or throws an exception if it is not in a valid state to stop (e.g. already stopping).
         /// </summary>
         public void Stop()
         {
             if (StopEvent.WaitOne(0))
                 throw new InvalidOperationException("Service is already stopped, or is running in an unsupported mode.");
 
+            TryStop();
+        }
+
+        /// <summary>
+        /// Signals the service to stop. Does nothing if the service is not in a valid state to stop (e.g. already stopping).
+        /// </summary>
+        public void TryStop()
+        {
             StopEvent.Set();
         }
 
         protected virtual void OnCrash()
         {
-            Stop();
+            TryStop();
             WaitForServiceStoppedAsync().Wait(5000);
             Dispose();
         }

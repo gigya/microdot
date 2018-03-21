@@ -32,6 +32,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Ninject;

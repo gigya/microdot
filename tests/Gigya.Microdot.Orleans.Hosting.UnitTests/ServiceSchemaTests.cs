@@ -23,6 +23,7 @@
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Newtonsoft.Json;
 using NUnit.Framework;
 

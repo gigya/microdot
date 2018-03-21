@@ -20,32 +20,48 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Net;
-using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.SharedLogic.HttpService.Schema;
+using System;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
-namespace Gigya.Microdot.Hosting.HttpService.Endpoints
+namespace Gigya.Microdot.SharedLogic.HttpService.Schema
 {
-    public class SchemaEndpoint : ICustomEndpoint
+    public class AttributeSchema
     {
-        private readonly string _jsonSchema;
+        [JsonIgnore]
+        public Attribute Attribute { get; set; }
 
-        public SchemaEndpoint(ServiceSchema schemaProvider)
-        {
-            _jsonSchema = JsonConvert.SerializeObject(schemaProvider, new JsonSerializerSettings{Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore});
-        }        
+        public string TypeName { get; set; }
 
-        public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
+        public JObject Data { get; set; }
+
+        public AttributeSchema() { }
+
+        public AttributeSchema(Attribute attribute)
         {
-            if (context.Request.Url.AbsolutePath.EndsWith("/schema"))
+            Attribute = attribute;
+            TypeName = attribute.GetType().AssemblyQualifiedName;
+            Data = JObject.FromObject(attribute);
+        }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext context)
+        {
+            try
             {
-                await writeResponse(_jsonSchema).ConfigureAwait(false);
-                return true;
-            }
+                Type t = Type.GetType(TypeName);
 
-            return false;
+                if (t != null)
+                    Attribute = (Attribute)Data.ToObject(t);
+            }
+            catch { }
+        }
+
+        internal static bool FilterAttributes(Attribute a)
+        {
+            return a.GetType().Namespace?.StartsWith("System.Diagnostics") == false && a.GetType().Namespace?.StartsWith("System.Security") == false;
         }
     }
+
 }

@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy

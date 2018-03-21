@@ -24,8 +24,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Gigya.Microdot.SharedLogic.Events;
 using Newtonsoft.Json;
@@ -107,6 +109,21 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 			for (int i = 0; i < arguments.Length; i++)
 				Arguments.Add(parameters[i].Name, arguments[i]);
 		}
+
+        public string ComputeCacheKey()
+        {
+            if (Arguments == null) throw new InvalidOperationException("Cannot compute cache key because Arguments is null.");
+            if (Target == null) throw new InvalidOperationException("Cannot compute cache key because Target is null.");
+
+            var stream = new MemoryStream();
+            using (var writer = new StreamWriter(stream) { AutoFlush = true })
+            using (SHA1 sha = new SHA1CryptoServiceProvider())
+            {
+                JsonSerializer.Create().Serialize(writer, Arguments);
+                stream.Seek(0, SeekOrigin.Begin);
+                return $"{Target}#{Convert.ToBase64String(sha.ComputeHash(stream))}";
+            }
+        }
 	}
 
     public class InvocationTarget

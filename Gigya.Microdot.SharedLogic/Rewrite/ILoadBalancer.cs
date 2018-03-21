@@ -20,32 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Net;
-using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.SharedLogic.HttpService.Schema;
-using Newtonsoft.Json;
+using System;
 
-namespace Gigya.Microdot.Hosting.HttpService.Endpoints
+namespace Gigya.Microdot.SharedLogic.Rewrite
 {
-    public class SchemaEndpoint : ICustomEndpoint
+    public interface ILoadBalancer : IDisposable
     {
-        private readonly string _jsonSchema;
-
-        public SchemaEndpoint(ServiceSchema schemaProvider)
-        {
-            _jsonSchema = JsonConvert.SerializeObject(schemaProvider, new JsonSerializerSettings{Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore});
-        }        
-
-        public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
-        {
-            if (context.Request.Url.AbsolutePath.EndsWith("/schema"))
-            {
-                await writeResponse(_jsonSchema).ConfigureAwait(false);
-                return true;
-            }
-
-            return false;
-        }
+        INode GetNode();
     }
 }

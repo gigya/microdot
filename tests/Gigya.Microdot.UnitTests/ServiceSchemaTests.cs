@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
 using NUnit.Framework;

@@ -23,6 +23,7 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Newtonsoft.Json;
 using NUnit.Framework;
 #pragma warning disable 169

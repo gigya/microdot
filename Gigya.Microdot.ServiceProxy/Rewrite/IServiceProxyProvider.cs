@@ -23,8 +23,9 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService.Schema;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 
@@ -41,9 +42,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
     {
         internal IMemoizer Memoizer { get; }
         internal ServiceSchema Schema { get; set; }
-        internal RemoteHostPool LoadBalancer { get; }
-
-
+        internal ILoadBalancer LoadBalancer { get; }
 
         public void Dispose()
         {
