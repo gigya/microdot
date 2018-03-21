@@ -87,8 +87,8 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-       private  IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
-            where TType : class
+        internal static IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
+             where TType : class
         {
             var type = typeof(TType);
             var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
@@ -105,7 +105,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             foreach (var getter in getters)
             {
-                ParameterExpression entity = Expression.Parameter(typeof(TType));
+                ParameterExpression entity = Expression.Parameter(type);
                 MethodCallExpression getterCall = Expression.Call(entity, getter.Getter);
 
                 UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
@@ -122,7 +122,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             return metadatas;
         }
 
-        private Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
+        internal static Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
         {
             var attribute = propertyInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);

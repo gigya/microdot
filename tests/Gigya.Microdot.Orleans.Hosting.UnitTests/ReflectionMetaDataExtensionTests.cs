@@ -43,6 +43,41 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
+        [TestCase(nameof(PersonMockData.Sensitive), Sensitivity.Sensitive)]
+        [TestCase(nameof(PersonMockData.Cryptic), Sensitivity.Secretive)]
+        [TestCase(nameof(PersonMockData.Name), Sensitivity.NonSensitive)]
+        [TestCase(nameof(PersonMockData.ID), null)]
+        public void ExtracPropertiesSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity ? expected)
+        {
+            var expectedSensitiveProperty = typeof(PersonMockData).GetProperty(actualValue);
+
+            PropertiesMetadataPropertiesCache.ExtractSensitivity(expectedSensitiveProperty).ShouldBe(expected);
+        }
+
+
+        [Test]
+        public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
+        {
+            var mock = new PersonMockData();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues<PersonMockData>().ToList();
+
+            reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
+
+            foreach (var reflectionMetadata in reflectionMetadataInfos)
+            {
+                var propertyInfo = typeof(PersonMockData).GetProperty(reflectionMetadata.PropertyName);
+
+                var result = reflectionMetadata.ValueExtractor(mock);
+
+                if (propertyInfo.GetValue(mock).Equals(result) == false)
+                {
+                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
+                }
+
+            }
+        }
+
+        [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);
@@ -132,6 +167,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     {
         public int ID { get; set; } = 10;
 
+        [NonSensitive]
         public string Name { get; set; } = "Mocky";
 
         public bool IsMale { get; set; } = false;
