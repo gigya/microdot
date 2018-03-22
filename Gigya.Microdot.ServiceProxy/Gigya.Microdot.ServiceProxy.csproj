@@ -91,10 +91,6 @@
       <Project>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</Project>
       <Name>Gigya.Microdot.Interfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
-      <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
-      <Name>Gigya.ServiceContract</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -104,6 +100,17 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Gigya.ServiceContract">
+          <HintPath>..\packages\Gigya.ServiceContract\lib\net451\Gigya.ServiceContract.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
