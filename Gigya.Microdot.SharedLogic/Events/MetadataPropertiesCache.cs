@@ -61,13 +61,15 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
+        private const string ErrorMessage = "Property {0} throw an exception, therefore its wasn't audited";
+
         private readonly ILog _log;
-        private readonly ConcurrentDictionary<Type, object[]> _cache;
+        private readonly ConcurrentDictionary<Type, ReflectionMetadataInfo[]> _propertyMetadataCache;
 
         public PropertiesMetadataPropertiesCache(ILog log)
         {
             _log = log;
-            _cache = new ConcurrentDictionary<Type, object[]>();
+            _propertyMetadataCache = new ConcurrentDictionary<Type, ReflectionMetadataInfo[]>();
 
         }
 
@@ -75,50 +77,41 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             var type = instance.GetType();
 
-            if (type.IsClass == false)
-            {
-                throw new NotImplementedException("Solely class types.");
-            }
-
-            Register(instance, type);
-            var result = Resolve(instance, type);
+            var result = ExtracParams(instance, type);
 
             return result;
         }
 
-        private void Register(object instance, Type type)
+
+
+        private IEnumerable<MetadataCacheParam> ExtracParams(object instance, Type type)
         {
-            _cache.GetOrAdd(type, x =>
+            var propertyMetadata = _propertyMetadataCache.GetOrAdd(type, x => ExtracPropertiesMetadata(instance, type).ToArray());
+
+            foreach (var item in propertyMetadata)
             {
+                object value = null;
+
                 try
                 {
-                    return ExtracPropertiesValues(instance, type).Cast<object>().ToArray();
+                    value = item.ValueExtractor(instance);
                 }
-                catch (Exception exception)
+                catch (Exception ex)
                 {
-                    _log.Error(_ => _($"During extraction an error occur with the following instance {type.Name}", exception: exception));
-
-                    return Enumerable.Empty<ReflectionMetadataInfo>().ToArray();
+                    _log.Warn(string.Format(ErrorMessage, item.PropertyName));
+                    continue;
                 }
-            });
-        }
-
-        private IEnumerable<MetadataCacheParam> Resolve(object instance, Type type)
-        {
-            foreach (var item in _cache[type])
-            {
-                var workinItem = (ReflectionMetadataInfo)item;
 
                 yield return new MetadataCacheParam
                 {
-                    Name = workinItem.PropertyName,
-                    Value = workinItem.ValueExtractor(instance),
-                    Sensitivity = workinItem.Sensitivity
+                    Name = item.PropertyName,
+                    Value = value,
+                    Sensitivity = item.Sensitivity
                 };
             }
         }
 
-        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesValues(object instance, Type type)
+        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
         {
             var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
                 .Select(x => new
@@ -136,14 +129,13 @@ namespace Gigya.Microdot.SharedLogic.Events
             {
                 var entity = Expression.Parameter(typeof(object));
                 var getterCall = Expression.Call(Expression.Convert(entity, type), getter.Getter);
-
                 var castToObject = Expression.Convert(getterCall, typeof(object));
-                LambdaExpression lambda = Expression.Lambda<Func<object, object>>(castToObject, entity);
+                var lambda = Expression.Lambda<Func<object, object>>(castToObject, entity);
 
                 metadatas.Add(new ReflectionMetadataInfo
                 {
                     PropertyName = getter.PropertyName,
-                    ValueExtractor = (Func<object, object>)lambda.Compile(),
+                    ValueExtractor = lambda.Compile(),
                     Sensitivity = getter.Sensitivity
                 });
             }

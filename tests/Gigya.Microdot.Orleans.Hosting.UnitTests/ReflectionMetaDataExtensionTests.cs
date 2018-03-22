@@ -25,10 +25,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Events;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
+using NSubstitute;
+using Orleans.CodeGeneration;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
@@ -37,13 +41,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class ReflectionMetaDataExtensionTests
     {
         private int _numOfProperties;
-        private NullLog _nullableLog;
+        private ILog _logMocked;
 
-        [OneTimeSetUp]
+        [SetUp]
         public void OneTimeSetup()
         {
             _numOfProperties = typeof(PersonMockData).GetProperties().Length;
-            _nullableLog = new NullLog();
+            _logMocked = Substitute.For<ILog>();
+
         }
 
         [Test]
@@ -63,7 +68,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent2()
         {
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues(mock, mock.GetType()).ToList();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToList();
 
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
@@ -84,7 +89,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesValues(mock, mock.GetType()).ToList();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToList();
 
             reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
 
@@ -108,7 +113,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);
             const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
 
-            var cache = new PropertiesMetadataPropertiesCache(_nullableLog);
+            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var mock = new PersonMockData();
             var arguments = cache.ParseIntoParams(mock);
 
@@ -129,10 +134,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
         }
 
+
         [Test]
         public void PropertyMetadata_Extract_All_Public_Properties()
         {
-            var cache = new PropertiesMetadataPropertiesCache(_nullableLog);
+            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var mock = new PersonMockData();
             var arguments = cache.ParseIntoParams(mock).ToList();
 
@@ -148,10 +154,46 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
         }
 
+
+        [Test]
+        public void ExtracPropertiesValues_ExtractSensitiveAndCrypticWithInheritenceAndException_ShouldBeEquivilent()
+        {
+            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
+            var mock = new TeacherWithExceptionMock();
+            var arguments = cache.ParseIntoParams(mock);
+
+            arguments.Count().ShouldBe(mock.GetType().GetProperties().Length - 1);
+
+            ArgumentVerivications(mock,arguments);
+            
+            _logMocked.Received().Warn(Arg.Any<string>(), null, null, null, Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+        }
+
+        [Test]
+        public void ExtracPropertiesValues_SendTwoPeople_ShouldBeEquivilent()
+        {
+            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
+            var person = new PersonMockData();
+            var teacher = new TeacherWithExceptionMock();
+            var teacherArguments = cache.ParseIntoParams(teacher);
+            var personArguments = cache.ParseIntoParams(person);
+
+            personArguments.Count().ShouldBe(person.GetType().GetProperties().Length);
+
+            ArgumentVerivications(person, personArguments);
+            _logMocked.DidNotReceive().Warn(Arg.Any<string>(), null, null, null, Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+
+            teacherArguments.Count().ShouldBe(teacher.GetType().GetProperties().Length - 1);
+            ArgumentVerivications(teacher, teacherArguments);
+
+            _logMocked.Received().Warn(Arg.Any<string>(), null, null, null, Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+
+        }
+
         [Test]
         public void LoadTest()
         {
-            var cache = new PropertiesMetadataPropertiesCache(_nullableLog);
+            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var people = GeneratePeople(10000).ToList();
             var stopWatch = new Stopwatch();
 
@@ -165,6 +207,115 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             stopWatch.Stop();
         }
 
+
+        private void ArgumentVerivications(object instance, IEnumerable<MetadataCacheParam> arguments)
+        {
+            foreach (var arg in arguments)
+            {
+                switch (arg.Sensitivity)
+                {
+
+                    case Sensitivity.Secretive:
+
+                        Varification<SensitiveAttribute>(instance, arg.Name, arg.Value, arg.Sensitivity);
+                        break;
+
+                    case Sensitivity.Sensitive:
+
+                        Varification<SensitiveAttribute>(instance, arg.Name, arg.Value, arg.Sensitivity);
+                        break;
+
+                    case Sensitivity.NonSensitive:
+
+                        Varification<NonSensitiveAttribute>(instance, arg.Name, arg.Value, arg.Sensitivity);
+                        break;
+
+                    default:
+
+                        //With no attributes.
+                        instance.GetType().GetProperty(arg.Name).GetCustomAttributes().Count().ShouldBe(0);
+
+                        if (TryGetValue(instance, arg.Name, out var value))
+                        {
+                            value.ShouldBe(value);
+                            break;
+                        }
+                        throw new NotImplementedException();
+                }
+            }
+
+
+        }
+
+        private void Varification<TAttribute>(object mock, string propName, object value, Sensitivity? sensitivity) where TAttribute : Attribute
+        {
+            var attribute = GetAttribute<TAttribute>(mock, propName);
+            object tmpValue;
+
+            if (TryGetValue(mock, propName, out tmpValue))
+            {
+                value.ShouldBe(value);
+            }
+            else
+            {
+                //value.ToString().StartsWith(PropertiesMetadataPropertiesCache.ErrorMessage).ShouldBeTrue();
+                throw new NotImplementedException();
+            }
+
+            if (attribute is null == false)
+            {
+                if (attribute is SensitiveAttribute)
+                {
+                    (attribute as SensitiveAttribute).Secretive.ShouldBe(sensitivity == Sensitivity.Secretive);
+                }
+                else
+                {
+                    if (attribute is NonSensitiveAttribute)
+                    {
+                        sensitivity.ShouldBe(Sensitivity.NonSensitive);
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+            }
+        }
+
+        private TAttribute GetAttribute<TAttribute>(object instance, string propName) where TAttribute : Attribute
+        {
+            var type = instance.GetType();
+            var attribute = default(TAttribute);
+
+            try
+            {
+                return type.GetProperty(propName).GetCustomAttribute<TAttribute>();
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+
+        }
+
+
+        private bool TryGetValue(object instance, string name, out object value)
+        {
+            var type = instance.GetType();
+            try
+            {
+                value = type.GetProperty(name).GetValue(instance);
+                return true;
+            }
+            catch (Exception e)
+            {
+                value = null;
+
+            }
+
+            return false;
+        }
+
         private IEnumerable<PersonMockData> GeneratePeople(int amount)
         {
             for (int i = 0; i < amount; i++)
@@ -172,27 +323,39 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 yield return new PersonMockData { ID = i, Name = "Name", Cryptic = true };
             }
         }
+
+
+
+
+        #region MockData
+        private class PersonMockData
+        {
+            public int ID { get; set; } = 10;
+
+            [NonSensitive]
+            public string Name { get; set; } = "Mocky";
+
+            public bool IsMale { get; set; } = false;
+
+            [Sensitive(Secretive = false)]
+
+            public bool Sensitive { get; set; } = true;
+
+            [Sensitive(Secretive = true)]
+
+            public bool Cryptic { get; set; } = true;
+
+        }
+
+
+        private class TeacherWithExceptionMock : PersonMockData
+        {
+            public string GetError => throw new Exception("ddsfsdfasd");
+
+            [NonSensitive]
+            public int Years { get; set; }
+        }
+        #endregion
     }
-
-
-    internal class PersonMockData
-    {
-        public int ID { get; set; } = 10;
-
-        [NonSensitive]
-        public string Name { get; set; } = "Mocky";
-
-        public bool IsMale { get; set; } = false;
-
-        [Sensitive(Secretive = false)]
-
-        public bool Sensitive { get; set; } = true;
-
-        [Sensitive(Secretive = true)]
-
-        public bool Cryptic { get; set; } = true;
-
-    }
-
 }
 

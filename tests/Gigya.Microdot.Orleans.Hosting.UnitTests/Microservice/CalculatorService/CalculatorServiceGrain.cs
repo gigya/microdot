@@ -29,7 +29,6 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.MockData;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
@@ -158,7 +157,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 {
                     serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
                     serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
-
                 }
 
                 foreach (var s in NoneSensitive)
@@ -183,13 +181,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return true;
         }
 
-        public async Task CreateMockPerson([LogFields] PersonMock personMock)
+        public async Task CreateMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock)
         {
             await Task.FromResult(1); // why?
         }
 
 
-        public async Task<bool> CreateDynamicMockPerson(PersonMock personMock)
+        public async Task<bool> CreateDynamicMockPerson(CalculatorServiceTests.PersonMock personMock)
         {
             await Task.FromResult(1); // why?
 
@@ -197,17 +195,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
 
 
-        public async Task<bool> IsCreateDynamicMockPerson([LogFields]PersonMock personMock)
+
+
+        public async Task<bool> IsCreateDynamicMockPerson([LogFields]CalculatorServiceTests.PersonMock personMock)
         {
             await Task.Delay(150);
 
-            var prefixClassName = typeof(PersonMock).Name;
+            var prefixClassName = typeof(CalculatorServiceTests.PersonMock).Name;
             var expectedMetadata = DissectPropertyInfoMetadata.DissectPropertis(personMock).Select(x => new
             {
                 PropertyInfo = x.PropertyInfo,
                 Sensitivity = x.Sensitivity,
                 NewPropertyName = AddPrifix(prefixClassName, x.PropertyInfo.Name)
             });
+
+
             var expectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
             var expectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).ToList();
             var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
@@ -216,6 +218,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
 
             expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
+
+            //Sensitive
             foreach (var argument in callEvent.EncryptedServiceMethodArguments)
             {
                 var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
@@ -231,6 +235,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
             }
+
+            //NonSensitive
 
             foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
             {

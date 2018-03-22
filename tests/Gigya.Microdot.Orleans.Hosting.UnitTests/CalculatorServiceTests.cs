@@ -29,10 +29,10 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.MockData;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;
@@ -335,11 +335,25 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             await Service.CreateMockPerson(person);
             (await Service.IsLogPramSucceed(
-                sensitives: new List<string> { person.ID.ToString(), person.Gender},
+                sensitives: new List<string> { person.ID.ToString(), person.Gender },
                 NoneSensitives: new List<string> { person.Name },
                 NotExists: new List<string> { person.Password })).ShouldBeTrue();
-
         }
+
+        [Test]
+        public async Task SendComplexWithInheritenceRequest()
+        {
+            var person = new TeacherMock();
+
+            await Service.CreateMockPerson(person);
+            (await Service.IsLogPramSucceed(
+                sensitives: new List<string> { person.ID.ToString(), person.Gender },
+                NoneSensitives: new List<string> { person.Name, person.School },
+                NotExists: new List<string> { person.Password })).ShouldBeTrue();
+        }
+
+
+
         [Test]
         public async Task CreateDynamicallyMockPerson()
         {
@@ -347,9 +361,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             await Service.CreateDynamicMockPerson(person);
             (await Service.IsCreateDynamicMockPerson(person)).ShouldBeTrue();
-
         }
 
+        [Test]
+        public async Task CreateDynamicallyWithInheritenceMock()
+        {
+            var person = new TeacherMock();
+
+            await Service.CreateDynamicMockPerson(person);
+            (await Service.IsCreateDynamicMockPerson(person)).ShouldBeTrue();
+
+        }
 
         [Test]
         public async Task LogGrainId()
@@ -357,6 +379,45 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Service.LogGrainId();
 
         }
+
+        #region MockData
+        public class PersonMock
+        {
+            public int ID { get; set; } = 100;
+
+            [NonSensitive]
+            public string Name { get; set; } = "Eli";
+
+            [Sensitive(Secretive = false)]
+            public string Gender { get; set; } = "Man";
+
+            [Sensitive(Secretive = true)]
+            public string Password { get; set; } = "password";
+
+            public InnerCarMockClass InnerCarMockClass { get; set; } = new InnerCarMockClass();
+
+
+        }
+
+
+        public class InnerCarMockClass
+        {
+            [NonSensitive] public int Year { get; set; } = 100;
+
+            [NonSensitive] public string LisencePlates { get; set; } = "11 -222-33";
+        }
+
+
+
+        [Serializable]
+        public class TeacherMock : PersonMock
+        {
+            [NonSensitive]
+            public string School { get; set; } = "Busmat";
+        }
+
+
+        #endregion
 
     }
 }
