@@ -79,8 +79,11 @@
     <Compile Include="Rewrite\ConsulServiceListMonitor.cs" />
     <Compile Include="Rewrite\IConsulNodeMonitor.cs" />
     <Compile Include="Rewrite\IConsulServiceListMonitor.cs" />
+    <Compile Include="Rewrite\ILoadBalancer.cs" />
     <Compile Include="Rewrite\IQueryBasedConsulNodeMonitor.cs" />
+    <Compile Include="Rewrite\LoadBalancer.cs" />
     <Compile Include="Rewrite\LocalNodeSource.cs" />
+    <Compile Include="Rewrite\MonitoredNode.cs" />
     <Compile Include="Rewrite\Node.cs" />
     <Compile Include="Rewrite\QueryBasedConsulNodeMonitor.cs" />
     <Compile Include="ServiceDeployment.cs" />

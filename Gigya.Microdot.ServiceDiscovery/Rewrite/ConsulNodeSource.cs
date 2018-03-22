@@ -63,7 +63,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (ServiceListMonitor.Services.Contains(ServiceName))
                     return false;
 
-                AggregatingHealthStatus.RegisterCheck(ServiceName, ()=> HealthCheckResult.Healthy($"{ServiceName} - Not exists on Consul"));
+                AggregatingHealthStatus.RegisterCheck(ServiceName, ()=> HealthCheckResult.Healthy($"Not exists on Consul"));
                 return true;
             }
         }

@@ -443,7 +443,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Content = responseContent
             });
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () => HealthCheckResult.Unhealthy($"{_serviceName} - Consul error: " + ex.Message));
+            _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () => HealthCheckResult.Unhealthy($"Consul error: " + ex.Message));
 
             if (Result != null && Result.Error == null)
                 return;
@@ -478,7 +478,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 };
 
                 _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin,
-                    () => HealthCheckResult.Healthy($"{_serviceNameOrigin} - Service doesn't exist on Consul"));
+                    () => HealthCheckResult.Healthy($"Service doesn't exist on Consul"));
             }
         }
 
@@ -516,9 +516,9 @@ namespace Gigya.Microdot.ServiceDiscovery
                 _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () =>
                     {
                         if (_serviceName == _serviceNameOrigin)
-                            return HealthCheckResult.Healthy($"{_serviceNameOrigin} - {healthMessage}");
+                            return HealthCheckResult.Healthy(healthMessage);
                         else
-                            return HealthCheckResult.Healthy($"{_serviceNameOrigin} - Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
+                            return HealthCheckResult.Healthy($"Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
                     });
 
                 Result = new EndPointsResult

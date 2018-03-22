@@ -207,7 +207,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var error = _lastNodesResult?.Error ?? _lastVersionResult?.Error ?? Error;
             if (error != null)
             {
-                return HealthCheckResult.Unhealthy($"{ServiceName} - Consul error: " + error.Message);
+                return HealthCheckResult.Unhealthy($"Consul error: " + error.Message);
             }
 
             var healthMessage = string.Empty;
@@ -216,7 +216,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else
                 healthMessage = $"{Nodes.Length} nodes";
 
-            return HealthCheckResult.Healthy($"{ServiceName} - {healthMessage}");
+            return HealthCheckResult.Healthy(healthMessage);
         }
 
 

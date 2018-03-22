@@ -65,6 +65,7 @@
     <Compile Include="Discovery\Rewrite\ConsulNodeMonitorTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulNodeSourceTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulServiceListMonitorTests.cs" />
+    <Compile Include="Discovery\Rewrite\LoadBalancerTests.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
     <Compile Include="Discovery\ConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Events\EventSerializationTests.cs" />
