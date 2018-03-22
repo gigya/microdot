@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
@@ -9,7 +8,6 @@ using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
@@ -114,7 +112,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
                 if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) == false && response.Headers.Contains(GigyaHttpHeaders.ProtocolVersion) == false)
                 {
                     //node?.ReportFailure(ex);
-                    throw new RemoteServiceException($"The remote service is returned code ({(int)response.StatusCode}) and is not recognized as a Gigya host.", uri);
+                    throw RemoteServiceException.NonMicrodotHost(uri, response.StatusCode);
                 }
             }
             catch (HttpRequestException ex)
@@ -123,9 +121,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             }
             catch (TaskCanceledException ex)
             {
-                throw new RemoteServiceException("The request to the remote service exceeded the allotted timeout. See the 'RequestUri' " +
-                    "property on this exception for the URL that was called and the tag 'requestTimeout' for the configured timeout.",
-                    uri, ex, unencrypted: new Tags { {"requestTimeout", http.Timeout.ToString()}, {"requestUri", uri } });
+                throw RemoteServiceException.Timeout(uri, ex, http.Timeout);
             }
         }
 
