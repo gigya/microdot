@@ -27,18 +27,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
-    //public class ReflectionMetadataInfo<TType> where TType : class
-    //{
-    //    public string PropertyName { get; set; }
-    //    public Func<TType, object> ValueExtractor { get; set; }
-
-    //    public Sensitivity? Sensitivity { get; set; }
-    //}
-
 
     public class ReflectionMetadataInfo
     {
@@ -68,12 +61,12 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
+        private readonly ILog _log;
         private readonly ConcurrentDictionary<Type, object[]> _cache;
-        private readonly MethodInfo _method;
 
-        public PropertiesMetadataPropertiesCache()
+        public PropertiesMetadataPropertiesCache(ILog log)
         {
-            _method = typeof(PropertiesMetadataPropertiesCache).GetMethod(nameof(Register), BindingFlags.NonPublic | BindingFlags.Instance);
+            _log = log;
             _cache = new ConcurrentDictionary<Type, object[]>();
 
         }
@@ -95,7 +88,19 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         private void Register(object instance, Type type)
         {
-            _cache.GetOrAdd(type, x => ExtracPropertiesValues(instance, type).Cast<object>().ToArray());
+            _cache.GetOrAdd(type, x =>
+            {
+                try
+                {
+                    return ExtracPropertiesValues(instance, type).Cast<object>().ToArray();
+                }
+                catch (Exception exception)
+                {
+                    _log.Error(_ => _($"During extraction an error occur with the following instance {type.Name}", exception: exception));
+
+                    return Enumerable.Empty<ReflectionMetadataInfo>().ToArray();
+                }
+            });
         }
 
         private IEnumerable<MetadataCacheParam> Resolve(object instance, Type type)
@@ -129,10 +134,10 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             foreach (var getter in getters)
             {
-                ParameterExpression entity = Expression.Parameter(typeof(object));
-                MethodCallExpression getterCall = Expression.Call(Expression.Convert(entity, type), getter.Getter);
+                var entity = Expression.Parameter(typeof(object));
+                var getterCall = Expression.Call(Expression.Convert(entity, type), getter.Getter);
 
-                UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
+                var castToObject = Expression.Convert(getterCall, typeof(object));
                 LambdaExpression lambda = Expression.Lambda<Func<object, object>>(castToObject, entity);
 
                 metadatas.Add(new ReflectionMetadataInfo
@@ -148,42 +153,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
 
 
-
-
-        //internal static IEnumerable<ReflectionMetadataInfo<TType>> ExtracPropertiesValues<TType>()
-        //     where TType : class
-        //{
-        //    var type = typeof(TType);
-        //    var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
-        //        .Select(x => new
-        //        {
-        //            Getter = x.GetGetMethod(),
-        //            PropertyName = x.Name,
-        //            Sensitivity = ExtractSensitivity(x) // nullable
-        //        });
-
-
-        //    var metadatas = new List<ReflectionMetadataInfo<TType>>();
-
-
-        //    foreach (var getter in getters)
-        //    {
-        //        ParameterExpression entity = Expression.Parameter(type);
-        //        MethodCallExpression getterCall = Expression.Call(entity, getter.Getter);
-
-        //        UnaryExpression castToObject = Expression.Convert(getterCall, typeof(object));
-        //        LambdaExpression lambda = Expression.Lambda(castToObject, entity);
-
-        //        metadatas.Add(new ReflectionMetadataInfo<TType>
-        //        {
-        //            PropertyName = getter.PropertyName,
-        //            ValueExtractor = (Func<TType, object>)lambda.Compile(),
-        //            Sensitivity = getter.Sensitivity
-        //        });
-        //    }
-
-        //    return metadatas;
-        //}
 
         internal static Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
         {

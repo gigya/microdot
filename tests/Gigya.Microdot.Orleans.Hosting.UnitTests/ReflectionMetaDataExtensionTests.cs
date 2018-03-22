@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Events;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
@@ -36,11 +37,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class ReflectionMetaDataExtensionTests
     {
         private int _numOfProperties;
+        private NullLog _nullableLog;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
             _numOfProperties = typeof(PersonMockData).GetProperties().Length;
+            _nullableLog = new NullLog();
         }
 
         [Test]
@@ -100,24 +103,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtracPropertiesSensitivity_ExtractSensitivity_ThrowNotImplementedException()
-        {
-            var cache = new PropertiesMetadataPropertiesCache();
-
-            var mock = new PersonMockData();
-
-            int x = 10;
-            Assert.Throws<NotImplementedException>(() => cache.ParseIntoParams(x));
-
-        }
-
-        [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
             const string crypticPropertyName = nameof(PersonMockData.Cryptic);
             const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
 
-            var cache = new PropertiesMetadataPropertiesCache();
+            var cache = new PropertiesMetadataPropertiesCache(_nullableLog);
             var mock = new PersonMockData();
             var arguments = cache.ParseIntoParams(mock);
 
@@ -141,7 +132,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void PropertyMetadata_Extract_All_Public_Properties()
         {
-            var cache = new PropertiesMetadataPropertiesCache();
+            var cache = new PropertiesMetadataPropertiesCache(_nullableLog);
             var mock = new PersonMockData();
             var arguments = cache.ParseIntoParams(mock).ToList();
 
@@ -160,12 +151,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void LoadTest()
         {
-            var cache = new PropertiesMetadataPropertiesCache();
+            var cache = new PropertiesMetadataPropertiesCache(_nullableLog);
             var people = GeneratePeople(10000).ToList();
             var stopWatch = new Stopwatch();
-
-            var type = typeof(PersonMockData);
-            var method = typeof(PropertiesMetadataPropertiesCache).GetMethod("ParseIntoParams");
 
             stopWatch.Start();
 
@@ -184,15 +172,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 yield return new PersonMockData { ID = i, Name = "Name", Cryptic = true };
             }
         }
-    }
-
-    internal class PersonOperationMock
-    {
-        public void PrintPerson([LogFields] PersonMockData person, PersonMockData person2, PersonMockData person3)
-        {
-
-        }
-
     }
 
 
