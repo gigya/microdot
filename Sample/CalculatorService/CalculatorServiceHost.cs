@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using CalculatorService.Interface;
+using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
@@ -19,8 +21,10 @@ namespace CalculatorService
             Environment.SetEnvironmentVariable("DC", "global");
             Environment.SetEnvironmentVariable("ENV", "dev");
 
+
             try
             {
+                //var serviceValidator = new ServiceValidator((new List<IValidator>()).ToArray());
                 new CalculatorServiceHost().Run();
             }
             catch (Exception ex)
@@ -34,7 +38,20 @@ namespace CalculatorService
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
             kernel.Bind<ICalculatorService>().To<CalculatorService>();
+            kernel.Bind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
+        }
+
+        public class MockServiceValidator : ServiceValidator
+        {
+
+            public MockServiceValidator()
+                : base(new List<IValidator>().ToArray())
+            {
+
+            }
         }
     }
+
+
 
 }

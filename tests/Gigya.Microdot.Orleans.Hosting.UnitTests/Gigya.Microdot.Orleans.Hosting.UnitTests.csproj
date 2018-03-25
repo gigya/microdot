@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="DissectPropertyInfoMetadata.cs" />
+    <Compile Include="LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
     <Compile Include="CalculatorServiceTests.cs" />

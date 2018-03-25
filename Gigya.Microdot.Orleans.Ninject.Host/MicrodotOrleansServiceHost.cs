@@ -25,6 +25,7 @@ using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -53,6 +54,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public abstract ILoggingModule GetLoggingModule();
 
+
+        protected MicrodotOrleansServiceHost() 
+        {
+
+        }
+
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
         /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
@@ -60,10 +67,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
+
             Kernel = CreateKernel();
-                        
-            PreConfigure(Kernel);          
-            
+
+            PreConfigure(Kernel);
+
             Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
 
             Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
@@ -71,7 +79,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             PreInitialize(Kernel);
             OnInitilize(Kernel);
 
-            SiloHost = Kernel.Get<GigyaSiloHost>();            
+            SiloHost = Kernel.Get<GigyaSiloHost>();
             SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
         }
 
@@ -84,6 +92,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
+             kernel.Get<ServiceValidator>()?.Validate();
+            //Validator.Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
@@ -128,8 +138,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
         }
-        
-        
+
+
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started.
@@ -154,8 +164,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>
         protected virtual async Task BeforeOrleansShutdown(IGrainFactory grainFactory) { }
-        
-        #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
         /// <summary>
         /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
@@ -167,10 +177,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Dispose();
         }
 
-        private readonly object lockHandale=new object();
+        private readonly object lockHandale = new object();
         protected override void Dispose(bool disposing)
         {
-            lock(lockHandale)
+            lock (lockHandale)
             {
                 try
                 {
@@ -178,7 +188,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         return;
 
                     if (!Kernel.IsDisposed)
-                        SafeDispose( Kernel);
+                        SafeDispose(Kernel);
 
                     base.Dispose(disposing);
                 }
@@ -186,7 +196,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 {
                     disposed = true;
                 }
-            }                       
+            }
         }
     }
 }

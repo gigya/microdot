@@ -4,7 +4,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.ServiceContract.Attributes;
 
-namespace Gigya.Microdot.Orleans.Ninject.Host.Validators
+namespace Gigya.Microdot.Hosting.Validators
 {
     public class LogFieldAttributeValidator : IValidator
     {
@@ -33,13 +33,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.Validators
             {
                 if (parameter.GetCustomAttribute(typeof(LogFieldsAttribute)) != null)
                 {
-                    if (parameter.ParameterType.IsClass == false)
+                    if (parameter.ParameterType.IsClass == false || parameter.ParameterType == typeof(string))
                     {
                         throw new ProgrammaticException($"[LogField] should be applied only on a class type ({parameter.Name}) in method ({method.Name}) on serviceInterface ({serviceInterface.Name})");
-
                     }
                 }
             }
         }
+
+
     }
 }

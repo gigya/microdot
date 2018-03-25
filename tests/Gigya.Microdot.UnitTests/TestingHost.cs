@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -26,6 +28,7 @@ namespace Gigya.Microdot.UnitTests
         private readonly Action<IKernel> optionalConfigs;
 
         public TestingHost(Action<IKernel> optionalConfigs = null)
+        
         {
             this.optionalConfigs = optionalConfigs;
         }

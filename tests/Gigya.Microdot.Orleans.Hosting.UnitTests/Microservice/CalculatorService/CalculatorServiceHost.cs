@@ -20,8 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -43,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
         {
-            if(_useHttpLog)
+            if (_useHttpLog)
                 logBinding.To<HttpLog>();
             else
                 logBinding.To<ConsoleLog>();
@@ -56,12 +58,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         private ILoggingModule LoggingModule { get; }
 
-        public CalculatorServiceHost() : this(true)
+        public CalculatorServiceHost() : this( true)
         { }
 
 
-        public CalculatorServiceHost(bool useHttpLog)
-        {            
+        public CalculatorServiceHost( bool useHttpLog)
+        {
             LoggingModule = new FakesLoggersModules(useHttpLog);
         }
 
@@ -76,8 +78,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
+            kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
+
+
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
         }
+
+        public class MockServiceValidator : ServiceValidator
+        {
+
+            public MockServiceValidator()
+                : base(new List<IValidator>().ToArray())
+            {
+
+            }
+        }
     }
+
+
+
 }

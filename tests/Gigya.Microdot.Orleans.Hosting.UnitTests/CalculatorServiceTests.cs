@@ -26,6 +26,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
@@ -57,6 +58,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             this.JObject = jObject;
         }
     }
+
+
 
     [TestFixture]
     public class CalculatorServiceTests
