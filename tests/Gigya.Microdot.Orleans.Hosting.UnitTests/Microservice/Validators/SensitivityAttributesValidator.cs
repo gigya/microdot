@@ -37,9 +37,10 @@ namespace Gigya.Common.Logging.Initialize
             {
                 if (parameter.GetCustomAttribute(typeof(LogFieldsAttribute)) != null)
                 {
-                    if (parameter.ParameterType.IsClass == false || parameter.ParameterType != typeof(string))
+                    if (parameter.ParameterType.IsClass == false )
                     {
-                        
+                        throw new ProgrammaticException($"[LogField] should be applied only on a class type ({parameter.Name}) in method ({method.Name}) on serviceInterface ({serviceInterface.Name})");
+
                     }
                 }
             }
