@@ -25,14 +25,12 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.ServiceContract.Attributes;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
@@ -55,6 +53,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [TestCase(typeof(ILogFieldOnStringMockData))]
         [TestCase(typeof(ILogFieldOnIntMockData))]
         [TestCase(typeof(ILogFieldOnGuiMockData))]
+        [TestCase(typeof(ILogFieldOnIEnumerableMockData))]
+        [TestCase(typeof(ILogFieldOnStructMockData))]
+        [TestCase(typeof(ILogFieldOnDateTimeMockData))]
+        [TestCase(typeof(ILogFieldOnDateTimeOffsetMockData))]
+        [TestCase(typeof(ILogFieldOnTypeMockData))]
+        [TestCase(typeof(ILogFieldOnJTokenMockData))]
         public void ValidationShouldFail(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -78,6 +82,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
 
         #region Valid MockData
+        // ReSharper disable once ClassNeverInstantiated.Local
         private class LocalPerson
         {
             public string Name { get; set; }
@@ -87,15 +92,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         private interface IPersonValidRequest
         {
-            void AddPerson(LocalPerson localPerson);
-            void AddPersonWithLogFieldAttribute([LogFields]LocalPerson localPerson);
-            void AddPerson(LocalPerson localPerson1, [LogFields] LocalPerson localPerson2);
-            void AddPerson2([LogFields] LocalPerson localPerson1, [LogFields] LocalPerson localPerson2);
+            Task AddPerson(LocalPerson localPerson);
+            Task AddPerson();
+            Task AddPersonWithLogFieldAttribute([LogFields]LocalPerson localPerson);
+            Task AddPerson(LocalPerson localPerson1, [LogFields] LocalPerson localPerson2);
+            Task AddPerson2([LogFields] LocalPerson localPerson1, [LogFields] LocalPerson localPerson2);
         }
 
         #endregion
 
+
+
         #region WrongData
+
+        private struct MyStruct
+        { }
+
         private interface ILogFieldOnStringMockData
         {
             void AddPerson([LogFields] string name);
@@ -110,7 +122,37 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             void AddPerson([LogFields] Guid id);
         }
-        
+
+        private interface ILogFieldOnIEnumerableMockData
+        {
+            void AddPerson([LogFields] IEnumerable<string> id);
+        }
+
+        private interface ILogFieldOnStructMockData
+        {
+            void AddPerson([LogFields] MyStruct d);
+        }
+
+        private interface ILogFieldOnDateTimeMockData
+        {
+            void AddPerson([LogFields] DateTime dateTime);
+        }
+        private interface ILogFieldOnDateTimeOffsetMockData
+        {
+            void AddPerson([LogFields] DateTimeOffset dateTimeOffset);
+        }
+        private interface ILogFieldOnTypeMockData
+        {
+            void AddPerson([LogFields] Type type);
+        }
+
+        private interface ILogFieldOnJTokenMockData
+        {
+            void AddPerson([LogFields] JToken token);
+        }
+
+
+
         #endregion
 
     }

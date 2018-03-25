@@ -76,12 +76,6 @@
     </None>
     <None Include="paket.template" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
-      <Project>{DB6D3561-835E-40D5-B9D4-83951CF426DF}</Project>
-      <Name>Gigya.ServiceContract</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

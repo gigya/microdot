@@ -183,13 +183,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public async Task CreateMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock)
         {
-            await Task.FromResult(1); // why?
+            await Task.FromResult(1); 
         }
 
 
         public async Task<bool> CreateDynamicMockPerson(CalculatorServiceTests.PersonMock personMock)
         {
-            await Task.FromResult(1); // why?
+            await Task.FromResult(1); 
 
             return true;
         }

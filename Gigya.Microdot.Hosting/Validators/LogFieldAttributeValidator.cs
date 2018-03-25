@@ -1,18 +1,26 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.ServiceContract.Attributes;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Hosting.Validators
 {
     public class LogFieldAttributeValidator : IValidator
     {
         private readonly IServiceInterfaceMapper _serviceInterfaceMapper;
+        private readonly Type[] _types;
 
         public LogFieldAttributeValidator(IServiceInterfaceMapper serviceInterfaceMapper)
         {
             _serviceInterfaceMapper = serviceInterfaceMapper;
+
+            _types = new[]
+            {
+                typeof(string), typeof(JToken), typeof(Type)
+            };
         }
 
 
@@ -33,9 +41,9 @@ namespace Gigya.Microdot.Hosting.Validators
             {
                 if (parameter.GetCustomAttribute(typeof(LogFieldsAttribute)) != null)
                 {
-                    if (parameter.ParameterType.IsClass == false || parameter.ParameterType == typeof(string))
+                    if (parameter.ParameterType.IsClass == false || _types.Any(x => x == parameter.ParameterType))
                     {
-                        throw new ProgrammaticException($"[LogField] should be applied only on a class type ({parameter.Name}) in method ({method.Name}) on serviceInterface ({serviceInterface.Name})");
+                        throw new ProgrammaticException($"LogFieldAttribute cannot be applied to parameter '{parameter.Name}' of method '{method.Name}' on '{serviceInterface.Name}'. It can only be applied to reference types, except the following types: ${string.Join(", ", _types.Select(x => x.Name))}");
                     }
                 }
             }
