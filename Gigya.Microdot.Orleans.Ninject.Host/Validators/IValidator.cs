@@ -1,4 +1,4 @@
-﻿namespace Gigya.Common.Interface
+﻿namespace Gigya.Microdot.Orleans.Ninject.Host.Validators
 {
     /// <summary>
     /// When service is started, validates that the service is Ok to run, and throws an exception if not
