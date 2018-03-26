@@ -44,7 +44,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("2.5.2")]
 [assembly: AssemblyFileVersion("2.5.2")]
 
+
 [assembly: AssemblyDescription("")]
+
 
 
 // Setting ComVisible to false makes the types in this assembly not visible 
