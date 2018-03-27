@@ -55,11 +55,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         public abstract ILoggingModule GetLoggingModule();
 
 
-        protected MicrodotOrleansServiceHost() 
-        {
-
-        }
-
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
         /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
@@ -92,8 +87,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-             kernel.Get<ServiceValidator>()?.Validate();
-            //Validator.Validate();
+            kernel.Get<ServiceValidator>().Validate();
+
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();

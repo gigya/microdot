@@ -7,5 +7,4 @@
     {
         void Validate();
     }
-
 }

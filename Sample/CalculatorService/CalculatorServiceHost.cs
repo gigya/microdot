@@ -24,7 +24,6 @@ namespace CalculatorService
 
             try
             {
-                //var serviceValidator = new ServiceValidator((new List<IValidator>()).ToArray());
                 new CalculatorServiceHost().Run();
             }
             catch (Exception ex)
@@ -51,7 +50,4 @@ namespace CalculatorService
             }
         }
     }
-
-
-
 }

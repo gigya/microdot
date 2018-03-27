@@ -26,7 +26,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
@@ -380,7 +379,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task LogGrainId()
         {
             await Service.LogGrainId();
-
         }
 
         #region MockData
@@ -398,10 +396,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public string Password { get; set; } = "password";
 
             public InnerCarMockClass InnerCarMockClass { get; set; } = new InnerCarMockClass();
-
-
         }
-
 
         public class InnerCarMockClass
         {
@@ -410,17 +405,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             [NonSensitive] public string LisencePlates { get; set; } = "11 -222-33";
         }
 
-
-
         [Serializable]
         public class TeacherMock : PersonMock
         {
             [NonSensitive]
             public string School { get; set; } = "Busmat";
         }
-
-
         #endregion
-
     }
 }

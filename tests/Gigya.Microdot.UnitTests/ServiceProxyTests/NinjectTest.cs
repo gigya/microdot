@@ -33,7 +33,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
     public class UseServiceWithNoCache
     {
-    
         public IDemoService DemoService { get; }
 
         public UseServiceWithNoCache(IServiceProxyProvider<IDemoService> demoService)

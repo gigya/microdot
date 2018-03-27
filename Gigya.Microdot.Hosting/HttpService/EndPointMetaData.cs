@@ -77,11 +77,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
             return null;
         }
-
-
-
-
-
     }
 
 }

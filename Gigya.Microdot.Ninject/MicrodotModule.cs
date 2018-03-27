@@ -23,9 +23,6 @@
 using System;
 using System.Collections.Concurrent;
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Hosting.Metrics;
-using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
@@ -70,7 +67,6 @@ namespace Gigya.Microdot.Ninject
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
-
 
             Rebind<MetricsContext>()
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))

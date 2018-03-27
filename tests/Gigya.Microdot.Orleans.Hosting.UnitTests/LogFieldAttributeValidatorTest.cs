@@ -62,7 +62,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void ValidationShouldFail(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
-
             var logFieldAttributeValidator = new LogFieldAttributeValidator(_serviceInterfaceMapper);
 
             Assert.Throws<ProgrammaticException>(logFieldAttributeValidator.Validate);
@@ -73,7 +72,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void ValidationShouldPass(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
-
             var logFieldAttributeValidator = new LogFieldAttributeValidator(_serviceInterfaceMapper);
 
             logFieldAttributeValidator.Validate();
@@ -89,7 +87,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public Guid Id { get; set; }
         }
 
-
         private interface IPersonValidRequest
         {
             Task AddPerson(LocalPerson localPerson);
@@ -98,10 +95,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Task AddPerson(LocalPerson localPerson1, [LogFields] LocalPerson localPerson2);
             Task AddPerson2([LogFields] LocalPerson localPerson1, [LogFields] LocalPerson localPerson2);
         }
-
         #endregion
-
-
 
         #region WrongData
 
@@ -150,10 +144,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             void AddPerson([LogFields] JToken token);
         }
-
-
-
         #endregion
-
     }
 }

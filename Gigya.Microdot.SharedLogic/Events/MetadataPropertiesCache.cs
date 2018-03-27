@@ -41,10 +41,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         public Sensitivity? Sensitivity { get; set; }
     }
 
-
-
-
-
     public interface IPropertiesMetadataPropertiesCache
     {
         IEnumerable<MetadataCacheParam> ParseIntoParams(object instance);
@@ -61,8 +57,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
-        private const string ErrorMessage = "Property {0} throw an exception, therefore its wasn't audited";
-
         private readonly ILog _log;
         private readonly ConcurrentDictionary<Type, ReflectionMetadataInfo[]> _propertyMetadataCache;
 
@@ -76,13 +70,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         public IEnumerable<MetadataCacheParam> ParseIntoParams(object instance)
         {
             var type = instance.GetType();
-
             var result = ExtracParams(instance, type);
 
             return result;
         }
-
-
 
         private IEnumerable<MetadataCacheParam> ExtracParams(object instance, Type type)
         {
@@ -90,7 +81,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             foreach (var item in propertyMetadata)
             {
-                object value = null;
+                object value;
 
                 try
                 {
@@ -98,7 +89,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 }
                 catch (Exception ex)
                 {
-                    _log.Warn(string.Format(ErrorMessage, item.PropertyName));
+                    _log.Warn("This property is invalid",unencryptedTags:new { propertyName= item.PropertyName},exception: ex);
                     continue;
                 }
 
@@ -121,9 +112,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                     Sensitivity = ExtractSensitivity(x) // nullable
                 });
 
-
             var metadatas = new List<ReflectionMetadataInfo>();
-
 
             foreach (var getter in getters)
             {
@@ -142,9 +131,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             return metadatas;
         }
-
-
-
 
         internal static Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
         {
@@ -169,8 +155,4 @@ namespace Gigya.Microdot.SharedLogic.Events
             return null;
         }
     }
-
-
-
-
 }

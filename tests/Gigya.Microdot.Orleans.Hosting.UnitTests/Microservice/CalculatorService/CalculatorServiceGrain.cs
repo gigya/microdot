@@ -72,7 +72,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return Worker.GetAppDomainChain(depth);
         }
 
-
         public Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime,
             DateTimeOffset localDateTimeOffset)
         {
@@ -147,9 +146,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             await Task.Delay(150);
             var eventPublisher = _eventPublisher as SpyEventPublisher;
-            eventPublisher.Events.OfType<ServiceCallEvent>().Select(x => x.ServiceMethod).ToArray();
-
             var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
+
             try
             {
 
@@ -186,16 +184,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             await Task.FromResult(1); 
         }
 
-
         public async Task<bool> CreateDynamicMockPerson(CalculatorServiceTests.PersonMock personMock)
         {
             await Task.FromResult(1); 
 
             return true;
         }
-
-
-
 
         public async Task<bool> IsCreateDynamicMockPerson([LogFields]CalculatorServiceTests.PersonMock personMock)
         {
@@ -216,7 +210,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             var eventPublisher = _eventPublisher as SpyEventPublisher;
             var callEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
 
-
             expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
 
             //Sensitive
@@ -235,9 +228,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
             }
-
             //NonSensitive
-
             foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
             {
                 var metadata = expectedNonSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
@@ -253,7 +244,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             return $"{prefix.Substring(0,1).ToLower()}{prefix.Substring(1)}.{param}";
         }
-
 
         public async Task LogGrainId()
         {
@@ -296,9 +286,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
             serviceCallEvent.GrainKeyLong.ShouldBeNull();
             serviceCallEvent.GrainKeyGuid.ShouldBeNull();
-
-
         }
     }
-
 }

@@ -71,7 +71,6 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
-
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -94,7 +93,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            kernel.Get<ServiceValidator>()?.Validate();
+            kernel.Get<ServiceValidator>().Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
@@ -156,7 +155,6 @@ namespace Gigya.Microdot.Ninject.Host
         {
             Dispose();
         }
-
 
         protected override void Dispose(bool disposing)
         {

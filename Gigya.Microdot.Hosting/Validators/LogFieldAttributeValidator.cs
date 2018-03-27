@@ -23,7 +23,6 @@ namespace Gigya.Microdot.Hosting.Validators
             };
         }
 
-
         public void Validate()
         {
             foreach (var serviceInterface in _serviceInterfaceMapper.ServiceInterfaceTypes)
@@ -48,7 +47,5 @@ namespace Gigya.Microdot.Hosting.Validators
                 }
             }
         }
-
-
     }
 }

@@ -27,7 +27,6 @@ using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.SharedLogic;
 
 

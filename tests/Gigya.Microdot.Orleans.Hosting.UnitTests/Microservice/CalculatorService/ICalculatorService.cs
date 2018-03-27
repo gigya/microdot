@@ -63,8 +63,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         Task<bool> IsLogPramSucceed(List<string> sensitives, List<string> NoneSensitives, List<string> NotExists);
         Task CreateMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock);
-
-
         Task LogGrainId();
         Task<bool> CreateDynamicMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock);
         Task<bool> IsCreateDynamicMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock);

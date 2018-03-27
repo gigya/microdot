@@ -4,7 +4,6 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
-using NUnit.Framework;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
@@ -26,7 +25,6 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             kernel.Bind<ICalculatorService>().To<CalculatorService>().InSingletonScope();
         }
 
-
         public class MockServiceValidator : ServiceValidator
         {
 
@@ -37,8 +35,4 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             }
         }
     }
-
-
-
-
 }

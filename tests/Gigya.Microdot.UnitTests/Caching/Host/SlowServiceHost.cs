@@ -40,7 +40,6 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         private readonly Action<IKernel> action;
 
         public SlowServiceHost(Action<IKernel> action = null)
-        
         {
             this.action = action;
         }

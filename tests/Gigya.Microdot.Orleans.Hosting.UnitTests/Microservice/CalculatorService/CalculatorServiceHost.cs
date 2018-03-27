@@ -79,8 +79,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
-
-
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
         }
@@ -95,7 +93,4 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             }
         }
     }
-
-
-
 }

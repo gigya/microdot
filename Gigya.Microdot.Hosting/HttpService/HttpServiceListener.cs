@@ -132,7 +132,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             _failureCounter = context.Counter("Failed", Unit.Calls);
             _activeRequestsCounter = context.Timer("ActiveRequests", Unit.Requests);
             _endpointContext = context.Context("Endpoints");
-
         }
 
 

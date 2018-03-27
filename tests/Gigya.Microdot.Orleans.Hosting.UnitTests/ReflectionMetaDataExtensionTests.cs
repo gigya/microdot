@@ -26,13 +26,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Events;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
 using NSubstitute;
-using Orleans.CodeGeneration;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
@@ -103,7 +101,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 {
                     throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
                 }
-
             }
         }
 
@@ -129,7 +126,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 {
                     arg.Sensitivity.ShouldBe(Sensitivity.Sensitive);
                     typeof(PersonMockData).GetProperty(sensitivePropertyName).GetValue(mock).ShouldBe(mock.Sensitive);
-
                 }
             }
         }
@@ -165,8 +161,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             arguments.Count().ShouldBe(mock.GetType().GetProperties().Length - 1);
 
             ArgumentVerivications(mock,arguments);
-            
-            _logMocked.Received().Warn(Arg.Any<string>(), null, null, null, Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+
+            _logMocked.Received().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
         }
 
         [Test]
@@ -181,13 +177,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             personArguments.Count().ShouldBe(person.GetType().GetProperties().Length);
 
             ArgumentVerivications(person, personArguments);
-            _logMocked.DidNotReceive().Warn(Arg.Any<string>(), null, null, null, Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+            _logMocked.DidNotReceive().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
 
             teacherArguments.Count().ShouldBe(teacher.GetType().GetProperties().Length - 1);
             ArgumentVerivications(teacher, teacherArguments);
 
-            _logMocked.Received().Warn(Arg.Any<string>(), null, null, null, Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
-
+            _logMocked.Received().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
         }
 
         [Test]
@@ -206,7 +201,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
             stopWatch.Stop();
         }
-
 
         private void ArgumentVerivications(object instance, IEnumerable<MetadataCacheParam> arguments)
         {
@@ -243,8 +237,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                         throw new NotImplementedException();
                 }
             }
-
-
         }
 
         private void Varification<TAttribute>(object mock, string propName, object value, Sensitivity? sensitivity) where TAttribute : Attribute
@@ -258,7 +250,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
             else
             {
-                //value.ToString().StartsWith(PropertiesMetadataPropertiesCache.ErrorMessage).ShouldBeTrue();
                 throw new NotImplementedException();
             }
 
@@ -295,9 +286,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 return null;
             }
-
         }
-
 
         private bool TryGetValue(object instance, string name, out object value)
         {
@@ -324,9 +313,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
         }
 
-
-
-
         #region MockData
         private class PersonMockData
         {
@@ -346,7 +332,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public bool Cryptic { get; set; } = true;
 
         }
-
 
         private class TeacherWithExceptionMock : PersonMockData
         {
