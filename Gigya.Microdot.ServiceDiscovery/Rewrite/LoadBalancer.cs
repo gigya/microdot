@@ -36,11 +36,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
-        private INodeSource NodeSource { get; }
+        internal INodeSource NodeSource { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
-        private string ServiceName { get; }
+        public string ServiceName { get; }
         private INode[] _sourceNodes;
         private MonitoredNode[] _monitoredNodes = new MonitoredNode[0];
 

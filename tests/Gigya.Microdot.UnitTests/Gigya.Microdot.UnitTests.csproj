@@ -55,6 +55,7 @@
     <Compile Include="Discovery\ConfigNodeSourceTests.cs" />
     <Compile Include="Discovery\ConsulClientMock.cs" />
     <Compile Include="Discovery\ConsulClientTests.cs" />
+    <Compile Include="Discovery\ConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Discovery\ConsulDiscoverySourceTest.cs" />
     <Compile Include="Discovery\ConsulSimulator.cs" />
     <Compile Include="Discovery\DiscoveryConfigTests.cs" />
@@ -66,8 +67,9 @@
     <Compile Include="Discovery\Rewrite\ConsulNodeSourceTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulServiceListMonitorTests.cs" />
     <Compile Include="Discovery\Rewrite\LoadBalancerTests.cs" />
+    <Compile Include="Discovery\Rewrite\NewServiceDiscoveryConfigChangeTest.cs" />
+    <Compile Include="Discovery\Rewrite\NewConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
-    <Compile Include="Discovery\ConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Events\EventSerializationTests.cs" />
     <Compile Include="Monitor\HealthStatusTests.cs" />
     <Compile Include="HttpServiceRequestTests.cs" />

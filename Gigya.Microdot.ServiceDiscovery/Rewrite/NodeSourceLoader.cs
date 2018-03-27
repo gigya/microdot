@@ -21,19 +21,35 @@
 #endregion
 
 using System;
+using System.Linq;
+using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    /// <summary>
-    /// Returns a one healthy-known node each time it is called. 
-    /// Executes balancing between a list of nodes it gets from a <see cref="INodeSource"/>.
-    /// </summary>
-    public interface ILoadBalancer: IDisposable
+    public class NodeSourceLoader : INodeSourceLoader
     {
-        /// <summary>
-        /// Retrieves the a node which is considered to be reachable.
-        /// </summary>
-        MonitoredNode GetNode();
+        private readonly Func<ServiceDeployment, INodeSource[]> _getSources;
+
+        public NodeSourceLoader(Func<ServiceDeployment, INodeSource[]> getSources)
+        {
+            _getSources = getSources;
+        }
+
+        public INodeSource GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        {
+            var source = _getSources(serviceDeployment).FirstOrDefault(f=>f.Type.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
+
+            if (source==null)
+                throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");
+
+            return source;
+        }
+    }
+
+    public interface INodeSourceLoader
+    {
+        INodeSource GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig);
     }
 }

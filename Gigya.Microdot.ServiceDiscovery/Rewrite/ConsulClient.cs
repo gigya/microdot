@@ -32,7 +32,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
-            var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
+
+            var address = $"{CurrentApplicationInfo.HostName}:8500";
+            if (!string.IsNullOrEmpty(environmentVariableProvider.ConsulAddress))
+                address = environmentVariableProvider.ConsulAddress;
+
             ConsulAddress = new Uri($"http://{address}");
             DataCenter = environmentVariableProvider.DataCenter;
         }
