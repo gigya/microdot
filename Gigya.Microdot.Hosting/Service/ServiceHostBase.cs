@@ -58,10 +58,12 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         protected virtual Version InfraVersion => null;
 
+
         protected ServiceHostBase()
         {
             if (IntPtr.Size != 8)
                 throw new Exception("You must run in 64-bit mode. Please make sure you unchecked the 'Prefer 32-bit' checkbox from the build section of the project properties.");
+
 
             StopEvent = new ManualResetEvent(true);
             ServiceStartedEvent = new TaskCompletionSource<object>();
