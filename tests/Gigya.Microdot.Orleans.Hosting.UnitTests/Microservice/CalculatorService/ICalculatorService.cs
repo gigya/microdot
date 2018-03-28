@@ -61,10 +61,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         [NonSensitive]
         Task LogPram2([Sensitive] string sensitive, [NonSensitive] string notSensitive, [Sensitive(Secretive = true)]string notExists, string @default);
 
-        Task<bool> IsLogPramSucceed(List<string> sensitives, List<string> NoneSensitives, List<string> NotExists);
-        Task CreateMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock);
+        Task<bool> IsLogParamSucceeded(List<string> sensitives, List<string> NoneSensitives, List<string> NotExists);
+        Task CreatePerson([LogFields] CalculatorServiceTests.Person person);
         Task LogGrainId();
-        Task<bool> CreateDynamicMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock);
-        Task<bool> IsCreateDynamicMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock);
+        Task<bool> ValidatePersonLogFields([LogFields] CalculatorServiceTests.Person person);
     }
 }

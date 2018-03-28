@@ -13,7 +13,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public interface IServerRequestPublisher
     {
-        void ConstructEvent(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime);
+        void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime);
     }
 
     public class ServerRequestPublisher : IServerRequestPublisher
@@ -31,7 +31,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             _serviceEndPointDefinition = serviceEndPointDefinition;
         }
 
-        public void ConstructEvent(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod,
+        public void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod,
             double requestTime)
         {
             var callEvent = _eventPublisher.CreateEvent();
@@ -71,8 +71,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             var sensitivity = metaData.ParameterAttributes[key].Sensitivity ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
             if (metaData.ParameterAttributes[key].IsLogFieldAttributeExists == true && (pair.Value is string) == false)
             {
-                var type = pair.Value.GetType();
-                if (type.IsClass)
+                var type = pair.Value?.GetType();
+                if (type?.IsClass==true)
                 {
                     var metaParams = _metadataPropertiesCache.ParseIntoParams(pair.Value);
 

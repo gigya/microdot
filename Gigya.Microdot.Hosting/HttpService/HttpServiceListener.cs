@@ -272,7 +272,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        _serverRequestPublisher.ConstructEvent(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
+                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
                     }
                 }
             }

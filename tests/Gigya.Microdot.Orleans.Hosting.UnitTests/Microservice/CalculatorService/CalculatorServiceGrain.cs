@@ -141,15 +141,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return Task.FromResult(1);
         }
 
-        public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive,
+        public async Task<bool> IsLogParamSucceeded(List<string> sensitive, List<string> NoneSensitive,
             List<string> NotExists)
         {
             await Task.Delay(150);
-            var eventPublisher = _eventPublisher as SpyEventPublisher;
-            var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
-
             try
             {
+                var eventPublisher = _eventPublisher as SpyEventPublisher;
+                var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
+
 
                 foreach (var s in sensitive)
                 {
@@ -171,32 +171,25 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 }
 
             }
-            catch (Exception exception)
+            catch (Exception )
             {
-                throw exception;
+                return false;
             }
 
             return true;
         }
 
-        public async Task CreateMockPerson([LogFields] CalculatorServiceTests.PersonMock personMock)
+        public async Task CreatePerson([LogFields] CalculatorServiceTests.Person person)
         {
-            await Task.FromResult(1); 
+            await Task.FromResult(1);
         }
 
-        public async Task<bool> CreateDynamicMockPerson(CalculatorServiceTests.PersonMock personMock)
-        {
-            await Task.FromResult(1); 
-
-            return true;
-        }
-
-        public async Task<bool> IsCreateDynamicMockPerson([LogFields]CalculatorServiceTests.PersonMock personMock)
+        public async Task<bool> ValidatePersonLogFields([LogFields]CalculatorServiceTests.Person person)
         {
             await Task.Delay(150);
 
-            var prefixClassName = typeof(CalculatorServiceTests.PersonMock).Name;
-            var expectedMetadata = DissectPropertyInfoMetadata.DissectPropertis(personMock).Select(x => new
+            var prefixClassName = typeof(CalculatorServiceTests.Person).Name;
+            var expectedMetadata = DissectPropertyInfoMetadata.DissectPropertis(person).Select(x => new
             {
                 PropertyInfo = x.PropertyInfo,
                 Sensitivity = x.Sensitivity,
@@ -219,11 +212,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
                 {
-                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(personMock, null)).ShouldBe(argument.Value); //Json validation
+                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(argument.Value); //Json validation
                 }
                 else
                 {
-                    metadata.PropertyInfo.GetValue(personMock, null).ToString().ShouldBe(argument.Value);
+                    metadata.PropertyInfo.GetValue(person, null).ToString().ShouldBe(argument.Value);
                 }
 
                 expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
@@ -242,7 +235,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         private string AddPrifix(string prefix, string param)
         {
-            return $"{prefix.Substring(0,1).ToLower()}{prefix.Substring(1)}.{param}";
+            return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}.{param}";
         }
 
         public async Task LogGrainId()

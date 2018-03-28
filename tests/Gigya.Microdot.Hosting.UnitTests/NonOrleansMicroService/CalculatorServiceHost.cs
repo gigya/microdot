@@ -19,15 +19,12 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
 
-
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
-
             kernel.Bind<ICalculatorService>().To<CalculatorService>().InSingletonScope();
         }
 
         public class MockServiceValidator : ServiceValidator
         {
-
             public MockServiceValidator()
                 : base(new List<IValidator>().ToArray())
             {

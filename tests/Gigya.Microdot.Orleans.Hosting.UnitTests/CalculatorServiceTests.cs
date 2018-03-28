@@ -314,7 +314,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var @default = "default Test";
 
             await Service.LogPram(sensitive, nonsensitive, notExists, @default);
-            (await Service.IsLogPramSucceed(new List<string> { @default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
+            (await Service.IsLogParamSucceeded(new List<string> { @default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
         }
 
         [Test]
@@ -326,17 +326,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var @default = "default Test";
 
             await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
-            (await Service.IsLogPramSucceed(new List<string> { sensitive }, new List<string> { nonsensitive, @default }, new List<string> { notExists })).ShouldBeTrue();
+            (await Service.IsLogParamSucceeded(new List<string> { sensitive }, new List<string> { nonsensitive, @default }, new List<string> { notExists })).ShouldBeTrue();
         }
 
 
         [Test]
         public async Task SendComplexRequest()
         {
-            var person = new PersonMock();
+            var person = new Person();
 
-            await Service.CreateMockPerson(person);
-            (await Service.IsLogPramSucceed(
+            await Service.CreatePerson(person);
+            (await Service.IsLogParamSucceeded(
                 sensitives: new List<string> { person.ID.ToString(), person.Gender },
                 NoneSensitives: new List<string> { person.Name },
                 NotExists: new List<string> { person.Password })).ShouldBeTrue();
@@ -345,13 +345,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task SendComplexWithInheritenceRequest()
         {
-            var person = new TeacherMock();
+            var teacher = new Teacher();
 
-            await Service.CreateMockPerson(person);
-            (await Service.IsLogPramSucceed(
-                sensitives: new List<string> { person.ID.ToString(), person.Gender },
-                NoneSensitives: new List<string> { person.Name, person.School },
-                NotExists: new List<string> { person.Password })).ShouldBeTrue();
+            await Service.CreatePerson(teacher);
+            (await Service.IsLogParamSucceeded(
+                sensitives: new List<string> { teacher.ID.ToString(), teacher.Gender },
+                NoneSensitives: new List<string> { teacher.Name, teacher.School },
+                NotExists: new List<string> { teacher.Password })).ShouldBeTrue();
         }
 
 
@@ -359,19 +359,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CreateDynamicallyMockPerson()
         {
-            var person = new PersonMock();
+            var person = new Person();
 
-            await Service.CreateDynamicMockPerson(person);
-            (await Service.IsCreateDynamicMockPerson(person)).ShouldBeTrue();
+            await Service.CreatePerson(person);
+            (await Service.ValidatePersonLogFields(person)).ShouldBeTrue();
         }
 
         [Test]
         public async Task CreateDynamicallyWithInheritenceMock()
         {
-            var person = new TeacherMock();
+            var person = new Teacher();
 
-            await Service.CreateDynamicMockPerson(person);
-            (await Service.IsCreateDynamicMockPerson(person)).ShouldBeTrue();
+            await Service.CreatePerson(person);
+            (await Service.ValidatePersonLogFields(person)).ShouldBeTrue();
 
         }
 
@@ -382,7 +382,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         #region MockData
-        public class PersonMock
+        public class Person
         {
             public int ID { get; set; } = 100;
 
@@ -406,7 +406,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Serializable]
-        public class TeacherMock : PersonMock
+        public class Teacher : Person
         {
             [NonSensitive]
             public string School { get; set; } = "Busmat";
