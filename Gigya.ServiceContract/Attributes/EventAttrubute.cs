@@ -21,4 +21,5 @@ namespace Gigya.ServiceContract.Attributes
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Method | AttributeTargets.Property)]
     public class NonSensitiveAttribute : Attribute{}
 
+
 }

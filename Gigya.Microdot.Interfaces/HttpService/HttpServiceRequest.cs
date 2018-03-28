@@ -101,7 +101,8 @@ namespace Gigya.Microdot.Interfaces.HttpService
 			Target = new InvocationTarget(targetMethod);
 			Arguments = new OrderedDictionary(arguments.Length);
 
-			for (int i = 0; i < arguments.Length; i++)
+            
+            for (int i = 0; i < arguments.Length; i++)
 				Arguments.Add(parameters[i].Name, arguments[i]);
 		}
 	}
