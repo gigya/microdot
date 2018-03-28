@@ -23,6 +23,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
@@ -51,6 +52,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
+        public void HealthCheck_OnShutdown_ShouldReturn503()
+        {
+            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: 6655, beforeStopSet503WaitTime: TimeSpan.FromSeconds(10));
+
+            var dispose = Task.Run(() => customServiceTester.Dispose());
+            customServiceTester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6655/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+            dispose.Wait();
+        }
+
+        [Test]
         public void HealthCheck_NotHealthy_ShouldReturn500()
         {
             tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
@@ -63,7 +76,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(true);
             var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6555/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
-            httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK); 
+            httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Test]
@@ -71,7 +84,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6555/{nameof(ICalculatorService).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
-            httpResponseMessage.Content.ShouldNotBeNull();      
+            httpResponseMessage.Content.ShouldNotBeNull();
         }
     }
 }

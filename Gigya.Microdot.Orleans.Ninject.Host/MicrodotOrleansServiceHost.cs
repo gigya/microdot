@@ -168,6 +168,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>        
         protected override void OnStop()
         {
+            if (Arguments.BeforeStopSet503WaitTime.HasValue)
+            {
+                Kernel.Get<IServcieShutdownSource>().Shutdown();
+                Task.Delay(Arguments.BeforeStopSet503WaitTime.Value).Wait();
+                Task.Delay(Arguments.BeforeStopSet503WaitTime.Value).Wait();
+            }
+
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
             Dispose();
         }

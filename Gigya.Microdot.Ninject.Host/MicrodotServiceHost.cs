@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
@@ -152,7 +153,12 @@ namespace Gigya.Microdot.Ninject.Host
         /// method.
         /// </summary>        
         protected override void OnStop()
-        {
+        {            
+            if (Arguments.BeforeStopSet503WaitTime.HasValue)
+            {
+                Kernel.Get<IServcieShutdownSource>().Shutdown();
+                Task.Delay(Arguments.BeforeStopSet503WaitTime.Value).Wait();
+            }
             Dispose();
         }
 
