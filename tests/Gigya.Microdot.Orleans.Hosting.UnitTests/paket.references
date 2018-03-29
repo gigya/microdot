@@ -1,3 +1,4 @@
+Gigya.ServiceContract
 Microsoft.Extensions.DependencyInjection
 Microsoft.Orleans.OrleansCodeGenerator
 Microsoft.Orleans.OrleansCodeGenerator.Build
@@ -8,3 +9,4 @@ Shouldly
 Castle.Core
 ZooKeeperNetEx
 System.Threading.Tasks.Dataflow
+System.ValueTuple

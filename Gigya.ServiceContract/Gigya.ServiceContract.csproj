@@ -42,6 +42,7 @@
     <Compile Include="Attributes\CachedAttribute.cs" />
     <Compile Include="Attributes\EventAttrubute.cs" />
     <Compile Include="Attributes\HttpServiceAttribute.cs" />
+    <Compile Include="Attributes\LogFieldsAttribute.cs" />
     <Compile Include="Attributes\PublicEndpointAttribute.cs" />
     <Compile Include="Exceptions\Breadcrumb.cs" />
     <Compile Include="Exceptions\EnvironmentException.cs" />
@@ -72,7 +73,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
         <Reference Include="Newtonsoft.Json">
-          <HintPath>..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
+          <HintPath>packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

@@ -104,7 +104,8 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 
 			Target = new InvocationTarget(targetMethod, parameters);
 
-			for (int i = 0; i < arguments.Length; i++)
+            
+            for (int i = 0; i < arguments.Length; i++)
 				Arguments.Add(parameters[i].Name, arguments[i]);
 		}
 	}

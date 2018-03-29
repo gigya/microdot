@@ -102,6 +102,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 case TypeCode.DateTime:
                     return ((DateTime)fieldValue).ToUniversalTime().ToString("o", CultureInfo.InvariantCulture);
                 case TypeCode.Boolean:
+                    return fieldValue.ToString().ToLower();
                 case TypeCode.Byte:
                 case TypeCode.Char:
                 case TypeCode.Int16:
