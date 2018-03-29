@@ -8,6 +8,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
@@ -45,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void Setup()
         {
             _configDic = new Dictionary<string, string>();
-            _unitTestingKernel = new TestingKernel<ConsoleLog>(k=>k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>(), _configDic);
+            _unitTestingKernel = new TestingKernel<ConsoleLog>(k=>k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>(), _configDic);
 
             var environmentVarialbesMock = Substitute.For<IEnvironmentVariableProvider>();
             environmentVarialbesMock.DeploymentEnvironment.Returns(ENV);

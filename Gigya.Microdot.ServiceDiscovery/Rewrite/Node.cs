@@ -23,5 +23,23 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             return Port.HasValue ? $"{Hostname}:{Port}" : Hostname;
         }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as INode;
+            if (other == null)
+                return false;
+
+            return other.Hostname == Hostname && other.Port == Port;
+        }
+
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((Hostname?.GetHashCode() ?? 0) * 397) ^ (Port?.GetHashCode()??1);
+            }
+        }
     }
 }

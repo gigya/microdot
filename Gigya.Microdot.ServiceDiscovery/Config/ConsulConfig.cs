@@ -10,6 +10,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// Whether to Call Consul with long-polling, waiting for changes to occur, or to call it periodically
         /// </summary>
+        [Obsolete("To be deleted after discovery refactoring")]
         public bool LongPolling { get; set; } = false;
 
         /// <summary>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -22,7 +23,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private bool _disposed;
         private INode[] _lastKnownNodes;
-        private bool _isActive;
+        private bool _isActive;        
 
         public ConsulNodeSource(ServiceDeployment serviceDeployment,
             IConsulServiceListMonitor serviceListMonitor,
@@ -52,8 +53,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         public INode[] GetNodes()
-        {            
-            return NodeMonitor.Nodes;
+        {
+            return NodeMonitor?.Nodes ?? new INode[0];
         }
 
         public bool WasUndeployed
@@ -63,7 +64,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (ServiceListMonitor.Services.Contains(ServiceName))
                     return false;
 
-                AggregatingHealthStatus.RegisterCheck(ServiceName, ()=> HealthCheckResult.Healthy($"{ServiceName} - Not exists on Consul"));
+                AggregatingHealthStatus.RegisterCheck(ServiceName, ()=> HealthCheckResult.Healthy($"Not exists on Consul"));
                 return true;
             }
         }

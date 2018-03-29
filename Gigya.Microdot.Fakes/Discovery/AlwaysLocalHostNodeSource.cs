@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,36 +20,18 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Utils;
-using Newtonsoft.Json;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.ServiceProxy.Rewrite
+namespace Gigya.Microdot.Fakes.Discovery
 {
-    public interface IServiceProxyProvider : IProxyable
+    public class AlwaysLocalHostNodeSource : INodeSourceLoader
     {
-        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);
-        Task<ServiceSchema> GetSchema();
-        HttpServiceAttribute HttpSettings { get; }
-    }
-
-    public class DeployedService : IDisposable
-    {
-        internal IMemoizer Memoizer { get; }
-        internal ServiceSchema Schema { get; set; }
-        internal ILoadBalancer LoadBalancer { get; }
-
-
-
-        public void Dispose()
+        public INodeSource GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            Memoizer.TryDispose();
-            LoadBalancer.TryDispose();
+            return new LocalNodeSource();
         }
     }
 }
