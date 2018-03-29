@@ -54,14 +54,12 @@
     <Compile Include="HttpService\Endpoints\ConfigurationResponseBuilder.cs" />
     <Compile Include="HostingAssembly.cs" />
     <Compile Include="Events\StatsEvent.cs" />
-    <Compile Include="HttpService\Endpoints\ISchemaProvider.cs" />
     <Compile Include="HttpService\Endpoints\SchemaEndpoint.cs" />
     <Compile Include="HttpService\Endpoints\ConfigurationEndpoint.cs" />
     <Compile Include="HttpService\Endpoints\HealthEndpoint.cs" />
     <Compile Include="HttpService\Endpoints\ICustomEndpoint.cs" />
     <Compile Include="Events\ServiceCallEvent.cs" />
     <Compile Include="HttpService\ServerRequestPublisher.cs" />
-    <Compile Include="HttpService\Endpoints\SchemaProvider.cs" />
     <Compile Include="HttpService\IdentityServiceInterfaceMapper.cs" />
     <Compile Include="HttpService\Endpoints\IHealthStatus.cs" />
     <Compile Include="HttpService\ServiceInterfaceMapper.cs" />

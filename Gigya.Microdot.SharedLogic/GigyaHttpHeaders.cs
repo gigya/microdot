@@ -29,6 +29,5 @@ namespace Gigya.Microdot.SharedLogic
         public const string DataCenter = "X-Gigya-DC";
         public const string Environment = "X-Gigya-ENV";
         public const string ServiceVersion = "X-Gigya-ServiceVersion";
-        public const string SchemaHash = "X-Gigya-SchemaHash";
     }
 }
