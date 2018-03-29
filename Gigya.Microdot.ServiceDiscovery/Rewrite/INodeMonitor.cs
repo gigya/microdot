@@ -7,7 +7,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// Monitors Consul using Health api and KeyValue api, to find the current active version of a service, and get its nodes list
     /// </summary>
-    public interface IConsulNodeMonitor: IDisposable
+    public interface INodeMonitor: IDisposable
     {
         /// <summary>
         /// Initialize monitoring of Consul nodes

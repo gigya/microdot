@@ -30,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string Host2 = "Host2";
 
         private TestingKernel<ConsoleLog> _testingKernel;
-        private IQueryBasedConsulNodeMonitor _consulQueryNodeMonitor;
+        private IQueryBasedNodeMonitor _consulQueryNodeMonitor;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ConsulSimulator _consulSimulator;
         private string _serviceName;
@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig{ReloadInterval = TimeSpan.FromMilliseconds(100)};
 
-            _consulQueryNodeMonitor = _testingKernel.Get<Func<string,IQueryBasedConsulNodeMonitor>>()(_serviceName);
+            _consulQueryNodeMonitor = _testingKernel.Get<Func<string,IQueryBasedNodeMonitor>>()(_serviceName);
         }
 
         [TearDown]
@@ -207,7 +207,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private Task Init()
         {
-            _consulQueryNodeMonitor = _testingKernel.Get<Func<string, IQueryBasedConsulNodeMonitor>>()(_serviceName);
+            _consulQueryNodeMonitor = _testingKernel.Get<Func<string, IQueryBasedNodeMonitor>>()(_serviceName);
             return _consulQueryNodeMonitor.Init();
         }
 

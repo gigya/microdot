@@ -13,7 +13,7 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public sealed class ConsulNodeMonitor: IConsulNodeMonitor
+    public sealed class ConsulNodeMonitor: INodeMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
 

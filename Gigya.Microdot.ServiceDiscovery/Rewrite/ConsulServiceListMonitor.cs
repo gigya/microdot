@@ -12,7 +12,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public sealed class ConsulServiceListMonitor : IConsulServiceListMonitor
+    public sealed class ConsulServiceListMonitor : IServiceListMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
 

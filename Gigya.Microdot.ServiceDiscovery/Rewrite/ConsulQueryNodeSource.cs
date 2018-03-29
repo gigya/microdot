@@ -9,9 +9,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _disposed;
         public string ServiceName { get; set; }
 
-        public IQueryBasedConsulNodeMonitor NodeMonitor { get; set; }
+        public IQueryBasedNodeMonitor NodeMonitor { get; set; }
 
-        public ConsulQueryNodeSource(ServiceDeployment serviceDeployment, Func<string, IQueryBasedConsulNodeMonitor> getNodeMonitor)
+        public ConsulQueryNodeSource(ServiceDeployment serviceDeployment, Func<string, IQueryBasedNodeMonitor> getNodeMonitor)
         {
             ServiceName = $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
             NodeMonitor = getNodeMonitor(ServiceName);

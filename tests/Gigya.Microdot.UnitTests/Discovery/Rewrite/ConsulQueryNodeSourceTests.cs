@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _consulSource;
         private ConsulConfig _consulConfig;
-        private IQueryBasedConsulNodeMonitor _queryBasedConsulNodeMonitor;
+        private IQueryBasedNodeMonitor _queryBasedNodeMonitor;
         private INode[] _consulNodes;
         private Func<INode[]> _getConsulNodes;
         private bool _serviceIsDeployed;
@@ -36,7 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IQueryBasedConsulNodeMonitor>().ToMethod(_ => _queryBasedConsulNodeMonitor);
+                k.Rebind<IQueryBasedNodeMonitor>().ToMethod(_ => _queryBasedNodeMonitor);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
         }
@@ -53,9 +53,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulNodes = new INode[0];
             _serviceIsDeployed = true;
             _getConsulNodes = () => _consulNodes;
-            _queryBasedConsulNodeMonitor = Substitute.For<IQueryBasedConsulNodeMonitor>();
-            _queryBasedConsulNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
-            _queryBasedConsulNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
+            _queryBasedNodeMonitor = Substitute.For<IQueryBasedNodeMonitor>();
+            _queryBasedNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
+            _queryBasedNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
             _consulConfig = new ConsulConfig();
         }
 
@@ -106,7 +106,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             bool nodesMonitorInitiated = false;
 
-            _queryBasedConsulNodeMonitor.Init().Returns(_=>{
+            _queryBasedNodeMonitor.Init().Returns(_=>{
                                                     nodesMonitorInitiated = true;
                                                     return Task.FromResult(1);});
 

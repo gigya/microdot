@@ -11,7 +11,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class QueryBasedConsulNodeMonitor : IQueryBasedConsulNodeMonitor
+    public class QueryBasedNodeMonitor : IQueryBasedNodeMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
 
@@ -24,7 +24,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
 
-        public QueryBasedConsulNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public QueryBasedNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
             ServiceName = serviceName;
             Log = log;

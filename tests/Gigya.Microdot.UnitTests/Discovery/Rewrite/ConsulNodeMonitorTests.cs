@@ -32,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string Version2 = "2.0.0.1";
 
         private TestingKernel<ConsoleLog> _testingKernel;
-        private IConsulNodeMonitor _consulNodeMonitor;
+        private INodeMonitor _nodeMonitor;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ConsulSimulator _consulSimulator;
         private string _serviceName;
@@ -71,7 +71,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [TearDown]
         public void Teardown()
         {
-            _consulNodeMonitor?.Dispose();            
+            _nodeMonitor?.Dispose();            
             _consulSimulator.Dispose();
         }
 
@@ -110,8 +110,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             AddServiceNode(Host2);
             await WaitForUpdates();
-            _consulNodeMonitor.Nodes.Length.ShouldBe(2);
-            _consulNodeMonitor.Nodes[1].Hostname.ShouldBe(Host2);
+            _nodeMonitor.Nodes.Length.ShouldBe(2);
+            _nodeMonitor.Nodes[1].Hostname.ShouldBe(Host2);
         }
 
 
@@ -123,7 +123,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Init();
 
-            _consulNodeMonitor.Nodes.Length.ShouldBe(2);
+            _nodeMonitor.Nodes.Length.ShouldBe(2);
 
             RemoveServiceEndPoint("nodeToRemove");
             await WaitForUpdates();
@@ -143,9 +143,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetServiceVersion(Version2);
             await WaitForUpdates();
 
-            _consulNodeMonitor.Nodes.Length.ShouldBe(1);
-            _consulNodeMonitor.Nodes[0].Hostname.ShouldBe(Host2);
-            _consulNodeMonitor.Nodes[0].Port.ShouldBe(Port2);
+            _nodeMonitor.Nodes.Length.ShouldBe(1);
+            _nodeMonitor.Nodes[0].Hostname.ShouldBe(Host2);
+            _nodeMonitor.Nodes[0].Port.ShouldBe(Port2);
         }
 
         [Test]
@@ -180,14 +180,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Init();
 
-            _consulNodeMonitor.Nodes.Length.ShouldBe(1);
-            _consulNodeMonitor.Nodes[0].Hostname.ShouldBe("oldVersionHost");
+            _nodeMonitor.Nodes.Length.ShouldBe(1);
+            _nodeMonitor.Nodes[0].Hostname.ShouldBe("oldVersionHost");
 
             SetServiceVersion("2.0.0");
             await WaitForUpdates();
 
-            _consulNodeMonitor.Nodes.Length.ShouldBe(1);
-            _consulNodeMonitor.Nodes[0].Hostname.ShouldBe("newVersionHost");
+            _nodeMonitor.Nodes.Length.ShouldBe(1);
+            _nodeMonitor.Nodes[0].Hostname.ShouldBe("newVersionHost");
         }
 
         [Test]
@@ -200,23 +200,23 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private Task Init()
         {
-            _consulNodeMonitor = _testingKernel.Get<Func<string, IConsulNodeMonitor>>()(_serviceName);
-            return _consulNodeMonitor.Init();
+            _nodeMonitor = _testingKernel.Get<Func<string, INodeMonitor>>()(_serviceName);
+            return _nodeMonitor.Init();
         }
 
 
         private void AssertOneDefaultNode()
         {
-            _consulNodeMonitor.Nodes.Length.ShouldBe(1);
-            _consulNodeMonitor.Nodes[0].Hostname.ShouldBe(Host1);
-            _consulNodeMonitor.Nodes[0].Port.ShouldBe(Port1);
+            _nodeMonitor.Nodes.Length.ShouldBe(1);
+            _nodeMonitor.Nodes[0].Hostname.ShouldBe(Host1);
+            _nodeMonitor.Nodes[0].Port.ShouldBe(Port1);
         }
 
         private void AssertExceptionIsThrown()
         {
             var getNodesAction = (Action) (() =>
             {
-                var _ = _consulNodeMonitor.Nodes;
+                var _ = _nodeMonitor.Nodes;
             });
 
             getNodesAction.ShouldThrow<EnvironmentException>();

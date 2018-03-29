@@ -16,9 +16,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private AggregatingHealthStatus AggregatingHealthStatus { get; }
         private ServiceDeployment ServiceDeployment { get; }
-        private IConsulServiceListMonitor ServiceListMonitor { get; }
-        private Func<string, IConsulNodeMonitor> GetNodeMonitor { get; }
-        private IConsulNodeMonitor NodeMonitor { get; set; }             
+        private IServiceListMonitor ServiceListMonitor { get; }
+        private Func<string, INodeMonitor> GetNodeMonitor { get; }
+        private INodeMonitor NodeMonitor { get; set; }             
         public string ServiceName { get; private set; }
 
         private bool _disposed;
@@ -26,8 +26,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _isActive;        
 
         public ConsulNodeSource(ServiceDeployment serviceDeployment,
-            IConsulServiceListMonitor serviceListMonitor,
-            Func<string, IConsulNodeMonitor> getNodeMonitor,            
+            IServiceListMonitor serviceListMonitor,
+            Func<string, INodeMonitor> getNodeMonitor,            
             Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
         {
             ServiceListMonitor = serviceListMonitor;
