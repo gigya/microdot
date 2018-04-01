@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
@@ -156,8 +157,8 @@ namespace Gigya.Microdot.Ninject.Host
         {            
             if (Arguments.ServiceDrainTime.HasValue)
             {
-                Kernel.Get<IServcieDrainSource>().StartDrain();
-                Task.Delay(Arguments.ServiceDrainTime.Value).Wait();
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTime.Value);
             }
             Dispose();
         }

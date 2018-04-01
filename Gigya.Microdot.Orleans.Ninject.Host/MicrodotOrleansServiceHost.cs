@@ -22,6 +22,7 @@
 
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Service;
@@ -170,9 +171,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             if (Arguments.ServiceDrainTime.HasValue)
             {
-                Kernel.Get<IServcieDrainSource>().StartDrain();
-                Task.Delay(Arguments.ServiceDrainTime.Value).Wait();
-            }
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTime.Value);            }
 
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
             Dispose();

@@ -2,25 +2,20 @@
 
 namespace Gigya.Microdot.SharedLogic
 {
-    public interface IServcieDrainToken
+    public interface IServiceDrainListener
     {
         CancellationToken Token { get; }
     }
 
-    internal interface IServcieDrainSource : IServcieDrainToken
-    {
-        void StartDrain();
-    }
-
-    internal class ServcieDrainSource : IServcieDrainSource
+    internal class ServiceDrainController :IServiceDrainListener
     {
         public CancellationTokenSource Source = new CancellationTokenSource();
 
-        void IServcieDrainSource.StartDrain()
+        internal void StartDrain()
         {
             Source.Cancel();
         }
 
-        CancellationToken IServcieDrainToken.Token => Source.Token;
+        CancellationToken IServiceDrainListener.Token => Source.Token;
     }
 }
