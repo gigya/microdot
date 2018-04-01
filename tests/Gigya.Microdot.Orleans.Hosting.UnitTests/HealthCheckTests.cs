@@ -52,9 +52,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void HealthCheck_OnShutdown_ShouldReturn503()
+        public void HealthCheck_ServcieDrain_StatueShouldBe503()
         {
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: 6655, beforeStopSet503WaitTime: TimeSpan.FromSeconds(10));
+            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: 6655, serviceDrainTime: TimeSpan.FromSeconds(10));
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
             customServiceTester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);

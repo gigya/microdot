@@ -31,14 +31,14 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {
     public class HealthEndpoint : ICustomEndpoint
     {
-        private readonly IServcieShutdownToken _shutdownToken;
+        private readonly IServcieDrainToken _drainToken;
         private IServiceEndPointDefinition ServiceEndPointDefinition { get; }
         private IServiceInterfaceMapper ServiceInterfaceMapper { get; }
         private IActivator Activator { get; }
 
-        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServcieShutdownToken shutdownToken)
+        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServcieDrainToken drainToken)
         {
-            _shutdownToken = shutdownToken;
+            _drainToken = drainToken;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             ServiceInterfaceMapper = serviceInterfaceMapper;
             Activator = activator;
@@ -52,7 +52,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 var serviceName = context.Request.RawUrl.Substring(1, context.Request.RawUrl.LastIndexOf(".", StringComparison.Ordinal) - 1);
                 var serviceType = ServiceEndPointDefinition.ServiceNames.FirstOrDefault(o => o.Value == $"I{serviceName}").Key;
 
-                if (_shutdownToken.Token.IsCancellationRequested)
+                if (_drainToken.Token.IsCancellationRequested)
                 {
                     await writeResponse("Starting shutdown", HttpStatusCode.ServiceUnavailable).ConfigureAwait(false);
                 }

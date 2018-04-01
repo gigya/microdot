@@ -154,10 +154,10 @@ namespace Gigya.Microdot.Ninject.Host
         /// </summary>        
         protected override void OnStop()
         {            
-            if (Arguments.BeforeStopSet503WaitTime.HasValue)
+            if (Arguments.ServiceDrainTime.HasValue)
             {
-                Kernel.Get<IServcieShutdownSource>().Shutdown();
-                Task.Delay(Arguments.BeforeStopSet503WaitTime.Value).Wait();
+                Kernel.Get<IServcieDrainSource>().StartDrain();
+                Task.Delay(Arguments.ServiceDrainTime.Value).Wait();
             }
             Dispose();
         }

@@ -39,10 +39,10 @@ namespace Gigya.Microdot.Ninject
         {
             this.BindClassesAsSingleton(assemblies: new[] { typeof(HostingAssembly) });
             this.BindInterfacesAsSingleton(new List<Type> { typeof(IServiceInterfaceMapper) }, assemblies: new[] { typeof(HostingAssembly) });
-            this.Bind<ServcieShutdownSource>().ToSelf().InSingletonScope();
+            this.Bind<ServcieDrainSource>().ToSelf().InSingletonScope();
 
-            this.Bind<IServcieShutdownToken>().ToMethod(x => x.Kernel.Get<ServcieShutdownSource>());
-            this.Bind<IServcieShutdownSource>().ToMethod(x => x.Kernel.Get<ServcieShutdownSource>());
+            this.Bind<IServcieDrainToken>().ToMethod(x => x.Kernel.Get<ServcieDrainSource>());
+            this.Bind<IServcieDrainSource>().ToMethod(x => x.Kernel.Get<ServcieDrainSource>());
         }
     }
 }
