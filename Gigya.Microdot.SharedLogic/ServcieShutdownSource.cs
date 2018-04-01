@@ -12,7 +12,7 @@ namespace Gigya.Microdot.SharedLogic
         void Shutdown();
     }
 
-    internal class ShutdownToken : IServcieShutdownSource
+    internal class ServcieShutdownSource : IServcieShutdownSource
     {
         public CancellationTokenSource Source = new CancellationTokenSource();
 

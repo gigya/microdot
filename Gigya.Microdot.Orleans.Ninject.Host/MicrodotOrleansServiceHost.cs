@@ -172,7 +172,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             {
                 Kernel.Get<IServcieShutdownSource>().Shutdown();
                 Task.Delay(Arguments.BeforeStopSet503WaitTime.Value).Wait();
-                Task.Delay(Arguments.BeforeStopSet503WaitTime.Value).Wait();
             }
 
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
