@@ -64,7 +64,7 @@ namespace Gigya.Common.Application.HttpService.Client
 
 	    public static RemoteServiceException Timeout(string uri, Exception ex, TimeSpan timeout)
 	    {
-	        new RemoteServiceException(
+	        return new RemoteServiceException(
 	            "The request to the remote service exceeded the allotted timeout. See the 'RequestUri' " +
 	            "property on this exception for the URL that was called and the tag 'requestTimeout' for the configured timeout.",
 	            uri, 

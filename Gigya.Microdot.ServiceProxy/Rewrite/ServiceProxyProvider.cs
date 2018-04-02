@@ -141,7 +141,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private DeployedService Route()
         {
-
+            return null;
         }
 
         // TBD: What do we do if different environment return different schemas? Should we return all of them, should we merge them?
