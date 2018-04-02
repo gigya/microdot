@@ -100,10 +100,6 @@
       <Project>{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}</Project>
       <Name>Gigya.Microdot.Orleans.Ninject.Host</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
-      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
-      <Name>Gigya.ServiceContract</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>
@@ -114,6 +110,17 @@
         </Reference>
         <Reference Include="Castle.Core">
           <HintPath>..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Gigya.ServiceContract">
+          <HintPath>..\packages\Gigya.ServiceContract\lib\net451\Gigya.ServiceContract.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

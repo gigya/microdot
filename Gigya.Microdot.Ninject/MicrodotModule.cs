@@ -23,22 +23,19 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.Metrics;
-using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
+using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchema;
 
 namespace Gigya.Microdot.Ninject
 {

@@ -24,10 +24,10 @@ using System;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
+using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchema;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {

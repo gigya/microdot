@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;

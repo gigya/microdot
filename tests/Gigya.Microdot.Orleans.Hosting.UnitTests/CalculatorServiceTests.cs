@@ -1,4 +1,4 @@
-﻿#region Copyright 
+﻿#region Copyright
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -26,15 +26,13 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;
@@ -59,6 +57,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             this.JObject = jObject;
         }
     }
+
+
 
     [TestFixture]
     public class CalculatorServiceTests
@@ -314,7 +314,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var @default = "default Test";
 
             await Service.LogPram(sensitive, nonsensitive, notExists, @default);
-            (await Service.IsLogPramSucceed(new List<string>{@default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
+            (await Service.IsLogParamSucceeded(new List<string> { @default, sensitive }, new List<string> { nonsensitive }, new List<string> { notExists })).ShouldBeTrue();
         }
 
         [Test]
@@ -326,15 +326,91 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var @default = "default Test";
 
             await Service.LogPram2(sensitive, nonsensitive, notExists, @default);
-            (await Service.IsLogPramSucceed(new List<string> {  sensitive }, new List<string> { nonsensitive , @default }, new List<string> { notExists })).ShouldBeTrue();
+            (await Service.IsLogParamSucceeded(new List<string> { sensitive }, new List<string> { nonsensitive, @default }, new List<string> { notExists })).ShouldBeTrue();
+        }
+
+
+        [Test]
+        public async Task SendComplexRequest()
+        {
+            var person = new Person();
+
+            await Service.CreatePerson(person);
+            (await Service.IsLogParamSucceeded(
+                sensitives: new List<string> { person.ID.ToString(), person.Gender },
+                NoneSensitives: new List<string> { person.Name },
+                NotExists: new List<string> { person.Password })).ShouldBeTrue();
+        }
+
+        [Test]
+        public async Task SendComplexWithInheritenceRequest()
+        {
+            var teacher = new Teacher();
+
+            await Service.CreatePerson(teacher);
+            (await Service.IsLogParamSucceeded(
+                sensitives: new List<string> { teacher.ID.ToString(), teacher.Gender },
+                NoneSensitives: new List<string> { teacher.Name, teacher.School },
+                NotExists: new List<string> { teacher.Password })).ShouldBeTrue();
+        }
+
+
+
+        [Test]
+        public async Task CreateDynamicallyMockPerson()
+        {
+            var person = new Person();
+
+            await Service.CreatePerson(person);
+            (await Service.ValidatePersonLogFields(person)).ShouldBeTrue();
+        }
+
+        [Test]
+        public async Task CreateDynamicallyWithInheritenceMock()
+        {
+            var person = new Teacher();
+
+            await Service.CreatePerson(person);
+            (await Service.ValidatePersonLogFields(person)).ShouldBeTrue();
+
         }
 
         [Test]
         public async Task LogGrainId()
         {
-             await Service.LogGrainId();
-           
+            await Service.LogGrainId();
         }
 
+        #region MockData
+        public class Person
+        {
+            public int ID { get; set; } = 100;
+
+            [NonSensitive]
+            public string Name { get; set; } = "Eli";
+
+            [Sensitive(Secretive = false)]
+            public string Gender { get; set; } = "Man";
+
+            [Sensitive(Secretive = true)]
+            public string Password { get; set; } = "password";
+
+            public InnerCarMockClass InnerCarMockClass { get; set; } = new InnerCarMockClass();
+        }
+
+        public class InnerCarMockClass
+        {
+            [NonSensitive] public int Year { get; set; } = 100;
+
+            [NonSensitive] public string LisencePlates { get; set; } = "11 -222-33";
+        }
+
+        [Serializable]
+        public class Teacher : Person
+        {
+            [NonSensitive]
+            public string School { get; set; } = "Busmat";
+        }
+        #endregion
     }
 }

@@ -1,3 +1,4 @@
+Gigya.ServiceContract
 Microsoft.Extensions.DependencyInjection
 Microsoft.Extensions.DependencyInjection.Abstractions
 Microsoft.Orleans.Core
