@@ -48,7 +48,7 @@ namespace Gigya.Common.Contracts.HttpService
         /// them. If you do specify a name, all of your response will be put under that json property name, and the
         /// standard response fields will be next to it.
         /// </summary>
-        public string PropertyNameForResponseBody { get; set; }
+        public string PropertyNameForResponseBody { get; set; } = null;
 
         /// <summary>
         /// Specifies the routing regex that determines which matching URLs will be routed to this method.
@@ -56,18 +56,23 @@ namespace Gigya.Common.Contracts.HttpService
         /// When specifying a value for this property, calls won't be routed to this method according to the command name.
         /// In this case, the command name is only used for logging and rate limit.
         /// </summary>
-        public string UrlPathRegex { get; set; }
+        public string UrlPathRegex { get; set; } = null;
 
         /// <summary>
         /// True if calls to this method should bypass authentication checks, otherwise false.
         /// </summary>
-        public bool SkipPermissionChecks { get; set; }
+        public bool SkipPermissionChecks { get; set; } = false;
+
+        /// <summary>
+        /// True if calls to this method should bypass datacenter checks, otherwise false.
+        /// </summary>
+        public bool SkipDatacenterChecks { get; set; } = false;
 
         /// <summary>
         /// True if this method accepts a single parameter where the request parameters should be mapped to each of its properties,
         /// false if request parameters should be directly mapped to the method's parameters.
         /// </summary>
-        public bool UsingRequestObject { get; set; }
+        public bool UsingRequestObject { get; set; } = false;
 
         /// <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies"). If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name in the same format, which will be used for logging and rate limit.</param>
         /// <param name="requireHTTPS">
