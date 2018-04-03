@@ -235,7 +235,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         private string AddPrifix(string prefix, string param)
         {
-            return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}.{param}";
+            return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}_{param}";
         }
 
         public async Task LogGrainId()

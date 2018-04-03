@@ -79,7 +79,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     foreach (var metaParam in metaParams)
                     {
                         var tuple = (
-                            name: $"{key}.{metaParam.Name}",
+                            name: $"{key}_{metaParam.Name}",
                             value: metaParam.Value,
                             sensitivity: metaParam.Sensitivity ?? sensitivity);
 
