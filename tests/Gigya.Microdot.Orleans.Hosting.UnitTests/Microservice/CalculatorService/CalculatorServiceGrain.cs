@@ -30,6 +30,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
@@ -153,21 +154,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 foreach (var s in sensitive)
                 {
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value.ToString() == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == s);
                 }
 
                 foreach (var s in NoneSensitive)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value.ToString() == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == s);
 
                 }
 
                 foreach (var n in NotExists)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == n);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == n);
                 }
 
             }
@@ -212,11 +213,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
                 {
-                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(argument.Value); //Json validation
+                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
                 }
                 else
                 {
-                    metadata.PropertyInfo.GetValue(person, null).ToString().ShouldBe(argument.Value);
+                    metadata.PropertyInfo.GetValue(person, null).ShouldBe(argument.Value);
                 }
 
                 expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
@@ -235,7 +236,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         private string AddPrifix(string prefix, string param)
         {
-            return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}.{param}";
+            return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}_{param}";
         }
 
         public async Task LogGrainId()
