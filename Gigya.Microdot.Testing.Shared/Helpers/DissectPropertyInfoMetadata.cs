@@ -4,11 +4,11 @@ using System.Reflection;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.ServiceContract.Attributes;
 
-namespace Gigya.Microdot.Orleans.Hosting.UnitTests
+namespace Gigya.Microdot.Testing.Shared.Helpers
 {
-    internal static class DissectPropertyInfoMetadata
+    public static class DissectPropertyInfoMetadata
     {
-        internal static IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity)> DissectPropertis<TType>(TType instance, Sensitivity defualtSensitivity = Sensitivity.Sensitive) where TType : class
+        public static IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity)> DissectPropertis<TType>(TType instance, Sensitivity defualtSensitivity = Sensitivity.Sensitive) where TType : class
         {
             foreach (var propertyInfo in instance.GetType().GetProperties())
             {
@@ -17,7 +17,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
         }
 
-        internal static Sensitivity? ExtractSensitivityFromPropertyInfo(PropertyInfo propertyInfo)
+        public static Sensitivity? ExtractSensitivityFromPropertyInfo(PropertyInfo propertyInfo)
         {
             var attribute = propertyInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
@@ -34,6 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                     return Sensitivity.Sensitive;
                 }
 
+                // If we got here, we definitely found a NonSensitiveAttribute
                 return Sensitivity.NonSensitive;
             }
 

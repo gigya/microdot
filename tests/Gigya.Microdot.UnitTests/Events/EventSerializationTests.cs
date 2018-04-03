@@ -19,9 +19,9 @@ namespace Gigya.Microdot.UnitTests.Events
     public class EventSerializationTests
     {
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()));
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration());
         EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironmentsVariableProvider(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()));
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration());
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
