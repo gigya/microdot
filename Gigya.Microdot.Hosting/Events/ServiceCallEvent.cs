@@ -66,7 +66,7 @@ namespace Gigya.Microdot.Hosting.Events
 
         /// <summary> NonSensitive Service method arguments </summary>
 
-        [EventField("params", Encrypt = false)]
+        [EventField("params", Encrypt = false, TruncateIfLong = true)]
         public IEnumerable<KeyValuePair<string, object>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
 
 

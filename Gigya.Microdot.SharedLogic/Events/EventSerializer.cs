@@ -114,7 +114,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                         yield return new SerializedEventField
                         {
                             Name          = kvp.Key,
-                            Value         = kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
+                            Value         = !member.Attribute.TruncateIfLong ? kvp.Value : kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
                             Attribute     = member.Attribute,
                             ShouldEncrypt = member.Attribute.Encrypt,
                         };
