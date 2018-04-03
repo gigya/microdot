@@ -34,6 +34,7 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
                     return Sensitivity.Sensitive;
                 }
 
+                // If we got here, we definitely found a NonSensitiveAttribute
                 return Sensitivity.NonSensitive;
             }
 

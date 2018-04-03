@@ -62,33 +62,25 @@ namespace Gigya.Microdot.Hosting.Events
 
         /// <summary>  Sensitive Service method arguments </summary>
         [EventField("params", Encrypt = true)]
-        public IEnumerable<KeyValuePair<string, string>> EncryptedServiceMethodArguments => LazyEncryptedRequestParams.GetValue(this);
+        public IEnumerable<KeyValuePair<string, object>> EncryptedServiceMethodArguments => LazyEncryptedRequestParams.GetValue(this);
 
         /// <summary> NonSensitive Service method arguments </summary>
 
         [EventField("params", Encrypt = false)]
-        public IEnumerable<KeyValuePair<string, string>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
+        public IEnumerable<KeyValuePair<string, object>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
 
 
-        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Sensitive).ToList());
-        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent> LazyUnencryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, string>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.NonSensitive).ToList());
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Sensitive).ToList());
+        private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyUnencryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.NonSensitive).ToList());
 
 
         public IEnumerable<Param> Params { get; set; }
 
-
-        private IEnumerable<KeyValuePair<string, string>> GetRequestParams(Sensitivity sensitivity)
+        private IEnumerable<KeyValuePair<string, object>> GetRequestParams(Sensitivity sensitivity)
         {
-            
-            if (!Configuration.ExcludeParams && Params != null)
-            {
-                foreach (var param in Params.Where(param => param.Value != null && param.Sensitivity == sensitivity))
-                {
-                    var val = param.Value.Substring(0, Math.Min(param.Value.Length, Configuration.ParamTruncateLength));
-
-                    yield return new KeyValuePair<string, string>(param.Name, val);
-                }
-            }
+            return Params.Where(param => !Configuration.ExcludeParams && Params != null)
+                         .Where(param => param.Value != null && param.Sensitivity == sensitivity)
+                         .Select(_ => new KeyValuePair<string, object>(_.Name, _.Value));
         }
     }
 }

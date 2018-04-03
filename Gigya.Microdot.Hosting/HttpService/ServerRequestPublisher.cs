@@ -42,21 +42,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             var metaData = _serviceEndPointDefinition.GetMetaData(serviceMethod);
             var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-            var @params = new List<Param>();
 
-            foreach (var argument in arguments)
-            {
-                foreach (var (name, value, sensitivity) in ExtractParamValues(argument, metaData))
-                {
-                    @params.Add(new Param{
-                        Name = name,
-                        Value = value is string ? value.ToString() : JsonConvert.SerializeObject(value),
-                        Sensitivity = sensitivity
-                    });
-                }
-            }
-
-            callEvent.Params = @params;
+            callEvent.Params = arguments.SelectMany(_ => ExtractParamValues(_, metaData)).Select(_ => new Param{
+                Name = _.name,
+                Value = _.value,
+                Sensitivity = _.sensitivity,
+            });
             callEvent.Exception = ex;
             callEvent.ActualTotalTime = requestTime;
             callEvent.ErrCode = ex != null ? null : (int?)0;
