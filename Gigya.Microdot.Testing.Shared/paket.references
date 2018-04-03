@@ -3,3 +3,4 @@ Ninject
 Microsoft.Orleans.Core
 NSubstitute
 System.Threading.Tasks.Dataflow
+System.ValueTuple
