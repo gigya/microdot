@@ -32,12 +32,12 @@ namespace Gigya.Microdot.Hosting.Events
 {
     public class ServiceCallEvent : StatsEvent
     {
-   
+
         protected Regex ExcludeStackTraceForErrorCodeRegex => Configuration.ExcludeStackTraceRule;
 
         internal double? ActualTotalTime { get; set; }
 
-      
+
         public override double? TotalTime => ActualTotalTime;
 
         public override string EventType => EventConsts.ServerReqType;
@@ -78,9 +78,16 @@ namespace Gigya.Microdot.Hosting.Events
 
         private IEnumerable<KeyValuePair<string, object>> GetRequestParams(Sensitivity sensitivity)
         {
-            return Params.Where(param => !Configuration.ExcludeParams && Params != null)
-                         .Where(param => param.Value != null && param.Sensitivity == sensitivity)
-                         .Select(_ => new KeyValuePair<string, object>(_.Name, _.Value));
+
+            if (Params != null)
+            {
+                return Params.Where(param => !Configuration.ExcludeParams && Params != null)
+                               .Where(param => param.Value != null && param.Sensitivity == sensitivity)
+                               .Select(_ => new KeyValuePair<string, object>(_.Name, _.Value));
+            }
+
+            return Enumerable.Empty<KeyValuePair<string, object>>();
+
         }
     }
 }

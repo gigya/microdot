@@ -154,21 +154,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 foreach (var s in sensitive)
                 {
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value.ToString() == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == s);
                 }
 
                 foreach (var s in NoneSensitive)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value.ToString() == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == s);
 
                 }
 
                 foreach (var n in NotExists)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == n);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == n);
                 }
 
             }
@@ -213,11 +213,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
                 if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
                 {
-                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(argument.Value); //Json validation
+                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
                 }
                 else
                 {
-                    metadata.PropertyInfo.GetValue(person, null).ToString().ShouldBe(argument.Value);
+                    metadata.PropertyInfo.GetValue(person, null).ShouldBe(argument.Value);
                 }
 
                 expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
