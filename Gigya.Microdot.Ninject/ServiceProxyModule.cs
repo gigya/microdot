@@ -64,7 +64,7 @@ namespace Gigya.Microdot.Ninject
                     new Binding(service)
                     {
                         ProviderCallback = ctx => new ServiceProxyFactory(service),
-                        ScopeCallback = context => StandardScopeCallbacks.Singleton
+                        ScopeCallback = StandardScopeCallbacks.Singleton
                     }
                 };
             }
