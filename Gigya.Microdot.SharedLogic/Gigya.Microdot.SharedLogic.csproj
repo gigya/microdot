@@ -55,6 +55,7 @@
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
+    <Compile Include="ServcieShutdownSource.cs" />
     <Compile Include="Utils\Assert.cs" />
     <Compile Include="BaseCommonConfig.cs" />
     <Compile Include="Events\ClientCallEvent.cs" />
