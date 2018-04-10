@@ -1,7 +1,7 @@
 REDIRECTS: ON
 COPY-CONTENT-TO-OUTPUT-DIR: ALWAYS
 CONTENT: ONCE
-RESTRICTION: == net451
+RESTRICTION: == net461
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Newtonsoft.Json (9.0.1)
