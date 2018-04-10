@@ -30,6 +30,7 @@ using Orleans;
 using Orleans.Providers;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
+using Metric = Metrics.Metric;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

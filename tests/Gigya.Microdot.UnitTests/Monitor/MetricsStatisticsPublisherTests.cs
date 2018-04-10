@@ -14,6 +14,7 @@ using NUnit.Framework;
 using Orleans.Providers;
 using Orleans.Runtime;
 using Shouldly;
+using Metric = Metrics.Metric;
 
 namespace Gigya.Microdot.UnitTests
 {

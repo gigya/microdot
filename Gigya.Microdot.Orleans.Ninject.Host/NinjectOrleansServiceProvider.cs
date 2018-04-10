@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Syntax;
 using Orleans.Runtime.Configuration;
+using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -37,10 +38,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     public class NinjectOrleansServiceProvider : IServiceProvider
     {
         internal static IKernel Kernel { get; set; }
-        private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; }= new ConcurrentDictionary<Type, Type>();
+        private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
+
+
+        public NinjectOrleansServiceProvider()
+        {
+            int x = 0;
+        }
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {            
+            
       
             foreach (var descriptor in services)
             {
@@ -48,15 +56,15 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
                 if (descriptor.ImplementationType != null)
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).To(descriptor.ImplementationType);
+                    binding = Kernel.Rebind(descriptor.ServiceType).To(descriptor.ImplementationType);
                 }
                 else if (descriptor.ImplementationFactory != null)
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
+                    binding = Kernel.Rebind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
                 }
                 else
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
+                    binding = Kernel.Rebind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
                 }
 
                 switch (descriptor.Lifetime)
@@ -71,6 +79,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         break;
                 }
             }
+
 
             return this;
         }
@@ -104,7 +113,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
             
             NinjectOrleansServiceProvider.Kernel = kernel;
-            clusterConfiguration.Defaults.StartupTypeName = typeof(NinjectOrleansServiceProvider).AssemblyQualifiedName;
+            clusterConfiguration.UseStartupType<NinjectOrleansServiceProvider>();
             return clusterConfiguration;
         }
 
