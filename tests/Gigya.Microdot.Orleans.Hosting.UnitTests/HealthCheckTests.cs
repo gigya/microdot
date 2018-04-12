@@ -54,11 +54,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void HealthCheck_ServcieDrain_StatueShouldBe503()
         {
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: 6655, serviceDrainTime: TimeSpan.FromSeconds(10));
+            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: 6755, serviceDrainTime: TimeSpan.FromSeconds(10));
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
             customServiceTester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6655/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6755/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
             dispose.Wait();
         }
