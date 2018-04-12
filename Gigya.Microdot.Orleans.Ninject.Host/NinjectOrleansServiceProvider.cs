@@ -24,6 +24,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Syntax;
@@ -37,6 +39,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// </summary>
     public class NinjectOrleansServiceProvider : IServiceProvider
     {
+
         internal static IKernel Kernel { get; set; }
         private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
 
@@ -80,7 +83,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 }
             }
 
-
+            var globalConfiguration = Kernel.Get<GlobalConfiguration>();
+            globalConfiguration.SerializationProviders.Add(typeof(OrleansCustomSerialization).GetTypeInfo());
             return this;
         }
 
