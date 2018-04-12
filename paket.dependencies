@@ -22,7 +22,7 @@ nuget Microsoft.Orleans.OrleansRuntime  1.5.3
 nuget Microsoft.Orleans.OrleansProviders 1.5.3
 nuget Microsoft.Orleans.OrleansSqlUtils  1.5.3
 nuget Microsoft.Orleans.OrleansZooKeeperUtils  1.5.3
-nuget Microsoft.Orleans.OrleansCodeGenerator  1.5.3
+nuget Microsoft.Orleans.OrleansCodeGenerator 1.5.3
 nuget Microsoft.Orleans.OrleansCodeGenerator.Build 1.5.3
 nuget Microsoft.Orleans.TestingHost 1.5.3
 nuget Microsoft.CodeAnalysis.CSharp 2

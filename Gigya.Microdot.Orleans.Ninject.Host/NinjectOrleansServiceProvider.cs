@@ -99,8 +99,15 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     return null;
             });
 
+
             if (elementType == null)
+            {
+                if (Kernel.CanResolve(serviceType) == false && serviceType.Namespace?.StartsWith("Orleans") == true)
+                    return null;
+
                 return Kernel.Get(serviceType);
+            }
+
 
             var results = Kernel.GetAll(elementType).ToArray();
             var typedResults = Array.CreateInstance(elementType, results.Length);

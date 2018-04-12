@@ -40,7 +40,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     //[Serializer(typeof(JProperty))]
     //[Serializer(typeof(JConstructor))]
     // ReSharper disable once UnusedMember.Global
-    public  class OrleansCustomSerialization :IExternalSerializer
+    public class OrleansCustomSerialization : IExternalSerializer
     {
         private Logger _logger;
 
@@ -87,7 +87,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public bool IsSupportedType(Type itemType)
         {
-            Debugger.Launch();
             foreach (var type in new[] { typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor) })
             {
                 // Alternatively, can copy via JObject.ToString() and JObject.Parse() for true deep-copy.
@@ -100,23 +99,22 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public object DeepCopy(object source, ICopyContext context)
         {
-            Debugger.Launch();
+            if (source is JToken token)
+                return token.DeepClone();
 
-            throw new NotImplementedException();
+            return source;
         }
 
         public void Serialize(object item, ISerializationContext context, Type expectedType)
         {
-            Debugger.Launch();
-
-            //throw new NotImplementedException();
+            SerializationManager.SerializeInner(item.ToString(), context, item.GetType());
         }
 
         public object Deserialize(Type expectedType, IDeserializationContext context)
         {
-            Debugger.Launch();
+            var str = (string)SerializationManager.DeserializeInner(expectedType.GetType(), context);
 
-            throw new NotImplementedException();
+            return JsonConvert.DeserializeObject(str, expectedType, JsonSettings);
         }
     }
 }

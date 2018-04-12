@@ -90,7 +90,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [OneTimeTearDown]
         public void TearDown()
         {
-            Tester.Dispose();
+            //Tester.Dispose();
         }
 
 

@@ -19,10 +19,23 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
+
+using Orleans.CodeGenerator;
+
 namespace Gigya.Microdot.Orleans.Hosting
 {
     /// <summary>
     /// Placeholder for referencing the Gigya.Orleans.Host assembly
     /// </summary>
-    public class OrleansHostingAssembly { }
+    public class OrleansHostingAssembly
+    {
+        public object SerializerGenerator
+        {
+            get
+            {
+                
+                return typeof(SerializerGenerator).ToString(); // create strong reference to code generation
+            }
+        }
+    }
 }
