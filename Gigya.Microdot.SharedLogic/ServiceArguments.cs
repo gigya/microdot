@@ -71,7 +71,7 @@ namespace Gigya.Microdot.SharedLogic
         public int? ShutdownWhenPidExits { get; }
 
         /// <summary>
-        /// Specifies drain time in this time the servcie status will be 503.
+        /// Specifies drain time in this time the servcie status will be 521.
         /// </summary>
         public TimeSpan? ServiceDrainTime { get;  }
         /// <summary>
