@@ -1,22 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-
 using Gigya.Microdot.Orleans.Hosting;
-
 using Metrics;
 using Metrics.MetricData;
-
 using NSubstitute;
-
 using NUnit.Framework;
-
 using Orleans.Providers;
 using Orleans.Runtime;
 using Shouldly;
 using Metric = Metrics.Metric;
 
-namespace Gigya.Microdot.UnitTests
+namespace Gigya.Microdot.UnitTests.Monitor
 {
     [TestFixture]
     public class MetricsStatisticsPublisherTests

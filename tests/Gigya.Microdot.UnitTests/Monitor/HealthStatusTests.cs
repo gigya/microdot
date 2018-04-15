@@ -1,15 +1,12 @@
 ﻿using System.Threading.Tasks;
-
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
-
 using NUnit.Framework;
-
 using Shouldly;
 
-namespace Gigya.Microdot.UnitTests
+namespace Gigya.Microdot.UnitTests.Monitor
 {
     [HttpService(5555)]
     public interface IHealthyService : IHealthStatus { }
