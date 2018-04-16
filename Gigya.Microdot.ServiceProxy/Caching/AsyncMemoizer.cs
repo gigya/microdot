@@ -65,7 +65,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var target = new InvocationTarget(method);
             string cacheKey = $"{target}#{GetArgumentHash(args)}";
             
-            return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(dataSource, args), taskResultType, policy, target.TypeName, target.MethodName);
+            return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(dataSource, args), taskResultType, policy, target.MethodName, string.Join(",", args), new []{target.TypeName, target.MethodName});
         }
 
 
@@ -76,7 +76,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             using (var writer = new StreamWriter(stream) { AutoFlush = true })
             using (SHA1 sha = new SHA1CryptoServiceProvider())
             {
-                JsonSerializer.Create().Serialize(writer, args);
+                JsonSerializer.Create().Serialize(writer, args);                
                 stream.Seek(0, SeekOrigin.Begin);
                 return Convert.ToBase64String(sha.ComputeHash(stream));
             }
