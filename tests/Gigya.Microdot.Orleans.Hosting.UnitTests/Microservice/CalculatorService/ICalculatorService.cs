@@ -65,6 +65,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         Task CreatePerson([LogFields] CalculatorServiceTests.Person person);
         Task LogGrainId();
         Task<bool> ValidatePersonLogFields([LogFields] CalculatorServiceTests.Person person);
-        Task<bool> ThrowExceptionAndValidate(Exception myServiceException);
+        Task ThrowExceptionAndValidate(Exception myServiceException);
+        Task ThrowHttpRequestException(string message);
     }
 }

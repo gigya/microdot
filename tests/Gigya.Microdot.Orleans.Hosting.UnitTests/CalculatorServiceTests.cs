@@ -386,7 +386,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             try
             {
-                (await Service.ThrowExceptionAndValidate(myServiceException)).ShouldBeTrue();
+                await Service.ThrowExceptionAndValidate(myServiceException);
             }
             catch (Exception actual)
             {
@@ -404,7 +404,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             try
             {
-                (await Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException))).ShouldBeTrue();
+                await Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException));
             }
             catch (Exception actual)
             {
@@ -424,7 +424,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             try
             {
-                (await Service.ThrowExceptionAndValidate(expected)).ShouldBe(true);
+                await Service.ThrowExceptionAndValidate(expected);
             }
             catch (Exception actual)
             {
@@ -434,20 +434,23 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             expected.ErrorCode.ShouldBe(10000);
         }
 
-        //[Test]
-        //public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
-        //{
-        //    var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
+        [Ignore("To discuss with Allon.")]
+        [Test]
+        public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
+        {
+            const string message = "HTTP request exception";
 
-        //    try
-        //    {
-        //        (await Service.ThrowExceptionAndValidate(expected)).ShouldBe(true);
-        //    }
-        //    catch (Exception actual)
-        //    {
-        //        AssertExceptionsAreEqual(expected, actual);
-        //    }
-        //}
+            var expected = new HttpRequestException(message).ThrowAndCatch();
+
+            try
+            {
+                await Service.ThrowHttpRequestException(message);
+            }
+            catch (Exception actual)
+            {
+                AssertExceptionsAreEqual(expected, actual.InnerException);
+            }
+        }
 
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)
@@ -479,33 +482,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 new BusinessEntity { Name = "name", Number = 5 },
                 unencrypted: new Tags { { "t1", "v1" } }).ThrowAndCatch();
         }
-
-
-
-        //[Test]
-        //public void OrleansSerialization_CustomerFacingException_IsEquivalent()
-        //{
-        //    var expected = new RequestException("Test", 10000).ThrowAndCatch();
-
-        //    var actual = _serializer.RoundTripSerializationForTesting(expected);
-
-        //    AssertExceptionsAreEqual(expected, actual);
-        //    expected.ErrorCode.ShouldBe(10000);
-        //}
-
-        //[Test]
-        //public void OrleansSerialization_HttpRequestException_IsEquivalent()
-        //{
-        //    var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
-
-        //    var actual = _serializer.RoundTripSerializationForTesting(expected);
-
-        //    AssertExceptionsAreEqual(expected, actual);
-        //}
-
-
-
-
 
         [Test]
         public async Task LogGrainId()
