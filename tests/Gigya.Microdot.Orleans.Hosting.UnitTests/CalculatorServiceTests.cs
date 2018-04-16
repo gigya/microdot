@@ -24,7 +24,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
@@ -32,10 +34,12 @@ using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;
+using NSubstitute.Core;
 using NUnit.Framework;
 using Shouldly;
 
@@ -74,7 +78,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true, serviceDrainTime:TimeSpan.MaxValue);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true, serviceDrainTime: TimeSpan.MaxValue);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -374,6 +378,134 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             (await Service.ValidatePersonLogFields(person)).ShouldBeTrue();
 
         }
+
+        [Test]
+        public async Task OrleansSerialization_MyServiceException_IsEquivalent()
+        {
+            var myServiceException = GetMyException();
+
+            try
+            {
+                (await Service.ThrowExceptionAndValidate(myServiceException)).ShouldBeTrue();
+            }
+            catch (Exception actual)
+            {
+                AssertExceptionsAreEqual(myServiceException, actual);
+            }
+
+        }
+
+        [Test]
+        public async Task OrleansSerialization_InnerMyServiceException_IsEquivalent()
+        {
+
+            var myServiceException = GetMyException();
+            var expected = new Exception("Intermediate exception", myServiceException).ThrowAndCatch();
+
+            try
+            {
+                (await Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException))).ShouldBeTrue();
+            }
+            catch (Exception actual)
+            {
+
+                AssertExceptionsAreEqual(expected, actual.InnerException);
+            }
+        }
+
+
+        
+
+        [Test]
+        public async Task OrleansSerialization_CustomerFacingException_IsEquivalent()
+        {
+            var expected = new RequestException("Test", 10000).ThrowAndCatch();
+
+
+            try
+            {
+                (await Service.ThrowExceptionAndValidate(expected)).ShouldBe(true);
+            }
+            catch (Exception actual)
+            {
+                AssertExceptionsAreEqual(expected, actual);
+            }
+          
+            expected.ErrorCode.ShouldBe(10000);
+        }
+
+        //[Test]
+        //public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
+        //{
+        //    var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
+
+        //    try
+        //    {
+        //        (await Service.ThrowExceptionAndValidate(expected)).ShouldBe(true);
+        //    }
+        //    catch (Exception actual)
+        //    {
+        //        AssertExceptionsAreEqual(expected, actual);
+        //    }
+        //}
+
+
+        private static void AssertExceptionsAreEqual(Exception expected, Exception actual)
+        {
+            Assert.NotNull(actual);
+            Assert.AreEqual(expected.GetType(), actual.GetType());
+            Assert.AreEqual(expected.Message, actual.Message);
+
+            if (expected is SerializableException)
+            {
+                var typedExpected = expected as SerializableException;
+                var typedActual = actual as SerializableException;
+                CollectionAssert.AreEqual(typedExpected.EncryptedTags, typedActual.EncryptedTags);
+                CollectionAssert.AreEqual(typedExpected.UnencryptedTags, typedActual.UnencryptedTags);
+                Assert.AreEqual(typedActual.ExtendedProperties.Count, 0);
+            }
+
+            if (expected is MyServiceException)
+                Assert.AreEqual(((MyServiceException)expected).Entity, ((MyServiceException)actual).Entity);
+
+            if (expected.InnerException != null)
+                AssertExceptionsAreEqual(expected.InnerException, actual.InnerException);
+        }
+
+        private MyServiceException GetMyException()
+        {
+            return new MyServiceException(
+                "My message",
+                new BusinessEntity { Name = "name", Number = 5 },
+                unencrypted: new Tags { { "t1", "v1" } }).ThrowAndCatch();
+        }
+
+
+
+        //[Test]
+        //public void OrleansSerialization_CustomerFacingException_IsEquivalent()
+        //{
+        //    var expected = new RequestException("Test", 10000).ThrowAndCatch();
+
+        //    var actual = _serializer.RoundTripSerializationForTesting(expected);
+
+        //    AssertExceptionsAreEqual(expected, actual);
+        //    expected.ErrorCode.ShouldBe(10000);
+        //}
+
+        //[Test]
+        //public void OrleansSerialization_HttpRequestException_IsEquivalent()
+        //{
+        //    var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
+
+        //    var actual = _serializer.RoundTripSerializationForTesting(expected);
+
+        //    AssertExceptionsAreEqual(expected, actual);
+        //}
+
+
+
+
 
         [Test]
         public async Task LogGrainId()

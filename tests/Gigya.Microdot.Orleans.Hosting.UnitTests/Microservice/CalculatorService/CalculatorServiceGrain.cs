@@ -172,7 +172,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 }
 
             }
-            catch (Exception )
+            catch (Exception)
             {
                 return false;
             }
@@ -232,6 +232,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             }
 
             return true;
+        }
+
+        public Task<bool> ThrowExceptionAndValidate(Exception myServiceException)
+        {
+            throw myServiceException;
         }
 
         private string AddPrifix(string prefix, string param)

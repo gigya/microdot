@@ -10,6 +10,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using NUnit.Framework;
 using Shouldly;
 

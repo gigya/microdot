@@ -14,6 +14,7 @@ using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using Ninject;
 using NUnit.Framework;
 

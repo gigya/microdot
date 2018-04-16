@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Gigya.Microdot.UnitTests
+namespace Gigya.Microdot.Testing.Shared.Helpers
 {
     public static class ExceptionExtensions
     {

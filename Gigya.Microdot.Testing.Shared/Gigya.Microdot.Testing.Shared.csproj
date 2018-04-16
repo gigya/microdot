@@ -49,6 +49,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Helpers\DissectPropertyInfoMetadata.cs" />
+    <Compile Include="Helpers\ExceptionExtensions.cs" />
     <Compile Include="Service\ServiceTesterExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service\NonOrleansServiceTester.cs" />

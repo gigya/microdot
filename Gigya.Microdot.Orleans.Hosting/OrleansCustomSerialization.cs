@@ -21,10 +21,9 @@
 #endregion
 
 using System;
-using System.Diagnostics;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Orleans.CodeGeneration;
 using Orleans.Runtime;
 using Orleans.Serialization;
 
@@ -33,21 +32,19 @@ namespace Gigya.Microdot.Orleans.Hosting
     /// <summary>
     /// This class is called by the Orleans runtime to perform serialization for special types, and should not be called directly from your code.
     /// </summary>
-    //[Serializer(typeof(JObject))]
-    //[Serializer(typeof(JArray))]
-    //[Serializer(typeof(JToken))]
-    //[Serializer(typeof(JValue))]
-    //[Serializer(typeof(JProperty))]
-    //[Serializer(typeof(JConstructor))]
-    // ReSharper disable once UnusedMember.Global
     public class OrleansCustomSerialization : IExternalSerializer
     {
         private Logger _logger;
+        private readonly Type[] _supportedTypes;
 
         public OrleansCustomSerialization()
         {
-            int x = 0;
+            _supportedTypes = new[]
+            {
+                typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor)
+            };
         }
+
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -56,46 +53,12 @@ namespace Gigya.Microdot.Orleans.Hosting
             DateParseHandling = DateParseHandling.None
         };
 
-        //[CopierMethod]
-        //public static object DeepCopier(object original, ICopyContext context)
-        //{
-        //    if (original is JToken token)
-        //        return token.DeepClone();
-
-        //    return original;
-        //}
-
-        //[SerializerMethod]
-        //public static void Serializer(object untypedInput, ISerializationContext context, Type expected)
-        //{
-        //    SerializationManager.SerializeInner(untypedInput.ToString(), context, untypedInput.GetType());
-        //}
-
-        //[DeserializerMethod]
-        //public static object Deserializer(Type expected, IDeserializationContext context)
-        //{
-        //    var str = (string)SerializationManager.DeserializeInner(expected.GetType(), context);
-
-        //    return JsonConvert.DeserializeObject(str, expected, JsonSettings);
-        //}
-
         public void Initialize(Logger logger)
         {
             _logger = logger;
-            //throw new NotImplementedException();
         }
 
-        public bool IsSupportedType(Type itemType)
-        {
-            foreach (var type in new[] { typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor) })
-            {
-                // Alternatively, can copy via JObject.ToString() and JObject.Parse() for true deep-copy.
-                if (type == itemType)
-                    return true;
-            }
-
-            return false;
-        }
+        public bool IsSupportedType(Type itemType) => _supportedTypes.Any(type => type == itemType);
 
         public object DeepCopy(object source, ICopyContext context)
         {

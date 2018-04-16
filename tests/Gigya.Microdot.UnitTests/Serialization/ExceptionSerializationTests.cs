@@ -12,6 +12,8 @@
 
 //namespace Gigya.Microdot.UnitTests.Serialization
 //{
+//todo: toli remove file
+
 //    [TestFixture]
 //    public class ExceptionSerializationTests
 //    {
@@ -30,6 +32,8 @@
 //                config.BufferPoolBufferSize.Returns(30000);
 //                config.BufferPoolMaxSize = 2;
 //                config.BufferPoolPreallocationSize = 3;
+
+
 //                _serializer = new SerializationManager(serviceProvider: null, config: config, traceConfig: trace);
 
 

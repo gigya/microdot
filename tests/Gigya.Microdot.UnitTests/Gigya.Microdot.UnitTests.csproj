@@ -87,7 +87,6 @@
     <Compile Include="ServiceListenerTests\PortsAllocationTests.cs" />
     <Compile Include="ServiceProxyTests\AbstractServiceProxyTest.cs" />
     <Compile Include="ServiceProxyTests\BehaviorTests.cs" />
-    <Compile Include="ExceptionExtensions.cs" />
     <Compile Include="ServiceProxyTests\HttpRequestsFactory.cs" />
     <Compile Include="ServiceProxyTests\JsonExceptionSerializerTests.cs" />
     <Compile Include="ServiceProxyTests\MetricsTests.cs" />
