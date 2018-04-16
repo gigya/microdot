@@ -25,6 +25,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Caching;
 using System.Runtime.Caching.Hosting;
 using System.Threading;
@@ -196,7 +197,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             cacheKey = key,
                             cacheGroup = groupName,
                             cacheData = logData,
-                            result = GetValueForLogging(result)
+                            value = GetValueForLogging(result)
                         }));
                     }
                     //Can happen if item removed before task is completed
@@ -226,8 +227,17 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     AwaitingResult.Decrement(metricsKeys);
                     return result;
                 }
-                catch
+                catch(Exception exception)
                 {
+                    Log.Info(x=>x("Error resolving value for cache item", unencryptedTags: new
+                    {
+                        cacheKey = key,
+                        cacheGroup = groupName,
+                        cacheData = logData,
+                        removeOnException,
+                        errorMessage = exception.Message
+                    }));
+
                     if(removeOnException)
                         MemoryCache.Remove(key); // Do not cache exceptions.
 
@@ -310,11 +320,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return resultTask;
         }
 
+        private ConcurrentDictionary<Type, FieldInfo> _revocableValueFieldPerType = new ConcurrentDictionary<Type, FieldInfo>();
         private string GetValueForLogging(object value)
         {
             if (value is IRevocable)
             {
-                var revocableValueField = value.GetType().GetField(nameof(Revocable<int>.Value));
+                var revocableValueField = _revocableValueFieldPerType.GetOrAdd(value.GetType(), t=>t.GetField(nameof(Revocable<int>.Value)));
                 if (revocableValueField != null)
                     value = revocableValueField.GetValue(value);
             }
@@ -336,18 +347,18 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             if (shouldLog)
                 Log.Info(x=>x("Item removed from cache", unencryptedTags: new
                 {
-                    cacheKey=arguments.CacheItem.Key,
-                    removeReason =arguments.RemovedReason.ToString(),
-                    cacheGroup = cacheItem?.GroupName,
-                    cacheData = cacheItem?.LogData
+                    cacheKey     = arguments.CacheItem.Key,
+                    removeReason = arguments.RemovedReason.ToString(),
+                    cacheGroup   = cacheItem?.GroupName,
+                    cacheData    = cacheItem?.LogData
                 })); 
 
             var cachedItem = ((AsyncCacheItem)arguments.CacheItem.Value).CurrentValueTask;
-            if(cachedItem.Status==TaskStatus.RanToCompletion && (cachedItem.Result as IRevocable)?.RevokeKeys!=null)
+            if(cachedItem.Status == TaskStatus.RanToCompletion && (cachedItem.Result as IRevocable)?.RevokeKeys!=null)
             {
-                foreach(var revocationKey in ((IRevocable)cachedItem.Result).RevokeKeys)
+                foreach(var revokeKey in ((IRevocable)cachedItem.Result).RevokeKeys)
                 {
-                    if (RevokeKeyToCacheKeysIndex.TryGetValue(revocationKey, out HashSet<string> cacheKeys))
+                    if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out HashSet<string> cacheKeys))
                     {
                         lock (cacheKeys)
                         {
@@ -355,7 +366,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             Log.Info(x => x("RevokeKey removed from reverse index", unencryptedTags: new
                             {
                                 cacheKey = arguments.CacheItem.Key,
-                                revokeKey = revocationKey,
+                                revokeKey = revokeKey,
                                 removeReason = arguments.RemovedReason.ToString(),
                                 cacheGroup = cacheItem?.GroupName,
                                 cacheData = cacheItem?.LogData
@@ -363,7 +374,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                             if (!cacheKeys.Any())
                             {
-                                if (RevokeKeyToCacheKeysIndex.TryRemove(revocationKey, out _) && shouldLog)
+                                if (RevokeKeyToCacheKeysIndex.TryRemove(revokeKey, out _) && shouldLog)
                                     Log.Info(x => x("Reverse index for cache item was removed", unencryptedTags: new
                                     {
                                         cacheKey = arguments.CacheItem.Key,                                        
@@ -387,10 +398,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 return false;
 
             var config = GetRevokeConfig();
-            if (!config.Groups.ContainsKey(groupName))
-                return false;
+            if (config.Groups.TryGetValue(groupName, out var groupConfig))
+                return groupConfig.WriteExtraLogs;
 
-            return config.Groups[groupName].WriteExtraLogs;
+            return false;
         }
 
 
