@@ -52,15 +52,16 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void HealthCheck_ServcieDrain_StatueShouldBe503()
+        public async Task HealthCheck_ServcieDrain_StatueShouldBe521()
         {
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: 6655, serviceDrainTime: TimeSpan.FromSeconds(10));
+            int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
+            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: port, serviceDrainTime: TimeSpan.FromSeconds(10));
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
-            customServiceTester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6655/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
-            httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
-            dispose.Wait();
+         
+            var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
+            httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
+            await dispose;
         }
 
         [Test]

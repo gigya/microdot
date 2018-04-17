@@ -101,16 +101,26 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             HttpServiceListener.Dispose();
 
-            if (Silo != null && Silo.IsStarted)
-                Silo.StopOrleansSilo();
 
             try
             {
-                GrainClient.Uninitialize();
+                if (Silo != null && Silo.IsStarted)
+                    Silo.StopOrleansSilo();
             }
-            catch (Exception exc)
+            catch (System.Net.Sockets.SocketException)
             {
-                Log.Warn("Exception Uninitializing grain client", exception: exc);
+                //Orleans 1.3.1 thorws this exception most of the time 
+            }
+            finally
+            {
+                try
+                {
+                    GrainClient.Uninitialize();
+                }
+                catch (Exception exc)
+                {
+                    Log.Warn("Exception Uninitializing grain client", exception: exc);
+                }
             }
 
         }

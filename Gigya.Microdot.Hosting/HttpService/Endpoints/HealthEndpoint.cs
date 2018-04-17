@@ -35,6 +35,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         private IServiceEndPointDefinition ServiceEndPointDefinition { get; }
         private IServiceInterfaceMapper ServiceInterfaceMapper { get; }
         private IActivator Activator { get; }
+        private const int WebServerIsDown = 521;
 
         public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServiceDrainListener drainListener)
         {
@@ -54,7 +55,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
                 if (_drainListener.Token.IsCancellationRequested)
                 {
-                    await writeResponse($"Begin service drain before shutdown.", HttpStatusCode.ServiceUnavailable).ConfigureAwait(false);
+                    await writeResponse($"Begin service drain before shutdown.",(HttpStatusCode)WebServerIsDown ).ConfigureAwait(false);
                 }
 
                 if (serviceType == null)
