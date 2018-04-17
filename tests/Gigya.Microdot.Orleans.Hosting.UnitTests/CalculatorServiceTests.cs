@@ -434,22 +434,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             expected.ErrorCode.ShouldBe(10000);
         }
 
-        [Ignore("To discuss with Allon.")]
         [Test]
         public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
         {
             const string message = "HTTP request exception";
-
-            var expected = new HttpRequestException(message).ThrowAndCatch();
-
-            try
-            {
-                await Service.ThrowHttpRequestException(message);
-            }
-            catch (Exception actual)
-            {
-                AssertExceptionsAreEqual(expected, actual.InnerException);
-            }
+            var actual = Should.Throw<EnvironmentException>(async () => await Service.ThrowHttpRequestException(message), $"[HttpRequestException] {message}");
+            actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
         }
 
 

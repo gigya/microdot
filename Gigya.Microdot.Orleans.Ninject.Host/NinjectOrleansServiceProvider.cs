@@ -44,11 +44,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
 
 
-        public NinjectOrleansServiceProvider()
-        {
-            int x = 0;
-        }
-
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {            
             
