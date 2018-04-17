@@ -31,5 +31,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         public DateTime NextRefreshTime { get; set; }
         public Task<object> CurrentValueTask { get; set; }
         public Task RefreshTask { get; set; }
+
+        /// <summary>
+        /// Group name of this cache item (e.g. method name). 
+        /// The group name is used to configure whether extra logData should be written for items of this group.
+        /// </summary>
+        public string GroupName { get; set; }
+
+        /// <summary>
+        /// Extra data for log purposes (e.g. arguments list)
+        /// </summary>
+        public string LogData { get; set; }
     }
 }

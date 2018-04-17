@@ -103,10 +103,6 @@
       <Project>{6d6a62a1-15b5-44c2-ad37-698ab31863e4}</Project>
       <Name>Gigya.Microdot.Testing.Shared</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
-      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
-      <Name>Gigya.ServiceContract</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>
@@ -117,6 +113,17 @@
         </Reference>
         <Reference Include="Castle.Core">
           <HintPath>..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Gigya.ServiceContract">
+          <HintPath>..\packages\Gigya.ServiceContract\lib\net451\Gigya.ServiceContract.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

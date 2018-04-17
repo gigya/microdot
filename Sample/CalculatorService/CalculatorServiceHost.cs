@@ -19,6 +19,7 @@ namespace CalculatorService
             Environment.SetEnvironmentVariable("DC", "global");
             Environment.SetEnvironmentVariable("ENV", "dev");
 
+
             try
             {
                 new CalculatorServiceHost().Run();
@@ -35,6 +36,7 @@ namespace CalculatorService
         {
             kernel.Bind<ICalculatorService>().To<CalculatorService>();
         }
-    }
 
+      
+    }
 }

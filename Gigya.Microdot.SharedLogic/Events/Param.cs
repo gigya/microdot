@@ -30,7 +30,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     public class Param
     {
         public string Name;
-        public string Value;
+        public object Value;
         public Sensitivity Sensitivity;
     }
 

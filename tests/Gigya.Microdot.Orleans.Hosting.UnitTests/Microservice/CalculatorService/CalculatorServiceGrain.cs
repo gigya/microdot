@@ -29,9 +29,12 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
+using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.Testing.Shared.Helpers;
+using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NUnit.Framework;
 using Orleans;
 using Orleans.Concurrency;
 using Shouldly;
@@ -69,7 +72,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             return Worker.GetAppDomainChain(depth);
         }
-
 
         public Task<Tuple<DateTime, DateTimeOffset>> ToUniversalTime(DateTime localDateTime,
             DateTimeOffset localDateTimeOffset)
@@ -140,37 +142,37 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return Task.FromResult(1);
         }
 
-        public async Task<bool> IsLogPramSucceed(List<string> sensitive, List<string> NoneSensitive,
+        public async Task<bool> IsLogParamSucceeded(List<string> sensitive, List<string> NoneSensitive,
             List<string> NotExists)
         {
             await Task.Delay(150);
             try
             {
                 var eventPublisher = _eventPublisher as SpyEventPublisher;
-
                 var serviceCallEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
+
+
                 foreach (var s in sensitive)
                 {
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
-
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldContain(x1 => x1.Value.ToString() == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == s);
                 }
 
                 foreach (var s in NoneSensitive)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value == s);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == s);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldContain(x1 => x1.Value.ToString() == s);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == s);
 
                 }
 
                 foreach (var n in NotExists)
                 {
-                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
-                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value == n);
+                    serviceCallEvent.UnencryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == n);
+                    serviceCallEvent.EncryptedServiceMethodArguments.ShouldNotContain(x1 => x1.Value.ToString() == n);
                 }
 
             }
-            catch (Exception)
+            catch (Exception )
             {
                 return false;
             }
@@ -178,7 +180,64 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return true;
         }
 
+        public async Task CreatePerson([LogFields] CalculatorServiceTests.Person person)
+        {
+            await Task.FromResult(1);
+        }
 
+        public async Task<bool> ValidatePersonLogFields([LogFields]CalculatorServiceTests.Person person)
+        {
+            await Task.Delay(150);
+
+            var prefixClassName = typeof(CalculatorServiceTests.Person).Name;
+            var expectedMetadata = DissectPropertyInfoMetadata.DissectPropertis(person).Select(x => new
+            {
+                PropertyInfo = x.PropertyInfo,
+                Sensitivity = x.Sensitivity,
+                NewPropertyName = AddPrifix(prefixClassName, x.PropertyInfo.Name)
+            });
+
+
+            var expectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
+            var expectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).ToList();
+            var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
+            var eventPublisher = _eventPublisher as SpyEventPublisher;
+            var callEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
+
+            expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
+
+            //Sensitive
+            foreach (var argument in callEvent.EncryptedServiceMethodArguments)
+            {
+                var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
+
+                if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
+                {
+                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
+                }
+                else
+                {
+                    metadata.PropertyInfo.GetValue(person, null).ShouldBe(argument.Value);
+                }
+
+                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+            }
+            //NonSensitive
+            foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
+            {
+                var metadata = expectedNonSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
+                metadata.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
+
+                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+            }
+
+            return true;
+        }
+
+        private string AddPrifix(string prefix, string param)
+        {
+            return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}_{param}";
+        }
 
         public async Task LogGrainId()
         {
@@ -197,7 +256,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             var id = await GrainFactory.GetGrain<IUserGrainWithGuid>(Guid.NewGuid()).GetIdentety();
             await Task.Delay(150);
 
-             serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
             serviceCallEvent.GrainKeyGuid.ToString().ShouldBe(id);
             serviceCallEvent.GrainKeyString.ShouldBeNull();
@@ -221,11 +280,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
             serviceCallEvent.GrainKeyLong.ShouldBeNull();
             serviceCallEvent.GrainKeyGuid.ShouldBeNull();
-
-
         }
-
-
     }
-
 }

@@ -1,4 +1,4 @@
-﻿#region Copyright 
+﻿#region Copyright
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -55,6 +55,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
+        private readonly IServerRequestPublisher _serverRequestPublisher;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -99,9 +100,12 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   JsonExceptionSerializer exceptionSerializer, ServiceSchema serviceSchema)
+                                   JsonExceptionSerializer exceptionSerializer, 
+                                   ServiceSchema serviceSchema,
+                                   IServerRequestPublisher serverRequestPublisher)
         {
             ServiceSchema = serviceSchema;
+            _serverRequestPublisher = serverRequestPublisher;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -191,7 +195,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private async Task HandleRequest(HttpListenerContext context)
         {
             RequestTimings.ClearCurrentTimings();
-            using (context.Response)            
+            using (context.Response)
             {
                 var sw = Stopwatch.StartNew();
 
@@ -227,7 +231,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
-                    
                     ServiceMethod serviceMethod = null;
                     try
                     {
@@ -272,7 +275,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
-                        PublishEvent(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
+
+                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
                     }
                 }
             }
@@ -289,7 +293,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             return ex;
         }
 
-        private static IEnumerable<Exception> GetAllExceptions( Exception ex)
+        private static IEnumerable<Exception> GetAllExceptions(Exception ex)
         {
             while (ex != null)
             {
@@ -358,32 +362,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
         }
 
-
-        private void PublishEvent(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime)
-        {
-            var callEvent = EventPublisher.CreateEvent();
-
-            callEvent.CalledServiceName = serviceMethod?.GrainInterfaceType.Name;
-            callEvent.ClientMetadata = requestData.TracingData;
-            callEvent.ServiceMethod = requestData.Target?.MethodName;
-
-            var metaData = ServiceEndPointDefinition.GetMetaData(serviceMethod);
-
-            callEvent.Params = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>().Select(arg => new Param
-            {
-                Name = arg.Key.ToString(),
-                Value = arg.Value is string ? arg.Value.ToString() : JsonConvert.SerializeObject(arg.Value),
-                Sensitivity = metaData.ParametersSensitivity[arg.Key.ToString()] ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive
-            });
-
-            callEvent.Exception = ex;
-            callEvent.ActualTotalTime = requestTime;
-            callEvent.ErrCode = ex != null ? null : (int?)0;
-
-            EventPublisher.TryPublish(callEvent); // fire and forget!
-        }
-
-
         private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
         {
             context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
@@ -434,7 +412,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
 
             TracingContext.SetRequestID(request.TracingData.RequestID);
-            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);            
+            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
             return request;
         }
 
@@ -454,7 +432,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
         private static object[] GetParametersByName(ServiceMethod serviceMethod, IDictionary args)
-        {            
+        {
             return serviceMethod.ServiceInterfaceMethod
                 .GetParameters()
                 .Select(p => JsonHelper.ConvertWeaklyTypedValue(args[p.Name], p.ParameterType))

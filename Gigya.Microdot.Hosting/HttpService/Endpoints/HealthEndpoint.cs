@@ -25,23 +25,25 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {
     public class HealthEndpoint : ICustomEndpoint
     {
+        private readonly IServiceDrainListener _drainListener;
         private IServiceEndPointDefinition ServiceEndPointDefinition { get; }
         private IServiceInterfaceMapper ServiceInterfaceMapper { get; }
         private IActivator Activator { get; }
+        private const int WebServerIsDown = 521;
 
-
-        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator)
+        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServiceDrainListener drainListener)
         {
+            _drainListener = drainListener;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             ServiceInterfaceMapper = serviceInterfaceMapper;
             Activator = activator;
         }
-
 
         public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
         {
@@ -50,6 +52,11 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 // verify that the service implement IHealthStatus                    
                 var serviceName = context.Request.RawUrl.Substring(1, context.Request.RawUrl.LastIndexOf(".", StringComparison.Ordinal) - 1);
                 var serviceType = ServiceEndPointDefinition.ServiceNames.FirstOrDefault(o => o.Value == $"I{serviceName}").Key;
+
+                if (_drainListener.Token.IsCancellationRequested)
+                {
+                    await writeResponse($"Begin service drain before shutdown.",(HttpStatusCode)WebServerIsDown ).ConfigureAwait(false);
+                }
 
                 if (serviceType == null)
                     throw new RequestException("Invalid service name");

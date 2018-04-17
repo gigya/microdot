@@ -21,9 +21,12 @@
 #endregion
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -41,7 +44,7 @@ namespace Gigya.Microdot.Ninject.Host
     public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase
     {
         private bool disposed;
-        
+
         private readonly object disposeLockHandle = new object();
 
         private IKernel Kernel { get; set; }
@@ -70,7 +73,6 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
-            
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -93,6 +95,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
+            kernel.Get<ServiceValidator>().Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
@@ -105,7 +108,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
         protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
-            
+
         }
 
         /// <summary>
@@ -152,22 +155,26 @@ namespace Gigya.Microdot.Ninject.Host
         /// </summary>        
         protected override void OnStop()
         {            
+            if (Arguments.ServiceDrainTime.HasValue)
+            {
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTime.Value);
+            }
             Dispose();
         }
 
-     
         protected override void Dispose(bool disposing)
         {
             lock (disposeLockHandle)
             {
                 try
                 {
-                    if(disposed)
+                    if (disposed)
                         return;
 
                     SafeDispose(Listener);
 
-                    if(!Kernel.IsDisposed)
+                    if (!Kernel.IsDisposed)
                         SafeDispose(Kernel);
 
                     base.Dispose(disposing);

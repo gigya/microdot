@@ -43,6 +43,8 @@ namespace Gigya.Microdot.Interfaces.Events
         /// Cannot be used along with <see cref="Encrypt"/>, since encrypted tags are by definition always strings.</summary>
         public bool AppendTypeSuffix;
 
+        public bool TruncateIfLong = false;
+
         public EventFieldAttribute(string _name, object default_value = null)
         {
             Name = _name;
