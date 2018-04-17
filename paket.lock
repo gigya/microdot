@@ -8,7 +8,7 @@ NUGET
     DataAnnotationsValidator (2.1)
     FluentAssertions (5.2)
       System.ValueTuple (>= 4.4)
-    Gigya.ServiceContract (2.5.3)
+    Gigya.ServiceContract (2.5.4)
       Newtonsoft.Json (>= 9.0.1)
     Metrics.NET (0.5.5)
     Microsoft.Bcl (1.1.10)
