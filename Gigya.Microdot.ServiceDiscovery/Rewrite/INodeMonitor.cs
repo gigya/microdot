@@ -5,9 +5,9 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     /// <summary>
-    /// Monitors Consul using Health api and KeyValue api, to find the current active version of a service, and get its nodes list
+    /// Monitors current nodes state
     /// </summary>
-    public interface IConsulNodeMonitor: IDisposable
+    public interface INodeMonitor: IDisposable
     {
         /// <summary>
         /// Initialize monitoring of Consul nodes
@@ -19,5 +19,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// List of nodes for this service at current active version
         /// </summary>
         INode[] Nodes { get; }
+
+        /// <summary>
+        /// Whether this service appears on Consul as a deployed service
+        /// </summary>
+        bool IsDeployed { get; }
+
     }
 }

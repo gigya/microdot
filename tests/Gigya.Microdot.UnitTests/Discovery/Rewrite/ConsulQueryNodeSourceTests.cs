@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _consulSource;
         private ConsulConfig _consulConfig;
-        private IQueryBasedConsulNodeMonitor _queryBasedConsulNodeMonitor;
+        private INodeMonitor _queryBasedConsulNodeMonitor;
         private INode[] _consulNodes;
         private Func<INode[]> _getConsulNodes;
         private bool _serviceIsDeployed;
@@ -36,7 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IQueryBasedConsulNodeMonitor>().ToMethod(_ => _queryBasedConsulNodeMonitor);
+                k.Rebind<INodeMonitor>().ToMethod(_ => _queryBasedConsulNodeMonitor);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
         }
@@ -53,7 +53,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulNodes = new INode[0];
             _serviceIsDeployed = true;
             _getConsulNodes = () => _consulNodes;
-            _queryBasedConsulNodeMonitor = Substitute.For<IQueryBasedConsulNodeMonitor>();
+            _queryBasedConsulNodeMonitor = Substitute.For<INodeMonitor>();
             _queryBasedConsulNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
             _queryBasedConsulNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
             _consulConfig = new ConsulConfig();

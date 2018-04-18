@@ -29,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private ConsulConfig _consulConfig;
-        private IConsulServiceListMonitor _consulServiceListMonitor;
+        private IServiceListMonitor _serviceListMonitor;
         private ConsulSimulator _consulSimulator;
         private IEnvironmentVariableProvider _environmentVariableProvider;
 
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
 
-                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope(); // Set in transient scope in order to get a new instance per test.
+                k.Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope(); // Set in transient scope in order to get a new instance per test.
             });
         }
 
@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [TearDown]
         public void TearDown()
         {
-            _consulServiceListMonitor?.Dispose();
+            _serviceListMonitor?.Dispose();
         }
 
 
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Init();
-            _consulServiceListMonitor.Services.ShouldNotContain(_serviceName);
+            _serviceListMonitor.Services.ShouldNotContain(_serviceName);
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Task.Delay(300);
             Should.Throw<EnvironmentException>(() =>
                                                 {
-                                                    var _ = _consulServiceListMonitor.Services;
+                                                    var _ = _serviceListMonitor.Services;
                                                 });
         }
 
@@ -145,8 +145,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         public Task Init()
         {
-            _consulServiceListMonitor = _testingKernel.Get<IConsulServiceListMonitor>();
-            return _consulServiceListMonitor.Init();
+            _serviceListMonitor = _testingKernel.Get<IServiceListMonitor>();
+            return _serviceListMonitor.Init();
         }
 
         private void SetError()
@@ -166,12 +166,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void ServiceShouldExistOnList()
         {
-            _consulServiceListMonitor.Services.ShouldContain(_serviceName);
+            _serviceListMonitor.Services.ShouldContain(_serviceName);
         }
 
         private void ServiceShouldNotExistOnList()
         {
-            _consulServiceListMonitor.Services.ShouldNotContain(_serviceName);
+            _serviceListMonitor.Services.ShouldNotContain(_serviceName);
         }
     }
 }

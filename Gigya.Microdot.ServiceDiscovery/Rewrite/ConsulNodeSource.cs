@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 
@@ -13,29 +12,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool SupportsMultipleEnvironments => true;
 
-        private AggregatingHealthStatus AggregatingHealthStatus { get; }
         private ServiceDeployment ServiceDeployment { get; }
-        private IConsulServiceListMonitor ServiceListMonitor { get; }
-        private Func<string, IConsulNodeMonitor> GetNodeMonitor { get; }
-        private IConsulNodeMonitor NodeMonitor { get; set; }             
+        private IServiceListMonitor ServiceListMonitor { get; }
+        private Func<string, INodeMonitor> GetNodeMonitor { get; }
+        private INodeMonitor NodeMonitor { get; set; }             
         public string ServiceName { get; private set; }
 
         private bool _disposed;
         private INode[] _lastKnownNodes;
         private bool _isActive;
+        private bool _wasUndeployed;
 
         public ConsulNodeSource(ServiceDeployment serviceDeployment,
-            IConsulServiceListMonitor serviceListMonitor,
-            Func<string, IConsulNodeMonitor> getNodeMonitor,            
-            Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
+            IServiceListMonitor serviceListMonitor,
+            Func<string, INodeMonitor> getNodeMonitor)
         {
             ServiceListMonitor = serviceListMonitor;
             GetNodeMonitor = getNodeMonitor;
             ServiceName = $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
 
             ServiceDeployment = serviceDeployment;
-
-            AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");            
         }
 
         public async Task Init()
@@ -49,24 +45,23 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 NodeMonitor = GetNodeMonitor(ServiceName);
                 await NodeMonitor.Init().ConfigureAwait(false);
             }
+            else
+                _wasUndeployed = true;
         }
 
-        public INode[] GetNodes()
-        {            
-            return NodeMonitor.Nodes;
-        }
+        public INode[] GetNodes() => NodeMonitor.Nodes;
 
         public bool WasUndeployed
         {
             get
             {
-                if (ServiceListMonitor.Services.Contains(ServiceName))
-                    return false;
+                if (_wasUndeployed)
+                    return true;
 
-                AggregatingHealthStatus.RegisterCheck(ServiceName, ()=> HealthCheckResult.Healthy($"Not exists on Consul"));
-                return true;
+                _wasUndeployed = !NodeMonitor.IsDeployed;
+                return _wasUndeployed;
             }
-        }
+        } 
 
         public void Dispose()
         {
@@ -81,7 +76,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             if (disposing)
             {
-                AggregatingHealthStatus?.RemoveCheck(ServiceName);
                 NodeMonitor?.Dispose();
                 ServiceListMonitor?.Dispose();
             }
