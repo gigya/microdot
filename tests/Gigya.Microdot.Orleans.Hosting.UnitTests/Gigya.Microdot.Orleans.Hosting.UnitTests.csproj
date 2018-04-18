@@ -44,7 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
-    <Compile Include="BusinessEntity.cs" />
     <Compile Include="LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
@@ -57,7 +56,6 @@
     <Compile Include="Microservice\CalculatorService\IUserGrainWithGuid.cs" />
     <Compile Include="Microservice\FakeRevokingManager.cs" />
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
-    <Compile Include="MyServiceException.cs" />
     <Compile Include="ReflectionMetaDataExtensionTests.cs" />
     <Compile Include="SchemaEndpointTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

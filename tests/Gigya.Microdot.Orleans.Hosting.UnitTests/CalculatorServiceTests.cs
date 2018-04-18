@@ -24,8 +24,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
@@ -39,7 +40,6 @@ using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Ninject;
-using NSubstitute.Core;
 using NUnit.Framework;
 using Shouldly;
 
@@ -380,57 +380,40 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
+        public async Task LogGrainId()
+        {
+            await Service.LogGrainId();
+        }
+
+        [Test]
         public async Task OrleansSerialization_MyServiceException_IsEquivalent()
         {
             var myServiceException = GetMyException();
 
-            try
-            {
-                await Service.ThrowExceptionAndValidate(myServiceException);
-            }
-            catch (Exception actual)
-            {
-                AssertExceptionsAreEqual(myServiceException, actual);
-            }
+            var actual = Should.Throw<MyServiceException>(async () => await Service.ThrowExceptionAndValidate(myServiceException));
+            AssertExceptionsAreEqual(myServiceException, actual);
 
         }
 
         [Test]
         public async Task OrleansSerialization_InnerMyServiceException_IsEquivalent()
         {
-
             var myServiceException = GetMyException();
             var expected = new Exception("Intermediate exception", myServiceException).ThrowAndCatch();
 
-            try
-            {
-                await Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException));
-            }
-            catch (Exception actual)
-            {
+            var actual = Should.Throw<RemoteServiceException>(async () => await Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException)));
 
-                AssertExceptionsAreEqual(expected, actual.InnerException);
-            }
+            AssertExceptionsAreEqual(expected, actual.InnerException);
         }
 
-
-        
 
         [Test]
         public async Task OrleansSerialization_CustomerFacingException_IsEquivalent()
         {
             var expected = new RequestException("Test", 10000).ThrowAndCatch();
+            var actual = Should.Throw<RequestException>(async () => await Service.ThrowExceptionAndValidate(expected));
 
-
-            try
-            {
-                await Service.ThrowExceptionAndValidate(expected);
-            }
-            catch (Exception actual)
-            {
-                AssertExceptionsAreEqual(expected, actual);
-            }
-          
+            AssertExceptionsAreEqual(expected, actual);
             expected.ErrorCode.ShouldBe(10000);
         }
 
@@ -441,7 +424,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var actual = Should.Throw<EnvironmentException>(async () => await Service.ThrowHttpRequestException(message), $"[HttpRequestException] {message}");
             actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
         }
-
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)
         {
@@ -458,8 +440,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 Assert.AreEqual(typedActual.ExtendedProperties.Count, 0);
             }
 
-            if (expected is MyServiceException)
-                Assert.AreEqual(((MyServiceException)expected).Entity, ((MyServiceException)actual).Entity);
+            if (expected is MyServiceException myServiceException)
+                Assert.AreEqual(myServiceException.Entity, ((MyServiceException)actual).Entity);
 
             if (expected.InnerException != null)
                 AssertExceptionsAreEqual(expected.InnerException, actual.InnerException);
@@ -473,13 +455,48 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 unencrypted: new Tags { { "t1", "v1" } }).ThrowAndCatch();
         }
 
-        [Test]
-        public async Task LogGrainId()
+        #region MockData
+
+        #region Seriliazation Tests
+        [Serializable]
+        private class MyServiceException : RequestException
         {
-            await Service.LogGrainId();
+            public IBusinessEntity Entity { get; private set; }
+
+            public MyServiceException(string message, IBusinessEntity entity, Tags encrypted = null, Tags unencrypted = null)
+                : base(message, null, encrypted, unencrypted)
+            {
+                Entity = entity;
+            }
+
+            public MyServiceException(string message, Exception innerException) : base(message, innerException) { }
+            public MyServiceException(SerializationInfo info, StreamingContext context) : base(info, context) { }
         }
 
-        #region MockData
+
+        private interface IBusinessEntity
+        {
+            string Name { get; set; }
+            int Number { get; set; }
+        }
+
+        [Serializable]
+        private class BusinessEntity : IBusinessEntity
+        {
+            public string Name { get; set; }
+            public int Number { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                BusinessEntity other = (BusinessEntity)obj;
+                return Name == other.Name && Number == other.Number;
+            }
+
+            public override int GetHashCode() { unchecked { return 0; } }
+        }
+        #endregion
+
+        #region For LofFieldAttrobute
         public class Person
         {
             public int ID { get; set; } = 100;
@@ -508,7 +525,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             [NonSensitive]
             public string School { get; set; } = "Busmat";
-        }
+        } 
+        #endregion
+
         #endregion
     }
 }
