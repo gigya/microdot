@@ -5,9 +5,8 @@ using System.Collections.Specialized;
 using System.Linq;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Events;
-using Newtonsoft.Json;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
