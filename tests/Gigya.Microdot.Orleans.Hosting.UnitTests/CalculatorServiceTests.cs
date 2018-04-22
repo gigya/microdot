@@ -78,7 +78,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true, serviceDrainTime: TimeSpan.MaxValue);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -94,7 +94,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [OneTimeTearDown]
         public void TearDown()
         {
-            //Tester.Dispose();
+            Tester.Dispose();
         }
 
 
@@ -425,7 +425,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
         }
 
-        private static void AssertExceptionsAreEqual(Exception expected, Exception actual)
+        private void AssertExceptionsAreEqual(Exception expected, Exception actual)
         {
             Assert.NotNull(actual);
             Assert.AreEqual(expected.GetType(), actual.GetType());

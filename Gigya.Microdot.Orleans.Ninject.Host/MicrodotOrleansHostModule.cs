@@ -50,9 +50,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Rebind<NinjectOrleansServiceProvider, IServiceProvider>().To<NinjectOrleansServiceProvider>()
                 .InSingletonScope();
 
-            //Kernel.Rebind<IRuntimeCodeGenerator>().To<NinjectOrleansServiceProvider>()
-            //    .InSingletonScope();
-
         }
     }
 }

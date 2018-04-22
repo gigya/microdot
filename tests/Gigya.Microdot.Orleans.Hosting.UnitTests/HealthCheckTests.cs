@@ -51,8 +51,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             tester.Dispose();
         }
 
-        //todo: toli remove Ignore Attribute
-        [Ignore("Teamcity reason")]
         [Test]
         public async Task HealthCheck_ServcieDrain_StatueShouldBe521()
         {
@@ -65,8 +63,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
             await dispose;
         }
-        //todo: toli remove Ignore Attribute
-        [Ignore("Teamcity reason")]
 
         [Test]
         public void HealthCheck_NotHealthy_ShouldReturn500()
@@ -76,8 +72,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
 
-        //todo: toli remove Ignore Attribute
-        [Ignore("Teamcity reason")]
+
         [Test]
         public void HealthCheck_Healthy_ShouldReturn200()
         {
@@ -86,8 +81,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
-        //todo: toli remove Ignore Attribute
-        [Ignore("Teamcity reason")]
+
         [Test]
         public void HealthCheck_NotImplemented_ShouldReturn200()
         {

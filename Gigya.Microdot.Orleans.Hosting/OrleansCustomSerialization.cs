@@ -34,8 +34,9 @@ namespace Gigya.Microdot.Orleans.Hosting
     /// </summary>
     public class OrleansCustomSerialization : IExternalSerializer
     {
-        private Logger _logger;
         private readonly Type[] _supportedTypes;
+        private readonly JsonSerializerSettings _jsonSettings;
+
 
         public OrleansCustomSerialization()
         {
@@ -43,19 +44,18 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor)
             };
-        }
 
-        private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Auto,
-            NullValueHandling = NullValueHandling.Ignore,
-            Formatting = Formatting.Indented,
-            DateParseHandling = DateParseHandling.None
-        };
+            _jsonSettings  = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.Indented,
+                DateParseHandling = DateParseHandling.None
+            };
+        }
 
         public void Initialize(Logger logger)
         {
-            _logger = logger;
         }
 
         public bool IsSupportedType(Type itemType) => _supportedTypes.Any(type => type == itemType);
@@ -77,7 +77,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             var str = (string)SerializationManager.DeserializeInner(expectedType.GetType(), context);
 
-            return JsonConvert.DeserializeObject(str, expectedType, JsonSettings);
+            return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
         }
     }
 }
