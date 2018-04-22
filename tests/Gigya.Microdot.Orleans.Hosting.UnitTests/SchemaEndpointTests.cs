@@ -59,8 +59,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             _tester.Dispose();
         }
 
-        //todo: toli remove Ignore Attribute
-        [Ignore("Teamcity reason")]
         [Test]
         public async Task MethodTypeName()
         {
@@ -71,8 +69,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Assert.AreEqual(typeof(ICalculatorService).FullName, iface.Name);
         }
 
-        //todo: toli remove Ignore Attribute
-        [Ignore("Teamcity reason")]
         [Test]
         public async Task ReturnPublicEndpointAttribute()
         {

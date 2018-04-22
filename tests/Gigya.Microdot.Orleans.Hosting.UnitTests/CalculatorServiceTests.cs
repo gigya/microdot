@@ -390,7 +390,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var myServiceException = GetMyException();
 
-            var actual = Should.Throw<MyServiceException>(async () => await Service.ThrowExceptionAndValidate(myServiceException));
+            var actual = await Should.ThrowAsync<MyServiceException>(() => Service.ThrowExceptionAndValidate(myServiceException));
             AssertExceptionsAreEqual(myServiceException, actual);
 
         }
@@ -401,7 +401,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var myServiceException = GetMyException();
             var expected = new Exception("Intermediate exception", myServiceException).ThrowAndCatch();
 
-            var actual = Should.Throw<RemoteServiceException>(async () => await Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException)));
+            var actual = await Should.ThrowAsync<RemoteServiceException>(() => Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException)));
 
             AssertExceptionsAreEqual(expected, actual.InnerException);
         }
@@ -411,7 +411,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task OrleansSerialization_CustomerFacingException_IsEquivalent()
         {
             var expected = new RequestException("Test", 10000).ThrowAndCatch();
-            var actual = Should.Throw<RequestException>(async () => await Service.ThrowExceptionAndValidate(expected));
+            var actual = await Should.ThrowAsync<RequestException>(() => Service.ThrowExceptionAndValidate(expected));
 
             AssertExceptionsAreEqual(expected, actual);
             expected.ErrorCode.ShouldBe(10000);
@@ -421,7 +421,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
         {
             const string message = "HTTP request exception";
-            var actual = Should.Throw<EnvironmentException>(async () => await Service.ThrowHttpRequestException(message), $"[HttpRequestException] {message}");
+            var actual = await Should.ThrowAsync<EnvironmentException>(() => Service.ThrowHttpRequestException(message), $"[HttpRequestException] {message}");
             actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
         }
 
@@ -525,7 +525,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             [NonSensitive]
             public string School { get; set; } = "Busmat";
-        } 
+        }
         #endregion
 
         #endregion

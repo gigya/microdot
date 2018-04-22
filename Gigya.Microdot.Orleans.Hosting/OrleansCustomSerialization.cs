@@ -32,6 +32,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     /// <summary>
     /// This class is called by the Orleans runtime to perform serialization for special types, and should not be called directly from your code.
     /// </summary>
+    /// 
     public class OrleansCustomSerialization : IExternalSerializer
     {
         private readonly Type[] _supportedTypes;
@@ -45,7 +46,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor)
             };
 
-            _jsonSettings  = new JsonSerializerSettings
+            _jsonSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
@@ -58,7 +59,10 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
         }
 
-        public bool IsSupportedType(Type itemType) => _supportedTypes.Any(type => type == itemType);
+        public bool IsSupportedType(Type itemType)
+        {
+            return _supportedTypes.Any(type => type == itemType);
+        }
 
         public object DeepCopy(object source, ICopyContext context)
         {
@@ -70,12 +74,12 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public void Serialize(object item, ISerializationContext context, Type expectedType)
         {
-            SerializationManager.SerializeInner(item.ToString(), context, item.GetType());
+            SerializationManager.SerializeInner(item.ToString(), context, typeof(string));
         }
 
         public object Deserialize(Type expectedType, IDeserializationContext context)
         {
-            var str = (string)SerializationManager.DeserializeInner(expectedType.GetType(), context);
+            var str = SerializationManager.DeserializeInner<string>(context);
 
             return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
         }
