@@ -59,6 +59,7 @@
     <Compile Include="ConsulContracts.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
+    <Compile Include="Rewrite\NodeSourceLoader.cs" />
     <Compile Include="EndPoint.cs" />
     <Compile Include="HostManagement\MissingHostException.cs" />
     <Compile Include="HostManagement\OverriddenRemoteHost.cs" />
@@ -85,7 +86,9 @@
     <Compile Include="Rewrite\MonitoredNode.cs" />
     <Compile Include="Rewrite\Node.cs" />
     <Compile Include="Rewrite\QueryBasedConsulNodeMonitor.cs" />
+    <Compile Include="Rewrite\ReachabilityCheck.cs" />
     <Compile Include="ServiceDeployment.cs" />
+    <Compile Include="Rewrite\NewServiceDiscovery.cs" />
     <Compile Include="ServiceDiscovery.cs" />
     <Compile Include="ServiceDiscoverySourceBase.cs" />
     <Compile Include="ServiceDiscoveryAssembly.cs" />

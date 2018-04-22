@@ -52,8 +52,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private LogSpy _log;
 
-        private IHealthMonitor _healthMonitor;
-
         private Func<INode, Task<bool>> _reachabilityCheck;
         private TestingKernel<LogSpy> _kernel;
 
@@ -71,10 +69,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
-            _kernel = new TestingKernel<LogSpy>(k =>
-            {
-                k.Rebind<IHealthMonitor>().ToMethod(_ => _healthMonitor);
-            });
+            _kernel = new TestingKernel<LogSpy>();
         }
 
         [OneTimeTearDown]
@@ -95,7 +90,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _loadBalancer = createLoadBalancer(
                 _nodeSource,
                 new ServiceDeployment(ServiceName, Env),
-                n => _reachabilityCheck(n));
+                new ReachabilityCheck(n=>_reachabilityCheck(n)));
         }
 
         [TearDown]

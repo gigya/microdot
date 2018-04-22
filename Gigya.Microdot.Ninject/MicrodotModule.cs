@@ -53,6 +53,7 @@ namespace Gigya.Microdot.Ninject
         {
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
+            typeof(LoadBalancer),
             typeof(ConfigDiscoverySource)
         };
 
@@ -69,8 +70,10 @@ namespace Gigya.Microdot.Ninject
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
             this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly),typeof(ServiceDiscoveryAssembly));
 
+            Bind<ILoadBalancerFactory>().ToFactory();
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
+            Kernel.BindPerKey<string, ReachabilityChecker, NewServiceDiscovery, NewServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();

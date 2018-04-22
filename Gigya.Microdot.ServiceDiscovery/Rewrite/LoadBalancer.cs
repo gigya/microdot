@@ -26,6 +26,7 @@ using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -36,11 +37,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
-        private INodeSource NodeSource { get; }
+        internal INodeSource NodeSource { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
-        private string ServiceName { get; }
+        public string ServiceName { get; }
         private INode[] _sourceNodes;
         private MonitoredNode[] _monitoredNodes = new MonitoredNode[0];
 
@@ -69,7 +70,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetNodesFromSource();
             var nodes = _monitoredNodes;
             if (nodes.Length==0)
-                throw new EnvironmentException("No nodes were discovered for service", unencrypted: new Tags
+                throw new ServiceUnreachableException("No nodes were discovered for service", unencrypted: new Tags
                 {
                     {"serviceName", ServiceName},
                     {"discoverySource", NodeSource.Type}
@@ -77,7 +78,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             var reachableNodes = nodes.Where(n => n.IsReachable).ToArray();
             if (!reachableNodes.Any())
-                throw new EnvironmentException("All nodes are unreachable", unencrypted: new Tags
+                throw new ServiceUnreachableException("All nodes are unreachable", unencrypted: new Tags
                 {
                     {"serviceName", ServiceName},
                     {"discoverySource", NodeSource.Type},

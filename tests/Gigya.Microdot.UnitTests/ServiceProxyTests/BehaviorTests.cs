@@ -11,6 +11,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -41,7 +42,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
             )
             {
 
@@ -88,7 +93,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict))
+                    k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict))
             {
 
 
@@ -131,7 +136,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
             };
 
-            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict);
+            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict);
             var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory(serviceName);
 
@@ -159,7 +164,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
         
         [Test]
-        public async Task AllHostsAreHavingNetworkErrorsShouldTryEachTwice()
+        public async Task AllHostsAreHavingNetworkErrorsShouldTryEachOnce()
         {
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
@@ -169,7 +174,12 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
+
             )
             {
 
@@ -196,7 +206,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
                 await act.ShouldThrowAsync<ServiceUnreachableException>();
-                counter.ShouldBe(4);
+                counter.ShouldBe(2);
             }
         }
 
@@ -213,7 +223,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
             )
             {
 
@@ -247,8 +261,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     var server = await serviceProxy.Invoke(request, typeof(string));
                     server.ShouldBe("host2");
                 }
-                // should try first server 2 time
-                counter.ShouldBe(5);
             }
         }
 
@@ -265,7 +277,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
             )
             {
 
@@ -317,7 +333,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict)
             )
             {
 
@@ -352,7 +368,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                     await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
-                counter.ShouldBe(2);
+                counter.ShouldBe(1);
             }
         }
 
