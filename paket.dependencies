@@ -48,7 +48,7 @@ nuget NLog ~> 4.0
 
 
 nuget System.Diagnostics.FileVersionInfo  redirects: off
-nuget System.IO.Compression  redirects: off
+nuget System.IO.Compression redirects: off
 nuget System.IO.FileSystem  redirects: off
 nuget System.IO.FileSystem.Primitives  redirects: off
 nuget System.Collections.Immutable
