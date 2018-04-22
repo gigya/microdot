@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Net;
 using System.Runtime.Serialization;
 using Gigya.Common.Contracts.Exceptions;
 
@@ -54,26 +53,5 @@ namespace Gigya.Common.Application.HttpService.Client
 		/// <exception cref="SerializationException">The class name is null or <see cref="Exception.HResult"/> is zero (0). </exception>
 		// ReSharper disable once UnusedMember.Global
 		protected RemoteServiceException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-
-	    public static RemoteServiceException NonMicrodotHost(string uri, HttpStatusCode code)
-	    {
-	        return new RemoteServiceException(
-	            $"The remote service returned HTTP code {(int)code} but is not recognized as a Microdot host.", 
-	            uri);
-	    }
-
-	    public static RemoteServiceException Timeout(string uri, Exception ex, TimeSpan timeout)
-	    {
-	        return new RemoteServiceException(
-	            "The request to the remote service exceeded the allotted timeout. See the 'RequestUri' " +
-	            "property on this exception for the URL that was called and the tag 'requestTimeout' for the configured timeout.",
-	            uri, 
-	            ex, 
-	            unencrypted: new Tags
-	            {
-	                { "requestTimeout" , timeout.ToString()},
-	                { "requestUri" , uri }
-	            });
-	    }
 	}
 }

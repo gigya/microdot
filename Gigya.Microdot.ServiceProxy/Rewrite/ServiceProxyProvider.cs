@@ -3,14 +3,17 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -38,15 +41,17 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         private IMemoizer Memoizer { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private IHttpClientFactory HttpFactory { get; }
+        private JsonExceptionSerializer ExceptionSerializer { get; }
 
         private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
 
-        public ServiceProxyProvider(string serviceName, IMemoizer memoizer, Func<DiscoveryConfig> getDiscoveryConfig, IHttpClientFactory httpFactory)
+        public ServiceProxyProvider(string serviceName, IMemoizer memoizer, Func<DiscoveryConfig> getDiscoveryConfig, IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer)
         {
             ServiceName = serviceName;
             Memoizer = memoizer;
             GetDiscoveryConfig = getDiscoveryConfig;
             HttpFactory = httpFactory;
+            ExceptionSerializer = exceptionSerializer;
         }
 
         public object Invoke(MethodInfo targetMethod, object[] args)
@@ -65,40 +70,49 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             if (resultReturnType == null)
                 throw new ArgumentNullException(nameof(resultReturnType));
 
-            Task resultTask;
-            HostOverride hostOverride = TracingContext.GetHostOverride(ServiceName);
+            Task<object> resultTask;
+            INode node = TracingContext.GetHostOverride(ServiceName);
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
 
-            if (hostOverride != null)
+            async Task<object> Send()
             {
-                HttpRequestMessage httpRequest = CreateHttpRequest(request, jsonSettings, hostOverride);
-                resultTask = SendRequest(httpRequest, config);
+                HttpRequestMessage httpRequest = CreateHttpRequest(request, jsonSettings, node);
+                string responseContent = await SendRequest(httpRequest, config, node).ConfigureAwait(false);
+                return await ParseResponse(responseContent, resultReturnType, jsonSettings, httpRequest?.RequestUri.ToString()).ConfigureAwait(false);
             }
-            else
+
+            bool isMethodCached = false;
+            MethodCachingPolicyConfig cachingPolicy = null;
+
+            if (node == null)
             {
                 DeployedService targetDeployment = Route();
-                bool isMethodCached = targetDeployment.Schema.TryFindMethod(request.Target)?.IsCached ?? false;
-                MethodCachingPolicyConfig cachingPolicy = config?.CachingPolicy?.Methods?[request.Target.MethodName] ?? CachingPolicyConfig.Default;
-                
-                Task Send()
-                {
-                    INode node = targetDeployment.LoadBalancer.GetNode();
-                    return SendRequest(CreateHttpRequest(request, jsonSettings, node), config, node);
-                }
-
-                if (isMethodCached && cachingPolicy.Enabled == true)
-                    resultTask = Memoizer.GetOrAdd(request.ComputeCacheKey(), Send, new CacheItemPolicyEx(cachingPolicy));
-                else
-                    resultTask = Send();
+                isMethodCached = targetDeployment.Schema.TryFindMethod(request.Target)?.IsCached ?? false;
+                cachingPolicy = config?.CachingPolicy?.Methods?[request.Target.MethodName] ?? CachingPolicyConfig.Default;
+                node = targetDeployment.LoadBalancer.GetNode();
             }
 
-            await resultTask.ConfigureAwait(false);
+            if (isMethodCached && cachingPolicy.Enabled == true)
+                resultTask = (Task<object>)Memoizer.GetOrAdd(request.ComputeCacheKey(), Send, new CacheItemPolicyEx(cachingPolicy));
+            else
+                resultTask = Send();
 
-            return null;
+            return await resultTask.ConfigureAwait(false);
         }
 
+        private async Task<object> ParseResponse(string responseContent, Type resultReturnType, JsonSerializerSettings jsonSettings, string uri)
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject(responseContent, resultReturnType, jsonSettings);
+            }
+            catch (JsonException ex)
+            {
+                throw Ex.UnparsableJsonResponse(uri, ex, responseContent);
+            }
+        }
 
-        private async Task SendRequest(HttpRequestMessage request, ServiceDiscoveryConfig config, INode node = null)
+        private async Task<string> SendRequest(HttpRequestMessage request, ServiceDiscoveryConfig config, INode node = null)
         {
             HttpClient http = HttpFactory.GetClient(config.UseHttpsOverride ?? HttpSettings.UseHttps, config.RequestTimeout);
             string uri = request.RequestUri.ToString();
@@ -111,17 +125,57 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
                 if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) == false && response.Headers.Contains(GigyaHttpHeaders.ProtocolVersion) == false)
                 {
                     //node?.ReportFailure(ex);
-                    throw RemoteServiceException.NonMicrodotHost(uri, response.StatusCode);
+                    throw Ex.NonMicrodotHost(uri, response.StatusCode);
                 }
+
+                if (response.IsSuccessStatusCode == false)
+                {
+                    Exception remoteException = GetFailureResponse(responseContent, uri);
+
+                    if (remoteException.StackTrace != null)
+                        ExceptionDispatchInfo.Capture(remoteException).Throw();
+
+                    throw remoteException;
+                }
+
+                return responseContent;
             }
             catch (HttpRequestException ex)
             {
                 //node?.ReportFailure(ex);
+                throw Ex.BadHttpResponse(uri, ex);
             }
             catch (TaskCanceledException ex)
             {
-                throw RemoteServiceException.Timeout(uri, ex, http.Timeout);
+                throw Ex.Timeout(uri, ex, http.Timeout);
             }
+        }
+
+        private Exception GetFailureResponse(string responseContent, string uri)
+        {
+            Exception remoteException;
+
+            try
+            {
+                remoteException = ExceptionSerializer.Deserialize(responseContent);
+            }
+            catch (Exception ex)
+            {
+                return Ex.UnparsableFailureResponse(uri, ex, responseContent);
+            }
+
+            #pragma warning disable 618
+
+            // Unwrap obsolete wrapper which is still used by old servers.
+            if (remoteException is UnhandledException)
+                remoteException = remoteException.InnerException;
+
+            #pragma warning restore 618
+
+            if (remoteException is RequestException == false && remoteException is EnvironmentException == false)
+                remoteException = Ex.FailureResponse(uri, remoteException);
+
+            return remoteException;
         }
 
         private HttpRequestMessage CreateHttpRequest(HttpServiceRequest request, JsonSerializerSettings jsonSettings, INode node)
