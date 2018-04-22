@@ -46,6 +46,9 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.TestingTools")]
 [assembly: InternalsVisibleTo("Gigya.Common.TestingHelpers")]
 [assembly: InternalsVisibleTo("Gigya.Hades.Client")]
+[assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Ninject.Host")]
+[assembly: InternalsVisibleTo("Gigya.Microdot.Ninject.Host")]
+[assembly: InternalsVisibleTo("Gigya.Microdot.Ninject")]
 
 
 [assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
