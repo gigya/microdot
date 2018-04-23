@@ -74,6 +74,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public void Serialize(object item, ISerializationContext context, Type expectedType)
         {
+            //Because we convert Json to string in order to seriliaze.
             SerializationManager.SerializeInner(item.ToString(), context, typeof(string));
         }
 
