@@ -6,9 +6,9 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
-using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
@@ -42,16 +42,19 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private IHttpClientFactory HttpFactory { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
+        private IEnvironmentVariableProvider EnvProvider { get; }
 
-        private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
+        private ConcurrentDictionary<string, DeployedService> Deployments { get; set; } = new ConcurrentDictionary<string, DeployedService>();
 
-        public ServiceProxyProvider(string serviceName, IMemoizer memoizer, Func<DiscoveryConfig> getDiscoveryConfig, IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer)
+        public ServiceProxyProvider(string serviceName, IMemoizer memoizer, Func<DiscoveryConfig> getDiscoveryConfig,
+            IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer, IEnvironmentVariableProvider envProvider)
         {
             ServiceName = serviceName;
             Memoizer = memoizer;
             GetDiscoveryConfig = getDiscoveryConfig;
             HttpFactory = httpFactory;
             ExceptionSerializer = exceptionSerializer;
+            EnvProvider = envProvider;
         }
 
         public object Invoke(MethodInfo targetMethod, object[] args)
@@ -194,13 +197,27 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private DeployedService Route()
         {
-            return null;
+            string[] environmentCandidates = { EnvProvider.DeploymentEnvironment, "prod" };
+            DeployedService selectedDeployment = null;
+
+            foreach (string env in environmentCandidates)
+            {
+                Deployments.TryGetValue(env, out selectedDeployment);
+                
+                if (selectedDeployment != null)
+                    break;
+            }
+
+            if (selectedDeployment == null)
+                throw Ex.RoutingFailed(ServiceName, environmentCandidates, Deployments.Keys.ToArray());
+
+            return selectedDeployment;
         }
 
         // TBD: What do we do if different environment return different schemas? Should we return all of them, should we merge them?
-        public Task<ServiceSchema> GetSchema()
+        public async Task<ServiceSchema> GetSchema()
         {
-            throw new NotImplementedException();
+            return Route().Schema;
         }
     }
 }

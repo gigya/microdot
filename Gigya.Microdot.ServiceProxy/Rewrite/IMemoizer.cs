@@ -24,7 +24,6 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {

@@ -40,8 +40,8 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
     public class DeployedService : IDisposable
     {
-        internal IMemoizer Memoizer { get; }
         internal ServiceSchema Schema { get; set; }
+        internal IMemoizer Memoizer { get; }
         internal ILoadBalancer LoadBalancer { get; }
 
         public void Dispose()
