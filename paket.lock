@@ -6,7 +6,7 @@ NUGET
   remote: https://api.nuget.org/v3/index.json
     Castle.Core (4.2.1)
     DataAnnotationsValidator (2.1)
-    FluentAssertions (5.2)
+    FluentAssertions (5.3)
       System.ValueTuple (>= 4.4)
     Gigya.ServiceContract (2.5.5)
       Newtonsoft.Json (>= 9.0.1)
