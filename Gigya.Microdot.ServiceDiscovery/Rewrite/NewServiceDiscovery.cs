@@ -287,12 +287,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             lock (_locker)
             {
-                var relevantPool = GetRelevantLoadBalancer();
+                var relevantLoadBalancer = GetRelevantLoadBalancer();
                 IEnumerable<INode> nodes = new INode[0];
                 try
                 {
-                    if (!relevantPool.NodeSource.WasUndeployed)
-                        nodes = relevantPool.NodeSource.GetNodes().OrderBy(x => x.Hostname).ThenBy(x => x.Port ?? 0);
+                    if (!relevantLoadBalancer.NodeSource.WasUndeployed)
+                        nodes = relevantLoadBalancer.NodeSource.GetNodes().OrderBy(x => x.Hostname).ThenBy(x => x.Port ?? 0);
                 }
                 catch
                 {

@@ -93,6 +93,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var mock = Substitute.For<INodeMonitor>();
             _consulNodesResults[serviceName] = () => new INode[] {new Node(hostName: "dummy", version: ServiceVersion)};
             mock.Nodes.Returns(_=>_consulNodesResults[serviceName]());
+            mock.IsDeployed.Returns(_ => _consulServiceList.Contains(serviceName));
             _consulNodeMonitors[serviceName] = mock;
 
             _consulServiceList = _consulServiceList.Add(serviceName);
@@ -114,7 +115,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
-            var nextHost = GetServiceDiscovey().GetNextHost();
+            var nextHost = GetServiceDiscovery().GetNextHost();
             nextHost.Result.HostName.ShouldBe(MasterService);
         }
 
@@ -125,7 +126,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "DataCenter";
             SetMockToReturnHost(_serviceName);
-            var nextHost = GetServiceDiscovey().GetNextHost();
+            var nextHost = GetServiceDiscovery().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);
         }
 
@@ -139,7 +140,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var discovey = GetServiceDiscovey();
+            var discovey = GetServiceDiscovery();
             var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
 
             var nextHost = discovey.GetNextHost();
@@ -162,7 +163,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
 
-            var discovey = GetServiceDiscovey();
+            var discovey = GetServiceDiscovery();
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(MasterService);
@@ -181,7 +182,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovey().GetNextHost());
+            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNextHost());
         }
 
         [Test]
@@ -191,7 +192,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var nextHost = GetServiceDiscovey().GetNextHost();
+            var nextHost = GetServiceDiscovery().GetNextHost();
             (await nextHost).HostName.ShouldBe(OriginatingService);
         }
 
@@ -206,7 +207,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             SetMockToReturnServiceNotDefined(MasterService);
 
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovey().GetNextHost());
+            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNextHost());
         }
 
         [Test]
@@ -220,7 +221,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovey();
+            var discovey = GetServiceDiscovery();
             discovey.GetNextHost();
             discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => numOfEvent++));
             Thread.Sleep(200);
@@ -242,11 +243,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovey();
+            var discovey = GetServiceDiscovery();
             var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
 
             await discovey.GetNextHost();
-
             _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
 
@@ -267,7 +267,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovey();
+            var discovey = GetServiceDiscovery();
 
             //wait for discovey to be initialize!!
             var endPoints = await discovey.GetAllEndPoints();
@@ -292,13 +292,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         [Test]
         [Repeat(Repeat)]
-        public async Task EndPointsChangedShouldFireWhenHostChange()
+        public async Task EndPointsChangedShouldFireWhenHostChanged()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
             _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
-            var discovey = GetServiceDiscovey();
+            var discovey = GetServiceDiscovery();
             await discovey.GetAllEndPoints();
 
             var wait = discovey.EndPointsChanged.StartCountingEvents();
@@ -347,12 +347,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public void ServiceDiscoveySameNameShouldBeTheSame()
         {
-            Assert.AreEqual(GetServiceDiscovey(), GetServiceDiscovey());
+            Assert.AreEqual(GetServiceDiscovery(), GetServiceDiscovery());
         }
 
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
 
-        private IServiceDiscovery GetServiceDiscovey()
+        private IServiceDiscovery GetServiceDiscovery()
         {
             var discovery =
                 _unitTestingKernel.Get<Func<string, ReachabilityChecker, NewServiceDiscovery>>()(_serviceName,
