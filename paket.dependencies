@@ -27,8 +27,8 @@ nuget Microsoft.Orleans.OrleansCodeGenerator.Build 1.5.3
 nuget Microsoft.Orleans.TestingHost 1.5.3
 nuget Microsoft.CodeAnalysis.CSharp 2
 nuget Microsoft.CodeAnalysis.Common 2
-nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 1
-nuget Microsoft.Extensions.DependencyInjection ~> 1
+nuget Microsoft.Extensions.DependencyInjection.Abstractions 1.1.1
+nuget Microsoft.Extensions.DependencyInjection 1.1.1
 
 #Ninject
 nuget Ninject ~> 3.3
