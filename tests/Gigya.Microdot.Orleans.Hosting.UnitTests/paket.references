@@ -10,3 +10,4 @@ ZooKeeperNetEx
 System.Threading.Tasks.Dataflow
 System.ValueTuple
 System.IO.Compression
+System.Runtime

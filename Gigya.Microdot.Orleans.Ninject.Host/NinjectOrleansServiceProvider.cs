@@ -30,7 +30,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Syntax;
 using Orleans.Runtime.Configuration;
-using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -46,8 +45,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {            
-            
-      
             foreach (var descriptor in services)
             {
                 IBindingWhenInNamedWithOrOnSyntax<object> binding;

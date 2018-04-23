@@ -4,29 +4,21 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-
 using FluentAssertions;
-
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
-
 using Metrics;
 using Ninject;
 using Ninject.Parameters;
-
 using NSubstitute;
-
 using NUnit.Framework;
-
 using RichardSzalay.MockHttp;
-
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
@@ -81,7 +73,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
 
         [Test]
-        public async Task  RequestWithException_ShouldNotWrapWithUnhandledException()
+        public async Task RequestWithException_ShouldNotWrapWithUnhandledException()
         {
             _testinghost.Instance.When(a => a.DoSomething()).Throw(x => new ArgumentException("MyEx"));
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
@@ -115,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var res = await _insecureClient.IncrementInt(0);
             res.Should().Be(1);
 
-            await  _testinghost.Instance.Received().IncrementInt(0);
+            await _testinghost.Instance.Received().IncrementInt(0);
         }
 
 
@@ -157,14 +149,14 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
 
         [Test]
-        public async Task  SendRequestWithEnumParameter()
+        public async Task SendRequestWithEnumParameter()
         {
             await _insecureClient.SendEnum(TestEnum.Enval1);
             await _testinghost.Instance.Received().SendEnum(TestEnum.Enval1);
         }
 
 
-        private  async Task< HttpRequestMessage> GetRequestFor<T>(Func<T, Task> action)
+        private async Task<HttpRequestMessage> GetRequestFor<T>(Func<T, Task> action)
         {
             HttpRequestMessage request = null;
             string requestContent = null;
