@@ -82,7 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         public async Task WaitForUpdates()
         {
-            await Task.Delay(300).ConfigureAwait(false);
+            await Task.Delay(800).ConfigureAwait(false);
         }
 
         [Test]

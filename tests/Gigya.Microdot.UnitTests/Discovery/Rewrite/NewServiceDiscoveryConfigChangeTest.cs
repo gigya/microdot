@@ -117,6 +117,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             update();
             _configRefresh.RaiseChangeEvent();
 
+            await Task.Delay(300);
             await task;
         }
     }
