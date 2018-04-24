@@ -29,11 +29,9 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.HostManagement
