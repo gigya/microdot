@@ -54,8 +54,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _serviceIsDeployed = true;
             _getConsulNodes = () => _consulNodes;
             _queryBasedConsulNodeMonitor = Substitute.For<INodeMonitor>();
-            _queryBasedConsulNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
-            _queryBasedConsulNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
+            _queryBasedNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
+            _queryBasedNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
             _consulConfig = new ConsulConfig();
         }
 
@@ -106,7 +106,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             bool nodesMonitorInitiated = false;
 
-            _queryBasedConsulNodeMonitor.Init().Returns(_=>{
+            _queryBasedNodeMonitor.Init().Returns(_=>{
                                                     nodesMonitorInitiated = true;
                                                     return Task.FromResult(1);});
 

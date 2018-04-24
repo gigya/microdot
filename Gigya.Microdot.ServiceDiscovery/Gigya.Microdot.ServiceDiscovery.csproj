@@ -88,7 +88,7 @@
     <Compile Include="Rewrite\MonitoredNode.cs" />
     <Compile Include="Rewrite\Node.cs" />
     <Compile Include="Rewrite\OverriddenNode.cs" />
-    <Compile Include="Rewrite\QueryBasedConsulNodeMonitor.cs" />
+    <Compile Include="Rewrite\QueryBasedNodeMonitor.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
     <Compile Include="ServiceDeployment.cs" />
     <Compile Include="Rewrite\NewServiceDiscovery.cs" />

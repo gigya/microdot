@@ -103,6 +103,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                                    JsonExceptionSerializer exceptionSerializer, 
                                    ServiceSchema serviceSchema,
                                    IServerRequestPublisher serverRequestPublisher)
+
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
