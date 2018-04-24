@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -8,7 +9,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         public INode[] Nodes { get; set; }
         public bool IsDeployed { get; set; } = true;
-        public Exception Error { get; set; }
+        public EnvironmentException Error { get; set; }
 
         public bool Success => Error == null && IsDeployed;
 

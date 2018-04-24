@@ -38,7 +38,6 @@ using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
-using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
 using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.Ninject
@@ -51,10 +50,12 @@ namespace Gigya.Microdot.Ninject
     {
         private readonly Type[] NonSingletonBaseTypes =
         {
-            typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
-            typeof(LoadBalancer),
-            typeof(ConfigDiscoverySource)
+            typeof(ILoadBalancer),
+            typeof(IServiceDiscoverySource),
+            typeof(INodeSource),
+            typeof(INodeMonitor),
+            typeof(IConsulClient)
         };
 
         public override void Load()
@@ -82,26 +83,14 @@ namespace Gigya.Microdot.Ninject
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))
                 .InScope(GetTypeOfTarget);
 
-            Rebind<IServiceDiscoverySource>().To<ConsulDiscoverySource>().InTransientScope();
-            Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
-            Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
+            Bind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
+            Bind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
+            Bind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();            
 
-            Rebind<INodeSource>().To<LocalNodeSource>().InTransientScope();
-            Bind<INodeSource>().To<ConfigNodeSource>().InTransientScope();
-            Bind<INodeSource>().To<ConsulNodeSource>().InTransientScope();
-            Bind<INodeSource>().To<ConsulQueryNodeSource>().InTransientScope();
-            Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
-
-            Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
-            Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
-            Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();            
-            Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
-
-            Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();
 
-            Kernel.Rebind<ServiceSchema>().ToMethod(c => 
+            Kernel.Bind<ServiceSchema>().ToMethod(c => 
                             new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
         }
 

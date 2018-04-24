@@ -45,8 +45,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             get
             {
+                if (!IsDeployed)
+                {
+                    throw new EnvironmentException("The service is not deployed in the specified DC and Env.", 
+                        unencrypted: new Tags
+                        {
+                            { "dc", DataCenter },
+                            { "serviceName", ServiceName }
+                        });
+                }
+                
                 if (_nodes.Length==0 && Error != null)
                     throw Error;
+
                 return _nodes;
             }            
         }

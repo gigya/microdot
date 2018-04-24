@@ -110,7 +110,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             catch (Exception ex)
             {
-                return new ConsulResult<TResponse> { RequestLog = requestLog, ResponseContent = responseContent, Error = ex, StatusCode = statusCode };
+                return new ConsulResult<TResponse>
+                {
+                    RequestLog = requestLog,
+                    ResponseContent = responseContent, 
+                    Error = new EnvironmentException("Unexpected error when calling Consul", ex), 
+                    StatusCode = statusCode
+                };
             }
         }
 

@@ -81,8 +81,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             get
             {
+                if (!IsDeployed)
+                {
+                    throw new EnvironmentException("The service is not deployed in the specified DC and Env.", 
+                        unencrypted: new Tags
+                        {
+                            { "dc", DataCenter },
+                            { "serviceName", ServiceName }
+                        });
+                }
+
                 if (_nodes.Length == 0 && Error != null)
                     throw Error;
+
                 return _nodes;
             }
             set => _nodes = value;
@@ -90,7 +101,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool IsDeployed => ServiceListMonitor.Services.Contains(ServiceName);
 
-        private Exception Error { get; set; }
+        private EnvironmentException Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
         public Task Init() => Task.WhenAll(_nodesInitTask, _versionInitTask);
