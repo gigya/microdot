@@ -9,11 +9,15 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.SharedLogic.Monitor;
+using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public sealed class ConsulServiceListMonitor : IServiceListMonitor
     {
+        private const string ConsulServiceList = "ConsulServiceList";
+
         private CancellationTokenSource ShutdownToken { get; }
 
         /// <summary>
@@ -27,17 +31,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         ILog Log { get; }
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
-        private Func<ConsulConfig> GetConfig { get; }
+        private Func<ConsulConfig> GetConfig { get; }        
 
-        public ConsulServiceListMonitor(ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        private HealthCheckResult _healthStatus = HealthCheckResult.Healthy();
+        private ComponentHealthMonitor _serviceListHealthMonitor;
+
+        public ConsulServiceListMonitor(ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
             Log = log;
             ConsulClient = consulClient;
             DateTime = dateTime;
-            GetConfig = getConfig;
+            GetConfig = getConfig;            
             DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
 
+            _serviceListHealthMonitor = healthMonitor.SetHealthFunction(ConsulServiceList, () => _healthStatus);
             GetAllLoop();
         }
 
@@ -85,13 +93,36 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _allServices = new HashSet<string>(allServiceNames)
                     .ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
 
+                if (allKeys.Length == _allServices.Count)
+                    _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", allKeys));
+                else
+                    _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
+
                 return consulResult.ModifyIndex ?? 0;
             }
             else
             {
                 SetErrorResult(consulResult, "Error calling Consul all-keys");
+                _healthStatus = HealthCheckResult.Unhealthy("Error calling Consul: " + consulResult.Error.Message);
                 return 0;
             }
+        }
+
+        private string[] GetDuplicateServiceNames(IEnumerable<string> allServices)
+        {
+            var list = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            var duplicateList = new HashSet<string>();
+            foreach (var service in allServices)
+            {
+                if (list.Contains(service))
+                {
+                    var existingService = list.First(x => x.Equals(service, StringComparison.CurrentCultureIgnoreCase));
+                    duplicateList.Add(existingService);
+                    duplicateList.Add(service);
+                }
+                list.Add(service);
+            }
+            return duplicateList.ToArray();
         }
 
 
@@ -132,6 +163,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             ShutdownToken?.Cancel();
             ShutdownToken?.Dispose();
+            _serviceListHealthMonitor.Dispose();
         }
         
     }
