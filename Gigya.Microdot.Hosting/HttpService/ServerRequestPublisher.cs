@@ -7,7 +7,6 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {

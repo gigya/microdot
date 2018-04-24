@@ -144,7 +144,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public void AddServiceNode(string serviceName, ConsulEndPoint endPoint)
         {
-            _serviceNodes.TryAdd(serviceName, new List<ConsulEndPoint>());
+            if (_serviceNodes.TryAdd(serviceName, new List<ConsulEndPoint>()))
+                IncreaseKeyValueModifyIndex();
             _serviceNodes[serviceName].Add(endPoint);
 
             if (endPoint.Version!=null && !_serviceActiveVersion.TryGetValue(serviceName, out string _))
@@ -165,6 +166,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public void SetServiceVersion(string serviceName, string version)
         {
+            _serviceNodes.TryAdd(serviceName, new List<ConsulEndPoint>());
             _serviceActiveVersion.AddOrUpdate(serviceName, _ => version, (_,__)=> version);
             IncreaseKeyValueModifyIndex();
         }

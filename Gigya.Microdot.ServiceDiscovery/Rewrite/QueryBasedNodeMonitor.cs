@@ -11,7 +11,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class QueryBasedNodeMonitor : IQueryBasedNodeMonitor
+    public class QueryBasedConsulNodeMonitor : INodeMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
 

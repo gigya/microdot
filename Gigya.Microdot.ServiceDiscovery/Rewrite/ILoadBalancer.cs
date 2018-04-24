@@ -33,6 +33,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <summary>
         /// Retrieves the a node which is considered to be reachable.
         /// </summary>
-        MonitoredNode GetNode();
+        IMonitoredNode GetNode();
     }
 }

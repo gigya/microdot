@@ -164,7 +164,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
         
         [Test]
-        public async Task AllHostsAreHavingNetworkErrorsShouldTryEachTwice()
+        public async Task AllHostsAreHavingNetworkErrorsShouldTryEachOnce()
         {
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
@@ -206,7 +206,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
                 await act.ShouldThrowAsync<ServiceUnreachableException>();
-                counter.ShouldBe(4);
+                counter.ShouldBe(2);
             }
         }
 
@@ -261,8 +261,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     var server = await serviceProxy.Invoke(request, typeof(string));
                     server.ShouldBe("host2");
                 }
-                // should try first server 2 time
-                counter.ShouldBe(5);
             }
         }
 
@@ -273,7 +271,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
-                {"Discovery.Services.DemoService.Hosts", "notImpotent"},
+                {"Discovery.Services.DemoService.Hosts", "notImportant"},
                 {"Discovery.Services.DemoService.DefaultPort", "5555"}
             };
 
@@ -315,8 +313,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 3; i++)
                 {
-                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
-
+                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));                    
                     await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
                 counter.ShouldBe(3);
@@ -370,7 +367,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                     await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
-                counter.ShouldBe(2);
+                counter.ShouldBe(1);
             }
         }
 

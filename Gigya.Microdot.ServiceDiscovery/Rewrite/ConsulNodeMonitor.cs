@@ -13,6 +13,9 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+    /// <summery>
+    /// Monitors Consul using Health api and KeyValue api, to find the current active version of a service, and get its nodes list
+    /// </summery>
     public sealed class ConsulNodeMonitor: INodeMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
@@ -28,14 +31,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ConsulResult<KeyValueResponse[]> _lastVersionResult;
 
         ILog Log { get; }
+        private IServiceListMonitor ServiceListMonitor { get; }
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private AggregatingHealthStatus AggregatingHealthStatus { get; }
-        public ConsulNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)            
+        public ConsulNodeMonitor(string serviceName, ILog log, IServiceListMonitor serviceListMonitor, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)            
         {
             ServiceName = serviceName;
             Log = log;
+            ServiceListMonitor = serviceListMonitor;
             ConsulClient = consulClient;
             DateTime = dateTime;
             GetConfig = getConfig;
@@ -82,6 +87,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             set => _nodes = value;
         }
+
+        public bool IsDeployed => ServiceListMonitor.Services.Contains(ServiceName);
 
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
@@ -204,6 +211,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private HealthCheckResult CheckHealth()
         {
+            if (!IsDeployed)
+                HealthCheckResult.Healthy($"Not exists on Consul");
+
             var error = _lastNodesResult?.Error ?? _lastVersionResult?.Error ?? Error;
             if (error != null)
             {

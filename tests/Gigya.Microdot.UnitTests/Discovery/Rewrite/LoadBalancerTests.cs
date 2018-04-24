@@ -201,7 +201,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-        private void Run100times(Action<MonitoredNode> act)
+        private void Run100times(Action<IMonitoredNode> act)
         {
             for (int i = 0; i < 100; i++)
             {

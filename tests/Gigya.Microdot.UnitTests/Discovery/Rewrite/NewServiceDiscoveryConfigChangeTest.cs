@@ -8,7 +8,6 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared;
-using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 using NUnit.Framework;
 using Shouldly;
@@ -91,8 +90,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _configDic[$"Discovery.{serviceName}.Source"] = "Config";
                 _configDic[$"Discovery.{serviceName}.Hosts"] = "host3";
             });
-            var nextHost = _serviceDiscovery.GetNextHost();
-            Assert.AreEqual("host3", nextHost.Result.HostName);
+            var node = _serviceDiscovery.GetNode();
+            Assert.AreEqual("host3", node.Result.Hostname);
         }
 
         [TestCase("Services.ServiceName")]
@@ -103,21 +102,20 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await WaitForConfigChange(() =>
             _configDic[$"Discovery.{serviceName}.Source"] = "Local"
             );
-            var remoteHostPull = _serviceDiscovery.GetNextHost();
-            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.HostName);
+            var remoteHostPull = _serviceDiscovery.GetNode();
+            remoteHostPull.Result.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
         }
 
 
 
         private async Task WaitForConfigChange(Action update)
         {
-            try {await _serviceDiscovery.GetNextHost();} catch {}
+            try {await _serviceDiscovery.GetNode();} catch {}
 
-            var task = _serviceDiscovery.EndPointsChanged.WhenEventReceived();
             update();
             _configRefresh.RaiseChangeEvent();
 
-            await task;
+            await Task.Delay(300);
         }
     }
 }

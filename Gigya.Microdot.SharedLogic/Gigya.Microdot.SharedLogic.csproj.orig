@@ -51,14 +51,6 @@
     <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />
     <Compile Include="Exceptions\StackTraceEnhancer.cs" />
     <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />
-    <Compile Include="HttpService\Schema\AttributeSchema.cs" />
-    <Compile Include="HttpService\Schema\FieldSchema.cs" />
-    <Compile Include="HttpService\Schema\InterfaceSchema.cs" />
-    <Compile Include="HttpService\Schema\MethodSchema.cs" />
-    <Compile Include="HttpService\Schema\ParameterSchema.cs" />
-    <Compile Include="HttpService\Schema\ServiceSchema.cs" />
-    <Compile Include="HttpService\Schema\SimpleTypeSchema.cs" />
-    <Compile Include="HttpService\Schema\TypeSchema.cs" />
     <Compile Include="IHttpClientFactory.cs" />
     <Compile Include="HttpService\HttpServiceRequest.cs" />
     <Compile Include="HttpService\ICertificateLocator.cs" />
@@ -68,10 +60,12 @@
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
-    <Compile Include="ServcieShutdownSource.cs" />
+<<<<<<< HEAD
     <Compile Include="Rewrite\INode.cs" />
     <Compile Include="Rewrite\INodeSource.cs" />
+=======
     <Compile Include="ServcieShutdownSource.cs" />
+>>>>>>> origin/develop
     <Compile Include="Utils\Assert.cs" />
     <Compile Include="BaseCommonConfig.cs" />
     <Compile Include="Events\ClientCallEvent.cs" />

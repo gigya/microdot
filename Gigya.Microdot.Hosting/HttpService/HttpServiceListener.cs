@@ -99,9 +99,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   IServerRequestPublisher serverRequestPublisher,
+                                   JsonExceptionSerializer exceptionSerializer, 
                                    ServiceSchema serviceSchema,
-                                   JsonExceptionSerializer exceptionSerializer)
+                                   IServerRequestPublisher serverRequestPublisher)
 
         {
             ServiceSchema = serviceSchema;

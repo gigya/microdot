@@ -26,6 +26,7 @@ using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -42,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ILog Log { get; }
         public string ServiceName { get; }
         private INode[] _sourceNodes;
-        private MonitoredNode[] _monitoredNodes = new MonitoredNode[0];
+        private IMonitoredNode[] _monitoredNodes = new IMonitoredNode[0];
 
         public AggregatingHealthStatus HealthStatus { get; }
 
@@ -64,12 +65,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             HealthStatus.RegisterCheck(ServiceName, CheckHealth);
         }
 
-        public MonitoredNode GetNode()
+        public IMonitoredNode GetNode()
         {
             GetNodesFromSource();
             var nodes = _monitoredNodes;
             if (nodes.Length==0)
-                throw new EnvironmentException("No nodes were discovered for service", unencrypted: new Tags
+                throw new ServiceUnreachableException("No nodes were discovered for service", unencrypted: new Tags
                 {
                     {"serviceName", ServiceName},
                     {"discoverySource", NodeSource.Type}
@@ -77,7 +78,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             var reachableNodes = nodes.Where(n => n.IsReachable).ToArray();
             if (!reachableNodes.Any())
-                throw new EnvironmentException("All nodes are unreachable", unencrypted: new Tags
+                throw new ServiceUnreachableException("All nodes are unreachable", unencrypted: new Tags
                 {
                     {"serviceName", ServiceName},
                     {"discoverySource", NodeSource.Type},
@@ -126,7 +127,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {_monitoredNodes.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
-        private void DisposeNodes(IEnumerable<MonitoredNode> monitoredNodes)
+        private void DisposeNodes(IEnumerable<IMonitoredNode> monitoredNodes)
         {
             foreach (var monitoredNode in monitoredNodes)
             {

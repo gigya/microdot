@@ -40,8 +40,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [OneTimeSetUp]
         public void SetupConsulListener()
         {
-            _consulSimulator = new ConsulSimulator(ConsulPort);
-
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
@@ -59,18 +57,23 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [OneTimeTearDown]
         public void TearDownConsulListener()
         {
-            _consulSimulator.Dispose();
             _testingKernel.Dispose();
         }
 
         [SetUp]
         public void Setup()
         {
+            _consulSimulator = new ConsulSimulator(ConsulPort);
+
             _serviceName = ServiceName + "_" + Guid.NewGuid();
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig();
+        }
 
-            _consulSimulator.Reset();            
+        [TearDown]
+        public void TearDown()
+        {
+            _consulSimulator.Dispose();
         }
 
         private Task<EndPointsResult> Start(ConsulMethod consulMethod)
@@ -91,7 +94,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AssertOneDefaultEndpoint(result);
         }
 
-        [Test]
+        [Test]        
         public async Task EndpointAdded_LongPolling()
         {
             await Start(ConsulMethod.LongPolling);
@@ -99,7 +102,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             AssertOneDefaultEndpoint(result);
             var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), and one health call (to get endpoints)
+            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), one health call (to get endpoints)
             delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
         }
 

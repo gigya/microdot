@@ -7,7 +7,9 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.Testing.Shared;
+using Metrics;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -119,6 +121,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                                                 {
                                                     var _ = _serviceListMonitor.Services;
                                                 });
+            GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
         [Test]
@@ -141,6 +144,36 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetError();
             await Task.Delay(300);
             ServiceShouldExistOnList();
+            GetHealthStatus().IsHealthy.ShouldBeFalse();
+        }
+
+        [Test]
+        public async Task ServiceListShouldAppearOnHealthCheck()
+        {
+            AddService(serviceName: "Service1");
+            AddService(serviceName: "Service2");
+            await Init();
+            
+            var healthStatus = GetHealthStatus();
+            healthStatus.IsHealthy.ShouldBeTrue();
+
+            healthStatus.Message.ShouldContain("Service1");
+            healthStatus.Message.ShouldContain("Service2");
+        }
+
+        [Test]
+        public async Task DuplicateService_HealthCheckIsRed()
+        {
+            AddService(serviceName: _serviceName);
+            AddService(serviceName: _serviceName.ToLower());
+            AddService("OtherService");
+            await Init();
+            
+            var healthStatus = GetHealthStatus();
+            healthStatus.IsHealthy.ShouldBeFalse();
+            healthStatus.Message.ShouldContain(_serviceName);
+            healthStatus.Message.ShouldContain(_serviceName.ToLower());
+            healthStatus.Message.ShouldNotContain("OtherService", "When ther exists duplicate services, only duplicate services should be listed on the health check message");
         }
 
         public Task Init()
@@ -173,5 +206,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _serviceListMonitor.Services.ShouldNotContain(_serviceName);
         }
+
+        private HealthCheckResult GetHealthStatus()
+        {
+            var healthMonitor = (FakeHealthMonitor)_testingKernel.Get<IHealthMonitor>();
+            return healthMonitor.Monitors["ConsulServiceList"].Invoke();
+        }
+
     }
 }

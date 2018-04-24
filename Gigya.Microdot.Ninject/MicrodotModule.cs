@@ -73,7 +73,7 @@ namespace Gigya.Microdot.Ninject
             Bind<ILoadBalancerFactory>().ToFactory();
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
-            Kernel.BindPerKey<string, ReachabilityChecker, NewServiceDiscovery, NewServiceDiscovery>();
+            Kernel.BindPerKey<string, ReachabilityChecker, INewServiceDiscovery, NewServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
@@ -93,8 +93,8 @@ namespace Gigya.Microdot.Ninject
             Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
-            Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
-            Rebind<IQueryBasedNodeMonitor>().To<QueryBasedNodeMonitor>().InTransientScope();
+            Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
+            Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();            
             Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();

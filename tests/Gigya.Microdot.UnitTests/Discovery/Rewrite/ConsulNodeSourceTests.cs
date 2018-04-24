@@ -33,13 +33,18 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private HashSet<string> _consulServicesList;
         private IServiceListMonitor _serviceListMonitor;
         private Func<INode[]> _getConsulNodes;
+        private string _serviceName;
 
         [OneTimeSetUp]
         public void SetupConsulListener()
         {
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<INodeMonitor>().ToMethod(_ => _nodeMonitor);
+                k.Rebind<Func<string, INodeMonitor>>().ToConstant<Func<string,INodeMonitor>>(s =>
+                {
+                    _serviceName = s;
+                    return _nodeMonitor;
+                });
                 k.Rebind<IServiceListMonitor>().ToMethod(_ => _serviceListMonitor);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
@@ -58,9 +63,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _getConsulNodes = () => _consulNodes;
             _consulServicesList = new HashSet<string>(new[]{_deployment.ToString()});
             _nodeMonitor = Substitute.For<INodeMonitor>();
-            _nodeMonitor.Nodes.Returns(_=>_getConsulNodes());
+            _nodeMonitor.Nodes.Returns(_ => _getConsulNodes());
+            _nodeMonitor.IsDeployed.Returns(_ => _consulServicesList.Contains(_serviceName));
             _serviceListMonitor = Substitute.For<IServiceListMonitor>();
-            _serviceListMonitor.Services.Returns(_ => _consulServicesList.ToImmutableHashSet());
+            _serviceListMonitor.Services.Returns(_ => _consulServicesList.ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase));
 
             _consulConfig = new ConsulConfig();
         }
@@ -85,12 +91,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void ServiceNotDeployedOnConsul_ReturnWasUndeployedTrue()
         {
             _consulServicesList.Clear();
-            CreateConsulSource();
+            Start();
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]
-        public async Task ServiceBecomesNotDeployedOnConsul_ReturnIsActiveFalse()
+        public async Task ServiceBecomesNotDeployedOnConsul_ReturnWasUndeployedTrue()
         {
             SetupOneDefaultNode();
             await Start();

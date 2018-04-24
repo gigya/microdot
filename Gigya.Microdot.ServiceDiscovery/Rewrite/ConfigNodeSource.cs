@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
@@ -66,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private INode[] GetNonEmptyNodesList()
         {
             if (_nodes.Length==0)
-                throw new EnvironmentException("No nodes were specified in the configuration for the " +
+                throw new ServiceUnreachableException("No nodes were specified in the configuration for the " +
                                                 "requested service. Please make sure you've specified a list of hosts for the requested " +
                                                 "service in the configuration. If you're a developer and want to access a service on your " +
                                                 "local machine, change service configuration to Discovery.[requestedService].Mode=\"Local\". " +

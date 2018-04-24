@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+<<<<<<< HEAD
+=======
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic.Monitor;
+>>>>>>> temp_DiscoveryRewrite
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 
@@ -21,8 +25,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private bool _disposed;
         private INode[] _lastKnownNodes;
-        private bool _isActive;        
+<<<<<<< HEAD
+        private bool _isActive;
         private bool _wasUndeployed;
+=======
+        private bool _isActive;        
+>>>>>>> temp_DiscoveryRewrite
 
         public ConsulNodeSource(ServiceDeployment serviceDeployment,
             IServiceListMonitor serviceListMonitor,
@@ -37,23 +45,27 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public async Task Init()
         {
-            await ServiceListMonitor.Init().ConfigureAwait(false);
+            await ServiceListMonitor.Init().ConfigureAwait(false);            
 
-            if (ServiceListMonitor.Services.Contains(ServiceName))
+            var serviceNameMatchCasing = ServiceListMonitor.Services.FirstOrDefault(s=>s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
+            if (serviceNameMatchCasing != null)
             {
-                var serviceNameMatchCasing = ServiceListMonitor.Services.FirstOrDefault(s => s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
-                if (serviceNameMatchCasing != null)
-                {
-                    ServiceName = serviceNameMatchCasing;
-                    NodeMonitor = GetNodeMonitor(ServiceName);
-                    await NodeMonitor.Init().ConfigureAwait(false);
-                }
+                ServiceName = serviceNameMatchCasing;
+                NodeMonitor = GetNodeMonitor(ServiceName);
+                await NodeMonitor.Init().ConfigureAwait(false);
             }
             else
                 _wasUndeployed = true;
         }
 
-        public INode[] GetNodes() => NodeMonitor?.Nodes ?? new INode[0];
+<<<<<<< HEAD
+        public INode[] GetNodes() => NodeMonitor.Nodes;
+=======
+        public INode[] GetNodes()
+        {
+            return NodeMonitor?.Nodes ?? new INode[0];
+        }
+>>>>>>> temp_DiscoveryRewrite
 
         public bool WasUndeployed
         {

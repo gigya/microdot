@@ -40,8 +40,6 @@ namespace Gigya.Microdot.ServiceProxy
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType);
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings);
         Task<ServiceSchema> GetSchema();
-        ISourceBlock<string> EndPointsChanged { get; }
-        ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged { get; }
         int? DefaultPort { get; set; }
         bool UseHttpsDefault { get; set; }
         string ServiceName { get;  }

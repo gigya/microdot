@@ -59,6 +59,8 @@
     <Compile Include="ConsulContracts.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
+    <Compile Include="Rewrite\IMonitoredNode.cs" />
+    <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\NodeSourceLoader.cs" />
     <Compile Include="EndPoint.cs" />
     <Compile Include="HostManagement\MissingHostException.cs" />
@@ -66,7 +68,7 @@
     <Compile Include="HostManagement\RemoteHost.cs" />
     <Compile Include="HostManagement\RemoteHostPool.cs" />
     <Compile Include="IConsulClient.cs" />
-    <Compile Include="IEndPointHandle.cs" />
+    <Compile Include="MonitoredNode.cs" />
     <Compile Include="IServiceDiscovery.cs" />
     <Compile Include="IServiceDiscoverySource.cs" />
     <Compile Include="LocalDiscoverySource.cs" />
@@ -81,11 +83,11 @@
     <Compile Include="Rewrite\INodeMonitor.cs" />
     <Compile Include="Rewrite\IServiceListMonitor.cs" />
     <Compile Include="Rewrite\ILoadBalancer.cs" />
-    <Compile Include="Rewrite\IQueryBasedNodeMonitor.cs" />
     <Compile Include="Rewrite\LoadBalancer.cs" />
     <Compile Include="Rewrite\LocalNodeSource.cs" />
     <Compile Include="Rewrite\MonitoredNode.cs" />
     <Compile Include="Rewrite\Node.cs" />
+    <Compile Include="Rewrite\OverriddenNode.cs" />
     <Compile Include="Rewrite\QueryBasedNodeMonitor.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
     <Compile Include="ServiceDeployment.cs" />
