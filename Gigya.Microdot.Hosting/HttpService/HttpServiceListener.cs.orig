@@ -23,6 +23,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,6 +33,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -45,7 +47,6 @@ using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Newtonsoft.Json;
-using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchema;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -54,7 +55,10 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public sealed class HttpServiceListener : IDisposable
     {
+<<<<<<< HEAD
+=======
         private readonly IServerRequestPublisher _serverRequestPublisher;
+>>>>>>> develop
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -85,7 +89,10 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
 
+<<<<<<< HEAD
         private ServiceSchema ServiceSchema { get; }
+=======
+>>>>>>> develop
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -99,13 +106,16 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   IServerRequestPublisher serverRequestPublisher,
-                                   ServiceSchema serviceSchema,
-                                   JsonExceptionSerializer exceptionSerializer)
-
+<<<<<<< HEAD
+                                   JsonExceptionSerializer exceptionSerializer, ServiceSchema serviceSchema)
         {
             ServiceSchema = serviceSchema;
+=======
+                                   IServerRequestPublisher serverRequestPublisher,
+                                   JsonExceptionSerializer exceptionSerializer)
+        {
             _serverRequestPublisher = serverRequestPublisher;
+>>>>>>> develop
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;

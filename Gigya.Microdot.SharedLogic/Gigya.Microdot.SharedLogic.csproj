@@ -68,8 +68,8 @@
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
-    <Compile Include="Rewrite\ILoadBalancer.cs" />
     <Compile Include="Rewrite\INode.cs" />
+    <Compile Include="Rewrite\INodeSource.cs" />
     <Compile Include="ServcieShutdownSource.cs" />
     <Compile Include="Utils\Assert.cs" />
     <Compile Include="BaseCommonConfig.cs" />

@@ -31,6 +31,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Ninject;
@@ -52,6 +53,7 @@ namespace Gigya.Microdot.Testing.Shared
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();
+            Rebind<INodeSourceLoader>().To<AlwaysLocalHostNodeSource>().InSingletonScope();
             Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
             var locationsParserMock = Substitute.For<IConfigurationLocationsParser>();
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());

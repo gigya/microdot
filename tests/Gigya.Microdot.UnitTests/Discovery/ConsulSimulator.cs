@@ -142,7 +142,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             };
         }
 
-        public void AddServiceEndpoint(string serviceName, ConsulEndPoint endPoint)
+        public void AddServiceNode(string serviceName, ConsulEndPoint endPoint)
         {
             _serviceNodes.TryAdd(serviceName, new List<ConsulEndPoint>());
             _serviceNodes[serviceName].Add(endPoint);
@@ -153,7 +153,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             IncreaseHealthModifyIndex();
         }
 
-        public void RemoveServiceEndpoint(string serviceName, ConsulEndPoint endPoint)
+        public void RemoveServiceNode(string serviceName, ConsulEndPoint endPoint)
         {            
             var index = _serviceNodes[serviceName].FindIndex(ep => ep.HostName==endPoint.HostName && ep.Port==endPoint.Port);
             if (index < 0)

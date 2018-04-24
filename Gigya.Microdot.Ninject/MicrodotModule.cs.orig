@@ -23,8 +23,14 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
+<<<<<<< HEAD
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Hosting.Metrics;
+using Gigya.Microdot.Interfaces;
+=======
+>>>>>>> develop
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -37,7 +43,6 @@ using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
-using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchema;
 using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
 using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
@@ -93,9 +98,9 @@ namespace Gigya.Microdot.Ninject
             Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
-            Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
-            Rebind<IQueryBasedNodeMonitor>().To<QueryBasedNodeMonitor>().InTransientScope();
-            Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
+            Rebind<IConsulNodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
+            Rebind<IQueryBasedConsulNodeMonitor>().To<QueryBasedConsulNodeMonitor>().InTransientScope();
+            Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();

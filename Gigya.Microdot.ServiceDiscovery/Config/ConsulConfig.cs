@@ -10,11 +10,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// Whether to Call Consul with long-polling, waiting for changes to occur, or to call it periodically
         /// </summary>
+        [Obsolete("To be deleted after discovery refactoring")]
         public bool LongPolling { get; set; } = false;
 
         /// <summary>
         /// Interval for reloading endpoints from Consul, 
-        /// Used only when LongPolling=false
+        /// Used for Consul queries loop
         /// </summary>
         public TimeSpan ReloadInterval { get; set; } = TimeSpan.FromSeconds(1);
 
@@ -25,8 +26,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// </summary>
         public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
+        public TimeSpan InitializationTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
         /// <summary>
-        /// Interval for retrying access to surce (e.g. Consul) after an error has occured
+        /// Interval for retrying access to Consul after an error has occured
         /// </summary>
         public TimeSpan ErrorRetryInterval { get; set; } = TimeSpan.FromSeconds(1);
     }

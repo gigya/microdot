@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,33 +21,18 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Utils;
-using Newtonsoft.Json;
-using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchema;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.ServiceProxy.Rewrite
+namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public interface IServiceProxyProvider : IProxyable
+    /// <summary>
+    /// Performs load-balancing between a list of nodes it gets from a <see cref="INodeSource"/>.
+    /// </summary>
+    public interface ILoadBalancer : IDisposable
     {
-        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);
-        Task<ServiceSchema> GetSchema();
-        HttpServiceAttribute HttpSettings { get; }
-    }
-
-    public class DeployedService : IDisposable
-    {
-        internal ServiceSchema Schema { get; set; }
-        internal IMemoizer Memoizer { get; }
-        internal ILoadBalancer LoadBalancer { get; }
-
-        public void Dispose()
-        {
-            Memoizer.TryDispose();
-            LoadBalancer.TryDispose();
-        }
+        /// <summary>
+        /// Retrieves the a node which is considered to be reachable.
+        /// </summary>
+        MonitoredNode GetNode();
     }
 }

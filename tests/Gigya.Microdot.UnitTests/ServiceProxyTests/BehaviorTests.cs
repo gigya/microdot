@@ -11,6 +11,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -41,7 +42,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
             )
             {
 
@@ -88,7 +93,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict))
+                    k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict))
             {
 
 
@@ -131,7 +136,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
             };
 
-            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict);
+            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict);
             var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory(serviceName);
 
@@ -169,7 +174,12 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
+
             )
             {
 
@@ -213,7 +223,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
             )
             {
 
@@ -265,7 +279,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k =>
+                    {
+                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
+                    }, dict)
             )
             {
 
@@ -317,7 +335,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             using (var kernel =
                 new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope(), dict)
+                    k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict)
             )
             {
 

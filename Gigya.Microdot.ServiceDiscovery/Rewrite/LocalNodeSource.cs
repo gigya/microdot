@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,12 +20,41 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
+using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.SharedLogic.Rewrite
+namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public interface ILoadBalancer : IDisposable
+    /// <summary>
+    /// Returns the current computer as the sole node. Never changes.
+    /// </summary>
+    public class LocalNodeSource : INodeSource
     {
-        INode GetNode();
+        private static readonly INode[] _nodes;
+
+        static LocalNodeSource()
+        {
+            _nodes = new []{new Node(CurrentApplicationInfo.HostName)};
+        }
+
+        public string Type => "Local";
+
+        public bool WasUndeployed => false;
+
+        public INode[] GetNodes() => _nodes;
+
+        public bool SupportsMultipleEnvironments => false;
+
+        public async Task Init()
+        {
+            // nothing to init
+        }
+
+        public void Dispose()
+        {
+            // nothing to dispose
+        }
     }
+
 }

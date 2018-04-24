@@ -2,6 +2,7 @@
 using System.Net;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
@@ -78,10 +79,10 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         public static RemoteServiceException UnparsableJsonResponse(string uri, Exception innerException, string responseContent)
         {
-            throw new RemoteServiceException("The remote service returned a response with JSON that failed deserialization. " + 
-                                             "See the 'RequestUri' property on this exception for the URL that was called, " + 
-                                             "the inner exception for the exact error and the 'responseContent' encrypted tag " + 
-                                             "for the original response content.",
+            return new RemoteServiceException(
+                "The remote service returned a response with JSON that failed deserialization. See the 'RequestUri' property on this " + 
+                "exception for the URL that was called, the inner exception for the exact error and the 'responseContent' encrypted " + 
+                "tag for the original response content.",
                 uri,
                 innerException,
                 encrypted: new Tags
@@ -91,6 +92,19 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
                 unencrypted: new Tags
                 {
                     { "requestUri", uri }
+                });
+        }
+
+        public static ServiceUnreachableException RoutingFailed(string requestedService, string[] environmentCandidates, string[] availableEnvironments)
+        {
+            return new ServiceUnreachableException(
+                "Failed to route request to the correct environment because all routing candidates are unavailable. See tags for " + 
+                "the requested service name, the candidate list and the list of all available environments for this service.",
+                unencrypted: new Tags
+                {
+                    { "requestedService", requestedService },
+                    { "environmentCandidates", string.Join(", ", environmentCandidates) },
+                    { "availableEnvironments", string.Join(",", availableEnvironments) }
                 });
         }
     }

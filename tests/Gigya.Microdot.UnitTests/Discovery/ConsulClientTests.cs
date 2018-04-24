@@ -248,12 +248,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async void AddServiceEndPoint(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
         {            
-            _consulSimulator.AddServiceEndpoint(serviceName??_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceNode(serviceName??_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
         private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1, string serviceName=null)
         {
-            _consulSimulator.RemoveServiceEndpoint(serviceName??_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceNode(serviceName??_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
         private void SetServiceVersion(string version, string serviceName=null)

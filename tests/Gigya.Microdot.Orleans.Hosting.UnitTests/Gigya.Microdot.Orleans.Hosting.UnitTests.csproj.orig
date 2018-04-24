@@ -5,13 +5,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0A24AE97-EE88-4E8B-8B92-092884D41399}</ProjectGuid>
+    <ProjectGuid>{8E548D57-5880-4283-BDF5-7386886D481D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Gigya.Microdot.UnitTests</RootNamespace>
-    <AssemblyName>Gigya.Microdot.UnitTests</AssemblyName>
+    <RootNamespace>Gigya.Microdot.Orleans.Hosting.UnitTests</RootNamespace>
+    <AssemblyName>Gigya.Microdot.Orleans.Hosting.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -19,10 +20,10 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <NoWarn>CS4014;CS1998;</NoWarn>
+    <NoWarn>CS1998</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -34,10 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Net.Http.WebRequest" />
-    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
@@ -46,65 +44,28 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
-    <Compile Include="Caching\AsyncMemoizerRevokesTests.cs" />
-    <Compile Include="Caching\AsyncMemoizerTests.cs" />
-    <Compile Include="Caching\CachingProxyTests.cs" />
-    <Compile Include="Caching\IThingFrobber.cs" />
-    <Compile Include="Configuration\BusSettings.cs" />
-    <Compile Include="Configuration\EnviromentVariablesFileReaderTests.cs" />
-    <Compile Include="Configuration\MasterConfigParserTests.cs" />
-    <Compile Include="Configuration\TypedConfigTest.cs" />
-    <Compile Include="Discovery\ConfigNodeSourceTests.cs" />
-    <Compile Include="Discovery\ConsulClientMock.cs" />
-    <Compile Include="Discovery\ConsulClientTests.cs" />
-    <Compile Include="Discovery\ConsulDiscoveryMasterFallBackTest.cs" />
-    <Compile Include="Discovery\ConsulDiscoverySourceTest.cs" />
-    <Compile Include="Discovery\ConsulSimulator.cs" />
-    <Compile Include="Discovery\DiscoveryConfigTests.cs" />
-    <Compile Include="Discovery\LocalNodeSourceTests.cs" />
-    <Compile Include="Discovery\RemoteHostPoolTests.cs" />
-    <Compile Include="Discovery\Rewrite\ConsulQueryNodeSourceTests.cs" />
-    <Compile Include="Discovery\Rewrite\QueryBasedConsulNodeMonitorTests.cs" />
-    <Compile Include="Discovery\Rewrite\ConsulNodeMonitorTests.cs" />
-    <Compile Include="Discovery\Rewrite\ConsulNodeSourceTests.cs" />
-    <Compile Include="Discovery\Rewrite\ConsulServiceListMonitorTests.cs" />
-    <Compile Include="Discovery\Rewrite\LoadBalancerTests.cs" />
-    <Compile Include="Discovery\Rewrite\NewServiceDiscoveryConfigChangeTest.cs" />
-    <Compile Include="Discovery\Rewrite\NewConsulDiscoveryMasterFallBackTest.cs" />
-    <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
-    <Compile Include="Events\EventSerializationTests.cs" />
-    <Compile Include="Monitor\HealthStatusTests.cs" />
-    <Compile Include="HttpServiceRequestTests.cs" />
-    <Compile Include="IDemoService.cs" />
-    <Compile Include="MetricsDataEquatable.cs" />
-    <Compile Include="MetricsDataExtenstion.cs" />
-    <Compile Include="Monitor\MetricsStatisticsPublisherTests.cs" />
-    <Compile Include="Monitor\HealthMonitorTest.cs" />
-    <Compile Include="Caching\Host\CachingProxyTests.cs" />
-    <Compile Include="Caching\Host\ISlowService.cs" />
-    <Compile Include="Caching\Host\SlowService.cs" />
-    <Compile Include="Caching\Host\SlowServiceHost.cs" />
-    <Compile Include="NinjectExtensionsTests.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Monitor\RequestTimings.cs" />
-    <Compile Include="Serialization\BusinessEntity.cs" />
-    <Compile Include="Serialization\ExceptionSerializationTests.cs" />
-    <Compile Include="Serialization\MyServiceException.cs" />
-    <Compile Include="ServiceListenerTests\HttpServiceListenerTests.cs" />
-    <Compile Include="ServiceListenerTests\MetricsTests.cs" />
-    <Compile Include="ServiceListenerTests\PortsAllocationTests.cs" />
-    <Compile Include="ServiceProxyTests\AbstractServiceProxyTest.cs" />
-    <Compile Include="ServiceProxyTests\BehaviorTests.cs" />
-    <Compile Include="ExceptionExtensions.cs" />
-    <Compile Include="ServiceProxyTests\HttpRequestsFactory.cs" />
-    <Compile Include="ServiceProxyTests\JsonExceptionSerializerTests.cs" />
-    <Compile Include="ServiceProxyTests\MetricsTests.cs" />
-    <Compile Include="ServiceProxyTests\NinjectTest.cs" />
+    <Compile Include="DissectPropertyInfoMetadata.cs" />
+    <Compile Include="LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
+    <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
+    <Compile Include="CalculatorServiceTests.cs" />
+    <Compile Include="Microservice\CalculatorService\CalculatorWorkerGrain.cs" />
+    <Compile Include="HealthCheckTests.cs" />
+    <Compile Include="Microservice\CalculatorService\ICalculatorService.cs" />
+    <Compile Include="Microservice\CalculatorService\ICalculatorServiceGrain.cs" />
+    <Compile Include="Microservice\CalculatorService\ICalculatorWorkerGrain.cs" />
+    <Compile Include="Microservice\CalculatorService\IUserGrainWithGuid.cs" />
+    <Compile Include="Microservice\FakeRevokingManager.cs" />
+    <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
+    <Compile Include="Properties\orleans.codegen.cs" />
+<<<<<<< HEAD
     <Compile Include="ServiceSchemaTests.cs" />
-    <Compile Include="SourceBlockShould.cs" />
-    <Compile Include="StringExtensionsTest.cs" />
-    <Compile Include="TagsExtractorTests.cs" />
-    <Compile Include="TestingHost.cs" />
+=======
+    <Compile Include="ReflectionMetaDataExtensionTests.cs" />
+>>>>>>> develop
+    <Compile Include="SchemaEndpointTests.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpyEventPublisher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -112,25 +73,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="paket.references" />
-    <None Include="TestCert\CreateTestCert.cmd" />
-    <None Include="TestCert\OtherTestClientCer.cer" />
-    <None Include="TestCert\OtherTestClientCer.pfx" />
-    <None Include="TestCert\OtherTestClientCer.pvk" />
-    <None Include="TestCert\OtherTestRootCA.cer" />
-    <None Include="TestCert\OtherTestRootCA.pfx" />
-    <None Include="TestCert\OtherTestRootCA.pvk" />
-    <None Include="TestCert\OtherTestServerCer.cer" />
-    <None Include="TestCert\OtherTestServerCer.pfx" />
-    <None Include="TestCert\OtherTestServerCer.pvk" />
-    <None Include="TestCert\TestClientCer.cer" />
-    <None Include="TestCert\TestClientCer.pfx" />
-    <None Include="TestCert\TestClientCer.pvk" />
-    <None Include="TestCert\TestRootCA.cer" />
-    <None Include="TestCert\TestRootCA.pfx" />
-    <None Include="TestCert\TestRootCA.pvk" />
-    <None Include="TestCert\TestServerCer.cer" />
-    <None Include="TestCert\TestServerCer.pfx" />
-    <None Include="TestCert\TestServerCer.pvk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -141,36 +83,24 @@
   </Target>
   -->
   <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
-      <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
-      <Name>Gigya.Microdot.Configuration</Name>
+    <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
+      <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
+      <Name>Gigya.Microdot.Hosting</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj">
       <Project>{2865F69B-D847-4901-8945-4941E463F94E}</Project>
       <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
-      <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
-      <Name>Gigya.Microdot.Hosting</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
-      <Project>{a90d7c71-ec7c-4328-9db1-d2c3a30727db}</Project>
-      <Name>Gigya.Microdot.Interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj">
-      <Project>{4E6A024F-DDC9-4A27-A859-77EBC3241009}</Project>
-      <Name>Gigya.Microdot.Ninject.Host</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
       <Project>{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}</Project>
       <Name>Gigya.Microdot.Ninject</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj">
-      <Project>{dd807780-01b0-4ef6-9e42-5d15ca26f353}</Project>
-      <Name>Gigya.Microdot.Orleans.Hosting</Name>
+    <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj">
+      <Project>{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}</Project>
+      <Name>Gigya.Microdot.Orleans.Ninject.Host</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
-      <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
+      <Project>{37e6909e-51e2-4bba-8efc-dbdf086d860e}</Project>
       <Name>Gigya.Microdot.ServiceDiscovery</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj">
@@ -181,6 +111,18 @@
       <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
+      <Project>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</Project>
+      <Name>Gigya.Microdot.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj">
+      <Project>{DD807780-01B0-4EF6-9E42-5D15CA26F353}</Project>
+      <Name>Gigya.Microdot.Orleans.Hosting</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj">
+      <Project>{d37e359c-170e-4d67-ad49-45002b48987e}</Project>
+      <Name>Gigya.Microdot.Testing</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj">
       <Project>{6D6A62A1-15B5-44C2-AD37-698AB31863E4}</Project>
       <Name>Gigya.Microdot.Testing.Shared</Name>
@@ -189,7 +131,6 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
-  <ItemGroup />
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
@@ -207,31 +148,6 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="System.Data.DataSetExtensions">
-          <Paket>True</Paket>
-        </Reference>
-        <Reference Include="DataAnnotationsValidator">
-          <HintPath>..\..\packages\DataAnnotationsValidator\lib\net40\DataAnnotationsValidator.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
-      <ItemGroup>
-        <Reference Include="FluentAssertions">
-          <HintPath>..\..\packages\FluentAssertions\lib\net45\FluentAssertions.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
-      <ItemGroup>
         <Reference Include="Gigya.ServiceContract">
           <HintPath>..\..\packages\Gigya.ServiceContract\lib\net451\Gigya.ServiceContract.dll</HintPath>
           <Private>True</Private>
@@ -240,11 +156,52 @@
       </ItemGroup>
     </When>
   </Choose>
+  <ItemGroup>
+    <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll">
+      <Paket>True</Paket>
+    </Analyzer>
+    <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll">
+      <Paket>True</Paket>
+    </Analyzer>
+  </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="Metrics">
-          <HintPath>..\..\packages\Metrics.NET\lib\net45\Metrics.dll</HintPath>
+        <Reference Include="Microsoft.CodeAnalysis">
+          <HintPath>..\..\packages\Microsoft.CodeAnalysis.Common\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Microsoft.CodeAnalysis.CSharp">
+          <HintPath>..\..\packages\Microsoft.CodeAnalysis.CSharp\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Microsoft.Extensions.DependencyInjection">
+          <HintPath>..\..\packages\Microsoft.Extensions.DependencyInjection\lib\netstandard1.1\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions">
+          <HintPath>..\..\packages\Microsoft.Extensions.DependencyInjection.Abstractions\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -256,6 +213,17 @@
       <ItemGroup>
         <Reference Include="Orleans">
           <HintPath>..\..\packages\Microsoft.Orleans.Core\lib\net451\Orleans.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="OrleansCodeGenerator">
+          <HintPath>..\..\packages\Microsoft.Orleans.OrleansCodeGenerator\lib\net451\OrleansCodeGenerator.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -309,17 +277,6 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="RichardSzalay.MockHttp">
-          <HintPath>..\..\packages\RichardSzalay.MockHttp\lib\net45\RichardSzalay.MockHttp.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
-      <ItemGroup>
         <Reference Include="Shouldly">
           <HintPath>..\..\packages\Shouldly\lib\net451\Shouldly.dll</HintPath>
           <Private>True</Private>
@@ -333,6 +290,17 @@
       <ItemGroup>
         <Reference Include="System.Collections.Immutable">
           <HintPath>..\..\packages\System.Collections.Immutable\lib\netstandard1.0\System.Collections.Immutable.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="System.Reflection.Metadata">
+          <HintPath>..\..\packages\System.Reflection.Metadata\lib\netstandard1.1\System.Reflection.Metadata.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -392,5 +360,17 @@
       </ItemGroup>
     </When>
   </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="ZooKeeperNetEx">
+          <HintPath>..\..\packages\ZooKeeperNetEx\lib\net45\ZooKeeperNetEx.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Import Project="..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets" Condition="Exists('..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets')" Label="Paket" />
   <Import Project="..\..\packages\NETStandard.Library\build\NETStandard.Library.targets" Condition="Exists('..\..\packages\NETStandard.Library\build\NETStandard.Library.targets')" Label="Paket" />
 </Project>
