@@ -24,7 +24,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
 
-        public QueryBasedNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public QueryBasedConsulNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
             ServiceName = serviceName;
             Log = log;
