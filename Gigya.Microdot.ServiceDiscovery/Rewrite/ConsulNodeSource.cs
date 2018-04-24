@@ -37,14 +37,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public async Task Init()
         {
-            await ServiceListMonitor.Init().ConfigureAwait(false);            
+            await ServiceListMonitor.Init().ConfigureAwait(false);
 
-            var serviceNameMatchCasing = ServiceListMonitor.Services.FirstOrDefault(s=>s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
-            if (serviceNameMatchCasing != null)
+            if (ServiceListMonitor.Services.Contains(ServiceName))
             {
-                ServiceName = serviceNameMatchCasing;
-                NodeMonitor = GetNodeMonitor(ServiceName);
-                await NodeMonitor.Init().ConfigureAwait(false);
+                var serviceNameMatchCasing = ServiceListMonitor.Services.FirstOrDefault(s => s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
+                if (serviceNameMatchCasing != null)
+                {
+                    ServiceName = serviceNameMatchCasing;
+                    NodeMonitor = GetNodeMonitor(ServiceName);
+                    await NodeMonitor.Init().ConfigureAwait(false);
+                }
             }
             else
                 _wasUndeployed = true;
