@@ -6,10 +6,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public interface INewServiceDiscovery
     {
         /// <summary>
-        /// Retrieves the next reachable <see cref="MonitoredNode"/>.
+        /// Retrieves the next reachable <see cref="IMonitoredNode"/>.
         /// </summary>
-        /// <returns>A reachable <see cref="MonitoredNode"/>.</returns>
-        /// <exception cref="EnvironmentException">Thrown when there is no reachable <see cref="MonitoredNode"/> available.</exception>
-        Task<MonitoredNode> GetNode();
+        /// <returns>A reachable <see cref="IMonitoredNode"/>.</returns>
+        /// <exception cref="EnvironmentException">Thrown when there is no reachable <see cref="IMonitoredNode"/> available.</exception>
+        Task<IMonitoredNode> GetNode();
     }
 }

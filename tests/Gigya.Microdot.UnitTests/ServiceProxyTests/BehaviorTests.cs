@@ -271,7 +271,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
-                {"Discovery.Services.DemoService.Hosts", "notImpotent"},
+                {"Discovery.Services.DemoService.Hosts", "notImportant"},
                 {"Discovery.Services.DemoService.DefaultPort", "5555"}
             };
 
@@ -313,8 +313,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 3; i++)
                 {
-                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
-
+                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));                    
                     await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
                 counter.ShouldBe(3);

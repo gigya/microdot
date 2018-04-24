@@ -335,7 +335,7 @@ namespace Gigya.Microdot.ServiceProxy
 
                 string responseContent;
                 HttpResponseMessage response;
-                MonitoredNode node = await ServiceDiscovery.GetNode().ConfigureAwait(false);
+                IMonitoredNode node = await ServiceDiscovery.GetNode().ConfigureAwait(false);
 
                 int? effectivePort = GetEffectivePort(node, config);
                 if (effectivePort == null)

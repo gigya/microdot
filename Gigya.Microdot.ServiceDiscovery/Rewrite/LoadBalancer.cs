@@ -43,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ILog Log { get; }
         public string ServiceName { get; }
         private INode[] _sourceNodes;
-        private MonitoredNode[] _monitoredNodes = new MonitoredNode[0];
+        private IMonitoredNode[] _monitoredNodes = new IMonitoredNode[0];
 
         public AggregatingHealthStatus HealthStatus { get; }
 
@@ -65,7 +65,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             HealthStatus.RegisterCheck(ServiceName, CheckHealth);
         }
 
-        public MonitoredNode GetNode()
+        public IMonitoredNode GetNode()
         {
             GetNodesFromSource();
             var nodes = _monitoredNodes;
@@ -127,7 +127,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {_monitoredNodes.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
-        private void DisposeNodes(IEnumerable<MonitoredNode> monitoredNodes)
+        private void DisposeNodes(IEnumerable<IMonitoredNode> monitoredNodes)
         {
             foreach (var monitoredNode in monitoredNodes)
             {

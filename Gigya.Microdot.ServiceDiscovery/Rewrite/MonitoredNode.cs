@@ -31,7 +31,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// A node monitored by LoadBalancer
     /// </summary>
-    public class MonitoredNode : Node, IDisposable
+    public class MonitoredNode : Node, IMonitoredNode, IDisposable
     {
         private const double FirstAttemptDelaySeconds = 0.001;
         private const double MaxAttemptDelaySeconds  = 10;

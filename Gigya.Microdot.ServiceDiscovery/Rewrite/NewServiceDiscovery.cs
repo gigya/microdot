@@ -109,7 +109,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 .ToArray();
         }
 
-        public async Task<MonitoredNode> GetNode()
+        public async Task<IMonitoredNode> GetNode()
         {
             await _initTask.ConfigureAwait(false);
 
@@ -117,19 +117,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public async Task<MonitoredNode> GetOrWaitForNextHost(CancellationToken cancellationToken)
+        public async Task<IMonitoredNode> GetOrWaitForNextHost(CancellationToken cancellationToken)
         {
             await _initTask.ConfigureAwait(false);
             return TryGetHostOverride() ?? GetRelevantLoadBalancer().GetNode();
         }
 
-        private MonitoredNode TryGetHostOverride()
+        private IMonitoredNode TryGetHostOverride()
         {
             var hostOverride = TracingContext.GetHostOverride(_serviceName);
             if (hostOverride == null)
                 return null;
-            return new MonitoredNode(new Node(hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort), _serviceName, _reachabilityCheck, _dateTime, Log);
-            
+
+            return new OverriddenNode(_serviceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort);            
         }
 
 
