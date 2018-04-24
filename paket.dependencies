@@ -67,6 +67,7 @@ nuget System.Reflection  redirects: off
 nuget System.Linq redirects: off
 nuget System.Linq.Expressions redirects: off
 nuget System.Runtime.InteropServices redirects: off
+nuget System.Runtime.Extensions redirects: off
 nuget System.Net.Http redirects: off, copy_content_to_output_dir: never
 
 

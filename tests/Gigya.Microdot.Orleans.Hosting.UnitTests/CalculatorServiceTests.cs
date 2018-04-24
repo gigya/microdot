@@ -78,7 +78,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true,serviceDrainTime:TimeSpan.MaxValue);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -423,6 +423,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const string message = "HTTP request exception";
             var actual = await Should.ThrowAsync<EnvironmentException>(() => Service.ThrowHttpRequestException(message), $"[HttpRequestException] {message}");
             actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
+
         }
 
         private void AssertExceptionsAreEqual(Exception expected, Exception actual)

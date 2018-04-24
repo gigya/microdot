@@ -21,7 +21,9 @@
 #endregion
 
 using System;
+using System.Net.Http;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
@@ -30,6 +32,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement;
+using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Orleans;
 using Orleans.CodeGeneration;
@@ -182,6 +185,16 @@ namespace Gigya.Microdot.Orleans.Hosting
             catch (Exception e)
             {
                 ex = e;
+
+                if (e is HttpRequestException)
+                {
+                    if (e.InnerException != null)
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+
+                    throw new EnvironmentException("[HttpRequestException] " + e.RawMessage(),
+                        unencrypted: new Tags { { "originalStackTrace", e.StackTrace } });
+                }
+
                 throw;
             }
             finally

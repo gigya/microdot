@@ -496,7 +496,7 @@ namespace Gigya.Microdot.ServiceProxy
                             ex,
                             new Tags {{"responseContent", responseContent}},
                             new Tags {{"requestUri", uri}});
-                    }
+                    } 
                 }
                 else
                 {

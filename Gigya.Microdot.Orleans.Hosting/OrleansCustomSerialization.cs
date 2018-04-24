@@ -22,6 +22,7 @@
 
 using System;
 using System.Linq;
+using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Orleans.Runtime;
@@ -61,7 +62,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public bool IsSupportedType(Type itemType)
         {
-            return _supportedTypes.Any(type => type == itemType);
+            var result = _supportedTypes.Any(type => type == itemType);
+
+            return result;
         }
 
         public object DeepCopy(object source, ICopyContext context)
@@ -74,7 +77,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public void Serialize(object item, ISerializationContext context, Type expectedType)
         {
-            //Because we convert Json to string in order to seriliaze.
+            //Because we convert Json to string in order to serialize.
             SerializationManager.SerializeInner(item.ToString(), context, typeof(string));
         }
 
@@ -83,6 +86,63 @@ namespace Gigya.Microdot.Orleans.Hosting
             var str = SerializationManager.DeserializeInner<string>(context);
 
             return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
+        }
+    }
+    public class RequestExceptionSerialization : IExternalSerializer
+    {
+        private readonly JsonSerializerSettings _jsonSettings;
+
+
+        public RequestExceptionSerialization()
+        {
+
+
+            _jsonSettings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.Indented,
+                DateParseHandling = DateParseHandling.None
+            };
+        }
+
+        public void Initialize(Logger logger)
+        {
+        }
+
+        public bool IsSupportedType(Type itemType)
+        {
+            var result =itemType == typeof(HttpRequestException);
+            return result;
+        }
+
+        public object DeepCopy(object source, ICopyContext context)
+        {
+            return source;
+            //if (source is JToken token)
+            //    return token.DeepClone();
+
+            //return source;
+        }
+
+        public void Serialize(object item, ISerializationContext context, Type expectedType)
+        {
+            throw item as HttpRequestException;
+
+            //if (item is HttpRequestException requestException)
+            //{
+            //    throw requestException;
+            //}
+
+            //throw new NotImplementedException("Just Implement!");
+        }
+
+        public object Deserialize(Type expectedType, IDeserializationContext context)
+        {
+            throw new NotImplementedException("Just Deserialize!");
+            //var str = SerializationManager.DeserializeInner<string>(context);
+
+            //return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
         }
     }
 }
