@@ -40,9 +40,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [SetUp]
         public void Setup()
         {
-            var deployment = new ServiceDeployment(ServiceName, "prod");
+            var deployment = new DeploymentIndentifier(ServiceName, "prod");
 
-            var sources = _kernel.Get<Func<ServiceDeployment, INodeSource[]>>()(deployment);
+            var sources = _kernel.Get<Func<DeploymentIndentifier, INodeSource[]>>()(deployment);
             _configNodeSource = sources.Single(x => x.Type == "Config");
         }
 

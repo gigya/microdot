@@ -29,16 +29,16 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public class DiscoverySourceLoader : IDiscoverySourceLoader
     {
-        private readonly Func<ServiceDeployment, IServiceDiscoverySource[]> _getSources;
+        private readonly Func<DeploymentIndentifier, IServiceDiscoverySource[]> _getSources;
 
-        public DiscoverySourceLoader(Func<ServiceDeployment, IServiceDiscoverySource[]> getSources)
+        public DiscoverySourceLoader(Func<DeploymentIndentifier, IServiceDiscoverySource[]> getSources)
         {
             _getSources = getSources;
         }
 
-        public IServiceDiscoverySource GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        public IServiceDiscoverySource GetDiscoverySource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            var source = _getSources(serviceDeployment).FirstOrDefault(f=>f.SourceName.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
+            var source = _getSources(deploymentIndentifier).FirstOrDefault(f=>f.SourceName.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
 
             if (source==null)
                 throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");
@@ -49,6 +49,6 @@ namespace Gigya.Microdot.ServiceDiscovery
 
     public interface IDiscoverySourceLoader
     {
-        IServiceDiscoverySource GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig);
+        IServiceDiscoverySource GetDiscoverySource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig serviceDiscoveryConfig);
     }
 }

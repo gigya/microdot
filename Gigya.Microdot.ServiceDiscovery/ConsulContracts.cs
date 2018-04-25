@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery
@@ -20,14 +22,23 @@ namespace Gigya.Microdot.ServiceDiscovery
 
     public class ServiceEntry
     {
-        public Node Node { get; set; }
+        public NodeEntry Node { get; set; }
 
         public AgentService Service { get; set; }
 
         public HealthCheck[] Checks { get; set; }
+
+        public Node ToNode()
+        {
+            const string versionPrefix = "version:";
+            string versionTag = Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            string version = versionTag?.Substring(versionPrefix.Length);
+
+            return new Node(Node.Name, Service?.Port, version);
+        }
     }
 
-    public class Node
+    public class NodeEntry
     {
         [JsonProperty(PropertyName = "Node")]
         public string Name { get; set; }

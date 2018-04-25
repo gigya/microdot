@@ -106,8 +106,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
             {
                 Scope = _serviceScope,
             };
-            var sourceFactory = Kernel.Get<Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
-            var serviceContext = new ServiceDeployment(SERVICE_NAME, ENV);
+            var sourceFactory = Kernel.Get<Func<DeploymentIndentifier, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
+            var serviceContext = new DeploymentIndentifier(SERVICE_NAME, ENV);
             _consulDiscoverySource = sourceFactory(serviceContext, config);
             _consulDiscoverySource.Init();
             await GetNewResult();

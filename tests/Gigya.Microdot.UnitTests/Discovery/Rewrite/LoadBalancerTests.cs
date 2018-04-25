@@ -86,10 +86,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _nodeSource.GetNodes().Returns(_ => _getSourceNodes());
             _reachabilityCheck = _ => Task.FromResult(false);
 
-            var createLoadBalancer = _kernel.Get<Func<INodeSource, ServiceDeployment, ReachabilityCheck, ILoadBalancer>>();
+            var createLoadBalancer = _kernel.Get<Func<INodeSource, DeploymentIndentifier, ReachabilityCheck, ILoadBalancer>>();
             _loadBalancer = createLoadBalancer(
                 _nodeSource,
-                new ServiceDeployment(ServiceName, Env),
+                new DeploymentIndentifier(ServiceName, Env),
                 new ReachabilityCheck(n=>_reachabilityCheck(n)));
         }
 

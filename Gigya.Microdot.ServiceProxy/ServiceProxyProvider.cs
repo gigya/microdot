@@ -263,7 +263,7 @@ namespace Gigya.Microdot.ServiceProxy
         }
 
 
-        private async Task<bool> IsReachable(INode node)
+        public async Task<bool> IsReachable(INode node)
         {
             try
             {

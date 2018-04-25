@@ -59,6 +59,7 @@
     <Compile Include="ConsulContracts.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
+    <Compile Include="Rewrite\Ex.cs" />
     <Compile Include="Rewrite\IMonitoredNode.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\NodeSourceLoader.cs" />
@@ -90,7 +91,7 @@
     <Compile Include="Rewrite\OverriddenNode.cs" />
     <Compile Include="Rewrite\QueryBasedConsulNodeMonitor.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
-    <Compile Include="ServiceDeployment.cs" />
+    <Compile Include="DeploymentIndentifier.cs" />
     <Compile Include="Rewrite\NewServiceDiscovery.cs" />
     <Compile Include="ServiceDiscovery.cs" />
     <Compile Include="ServiceDiscoverySourceBase.cs" />

@@ -31,10 +31,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         ILog Log { get; }
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
-        private Func<ConsulConfig> GetConfig { get; }        
-
+        private Func<ConsulConfig> GetConfig { get; }
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy();
-        private ComponentHealthMonitor _serviceListHealthMonitor;
+        private readonly ComponentHealthMonitor _serviceListHealthMonitor;
+        private Task LoopingTask { get; set; }
 
         public ConsulServiceListMonitor(ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
@@ -46,14 +46,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken = new CancellationTokenSource();
 
             _serviceListHealthMonitor = healthMonitor.SetHealthFunction(ConsulServiceList, () => _healthStatus);
-            GetAllLoop();
+            LoopingTask = GetAllLoop();
         }
+
 
         public string DataCenter { get; }
 
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
+        /// <inheritdoc />
         public ImmutableHashSet<string> Services
         {
             get
@@ -86,7 +88,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={maxSecondsToWaitForResponse}s";
             var consulResult = await ConsulClient.Call<string[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (consulResult.Success && consulResult.Response!=null)
+            if (consulResult.IsSuccessful && consulResult.Response!=null)
             {
                 var allKeys = consulResult.Response;
                 var allServiceNames = allKeys.Select(s => s.Substring("service/".Length));
@@ -134,7 +136,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 var now = DateTime.UtcNow;
                 var timeElapsed = ErrorTime - now;
                 if (timeElapsed < config.ErrorRetryInterval)
-                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed).ConfigureAwait(false);
+                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed, ShutdownToken.Token).ConfigureAwait(false);
             }
         }
 
@@ -142,14 +144,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var error = result.Error ?? new EnvironmentException(errorMessage);
 
-            if (!(error is TaskCanceledException))
+            if (error.InnerException is TaskCanceledException == false)
+            {
                 Log.Error("Error calling Consul to get all services list", exception: result.Error, unencryptedTags: new
                 {
-                    ConsulAddress = ConsulClient.ConsulAddress.ToString(),
-                    consulQuery = result.RequestLog,
-                    ResponseCode = result.StatusCode,
-                    Content = result.ResponseContent
+                    consulAddress = result.ConsulAddress,
+                    commandPath = result.CommandPath,
+                    responseCode = result.StatusCode,
+                    content = result.ResponseContent
                 });
+            }
 
             Error = error;
             ErrorTime = DateTime.UtcNow;            
@@ -162,6 +166,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             ShutdownToken?.Cancel();
+            LoopingTask.GetAwaiter().GetResult();
             ShutdownToken?.Dispose();
             _serviceListHealthMonitor.Dispose();
         }

@@ -47,7 +47,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private LoadBalancer MasterEnvironmentLoadBalancer { get; set; }
         private List<IDisposable> _masterEnvironmentLinks = new List<IDisposable>();
-        private readonly ServiceDeployment _masterDeployment;
+        private readonly DeploymentIndentifier _masterDeployment;
 
         private LoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
 
@@ -57,7 +57,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<DiscoveryConfig> GetConfig { get; }
 
         private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
-        private readonly ServiceDeployment _originatingDeployment;
+        private readonly DeploymentIndentifier _originatingDeployment;
 
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
@@ -89,8 +89,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Log = log;
             _dateTime = dateTime;
             _serviceName = serviceName;
-            _originatingDeployment = new ServiceDeployment(serviceName, environmentVariableProvider.DeploymentEnvironment);
-            _masterDeployment = new ServiceDeployment(serviceName, MASTER_ENVIRONMENT);
+            _originatingDeployment = new DeploymentIndentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
+            _masterDeployment = new DeploymentIndentifier(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityCheck = reachabilityCheck;
             _loadBalancerFactory = loadBalancerFactory;
@@ -196,16 +196,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         private LoadBalancer CreateLoadBalancer(
-            ServiceDeployment serviceDeployment,            
+            DeploymentIndentifier deploymentIndentifier,            
             INodeSource nodeSource)
         {
-            return (LoadBalancer)_loadBalancerFactory.Create(nodeSource, serviceDeployment, _reachabilityCheck);
+            return (LoadBalancer)_loadBalancerFactory.Create(nodeSource, deploymentIndentifier, _reachabilityCheck);
         }
 
 
-        private async Task<INodeSource> GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
+        private async Task<INodeSource> GetNodeSource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig config)
         {
-            var source = new PersistentNodeSource(()=>_nodeLoader.GetNodeSource(serviceDeployment, config));
+            var source = new PersistentNodeSource(()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config));
 
             await source.Init().ConfigureAwait(false);
 
@@ -341,7 +341,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     [Obsolete("Delete this class after Discovery Rewrite is completed")]
     public interface ILoadBalancerFactory
     {
-        ILoadBalancer Create(INodeSource nodeSource, ServiceDeployment serviceDeployment,
+        ILoadBalancer Create(INodeSource nodeSource, DeploymentIndentifier deploymentIndentifier,
             ReachabilityCheck reachabilityChecker);
     }
 

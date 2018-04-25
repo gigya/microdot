@@ -23,6 +23,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
+        private Task LoopingTask { get; set; }
 
         public QueryBasedConsulNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
@@ -34,17 +35,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
 
-            LoadNodesLoop();
+            LoopingTask = LoadNodesLoop();
         }
 
-        public string DataCenter { get; }
+
+        private string DataCenter { get; }
 
         private string ServiceName { get; }
 
+        /// <inheritdoc />
         public INode[] Nodes 
         {
             get
             {
+                if (_disposed > 0)
+                    throw new ObjectDisposedException(nameof(QueryBasedConsulNodeMonitor));
+
                 if (!IsDeployed)
                 {
                     throw new EnvironmentException("The service is not deployed in the specified DC and Env.", 
@@ -54,14 +60,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                             { "serviceName", ServiceName }
                         });
                 }
-                
-                if (_nodes.Length==0 && Error != null)
+
+                if (_nodes.Length == 0 && Error != null)
                     throw Error;
 
                 return _nodes;
             }            
         }
 
+        /// <inheritdoc />
         public bool IsDeployed { get; set; } = true;
 
         private Exception Error { get; set; }
@@ -77,11 +84,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+        /// <inheritdoc />
         public Task Init() => _initTask;
 
         private async Task LoadNodes()
         {
-            await WaitIfErrorOccuredOnPreviousCall().ConfigureAwait(false);
+            await WaitIfErrorOccurredOnPreviousCall().ConfigureAwait(false);
 
             var consulQuery = $"v1/query/{ServiceName}/execute?dc={DataCenter}";
             var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(consulQuery, ShutdownToken.Token).ConfigureAwait(false);
@@ -91,10 +99,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 IsDeployed = false;
                 _nodes = new INode[0];
             }
-            else if (consulResult.Success)
+            else if (consulResult.IsSuccessful)
             {
-                var queryResult = consulResult.Response;
-                _nodes = ConsulClient.ReadConsulNodes(queryResult.Nodes);
+                ConsulQueryExecuteResponse queryResult = consulResult.Response;
+                _nodes = queryResult.Nodes.Select(n => n.ToNode()).ToArray<INode>();
                 if (_nodes.Length == 0)
                     ErrorResult(consulResult, "No endpoints were specified in Consul for the requested service and service's active version.");
 
@@ -104,44 +112,49 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 ErrorResult(consulResult, "Cannot extract service's nodes from Consul query response");                        
         }
 
-        private async Task WaitIfErrorOccuredOnPreviousCall()
+        private async Task WaitIfErrorOccurredOnPreviousCall()
         {
             if (Error != null)
             {
-                var config = GetConfig();
-                var now = DateTime.UtcNow;
-                var timeElapsed = ErrorTime - now;
+                ConsulConfig config = GetConfig();
+                DateTime now = DateTime.UtcNow;
+                TimeSpan timeElapsed = ErrorTime - now;
+
                 if (timeElapsed < config.ErrorRetryInterval)
-                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed).ConfigureAwait(false);
+                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed, ShutdownToken.Token).ConfigureAwait(false);
             }
         }
 
 
         private void ErrorResult<T>(ConsulResult<T> result, string errorMessage)
         {
-            var error = result.Error ?? new EnvironmentException(errorMessage);
+            EnvironmentException error = result.Error ?? new EnvironmentException(errorMessage);
 
-            if (!(error is TaskCanceledException))
+            if (error.InnerException is TaskCanceledException == false)
+            {
                 Log.Error("Error calling Consul", exception: result.Error, unencryptedTags: new
                 {
-                    ServiceName = ServiceName,
-                    ConsulAddress = ConsulClient.ConsulAddress.ToString(),
-                    consulQuery = result.RequestLog,
-                    ResponseCode = result.StatusCode,
-                    Content = result.ResponseContent
+                    serviceName = ServiceName,
+                    consulAddress = result.ConsulAddress,
+                    commandPath = result.CommandPath,
+                    responseCode = result.StatusCode,
+                    content = result.ResponseContent
                 });
+            }
 
             Error = error;
             ErrorTime = DateTime.UtcNow;
         }
 
 
+        /// <inheritdoc />
         public void Dispose()
         {
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
             
             ShutdownToken?.Cancel();
+            LoopingTask.GetAwaiter().GetResult();
             ShutdownToken?.Dispose();
         }
     }

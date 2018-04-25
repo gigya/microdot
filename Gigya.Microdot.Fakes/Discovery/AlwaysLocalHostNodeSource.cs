@@ -29,7 +29,7 @@ namespace Gigya.Microdot.Fakes.Discovery
 {
     public class AlwaysLocalHostNodeSource : INodeSourceLoader
     {
-        public INodeSource GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        public INodeSource GetNodeSource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
             return new LocalNodeSource();
         }

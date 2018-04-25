@@ -79,8 +79,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         unencryptedTags: new
                         {
                             endpoint = HostName,
-                            requestedService = HostPool.ServiceDeployment.ServiceName,
-                            requestedServiceEnvironment = HostPool.ServiceDeployment.DeploymentEnvironment
+                            requestedService = HostPool.DeploymentIndentifier.ServiceName,
+                            requestedServiceEnvironment = HostPool.DeploymentIndentifier.DeploymentEnvironment
 
                         }));
 
@@ -145,8 +145,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         unencryptedTags: new
                         {
                             endpoint = HostName,
-                            requestedService = HostPool.ServiceDeployment.ServiceName,
-                            requestedServiceEnvironment = HostPool.ServiceDeployment.DeploymentEnvironment
+                            requestedService = HostPool.DeploymentIndentifier.ServiceName,
+                            requestedServiceEnvironment = HostPool.DeploymentIndentifier.DeploymentEnvironment
                         }));
 				}
 
@@ -159,8 +159,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 				Log.Info(_ => _("A remote host is still unreachable, monitoring continues. See tags for details", unencryptedTags: new
 				{
 					endpoint = HostName,
-                    requestedService = HostPool.ServiceDeployment.ServiceName,
-                    requestedServiceEnvironment = HostPool.ServiceDeployment.DeploymentEnvironment,
+                    requestedService = HostPool.DeploymentIndentifier.ServiceName,
+                    requestedServiceEnvironment = HostPool.DeploymentIndentifier.DeploymentEnvironment,
                     attemptCount,
 					nextDelay,
 					nextAttemptAt = DateTime.UtcNow + nextDelay,
@@ -186,8 +186,8 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
                         unencryptedTags: new
                         {
                             endpoint = HostName,
-                            requestedService = HostPool.ServiceDeployment.ServiceName,
-                            requestedServiceEnvironment = HostPool.ServiceDeployment.DeploymentEnvironment,
+                            requestedService = HostPool.DeploymentIndentifier.ServiceName,
+                            requestedServiceEnvironment = HostPool.DeploymentIndentifier.DeploymentEnvironment,
                             attemptCount,
                             downtime = DateTime.UtcNow - start
                         }));

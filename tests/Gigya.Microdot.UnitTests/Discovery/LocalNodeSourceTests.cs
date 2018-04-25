@@ -31,9 +31,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [SetUp]
         public void Setup()
         {
-            var deployment = new ServiceDeployment("MyService", "prod");
+            var deployment = new DeploymentIndentifier("MyService", "prod");
 
-            var sources = _kernel.Get<Func<ServiceDeployment,INodeSource[]>>()(deployment);
+            var sources = _kernel.Get<Func<DeploymentIndentifier,INodeSource[]>>()(deployment);
             _localNodeSource = sources.Single(x => x.Type == "Local");
         }
 

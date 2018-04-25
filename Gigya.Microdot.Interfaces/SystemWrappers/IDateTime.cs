@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Interfaces.SystemWrappers
@@ -28,6 +29,8 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
     public interface IDateTime
     {
         DateTime UtcNow { get; }
-        Task Delay(TimeSpan delay);
+        Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task DelayUntil(DateTime until, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

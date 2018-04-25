@@ -43,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private string ConfigPath => $"Discovery.{Deployment}";
 
-        public ConfigDiscoverySource(ServiceDeployment deployment, Func<DiscoveryConfig> getConfig, ILog log) : base(deployment.ServiceName)
+        public ConfigDiscoverySource(DeploymentIndentifier deployment, Func<DiscoveryConfig> getConfig, ILog log) : base(deployment.ServiceName)
         {            
             _serviceDiscoveryConfig = getConfig().Services[deployment.ServiceName];
             Log = log;

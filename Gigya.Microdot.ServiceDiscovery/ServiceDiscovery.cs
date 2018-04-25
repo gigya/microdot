@@ -44,13 +44,13 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private RemoteHostPool MasterEnvironmentPool { get; set; }
         private List<IDisposable> _masterEnvironmentLinks = new List<IDisposable>();
-        private readonly ServiceDeployment _masterDeployment;
+        private readonly DeploymentIndentifier _masterDeployment;
 
         private RemoteHostPool OriginatingEnvironmentPool { get; set; }
         private ILog Log { get; }
 
         private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
-        private readonly ServiceDeployment _originatingDeployment;
+        private readonly DeploymentIndentifier _originatingDeployment;
 
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
@@ -77,8 +77,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             Log = log;
             _serviceName = serviceName;
-            _originatingDeployment = new ServiceDeployment(serviceName, environmentVariableProvider.DeploymentEnvironment);
-            _masterDeployment = new ServiceDeployment(serviceName, MASTER_ENVIRONMENT);
+            _originatingDeployment = new DeploymentIndentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
+            _masterDeployment = new DeploymentIndentifier(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityChecker = reachabilityChecker;
             _remoteHostPoolFactory = remoteHostPoolFactory;
@@ -175,11 +175,11 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
         private RemoteHostPool CreatePool(
-            ServiceDeployment serviceDeployment,
+            DeploymentIndentifier deploymentIndentifier,
             List<IDisposable> blockLinks,
             IServiceDiscoverySource discoverySource)
         {
-            var result = _remoteHostPoolFactory.Create(serviceDeployment, discoverySource, _reachabilityChecker);
+            var result = _remoteHostPoolFactory.Create(deploymentIndentifier, discoverySource, _reachabilityChecker);
 
             var dispose = result.EndPointsChanged.LinkTo(new ActionBlock<EndPointsResult>(m =>
                 {
@@ -205,9 +205,9 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
 
-        private async Task<IServiceDiscoverySource> GetDiscoverySource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
+        private async Task<IServiceDiscoverySource> GetDiscoverySource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig config)
         {
-            var source = _serviceDiscoveryLoader.GetDiscoverySource(serviceDeployment, config);
+            var source = _serviceDiscoveryLoader.GetDiscoverySource(deploymentIndentifier, config);
 
             await source.Init().ConfigureAwait(false);
 
@@ -227,7 +227,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 if (newActivePool != _activePool)
                 {
-                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activePool?.ServiceDeployment?.ToString(), newPool = newActivePool.ServiceDeployment.ToString()}));
+                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activePool?.DeploymentIndentifier?.ToString(), newPool = newActivePool.DeploymentIndentifier.ToString()}));
                     _activePool = newActivePool;
                     FireEndPointChange();
 

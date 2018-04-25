@@ -377,7 +377,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                             unencrypted: new Tags
                             {
                                 {"ConsulAddress", ConsulAddress.ToString()},
-                                {"ServiceDeployment", _serviceName},
+                                {"ServiceName", _serviceName},
                                 {"ConsulQuery", urlCommand},
                                 {"ResponseCode", statusCode.ToString()},
                                 {"Content", responseContent}
