@@ -21,13 +21,13 @@
 #endregion
 namespace Gigya.Microdot.ServiceDiscovery
 {
-    public class DeploymentIndentifier
+    public class DeploymentIdentifier
     {
         public string DeploymentEnvironment { get; }
         public string ServiceName { get; }
 
 
-        public DeploymentIndentifier(string serviceName, string deploymentEnvironment)
+        public DeploymentIdentifier(string serviceName, string deploymentEnvironment)
         {
             DeploymentEnvironment = deploymentEnvironment.ToLower();
             ServiceName = serviceName;
@@ -48,7 +48,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (ReferenceEquals(this, obj))
                 return true;
 
-            DeploymentIndentifier other = obj as DeploymentIndentifier;
+            DeploymentIdentifier other = obj as DeploymentIdentifier;
 
             if (other == null)
                 return false;

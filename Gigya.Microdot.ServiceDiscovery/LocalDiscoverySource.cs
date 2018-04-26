@@ -34,7 +34,7 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         public override string SourceName => "Local";
 
-        public LocalDiscoverySource(DeploymentIndentifier deploymentIndentifier) : base($"{CurrentApplicationInfo.HostName}-{deploymentIndentifier.ServiceName}")
+        public LocalDiscoverySource(DeploymentIdentifier deploymentIdentifier) : base($"{CurrentApplicationInfo.HostName}-{deploymentIdentifier.ServiceName}")
         {
             Result = new EndPointsResult{EndPoints  = new[] { new EndPoint { HostName = CurrentApplicationInfo.HostName }}} ;
         }

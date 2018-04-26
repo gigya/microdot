@@ -54,7 +54,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _discoverySourceMock = new DiscoverySourceMock(serviceContext, endPoints);
             
             Pool = factory.Create(
-                new DeploymentIndentifier(SERVICE_NAME, "prod"), 
+                new DeploymentIdentifier(SERVICE_NAME, "prod"), 
                 _discoverySourceMock, 
                 isReachableChecker ?? (rh => Task.FromResult(false)));
 

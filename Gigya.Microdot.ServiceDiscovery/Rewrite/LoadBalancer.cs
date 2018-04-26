@@ -49,13 +49,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public LoadBalancer(
             INodeSource nodeSource, 
-            DeploymentIndentifier deploymentIndentifier, 
+            DeploymentIdentifier deploymentIdentifier, 
             ReachabilityCheck reachabilityCheck,
             Func<string, AggregatingHealthStatus> getAggregatingHealthStatus,
             IDateTime dateTime, 
             ILog log)
         {
-            ServiceName = deploymentIndentifier.ToString();
+            ServiceName = deploymentIdentifier.ToString();
             NodeSource = nodeSource;
             ReachabilityCheck = reachabilityCheck;
             DateTime = dateTime;

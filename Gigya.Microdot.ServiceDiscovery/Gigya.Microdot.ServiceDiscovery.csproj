@@ -92,7 +92,7 @@
     <Compile Include="Rewrite\OverriddenNode.cs" />
     <Compile Include="Rewrite\QueryBasedConsulNodeMonitor.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
-    <Compile Include="DeploymentIndentifier.cs" />
+    <Compile Include="DeploymentIdentifier.cs" />
     <Compile Include="Rewrite\NewServiceDiscovery.cs" />
     <Compile Include="ServiceDiscovery.cs" />
     <Compile Include="ServiceDiscoverySourceBase.cs" />

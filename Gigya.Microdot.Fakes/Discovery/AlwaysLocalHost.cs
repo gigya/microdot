@@ -27,9 +27,9 @@ namespace Gigya.Microdot.Fakes.Discovery
 {
     public class AlwaysLocalHost : IDiscoverySourceLoader
     {
-        public IServiceDiscoverySource GetDiscoverySource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        public IServiceDiscoverySource GetDiscoverySource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            return new LocalDiscoverySource(deploymentIndentifier);
+            return new LocalDiscoverySource(deploymentIdentifier);
         }
     }
 }

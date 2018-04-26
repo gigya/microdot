@@ -28,7 +28,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool SupportsMultipleEnvironments => false;
 
         /// <inheritdoc />
-        public ConfigNodeSource(DeploymentIndentifier deployment, Func<DiscoveryConfig> getConfig, ILog log)
+        public ConfigNodeSource(DeploymentIdentifier deployment, Func<DiscoveryConfig> getConfig, ILog log)
         {
             _serviceName = deployment.ServiceName;
             GetConfig = getConfig;

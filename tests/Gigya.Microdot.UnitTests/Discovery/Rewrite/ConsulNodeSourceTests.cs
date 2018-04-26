@@ -24,7 +24,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
               
-        private readonly DeploymentIndentifier _deployment = new DeploymentIndentifier("MyService", "prod");
+        private readonly DeploymentIdentifier _deployment = new DeploymentIdentifier("MyService", "prod");
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _consulSource;
@@ -175,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void CreateConsulSource()
         {            
-            var sources = _testingKernel.Get<Func<DeploymentIndentifier, INodeSource[]>>()(_deployment);
+            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deployment);
             _consulSource = sources.Single(x => x.Type == "Consul");            
         }
 
