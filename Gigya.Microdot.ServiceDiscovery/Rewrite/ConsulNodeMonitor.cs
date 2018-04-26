@@ -39,6 +39,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Task NodesLoopTask { get; set; }
         private Task VersionLoopTask { get; set; }
         private CancellationTokenSource ShutdownToken { get; }
+        private EnvironmentException Error { get; set; }
+        private DateTime ErrorTime { get; set; }
+        private string DeploymentIdentifier { get; }
 
         public ConsulNodeMonitor(
             string deploymentIdentifier, 
@@ -65,7 +68,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             NodesLoopTask = LoadNodesLoop();
         }
 
-        private string DeploymentIdentifier { get; }
 
         private string ActiveVersion
         {
@@ -113,29 +115,40 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public bool IsDeployed => ServiceListMonitor.Services.Contains(DeploymentIdentifier);
 
-        private EnvironmentException Error { get; set; }
-        private DateTime ErrorTime { get; set; }
-
         /// <inheritdoc />
         public Task Init() => Task.WhenAll(_nodesInitTask, _versionInitTask);
 
         private async Task LoadVersionLoop()
         {
-            _versionInitTask = LoadVersion(0);
-            var modifyIndex = await _versionInitTask.ConfigureAwait(false);            
-            while (!ShutdownToken.IsCancellationRequested)
+            try
             {
-                modifyIndex = await LoadVersion(modifyIndex).ConfigureAwait(false);
+                _versionInitTask = LoadVersion(0);
+                var modifyIndex = await _versionInitTask.ConfigureAwait(false);
+                while (!ShutdownToken.IsCancellationRequested)
+                {
+                    modifyIndex = await LoadVersion(modifyIndex).ConfigureAwait(false);
+                }
+            }
+            catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
+            {
+                // Ignore exception during shutdown.
             }
         }
 
         private async Task LoadNodesLoop()
         {
-            _nodesInitTask = LoadNodes(0);
-            var modifyIndex = await _nodesInitTask.ConfigureAwait(false);
-            while (!ShutdownToken.IsCancellationRequested)
+            try
             {
-                modifyIndex = await LoadNodes(modifyIndex).ConfigureAwait(false);
+                _nodesInitTask = LoadNodes(0);
+                var modifyIndex = await _nodesInitTask.ConfigureAwait(false);
+                while (!ShutdownToken.IsCancellationRequested)
+                {
+                    modifyIndex = await LoadNodes(modifyIndex).ConfigureAwait(false);
+                }
+            }
+            catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
+            {
+                // Ignore exception during shutdown.
             }
         }
 
@@ -143,14 +156,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             ConsulConfig config = GetConfig();
            
-            if (Error != null)
-                await DateTime.DelayUntil(ErrorTime + config.ErrorRetryInterval).ConfigureAwait(false);
+            await DateTime.DelayUntil(ErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
 
             double maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
             string urlCommand = $"v1/kv/service/{DeploymentIdentifier}?dc={DataCenter}&index={modifyIndex}&wait={maxSecondsToWaitForResponse}s";
             _lastVersionResult = await ConsulClient.Call<KeyValueResponse[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (_lastVersionResult.IsDeployed && _lastVersionResult.IsSuccessful)
+            if (_lastVersionResult.Error != null)
+            {
+                ErrorResult(_lastVersionResult);
+            }
+            else if (_lastNodesResult.IsDeployed == false || _lastNodesResult.Response == null)
+            {
+                ErrorTime = DateTime.UtcNow;
+                // This situation is ignored because other processes are responsible for indicating when a service is undeployed.
+            }
+            else
             {
                 string version = _lastVersionResult.Response?.SingleOrDefault()?.TryDecodeValue()?.Version;
 
@@ -161,7 +182,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }
             }
             
-            ErrorResult(_lastVersionResult, "Cannot extract service's active version from Consul response");
             return 0;
         }
 
@@ -169,23 +189,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             ConsulConfig config = GetConfig();
           
-            if (Error != null)
-                await DateTime.DelayUntil(ErrorTime + config.ErrorRetryInterval).ConfigureAwait(false);
+            await DateTime.DelayUntil(ErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
 
             double maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
             string urlCommand = $"v1/health/service/{DeploymentIdentifier}?dc={DataCenter}&passing&index={modifyIndex}&wait={maxSecondsToWaitForResponse}s";
             _lastNodesResult = await ConsulClient.Call<ServiceEntry[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (_lastNodesResult.IsSuccessful)
+            if (_lastNodesResult.Error != null)
             {
-                var consulNodes = _lastNodesResult.Response;
-                if (consulNodes != null)
-                {
-                    NodesOfAllVersions = consulNodes.Select(n => n.ToNode()).ToArray();
-                    return _lastNodesResult.ModifyIndex ?? 0;
-                }
-            }            
-            ErrorResult(_lastNodesResult, "Cannot extract service's nodes from Consul response");
+                ErrorResult(_lastNodesResult);
+            }
+            else if (_lastNodesResult.IsDeployed == false || _lastNodesResult.Response == null)
+            {
+                NodesOfAllVersions = new Node[0];
+                ErrorTime = DateTime.UtcNow;
+            }
+            else
+            {
+                NodesOfAllVersions = _lastNodesResult.Response.Select(n => n.ToNode()).ToArray();
+                return _lastNodesResult.ModifyIndex ?? 0;
+            }
             return 0;
         }
 
@@ -201,9 +224,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
-        private void ErrorResult<T>(ConsulResult<T> result, string errorMessage)
+        private void ErrorResult<T>(ConsulResult<T> result)
         {
-            EnvironmentException error = result?.Error ?? new EnvironmentException(errorMessage);
+            EnvironmentException error = result.Error;
 
             if (error.InnerException is TaskCanceledException == false)
             {

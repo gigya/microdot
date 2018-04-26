@@ -8,7 +8,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         public bool IsDeployed { get; set; } = true;
         public EnvironmentException Error { get; private set; }
-        public bool IsSuccessful => Error == null && IsDeployed;
         public string ConsulAddress { get; set; }
         public string CommandPath { get; set; }
         public string ResponseContent { get; set; }

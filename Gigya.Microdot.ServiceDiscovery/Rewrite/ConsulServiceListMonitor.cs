@@ -16,8 +16,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public sealed class ConsulServiceListMonitor : IServiceListMonitor
     {
-        private const string ConsulServiceList = "ConsulServiceList";
-
         private CancellationTokenSource ShutdownToken { get; }
 
         /// <summary>
@@ -45,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
 
-            _serviceListHealthMonitor = healthMonitor.SetHealthFunction(ConsulServiceList, () => _healthStatus);
+            _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus);
             LoopingTask = GetAllLoop();
         }
 
@@ -70,11 +68,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task GetAllLoop()
         {
-            _initTask = GetAll(0);
-            var modifyIndex = await _initTask.ConfigureAwait(false);
-            while (!ShutdownToken.IsCancellationRequested)
+            try
             {
-                modifyIndex = await GetAll(modifyIndex).ConfigureAwait(false);
+                _initTask = GetAll(0);
+                var modifyIndex = await _initTask.ConfigureAwait(false);
+                while (!ShutdownToken.IsCancellationRequested)
+                {
+                    modifyIndex = await GetAll(modifyIndex).ConfigureAwait(false);
+                }
+            }
+            catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
+            {
+                // Ignore exception during shutdown.
             }
         }
 
@@ -82,11 +87,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<ulong> GetAll(ulong modifyIndex)
         {
-            await WaitIfErrorOccuredOnPreviousCall().ConfigureAwait(false);
+            ConsulConfig config = GetConfig();
 
-            var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand =
+            if (Error != null)
+                await DateTime.DelayUntil(ErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
+
+            double maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
+            string urlCommand =
                 $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={maxSecondsToWaitForResponse}s";
             var consulResult = await ConsulClient.Call<string[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
@@ -131,19 +138,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return duplicateList.ToArray();
         }
 
-
-        private async Task WaitIfErrorOccuredOnPreviousCall()
-        {
-            if (Error != null)
-            {
-                var config = GetConfig();
-                var now = DateTime.UtcNow;
-                var timeElapsed = ErrorTime - now;
-                if (timeElapsed < config.ErrorRetryInterval)
-                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed, ShutdownToken.Token).ConfigureAwait(false);
-            }
-        }
-
+        
         private void SetErrorResult<T>(ConsulResult<T> result, string errorMessage)
         {
             var error = result.Error ?? new EnvironmentException(errorMessage);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
@@ -19,15 +20,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private INode[] _nodes = new INode[0];
         private Task _initTask;
 
-        ILog Log { get; }
+        private ILog Log { get; }
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private Task LoopingTask { get; set; }
+        private string DataCenter { get; }
+        private string DeploymentIdentifier { get; }
+        private Exception Error { get; set; }
+        private DateTime ErrorTime { get; set; }
 
-        public QueryBasedConsulNodeMonitor(string serviceName, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public QueryBasedConsulNodeMonitor(string deploymentIdentifier, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            ServiceName = serviceName;
+            DeploymentIdentifier = deploymentIdentifier;
             Log = log;
             ConsulClient = consulClient;
             DateTime = dateTime;
@@ -38,49 +43,47 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             LoopingTask = LoadNodesLoop();
         }
 
-
-        private string DataCenter { get; }
-
-        private string ServiceName { get; }
-
         /// <inheritdoc />
         public INode[] Nodes 
         {
             get
             {
                 if (_disposed > 0)
-                    throw new ObjectDisposedException(nameof(QueryBasedConsulNodeMonitor));
+                    throw new ObjectDisposedException(nameof(ConsulNodeMonitor));
 
                 if (!IsDeployed)
-                {
-                    throw new EnvironmentException("The service is not deployed in the specified DC and Env.", 
-                        unencrypted: new Tags
-                        {
-                            { "dc", DataCenter },
-                            { "serviceName", ServiceName }
-                        });
-                }
+                    throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
 
                 if (_nodes.Length == 0 && Error != null)
-                    throw Error;
+                {
+                    if (Error.StackTrace == null)
+                        throw Error;
+
+                    ExceptionDispatchInfo.Capture(Error).Throw();
+                }
 
                 return _nodes;
-            }            
+            }           
         }
 
         /// <inheritdoc />
         public bool IsDeployed { get; set; } = true;
 
-        private Exception Error { get; set; }
-        private DateTime ErrorTime { get; set; }
-
         private async Task LoadNodesLoop()
         {
-            _initTask = LoadNodes();
-            while (!ShutdownToken.IsCancellationRequested)
+            try
             {
-                await LoadNodes().ConfigureAwait(false);
-                await DateTime.Delay(GetConfig().ReloadInterval);
+                _initTask = LoadNodes();
+
+                while (!ShutdownToken.IsCancellationRequested)
+                {
+                    await LoadNodes().ConfigureAwait(false);
+                    await DateTime.Delay(GetConfig().ReloadInterval, ShutdownToken.Token);
+                }
+            }
+            catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
+            {
+                // Ignore exception during shutdown.
             }
         }
 
@@ -89,10 +92,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task LoadNodes()
         {
-            await WaitIfErrorOccurredOnPreviousCall().ConfigureAwait(false);
+            if (Error != null)
+                await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
 
-            var consulQuery = $"v1/query/{ServiceName}/execute?dc={DataCenter}";
-            var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(consulQuery, ShutdownToken.Token).ConfigureAwait(false);
+            string commandPath = $"v1/query/{DeploymentIdentifier}/execute?dc={DataCenter}";
+            var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(commandPath, ShutdownToken.Token).ConfigureAwait(false);
 
             if (!consulResult.IsDeployed)
             {
@@ -109,19 +113,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 IsDeployed = true;
             }
             else
-                ErrorResult(consulResult, "Cannot extract service's nodes from Consul query response");                        
-        }
-
-        private async Task WaitIfErrorOccurredOnPreviousCall()
-        {
-            if (Error != null)
             {
-                ConsulConfig config = GetConfig();
-                DateTime now = DateTime.UtcNow;
-                TimeSpan timeElapsed = ErrorTime - now;
-
-                if (timeElapsed < config.ErrorRetryInterval)
-                    await DateTime.Delay(config.ErrorRetryInterval - timeElapsed, ShutdownToken.Token).ConfigureAwait(false);
+                ErrorResult(consulResult, "Cannot extract service's nodes from Consul query response");
             }
         }
 
@@ -134,7 +127,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 Log.Error("Error calling Consul", exception: result.Error, unencryptedTags: new
                 {
-                    serviceName = ServiceName,
+                    serviceName = DeploymentIdentifier,
                     consulAddress = result.ConsulAddress,
                     commandPath = result.CommandPath,
                     responseCode = result.StatusCode,
