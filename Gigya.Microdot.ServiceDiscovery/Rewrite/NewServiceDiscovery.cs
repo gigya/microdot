@@ -54,13 +54,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private INodeSource _originatingSource;
         private INodeSource _masterSource;
         private ILog Log { get; }
+        private readonly IServiceListMonitor _serviceListMonitor;
         private Func<DiscoveryConfig> GetConfig { get; }
 
         private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
         private readonly DeploymentIndentifier _originatingDeployment;
 
         private const string MASTER_ENVIRONMENT = "prod";
-        private readonly string _serviceName;
+        private readonly string _deploymentIdentifier;
         private bool _disposed = false;
         private readonly ReachabilityCheck _reachabilityCheck;
         private readonly ILoadBalancerFactory _loadBalancerFactory;
@@ -76,7 +77,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _lastKnownSourceWasUndeployed;
         private readonly IDateTime _dateTime;
 
-        public NewServiceDiscovery(string serviceName,
+        public NewServiceDiscovery(string deploymentIdentifier,
                                 ReachabilityCheck reachabilityCheck,
                                 ILoadBalancerFactory loadBalancerFactory,
                                 INodeSourceLoader nodeLoader,
@@ -84,13 +85,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 IDateTime dateTime,
-                                ILog log)
+                                ILog log,
+                                IServiceListMonitor serviceListMonitor)
         {
             Log = log;
+            _serviceListMonitor = serviceListMonitor;
             _dateTime = dateTime;
-            _serviceName = serviceName;
-            _originatingDeployment = new DeploymentIndentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
-            _masterDeployment = new DeploymentIndentifier(serviceName, MASTER_ENVIRONMENT);
+            _deploymentIdentifier = deploymentIdentifier;
+            _originatingDeployment = new DeploymentIndentifier(deploymentIdentifier, environmentVariableProvider.DeploymentEnvironment);
+            _masterDeployment = new DeploymentIndentifier(deploymentIdentifier, MASTER_ENVIRONMENT);
 
             _reachabilityCheck = reachabilityCheck;
             _loadBalancerFactory = loadBalancerFactory;
@@ -125,17 +128,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private IMonitoredNode TryGetHostOverride()
         {
-            var hostOverride = TracingContext.GetHostOverride(_serviceName);
+            var hostOverride = TracingContext.GetHostOverride(_deploymentIdentifier);
             if (hostOverride == null)
                 return null;
 
-            return new OverriddenNode(_serviceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort);            
+            return new OverriddenNode(_deploymentIdentifier, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_deploymentIdentifier].DefaultPort);            
         }
 
 
         private async Task ReloadRemoteHost(DiscoveryConfig newConfig)
         {
-            var newServiceConfig = newConfig.Services[_serviceName];
+            var newServiceConfig = newConfig.Services[_deploymentIdentifier];
 
             lock (_locker)
             {
@@ -205,7 +208,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<INodeSource> GetNodeSource(DeploymentIndentifier deploymentIndentifier, ServiceDiscoveryConfig config)
         {
-            var source = new PersistentNodeSource(()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config));
+            var source = new PersistentNodeSource(_deploymentIdentifier, ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
 
             await source.Init().ConfigureAwait(false);
 
@@ -227,7 +230,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 if (newActiveLoadBalancer != _activeLoadBalancer)
                 {
-                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activeLoadBalancer?.ServiceName, newPool = newActiveLoadBalancer.ServiceName}));
+                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _deploymentIdentifier, previousPool = _activeLoadBalancer?.ServiceName, newPool = newActiveLoadBalancer.ServiceName}));
                     _activeLoadBalancer = newActiveLoadBalancer;
                 }
 
@@ -253,18 +256,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public class PersistentNodeSource : INodeSource
     {
         private INodeSource _currentSource;
-        private bool _isUndeployed;
         private Task _redeployCheck;
         private object _locker = new object();
         private bool _disposed = false;
 
-        private IDateTime DateTime { get; }
+        private int _lastServiceListVersion = 0;
+        public string DeploymentIdentifier { get; }
         private Func<INodeSource> CreateNewSource { get; }
+        private IServiceListMonitor ServiceListMonitor { get; }
 
 
-        public PersistentNodeSource(Func<INodeSource> createNewSource)
+        public PersistentNodeSource(string deploymentIdentifier, Func<INodeSource> createNewSource, IServiceListMonitor serviceListMonitor)
         {
-            CreateNewSource = createNewSource;            
+            DeploymentIdentifier = deploymentIdentifier;
+            CreateNewSource = createNewSource;
+            ServiceListMonitor = serviceListMonitor;
             _currentSource = CreateNewSource();
         }
 
@@ -291,29 +297,32 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool WasUndeployed
         {
             get
-            {
-                var wasUndeployed = _currentSource.WasUndeployed;
-                if (wasUndeployed)
+            {                
+                if (_currentSource.WasUndeployed)
                 {
-                    CheckIfRedeployed();
+                    return CheckIfStillUndeployed();
                 }
-                return _isUndeployed;
+                return false;
             }
         }
 
-        private void CheckIfRedeployed()
+        private bool CheckIfStillUndeployed()
         {
+            var isStillUndeployed = true;
             lock (_locker)
             {
-                if (_currentSource.WasUndeployed)
+                if (_lastServiceListVersion != ServiceListMonitor.Version)
                 {
-                    _isUndeployed = true;
-                    if (_redeployCheck == null || _redeployCheck.IsCompleted)
+                    if (ServiceListMonitor.Services.Contains(DeploymentIdentifier))
                     {
-                        _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();
+                        isStillUndeployed = false;
+                        if (_redeployCheck == null || _redeployCheck.IsCompleted)
+                            _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();
                     }
+                    _lastServiceListVersion = ServiceListMonitor.Version;
                 }
-            }            
+            }
+            return isStillUndeployed;
         }
 
         private async Task RecreateSourceToCheckIfItWasRedeployed()
@@ -330,7 +339,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     var oldSource = _currentSource;
                     _currentSource = newSource;
                     oldSource.Dispose();
-                    _isUndeployed = _currentSource.WasUndeployed;
                 }
             }
         }

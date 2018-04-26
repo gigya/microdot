@@ -66,6 +66,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+        public int Version { get; private set; }
+
         private async Task GetAllLoop()
         {
             _initTask = GetAll(0);
@@ -99,6 +101,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", allKeys));
                 else
                     _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
+
+                Version++;
 
                 return consulResult.ModifyIndex ?? 0;
             }
