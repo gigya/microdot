@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using Ninject;
 using NUnit.Framework;
-
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests

@@ -1,6 +1,5 @@
 Gigya.ServiceContract
 Microsoft.Extensions.DependencyInjection
-Microsoft.Orleans.OrleansCodeGenerator
 Microsoft.Orleans.OrleansCodeGenerator.Build
 NSubstitute
 NUnit
@@ -10,3 +9,5 @@ Castle.Core
 ZooKeeperNetEx
 System.Threading.Tasks.Dataflow
 System.ValueTuple
+System.IO.Compression
+System.Runtime

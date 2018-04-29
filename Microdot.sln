@@ -5,6 +5,7 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
 	ProjectSection(SolutionItems) = preProject
+		.paket\install.bat = .paket\install.bat
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
 		.paket\restore.bat = .paket\restore.bat
@@ -39,6 +40,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Ninject.Host", "Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj", "{4E6A024F-DDC9-4A27-A859-77EBC3241009}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F8A1B754-3C63-4051-A1A5-C51E916F90EB}"
+	ProjectSection(SolutionItems) = preProject
+		Gigya.Microdot.SharedLogic\AssemblyProvider.cs = Gigya.Microdot.SharedLogic\AssemblyProvider.cs
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing.Shared", "Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj", "{6D6A62A1-15B5-44C2-AD37-698AB31863E4}"
 EndProject

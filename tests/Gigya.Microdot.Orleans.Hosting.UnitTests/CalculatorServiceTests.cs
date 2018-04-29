@@ -24,7 +24,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Gigya.Common.Application.HttpService.Client;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
@@ -32,6 +35,7 @@ using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -74,7 +78,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true,serviceDrainTime:TimeSpan.MaxValue);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -381,7 +385,119 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Service.LogGrainId();
         }
 
+        [Test]
+        public async Task OrleansSerialization_MyServiceException_IsEquivalent()
+        {
+            var myServiceException = GetMyException();
+
+            var actual = await Should.ThrowAsync<MyServiceException>(() => Service.ThrowExceptionAndValidate(myServiceException));
+            AssertExceptionsAreEqual(myServiceException, actual);
+
+        }
+
+        [Test]
+        public async Task OrleansSerialization_InnerMyServiceException_IsEquivalent()
+        {
+            var myServiceException = GetMyException();
+            var expected = new Exception("Intermediate exception", myServiceException).ThrowAndCatch();
+
+            var actual = await Should.ThrowAsync<RemoteServiceException>(() => Service.ThrowExceptionAndValidate(new Exception("Intermediate exception", myServiceException)));
+
+            AssertExceptionsAreEqual(expected, actual.InnerException);
+        }
+
+
+        [Test]
+        public async Task OrleansSerialization_CustomerFacingException_IsEquivalent()
+        {
+            var expected = new RequestException("Test", 10000).ThrowAndCatch();
+            var actual = await Should.ThrowAsync<RequestException>(() => Service.ThrowExceptionAndValidate(expected));
+
+            AssertExceptionsAreEqual(expected, actual);
+            expected.ErrorCode.ShouldBe(10000);
+        }
+
+        [Test]
+        public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
+        {
+            const string message = "HTTP request exception";
+            var actual = await Should.ThrowAsync<EnvironmentException>(() => Service.ThrowHttpRequestException(message), $"[HttpRequestException] {message}");
+            actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
+
+        }
+
+        private void AssertExceptionsAreEqual(Exception expected, Exception actual)
+        {
+            Assert.NotNull(actual);
+            Assert.AreEqual(expected.GetType(), actual.GetType());
+            Assert.AreEqual(expected.Message, actual.Message);
+
+            if (expected is SerializableException)
+            {
+                var typedExpected = expected as SerializableException;
+                var typedActual = actual as SerializableException;
+                CollectionAssert.AreEqual(typedExpected.EncryptedTags, typedActual.EncryptedTags);
+                CollectionAssert.AreEqual(typedExpected.UnencryptedTags, typedActual.UnencryptedTags);
+                Assert.AreEqual(typedActual.ExtendedProperties.Count, 0);
+            }
+
+            if (expected is MyServiceException myServiceException)
+                Assert.AreEqual(myServiceException.Entity, ((MyServiceException)actual).Entity);
+
+            if (expected.InnerException != null)
+                AssertExceptionsAreEqual(expected.InnerException, actual.InnerException);
+        }
+
+        private MyServiceException GetMyException()
+        {
+            return new MyServiceException(
+                "My message",
+                new BusinessEntity { Name = "name", Number = 5 },
+                unencrypted: new Tags { { "t1", "v1" } }).ThrowAndCatch();
+        }
+
         #region MockData
+
+        #region Seriliazation Tests
+        [Serializable]
+        private class MyServiceException : RequestException
+        {
+            public IBusinessEntity Entity { get; private set; }
+
+            public MyServiceException(string message, IBusinessEntity entity, Tags encrypted = null, Tags unencrypted = null)
+                : base(message, null, encrypted, unencrypted)
+            {
+                Entity = entity;
+            }
+
+            public MyServiceException(string message, Exception innerException) : base(message, innerException) { }
+            public MyServiceException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+        }
+
+
+        private interface IBusinessEntity
+        {
+            string Name { get; set; }
+            int Number { get; set; }
+        }
+
+        [Serializable]
+        private class BusinessEntity : IBusinessEntity
+        {
+            public string Name { get; set; }
+            public int Number { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                BusinessEntity other = (BusinessEntity)obj;
+                return Name == other.Name && Number == other.Number;
+            }
+
+            public override int GetHashCode() { unchecked { return 0; } }
+        }
+        #endregion
+
+        #region For LofFieldAttrobute
         public class Person
         {
             public int ID { get; set; } = 100;
@@ -411,6 +527,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             [NonSensitive]
             public string School { get; set; } = "Busmat";
         }
+        #endregion
+
         #endregion
     }
 }

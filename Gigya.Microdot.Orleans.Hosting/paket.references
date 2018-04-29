@@ -10,3 +10,5 @@ Microsoft.Orleans.OrleansRuntime
 Microsoft.Orleans.OrleansProviders
 Microsoft.Orleans.OrleansSqlUtils
 Microsoft.Orleans.OrleansZooKeeperUtils
+System.IO.Compression
+Microsoft.Extensions.DependencyInjection

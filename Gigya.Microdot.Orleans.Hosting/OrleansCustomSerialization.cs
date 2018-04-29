@@ -21,56 +21,72 @@
 #endregion
 
 using System;
+using System.Linq;
+using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Orleans.CodeGeneration;
+using Orleans.Runtime;
 using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-	/// <summary>
-	/// This class is called by the Orleans runtime to perform serialization for special types, and should not be called directly from your code.
-	/// </summary>
-	[RegisterSerializer]
-	// ReSharper disable once UnusedMember.Global
-	public class OrleansCustomSerialization
-	{
-		private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
-		{
-			TypeNameHandling = TypeNameHandling.Auto,
-			NullValueHandling = NullValueHandling.Ignore,
-			Formatting = Formatting.Indented,
-			DateParseHandling = DateParseHandling.None
-		};
+    /// <summary>
+    /// This class is called by the Orleans runtime to perform serialization for special types, and should not be called directly from your code.
+    /// </summary>
+    /// 
+    public class OrleansCustomSerialization : IExternalSerializer
+    {
+        private readonly Type[] _supportedTypes;
+        private readonly JsonSerializerSettings _jsonSettings;
 
-		/// <summary>
-		/// This method is called by the Orleans runtime (because of the RegisterSerializerAttribute) to register serializers for special types, 
-		/// and should not be called directly from your code.
-		/// </summary>
-		// ReSharper disable once UnusedMember.Global
-		public static void Register()
-		{
-			foreach(var type in new[] {typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor)})
-			{
-				// Alternatively, can copy via JObject.ToString() and JObject.Parse() for true deep-copy.
-				SerializationManager.Register(type, JTokenCloneCopier, ToStringSerializer, StandardJsonDeserializer);
-			}
-		}
 
-		private static object JTokenCloneCopier(object original)
-		{
-			if (original is JToken token)
-				return token.DeepClone();
+        public OrleansCustomSerialization()
+        {
+            _supportedTypes = new[]
+            {
+                typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor)
+            };
 
-			return original;
-		}
+            _jsonSettings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.Indented,
+                DateParseHandling = DateParseHandling.None
+            };
+        }
 
-		private static void ToStringSerializer(object untypedInput, BinaryTokenStreamWriter stream, Type expected = null) { SerializationManager.Serialize(untypedInput.ToString(), stream); }
+        public void Initialize(Logger logger)
+        {
+        }
 
-		private static object StandardJsonDeserializer(Type expected, BinaryTokenStreamReader stream)
-		{
-			var str = SerializationManager.Deserialize<string>(stream);
-			return JsonConvert.DeserializeObject(str, expected, JsonSettings);
-		}
-	}
+        public bool IsSupportedType(Type itemType)
+        {
+            var result = _supportedTypes.Any(type => type == itemType);
+
+            return result;
+        }
+
+        public object DeepCopy(object source, ICopyContext context)
+        {
+            if (source is JToken token)
+                return token.DeepClone();
+
+            return source;
+        }
+
+        public void Serialize(object item, ISerializationContext context, Type expectedType)
+        {
+            //Because we convert Json to string in order to serialize.
+            SerializationManager.SerializeInner(item.ToString(), context, typeof(string));
+        }
+
+        public object Deserialize(Type expectedType, IDeserializationContext context)
+        {
+            var str = SerializationManager.DeserializeInner<string>(context);
+
+            return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
+        }
+    }
+    
 }

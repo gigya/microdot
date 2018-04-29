@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
@@ -172,7 +173,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 }
 
             }
-            catch (Exception )
+            catch (Exception)
             {
                 return false;
             }
@@ -233,6 +234,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
             return true;
         }
+
+        public Task ThrowExceptionAndValidate(Exception myServiceException)
+        {
+            throw myServiceException;
+        }
+
+        public Task ThrowHttpRequestException(string message)
+        {
+            throw new HttpRequestException(message);
+        }
+
 
         private string AddPrifix(string prefix, string param)
         {

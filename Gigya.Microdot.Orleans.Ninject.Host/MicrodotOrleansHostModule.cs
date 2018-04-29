@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
@@ -45,7 +46,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
             Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
 
-            Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();                                    
+            Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
+            Kernel.Rebind<NinjectOrleansServiceProvider, IServiceProvider>().To<NinjectOrleansServiceProvider>()
+                .InSingletonScope();
+
         }
     }
 }

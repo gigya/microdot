@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Logging;
 
@@ -108,7 +107,6 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 		/// <summary>
 		/// Monitors a host that has been marked unreachable by using the parent RemoteHostPool.IsReachableChecker using exponential backoff.
 		/// </summary>
-	    [SuppressMessage("ReSharper", "AccessToModifiedClosure")]
 	    private async Task StartMonitoring()
 	    {
 		    lock (Lock)

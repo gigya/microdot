@@ -4,7 +4,7 @@ using System.Threading;
 using Gigya.Microdot.SharedLogic.Measurement;
 using NUnit.Framework;
 
-namespace Gigya.Microdot.UnitTests
+namespace Gigya.Microdot.UnitTests.Monitor
 {
 
     [TestFixture]

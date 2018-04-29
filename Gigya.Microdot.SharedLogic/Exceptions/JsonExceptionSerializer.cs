@@ -42,15 +42,6 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             Converters = { new StripHttpRequestExceptionConverter() }
         };
 
-	    private static readonly JsonSerializer Serializer = new JsonSerializer
-	    {
-	        TypeNameHandling = TypeNameHandling.All,
-	        Binder = new ExceptionHierarchySerializationBinder(),
-	        Formatting = Formatting.Indented,
-	        DateParseHandling = DateParseHandling.DateTimeOffset,
-	        Converters = { new StripHttpRequestExceptionConverter() }
-	    };
-
 	    private IStackTraceEnhancer StackTraceEnhancer { get; }
         
         public JsonExceptionSerializer(IStackTraceEnhancer stackTraceEnhancer)

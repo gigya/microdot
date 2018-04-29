@@ -72,6 +72,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
 
+
         [Test]
         public void HealthCheck_Healthy_ShouldReturn200()
         {
@@ -79,6 +80,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6555/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
+
 
         [Test]
         public void HealthCheck_NotImplemented_ShouldReturn200()

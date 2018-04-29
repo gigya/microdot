@@ -59,7 +59,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             _tester.Dispose();
         }
 
-
         [Test]
         public async Task MethodTypeName()
         {
@@ -69,7 +68,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Assert.IsNotNull(schemaTestMethod, "Service schema did not return the method Add");
             Assert.AreEqual(typeof(ICalculatorService).FullName, iface.Name);
         }
-
 
         [Test]
         public async Task ReturnPublicEndpointAttribute()

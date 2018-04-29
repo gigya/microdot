@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Logging;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests

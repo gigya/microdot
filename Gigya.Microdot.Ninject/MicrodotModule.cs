@@ -47,6 +47,7 @@ namespace Gigya.Microdot.Ninject
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
             typeof(ConfigDiscoverySource)
+
         };
 
         public override void Load()
