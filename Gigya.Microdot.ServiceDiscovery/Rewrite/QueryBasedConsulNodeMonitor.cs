@@ -103,7 +103,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 IsDeployed = false;
                 _nodes = new INode[0];
             }
-            else if (consulResult.IsSuccessful)
+            else if (consulResult.Error != null)
+            {
+                ErrorResult(consulResult);
+            }
+            else
             {
                 ConsulQueryExecuteResponse queryResult = consulResult.Response;
                 _nodes = queryResult.Nodes.Select(n => n.ToNode()).ToArray<INode>();
@@ -112,14 +116,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 IsDeployed = true;
             }
-            else
-            {
-                ErrorResult(consulResult, "Cannot extract service's nodes from Consul query response");
-            }
         }
 
 
-        private void ErrorResult<T>(ConsulResult<T> result, string errorMessage)
+        private void ErrorResult<T>(ConsulResult<T> result, string errorMessage=null)
         {
             EnvironmentException error = result.Error ?? new EnvironmentException(errorMessage);
 

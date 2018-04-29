@@ -91,9 +91,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Log = log;
             _serviceListMonitor = serviceListMonitor;
             _dateTime = dateTime;
+<<<<<<< Updated upstream
+            _deploymentIdentifier = deploymentIdentifier;
+            _originatingDeployment = new DeploymentIdentifier(deploymentIdentifier, environmentVariableProvider.DeploymentEnvironment);
+            _masterDeployment = new DeploymentIdentifier(deploymentIdentifier, MASTER_ENVIRONMENT);
+=======
             _serviceName = serviceName;
-            _originatingDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
-            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
+            _originatingDeployment = new DeploymentIndentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
+            _masterDeployment = new DeploymentIndentifier(serviceName, MASTER_ENVIRONMENT);
+>>>>>>> Stashed changes
 
             _reachabilityCheck = reachabilityCheck;
             _loadBalancerFactory = loadBalancerFactory;
@@ -208,7 +214,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<INodeSource> GetNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
         {
-            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
+<<<<<<< Updated upstream
+            var source = new PersistentNodeSource(_deploymentIdentifier, ()=>_nodeLoader.GetNodeSource(deploymentIdentifier, config), _serviceListMonitor);
+=======
+            var source = new PersistentNodeSource(deploymentIndentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
+>>>>>>> Stashed changes
 
             await source.Init().ConfigureAwait(false);
 

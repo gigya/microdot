@@ -112,7 +112,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             AddServiceNode("nodeToRemove");
 
-            await Init();
+            await Init();            
 
             _nodeMonitor.Nodes.Length.ShouldBe(2);
 
@@ -190,10 +190,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AssertExceptionIsThrown();
         }
 
-        private Task Init()
+        private async Task Init()
         {
             _nodeMonitor = _testingKernel.Get<Func<string, INodeMonitor>>()(_serviceDeployment);
-            return _nodeMonitor.Init();
+            await _nodeMonitor.Init();            
         }
 
 

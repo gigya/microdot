@@ -22,7 +22,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private int _disposed;
         private string _activeVersion;
-        private Node[] _nodesOfAllVersions = new Node[0];
+        private Node[] _nodesOfAllVersions;
         private INode[] _nodes = new INode[0];
         private Task<ulong> _nodesInitTask;
         private Task<ulong> _versionInitTask;
@@ -166,7 +166,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 ErrorResult(_lastVersionResult);
             }
-            else if (_lastNodesResult.IsDeployed == false || _lastNodesResult.Response == null)
+            else if (_lastVersionResult.IsDeployed == false || _lastVersionResult.Response == null)
             {
                 ErrorTime = DateTime.UtcNow;
                 // This situation is ignored because other processes are responsible for indicating when a service is undeployed.
@@ -214,7 +214,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private void SetNodesByActiveVersion()
         {
-            if (ActiveVersion != null)
+            if (ActiveVersion != null && NodesOfAllVersions != null)
             {
                 _nodes = NodesOfAllVersions.Where(n => n.Version == ActiveVersion).ToArray();
                 if (_nodes.Length==0)
@@ -224,9 +224,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
-        private void ErrorResult<T>(ConsulResult<T> result)
+        private void ErrorResult<T>(ConsulResult<T> result, string message=null)
         {
-            EnvironmentException error = result.Error;
+            EnvironmentException error = result.Error ?? new EnvironmentException(message);
 
             if (error.InnerException is TaskCanceledException == false)
             {
@@ -263,7 +263,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             string healthMessage;
             
-            if (Nodes.Length < NodesOfAllVersions.Length)
+            if (Nodes.Length < NodesOfAllVersions?.Length)
                 healthMessage = $"{Nodes.Length} nodes matching to version {ActiveVersion} from total of {NodesOfAllVersions.Length} nodes";
             else
                 healthMessage = $"{Nodes.Length} nodes";

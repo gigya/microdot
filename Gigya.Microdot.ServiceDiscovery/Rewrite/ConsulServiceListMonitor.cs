@@ -97,28 +97,29 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={maxSecondsToWaitForResponse}s";
             var consulResult = await ConsulClient.Call<string[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (consulResult.IsSuccessful && consulResult.Response!=null)
+            if (consulResult.Error != null)
+            {
+                SetErrorResult(consulResult);
+                _healthStatus = HealthCheckResult.Unhealthy($"Error calling Consul: {consulResult.Error.Message}");
+            }
+            else if (consulResult.Response != null)
             {
                 var allKeys = consulResult.Response;
                 var allServiceNames = allKeys.Select(s => s.Substring("service/".Length));
                 _allServices = new HashSet<string>(allServiceNames)
                     .ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
 
+                Version++;
+
                 if (allKeys.Length == _allServices.Count)
                     _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", allKeys));
                 else
                     _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
 
-                Version++;
 
                 return consulResult.ModifyIndex ?? 0;
             }
-            else
-            {
-                SetErrorResult(consulResult, "Error calling Consul all-keys");
-                _healthStatus = HealthCheckResult.Unhealthy("Error calling Consul: " + consulResult.Error.Message);
-                return 0;
-            }
+            return 0;
         }
 
         private string[] GetDuplicateServiceNames(IEnumerable<string> allServices)
@@ -139,9 +140,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         
-        private void SetErrorResult<T>(ConsulResult<T> result, string errorMessage)
+        private void SetErrorResult<T>(ConsulResult<T> result)
         {
-            var error = result.Error ?? new EnvironmentException(errorMessage);
+            var error = result.Error;
 
             if (error.InnerException is TaskCanceledException == false)
             {
@@ -165,7 +166,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             ShutdownToken?.Cancel();
-            LoopingTask.GetAwaiter().GetResult();
+            try
+            {
+                LoopingTask.GetAwaiter().GetResult();
+            }
+            catch (TaskCanceledException) {}
             ShutdownToken?.Dispose();
             _serviceListHealthMonitor.Dispose();
         }
