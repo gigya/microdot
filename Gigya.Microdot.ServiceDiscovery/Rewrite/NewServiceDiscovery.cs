@@ -82,7 +82,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             Log = log;
             _serviceListMonitor = serviceListMonitor;
-            _dateTime = dateTime;
             _serviceName = serviceName;
             _originatingDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
@@ -176,7 +175,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
         {
-            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
+            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIdentifier, config), _serviceListMonitor);
 
             await source.Init().ConfigureAwait(false);
 
