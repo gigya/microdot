@@ -91,6 +91,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return reachableNodes[index % reachableNodes.Length];
         }
 
+        /// <inheritdoc />
+        public bool WasUndeployed => NodeSource.WasUndeployed;
+
         private void GetNodesFromSource()
         {
             if (_disposed)
