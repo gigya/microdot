@@ -68,7 +68,7 @@ namespace Gigya.Microdot.Ninject
                 Kernel.Load<FuncModule>();
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly),typeof(ServiceDiscoveryAssembly));
+            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
 
             Bind<ILoadBalancerFactory>().ToFactory();
             Bind<IRemoteHostPoolFactory>().ToFactory();
@@ -94,14 +94,14 @@ namespace Gigya.Microdot.Ninject
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
             Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
-            Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();            
+            Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
             Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();
 
-            Kernel.Rebind<ServiceSchema>().ToMethod(c => 
+            Kernel.Rebind<ServiceSchema>().ToMethod(c =>
                             new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
         }
 

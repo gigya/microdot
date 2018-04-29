@@ -59,10 +59,10 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _disposed;
         
 
-        public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
+        public ConsulDiscoverySource(DeploymentIdentifier deploymentIdentifier,
             Func<DiscoveryConfig> getConfig,
             Func<string, IConsulClient> getConsulClient, ILog log)
-            : base(GetDeploymentName(serviceDeployment, getConfig().Services[serviceDeployment.ServiceName]))
+            : base(GetDeploymentName(deploymentIdentifier, getConfig().Services[deploymentIdentifier.ServiceName]))
 
         {            
             _getConsulClient = getConsulClient;            
@@ -190,13 +190,13 @@ namespace Gigya.Microdot.ServiceDiscovery
             _disposed = true;
         }
 
-        public static string GetDeploymentName(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        public static string GetDeploymentName(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoverySettings)
         {
             if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
             {
-                return serviceDeployment.ServiceName;
+                return deploymentIdentifier.ServiceName;
             }
-            return $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+            return $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
         }
 
     }

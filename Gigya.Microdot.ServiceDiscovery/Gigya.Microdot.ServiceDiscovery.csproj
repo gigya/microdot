@@ -21,6 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\Gigya.Microdot.ServiceDiscovery.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -59,6 +60,8 @@
     <Compile Include="ConsulContracts.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
+    <Compile Include="Rewrite\Ex.cs" />
+    <Compile Include="Rewrite\IDiscoveryFactory.cs" />
     <Compile Include="Rewrite\IMonitoredNode.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\NodeSourceLoader.cs" />
@@ -90,7 +93,7 @@
     <Compile Include="Rewrite\OverriddenNode.cs" />
     <Compile Include="Rewrite\QueryBasedConsulNodeMonitor.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
-    <Compile Include="ServiceDeployment.cs" />
+    <Compile Include="DeploymentIdentifier.cs" />
     <Compile Include="Rewrite\NewServiceDiscovery.cs" />
     <Compile Include="ServiceDiscovery.cs" />
     <Compile Include="ServiceDiscoverySourceBase.cs" />
@@ -116,7 +119,6 @@
       <Name>Gigya.Microdot.SharedLogic</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -36,6 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private Dictionary<string, Func<INode[]>> _consulNodesResults;
         private IServiceListMonitor _consulServiceListMonitor;
         private ImmutableHashSet<string> _consulServiceList;
+        private int _serviceListVersion = 0;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ManualConfigurationEvents _configRefresh;
         private IDateTime _dateTimeMock;
@@ -79,6 +80,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulServiceListMonitor = Substitute.For<IServiceListMonitor>();
             _consulServiceList = new HashSet<string>().ToImmutableHashSet();
             _consulServiceListMonitor.Services.Returns(_ => _consulServiceList);
+            _consulServiceListMonitor.Version.Returns(_ => _serviceListVersion);
 
             kernel.Rebind<Func<string, INodeMonitor>>().ToMethod(_ => (s => _consulNodeMonitors[s]));
             kernel.Rebind<IServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
@@ -97,6 +99,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulNodeMonitors[serviceName] = mock;
 
             _consulServiceList = _consulServiceList.Add(serviceName);
+            _serviceListVersion++;
         }
 
         [TearDown]
@@ -216,11 +219,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulNodesResults[serviceName] = () => newNodes;
 
             _consulServiceList = _consulServiceList.Add(serviceName);
+            _serviceListVersion++;
         }
 
         private void SetMockToReturnServiceNotDefined(string serviceName)
         {
             _consulServiceList = _consulServiceList.Remove(serviceName);
+            _serviceListVersion++;
         }
 
         private void SetMockToReturnError(string serviceName)

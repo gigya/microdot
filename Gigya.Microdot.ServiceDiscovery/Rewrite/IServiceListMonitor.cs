@@ -11,5 +11,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         Task Init();
         ImmutableHashSet<string> Services { get; }
+        int Version { get; }
     }
 }

@@ -13,7 +13,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool SupportsMultipleEnvironments => true;
 
-        private ServiceDeployment ServiceDeployment { get; }
+        private DeploymentIdentifier DeploymentIdentifier { get; }
         private IServiceListMonitor ServiceListMonitor { get; }
         private Func<string, INodeMonitor> GetNodeMonitor { get; }
         private INodeMonitor NodeMonitor { get; set; }             
@@ -24,15 +24,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _isActive;        
         private bool _wasUndeployed;
 
-        public ConsulNodeSource(ServiceDeployment serviceDeployment,
+        public ConsulNodeSource(DeploymentIdentifier deploymentIdentifier,
             IServiceListMonitor serviceListMonitor,
             Func<string, INodeMonitor> getNodeMonitor)
         {
             ServiceListMonitor = serviceListMonitor;
             GetNodeMonitor = getNodeMonitor;
-            ServiceName = $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+            ServiceName = $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
 
-            ServiceDeployment = serviceDeployment;
+            DeploymentIdentifier = deploymentIdentifier;
         }
 
         public async Task Init()

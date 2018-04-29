@@ -11,9 +11,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public INodeMonitor NodeMonitor { get; set; }
 
-        public ConsulQueryNodeSource(ServiceDeployment serviceDeployment, Func<string, INodeMonitor> getNodeMonitor)
+        public ConsulQueryNodeSource(DeploymentIdentifier deploymentIdentifier, Func<string, INodeMonitor> getNodeMonitor)
         {
-            ServiceName = $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+            ServiceName = $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
             NodeMonitor = getNodeMonitor(ServiceName);
         }
 

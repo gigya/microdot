@@ -50,11 +50,11 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         /// Time of the last attempt to reach the service.
         /// </summary>
         private DateTime LastEndpointRequest { get; set; }
-        internal ServiceDiscoveryConfig GetConfig() => GetDiscoveryConfig().Services[ServiceDeployment.ServiceName];
+        internal ServiceDiscoveryConfig GetConfig() => GetDiscoveryConfig().Services[DeploymentIdentifier.ServiceName];
         internal ReachabilityChecker ReachabilityChecker { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         internal ILog Log { get; }
-        internal ServiceDeployment ServiceDeployment { get; }
+        internal DeploymentIdentifier DeploymentIdentifier { get; }
 
         private ulong Counter { get; set; }
         private ComponentHealthMonitor Health { get; }
@@ -79,7 +79,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         /// Should return true if the host is reachable, or false if it is unreachable. It should not throw an exception.</param>
         /// <param name="log">An implementation of <see cref="ILog"/> used for logging.</param>
         public RemoteHostPool(
-            ServiceDeployment serviceDeployment
+            DeploymentIdentifier deploymentIdentifier
             , IServiceDiscoverySource discovery
             , ReachabilityChecker reachabilityChecker
             , Func<DiscoveryConfig> getDiscoveryConfig
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         )
         {
             DiscoverySource = discovery;
-            ServiceDeployment = serviceDeployment;
+            DeploymentIdentifier = deploymentIdentifier;
             ReachabilityChecker = reachabilityChecker;
             GetDiscoveryConfig = getDiscoveryConfig;
             Log = log;
@@ -258,10 +258,10 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         {
             LastEndpointRequest = DateTime.UtcNow;
 
-            var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
+            var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Hostname, hostOverride.Port?? GetConfig().DefaultPort);
+                return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Hostname, hostOverride.Port?? GetConfig().DefaultPort);
 
             lock (_lock)
             {
@@ -285,10 +285,10 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
         public async Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken)
         {
-            var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
+            var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().DefaultPort);
+                return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().DefaultPort);
 
             if (ReachableHosts.Count > 0)
                 return GetNextHost();
@@ -389,7 +389,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
     public interface IRemoteHostPoolFactory
     {
-        RemoteHostPool Create(ServiceDeployment serviceDeployment, IServiceDiscoverySource discovery,
+        RemoteHostPool Create(DeploymentIdentifier deploymentIdentifier, IServiceDiscoverySource discovery,
             ReachabilityChecker reachabilityChecker);
     }
 }

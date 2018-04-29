@@ -28,10 +28,10 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Nito.AsyncEx.Synchronous;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
@@ -46,18 +46,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         internal ServiceDiscoveryConfig LastServiceConfig { get; private set; }
 
         private LoadBalancer MasterEnvironmentLoadBalancer { get; set; }
-        private List<IDisposable> _masterEnvironmentLinks = new List<IDisposable>();
-        private readonly ServiceDeployment _masterDeployment;
+        private readonly DeploymentIdentifier _masterDeployment;
 
         private LoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
 
         private INodeSource _originatingSource;
         private INodeSource _masterSource;
         private ILog Log { get; }
+        private readonly IServiceListMonitor _serviceListMonitor;
         private Func<DiscoveryConfig> GetConfig { get; }
 
-        private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
-        private readonly ServiceDeployment _originatingDeployment;
+        private readonly DeploymentIdentifier _originatingDeployment;
 
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
@@ -68,13 +67,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly object _locker = new object();
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
-        private bool _firstTime = true;
-        private volatile bool _suppressNotifications;
         private LoadBalancer _activeLoadBalancer;
-        private INode[] _lastKnownNodes;
-        private ILoadBalancer _lastKnownActiveLoadBalancer;
-        private bool _lastKnownSourceWasUndeployed;
-        private readonly IDateTime _dateTime;
+
 
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
@@ -83,14 +77,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
-                                IDateTime dateTime,
-                                ILog log)
+                                ILog log,
+                                IServiceListMonitor serviceListMonitor)
         {
             Log = log;
+            _serviceListMonitor = serviceListMonitor;
             _dateTime = dateTime;
             _serviceName = serviceName;
-            _originatingDeployment = new ServiceDeployment(serviceName, environmentVariableProvider.DeploymentEnvironment);
-            _masterDeployment = new ServiceDeployment(serviceName, MASTER_ENVIRONMENT);
+            _originatingDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
+            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityCheck = reachabilityCheck;
             _loadBalancerFactory = loadBalancerFactory;
@@ -101,25 +96,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));            
         }        
 
-        public async Task<EndPoint[]> GetAllEndPoints()
-        {
-            await _initTask.ConfigureAwait(false);
-            return GetRelevantLoadBalancer().NodeSource.GetNodes()
-                .Select(n=>new EndPoint{HostName = n.Hostname, Port = n.Port})
-                .ToArray();
-        }
+  
 
         public async Task<IMonitoredNode> GetNode()
         {
             await _initTask.ConfigureAwait(false);
 
-            return TryGetHostOverride() ?? GetRelevantLoadBalancer().GetNode();
-        }
-
-
-        public async Task<IMonitoredNode> GetOrWaitForNextHost(CancellationToken cancellationToken)
-        {
-            await _initTask.ConfigureAwait(false);
             return TryGetHostOverride() ?? GetRelevantLoadBalancer().GetNode();
         }
 
@@ -132,7 +114,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return new OverriddenNode(_serviceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort);            
         }
 
-
         private async Task ReloadRemoteHost(DiscoveryConfig newConfig)
         {
             var newServiceConfig = newConfig.Services[_serviceName];
@@ -144,7 +125,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     return;
             }
 
-            _originatingSource = await GetNodeSource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
+            _originatingSource = await CreateNodeSource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
 
             var shouldCreateMasterPool = newConfig.EnvironmentFallbackEnabled &&
                                          newServiceConfig.Scope == ServiceScope.Environment &&
@@ -152,12 +133,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                          _originatingDeployment.Equals(_masterDeployment) == false;
 
             if (shouldCreateMasterPool)
-                _masterSource = await GetNodeSource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
+                _masterSource = await CreateNodeSource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
 
             lock (_locker)
             {
-                _suppressNotifications = true;
-
+                
                 LastConfig = newConfig;
                 LastServiceConfig = newServiceConfig;
 
@@ -168,10 +148,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 if (_masterSource != null)
                     MasterEnvironmentLoadBalancer = CreateLoadBalancer(_masterDeployment, _masterSource);
-
-                _suppressNotifications = false;
-
-                GetRelevantLoadBalancer();
             }
         }
 
@@ -181,8 +157,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             OriginatingEnvironmentLoadBalancer?.Dispose();
             OriginatingEnvironmentLoadBalancer = null;
-            _originatingEnvironmentLinks.ForEach(x => x?.Dispose());
-            _originatingEnvironmentLinks = new List<IDisposable>();
         }
 
         private void RemoveMasterPool()
@@ -191,21 +165,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             MasterEnvironmentLoadBalancer?.Dispose();
             MasterEnvironmentLoadBalancer = null;
-            _masterEnvironmentLinks.ForEach(x => x?.Dispose());
-            _masterEnvironmentLinks = new List<IDisposable>();
         }
 
         private LoadBalancer CreateLoadBalancer(
-            ServiceDeployment serviceDeployment,            
+            DeploymentIdentifier deploymentIdentifier,            
             INodeSource nodeSource)
         {
-            return (LoadBalancer)_loadBalancerFactory.Create(nodeSource, serviceDeployment, _reachabilityCheck);
+            return (LoadBalancer)_loadBalancerFactory.Create(nodeSource, deploymentIdentifier, _reachabilityCheck);
         }
 
-
-        private async Task<INodeSource> GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig config)
+        private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
         {
-            var source = new PersistentNodeSource(()=>_nodeLoader.GetNodeSource(serviceDeployment, config));
+            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
 
             await source.Init().ConfigureAwait(false);
 
@@ -214,7 +185,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return source;
 
         }
-
 
         private LoadBalancer GetRelevantLoadBalancer()
         {
@@ -235,7 +205,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }                
 
-
         public void Dispose()
         {
             _disposed = true;
@@ -253,18 +222,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public class PersistentNodeSource : INodeSource
     {
         private INodeSource _currentSource;
-        private bool _isUndeployed;
         private Task _redeployCheck;
-        private object _locker = new object();
+        private readonly object _locker = new object();
         private bool _disposed = false;
 
-        private IDateTime DateTime { get; }
+        private int _lastServiceListVersion = 0;
+        public string DeploymentIdentifier { get; }
         private Func<INodeSource> CreateNewSource { get; }
+        private IServiceListMonitor ServiceListMonitor { get; }
 
 
-        public PersistentNodeSource(Func<INodeSource> createNewSource)
+        public PersistentNodeSource(string deploymentIdentifier, Func<INodeSource> createNewSource, IServiceListMonitor serviceListMonitor)
         {
-            CreateNewSource = createNewSource;            
+            DeploymentIdentifier = deploymentIdentifier;
+            CreateNewSource = createNewSource;
+            ServiceListMonitor = serviceListMonitor;
             _currentSource = CreateNewSource();
         }
 
@@ -291,35 +263,40 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool WasUndeployed
         {
             get
-            {
-                var wasUndeployed = _currentSource.WasUndeployed;
-                if (wasUndeployed)
+            {                
+                if (_currentSource.WasUndeployed)
                 {
-                    CheckIfRedeployed();
+                    return CheckIfStillUndeployed();
                 }
-                return _isUndeployed;
+                return false;
             }
         }
 
-        private void CheckIfRedeployed()
+        private bool CheckIfStillUndeployed()
         {
+            var isStillUndeployed = true;
             lock (_locker)
             {
-                if (_currentSource.WasUndeployed)
+                if (_lastServiceListVersion != ServiceListMonitor.Version)
                 {
-                    _isUndeployed = true;
-                    if (_redeployCheck == null || _redeployCheck.IsCompleted)
+                    if (ServiceListMonitor.Services.Contains(DeploymentIdentifier))
                     {
-                        _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();
+                        isStillUndeployed = false;
+                        if (_redeployCheck == null || _redeployCheck.IsCompleted)
+                            _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();//Ignore ex 
                     }
+                    _lastServiceListVersion = ServiceListMonitor.Version;
                 }
-            }            
+            }
+            return isStillUndeployed;
         }
 
         private async Task RecreateSourceToCheckIfItWasRedeployed()
         {
+            if (_disposed) return;
+
             var newSource = CreateNewSource();
-            await newSource.Init();
+            await newSource.Init().ConfigureAwait(false);
 
             lock (_locker)
             {
@@ -330,7 +307,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     var oldSource = _currentSource;
                     _currentSource = newSource;
                     oldSource.Dispose();
-                    _isUndeployed = _currentSource.WasUndeployed;
                 }
             }
         }
@@ -341,7 +317,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     [Obsolete("Delete this class after Discovery Rewrite is completed")]
     public interface ILoadBalancerFactory
     {
-        ILoadBalancer Create(INodeSource nodeSource, ServiceDeployment serviceDeployment,
+        ILoadBalancer Create(INodeSource nodeSource, DeploymentIdentifier deploymentIdentifier,
             ReachabilityCheck reachabilityChecker);
     }
 

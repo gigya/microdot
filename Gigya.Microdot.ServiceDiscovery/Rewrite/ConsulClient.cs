@@ -4,13 +4,11 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -29,88 +27,76 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
+            if (!string.IsNullOrEmpty(environmentVariableProvider.ConsulAddress))
+                ConsulAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}");
+            else
+                ConsulAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500");
+
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
-
-            var address = $"{CurrentApplicationInfo.HostName}:8500";
-            if (!string.IsNullOrEmpty(environmentVariableProvider.ConsulAddress))
-                address = environmentVariableProvider.ConsulAddress;
-
-            ConsulAddress = new Uri($"http://{address}");
             DataCenter = environmentVariableProvider.DataCenter;
+            HttpClient = new HttpClient { BaseAddress = ConsulAddress };
         }
 
-        public async Task<ConsulResult<TResponse>> Call<TResponse>(string urlCommand, CancellationToken cancellationToken)
+        public async Task<ConsulResult<TResponse>> Call<TResponse>(string commandPath, CancellationToken cancellationToken)
         {
-            var timeout = GetConfig().HttpTimeout;
-            ulong? modifyIndex = 0;
-            string requestLog = string.Empty;
-            string responseContent = null;
-            HttpStatusCode? statusCode = null;
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ConsulClient));
 
-            try
+            using (var timeoutCancellationToken = new CancellationTokenSource(GetConfig().HttpTimeout))
+            using (CancellationTokenSource cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCancellationToken.Token))
             {
-                if (HttpClient == null)
-                    HttpClient = new HttpClient { BaseAddress = ConsulAddress };
+                string responseContent = null;
+                var consulResult = new ConsulResult<TResponse> { ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
 
-                requestLog = HttpClient.BaseAddress + urlCommand;
-                using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
-                using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
-                using (var response = await HttpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false))
+                try
                 {
-                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    statusCode = response.StatusCode;
-                    Log.Debug(x => x("Response received from Consul", unencryptedTags: new { ConsulAddress, requestLog = urlCommand, responseCode = statusCode, responseContent }));
+                    HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
 
-                    var consulResult = new ConsulResult<TResponse> { RequestLog = requestLog, StatusCode = statusCode, ResponseContent = responseContent, ResponseDateTime = DateTime.UtcNow };
-
-                    if (statusCode == HttpStatusCode.OK)
+                    using (response)
+                    {
+                        responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        consulResult.StatusCode = response.StatusCode;
+                        consulResult.ResponseContent = responseContent;
+                        consulResult.ResponseDateTime = DateTime.UtcNow;
                         consulResult.ModifyIndex = GetConsulIndex(response);
-                    else
-                    {
-                        var exception = new EnvironmentException("Consul response not OK",
-                            unencrypted: new Tags
-                            {
-                                {"ConsulAddress", ConsulAddress.ToString()},
-                                {"ConsulQuery", urlCommand},
-                                {"ResponseCode", statusCode.ToString()},
-                                {"Content", responseContent}
-                            });
-
-                        if (statusCode == HttpStatusCode.NotFound || responseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            var responseStr = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
-                            consulResult.ResponseContent = responseStr;
-                            consulResult.IsDeployed = false;
-                        }
-                        else
-                            consulResult.Error = exception;
-
                     }
-                    if (consulResult.Success)
-                    {
-                        try
-                        {
-                            consulResult.Response = JsonConvert.DeserializeObject<TResponse>(responseContent);
-                        }
-                        catch (Exception ex)
-                        {
-                            consulResult.Error = new EnvironmentException("Error serializing Consul response",
-                                innerException: ex, unencrypted: new Tags
-                                {
-                                    {"requestLog", requestLog},
-                                    {"responseContent", responseContent},
-                                    {"responseType", typeof(TResponse).Name}
-                                });
-                        }
-                    }
+                }
+                catch (Exception ex)
+                {
+                    consulResult.ConsulUnreachable(ex);
                     return consulResult;
                 }
-            }
-            catch (Exception ex)
-            {
-                return new ConsulResult<TResponse> { RequestLog = requestLog, ResponseContent = responseContent, Error = ex, StatusCode = statusCode };
+
+                Log.Debug(x => x("Response received from Consul", unencryptedTags: new { consulAddress = ConsulAddress, commandPath, responseCode = consulResult.StatusCode, responseContent }));
+
+
+                if (consulResult.StatusCode == HttpStatusCode.OK)
+                {
+                    try
+                    {
+                        consulResult.Response = JsonConvert.DeserializeObject<TResponse>(responseContent);
+                    }
+                    catch (Exception ex)
+                    {
+                        consulResult.UnparsableConsulResponse(ex);
+                    }
+                }
+                else
+                {
+                    if (consulResult.StatusCode == HttpStatusCode.NotFound || responseContent?.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase) == true)
+                    {
+                        consulResult.IsDeployed = false;
+                        consulResult.ResponseContent = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
+                    }
+                    else
+                    {
+                        consulResult.ConsulResponseError();
+                    }
+                }
+                
+                return consulResult;
             }
         }
 
@@ -119,25 +105,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             ulong? modifyIndex = null;
             response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
-            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue))
+            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out ulong consulIndexValue))
                 modifyIndex = consulIndexValue;
             return modifyIndex;
         }
 
-        private static string GetNodeVersion(ServiceEntry node)
-        {
-            const string versionPrefix = "version:";
-            var versionTag = node?.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
-            return versionTag?.Substring(versionPrefix.Length);
-        }
 
-
-
-        public Node[] ReadConsulNodes(ServiceEntry[] consulNodes)
-        {
-            return consulNodes.Select(n => new Node(n.Node.Name, n.Service.Port, GetNodeVersion(n))).ToArray();
-        }
-
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);

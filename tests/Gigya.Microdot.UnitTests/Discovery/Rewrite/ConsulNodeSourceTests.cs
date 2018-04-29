@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -14,7 +15,7 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
-using ServiceDeployment = Gigya.Microdot.ServiceDiscovery.ServiceDeployment;
+using Node = Gigya.Microdot.ServiceDiscovery.Rewrite.Node;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
@@ -23,7 +24,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
               
-        private readonly ServiceDeployment _deployment = new ServiceDeployment("MyService", "prod");
+        private readonly DeploymentIdentifier _deployment = new DeploymentIdentifier("MyService", "prod");
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _consulSource;
@@ -174,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void CreateConsulSource()
         {            
-            var sources = _testingKernel.Get<Func<ServiceDeployment, INodeSource[]>>()(_deployment);
+            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deployment);
             _consulSource = sources.Single(x => x.Type == "Consul");            
         }
 

@@ -30,16 +30,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class NodeSourceLoader : INodeSourceLoader
     {
-        private readonly Func<ServiceDeployment, INodeSource[]> _getSources;
+        private readonly Func<DeploymentIdentifier, INodeSource[]> _getSources;
 
-        public NodeSourceLoader(Func<ServiceDeployment, INodeSource[]> getSources)
+        public NodeSourceLoader(Func<DeploymentIdentifier, INodeSource[]> getSources)
         {
             _getSources = getSources;
         }
 
-        public INodeSource GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        public INodeSource GetNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoveryConfig)
         {
-            var source = _getSources(serviceDeployment).FirstOrDefault(f=>f.Type.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
+            var source = _getSources(deploymentIdentifier).FirstOrDefault(f=>f.Type.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
 
             if (source==null)
                 throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");
@@ -50,6 +50,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
     public interface INodeSourceLoader
     {
-        INodeSource GetNodeSource(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoveryConfig);
+        INodeSource GetNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoveryConfig);
     }
 }

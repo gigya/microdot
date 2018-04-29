@@ -4,7 +4,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class Node : INode
     {
-        public Node(string hostName, int? port = null, string version=null)
+        public Node(string hostName, int? port = null, string version = null)
         {
             Hostname = hostName;
             Port = port;

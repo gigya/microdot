@@ -34,5 +34,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// Retrieves the a node which is considered to be reachable.
         /// </summary>
         IMonitoredNode GetNode();
+
+        /// <summary>
+        /// Returns true if the service was undeployed.
+        /// </summary>
+        bool WasUndeployed { get; }
     }
 }
