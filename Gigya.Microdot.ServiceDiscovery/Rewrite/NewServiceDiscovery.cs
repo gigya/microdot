@@ -28,10 +28,10 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Nito.AsyncEx.Synchronous;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
@@ -46,7 +46,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         internal ServiceDiscoveryConfig LastServiceConfig { get; private set; }
 
         private LoadBalancer MasterEnvironmentLoadBalancer { get; set; }
-        private List<IDisposable> _masterEnvironmentLinks = new List<IDisposable>();
         private readonly DeploymentIdentifier _masterDeployment;
 
         private LoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
@@ -57,7 +56,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly IServiceListMonitor _serviceListMonitor;
         private Func<DiscoveryConfig> GetConfig { get; }
 
-        private List<IDisposable> _originatingEnvironmentLinks = new List<IDisposable>();
         private readonly DeploymentIdentifier _originatingDeployment;
 
         private const string MASTER_ENVIRONMENT = "prod";
@@ -69,13 +67,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly object _locker = new object();
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
-        private bool _firstTime = true;
-        private volatile bool _suppressNotifications;
         private LoadBalancer _activeLoadBalancer;
-        private INode[] _lastKnownNodes;
-        private ILoadBalancer _lastKnownActiveLoadBalancer;
-        private bool _lastKnownSourceWasUndeployed;
-        private readonly IDateTime _dateTime;
+
 
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
@@ -84,7 +77,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
-                                IDateTime dateTime,
                                 ILog log,
                                 IServiceListMonitor serviceListMonitor)
         {
@@ -104,25 +96,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));            
         }        
 
-        public async Task<EndPoint[]> GetAllEndPoints()
-        {
-            await _initTask.ConfigureAwait(false);
-            return GetRelevantLoadBalancer().NodeSource.GetNodes()
-                .Select(n=>new EndPoint{HostName = n.Hostname, Port = n.Port})
-                .ToArray();
-        }
+  
 
         public async Task<IMonitoredNode> GetNode()
         {
             await _initTask.ConfigureAwait(false);
 
-            return TryGetHostOverride() ?? GetRelevantLoadBalancer().GetNode();
-        }
-
-
-        public async Task<IMonitoredNode> GetOrWaitForNextHost(CancellationToken cancellationToken)
-        {
-            await _initTask.ConfigureAwait(false);
             return TryGetHostOverride() ?? GetRelevantLoadBalancer().GetNode();
         }
 
@@ -135,7 +114,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return new OverriddenNode(_serviceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort);            
         }
 
-
         private async Task ReloadRemoteHost(DiscoveryConfig newConfig)
         {
             var newServiceConfig = newConfig.Services[_serviceName];
@@ -147,7 +125,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     return;
             }
 
-            _originatingSource = await GetNodeSource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
+            _originatingSource = await CreateNodeSource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
 
             var shouldCreateMasterPool = newConfig.EnvironmentFallbackEnabled &&
                                          newServiceConfig.Scope == ServiceScope.Environment &&
@@ -155,12 +133,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                          _originatingDeployment.Equals(_masterDeployment) == false;
 
             if (shouldCreateMasterPool)
-                _masterSource = await GetNodeSource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
+                _masterSource = await CreateNodeSource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
 
             lock (_locker)
             {
-                _suppressNotifications = true;
-
+                
                 LastConfig = newConfig;
                 LastServiceConfig = newServiceConfig;
 
@@ -171,10 +148,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 if (_masterSource != null)
                     MasterEnvironmentLoadBalancer = CreateLoadBalancer(_masterDeployment, _masterSource);
-
-                _suppressNotifications = false;
-
-                GetRelevantLoadBalancer();
             }
         }
 
@@ -184,8 +157,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             OriginatingEnvironmentLoadBalancer?.Dispose();
             OriginatingEnvironmentLoadBalancer = null;
-            _originatingEnvironmentLinks.ForEach(x => x?.Dispose());
-            _originatingEnvironmentLinks = new List<IDisposable>();
         }
 
         private void RemoveMasterPool()
@@ -194,8 +165,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             MasterEnvironmentLoadBalancer?.Dispose();
             MasterEnvironmentLoadBalancer = null;
-            _masterEnvironmentLinks.ForEach(x => x?.Dispose());
-            _masterEnvironmentLinks = new List<IDisposable>();
         }
 
         private LoadBalancer CreateLoadBalancer(
@@ -205,8 +174,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return (LoadBalancer)_loadBalancerFactory.Create(nodeSource, deploymentIdentifier, _reachabilityCheck);
         }
 
-
-        private async Task<INodeSource> GetNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
+        private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
         {
             var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
 
@@ -217,7 +185,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return source;
 
         }
-
 
         private LoadBalancer GetRelevantLoadBalancer()
         {
@@ -238,7 +205,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }                
 
-
         public void Dispose()
         {
             _disposed = true;
@@ -257,7 +223,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private INodeSource _currentSource;
         private Task _redeployCheck;
-        private object _locker = new object();
+        private readonly object _locker = new object();
         private bool _disposed = false;
 
         private int _lastServiceListVersion = 0;
@@ -317,7 +283,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     {
                         isStillUndeployed = false;
                         if (_redeployCheck == null || _redeployCheck.IsCompleted)
-                            _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();
+                            _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();//Ignore ex 
                     }
                     _lastServiceListVersion = ServiceListMonitor.Version;
                 }
@@ -327,8 +293,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task RecreateSourceToCheckIfItWasRedeployed()
         {
+            if (_disposed) return;
+
             var newSource = CreateNewSource();
-            await newSource.Init();
+            await newSource.Init().ConfigureAwait(false);
 
             lock (_locker)
             {
