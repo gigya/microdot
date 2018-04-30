@@ -26,6 +26,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         public string DeploymentEnvironment { get; }
         public string ServiceName { get; }
 
+        public bool IsLastFallback => DeploymentEnvironment == "prod";
 
         public DeploymentIdentifier(string serviceName, string deploymentEnvironment)
         {

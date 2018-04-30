@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -14,7 +13,10 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public sealed class ConsulServiceListMonitor : IServiceListMonitor
+    /// <summary>
+    /// Monitors Consul using KeyValue api, to get a list of all available services
+    /// </summary>
+    public sealed class ConsulServiceListMonitor: IConsulServiceListMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
 
@@ -34,6 +36,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly ComponentHealthMonitor _serviceListHealthMonitor;
         private Task LoopingTask { get; set; }
 
+        /// <inheritdoc />
         public ConsulServiceListMonitor(ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
             Log = log;
@@ -48,7 +51,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public string DataCenter { get; }
+        private string DataCenter { get; }
 
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
@@ -64,6 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+        /// <inheritdoc />
         public int Version { get; private set; }
 
         private async Task GetAllLoop()
@@ -83,6 +87,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+        /// <inheritdoc />
         public Task Init() => _initTask;
 
         private async Task<ulong> GetAll(ulong modifyIndex)
@@ -160,6 +165,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
+        /// <inheritdoc />
         public void Dispose()
         {
             if (Interlocked.Increment(ref _disposed) != 1)

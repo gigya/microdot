@@ -60,10 +60,12 @@
     <Compile Include="ConsulContracts.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
+    <Compile Include="Rewrite\DiscoveryFactory.cs" />
     <Compile Include="Rewrite\Ex.cs" />
     <Compile Include="Rewrite\IDiscoveryFactory.cs" />
     <Compile Include="Rewrite\IMonitoredNode.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
+    <Compile Include="Rewrite\IConsulServiceListMonitor.cs" />
     <Compile Include="Rewrite\NodeSourceLoader.cs" />
     <Compile Include="EndPoint.cs" />
     <Compile Include="HostManagement\MissingHostException.cs" />
@@ -84,7 +86,6 @@
     <Compile Include="Rewrite\ConsulResult.cs" />
     <Compile Include="Rewrite\ConsulServiceListMonitor.cs" />
     <Compile Include="Rewrite\INodeMonitor.cs" />
-    <Compile Include="Rewrite\IServiceListMonitor.cs" />
     <Compile Include="Rewrite\ILoadBalancer.cs" />
     <Compile Include="Rewrite\LoadBalancer.cs" />
     <Compile Include="Rewrite\LocalNodeSource.cs" />

@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
-using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class ConsulNodeSource: INodeSource
     {
+        /// <inheritdoc />
         public virtual string Type => "Consul";
 
         public bool SupportsMultipleEnvironments => true;
 
         private DeploymentIdentifier DeploymentIdentifier { get; }
-        private IServiceListMonitor ServiceListMonitor { get; }
+        private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
         private Func<string, INodeMonitor> GetNodeMonitor { get; }
         private INodeMonitor NodeMonitor { get; set; }             
-        public string ServiceName { get; private set; }
+        private string ServiceName { get; set; }
 
         private bool _disposed;
         private INode[] _lastKnownNodes;
@@ -25,23 +24,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _wasUndeployed;
 
         public ConsulNodeSource(DeploymentIdentifier deploymentIdentifier,
-            IServiceListMonitor serviceListMonitor,
+            IConsulServiceListMonitor consulServiceListMonitor,
             Func<string, INodeMonitor> getNodeMonitor)
         {
-            ServiceListMonitor = serviceListMonitor;
+            ConsulServiceListMonitor = consulServiceListMonitor;
             GetNodeMonitor = getNodeMonitor;
             ServiceName = $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
 
             DeploymentIdentifier = deploymentIdentifier;
         }
 
+        /// <inheritdoc />
         public async Task Init()
         {
-            await ServiceListMonitor.Init().ConfigureAwait(false);
+            await ConsulServiceListMonitor.Init().ConfigureAwait(false);
 
-            if (ServiceListMonitor.Services.Contains(ServiceName))
+            if (ConsulServiceListMonitor.Services.Contains(ServiceName))
             {
-                var serviceNameMatchCasing = ServiceListMonitor.Services.FirstOrDefault(s => s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
+                var serviceNameMatchCasing = ConsulServiceListMonitor.Services.FirstOrDefault(s => s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
                 if (serviceNameMatchCasing != null)
                 {
                     ServiceName = serviceNameMatchCasing;
@@ -53,8 +53,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _wasUndeployed = true;
         }
 
+        /// <inheritdoc />
         public INode[] GetNodes() => NodeMonitor?.Nodes ?? new INode[0];
 
+        /// <inheritdoc />
         public bool WasUndeployed
         {
             get
@@ -81,7 +83,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (disposing)
             {
                 NodeMonitor?.Dispose();
-                ServiceListMonitor?.Dispose();
+                ConsulServiceListMonitor?.Dispose();
             }
 
             _disposed = true;

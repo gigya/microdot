@@ -95,7 +95,7 @@ namespace Gigya.Microdot.Ninject
             Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
             Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
             Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
-            Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
+            Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();

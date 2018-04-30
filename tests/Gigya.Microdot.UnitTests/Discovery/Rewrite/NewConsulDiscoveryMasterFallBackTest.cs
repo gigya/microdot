@@ -34,7 +34,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private Dictionary<string, INodeMonitor> _consulNodeMonitors;
         private Dictionary<string, Func<INode[]>> _consulNodesResults;
-        private IServiceListMonitor _consulServiceListMonitor;
+        private IConsulServiceListMonitor _consulConsulServiceListMonitor;
         private ImmutableHashSet<string> _consulServiceList;
         private int _serviceListVersion = 0;
         private IEnvironmentVariableProvider _environmentVariableProvider;
@@ -77,13 +77,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulNodeMonitors = new Dictionary<string, INodeMonitor>();
             _consulNodesResults = new Dictionary<string, Func<INode[]>>();
 
-            _consulServiceListMonitor = Substitute.For<IServiceListMonitor>();
+            _consulConsulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
             _consulServiceList = new HashSet<string>().ToImmutableHashSet();
-            _consulServiceListMonitor.Services.Returns(_ => _consulServiceList);
-            _consulServiceListMonitor.Version.Returns(_ => _serviceListVersion);
+            _consulConsulServiceListMonitor.Services.Returns(_ => _consulServiceList);
+            _consulConsulServiceListMonitor.Version.Returns(_ => _serviceListVersion);
 
             kernel.Rebind<Func<string, INodeMonitor>>().ToMethod(_ => (s => _consulNodeMonitors[s]));
-            kernel.Rebind<IServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
+            kernel.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulConsulServiceListMonitor);
 
             CreateConsulMock(MasterService);
             CreateConsulMock(OriginatingService);

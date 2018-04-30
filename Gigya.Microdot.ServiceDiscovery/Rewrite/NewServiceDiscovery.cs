@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private INodeSource _originatingSource;
         private INodeSource _masterSource;
         private ILog Log { get; }
-        private readonly IServiceListMonitor _serviceListMonitor;
+        private readonly IConsulServiceListMonitor _consulServiceListMonitor;
         private Func<DiscoveryConfig> GetConfig { get; }
 
         private readonly DeploymentIdentifier _originatingDeployment;
@@ -78,11 +78,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log,
-                                IServiceListMonitor serviceListMonitor)
+                                IConsulServiceListMonitor consulServiceListMonitor)
         {
             Log = log;
-            _serviceListMonitor = serviceListMonitor;
-            _dateTime = dateTime;
+            _consulServiceListMonitor = consulServiceListMonitor;            
             _serviceName = serviceName;
             _originatingDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
@@ -176,7 +175,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
         {
-            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIndentifier, config), _serviceListMonitor);
+            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIdentifier, config), _consulServiceListMonitor);
 
             await source.Init().ConfigureAwait(false);
 
@@ -229,14 +228,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private int _lastServiceListVersion = 0;
         public string DeploymentIdentifier { get; }
         private Func<INodeSource> CreateNewSource { get; }
-        private IServiceListMonitor ServiceListMonitor { get; }
+        private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
 
 
-        public PersistentNodeSource(string deploymentIdentifier, Func<INodeSource> createNewSource, IServiceListMonitor serviceListMonitor)
+        public PersistentNodeSource(string deploymentIdentifier, Func<INodeSource> createNewSource, IConsulServiceListMonitor consulServiceListMonitor)
         {
             DeploymentIdentifier = deploymentIdentifier;
             CreateNewSource = createNewSource;
-            ServiceListMonitor = serviceListMonitor;
+            ConsulServiceListMonitor = consulServiceListMonitor;
             _currentSource = CreateNewSource();
         }
 
@@ -277,15 +276,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var isStillUndeployed = true;
             lock (_locker)
             {
-                if (_lastServiceListVersion != ServiceListMonitor.Version)
+                if (_lastServiceListVersion != ConsulServiceListMonitor.Version)
                 {
-                    if (ServiceListMonitor.Services.Contains(DeploymentIdentifier))
+                    if (ConsulServiceListMonitor.Services.Contains(DeploymentIdentifier))
                     {
                         isStillUndeployed = false;
                         if (_redeployCheck == null || _redeployCheck.IsCompleted)
                             _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();//Ignore ex 
                     }
-                    _lastServiceListVersion = ServiceListMonitor.Version;
+                    _lastServiceListVersion = ConsulServiceListMonitor.Version;
                 }
             }
             return isStillUndeployed;

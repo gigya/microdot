@@ -30,7 +30,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ConsulResult<KeyValueResponse[]> _lastVersionResult;
 
         private ILog Log { get; }
-        private IServiceListMonitor ServiceListMonitor { get; }
+        private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public ConsulNodeMonitor(
             string deploymentIdentifier, 
             ILog log, 
-            IServiceListMonitor serviceListMonitor, 
+            IConsulServiceListMonitor consulServiceListMonitor, 
             ConsulClient consulClient, 
             IEnvironmentVariableProvider environmentVariableProvider, 
             IDateTime dateTime,
@@ -55,7 +55,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             DeploymentIdentifier = deploymentIdentifier;
             Log = log;
-            ServiceListMonitor = serviceListMonitor;
+            ConsulServiceListMonitor = consulServiceListMonitor;
             ConsulClient = consulClient;
             DateTime = dateTime;
             GetConfig = getConfig;
@@ -113,7 +113,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public bool IsDeployed => ServiceListMonitor.Services.Contains(DeploymentIdentifier);
+        public bool IsDeployed => ConsulServiceListMonitor.Services.Contains(DeploymentIdentifier);
 
         /// <inheritdoc />
         public Task Init() => Task.WhenAll(_nodesInitTask, _versionInitTask);
