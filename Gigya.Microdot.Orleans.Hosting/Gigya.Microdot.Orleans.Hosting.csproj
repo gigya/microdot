@@ -52,6 +52,7 @@
     <Compile Include="GigyaSiloHost.cs" />
     <Compile Include="GrainActivator.cs" />
     <Compile Include="OrleansServiceInterfaceMapper.cs" />
+    <Compile Include="OrleansTracingContext.cs" />
     <Compile Include="ProcessingGrainWorker.cs" />
     <Compile Include="InfraProcessingGrain.cs" />
     <Compile Include="Logging\OrleansLogConsumer.cs" />

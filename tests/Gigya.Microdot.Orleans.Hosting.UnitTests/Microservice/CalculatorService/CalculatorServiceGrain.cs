@@ -48,12 +48,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         private readonly ILog _log;
         private readonly IEventPublisher _eventPublisher;
+        private readonly ITracingContext _tracingContext;
         private ICalculatorWorkerGrain Worker { get; set; }
 
-        public CalculatorServiceGrain(ILog log, IEventPublisher eventPublisher)
+        public CalculatorServiceGrain(ILog log, IEventPublisher eventPublisher,ITracingContext tracingContext)
         {
             _log = log;
             _eventPublisher = eventPublisher;
+            _tracingContext = tracingContext;
         }
 
 
@@ -67,6 +69,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public Task<int> Add(int a, int b, bool shouldThrow = false)
         {
             return Worker.Add(a, b, shouldThrow);
+        }
+
+        public async Task<CalculatorServiceTests.TracingContextMock> RetriveTracingContext()
+        {
+            return new CalculatorServiceTests.TracingContextMock
+            {
+                CallId = _tracingContext.RequestID,
+                SpanID = _tracingContext.SpanID,
+                ParentID = _tracingContext.ParentSpnaID,
+                Overrides = _tracingContext.Overrides
+            };
         }
 
         public Task<string[]> GetAppDomainChain(int depth)

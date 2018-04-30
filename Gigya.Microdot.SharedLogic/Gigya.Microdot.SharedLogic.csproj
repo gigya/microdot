@@ -45,9 +45,12 @@
     </Compile>
     <Compile Include="ApplicationDirectoryProvider.cs" />
     <Compile Include="AssemblyProvider.cs" />
+    <Compile Include="Events\ITracingContext.cs" />
     <Compile Include="Events\MetadataPropertiesCache.cs" />
     <Compile Include="Events\EventSerializer.cs" />
     <Compile Include="Events\Param.cs" />
+    <Compile Include="Events\ServiceTracingContext.cs" />
+    <Compile Include="Events\TracingContextBase.cs" />
     <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />
     <Compile Include="Exceptions\StackTraceEnhancer.cs" />
     <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />

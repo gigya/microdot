@@ -37,18 +37,15 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [SetUp]
         public virtual void SetUp()
         {
-            var kernel = new TestingKernel<ConsoleLog>();
+            var kernel = new TestingKernel<ConsoleLog>(krnl=> krnl.Get<ITracingContext>().RequestID = "1");
             _insecureClient = kernel.Get<IDemoService>();
             _exceptionSerializer = kernel.Get<JsonExceptionSerializer>();
 
             Metric.ShutdownContext("Service");
-            TracingContext.SetUpStorage();
-            TracingContext.SetRequestID("1");
 
             _testinghost = new TestingHost<IDemoService>();
             _stopTask = _testinghost.RunAsync();
         }
-
 
         [TearDown]
         public virtual void TearDown()

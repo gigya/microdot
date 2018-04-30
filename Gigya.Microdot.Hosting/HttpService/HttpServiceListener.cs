@@ -55,6 +55,7 @@ namespace Gigya.Microdot.Hosting.HttpService
     public sealed class HttpServiceListener : IDisposable
     {
         private readonly IServerRequestPublisher _serverRequestPublisher;
+        private readonly ITracingContext _tracingContext;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -99,7 +100,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
                                    IServerRequestPublisher serverRequestPublisher,
-                                   JsonExceptionSerializer exceptionSerializer)
+                                   JsonExceptionSerializer exceptionSerializer,
+                                   ITracingContext tracingContext)
         {
             _serverRequestPublisher = serverRequestPublisher;
             ServiceEndPointDefinition = serviceEndPointDefinition;
@@ -122,6 +124,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                 IgnoreWriteExceptions = true,
                 Prefixes = { Prefix }
             };
+
+
+            _tracingContext = tracingContext;
+
 
             var context = Metric.Context("Service").Context(CurrentApplicationInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
@@ -218,7 +224,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                 // Regular endpoint handling
                 using (_activeRequestsCounter.NewContext("Request"))
                 {
-                    TracingContext.SetUpStorage();
                     RequestTimings.GetOrCreate(); // initialize request timing context
 
                     Exception ex;
@@ -233,11 +238,17 @@ namespace Gigya.Microdot.Hosting.HttpService
                         try
                         {
                             ValidateRequest(context);
+
                             await CheckSecureConnection(context);
+
 
                             requestData = await ParseRequest(context);
 
-                            TracingContext.SetOverrides(requestData.Overrides);
+                            _tracingContext.RequestID = requestData.TracingData.RequestID;
+                            _tracingContext.SetSpan(requestData.TracingData.SpanID, requestData.TracingData.ParentSpanID);
+
+
+                            _tracingContext.Overrides = requestData.Overrides;
 
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
@@ -405,8 +416,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
 
-            TracingContext.SetRequestID(request.TracingData.RequestID);
-            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
+            //_tracingContext.RequestID = request.TracingData.RequestID;
+            //_tracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
             return request;
         }
 

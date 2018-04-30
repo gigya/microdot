@@ -41,8 +41,9 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
     /// </summary>
     public sealed class RemoteHostPool : IDisposable
     {
+        private readonly ITracingContext _tracingContext;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilitySource => ReachabilityBroadcaster;
-        public  bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
+        public bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
         private readonly BroadcastBlock<EndPointsResult> _endPointsChanged = new BroadcastBlock<EndPointsResult>(null);
         public ISourceBlock<EndPointsResult> EndPointsChanged => _endPointsChanged;
 
@@ -79,19 +80,21 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         /// Should return true if the host is reachable, or false if it is unreachable. It should not throw an exception.</param>
         /// <param name="log">An implementation of <see cref="ILog"/> used for logging.</param>
         public RemoteHostPool(
-            ServiceDeployment serviceDeployment
-            , IServiceDiscoverySource discovery
-            , ReachabilityChecker reachabilityChecker
-            , Func<DiscoveryConfig> getDiscoveryConfig
-            , ILog log
-            , HealthMonitor healthMonitor
-            , MetricsContext metrics
+            ServiceDeployment serviceDeployment,
+            IServiceDiscoverySource discovery,
+            ReachabilityChecker reachabilityChecker,
+            Func<DiscoveryConfig> getDiscoveryConfig,
+            ILog log,
+            HealthMonitor healthMonitor,
+            MetricsContext metrics,
+            ITracingContext tracingContext
         )
         {
             DiscoverySource = discovery;
             ServiceDeployment = serviceDeployment;
             ReachabilityChecker = reachabilityChecker;
             GetDiscoveryConfig = getDiscoveryConfig;
+            _tracingContext = tracingContext;
             Log = log;
             ReachabilityBroadcaster = new BroadcastBlock<ServiceReachabilityStatus>(null);
             Health = healthMonitor.Get(discovery.Deployment);
@@ -105,7 +108,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             var metricsContext = Metrics.Context(DiscoverySource.Deployment);
             metricsContext.Gauge("ReachableHosts", () => ReachableHosts.Count, Unit.Custom("EndPoints"));
             metricsContext.Gauge("UnreachableHosts", () => UnreachableHosts.Count, Unit.Custom("EndPoints"));
-            
+
         }
 
 
@@ -203,7 +206,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
             return false;
         }
-        
+
         private HealthCheckResult CheckHealth()
         {
             var config = GetConfig();
@@ -258,7 +261,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         {
             LastEndpointRequest = DateTime.UtcNow;
 
-            var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(ServiceDeployment.ServiceName);
 
             if (hostOverride != null)
                 return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);
@@ -285,7 +288,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
         public async Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken)
         {
-            var hostOverride = TracingContext.GetHostOverride(ServiceDeployment.ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(ServiceDeployment.ServiceName);
 
             if (hostOverride != null)
                 return new OverriddenRemoteHost(ServiceDeployment.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);

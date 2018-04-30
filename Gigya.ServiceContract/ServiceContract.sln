@@ -7,8 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.ServiceContract", "Gi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{E38B2044-FCF9-4FA7-A9AD-D3B4FDAA91CF}"
 	ProjectSection(SolutionItems) = preProject
+		.paket\install.bat = .paket\install.bat
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
+		.paket\restore.bat = .paket\restore.bat
+		.paket\update.bat = .paket\update.bat
 	EndProjectSection
 EndProject
 Global

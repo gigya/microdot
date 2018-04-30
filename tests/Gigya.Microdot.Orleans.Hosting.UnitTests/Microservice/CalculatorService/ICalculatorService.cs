@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.ServiceContract.Attributes;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json.Linq;
@@ -35,6 +36,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     public interface ICalculatorService
     {
         Task<int> Add(int a, int b, bool shouldThrow = false);
+        Task<CalculatorServiceTests.TracingContextMock> RetriveTracingContext();
 
         [PublicEndpoint("test.calculator.getAppDomainChain", RequireHTTPS = false, PropertyNameForResponseBody = "something")]
         Task<string[]> GetAppDomainChain(int depth);

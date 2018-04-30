@@ -25,6 +25,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
 using Ninject.Modules;
 using Orleans;
 using Orleans.Runtime.Configuration;
@@ -44,6 +45,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IActivator>().To<GrainActivator>().InSingletonScope();
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
+            Rebind<ITracingContext>().To<OrleansTracingContext>().InSingletonScope();
             Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
 
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();

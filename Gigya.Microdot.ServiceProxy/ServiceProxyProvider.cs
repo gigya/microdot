@@ -51,13 +51,8 @@ namespace Gigya.Microdot.ServiceProxy
 {
     public class ServiceProxyProvider : IDisposable, IServiceProxyProvider
     {
-        public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Auto,
-            NullValueHandling = NullValueHandling.Ignore,
-            Formatting = Formatting.Indented,
-            DateParseHandling = DateParseHandling.None
-        };
+
+        public readonly JsonSerializerSettings JsonSettings;
 
         /// <summary>
         /// Gets or sets default port used to access the remote service, it overridden by service discovery.
@@ -76,7 +71,7 @@ namespace Gigya.Microdot.ServiceProxy
         /// value that was specified in the <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, overridden
         /// by service discovery.
         /// </summary>
-        public bool UseHttpsDefault { get;  set; }
+        public bool UseHttpsDefault { get; set; }
 
 
         /// <summary>
@@ -94,6 +89,7 @@ namespace Gigya.Microdot.ServiceProxy
         private readonly Timer _deserializationTime;
         private readonly Timer _roundtripTime;
 
+
         private readonly Counter _successCounter;
         private readonly Counter _failureCounter;
         /// <summary>Counts fatal errors with remote hosts, that cause us to disconnect from it.</summary>
@@ -101,6 +97,8 @@ namespace Gigya.Microdot.ServiceProxy
         private readonly Counter _applicationExceptionCounter;
 
         private HttpMessageHandler _httpMessageHandler = new HttpClientHandler();
+        private readonly ITracingContext _tracingContext;
+
 
         protected internal HttpMessageHandler HttpMessageHandler
         {
@@ -124,7 +122,7 @@ namespace Gigya.Microdot.ServiceProxy
         public const string METRICS_CONTEXT_NAME = "ServiceProxy";
 
         private ICertificateLocator CertificateLocator { get; }
- 
+
         private ILog Log { get; }
         private ServiceDiscoveryConfig GetConfig() => GetDiscoveryConfig().Services[ServiceName];
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
@@ -143,11 +141,12 @@ namespace Gigya.Microdot.ServiceProxy
             ILog log,
             Func<string, ReachabilityChecker, IServiceDiscovery> serviceDiscoveryFactory,
             Func<DiscoveryConfig> getConfig,
-            JsonExceptionSerializer exceptionSerializer)
+            JsonExceptionSerializer exceptionSerializer,
+            ITracingContext tracingContext)
         {
             EventPublisher = eventPublisher;
             CertificateLocator = certificateLocator;
-   
+
             Log = log;
 
             ServiceName = serviceName;
@@ -163,6 +162,17 @@ namespace Gigya.Microdot.ServiceProxy
             _failureCounter = metricsContext.Counter("Failed", Unit.Calls);
             _hostFailureCounter = metricsContext.Counter("HostFailure", Unit.Calls);
             _applicationExceptionCounter = metricsContext.Counter("ApplicationException", Unit.Calls);
+
+            _tracingContext = tracingContext;
+            JsonSettings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                NullValueHandling = NullValueHandling.Ignore,
+                Formatting = Formatting.Indented,
+                DateParseHandling = DateParseHandling.None
+            };
+
+
 
             ServiceDiscovery = serviceDiscoveryFactory(serviceName, IsReachable);
         }
@@ -306,16 +316,29 @@ namespace Gigya.Microdot.ServiceProxy
 
         private async Task<object> InvokeCore(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings)
         {
-            if(request == null)
+            if (request == null)
                 throw new ArgumentNullException(nameof(request));
-            request.Overrides = TracingContext.TryGetOverrides();
+
+            //request.Overrides = TracingContext.TryGetOverrides();
+            request.Overrides = _tracingContext.Overrides;
+
+
+
+            request.Overrides = _tracingContext.Overrides; //TODO: toli
+
+
+
+
+            //var requestID = TracingContext.TryGetRequestID(); //TODO: toli
+
             request.TracingData = new TracingData
             {
                 HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
                 ServiceName = CurrentApplicationInfo.Name,
-                RequestID = TracingContext.TryGetRequestID(),
+                RequestID = _tracingContext.RequestID,
+
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID()
+                ParentSpanID = _tracingContext.SpanID
             };
             PrepareRequest?.Invoke(request);
             var requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
@@ -325,7 +348,8 @@ namespace Gigya.Microdot.ServiceProxy
                 var config = GetConfig();
                 var clientCallEvent = EventPublisher.CreateEvent();
                 clientCallEvent.TargetService = ServiceName;
-                clientCallEvent.RequestId = request.TracingData?.RequestID;                
+                clientCallEvent.SpanId = _tracingContext.SpanID;
+                clientCallEvent.RequestId = request.TracingData?.RequestID;
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;
                 clientCallEvent.ParentSpanId = request.TracingData?.ParentSpanID;
@@ -343,7 +367,7 @@ namespace Gigya.Microdot.ServiceProxy
 
                 // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
                 var uri = BuildUri(endPoint.HostName, effectivePort.Value, config) + ServiceName;
-                if (request.Target.MethodName!=null)
+                if (request.Target.MethodName != null)
                     uri += $".{request.Target.MethodName}";
                 if (request.Target.Endpoint != null)
                     uri += $"/{request.Target.Endpoint}";
@@ -389,7 +413,7 @@ namespace Gigya.Microdot.ServiceProxy
                     Log.Error("The remote service failed to return a valid HTTP response. Continuing to next " +
                               "host. See tags for URL and exception for details.",
                         exception: ex,
-                        unencryptedTags: new {uri});
+                        unencryptedTags: new { uri });
 
                     endPoint.ReportFailure(ex);
                     _hostFailureCounter.Increment("RequestFailure");
@@ -424,7 +448,7 @@ namespace Gigya.Microdot.ServiceProxy
                     {
                         endPoint.ReportSuccess();
 
-                        if(response.IsSuccessStatusCode)
+                        if (response.IsSuccessStatusCode)
                         {
                             var returnObj = _deserializationTime.Time(() => JsonConvert.DeserializeObject(responseContent, resultReturnType, jsonSettings));
 
@@ -442,7 +466,7 @@ namespace Gigya.Microdot.ServiceProxy
                             {
                                 remoteException = _deserializationTime.Time(() => ExceptionSerializer.Deserialize(responseContent));
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                                 _applicationExceptionCounter.Increment("ExceptionDeserializationFailure");
 
@@ -452,8 +476,8 @@ namespace Gigya.Microdot.ServiceProxy
                                                                  "'responseContent' encrypted tag for the original response content.",
                                     uri,
                                     ex,
-                                    unencrypted: new Tags {{"requestUri", uri}},
-                                    encrypted: new Tags {{"responseContent", responseContent}});
+                                    unencrypted: new Tags { { "requestUri", uri } },
+                                    encrypted: new Tags { { "responseContent", responseContent } });
                             }
 
                             _applicationExceptionCounter.Increment();
@@ -461,10 +485,10 @@ namespace Gigya.Microdot.ServiceProxy
                             clientCallEvent.Exception = remoteException;
                             EventPublisher.TryPublish(clientCallEvent); // fire and forget!
 
-                            if(remoteException is RequestException || remoteException is EnvironmentException)
+                            if (remoteException is RequestException || remoteException is EnvironmentException)
                                 ExceptionDispatchInfo.Capture(remoteException).Throw();
 
-                            if(remoteException is UnhandledException)
+                            if (remoteException is UnhandledException)
                                 remoteException = remoteException.InnerException;
 
                             throw new RemoteServiceException("The remote service returned a failure response. See " +
@@ -472,7 +496,7 @@ namespace Gigya.Microdot.ServiceProxy
                                                              "inner exception for details.",
                                 uri,
                                 remoteException,
-                                unencrypted: new Tags {{"requestUri", uri}});
+                                unencrypted: new Tags { { "requestUri", uri } });
                         }
                     }
                     catch (JsonException ex)
@@ -483,8 +507,8 @@ namespace Gigya.Microdot.ServiceProxy
                                          "deserialization. See the 'uri' tag for the URL that was called, the exception for the " +
                                          "exact error and the 'responseContent' encrypted tag for the original response content.",
                                       exception: ex,
-                                      unencryptedTags: new {uri},
-                                      encryptedTags: new {responseContent});
+                                      unencryptedTags: new { uri },
+                                      encryptedTags: new { responseContent });
 
                         clientCallEvent.Exception = ex;
                         EventPublisher.TryPublish(clientCallEvent); // fire and forget!
@@ -494,23 +518,23 @@ namespace Gigya.Microdot.ServiceProxy
                                                          "encrypted tag for the original response content.",
                             uri,
                             ex,
-                            new Tags {{"responseContent", responseContent}},
-                            new Tags {{"requestUri", uri}});
-                    } 
+                            new Tags { { "responseContent", responseContent } },
+                            new Tags { { "requestUri", uri } });
+                    }
                 }
                 else
                 {
                     var exception = response.StatusCode == HttpStatusCode.ServiceUnavailable ?
-                        new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}"):
+                        new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}") :
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
 
                     endPoint.ReportFailure(exception);
                     _hostFailureCounter.Increment("NotGigyaHost");
 
-                    if(response.StatusCode == HttpStatusCode.ServiceUnavailable)
-                        Log.Error("The remote service is unavailable (503) and is not recognized as a Gigya host. Continuing to next host.", unencryptedTags: new {uri});
+                    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                        Log.Error("The remote service is unavailable (503) and is not recognized as a Gigya host. Continuing to next host.", unencryptedTags: new { uri });
                     else
-                        Log.Error("The remote service returned a response but is not recognized as a Gigya host. Continuing to next host.", unencryptedTags: new {uri, statusCode = response.StatusCode}, encryptedTags: new {responseContent});
+                        Log.Error("The remote service returned a response but is not recognized as a Gigya host. Continuing to next host.", unencryptedTags: new { uri, statusCode = response.StatusCode }, encryptedTags: new { responseContent });
 
                     clientCallEvent.ErrCode = 500001;//(int)GSErrors.General_Server_Error;
                     EventPublisher.TryPublish(clientCallEvent); // fire and forget!
@@ -520,8 +544,8 @@ namespace Gigya.Microdot.ServiceProxy
 
         public async Task<ServiceSchema> GetSchema()
         {
-            var result = await InvokeCore(new HttpServiceRequest {Target = new InvocationTarget {Endpoint = "schema"}}, typeof(ServiceSchema), JsonSettings).ConfigureAwait(false);
-            return (ServiceSchema) result;
+            var result = await InvokeCore(new HttpServiceRequest { Target = new InvocationTarget { Endpoint = "schema" } }, typeof(ServiceSchema), JsonSettings).ConfigureAwait(false);
+            return (ServiceSchema)result;
         }
 
         public void Dispose()

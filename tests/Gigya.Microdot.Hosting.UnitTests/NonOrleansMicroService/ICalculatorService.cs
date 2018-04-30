@@ -29,5 +29,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
     public interface ICalculatorService
     {
         Task<int> Add(int a, int b);
+
+        Task<MicroServiceTests.TracingContextForMicrodotServiceMock> RetriveTraceContext();
     }
 }

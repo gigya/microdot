@@ -31,11 +31,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             Metric.ShutdownContext("Service");
 
-            TracingContext.SetUpStorage();
-            TracingContext.SetRequestID("1");
-
-           
-            var kernel = new TestingKernel<ConsoleLog>();
+            var kernel = new TestingKernel<ConsoleLog>(krnl => krnl.Get<ITracingContext>().RequestID = "1");
             _proxyInstance = kernel.Get<IDemoService>();
         }
 

@@ -17,10 +17,10 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
-  
+
     [TestFixture]
     public abstract class AbstractServiceProxyTest
-    {     
+    {
         internal const string SERVICE_NAME = "Demonstration";
         protected TestingKernel<ConsoleLog> unitTesting;
         protected Dictionary<string, string> MockConfig { get; } = new Dictionary<string, string>();
@@ -29,11 +29,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [SetUp]
         public virtual void SetUp()
         {
-            TracingContext.SetUpStorage();
-            
-            unitTesting = new TestingKernel<ConsoleLog>(mockConfig: MockConfig);
+
+            unitTesting = new TestingKernel<ConsoleLog>(krnl => krnl.Get<ITracingContext>().RequestID = "1", mockConfig: MockConfig);
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
-            TracingContext.SetRequestID("1");
             ExceptionSerializer = unitTesting.Get<JsonExceptionSerializer>();
         }
 

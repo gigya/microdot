@@ -33,6 +33,7 @@ using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Helpers;
@@ -67,6 +68,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     [TestFixture]
     public class CalculatorServiceTests
     {
+        private ITracingContext _tracingContext;
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }
         private ICalculatorService Service { get; set; }
         private ICalculatorService ServiceWithCaching { get; set; }
@@ -77,11 +79,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
+                _tracingContext = AssemblyInitialize.ResolutionRoot.Get<ITracingContext>();
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true, serviceDrainTime: TimeSpan.MaxValue);
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true,serviceDrainTime:TimeSpan.MaxValue);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
-
             }
             catch (Exception e)
             {
@@ -150,6 +152,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var actual = await Service.Add(5, 3);
 
             actual.ShouldBe(8);
+        }
+
+        [Test]
+        public async Task TracivngContext_RetreivingTraceProperties_IsEquivalent()
+        {
+            _tracingContext.RequestID = "Req1";
+            _tracingContext.SetSpan("SpanIdButWillBeParentId", null);
+            _tracingContext.SetHostOverride("AnatolyService", "TLV-ANATOLY-PC", 1234);
+
+            var actual = await Service.RetriveTracingContext();
+
+
+            actual.CallId.ShouldBe(_tracingContext.RequestID);
+            actual.ParentID.ShouldBe(_tracingContext.SpanID);
+            //actual.Overrides.Hosts.ShouldBe(_tracingContext.SpanID);
         }
 
         [Test]
@@ -417,6 +434,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             expected.ErrorCode.ShouldBe(10000);
         }
 
+
         [Test]
         public async Task OrleansSerialization_HttpRequestException_IsEquivalent()
         {
@@ -425,6 +443,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             actual.UnencryptedTags.ShouldHaveSingleItem().Key.ShouldBe("originalStackTrace");
 
         }
+
+
 
         private void AssertExceptionsAreEqual(Exception expected, Exception actual)
         {
@@ -457,6 +477,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         #region MockData
+
+        #region TracingContext Tests
+
+        [Serializable]
+        public class TracingContextMock
+        {
+            public string CallId { get; set; }
+            public string SpanID { get; set; }
+            public string ParentID { get; set; }
+            public RequestOverrides Overrides { get; set; }
+        }
+        #endregion
 
         #region Seriliazation Tests
         [Serializable]

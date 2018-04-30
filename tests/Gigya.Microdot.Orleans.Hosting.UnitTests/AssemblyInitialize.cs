@@ -24,8 +24,10 @@ using System;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Ninject.Syntax;
@@ -55,6 +57,7 @@ using NUnit.Framework;
                     kernel.Rebind<ICacheRevoker>().ToConstant(revokingManager);
                     kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
                     kernel.Rebind<IEventPublisher>().To<SpyEventPublisher>().InSingletonScope();
+                    kernel.Rebind<ITracingContext>().To<OrleansTracingContext>().InSingletonScope();
 
                 });            
                 ResolutionRoot = kernel;
