@@ -7,4 +7,17 @@ namespace Gigya.Microdot.SharedLogic
     {
         HttpClient GetClient(bool https, TimeSpan? requestTimeout);
     }
+
+    class FakeClientFactory : IHttpClientFactory
+    {
+        public HttpClient GetClient(bool https, TimeSpan? requestTimeout)
+        {
+            var http = new HttpClient();
+            
+            if (requestTimeout != null)
+                http.Timeout = requestTimeout.Value;
+
+            return http;
+        }
+    }
 }
