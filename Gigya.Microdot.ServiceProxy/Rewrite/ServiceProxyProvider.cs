@@ -6,10 +6,13 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
+using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
@@ -38,29 +41,39 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         /// </summary>
         public string ServiceName { get; }
 
-        private IMemoizer Memoizer { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
+        private Func<IMemoizer> MemoizerFactory { get; }
         private IHttpClientFactory HttpFactory { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
         private IEnvironmentVariableProvider EnvProvider { get; }
+        private IDiscoveryFactory DiscoveryFactory { get; }
+        private ConcurrentDictionary<string, DeployedService> Deployments { get; } = new ConcurrentDictionary<string, DeployedService>();
+        private ConcurrentDictionary<MethodInfo, Type> ResultReturnTypeCache { get; } = new ConcurrentDictionary<MethodInfo, Type>();
+        private string GetBaseUri(INode node, bool useHttps) => $"{(useHttps ? "https" : "http")}://{node.Hostname}:{node.Port ?? HttpSettings.BasePort}/";
 
-        private ConcurrentDictionary<string, DeployedService> Deployments { get; set; } = new ConcurrentDictionary<string, DeployedService>();
 
-        public ServiceProxyProvider(string serviceName, IMemoizer memoizer, Func<DiscoveryConfig> getDiscoveryConfig,
-            IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer, IEnvironmentVariableProvider envProvider)
+        public ServiceProxyProvider(string serviceName, Func<DiscoveryConfig> getDiscoveryConfig, Func<IMemoizer> memoizerFactory,
+            IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer, IEnvironmentVariableProvider envProvider,
+            IDiscoveryFactory discoveryFactory)
         {
             ServiceName = serviceName;
-            Memoizer = memoizer;
             GetDiscoveryConfig = getDiscoveryConfig;
+            MemoizerFactory = memoizerFactory;
             HttpFactory = httpFactory;
             ExceptionSerializer = exceptionSerializer;
             EnvProvider = envProvider;
+            DiscoveryFactory = discoveryFactory;
+        }
+
+        private ServiceDiscoveryConfig GetConfig()
+        {
+            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
+            return config;
         }
 
         public object Invoke(MethodInfo targetMethod, object[] args)
         {
-            // TODO: Add caching to this step to prevent using reflection every call
-            Type resultReturnType = targetMethod.ReturnType.GetGenericArguments().SingleOrDefault() ?? typeof(object);
+            Type resultReturnType = ResultReturnTypeCache.GetOrAdd(targetMethod, m => m.ReturnType.GetGenericArguments().SingleOrDefault() ?? typeof(object));
             var request = new HttpServiceRequest(targetMethod, args);
 
             return TaskConverter.ToStronglyTypedTask(Invoke(request, resultReturnType), resultReturnType);
@@ -73,37 +86,39 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             if (resultReturnType == null)
                 throw new ArgumentNullException(nameof(resultReturnType));
 
+            jsonSettings = jsonSettings ?? JsonSettings;
             Task<object> resultTask;
             INode node = TracingContext.GetHostOverride(ServiceName);
-            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
+            ServiceDiscoveryConfig config = GetConfig();
 
             async Task<object> Send()
             {
-                HttpRequestMessage httpRequest = CreateHttpRequest(request, jsonSettings, node);
-                string responseContent = await SendRequest(httpRequest, config, node).ConfigureAwait(false);
-                return await ParseResponse(responseContent, resultReturnType, jsonSettings, httpRequest?.RequestUri.ToString()).ConfigureAwait(false);
+                bool useHttps = config?.UseHttpsOverride ?? HttpSettings.UseHttps;
+                HttpRequestMessage httpRequest = CreateHttpRequest(request, jsonSettings, node, useHttps);
+                string responseContent = await SendRequest(httpRequest, config, useHttps, node).ConfigureAwait(false);
+                return ParseResponse(responseContent, resultReturnType, jsonSettings, httpRequest?.RequestUri.ToString());
             }
 
             bool isMethodCached = false;
             MethodCachingPolicyConfig cachingPolicy = null;
+            DeployedService targetDeployment = await Route(config).ConfigureAwait(false);
 
             if (node == null)
             {
-                DeployedService targetDeployment = Route();
                 isMethodCached = targetDeployment.Schema.TryFindMethod(request.Target)?.IsCached ?? false;
                 cachingPolicy = config?.CachingPolicy?.Methods?[request.Target.MethodName] ?? CachingPolicyConfig.Default;
                 node = targetDeployment.LoadBalancer.GetNode();
             }
 
             if (isMethodCached && cachingPolicy.Enabled == true)
-                resultTask = (Task<object>)Memoizer.GetOrAdd(request.ComputeCacheKey(), Send, new CacheItemPolicyEx(cachingPolicy));
+                resultTask = (Task<object>)targetDeployment.Memoizer.GetOrAdd(request.ComputeCacheKey(), Send, new CacheItemPolicyEx(cachingPolicy));
             else
                 resultTask = Send();
 
             return await resultTask.ConfigureAwait(false);
         }
 
-        private async Task<object> ParseResponse(string responseContent, Type resultReturnType, JsonSerializerSettings jsonSettings, string uri)
+        private object ParseResponse(string responseContent, Type resultReturnType, JsonSerializerSettings jsonSettings, string uri)
         {
             try
             {
@@ -115,9 +130,9 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             }
         }
 
-        private async Task<string> SendRequest(HttpRequestMessage request, ServiceDiscoveryConfig config, INode node = null)
+        private async Task<string> SendRequest(HttpRequestMessage request, ServiceDiscoveryConfig config, bool useHttps, INode node = null)
         {
-            HttpClient http = HttpFactory.GetClient(config.UseHttpsOverride ?? HttpSettings.UseHttps, config.RequestTimeout);
+            HttpClient http = HttpFactory.GetClient(useHttps, config.RequestTimeout);
             string uri = request.RequestUri.ToString();
 
             try
@@ -127,8 +142,10 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
                 
                 if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) == false && response.Headers.Contains(GigyaHttpHeaders.ProtocolVersion) == false)
                 {
-                    //node?.ReportFailure(ex);
-                    throw Ex.NonMicrodotHost(uri, response.StatusCode);
+                    var ex = Ex.NonMicrodotHost(uri, response.StatusCode);
+                    if (node is IMonitoredNode mNode)
+                        mNode.ReportUnreachable(ex);
+                    throw ex;
                 }
 
                 if (response.IsSuccessStatusCode == false)
@@ -143,10 +160,12 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
                 return responseContent;
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException httpEx)
             {
-                //node?.ReportFailure(ex);
-                throw Ex.BadHttpResponse(uri, ex);
+                var ex = Ex.BadHttpResponse(uri, httpEx);
+                if (node is IMonitoredNode mNode)
+                    mNode.ReportUnreachable(ex);
+                throw ex;
             }
             catch (TaskCanceledException ex)
             {
@@ -181,10 +200,10 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             return remoteException;
         }
 
-        private HttpRequestMessage CreateHttpRequest(HttpServiceRequest request, JsonSerializerSettings jsonSettings, INode node)
+        private HttpRequestMessage CreateHttpRequest(HttpServiceRequest request, JsonSerializerSettings jsonSettings, INode node, bool useHttps)
         {
             // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
-            string uri = $"{(HttpSettings.UseHttps ? "https" : "http")}://{node.Hostname}:{node.Port ?? HttpSettings.BasePort}/{ServiceName}.{request.Target.MethodName}";
+            string uri = $"{GetBaseUri(node, useHttps)}/{ServiceName}.{request.Target.MethodName}";
             
             return new HttpRequestMessage(HttpMethod.Post, uri)
             {
@@ -195,29 +214,88 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             };
         }
 
-        private DeployedService Route()
+        private async Task<DeployedService> Route(ServiceDiscoveryConfig config)
         {
             string[] environmentCandidates = { EnvProvider.DeploymentEnvironment, "prod" };
             DeployedService selectedDeployment = null;
 
             foreach (string env in environmentCandidates)
             {
-                Deployments.TryGetValue(env, out selectedDeployment);
+                selectedDeployment = await GetDeployment(env, config).ConfigureAwait(false);
                 
                 if (selectedDeployment != null)
                     break;
             }
 
             if (selectedDeployment == null)
-                throw Ex.RoutingFailed(ServiceName, environmentCandidates, Deployments.Keys.ToArray());
+            {
+                var allAvailableDeployments = Deployments.Where(d => d.Value.LoadBalancer?.WasUndeployed == false)
+                    .Select(d => d.Key)
+                    .ToArray();
+
+                throw Ex.RoutingFailed(ServiceName, environmentCandidates, allAvailableDeployments);
+            }
 
             return selectedDeployment;
+        }
+
+        private async Task<DeployedService> GetDeployment(string env, ServiceDiscoveryConfig config)
+        {
+            DeployedService deployment = Deployments.GetOrAdd(env, k => new DeployedService());
+
+            using (await deployment.Lock.LockAsync().ConfigureAwait(false))
+            {
+                if (deployment.LoadBalancer?.WasUndeployed == true)
+                {
+                    deployment.LoadBalancer.Dispose();
+                    deployment.LoadBalancer = null;
+                }
+
+                if (deployment.LoadBalancer == null)
+                    deployment.LoadBalancer = await DiscoveryFactory.TryCreateLoadBalancer(new DeploymentIdentifier(ServiceName, env), new ReachabilityCheck(IsReachable)).ConfigureAwait(false);
+
+                if (deployment.LoadBalancer == null)
+                    return null;
+
+                if (deployment.Schema == null)
+                    await RefreshSchema(deployment, config).ConfigureAwait(false);
+
+                if (deployment.Memoizer == null)
+                    deployment.Memoizer = MemoizerFactory();
+            }
+
+            return deployment;
+        }
+
+        private async Task<bool> IsReachable(INode node)
+        {
+            try
+            {
+                bool useHttps = GetConfig()?.UseHttpsOverride ?? HttpSettings.UseHttps;
+                HttpClient http = HttpFactory.GetClient(useHttps, TimeSpan.FromSeconds(30));
+                string uri = GetBaseUri(node, useHttps);
+                HttpResponseMessage response = await http.GetAsync(uri, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
+                return response.Headers.Contains(GigyaHttpHeaders.ServerHostname);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task RefreshSchema(DeployedService deployment, ServiceDiscoveryConfig config)
+        {
+            bool useHttps = config?.UseHttpsOverride ?? HttpSettings.UseHttps;
+            IMonitoredNode monitoredNode = deployment.LoadBalancer.GetNode();
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{GetBaseUri(monitoredNode, useHttps)}/schema");
+            string responseContent = await SendRequest(request, config, useHttps, monitoredNode).ConfigureAwait(false);
+            deployment.Schema = JsonConvert.DeserializeObject<ServiceSchema>(responseContent, JsonSettings);
         }
 
         // TBD: What do we do if different environment return different schemas? Should we return all of them, should we merge them?
         public async Task<ServiceSchema> GetSchema()
         {
-            return Route().Schema;
+            return (await Route(GetConfig()).ConfigureAwait(false)).Schema;
         }
     }
 }

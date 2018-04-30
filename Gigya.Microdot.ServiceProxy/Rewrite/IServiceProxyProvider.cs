@@ -23,9 +23,7 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchema;
 
@@ -36,18 +34,5 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);
         Task<ServiceSchema> GetSchema();
         HttpServiceAttribute HttpSettings { get; }
-    }
-
-    public class DeployedService : IDisposable
-    {
-        internal ServiceSchema Schema { get; set; }
-        internal IMemoizer Memoizer { get; }
-        internal ILoadBalancer LoadBalancer { get; }
-
-        public void Dispose()
-        {
-            Memoizer.TryDispose();
-            LoadBalancer.TryDispose();
-        }
     }
 }
