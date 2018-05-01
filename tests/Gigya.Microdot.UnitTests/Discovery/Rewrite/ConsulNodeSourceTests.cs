@@ -117,6 +117,18 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AssertOneDefaultNode();
         }
 
+        [Test]
+        public async Task ServiceCasingIsChangedWhileMonitoring_MarkAsUndeployedInOrderToCauseItToBeReloaded()
+        {
+            var lowerCaseServiceName = _deployment.ToString().ToLower();
+
+            SetupOneDefaultNode();
+            await Start();
+
+            _consulServicesList = new HashSet<string>(new[] { lowerCaseServiceName });
+            _consulSource.WasUndeployed.ShouldBeTrue();
+        }
+
 
         [Test]
         public void ConsulErrorOnStart_ThrowErrorWhenGettingNodesList()

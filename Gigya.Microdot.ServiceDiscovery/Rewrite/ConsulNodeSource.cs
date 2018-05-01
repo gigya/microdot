@@ -12,11 +12,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool SupportsMultipleEnvironments => true;
 
-        private DeploymentIdentifier DeploymentIdentifier { get; }
         private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
         private Func<string, INodeMonitor> GetNodeMonitor { get; }
-        private INodeMonitor NodeMonitor { get; set; }             
-        private string ServiceName { get; set; }
+        private INodeMonitor NodeMonitor { get; set; }
+        private string _deploymentIdentifier;
 
         private bool _disposed;
         private INode[] _lastKnownNodes;
@@ -29,9 +28,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             ConsulServiceListMonitor = consulServiceListMonitor;
             GetNodeMonitor = getNodeMonitor;
-            ServiceName = deploymentIdentifier.ToString();
-
-            DeploymentIdentifier = deploymentIdentifier;
+            _deploymentIdentifier = deploymentIdentifier.ToString();
         }
 
         /// <inheritdoc />
@@ -39,15 +36,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             await ConsulServiceListMonitor.Init().ConfigureAwait(false);
 
-            if (ConsulServiceListMonitor.Services.Contains(ServiceName))
+            if (ConsulServiceListMonitor.Services.TryGetValue(_deploymentIdentifier, out string deploymentIdentifierMatchCasing))
             {
-                var serviceNameMatchCasing = ConsulServiceListMonitor.Services.FirstOrDefault(s => s.Equals(ServiceName, StringComparison.InvariantCultureIgnoreCase));
-                if (serviceNameMatchCasing != null)
-                {
-                    ServiceName = serviceNameMatchCasing;
-                    NodeMonitor = GetNodeMonitor(ServiceName);
-                    await NodeMonitor.Init().ConfigureAwait(false);
-                }
+                _deploymentIdentifier = deploymentIdentifierMatchCasing;
+                NodeMonitor = GetNodeMonitor(_deploymentIdentifier);
+                await NodeMonitor.Init().ConfigureAwait(false);
             }
             else
                 _wasUndeployed = true;
@@ -64,7 +57,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                _wasUndeployed = NodeMonitor.WasUndeployed;
+                _wasUndeployed = !(ConsulServiceListMonitor.Services.TryGetValue(_deploymentIdentifier, out string deploymentIdentifierMatchCasing));
+                if (deploymentIdentifierMatchCasing != _deploymentIdentifier)
+                    _wasUndeployed = true;
+
                 return _wasUndeployed;
             }
         } 
