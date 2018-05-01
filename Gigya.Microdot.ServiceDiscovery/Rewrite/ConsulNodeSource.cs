@@ -29,7 +29,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             ConsulServiceListMonitor = consulServiceListMonitor;
             GetNodeMonitor = getNodeMonitor;
-            ServiceName = $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
+            ServiceName = deploymentIdentifier.ToString();
 
             DeploymentIdentifier = deploymentIdentifier;
         }

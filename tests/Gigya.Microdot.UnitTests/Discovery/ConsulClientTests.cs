@@ -94,7 +94,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AssertOneDefaultEndpoint(result);
         }
 
-        [Test]        
+        [Test]       
         public async Task EndpointAdded_LongPolling()
         {
             await Start(ConsulMethod.LongPolling);

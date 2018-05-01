@@ -26,18 +26,23 @@ namespace Gigya.Microdot.ServiceDiscovery
         public string DeploymentEnvironment { get; }
         public string ServiceName { get; }
 
-        public bool IsLastFallback => DeploymentEnvironment == "prod";
+        public bool IsEnvironmentSpecific => string.IsNullOrEmpty(DeploymentEnvironment)==false;
 
         public DeploymentIdentifier(string serviceName, string deploymentEnvironment)
         {
-            DeploymentEnvironment = deploymentEnvironment.ToLower();
+            DeploymentEnvironment = deploymentEnvironment?.ToLower();
             ServiceName = serviceName;
         }
 
+        public DeploymentIdentifier(string serviceName): this(serviceName, null)
+        { }
 
         public override string ToString()
         {
-            return $"{ServiceName}-{DeploymentEnvironment}";
+            if (IsEnvironmentSpecific)
+                return $"{ServiceName}-{DeploymentEnvironment}";
+            else
+                return ServiceName;
         }
 
 
@@ -49,12 +54,15 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (ReferenceEquals(this, obj))
                 return true;
 
-            DeploymentIdentifier other = obj as DeploymentIdentifier;
-
-            if (other == null)
+            if (obj is DeploymentIdentifier other)
+            {
+                if (IsEnvironmentSpecific && other.IsEnvironmentSpecific)
+                    return DeploymentEnvironment == other.DeploymentEnvironment && ServiceName == other.ServiceName;
+                else
+                    return ServiceName == other.ServiceName;
+            }
+            else
                 return false;
-
-            return DeploymentEnvironment == other.DeploymentEnvironment && ServiceName == other.ServiceName;
         }
 
 
@@ -62,7 +70,10 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             unchecked
             {
-                return ((DeploymentEnvironment?.GetHashCode() ?? 0) * 397) ^ (ServiceName?.GetHashCode() ?? 0);
+                if (IsEnvironmentSpecific)
+                    return ((ServiceName?.GetHashCode() ?? 0) * 397) ^ (DeploymentEnvironment?.GetHashCode() ?? 0);
+                else
+                    return ServiceName?.GetHashCode() ?? 0;
             }
         }
     }

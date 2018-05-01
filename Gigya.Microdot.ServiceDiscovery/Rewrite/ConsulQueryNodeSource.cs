@@ -7,14 +7,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public class ConsulQueryNodeSource : INodeSource
     {
         private bool _disposed;
-        public string ServiceName { get; set; }
-
         public INodeMonitor NodeMonitor { get; set; }
 
         public ConsulQueryNodeSource(DeploymentIdentifier deploymentIdentifier, Func<string, INodeMonitor> getNodeMonitor)
-        {
-            ServiceName = $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
-            NodeMonitor = getNodeMonitor(ServiceName);
+        {            
+            NodeMonitor = getNodeMonitor(deploymentIdentifier.ToString());
         }
 
         public Task Init()

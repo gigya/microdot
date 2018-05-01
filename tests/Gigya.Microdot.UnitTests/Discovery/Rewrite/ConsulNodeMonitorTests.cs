@@ -200,14 +200,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             RemoveService();
             await WaitForUpdates();
             _nodeMonitor.WasUndeployed.ShouldBeTrue();
-            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;
-            var keyValueReuqestsCounterBeforeServiceWasRedeployed = _consulSimulator.KeyValueReuqestsCounter;
+            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;            
 
             AddServiceNode();
             await WaitForUpdates();            
             _nodeMonitor.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");            
             _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
-            _consulSimulator.KeyValueReuqestsCounter.ShouldBe(keyValueReuqestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
         }
 
 

@@ -108,7 +108,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task TryCreateNodeSource_ReturnConfigSource()
         {
             ConfigureServiceSource(Config);
-            var source = await TryCreateNodeSource(env: "prod");
+            var source = await TryCreateNodeSource(env: null);
             source.ShouldBe(_configSource);   
             _consulSourceInitiated.ShouldBeFalse();
         }
@@ -117,24 +117,24 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task TryCreateLoadBalancer_ReturnConfigLoadBalancer()
         {
             ConfigureServiceSource(Config);
-            var loadBalancer = await TryCreateLoadBalancer(env: "prod");
+            var loadBalancer = await TryCreateLoadBalancer(env: null);
             loadBalancer.ShouldBe(_configLoadBalancer);
             _consulSourceInitiated.ShouldBeFalse();
         }
 
         [Test]
-        public async Task TryCreateNodeSource_NotLastFallbackEnvironment_ReturnNull()
+        public async Task TryCreateNodeSource_NotSupportsMultipleEnvironments_EnvironmentSpecific_ReturnNull()
         {
             ConfigureServiceSource(Config);
-            var source = await TryCreateNodeSource(env: Env);
+            var source = await TryCreateNodeSource();
             source.ShouldBeNull();            
         }
 
         [Test]
-        public async Task TryCreateLoadBalancer_NotLastFallbackEnvironment_ReturnNull()
+        public async Task TryCreateLoadBalancer__NotSupportsMultipleEnvironments_EnvironmentSpecific_ReturnNull()
         {
             ConfigureServiceSource(Config);
-            var loadBalancer = await TryCreateLoadBalancer(env: Env);
+            var loadBalancer = await TryCreateLoadBalancer();
             loadBalancer.ShouldBeNull();            
         }
 

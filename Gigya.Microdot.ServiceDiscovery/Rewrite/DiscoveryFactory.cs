@@ -39,7 +39,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             await nodeSource.Init().ConfigureAwait(false);
             if (nodeSource.WasUndeployed)
                 return null;
-            if (!nodeSource.SupportsMultipleEnvironments && !deploymentIdentifier.IsLastFallback) // if nodeSource not supports multiple environments, only the last fallback environment will get a valid nodeSource
+            if (!nodeSource.SupportsMultipleEnvironments && deploymentIdentifier.IsEnvironmentSpecific) // if nodeSource not supports multiple environments, only the last fallback environment will get a valid nodeSource
                 return null;
             else              
                 return nodeSource;            
