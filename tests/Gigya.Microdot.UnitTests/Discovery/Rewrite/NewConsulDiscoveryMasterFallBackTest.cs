@@ -95,7 +95,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var mock = Substitute.For<INodeMonitor>();
             _consulNodesResults[serviceName] = () => new INode[] {new Node(hostName: "dummy", version: ServiceVersion)};
             mock.Nodes.Returns(_=>_consulNodesResults[serviceName]());
-            mock.IsDeployed.Returns(_ => _consulServiceList.Contains(serviceName));
+            mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(serviceName));
             _consulNodeMonitors[serviceName] = mock;
 
             _consulServiceList = _consulServiceList.Add(serviceName);

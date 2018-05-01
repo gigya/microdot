@@ -65,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulServicesList = new HashSet<string>(new[]{_deployment.ToString()});
             _nodeMonitor = Substitute.For<INodeMonitor>();
             _nodeMonitor.Nodes.Returns(_ => _getConsulNodes());
-            _nodeMonitor.IsDeployed.Returns(_ => _consulServicesList.Contains(_serviceName));
+            _nodeMonitor.WasUndeployed.Returns(_ => !_consulServicesList.Contains(_serviceName));
             _consulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();            
             _consulServiceListMonitor.Services.Returns(_ => _consulServicesList.ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase));
 

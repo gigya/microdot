@@ -21,6 +21,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public sealed class ConsulNodeMonitor : INodeMonitor
     {
         private int _disposed;
+        private bool _wasUndeployed;
         private string _activeVersion;
         private Node[] _nodesOfAllVersions;
         private INode[] _nodes = new INode[0];
@@ -97,7 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_disposed > 0)
                     throw new ObjectDisposedException(nameof(ConsulNodeMonitor));
 
-                if (!IsDeployed)
+                if (WasUndeployed)
                     throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
 
                 if (_nodes.Length == 0 && LastError != null)
@@ -113,10 +114,23 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public bool IsDeployed => ConsulServiceListMonitor.Services.Contains(DeploymentIdentifier);
+        public bool WasUndeployed
+        {
+            get
+            {
+                if (_wasUndeployed)
+                    return true;
+
+                _wasUndeployed = !ConsulServiceListMonitor.Services.Contains(DeploymentIdentifier);
+                if (_wasUndeployed)
+                    ShutdownToken?.Cancel();
+
+                return _wasUndeployed;
+            }
+        } 
 
         /// <inheritdoc />
-        public Task Init() => Task.WhenAll(_nodesInitTask, _versionInitTask);
+        public Task Init() => Task.WhenAll(ConsulServiceListMonitor.Init(), _nodesInitTask, _versionInitTask);
 
         private async Task LoadVersionLoop()
         {
@@ -252,7 +266,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private HealthCheckResult CheckHealth()
         {
-            if (!IsDeployed)
+            if (WasUndeployed)
                 HealthCheckResult.Healthy($"Not exists on Consul (key value store)");
 
             var error = _lastNodesResult?.Error ?? _lastVersionResult?.Error ?? LastError;

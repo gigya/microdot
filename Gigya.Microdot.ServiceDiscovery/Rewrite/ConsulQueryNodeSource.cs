@@ -26,7 +26,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public INode[] GetNodes() => NodeMonitor.Nodes;
 
-        public bool WasUndeployed => !NodeMonitor.IsDeployed;
+        public bool WasUndeployed => NodeMonitor.WasUndeployed;
 
         public bool SupportsMultipleEnvironments => true;
 

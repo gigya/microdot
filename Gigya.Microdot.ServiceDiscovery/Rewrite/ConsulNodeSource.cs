@@ -64,7 +64,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                _wasUndeployed = !NodeMonitor.IsDeployed;
+                _wasUndeployed = NodeMonitor.WasUndeployed;
                 return _wasUndeployed;
             }
         } 

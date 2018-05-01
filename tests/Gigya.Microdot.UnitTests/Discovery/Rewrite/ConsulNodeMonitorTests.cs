@@ -33,7 +33,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeMonitor _nodeMonitor;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ConsulSimulator _consulSimulator;
-        private string _serviceDeployment;
+        private string _deploymentIdentifier;
         private ConsulConfig _consulConfig;
 
         private string _serviceName;
@@ -54,7 +54,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
-            _serviceDeployment = $"{_serviceName}-prod";
+            _deploymentIdentifier = $"{_serviceName}-prod";
             _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};
         }
 
@@ -186,20 +186,41 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetServiceVersion("1.0.0");
             await Init();
-            _nodeMonitor.IsDeployed.ShouldBeTrue();
+            _nodeMonitor.WasUndeployed.ShouldBeFalse();
             AssertExceptionIsThrown();
         }
 
+        [Test]
+        public async Task ServiceUndeployed_StopMonitoring()
+        {
+            AddServiceNode();
+            await Init();
+            _nodeMonitor.WasUndeployed.ShouldBeFalse();
+
+            RemoveService();
+            await WaitForUpdates();
+            _nodeMonitor.WasUndeployed.ShouldBeTrue();
+            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;
+            var keyValueReuqestsCounterBeforeServiceWasRedeployed = _consulSimulator.KeyValueReuqestsCounter;
+
+            AddServiceNode();
+            await WaitForUpdates();            
+            _nodeMonitor.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");            
+            _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
+            _consulSimulator.KeyValueReuqestsCounter.ShouldBe(keyValueReuqestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
+        }
+
+
         private async Task Init()
         {
-            _nodeMonitor = _testingKernel.Get<Func<string, INodeMonitor>>()(_serviceDeployment);
+            _nodeMonitor = _testingKernel.Get<Func<string, INodeMonitor>>()(_deploymentIdentifier);
             await _nodeMonitor.Init();            
         }
 
 
         private void AssertOneDefaultNode()
         {
-            _nodeMonitor.IsDeployed.ShouldBeTrue();
+            _nodeMonitor.WasUndeployed.ShouldBeFalse();
             _nodeMonitor.Nodes.Length.ShouldBe(1);
             _nodeMonitor.Nodes[0].Hostname.ShouldBe(Host1);
             _nodeMonitor.Nodes[0].Port.ShouldBe(Port1);
@@ -215,19 +236,24 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             getNodesAction.ShouldThrow<EnvironmentException>();
         }
 
-        private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
+        private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string deploymentIdentifier=null)
         {            
-            _consulSimulator.AddServiceNode(serviceName??_serviceDeployment, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceNode(deploymentIdentifier??_deploymentIdentifier, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
-        private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1, string serviceName=null)
+        private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1, string deploymentIdentifier=null)
         {
-            _consulSimulator.RemoveServiceNode(serviceName??_serviceDeployment, new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceNode(deploymentIdentifier??_deploymentIdentifier, new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
-        private void SetServiceVersion(string version, string serviceName=null)
+        private void SetServiceVersion(string version, string deploymentIdentifier=null)
         {
-            _consulSimulator.SetServiceVersion(serviceName??_serviceDeployment, version);
+            _consulSimulator.SetServiceVersion(deploymentIdentifier ?? _deploymentIdentifier, version);
+        }
+
+        private void RemoveService(string deploymentIdentifier = null)
+        {
+            _consulSimulator.RemoveService(deploymentIdentifier ?? _deploymentIdentifier);
         }
 
         private void SetConsulIsDown()

@@ -21,9 +21,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         INode[] Nodes { get; }
 
         /// <summary>
-        /// Whether this service appears on Consul as a deployed service
+        /// Whether this service has been undeployed
         /// </summary>
-        bool IsDeployed { get; }
+        bool WasUndeployed { get; }
 
     }
 }
