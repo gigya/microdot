@@ -36,15 +36,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public async Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
         {
             var nodeSource = CreateNodeSource(deploymentIdentifier);
+            await nodeSource.Init().ConfigureAwait(false);
             if (nodeSource.WasUndeployed)
                 return null;
             if (!nodeSource.SupportsMultipleEnvironments && !deploymentIdentifier.IsLastFallback) // if nodeSource not supports multiple environments, only the last fallback environment will get a valid nodeSource
                 return null;
-            else
-            {
-                await nodeSource.Init().ConfigureAwait(false);
-                return nodeSource;
-            }
+            else              
+                return nodeSource;            
         }
 
         private INodeSource CreateNodeSource(DeploymentIdentifier deploymentIdentifier)

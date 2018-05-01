@@ -21,35 +21,31 @@
 #endregion
 
 using System;
-using System.Linq;
+using System.Threading.Tasks;
+using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.ServiceDiscovery.Rewrite
+namespace Gigya.Microdot.Fakes.Discovery
 {
-    public class NodeSourceLoader : INodeSourceLoader
+    public class AlwaysLocalHostDiscoveryFactory : IDiscoveryFactory
     {
-        private readonly Func<DeploymentIdentifier, INodeSource[]> _getSources;
+        private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> CreateLoadBalancer {get;}
 
-        public NodeSourceLoader(Func<DeploymentIdentifier, INodeSource[]> getSources)
+        public AlwaysLocalHostDiscoveryFactory(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> createLoadBalancer)
         {
-            _getSources = getSources;
+            CreateLoadBalancer = createLoadBalancer;
         }
 
-        public INodeSource GetNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoveryConfig)
+        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck)
         {
-            var source = _getSources(deploymentIdentifier).FirstOrDefault(f=>f.Type.Equals(serviceDiscoveryConfig.Source, StringComparison.InvariantCultureIgnoreCase));
-
-            if (source==null)
-                throw new ConfigurationException($"Discovery Source '{serviceDiscoveryConfig.Source}' is not supported.");
-
-            return source;
+            return CreateLoadBalancer(deploymentIdentifier, new LocalNodeSource(), reachabilityCheck);
         }
-    }
 
-    public interface INodeSourceLoader
-    {
-        INodeSource GetNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoveryConfig);
+        public async Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
+        {
+            return new LocalNodeSource();
+        }
     }
 }

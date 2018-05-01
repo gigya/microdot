@@ -66,7 +66,6 @@
     <Compile Include="Rewrite\IMonitoredNode.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\IConsulServiceListMonitor.cs" />
-    <Compile Include="Rewrite\NodeSourceLoader.cs" />
     <Compile Include="EndPoint.cs" />
     <Compile Include="HostManagement\MissingHostException.cs" />
     <Compile Include="HostManagement\OverriddenRemoteHost.cs" />

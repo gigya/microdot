@@ -31,8 +31,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
                 k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
+                k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
                 _consulClientMock = new ConsulClientMock();
                 _consulClientMock.SetResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, ActiveVersion = ServiceVersion, IsQueryDefined = true });
                 k.Rebind<Func<string,IConsulClient>>().ToMethod(c=>s=>_consulClientMock);

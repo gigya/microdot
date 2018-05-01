@@ -43,6 +43,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             {
                 k.Rebind<Func<DeploymentIdentifier, INodeSource[]>>().ToMethod(c => i => _nodeSources);
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(c=> () => _discoveryConfig);
+                k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>().InSingletonScope();
                 k.Rebind<Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer>>()
                 .ToMethod(c=> (di, source, rc)=>
                 {                    
@@ -145,7 +146,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSourceWasUndeployed = true;
             var source = await TryCreateNodeSource();
             source.ShouldBeNull();
-            _consulSourceInitiated.ShouldBeFalse();
         }
 
         [Test]
@@ -155,7 +155,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSourceWasUndeployed = true;
             var loadBalancer = await TryCreateLoadBalancer();
             loadBalancer.ShouldBeNull();
-            _consulSourceInitiated.ShouldBeFalse();
         }
 
         private void ConfigureServiceSource(string source)

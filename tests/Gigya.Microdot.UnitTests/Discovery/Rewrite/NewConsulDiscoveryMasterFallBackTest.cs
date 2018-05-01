@@ -58,8 +58,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
+                k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>().InSingletonScope();
 
-                k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
                 SetupConsulMocks(k);
 
                 _dateTimeMock = Substitute.For<IDateTime>();

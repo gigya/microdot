@@ -46,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void Setup()
         {
             _configDic = new Dictionary<string, string>();
-            _unitTestingKernel = new TestingKernel<ConsoleLog>(k=>k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>(), _configDic);
+            _unitTestingKernel = new TestingKernel<ConsoleLog>(k => {}, _configDic);
 
             var environmentVarialbesMock = Substitute.For<IEnvironmentVariableProvider>();
             environmentVarialbesMock.DeploymentEnvironment.Returns(ENV);

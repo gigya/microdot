@@ -21,17 +21,14 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Rewrite;
-using Nito.AsyncEx.Synchronous;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
@@ -45,15 +42,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         internal DiscoveryConfig LastConfig { get; private set; }
         internal ServiceDiscoveryConfig LastServiceConfig { get; private set; }
 
-        private LoadBalancer MasterEnvironmentLoadBalancer { get; set; }
+        private ILoadBalancer MasterEnvironmentLoadBalancer { get; set; }
         private readonly DeploymentIdentifier _masterDeployment;
 
-        private LoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
+        private ILoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
 
-        private INodeSource _originatingSource;
-        private INodeSource _masterSource;
         private ILog Log { get; }
-        private readonly IConsulServiceListMonitor _consulServiceListMonitor;
+        private readonly IDiscoveryFactory _discoveryFactory;
         private Func<DiscoveryConfig> GetConfig { get; }
 
         private readonly DeploymentIdentifier _originatingDeployment;
@@ -62,33 +57,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly string _serviceName;
         private bool _disposed = false;
         private readonly ReachabilityCheck _reachabilityCheck;
-        private readonly ILoadBalancerFactory _loadBalancerFactory;
-        private readonly INodeSourceLoader _nodeLoader;
         private readonly object _locker = new object();
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
-        private LoadBalancer _activeLoadBalancer;
-
 
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
-                                ILoadBalancerFactory loadBalancerFactory,
-                                INodeSourceLoader nodeLoader,
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log,
-                                IConsulServiceListMonitor consulServiceListMonitor)
+                                IDiscoveryFactory discoveryFactory)
         {
             Log = log;
-            _consulServiceListMonitor = consulServiceListMonitor;            
+            _discoveryFactory = discoveryFactory;            
             _serviceName = serviceName;
             _originatingDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityCheck = reachabilityCheck;
-            _loadBalancerFactory = loadBalancerFactory;
-            _nodeLoader = nodeLoader;
             GetConfig = discoveryConfigFactory;
             // Must be run in Task.Run() because of incorrect Orleans scheduling
             _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
@@ -101,7 +88,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             await _initTask.ConfigureAwait(false);
 
-            return TryGetHostOverride() ?? GetRelevantLoadBalancer().GetNode();
+            IMonitoredNode node = TryGetHostOverride();
+            if (node != null)
+                return node;
+
+            ILoadBalancer relevantLoadBalancer = await GetRelevantLoadBalancer();
+            if (relevantLoadBalancer==null)            
+                throw new ServiceUnreachableException("Service is not deployed");
+
+            return relevantLoadBalancer.GetNode();
         }
 
         private IMonitoredNode TryGetHostOverride()
@@ -113,96 +108,73 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return new OverriddenNode(_serviceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort);            
         }
 
-        private async Task ReloadRemoteHost(DiscoveryConfig newConfig)
+        private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
         {
-            var newServiceConfig = newConfig.Services[_serviceName];
+            var newServiceConfig = discoveryConfig.Services[_serviceName];
 
             lock (_locker)
             {
                 if (newServiceConfig.Equals(LastServiceConfig) &&
-                    newConfig.EnvironmentFallbackEnabled == LastConfig.EnvironmentFallbackEnabled)
+                    discoveryConfig.EnvironmentFallbackEnabled == LastConfig.EnvironmentFallbackEnabled)
                     return;
             }
 
-            _originatingSource = await CreateNodeSource(_originatingDeployment, newServiceConfig).ConfigureAwait(false);
-
-            var shouldCreateMasterPool = newConfig.EnvironmentFallbackEnabled &&
-                                         newServiceConfig.Scope == ServiceScope.Environment &&
-                                         _originatingSource.SupportsMultipleEnvironments &&
-                                         _originatingDeployment.Equals(_masterDeployment) == false;
-
-            if (shouldCreateMasterPool)
-                _masterSource = await CreateNodeSource(_masterDeployment, newServiceConfig).ConfigureAwait(false);
-
             lock (_locker)
             {
-                
-                LastConfig = newConfig;
+                LastConfig = discoveryConfig;
                 LastServiceConfig = newServiceConfig;
+            }
+            await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
+            await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);            
+        }
 
+        private async Task ReloadMasterEnvironmentLoadBalancer()
+        {
+            var newLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
+            RemoveMasterPool();
+            MasterEnvironmentLoadBalancer = newLoadBalancer;
+        }
+
+        private async Task ReloadOriginatingEnvironmentLoadBalancer()
+        {
+            var newLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingDeployment, _reachabilityCheck).ConfigureAwait(false);
+            lock (_locker)
+            {
                 RemoveOriginatingPool();
-                OriginatingEnvironmentLoadBalancer = CreateLoadBalancer(_originatingDeployment, _originatingSource);
-
-                RemoveMasterPool();
-
-                if (_masterSource != null)
-                    MasterEnvironmentLoadBalancer = CreateLoadBalancer(_masterDeployment, _masterSource);
+                OriginatingEnvironmentLoadBalancer = newLoadBalancer;
             }
         }
 
         private void RemoveOriginatingPool()
         {
-            if (_activeLoadBalancer == OriginatingEnvironmentLoadBalancer) _activeLoadBalancer = null;
-
             OriginatingEnvironmentLoadBalancer?.Dispose();
             OriginatingEnvironmentLoadBalancer = null;
         }
 
         private void RemoveMasterPool()
         {
-            if (_activeLoadBalancer == MasterEnvironmentLoadBalancer) _activeLoadBalancer = null;
-
             MasterEnvironmentLoadBalancer?.Dispose();
             MasterEnvironmentLoadBalancer = null;
         }
 
-        private LoadBalancer CreateLoadBalancer(
-            DeploymentIdentifier deploymentIdentifier,            
-            INodeSource nodeSource)
+        private async Task<ILoadBalancer> GetRelevantLoadBalancer()
         {
-            return (LoadBalancer)_loadBalancerFactory.Create(nodeSource, deploymentIdentifier, _reachabilityCheck);
-        }
+            if (MasterEnvironmentLoadBalancer?.WasUndeployed != false)
+                await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
 
-        private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig config)
-        {
-            var source = new PersistentNodeSource(deploymentIdentifier.ToString(), ()=>_nodeLoader.GetNodeSource(deploymentIdentifier, config), _consulServiceListMonitor);
+            if (OriginatingEnvironmentLoadBalancer?.WasUndeployed != false)
+                await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
 
-            await source.Init().ConfigureAwait(false);
-
-            GetRelevantLoadBalancer();
-
-            return source;
-
-        }
-
-        private LoadBalancer GetRelevantLoadBalancer()
-        {
-            lock (_locker)
+            if (MasterEnvironmentLoadBalancer?.WasUndeployed == false &&
+                OriginatingEnvironmentLoadBalancer?.WasUndeployed != false)
             {
-                bool shouldFallBack = MasterEnvironmentLoadBalancer != null
-                                      && _originatingSource?.WasUndeployed==true;
-
-                LoadBalancer newActiveLoadBalancer = shouldFallBack ? MasterEnvironmentLoadBalancer : OriginatingEnvironmentLoadBalancer;
-
-                if (newActiveLoadBalancer != _activeLoadBalancer)
-                {
-                    Log.Info(x=>x("Discovery host pool has changed", unencryptedTags: new {serviceName = _serviceName, previousPool = _activeLoadBalancer?.ServiceName, newPool = newActiveLoadBalancer.ServiceName}));
-                    _activeLoadBalancer = newActiveLoadBalancer;
-                }
-
-                return _activeLoadBalancer;
+                return MasterEnvironmentLoadBalancer;
             }
-        }                
+            else
+            {
+                return OriginatingEnvironmentLoadBalancer;
+            }
+        }
 
         public void Dispose()
         {
@@ -211,113 +183,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             RemoveOriginatingPool();
             _configBlockLink?.Dispose();
         }
-    }
-
-    /// <summary>
-    /// This class is an adapter for nodesSource which enables working with a node source event when it was undeployed,
-    /// without need to dispose it an re-construct it when node is deployed again.
-    /// TODO: Delete this class after Discovery Rewrite is completed.
-    /// </summary>
-    public class PersistentNodeSource : INodeSource
-    {
-        private INodeSource _currentSource;
-        private Task _redeployCheck;
-        private readonly object _locker = new object();
-        private bool _disposed = false;
-
-        private int _lastServiceListVersion = 0;
-        public string DeploymentIdentifier { get; }
-        private Func<INodeSource> CreateNewSource { get; }
-        private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
-
-
-        public PersistentNodeSource(string deploymentIdentifier, Func<INodeSource> createNewSource, IConsulServiceListMonitor consulServiceListMonitor)
-        {
-            DeploymentIdentifier = deploymentIdentifier;
-            CreateNewSource = createNewSource;
-            ConsulServiceListMonitor = consulServiceListMonitor;
-            _currentSource = CreateNewSource();
-        }
-
-        public void Dispose()
-        {
-            lock (_locker)
-            {
-                _disposed = true;
-                _currentSource.Dispose();
-            }
-        }
-
-        public Task Init()
-        {
-            return _currentSource.Init();
-        }
-
-        public string Type => _currentSource.Type;
-        public INode[] GetNodes()
-        {
-            return WasUndeployed ? new INode[0] : _currentSource.GetNodes();
-        }
-
-        public bool WasUndeployed
-        {
-            get
-            {                
-                if (_currentSource.WasUndeployed)
-                {
-                    return CheckIfStillUndeployed();
-                }
-                return false;
-            }
-        }
-
-        private bool CheckIfStillUndeployed()
-        {
-            var isStillUndeployed = true;
-            lock (_locker)
-            {
-                if (_lastServiceListVersion != ConsulServiceListMonitor.Version)
-                {
-                    if (ConsulServiceListMonitor.Services.Contains(DeploymentIdentifier))
-                    {
-                        isStillUndeployed = false;
-                        if (_redeployCheck == null || _redeployCheck.IsCompleted)
-                            _redeployCheck = RecreateSourceToCheckIfItWasRedeployed();//Ignore ex 
-                    }
-                    _lastServiceListVersion = ConsulServiceListMonitor.Version;
-                }
-            }
-            return isStillUndeployed;
-        }
-
-        private async Task RecreateSourceToCheckIfItWasRedeployed()
-        {
-            if (_disposed) return;
-
-            var newSource = CreateNewSource();
-            await newSource.Init().ConfigureAwait(false);
-
-            lock (_locker)
-            {
-                if (_disposed)
-                    newSource.Dispose();
-                else
-                {
-                    var oldSource = _currentSource;
-                    _currentSource = newSource;
-                    oldSource.Dispose();
-                }
-            }
-        }
-
-        public bool SupportsMultipleEnvironments => _currentSource.SupportsMultipleEnvironments;
-    }
-
-    [Obsolete("Delete this class after Discovery Rewrite is completed")]
-    public interface ILoadBalancerFactory
-    {
-        ILoadBalancer Create(INodeSource nodeSource, DeploymentIdentifier deploymentIdentifier,
-            ReachabilityCheck reachabilityChecker);
     }
 
 

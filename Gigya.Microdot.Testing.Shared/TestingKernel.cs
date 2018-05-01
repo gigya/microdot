@@ -53,7 +53,7 @@ namespace Gigya.Microdot.Testing.Shared
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();
-            Rebind<INodeSourceLoader>().To<AlwaysLocalHostNodeSource>().InSingletonScope();
+            Rebind<IDiscoveryFactory>().To<AlwaysLocalHostDiscoveryFactory>().InSingletonScope();
             Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
             var locationsParserMock = Substitute.For<IConfigurationLocationsParser>();
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());

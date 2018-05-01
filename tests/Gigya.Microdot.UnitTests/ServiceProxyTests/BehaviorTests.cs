@@ -44,7 +44,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
             )
@@ -92,8 +92,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
 
             using (var kernel =
-                new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict))
+                new TestingKernel<ConsoleLog>(k =>{}, dict))
             {
 
 
@@ -136,7 +135,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
             };
 
-            var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict);
+            var kernel = new TestingKernel<ConsoleLog>(k => {}, dict);
             var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory(serviceName);
 
@@ -176,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
 
@@ -225,7 +224,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
+                        k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
             )
@@ -279,7 +278,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
             )
@@ -331,8 +329,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
 
             using (var kernel =
-                new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope(), dict)
+                new TestingKernel<ConsoleLog>(k=> { }, dict)
             )
             {
 

@@ -69,8 +69,7 @@ namespace Gigya.Microdot.Ninject
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
             this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
-
-            Bind<ILoadBalancerFactory>().ToFactory();
+            
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
             Kernel.BindPerKey<string, ReachabilityChecker, INewServiceDiscovery, NewServiceDiscovery>();
