@@ -38,8 +38,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private string _serviceName;
 
-        [SetUp]
-        public void Setup()
+        [OneTimeSetUp]
+        public void OneTimeSetup()
         {
             _consulSimulator = new ConsulSimulator(ConsulPort);
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
@@ -48,10 +48,23 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
                 _environmentVariableProvider.DataCenter.Returns(DataCenter);
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
-
+                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope();
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
             });
 
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            _consulSimulator.Dispose();
+            _testingKernel.Dispose();
+        }
+
+        [SetUp]
+        public void Setup()
+        {
+            _consulSimulator.Reset();
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
             _deploymentIdentifier = $"{_serviceName}-prod";
@@ -62,8 +75,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void Teardown()
         {
             _nodeMonitor?.Dispose();
-            _consulSimulator.Dispose();
-            _testingKernel.Dispose();
         }
 
         public async Task WaitForUpdates()

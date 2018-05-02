@@ -64,12 +64,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _waitForHealthIndexModification = new TaskCompletionSource<bool>();
             _waitForKeyValueIndexModification = new TaskCompletionSource<bool>();
             _httpErrorFake = null;
+            _requestsCounter = 0;
+            _allKeysRequestsCounter = 0;
+            _keyValueReuqestsCounter = 0;
+            _healthRequestsCounter = 0;
+            _queryRequestsCounter = 0;
         }
 
         public int RequestsCounter => _requestsCounter;
         public int HealthRequestsCounter => _healthRequestsCounter;
         public int QueryRequestsCounter => _queryRequestsCounter;
-        public int QllKeysRequestsCounter => _allKeysRequestsCounter;
+        public int AllKeysRequestsCounter => _allKeysRequestsCounter;
         public int KeyValueReuqestsCounter => _keyValueReuqestsCounter;
 
         private async Task<ConsulResponse> GetHealthResponse(string serviceName, ulong index)

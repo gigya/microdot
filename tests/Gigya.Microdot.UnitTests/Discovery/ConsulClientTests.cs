@@ -102,7 +102,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             AssertOneDefaultEndpoint(result);
             var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), one health call (to get endpoints)
+            _consulSimulator.HealthRequestsCounter.ShouldBe(2); // one call with zero modifyIndex, one call after modifyIndex is set
+            _consulSimulator.AllKeysRequestsCounter.ShouldBe(2);  // one call with zero modifyIndex, one call after modifyIndex is set            
             delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
         }
 

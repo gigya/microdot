@@ -260,10 +260,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupSourceNodes(Node1,Node2,Node3);
             Run100times(node => node.ReportUnreachable());
-            await Task.Delay(100);
+            await Task.Delay(1000);
 
             _reachabilityCheck = _ => Task.FromResult(true);
-            await Task.Delay(100);
+            await Task.Delay(1000);
 
             var nodes = Get100Nodes();
             nodes.ShouldContain(Node1);
@@ -281,7 +281,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _reachabilityCheck = _ => { throw reachabilityException; };
             Run100times(node => node.ReportUnreachable());
 
-            await Task.Delay(200);
+            await Task.Delay(1000);
 
             _log.LogEntries.ToArray().ShouldContain(e => e.Severity == TraceEventType.Error && e.Exception == reachabilityException);
         }
