@@ -102,8 +102,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             AssertOneDefaultEndpoint(result);
             var delays = _dateTimeFake.DelaysRequested.ToArray();
-            _consulSimulator.HealthRequestsCounter.ShouldBe(2); // one call with zero modifyIndex, one call after modifyIndex is set
-            _consulSimulator.AllKeysRequestsCounter.ShouldBe(2);  // one call with zero modifyIndex, one call after modifyIndex is set            
+            _consulSimulator.HealthRequestsCounter.ShouldBeLessThanOrEqualTo(2); // one call with zero modifyIndex, one call after modifyIndex is set
+            _consulSimulator.AllKeysRequestsCounter.ShouldBeLessThanOrEqualTo(2);  // one call with zero modifyIndex, one call after modifyIndex is set            
             delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
         }
 
