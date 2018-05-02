@@ -31,6 +31,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
@@ -43,6 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
+        private readonly ITracingContext _tracingContext;
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -57,8 +59,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
                              HttpServiceListener httpServiceListener,
-                             IEventPublisher<GrainCallEvent> eventPublisher)
+                             IEventPublisher<GrainCallEvent> eventPublisher,ITracingContext tracingContext)
         {
+            _tracingContext = tracingContext;
             Log = log;
             ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
@@ -202,6 +205,9 @@ namespace Gigya.Microdot.Orleans.Hosting
                 RequestTimings.Current.Request.Stop();
                 var grainEvent = EventPublisher.CreateEvent();
 
+                grainEvent.RequestId = _tracingContext.RequestID;
+                grainEvent.SpanId = _tracingContext.SpanID;
+                grainEvent.ParentSpanId = _tracingContext.ParentSpnaID;
                 if (target.GetPrimaryKeyString() != null)
                 {
                     grainEvent.GrainKeyString = target.GetPrimaryKeyString();

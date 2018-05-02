@@ -17,7 +17,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         protected override void Add(string key, object value)
         {
-            var dictionary = TryGetValue<Dictionary<string, object>>(MICRODOT_KEY);
+            var dictionary = (IDictionary<string, object>)RequestContext.Get(MICRODOT_KEY);
+
 
             if (dictionary == null)
                 dictionary = new Dictionary<string, object>();
