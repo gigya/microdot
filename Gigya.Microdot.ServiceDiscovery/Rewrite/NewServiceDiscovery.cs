@@ -82,15 +82,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetConfig = discoveryConfigFactory;
             // Must be run in Task.Run() because of incorrect Orleans scheduling
             _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
-            _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));            
-        }        
+            _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
+        }
 
-  
+
 
         public async Task<IMonitoredNode> GetNode()
         {
             await _initTask.ConfigureAwait(false);
-
+            
             IMonitoredNode node = TryGetHostOverride();
             if (node != null)
                 return node;
@@ -179,6 +179,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<ILoadBalancer> GetRelevantLoadBalancer()
         {
+            var config = GetConfig();
+            if (config != LastConfig)
+                await ReloadRemoteHost(config);
+
             if (MasterEnvironmentLoadBalancer?.WasUndeployed != false)
                 await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
 
