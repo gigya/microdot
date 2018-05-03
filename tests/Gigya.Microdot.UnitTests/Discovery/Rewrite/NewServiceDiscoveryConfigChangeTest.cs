@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared;
@@ -63,34 +65,18 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
         }
 
-        [TestCase("Services.OtherServiceName")]
-        [Repeat(Repeat)]
-
-        public void DiscoverySettingUpdatingUnrelatedConfig_ShouldNotChange(string serviceName)
-        {
-
-            Func<Task> act = () => WaitForConfigChange(() =>
-            {
-                _configDic[$"Discovery.{serviceName}.Source"] = "Config";
-                _configDic[$"Discovery.{serviceName}.Hosts"] = "localhost";
-            });
-
-            act.ShouldThrowAsync<TimeoutException>();
-        }
-
-
         [TestCase("Services.ServiceName")]
         [Repeat(Repeat)]
 
         public async Task HostShouldUpdateFromConfig(string serviceName)
         {
-
             await WaitForConfigChange(() =>
             {
                 _configDic[$"Discovery.{serviceName}.Source"] = "Config";
                 _configDic[$"Discovery.{serviceName}.Hosts"] = "host3";
             });
             var node = _serviceDiscovery.GetNode();
+            Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
             Assert.AreEqual("host3", node.Result.Hostname);
         }
 
@@ -112,10 +98,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             try {await _serviceDiscovery.GetNode();} catch {}
 
+            var configurationChanged = new TaskCompletionSource<bool>();
+            _unitTestingKernel.Get<ISourceBlock<DiscoveryConfig>>().LinkTo(new ActionBlock<DiscoveryConfig>(_ => configurationChanged.SetResult(true)));
+            var task = _unitTestingKernel.Get<ISourceBlock<DiscoveryConfig>>();
             update();
             _configRefresh.RaiseChangeEvent();
 
-            await Task.Delay(800);
+            await configurationChanged.Task;
+            await Task.Delay(300);
         }
     }
 }
