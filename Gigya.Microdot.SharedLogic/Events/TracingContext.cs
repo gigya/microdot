@@ -35,6 +35,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string ORLEANS_REQUEST_CONTEXT_KEY = "#ORL_RC";
         private const string REQUEST_ID_KEY = "ServiceTraceRequestID";
         private const string OVERRIDES_KEY = "Overrides";
+        private const string SPAN_START_TIME = "SpanStartTime";
+        private const string REQUEST_DEATH_TIME = "RequestDeathTime";
 
 
         internal static void SetOverrides(RequestOverrides overrides)
@@ -101,6 +103,17 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
+        public static DateTime? SpanStartTime
+        {
+            get => TryGetNullableValue<DateTime>(SPAN_START_TIME);
+            set => SetValue(SPAN_START_TIME, value);
+        }
+
+        public static DateTime? RequestDeathTime
+        {
+            get => TryGetNullableValue<DateTime>(REQUEST_DEATH_TIME);
+            set => SetValue(REQUEST_DEATH_TIME, value);
+        }
 
         /// <summary>
         /// This add requestID to logical call context in unsafe way (no copy on write)
@@ -135,6 +148,12 @@ namespace Gigya.Microdot.SharedLogic.Events
             return value as T;
         }
 
+        private static T? TryGetNullableValue<T>(string key) where T : struct
+        {
+            object value = null;
+            GetContextData()?.TryGetValue(key, out value);
+            return value as T?;
+        }
 
         /// Must setup localstorage in upper most task (one that opens other tasks)
         /// https://stackoverflow.com/questions/31953846/if-i-cant-use-tls-in-c-sharp-async-programming-what-can-i-use

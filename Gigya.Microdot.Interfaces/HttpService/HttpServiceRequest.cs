@@ -213,5 +213,18 @@ namespace Gigya.Microdot.Interfaces.HttpService
 
         [JsonProperty]
         public string ParentSpanID { get; set; }
+
+        /// <summary>
+        /// The time at which the request was sent from the client.
+        /// </summary>
+        [JsonProperty]
+        public DateTime? SpanStartTime { get; set; }
+
+        /// <summary>
+        /// The time at which the topmost API gateway is going to give up on the whole end-to-end request, after which
+        /// it makes no sense to try and handle it, or to subsequently call other services.
+        /// </summary>
+        [JsonProperty]
+        public DateTime? RequestDeathTime { get; set; }
     }
 }

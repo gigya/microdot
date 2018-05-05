@@ -29,6 +29,8 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Configurations;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Orleans;
@@ -50,16 +52,17 @@ namespace Gigya.Microdot.Orleans.Hosting
         private OrleansConfigurationBuilder ConfigBuilder { get; }
         private HttpServiceListener HttpServiceListener { get; }
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
+        private Func<LoadShedding> LoadSheddingConfig { get; }
 
 
-        public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
-                             HttpServiceListener httpServiceListener,
-                             IEventPublisher<GrainCallEvent> eventPublisher)
+        public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener,
+                             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig)
         {
             Log = log;
             ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
+            LoadSheddingConfig = loadSheddingConfig;
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
                 throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
@@ -129,7 +132,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             GrainTaskScheduler = TaskScheduler.Current;
             GrainFactory = providerRuntime.GrainFactory;
-            providerRuntime.SetInvokeInterceptor(Interceptor);
+            providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor);
+            GrainClient.ClientInvokeCallback = OutgoingCallInterceptor;
 
             try
             {
@@ -158,7 +162,14 @@ namespace Gigya.Microdot.Orleans.Hosting
         public TaskScheduler GrainTaskScheduler { get; set; }
 
 
-        private async Task<object> Interceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
+        private void OutgoingCallInterceptor(InvokeMethodRequest request, IGrain target)
+        {
+            TracingContext.SetUpStorage();
+            TracingContext.SpanStartTime = DateTime.UtcNow;
+        }
+
+
+        private async Task<object> IncomingCallInterceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
         {
             if (targetMethod == null)
                 throw new ArgumentNullException(nameof(targetMethod));
@@ -177,6 +188,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             try
             {
+                RejectRequestIfLateOrOverloaded();
                 return await invoker.Invoke(target, request);
             }
             catch (Exception e)
@@ -187,46 +199,101 @@ namespace Gigya.Microdot.Orleans.Hosting
             finally
             {
                 RequestTimings.Current.Request.Stop();
-                var grainEvent = EventPublisher.CreateEvent();
-
-                if (target.GetPrimaryKeyString() != null)
-                {
-                    grainEvent.GrainKeyString = target.GetPrimaryKeyString();
-                }
-                else if(target.IsPrimaryKeyBasedOnLong())
-                {
-                    grainEvent.GrainKeyLong = target.GetPrimaryKeyLong(out var keyExt);
-                    grainEvent.GrainKeyExtention = keyExt;
-                }
-                else
-                {
-                    grainEvent.GrainKeyGuid = target.GetPrimaryKey(out var keyExt);
-                    grainEvent.GrainKeyExtention = keyExt;
-                }
-
-                if (target is Grain grainTarget)
-                {
-                    grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
-                }
-
-                grainEvent.SiloDeploymentId =  ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
-
-
-                grainEvent.TargetType = targetMethod.DeclaringType?.FullName;
-                grainEvent.TargetMethod = targetMethod.Name;
-                grainEvent.Exception = ex;
-                grainEvent.ErrCode = ex != null ? null : (int?)0;
-
-                try
-                {
-                    EventPublisher.TryPublish(grainEvent);
-                }
-                catch (Exception)
-                {
-                    EventsDiscarded.Increment();
-                }
+                PublishEvent(targetMethod, target, ex);
             }
         }
+
+
+        private void RejectRequestIfLateOrOverloaded()
+        {
+            var config = LoadSheddingConfig();
+            var now = DateTime.UtcNow;
+
+            if (   config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.No
+                && TracingContext.SpanStartTime != null
+                && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
+            {
+
+                if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
+                    Log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new {
+                        clientSendTime    = TracingContext.SpanStartTime,
+                        currentTime       = now,
+                        maxDelayInSecs    = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
+                        actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
+                    }));
+
+                else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
+                    throw new EnvironmentException("Dropping Orleans request since too much time passed since the client sent it to us.", unencrypted: new Tags {
+                        ["clientSendTime"]    = TracingContext.SpanStartTime.ToString(),
+                        ["currentTime"]       = now.ToString(),
+                        ["maxDelayInSecs"]    = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
+                        ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
+                    });
+            }
+
+            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.No
+                && TracingContext.RequestDeathTime != null
+                && TracingContext.RequestDeathTime.Value < now)
+            {
+                if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
+                    Log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new {
+                        requestDeathTime = TracingContext.RequestDeathTime,
+                        currentTime      = now,
+                        overTimeInSecs   = (now - TracingContext.RequestDeathTime.Value).TotalSeconds,
+                    }));
+
+                else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
+                    throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags {
+                        ["requestDeathTime"] = TracingContext.RequestDeathTime.ToString(),
+                        ["currentTime"]      = now.ToString(),
+                        ["overTimeInSecs"]   = (now - TracingContext.RequestDeathTime.Value).TotalSeconds.ToString(),
+                    });
+            }
+        }
+
+
+        private void PublishEvent(MethodInfo targetMethod, IGrain target, Exception ex)
+        {
+            var grainEvent = EventPublisher.CreateEvent();
+
+            if (target.GetPrimaryKeyString() != null)
+            {
+                grainEvent.GrainKeyString = target.GetPrimaryKeyString();
+            }
+            else if (target.IsPrimaryKeyBasedOnLong())
+            {
+                grainEvent.GrainKeyLong = target.GetPrimaryKeyLong(out var keyExt);
+                grainEvent.GrainKeyExtention = keyExt;
+            }
+            else
+            {
+                grainEvent.GrainKeyGuid = target.GetPrimaryKey(out var keyExt);
+                grainEvent.GrainKeyExtention = keyExt;
+            }
+
+            if (target is Grain grainTarget)
+            {
+                grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
+            }
+
+            grainEvent.SiloDeploymentId = ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
+
+
+            grainEvent.TargetType = targetMethod.DeclaringType?.FullName;
+            grainEvent.TargetMethod = targetMethod.Name;
+            grainEvent.Exception = ex;
+            grainEvent.ErrCode = ex != null ? null : (int?) 0;
+
+            try
+            {
+                EventPublisher.TryPublish(grainEvent);
+            }
+            catch (Exception)
+            {
+                EventsDiscarded.Increment();
+            }
+        }
+
 
         private async Task BootstrapClose()
         {
