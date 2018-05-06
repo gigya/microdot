@@ -244,7 +244,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             if (error.InnerException is TaskCanceledException == false)
             {
-                Log.Error("Error calling Consul", exception: result?.Error, unencryptedTags: new
+                Log.Error(message ?? "Consul error", exception: result?.Error, unencryptedTags: new
                 {
                     serviceName = DeploymentIdentifier,
                     consulAddress = result?.ConsulAddress,

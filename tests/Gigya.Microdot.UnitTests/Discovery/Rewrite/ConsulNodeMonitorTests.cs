@@ -42,16 +42,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void OneTimeSetup()
         {
             _consulSimulator = new ConsulSimulator(ConsulPort);
-            _testingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-                _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environmentVariableProvider.DataCenter.Returns(DataCenter);
-                k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
-                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope();
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
-            });
-
         }
 
         [OneTimeTearDown]
@@ -65,16 +55,26 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void Setup()
         {
             _consulSimulator.Reset();
+            _testingKernel = new TestingKernel<ConsoleLog>(k =>
+            {
+                _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
+                _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                _environmentVariableProvider.DataCenter.Returns(DataCenter);
+                k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
+                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope();
+                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
+            });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
             _deploymentIdentifier = $"{_serviceName}-prod";
-            _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};
+            _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};            
         }
 
         [TearDown]
         public void Teardown()
         {
             _nodeMonitor?.Dispose();
+            _testingKernel?.Dispose();
         }
 
         public async Task WaitForUpdates()
@@ -205,7 +205,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AssertExceptionIsThrown();
         }
 
-        [Test]
+        [Test]        
         public async Task ServiceUndeployed_StopMonitoring()
         {
             AddServiceNode();
