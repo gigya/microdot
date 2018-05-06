@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
-using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -216,7 +215,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private async Task<DeployedService> Route(ServiceDiscoveryConfig config)
         {
-            string[] environmentCandidates = { EnvProvider.DeploymentEnvironment, "prod" };
+            string[] environmentCandidates = { EnvProvider.DeploymentEnvironment, "prod", "" };
             DeployedService selectedDeployment = null;
 
             foreach (string env in environmentCandidates)

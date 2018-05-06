@@ -59,11 +59,12 @@
     <Compile Include="HttpService\Schema\ServiceSchema.cs" />
     <Compile Include="HttpService\Schema\SimpleTypeSchema.cs" />
     <Compile Include="HttpService\Schema\TypeSchema.cs" />
-    <Compile Include="IHttpClientFactory.cs" />
+    <Compile Include="HttpService\IHttpClientFactory.cs" />
     <Compile Include="HttpService\HttpServiceRequest.cs" />
     <Compile Include="HttpService\ICertificateLocator.cs" />
     <Compile Include="HttpService\RequestOverrides.cs" />
     <Compile Include="HttpService\ServiceReachabilityStatus.cs" />
+    <Compile Include="HttpService\SimpleHttpClientFactory.cs" />
     <Compile Include="Logging\LogBase.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />

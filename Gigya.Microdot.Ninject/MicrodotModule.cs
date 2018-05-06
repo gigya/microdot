@@ -30,6 +30,7 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -96,6 +97,7 @@ namespace Gigya.Microdot.Ninject
             Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
             Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
             Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
+            Rebind<IHttpClientFactory>().To<SimpleHttpClientFactory>().InTransientScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
