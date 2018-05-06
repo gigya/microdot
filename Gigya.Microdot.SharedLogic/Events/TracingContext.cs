@@ -103,12 +103,19 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
+        /// <summary>
+        /// The time at which the request was sent from the client.
+        /// </summary>
         public static DateTimeOffset? SpanStartTime
         {
             get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
             set => SetValue(SPAN_START_TIME, value);
         }
 
+        /// <summary>
+        /// The time at which the topmost API gateway is going to give up on the whole end-to-end request, after which
+        /// it makes no sense to try and handle it, or to subsequently call other services.
+        /// </summary>
         public static DateTimeOffset? AbandonRequestBy
         {
             get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
