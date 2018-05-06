@@ -70,8 +70,7 @@ namespace Gigya.Microdot.Ninject
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
             this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
-
-            Bind<ILoadBalancerFactory>().ToFactory();
+            
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
             Kernel.BindPerKey<string, ReachabilityChecker, INewServiceDiscovery, NewServiceDiscovery>();
@@ -96,7 +95,7 @@ namespace Gigya.Microdot.Ninject
             Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
             Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
             Rebind<INodeMonitor>().To<ConsulNodeMonitor>().InTransientScope();
-            Rebind<IServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
+            Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
             Rebind<IHttpClientFactory>().To<SimpleHttpClientFactory>().InTransientScope();
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();

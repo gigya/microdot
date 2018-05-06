@@ -123,7 +123,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             update();
             _configRefresh.RaiseChangeEvent();
 
-            await task;
+            await task;            
         }
     }
 }

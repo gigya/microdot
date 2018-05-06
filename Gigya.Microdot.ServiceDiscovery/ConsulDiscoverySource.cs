@@ -196,7 +196,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             {
                 return deploymentIdentifier.ServiceName;
             }
-            return $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}";
+            return deploymentIdentifier.ToString();
         }
 
     }

@@ -7,7 +7,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// Monitors Consul using KeyValue api, to get a list of all available services
     /// </summary>    
-    public interface IServiceListMonitor: IDisposable
+    public interface IConsulServiceListMonitor: IDisposable
     {
         Task Init();
         ImmutableHashSet<string> Services { get; }

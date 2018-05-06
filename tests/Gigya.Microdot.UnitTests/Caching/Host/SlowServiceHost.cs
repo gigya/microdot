@@ -49,7 +49,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
-            kernel.Rebind<INodeSourceLoader>().To<AlwaysLocalHostNodeSource>().InSingletonScope();
+            kernel.Rebind<IDiscoveryFactory>().To<AlwaysLocalHostDiscoveryFactory>().InSingletonScope();
             kernel.Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
             action?.Invoke(kernel);
             kernel.Bind<ISlowService>().To<SlowService>().InSingletonScope();

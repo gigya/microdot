@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -13,7 +10,6 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
-using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -34,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private Dictionary<string, INodeMonitor> _consulNodeMonitors;
         private Dictionary<string, Func<INode[]>> _consulNodesResults;
-        private IServiceListMonitor _consulServiceListMonitor;
+        private IConsulServiceListMonitor _consulConsulServiceListMonitor;
         private ImmutableHashSet<string> _consulServiceList;
         private int _serviceListVersion = 0;
         private IEnvironmentVariableProvider _environmentVariableProvider;
@@ -58,8 +54,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
+                k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>().InSingletonScope();
 
-                k.Rebind<INodeSourceLoader>().To<NodeSourceLoader>().InSingletonScope();
                 SetupConsulMocks(k);
 
                 _dateTimeMock = Substitute.For<IDateTime>();
@@ -77,17 +73,26 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulNodeMonitors = new Dictionary<string, INodeMonitor>();
             _consulNodesResults = new Dictionary<string, Func<INode[]>>();
 
-            _consulServiceListMonitor = Substitute.For<IServiceListMonitor>();
+            _consulConsulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
             _consulServiceList = new HashSet<string>().ToImmutableHashSet();
-            _consulServiceListMonitor.Services.Returns(_ => _consulServiceList);
-            _consulServiceListMonitor.Version.Returns(_ => _serviceListVersion);
+            _consulConsulServiceListMonitor.Services.Returns(_ => _consulServiceList);
+            _consulConsulServiceListMonitor.Version.Returns(_ => _serviceListVersion);
 
-            kernel.Rebind<Func<string, INodeMonitor>>().ToMethod(_ => (s => _consulNodeMonitors[s]));
-            kernel.Rebind<IServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
+            kernel.Rebind<Func<string, INodeMonitor>>().ToMethod(_ => GetNodeMonitorMock);
+            kernel.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulConsulServiceListMonitor);
 
             CreateConsulMock(MasterService);
             CreateConsulMock(OriginatingService);
 
+        }
+
+        private INodeMonitor GetNodeMonitorMock(string s)
+        {
+            if (_consulNodeMonitors.ContainsKey(s))
+                return _consulNodeMonitors[s];
+            var mock = Substitute.For<INodeMonitor>();
+            mock.WasUndeployed.Returns(true);
+            return mock;
         }
 
         private void CreateConsulMock(string serviceName)
@@ -95,7 +100,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var mock = Substitute.For<INodeMonitor>();
             _consulNodesResults[serviceName] = () => new INode[] {new Node(hostName: "dummy", version: ServiceVersion)};
             mock.Nodes.Returns(_=>_consulNodesResults[serviceName]());
-            mock.IsDeployed.Returns(_ => _consulServiceList.Contains(serviceName));
+            mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(serviceName));
             _consulNodeMonitors[serviceName] = mock;
 
             _consulServiceList = _consulServiceList.Add(serviceName);
@@ -120,6 +125,18 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnServiceNotDefined(OriginatingService);
             var nextHost = GetServiceDiscovery().GetNode();
             nextHost.Result.Hostname.ShouldBe(MasterService);
+        }
+
+        [Test]
+        [Repeat(Repeat)]
+        public async Task FallbackDisabledByConsul_ShouldNotFallBackToMaster()
+        {
+            _configDic[$"Discovery.EnvironmentFallbackEnabled"] = "false";
+
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnServiceNotDefined(OriginatingService);
+            
+            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNode());            
         }
 
         [Test]

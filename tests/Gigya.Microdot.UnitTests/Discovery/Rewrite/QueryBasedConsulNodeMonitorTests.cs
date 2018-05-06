@@ -82,7 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         public async Task WaitForUpdates()
         {
-            await Task.Delay(800).ConfigureAwait(false);
+            await Task.Delay(1500).ConfigureAwait(false);
         }
 
         [Test]
@@ -163,7 +163,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Init();
-            _consulQueryNodeMonitor.IsDeployed.ShouldBeFalse();
+            _consulQueryNodeMonitor.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]
@@ -172,12 +172,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             await Init();
 
-            _consulQueryNodeMonitor.IsDeployed.ShouldBeTrue();
+            _consulQueryNodeMonitor.WasUndeployed.ShouldBeFalse();
 
             RemoveService();
             await WaitForUpdates();
 
-            _consulQueryNodeMonitor.IsDeployed.ShouldBeFalse();
+            _consulQueryNodeMonitor.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]        
@@ -186,7 +186,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             RemoveServiceNode();
             await Init();
-            _consulQueryNodeMonitor.IsDeployed.ShouldBeTrue();
+            _consulQueryNodeMonitor.WasUndeployed.ShouldBeFalse();
             ShouldThrowExceptionWhenRequestingNodes();
         }
 
@@ -196,7 +196,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             await Init();
 
-            _consulQueryNodeMonitor.IsDeployed.ShouldBeFalse();
+            _consulQueryNodeMonitor.WasUndeployed.ShouldBeTrue();
             await WaitForUpdates();
 
             AddServiceNode();
@@ -213,7 +213,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void AssertOneDefaultNode()
         {
-            _consulQueryNodeMonitor.IsDeployed.ShouldBeTrue();
+            _consulQueryNodeMonitor.WasUndeployed.ShouldBeFalse();
             _consulQueryNodeMonitor.Nodes.Length.ShouldBe(1);
             _consulQueryNodeMonitor.Nodes[0].Hostname.ShouldBe(Host1);
             _consulQueryNodeMonitor.Nodes[0].Port.ShouldBe(Port1);

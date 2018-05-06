@@ -64,6 +64,7 @@
     <Compile Include="Discovery\LocalNodeSourceTests.cs" />
     <Compile Include="Discovery\RemoteHostPoolTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulQueryNodeSourceTests.cs" />
+    <Compile Include="Discovery\Rewrite\DiscoveryFactoryTests.cs" />
     <Compile Include="Discovery\Rewrite\QueryBasedConsulNodeMonitorTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulNodeMonitorTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulNodeSourceTests.cs" />

@@ -44,7 +44,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Discovery\AlwaysLocalHost.cs" />
-    <Compile Include="Discovery\AlwaysLocalHostNodeSource.cs" />
+    <Compile Include="Discovery\AlwaysLocalHostDiscoveryFactory.cs" />
     <Compile Include="MetricsInitializerFake.cs" />
     <Compile Include="ConsoleLog.cs" />
     <Compile Include="DateTimeFake.cs" />

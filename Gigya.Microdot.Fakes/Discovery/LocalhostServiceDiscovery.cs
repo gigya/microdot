@@ -20,31 +20,54 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {
 
-    public class LocalhostServiceDiscovery : IServiceDiscovery
+    public class LocalhostServiceDiscovery : INewServiceDiscovery
     {
-        private static readonly IEndPointHandle handle = new LocalhostEndPointHandle();
+        private static readonly IMonitoredNode _node = new FakeMonitoredNode(new LocalNodeSource().GetNodes().First());
+       
+        public Task<IMonitoredNode> GetNode()
+        {
+            return Task.FromResult(_node);
+        }
+    }
 
-        private readonly Task<IEndPointHandle> _source = Task.FromResult(handle);
+    internal class FakeMonitoredNode : IMonitoredNode
+    {
+        private readonly INode _node;
 
-        private readonly Task<EndPoint[]> allHosts = Task.FromResult(new[] { new EndPoint { HostName = handle.HostName, Port = handle.Port } });
+        public FakeMonitoredNode(INode node)
+        {
+            _node = node;
+        }
 
-        public Task<IEndPointHandle> GetNextHost(string affinityToken = null) => _source;
+        public string Hostname => _node.Hostname;
+        public int? Port => _node.Port;
 
-        public Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken) => _source;
+        public void Dispose()
+        {            
+        }
 
-        public ISourceBlock<string> EndPointsChanged => new BroadcastBlock<string>(null);
+        public void ReportReachable()
+        {            
+        }
 
-        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => new BroadcastBlock<ServiceReachabilityStatus>(null);
+        public void ReportUnreachable(Exception ex = null)
+        {            
+        }
 
-        public Task<EndPoint[]> GetAllEndPoints() => allHosts;
+        public bool IsReachable => true;
+        public Exception LastException => null;
     }
 }

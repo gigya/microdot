@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
@@ -25,6 +26,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private TaskCompletionSource<bool> _waitForKeyValueIndexModification;
         private TaskCompletionSource<bool> _waitForHealthIndexModification;
         private Exception _httpErrorFake;
+
+        private int _requestsCounter = 0;
+        private int _healthRequestsCounter = 0;
+        private int _queryRequestsCounter = 0;
+        private int _allKeysRequestsCounter = 0;
+        private int _keyValueReuqestsCounter = 0;
 
         public ConsulSimulator(int consulPort)
         {
@@ -57,10 +64,23 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _waitForHealthIndexModification = new TaskCompletionSource<bool>();
             _waitForKeyValueIndexModification = new TaskCompletionSource<bool>();
             _httpErrorFake = null;
+            _requestsCounter = 0;
+            _allKeysRequestsCounter = 0;
+            _keyValueReuqestsCounter = 0;
+            _healthRequestsCounter = 0;
+            _queryRequestsCounter = 0;
         }
+
+        public int RequestsCounter => _requestsCounter;
+        public int HealthRequestsCounter => _healthRequestsCounter;
+        public int QueryRequestsCounter => _queryRequestsCounter;
+        public int AllKeysRequestsCounter => _allKeysRequestsCounter;
+        public int KeyValueReuqestsCounter => _keyValueReuqestsCounter;
 
         private async Task<ConsulResponse> GetHealthResponse(string serviceName, ulong index)
         {
+            Interlocked.Increment(ref _healthRequestsCounter);
+
             if (index >= _healthModifyIndex)
                 await _waitForHealthIndexModification.Task;
 
@@ -84,6 +104,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<ConsulResponse> GetKeyValueResponse(string serviceName, ulong index)
         {
+            Interlocked.Increment(ref _keyValueReuqestsCounter);
+
             if (index >= _keyValueModifyIndex)
                 await _waitForKeyValueIndexModification.Task;
 
@@ -102,6 +124,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<ConsulResponse> GetAllKeysResponse(string serviceName, ulong index)
         {
+            Interlocked.Increment(ref _allKeysRequestsCounter);
+
             if (index >= _keyValueModifyIndex)
                 await _waitForKeyValueIndexModification.Task;
 
@@ -115,6 +139,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task<ConsulResponse> GetQueryResponse(string serviceName, ulong index)
         {
+            Interlocked.Increment(ref _queryRequestsCounter);
+
             if (!_serviceNodes.ContainsKey(serviceName) && !_serviceActiveVersion.ContainsKey(serviceName))
                 return new ConsulResponse
                 {
@@ -213,11 +239,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 {
                     break;
                 }
+                catch (HttpListenerException)
+                {
+                    break;
+                }
             }
         }
 
         private async void HandleConsulRequest(HttpListenerContext context)
         {
+            Interlocked.Increment(ref _requestsCounter);
+
             var urlPath = context.Request.Url.PathAndQuery;
 
             if (_httpErrorFake == null)

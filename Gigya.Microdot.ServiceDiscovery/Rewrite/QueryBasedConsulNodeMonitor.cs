@@ -51,7 +51,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_disposed > 0)
                     throw new ObjectDisposedException(nameof(ConsulNodeMonitor));
 
-                if (!IsDeployed)
+                if (WasUndeployed)
                     throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
 
                 if (_nodes.Length == 0 && Error != null)
@@ -67,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public bool IsDeployed { get; set; } = true;
+        public bool WasUndeployed { get; set; } = true;
 
         private async Task LoadNodesLoop()
         {
@@ -100,7 +100,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             if (!consulResult.IsDeployed)
             {
-                IsDeployed = false;
+                WasUndeployed = true;
                 _nodes = new INode[0];
             }
             else if (consulResult.Error != null)
@@ -114,7 +114,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_nodes.Length == 0)
                     ErrorResult(consulResult, "No endpoints were specified in Consul for the requested service and service's active version.");
 
-                IsDeployed = true;
+                WasUndeployed = false;
             }
         }
 

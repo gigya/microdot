@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
-        internal INodeSource NodeSource { get; }
+        private INodeSource NodeSource { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
@@ -150,6 +150,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             DisposeNodes(_monitoredNodes);
+            NodeSource.Dispose();
             _disposed = true;
         }
     }

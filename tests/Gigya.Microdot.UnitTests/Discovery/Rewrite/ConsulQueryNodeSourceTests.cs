@@ -56,7 +56,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _getConsulNodes = () => _consulNodes;
             _queryBasedConsulNodeMonitor = Substitute.For<INodeMonitor>();
             _queryBasedConsulNodeMonitor.Nodes.Returns(_=>_getConsulNodes());
-            _queryBasedConsulNodeMonitor.IsDeployed.Returns(_ => _serviceIsDeployed);
+            _queryBasedConsulNodeMonitor.WasUndeployed.Returns(_ => !_serviceIsDeployed);
             _consulConfig = new ConsulConfig();
         }
 

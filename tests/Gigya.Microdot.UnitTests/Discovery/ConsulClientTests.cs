@@ -94,16 +94,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AssertOneDefaultEndpoint(result);
         }
 
-        [Test]        
+        [Test]       
         public async Task EndpointAdded_LongPolling()
         {
             await Start(ConsulMethod.LongPolling);
             var result = await GetResultAfter(() => AddServiceEndPoint());
 
             AssertOneDefaultEndpoint(result);
-            var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), one health call (to get endpoints)
-            delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
         }
 
         [Test]
