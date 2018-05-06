@@ -108,7 +108,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetServiceVersion(Version);
             AddServiceNode();
             await Init();
-            await WaitForUpdates();
+            
             AssertOneDefaultNode();
 
             AddServiceNode(Host2);
@@ -124,8 +124,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             AddServiceNode("nodeToRemove");
 
-            await Init();            
-
+            await Init();
+            
             _nodeMonitor.Nodes.Length.ShouldBe(2);
 
             RemoveServiceEndPoint("nodeToRemove");
@@ -146,6 +146,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetServiceVersion(Version2);
             await WaitForUpdates();
 
+            await ReloadNodeMonitorIfNeeded();
             _nodeMonitor.Nodes.Length.ShouldBe(1);
             _nodeMonitor.Nodes[0].Hostname.ShouldBe(Host2);
             _nodeMonitor.Nodes[0].Port.ShouldBe(Port2);
@@ -183,12 +184,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Init();
 
+            await ReloadNodeMonitorIfNeeded();
             _nodeMonitor.Nodes.Length.ShouldBe(1);
             _nodeMonitor.Nodes[0].Hostname.ShouldBe("oldVersionHost");
 
             SetServiceVersion("2.0.0");
             await WaitForUpdates();
 
+            await ReloadNodeMonitorIfNeeded();
             _nodeMonitor.Nodes.Length.ShouldBe(1);
             _nodeMonitor.Nodes[0].Hostname.ShouldBe("newVersionHost");
         }
@@ -228,12 +231,19 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-        private void AssertOneDefaultNode()
+        private async Task AssertOneDefaultNode()
         {
+            await ReloadNodeMonitorIfNeeded();
             _nodeMonitor.WasUndeployed.ShouldBeFalse();
             _nodeMonitor.Nodes.Length.ShouldBe(1);
             _nodeMonitor.Nodes[0].Hostname.ShouldBe(Host1);
             _nodeMonitor.Nodes[0].Port.ShouldBe(Port1);
+        }
+
+        private async Task ReloadNodeMonitorIfNeeded()
+        {
+            if (_nodeMonitor.WasUndeployed)
+                await Init();
         }
 
         private void AssertExceptionIsThrown()

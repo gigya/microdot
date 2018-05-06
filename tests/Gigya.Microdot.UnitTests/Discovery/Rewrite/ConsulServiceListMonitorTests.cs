@@ -132,7 +132,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Init();
             _consulSimulator.Reset();
             AddService();
-            await Task.Delay(300);
+            await Task.Delay(800);
             ServiceShouldExistOnList();
         }
 
@@ -142,7 +142,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddService();
             await Init();
             SetError();
-            await Task.Delay(300);
+            await Task.Delay(800);
             ServiceShouldExistOnList();
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
