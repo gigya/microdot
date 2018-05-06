@@ -103,13 +103,13 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
-        public static DateTime? SpanStartTime
+        public static DateTimeOffset? SpanStartTime
         {
             get => TryGetNullableValue<DateTime>(SPAN_START_TIME);
             set => SetValue(SPAN_START_TIME, value);
         }
 
-        public static DateTime? RequestDeathTime
+        public static DateTimeOffset? AbandonRequestBy
         {
             get => TryGetNullableValue<DateTime>(REQUEST_DEATH_TIME);
             set => SetValue(REQUEST_DEATH_TIME, value);

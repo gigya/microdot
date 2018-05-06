@@ -287,8 +287,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         private void RejectRequestIfLateOrOverloaded()
         {
             var config = LoadSheddingConfig();
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
 
+            // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
             if (   config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.No
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropMicrodotRequestsOlderThanSpanTimeBy < now)
@@ -311,22 +312,24 @@ namespace Gigya.Microdot.Hosting.HttpService
                     });
             }
 
+            // Too much time passed since the API gateway initially sent this request till it reached us (potentially
+            // passing through other micro-services along the way). Log or reject the request, if needed.
             if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.No
-                && TracingContext.RequestDeathTime != null
-                && TracingContext.RequestDeathTime.Value < now)
+                && TracingContext.AbandonRequestBy != null
+                && TracingContext.AbandonRequestBy.Value < now)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
                     Log.Warn(_ => _("Accepted Microdot request despite exceeding the API gateway timeout.", unencryptedTags: new {
-                        requestDeathTime = TracingContext.RequestDeathTime,
+                        requestDeathTime = TracingContext.AbandonRequestBy,
                         currentTime      = now,
-                        overTimeInSecs   = (now - TracingContext.RequestDeathTime.Value).TotalSeconds,
+                        overTimeInSecs   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
 
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Microdot request since the API gateway timeout passed.", unencrypted: new Tags {
-                        ["requestDeathTime"] = TracingContext.RequestDeathTime.ToString(),
+                        ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
                         ["currentTime"]      = now.ToString(),
-                        ["overTimeInSecs"]   = (now - TracingContext.RequestDeathTime.Value).TotalSeconds.ToString(),
+                        ["overTimeInSecs"]   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
                     });
             }
         }
@@ -461,7 +464,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             TracingContext.SetRequestID(request.TracingData.RequestID);
             TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
             TracingContext.SpanStartTime    = request.TracingData.SpanStartTime;
-            TracingContext.RequestDeathTime = request.TracingData.RequestDeathTime;
+            TracingContext.AbandonRequestBy = request.TracingData.AbandonRequestBy;
 
             return request;
         }
