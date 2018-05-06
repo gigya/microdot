@@ -165,7 +165,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private void OutgoingCallInterceptor(InvokeMethodRequest request, IGrain target)
         {
             TracingContext.SetUpStorage();
-            TracingContext.SpanStartTime = DateTime.UtcNow;
+            TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
         }
 
 
