@@ -290,7 +290,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             var now = DateTimeOffset.UtcNow;
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
-            if (   config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.No
+            if (   config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.Disabled
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropMicrodotRequestsOlderThanSpanTimeBy < now)
             {
@@ -314,7 +314,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
-            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.No
+            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
                 && TracingContext.AbandonRequestBy != null
                 && TracingContext.AbandonRequestBy.Value < now)
             {

@@ -210,7 +210,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             var now = DateTimeOffset.UtcNow;
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
-            if (   config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.No
+            if (   config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
@@ -234,7 +234,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
-            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.No
+            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
                 && TracingContext.AbandonRequestBy != null
                 && TracingContext.AbandonRequestBy.Value < now)
             {

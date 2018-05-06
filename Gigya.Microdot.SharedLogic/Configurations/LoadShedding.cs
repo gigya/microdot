@@ -10,19 +10,19 @@ namespace Gigya.Microdot.SharedLogic.Configurations
     {
         public enum Toggle
         {
-            No,
+            Disabled,
             LogOnly,
             Drop,
         }
 
-        public Toggle   DropRequestsByDeathTime   { get; set; } = Toggle.No;
+        public Toggle   DropRequestsByDeathTime   { get; set; } = Toggle.Disabled;
         public TimeSpan RequestTimeToLive         { get; set; } = TimeSpan.FromSeconds(30);
         public TimeSpan TimeToDropBeforeDeathTime { get; set; } = TimeSpan.FromSeconds(5);
 
-        public Toggle   DropMicrodotRequestsBySpanTime          { get; set; } = Toggle.No;
+        public Toggle   DropMicrodotRequestsBySpanTime          { get; set; } = Toggle.Disabled;
         public TimeSpan DropMicrodotRequestsOlderThanSpanTimeBy { get; set; } = TimeSpan.FromSeconds(5);
 
-        public Toggle   DropOrleansRequestsBySpanTime           { get; set; } = Toggle.No;
+        public Toggle   DropOrleansRequestsBySpanTime           { get; set; } = Toggle.Disabled;
         public TimeSpan DropOrleansRequestsOlderThanSpanTimeBy  { get; set; } = TimeSpan.FromSeconds(5);
     }
 
