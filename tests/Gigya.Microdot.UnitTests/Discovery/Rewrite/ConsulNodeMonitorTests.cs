@@ -108,6 +108,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetServiceVersion(Version);
             AddServiceNode();
             await Init();
+            await WaitForUpdates();
             AssertOneDefaultNode();
 
             AddServiceNode(Host2);
