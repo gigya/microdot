@@ -283,7 +283,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _reachabilityCheck = _ => { throw reachabilityException; };
             Run20times(node => node.ReportUnreachable());
 
-            await Task.Delay(1000);
+            await Task.Delay(1500);
 
             _log.LogEntries.ToArray().ShouldContain(e => e.Severity == TraceEventType.Error && e.Exception == reachabilityException);
         }
