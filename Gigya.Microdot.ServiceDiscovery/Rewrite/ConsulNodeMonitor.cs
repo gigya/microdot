@@ -258,8 +258,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     lastNodesResponse = _lastNodesResult?.ResponseContent,
                 });
             }
-
-            LastError = error;
+            
+            LastError = new EnvironmentException(message?? "Consul error", error, unencrypted: new Tags{
+                { "serviceName", DeploymentIdentifier},
+                { "consulAddress", result?.ConsulAddress},
+                { "commandPath", result?.CommandPath},
+                { "responseCode", result?.StatusCode?.ToString()},
+                { "content", result?.ResponseContent},
+                { "activeVersion", ActiveVersion},
+                { "lastVersionCommand", _lastVersionResult?.CommandPath},
+                { "lastVersionResponse", _lastVersionResult?.ResponseContent},
+                { "lastNodesCommand", _lastNodesResult?.CommandPath},
+                { "lastNodesResponse", _lastNodesResult?.ResponseContent}
+            }); 
             LastErrorTime = DateTime.UtcNow;
         }
 

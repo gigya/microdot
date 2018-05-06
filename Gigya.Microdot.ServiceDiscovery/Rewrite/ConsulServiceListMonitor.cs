@@ -121,7 +121,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 else
                     _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
 
-
+                Error = null;
                 return consulResult.ModifyIndex ?? 0;
             }
             return 0;

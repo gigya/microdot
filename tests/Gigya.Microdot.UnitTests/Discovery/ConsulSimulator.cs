@@ -239,6 +239,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 {
                     break;
                 }
+                catch (HttpListenerException)
+                {
+                    break;
+                }
             }
         }
 
