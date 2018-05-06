@@ -26,9 +26,6 @@ namespace CalculatorService.Client
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
 
-                TracingContext.SetUpStorage();
-                TracingContext.RequestDeathTime = DateTime.UtcNow.AddSeconds(-2);
-
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;
                 Console.WriteLine($"Sum: {sum}");
