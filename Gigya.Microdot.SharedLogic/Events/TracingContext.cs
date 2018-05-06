@@ -105,7 +105,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public static DateTimeOffset? SpanStartTime
         {
-            get => TryGetNullableValue<DateTime>(SPAN_START_TIME);
+            get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
             set => SetValue(SPAN_START_TIME, value);
         }
 
