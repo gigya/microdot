@@ -111,7 +111,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public static DateTimeOffset? AbandonRequestBy
         {
-            get => TryGetNullableValue<DateTime>(REQUEST_DEATH_TIME);
+            get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
             set => SetValue(REQUEST_DEATH_TIME, value);
         }
 
