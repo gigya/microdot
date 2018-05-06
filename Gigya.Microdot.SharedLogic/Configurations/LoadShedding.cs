@@ -16,7 +16,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations
         }
 
         public Toggle   DropRequestsByDeathTime   { get; set; } = Toggle.Disabled;
-        public TimeSpan RequestTimeToLive         { get; set; } = TimeSpan.FromSeconds(30);
+        public TimeSpan RequestTimeToLive         { get; set; } = TimeSpan.FromSeconds(90);
         public TimeSpan TimeToDropBeforeDeathTime { get; set; } = TimeSpan.FromSeconds(5);
 
         public Toggle   DropMicrodotRequestsBySpanTime          { get; set; } = Toggle.Disabled;

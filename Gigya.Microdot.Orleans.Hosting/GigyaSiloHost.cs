@@ -236,7 +236,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             // passing through other micro-services along the way). Log or reject the request, if needed.
             if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
                 && TracingContext.AbandonRequestBy != null
-                && TracingContext.AbandonRequestBy.Value < now)
+                && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
                     Log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new {
