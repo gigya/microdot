@@ -310,7 +310,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private HealthCheckResult GetHealthStatus()
         {
             var healthMonitor = (FakeHealthMonitor)_kernel.Get<IHealthMonitor>();
-            return healthMonitor.Monitors["Discovery"].Invoke();
+            return healthMonitor.Monitors[new DeploymentIdentifier(ServiceName,Env).ToString()].Invoke();
         }
 
 
