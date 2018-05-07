@@ -22,12 +22,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private int _disposed;
         private int _initiated;
+        private readonly TaskCompletionSource<bool> _waitForNodesInitiation = new TaskCompletionSource<bool>();
+        private readonly TaskCompletionSource<bool> _waitForVersionInitiation = new TaskCompletionSource<bool>();
+        private Task<ulong> _nodesInitTask;
+        private Task<ulong> _versionInitTask;
+
         private bool _wasUndeployed;
         private string _activeVersion;
         private Node[] _nodesOfAllVersions;
         private INode[] _nodes = new INode[0];
-        private Task<ulong> _nodesInitTask;
-        private Task<ulong> _versionInitTask;
         private ConsulResult<ServiceEntry[]> _lastNodesResult;
         private ConsulResult<KeyValueResponse[]> _lastVersionResult;
 
@@ -137,10 +140,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 _versionLoopTask = LoadVersionLoop();
                 _nodesLoopTask = LoadNodesLoop();
-                while (_nodesInitTask == null || _versionInitTask == null)
-                    await Task.Delay(5).ConfigureAwait(false);
             }
 
+            await Task.WhenAll(_waitForNodesInitiation.Task, _waitForVersionInitiation.Task).ConfigureAwait(false);
             await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
         }
 
@@ -149,6 +151,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 _versionInitTask = LoadVersion(0);
+                _waitForVersionInitiation.TrySetResult(true);
+
                 var modifyIndex = await _versionInitTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {
@@ -166,6 +170,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 _nodesInitTask = LoadNodes(0);
+                _waitForNodesInitiation.TrySetResult(true);
+
                 var modifyIndex = await _nodesInitTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {

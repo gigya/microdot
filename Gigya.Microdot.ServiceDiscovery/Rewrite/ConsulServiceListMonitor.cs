@@ -26,6 +26,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ImmutableHashSet<string> _allServices = new HashSet<string>().ToImmutableHashSet();
 
         private int _disposed;
+        private int _initiated;
+        private readonly TaskCompletionSource<bool> _waitForInitiation = new TaskCompletionSource<bool>();
         private Task<ulong> _initTask;
 
         ILog Log { get; }
@@ -47,7 +49,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken = new CancellationTokenSource();
 
             _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus);
-            LoopingTask = GetAllLoop();
         }
 
 
@@ -75,6 +76,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 _initTask = GetAll(0);
+                _waitForInitiation.TrySetResult(true);
+
                 var modifyIndex = await _initTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {
@@ -88,7 +91,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public Task Init() => _initTask;
+        public async Task Init()
+        {
+            if (Interlocked.Increment(ref _initiated) == 1)
+            {
+                LoopingTask = GetAllLoop();
+            }
+
+            await _waitForInitiation.Task.ConfigureAwait(false);
+            await _initTask.ConfigureAwait(false);
+        }
+        
 
         private async Task<ulong> GetAll(ulong modifyIndex)
         {
@@ -174,7 +187,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken?.Cancel();
             try
             {
-                LoopingTask.GetAwaiter().GetResult();
+                LoopingTask?.GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) {}
             ShutdownToken?.Dispose();
