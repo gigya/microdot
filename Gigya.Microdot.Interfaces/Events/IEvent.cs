@@ -39,5 +39,14 @@ namespace Gigya.Microdot.Interfaces.Events
         IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
 
         IStackTraceEnhancer StackTraceEnhancer { get; set; }
+
+        /// <summary>A unique, random ID coming from Gator</summary>    
+        string RequestId { get; set; } 
+
+        /// <summary>A unique, random ID coming from Gator</summary>    
+        string SpanId { get; set; } 
+
+        /// <summary>A unique, random ID coming from Gator</summary>    
+        string ParentSpanId { get; set; }
     }
 }

@@ -13,8 +13,10 @@ using Gigya.Microdot.Interfaces.Logging;
 namespace Gigya.Microdot.SharedLogic.Events
 {
 
-    public class EventSerializer: IEventSerializer
+    public class EventSerializer : IEventSerializer
     {
+        private readonly ITracingContext _tracingContext;
+
         [DebuggerDisplay("{" + nameof(Name) + "}")]
         private class MemberToSerialize
         {
@@ -32,12 +34,13 @@ namespace Gigya.Microdot.SharedLogic.Events
 
 
         public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
-            IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig)
+            IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig, ITracingContext tracingContext)
         {
             LoggingConfigFactory = loggingConfigFactory;
             EnvProvider = envProvider;
             StackTraceEnhancer = stackTraceEnhancer;
             EventConfig = eventConfig;
+            _tracingContext = tracingContext;
         }
 
 
@@ -47,6 +50,10 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.Configuration = LoggingConfigFactory();
             evt.EnvironmentVariableProvider = EnvProvider;
             evt.StackTraceEnhancer = StackTraceEnhancer;
+
+            evt.RequestId = evt.RequestId ?? _tracingContext.RequestID;
+            evt.SpanId = evt.SpanId ?? _tracingContext.SpanID;
+            evt.ParentSpanId = evt.ParentSpanId ??_tracingContext.ParentSpnaID;
 
             foreach (var member in GetMembersToSerialize(evt.GetType()))
                 if (predicate == null || predicate(member.Attribute) == true)
@@ -113,9 +120,9 @@ namespace Gigya.Microdot.SharedLogic.Events
                     if (!IsEmpty(kvp.Value))
                         yield return new SerializedEventField
                         {
-                            Name          = kvp.Key,
-                            Value         = !member.Attribute.TruncateIfLong ? kvp.Value : kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
-                            Attribute     = member.Attribute,
+                            Name = kvp.Key,
+                            Value = !member.Attribute.TruncateIfLong ? kvp.Value : kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
+                            Attribute = member.Attribute,
                             ShouldEncrypt = member.Attribute.Encrypt,
                         };
         }

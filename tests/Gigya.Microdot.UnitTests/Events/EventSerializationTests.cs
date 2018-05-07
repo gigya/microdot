@@ -19,16 +19,35 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration());
+        private ServiceTracingContext _tracingContext;
+        public EventSerializer _serializerWithStackTrace;
+
         EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironmentsVariableProvider(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), new ServiceTracingContext());
+
+
+        public EventSerializationTests()
+        {
+            _tracingContext = new ServiceTracingContext();
+
+            _serializerWithStackTrace = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
+                new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), _tracingContext);
+        }
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
             if (CurrentApplicationInfo.Name == null)
                 CurrentApplicationInfo.Init("Tests");
+        }
+
+        [SetUp]
+        public void Setup()
+        {
+            _tracingContext = new ServiceTracingContext();
+
+            _serializerWithStackTrace = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
+                new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), _tracingContext);
         }
 
 
@@ -83,7 +102,7 @@ namespace Gigya.Microdot.UnitTests.Events
             exception.Data.Add("details", "details");
             var evt = new Event { Exception = exception };
 
-            var serializedEvent = SerializerWithStackTrace.Serialize(evt).ToDictionary(_ => _.Name, _ => _.Value);
+            var serializedEvent = _serializerWithStackTrace.Serialize(evt).ToDictionary(_ => _.Name, _ => _.Value);
 
             serializedEvent.ShouldContainKey(EventConsts.exMessage);
             serializedEvent[EventConsts.exMessage].ShouldBe("Test Test");
@@ -109,7 +128,7 @@ namespace Gigya.Microdot.UnitTests.Events
             exception.Data.Add("details", "details");
             var evt = new Event { Exception = exception };
 
-            var serializedEvent = SerializerWithStackTrace.Serialize(evt).ToDictionary(_ => _.Name, _ => _.Value);
+            var serializedEvent = _serializerWithStackTrace.Serialize(evt).ToDictionary(_ => _.Name, _ => _.Value);
 
             serializedEvent.ShouldContainKey(EventConsts.exMessage);
             serializedEvent[EventConsts.exMessage].ShouldBe("Test Test");
@@ -131,24 +150,25 @@ namespace Gigya.Microdot.UnitTests.Events
         [Test]
         public async Task PublishClientCallEvent()
         {
+            _tracingContext.RequestID = EventConsts.callID;
+            _tracingContext.SetSpan(EventConsts.spanID, EventConsts.parentSpanID);
+
             var evt = new ClientCallEvent
             {
                 Details               = EventConsts.details,
                 ErrCode               = 1,
                 Message               = EventConsts.message,
-                RequestId             = EventConsts.callID,
                 RequestStartTimestamp = 0,
                 ResponseEndTimestamp  = 2 * Stopwatch.Frequency,
                 TargetHostName        = EventConsts.targetHost,
                 TargetMethod          = EventConsts.targetMethod,
                 TargetService         = EventConsts.targetService,
-                ParentSpanId          = EventConsts.parentSpanID,
-                SpanId                = EventConsts.spanID,
                 EncryptedTags         = new Dictionary<string, object> { { "EncryptedTag", "EncryptedTagValue" } },
                 UnencryptedTags       = new Dictionary<string, object> { { "UnencryptedTag", "UnencryptedTagValue" } }
             };
 
-            var serializedEvent = SerializerWithStackTrace.Serialize(evt).ToDictionary(_ => _.Name, _ => _.Value);
+
+            var serializedEvent = _serializerWithStackTrace.Serialize(evt).ToDictionary(_ => _.Name, _ => _.Value);
 
             serializedEvent.ShouldContainKey(EventConsts.type);
             serializedEvent[EventConsts.type].ShouldBe(EventConsts.ClientReqType);

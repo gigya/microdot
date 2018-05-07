@@ -348,7 +348,7 @@ namespace Gigya.Microdot.ServiceProxy
                 var config = GetConfig();
                 var clientCallEvent = EventPublisher.CreateEvent();
                 clientCallEvent.TargetService = ServiceName;
-                clientCallEvent.SpanId = _tracingContext.SpanID;
+                //clientCallEvent.SpanId = _tracingContext.SpanID;
                 clientCallEvent.RequestId = request.TracingData?.RequestID;
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;

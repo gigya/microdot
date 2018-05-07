@@ -205,9 +205,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                 RequestTimings.Current.Request.Stop();
                 var grainEvent = EventPublisher.CreateEvent();
 
-                grainEvent.RequestId = _tracingContext.RequestID;
-                grainEvent.SpanId = _tracingContext.SpanID;
-                grainEvent.ParentSpanId = _tracingContext.ParentSpnaID;
                 if (target.GetPrimaryKeyString() != null)
                 {
                     grainEvent.GrainKeyString = target.GetPrimaryKeyString();
