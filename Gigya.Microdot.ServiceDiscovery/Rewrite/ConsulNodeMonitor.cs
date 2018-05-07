@@ -21,6 +21,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public sealed class ConsulNodeMonitor : INodeMonitor
     {
         private int _disposed;
+        private int _initiated;
         private bool _wasUndeployed;
         private string _activeVersion;
         private Node[] _nodesOfAllVersions;
@@ -37,8 +38,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<ConsulConfig> GetConfig { get; }
         private AggregatingHealthStatus AggregatingHealthStatus { get; }
         private string DataCenter { get; }
-        private Task NodesLoopTask { get; }
-        private Task VersionLoopTask { get; }
+        private Task _nodesLoopTask;
+        private Task _versionLoopTask;
         private CancellationTokenSource ShutdownToken { get; }
         private EnvironmentException LastError { get; set; }
         private DateTime LastErrorTime { get; set; }
@@ -64,9 +65,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken = new CancellationTokenSource();
             AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");
             AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier, CheckHealth);
-
-            VersionLoopTask = LoadVersionLoop();
-            NodesLoopTask = LoadNodesLoop();
         }
 
 
@@ -127,10 +125,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 return _wasUndeployed;
             }
-        } 
+        }
+
 
         /// <inheritdoc />
-        public Task Init() => Task.WhenAll(ConsulServiceListMonitor.Init(), _nodesInitTask, _versionInitTask);
+        public async Task Init()
+        {
+            await ConsulServiceListMonitor.Init().ConfigureAwait(false);
+
+            if (Interlocked.Increment(ref _initiated) == 1)
+            {
+                _versionLoopTask = LoadVersionLoop();
+                _nodesLoopTask = LoadNodesLoop();
+                while (_nodesInitTask == null || _versionInitTask == null)
+                    await Task.Delay(5).ConfigureAwait(false);
+            }
+
+            await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
+        }
 
         private async Task LoadVersionLoop()
         {
@@ -304,8 +316,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             AggregatingHealthStatus.RemoveCheck(DeploymentIdentifier);
             ShutdownToken?.Cancel();
-            NodesLoopTask.Wait(TimeSpan.FromSeconds(3));
-            VersionLoopTask.Wait(TimeSpan.FromSeconds(3));
+            _nodesLoopTask?.Wait(TimeSpan.FromSeconds(3));
+            _versionLoopTask?.Wait(TimeSpan.FromSeconds(3));
             ShutdownToken?.Dispose();
         }
     }

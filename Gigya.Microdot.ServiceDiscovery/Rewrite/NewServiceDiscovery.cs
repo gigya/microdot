@@ -131,6 +131,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task ReloadMasterEnvironmentLoadBalancer()
         {
+            if (_masterDeployment.Equals(_originatingEnvironmentDeployment))
+            {
+                lock (_locker)
+                {
+                    RemoveMasterPool();
+                    return;
+                }
+            }
+
             var newLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
             lock (_locker)
             {
