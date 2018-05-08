@@ -23,13 +23,15 @@
 using System;
 using System.Reflection;
 using System.Runtime.Caching;
+using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    public interface IMemoizer : IDisposable
+    public interface IMemoizer : IProxyable, IDisposable
     {
-        object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
+        object Memoize(MethodInfo method, object[] args, CacheItemPolicyEx policy);
+        Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy);
     }
 
 

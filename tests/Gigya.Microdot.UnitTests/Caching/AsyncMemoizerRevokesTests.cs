@@ -6,6 +6,7 @@ using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.ServiceContract.HttpService;
 using Metrics;
@@ -33,10 +34,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new CacheConfig());
         }
 
-        private IMemoizer CreateMemoizer(AsyncCache cache)
+        private IMemoizer CreateMemoizer(object dataSource, AsyncCache cache)
         {
             var metadataProvider = new MetadataProvider();
-            return new AsyncMemoizer(cache, metadataProvider, Metric.Context(memoizerContextName));
+            return new AsyncMemoizer(dataSource, cache, metadataProvider, Metric.Context(memoizerContextName), () => new DiscoveryConfig());
         }
 
         private CacheItemPolicyEx GetPolicy(double ttlSeconds = 60 * 60 * 6, double refreshTimeSeconds = 60) => new CacheItemPolicyEx
@@ -88,10 +89,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateRevokableDataSource(null, completionSource);
             var revokesSource = new OneTimeSynchronousSourceBlock<string>();
             var cache = CreateCache(revokesSource);
-            var memoizer = CreateMemoizer(cache);
+            var memoizer = CreateMemoizer(dataSource, cache);
 
             //Call method to get results
-            var resultTask = (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            var resultTask = (Task<Revocable<Thing>>)memoizer.Memoize(ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
 
             //Post revoke message while results had not arrived
             revokesSource.PostMessageSynced("revokeKey");
@@ -128,7 +129,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var revokesSource = new OneTimeSynchronousSourceBlock<string>();
 
             var cache = CreateCache(revokesSource);
-            var memoizer = CreateMemoizer(cache);
+            var memoizer = CreateMemoizer(dataSource, cache);
 
             var actual = await CallWithMemoize(memoizer, dataSource);
             dataSource.Received(1).ThingifyTaskRevokable("someString");
@@ -174,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             cache.CacheKeyCount.ShouldBe(1);
 
             //Post revoke message to not existing key value still should be 6
-            revokesSource.PostMessageSynced("NotExistin-RevokeKey");
+            revokesSource.PostMessageSynced("NotExisting-RevokeKey");
 
 
             actual = await CallWithMemoize(memoizer, dataSource);
@@ -189,7 +190,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         private async Task<Revocable<Thing>> CallWithMemoize(IMemoizer memoizer, IThingFrobber dataSource)
         {
-            return await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            return await (Task<Revocable<Thing>>)memoizer.Memoize(ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
         }
 
 

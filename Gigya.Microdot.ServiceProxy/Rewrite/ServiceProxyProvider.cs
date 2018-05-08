@@ -51,11 +51,12 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         private string GetBaseUri(INode node, bool useHttps) => $"{(useHttps ? "https" : "http")}://{node.Hostname}:{node.Port ?? HttpSettings.BasePort}/";
 
 
-        public ServiceProxyProvider(string serviceName, Func<DiscoveryConfig> getDiscoveryConfig, Func<IMemoizer> memoizerFactory,
+        public ServiceProxyProvider(string serviceName, HttpServiceAttribute httpSettings, Func<DiscoveryConfig> getDiscoveryConfig, Func<IMemoizer> memoizerFactory,
             IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer, IEnvironmentVariableProvider envProvider,
             IDiscoveryFactory discoveryFactory)
         {
             ServiceName = serviceName;
+            HttpSettings = httpSettings;
             GetDiscoveryConfig = getDiscoveryConfig;
             MemoizerFactory = memoizerFactory;
             HttpFactory = httpFactory;
@@ -110,7 +111,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             }
 
             if (isMethodCached && cachingPolicy.Enabled == true)
-                resultTask = (Task<object>)targetDeployment.Memoizer.GetOrAdd(request.ComputeCacheKey(), Send, new CacheItemPolicyEx(cachingPolicy));
+                resultTask = (Task<object>)targetDeployment.Memoizer.GetOrAdd(request.ComputeCacheKey(), Send, resultReturnType, new CacheItemPolicyEx(cachingPolicy));
             else
                 resultTask = Send();
 

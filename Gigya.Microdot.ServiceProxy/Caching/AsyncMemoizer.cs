@@ -25,6 +25,7 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
@@ -40,21 +41,25 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private AsyncCache Cache { get; }
         private MetadataProvider MetadataProvider { get; }
         private MetricsContext Metrics { get; }
+        private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private Timer ComputeArgumentHash { get; }
+        private object DataSource { get; }
 
 
-        public AsyncMemoizer(AsyncCache cache, MetadataProvider metadataProvider, MetricsContext metrics)
+        public AsyncMemoizer(object dataSource, AsyncCache cache, MetadataProvider metadataProvider, MetricsContext metrics,
+            Func<DiscoveryConfig> getDiscoveryConfig)
         {
             Cache = cache;
             MetadataProvider = metadataProvider;
             Metrics = metrics;
+            GetDiscoveryConfig = getDiscoveryConfig;
             ComputeArgumentHash = Metrics.Timer("ComputeArgumentHash", Unit.Calls);
+            DataSource = dataSource ?? throw new ArgumentNullException(nameof(dataSource));
         }
 
 
-        public object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy)
+        public object Memoize(MethodInfo method, object[] args, CacheItemPolicyEx policy)
         {
-            if (dataSource == null) throw new ArgumentNullException(nameof(dataSource));
             if (method == null) throw new ArgumentNullException(nameof(method));
             if (args == null) throw new ArgumentNullException(nameof(args));
 
@@ -66,7 +71,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var target = new InvocationTarget(method, method.GetParameters());
             string cacheKey = $"{target}#{GetArgumentHash(args)}";
             
-            return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(dataSource, args), taskResultType, policy, target.MethodName, string.Join(",", args), new []{target.TypeName, target.MethodName});
+            return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(DataSource, args), taskResultType, policy, target.MethodName, string.Join(",", args), new []{target.TypeName, target.MethodName});
+        }
+
+        public Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy)
+        {
+            return Cache.GetOrAdd(key, factory, taskResultType, policy, null, null, new string[0]);
         }
 
 
@@ -87,6 +97,19 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         {
             Cache.TryDispose();
             Metrics.TryDispose();
+        }
+
+        public object Invoke(MethodInfo targetMethod, object[] args)
+        {
+            GetDiscoveryConfig().Services.TryGetValue(targetMethod.DeclaringType.GetServiceName(), out ServiceDiscoveryConfig discoveryConfig);
+            MethodCachingPolicyConfig config = discoveryConfig?.CachingPolicy?.Methods?[targetMethod.Name] ?? CachingPolicyConfig.Default;
+            
+            if (config.Enabled == false)
+                return targetMethod.Invoke(DataSource, args);
+            else if (MetadataProvider.IsCached(targetMethod))
+                return Memoize(targetMethod, args, new CacheItemPolicyEx(config));
+            else
+                return targetMethod.Invoke(DataSource, args);
         }
     }
 }

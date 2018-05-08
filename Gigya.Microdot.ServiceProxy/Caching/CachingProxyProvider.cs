@@ -54,10 +54,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private string ServiceName { get; }
 
 
-        public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
+        public CachingProxyProvider(TInterface dataSource, Func<object, IMemoizer> memoizerFactory, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
         {
             DataSource = dataSource;
-            Memoizer = memoizer;
+            Memoizer = memoizerFactory(dataSource);
             MetadataProvider = metadataProvider;
             GetDiscoveryConfig = getDiscoveryConfig;
             Log = log;
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 return targetMethod.Invoke(DataSource, args);
 
             if (IsMethodCached(targetMethod, args))
-                return Memoizer.Memoize(DataSource, targetMethod, args, new CacheItemPolicyEx(config));
+                return Memoizer.Memoize(targetMethod, args, new CacheItemPolicyEx(config));
             else
                 return targetMethod.Invoke(DataSource, args);
         }

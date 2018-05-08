@@ -65,8 +65,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rewrite\DeployedService.cs" />
     <Compile Include="Rewrite\Ex.cs" />
-    <Compile Include="Rewrite\IMemoizer.cs" />
-    <Compile Include="Rewrite\IProxyable.cs" />
+    <Compile Include="IProxyable.cs" />
     <Compile Include="Rewrite\IServiceProxyProvider.cs" />
     <Compile Include="Rewrite\ServiceProxyProvider.cs" />
     <Compile Include="ServiceProxyExtensions.cs" />

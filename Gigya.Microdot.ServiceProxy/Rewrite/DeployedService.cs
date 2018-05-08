@@ -1,5 +1,6 @@
 using System;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.HttpService.Schema;
 using Gigya.Microdot.SharedLogic.Utils;
 using Nito.AsyncEx;
