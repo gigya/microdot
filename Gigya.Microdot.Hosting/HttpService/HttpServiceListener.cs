@@ -81,7 +81,6 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IServiceEndPointDefinition ServiceEndPointDefinition { get; }
         private HttpListener Listener { get; }
         private ILog Log { get; }
-        private IEventPublisher<ServiceCallEvent> EventPublisher { get; }
         private IEnumerable<ICustomEndpoint> CustomEndpoints { get; }
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
@@ -97,7 +96,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly MetricsContext _endpointContext;
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
-                                   ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
+                                   ICertificateLocator certificateLocator, ILog log,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
                                    IServerRequestPublisher serverRequestPublisher,
                                    JsonExceptionSerializer exceptionSerializer,
@@ -108,7 +107,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             Worker = worker;
             Activator = activator;
             Log = log;
-            EventPublisher = eventPublisher;
             CustomEndpoints = customEndpoints.ToArray();
             EnvironmentVariableProvider = environmentVariableProvider;
             ExceptionSerializer = exceptionSerializer;
@@ -416,8 +414,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
 
-            //_tracingContext.RequestID = request.TracingData.RequestID;
-            //_tracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
             return request;
         }
 

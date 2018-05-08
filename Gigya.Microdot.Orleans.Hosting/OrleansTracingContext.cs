@@ -12,7 +12,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         public override IDictionary<string, object> Export()
         {
             throw new System.NotImplementedException();
-            //(IDictionary<string, object>)RequestContext.Get(MICRODOT_KEY);
+            //return (IDictionary<string, object>)RequestContext.Get(MICRODOT_KEY);
         }
 
         protected override void Add(string key, object value)

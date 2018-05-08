@@ -77,7 +77,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             var globalConfiguration = Kernel.Get<GlobalConfiguration>();
             globalConfiguration.SerializationProviders.Add(typeof(OrleansCustomSerialization).GetTypeInfo());
-            //globalConfiguration.SerializationProviders.Add(typeof(RequestExceptionSerialization).GetTypeInfo());
             return this;
         }
 
