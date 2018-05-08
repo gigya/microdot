@@ -84,9 +84,9 @@ namespace Gigya.Microdot.SharedLogic.Events
                     if (fieldAttr != null)
                         res.Add(new MemberToSerialize
                         {
-                            Name = member.Name,
-                            Field = member as FieldInfo,
-                            Property = member as PropertyInfo,
+                            Name      = member.Name,
+                            Field     = member as FieldInfo,
+                            Property  = member as PropertyInfo,
                             Attribute = fieldAttr,
                         });
                 }

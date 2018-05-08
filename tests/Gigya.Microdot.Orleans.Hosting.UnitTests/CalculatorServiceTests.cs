@@ -486,7 +486,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public string CallId { get; set; }
             public string SpanID { get; set; }
             public string ParentID { get; set; }
-            public RequestOverrides Overrides { get; set; }
+            public IList<HostOverride> Overrides { get; set; }
         }
         #endregion
 

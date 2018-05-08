@@ -19,7 +19,6 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        private ServiceTracingContext _tracingContext;
         public EventSerializer _serializerWithStackTrace;
 
         EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironmentsVariableProvider(),
@@ -28,10 +27,8 @@ namespace Gigya.Microdot.UnitTests.Events
 
         public EventSerializationTests()
         {
-            _tracingContext = new ServiceTracingContext();
-
             _serializerWithStackTrace = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
-                new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), _tracingContext);
+                new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), new ServiceTracingContext());
         }
 
         [OneTimeSetUp]
@@ -44,10 +41,8 @@ namespace Gigya.Microdot.UnitTests.Events
         [SetUp]
         public void Setup()
         {
-            _tracingContext = new ServiceTracingContext();
-
             _serializerWithStackTrace = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
-                new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), _tracingContext);
+                new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration(), new ServiceTracingContext());
         }
 
 
@@ -150,19 +145,19 @@ namespace Gigya.Microdot.UnitTests.Events
         [Test]
         public async Task PublishClientCallEvent()
         {
-            _tracingContext.RequestID = EventConsts.callID;
-            _tracingContext.SetSpan(EventConsts.spanID, EventConsts.parentSpanID);
-
             var evt = new ClientCallEvent
             {
                 Details               = EventConsts.details,
                 ErrCode               = 1,
                 Message               = EventConsts.message,
+                RequestId             = EventConsts.callID,
                 RequestStartTimestamp = 0,
                 ResponseEndTimestamp  = 2 * Stopwatch.Frequency,
                 TargetHostName        = EventConsts.targetHost,
                 TargetMethod          = EventConsts.targetMethod,
                 TargetService         = EventConsts.targetService,
+                ParentSpanId          = EventConsts.parentSpanID,
+                SpanId                = EventConsts.spanID,
                 EncryptedTags         = new Dictionary<string, object> { { "EncryptedTag", "EncryptedTagValue" } },
                 UnencryptedTags       = new Dictionary<string, object> { { "UnencryptedTag", "UnencryptedTagValue" } }
             };

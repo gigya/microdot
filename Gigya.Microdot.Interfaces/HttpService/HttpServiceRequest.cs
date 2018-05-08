@@ -41,7 +41,7 @@ namespace Gigya.Microdot.Interfaces.HttpService
         public TracingData TracingData { get; set; }
 
         [JsonProperty(Order = 2)]
-        public RequestOverrides Overrides { get; set; }
+        public IList<HostOverride> Overrides { get; set; }
 
         [JsonProperty(Order = 3)]
 		public InvocationTarget Target { get; set; }

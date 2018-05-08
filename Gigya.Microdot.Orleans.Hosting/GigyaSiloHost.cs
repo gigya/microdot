@@ -185,18 +185,19 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 return await invoker.Invoke(target, request);
             }
-            catch (Exception e)
+            catch (HttpRequestException e)
             {
                 ex = e;
 
-                if (e is HttpRequestException)
-                {
-                    if (e.InnerException != null)
-                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                if (e.InnerException != null)
+                    ExceptionDispatchInfo.Capture(e.InnerException).Throw();
 
-                    throw new EnvironmentException("[HttpRequestException] " + e.RawMessage(),
-                        unencrypted: new Tags { { "originalStackTrace", e.StackTrace } });
-                }
+                throw new EnvironmentException("[HttpRequestException] " + e.RawMessage(),
+                    unencrypted: new Tags { { "originalStackTrace", e.StackTrace } });
+            }
+            catch (Exception e)
+            {
+                ex = e;
 
                 throw;
             }

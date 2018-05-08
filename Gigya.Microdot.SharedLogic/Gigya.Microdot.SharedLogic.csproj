@@ -85,7 +85,6 @@
     <Compile Include="Security\CertificateHelper.cs" />
     <Compile Include="ServiceArguments.cs" />
     <Compile Include="SystemWrappers\DateTimeImpl.cs" />
-    <Compile Include="Events\TracingContext.cs" />
     <Compile Include="SharedLogicAssembly.cs" />
     <Compile Include="SystemWrappers\FileSystem.cs" />
     <Compile Include="SystemWrappers\EnvironmentInstance.cs" />

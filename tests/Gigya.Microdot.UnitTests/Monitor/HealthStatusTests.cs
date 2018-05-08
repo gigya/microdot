@@ -14,23 +14,6 @@ namespace Gigya.Microdot.UnitTests.Monitor
     [HttpService(5555)]
     public interface IUnhealthyService : IHealthStatus { }
 
-    class HealthyService : IHealthyService
-    {
-        public async Task<HealthStatusResult> Status()
-        {
-            return new HealthStatusResult("OK");
-        }
-    }
-
-    class UnhealthyService : IUnhealthyService
-    {
-        public async Task<HealthStatusResult> Status()
-        {
-            return new HealthStatusResult(null, false);
-        }
-    }
-
-
     [TestFixture]
     public class HealthStatusTests
     {

@@ -23,7 +23,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -33,10 +32,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
@@ -110,6 +107,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             CustomEndpoints = customEndpoints.ToArray();
             EnvironmentVariableProvider = environmentVariableProvider;
             ExceptionSerializer = exceptionSerializer;
+            _tracingContext = tracingContext;
+
 
             if (serviceEndPointDefinition.UseSecureChannel)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -122,10 +121,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                 IgnoreWriteExceptions = true,
                 Prefixes = { Prefix }
             };
-
-
-            _tracingContext = tracingContext;
-
 
             var context = Metric.Context("Service").Context(CurrentApplicationInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);

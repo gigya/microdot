@@ -8,7 +8,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         string RequestID { get; set; }
         string SpanID { get; }
         string ParentSpnaID { get; }
-        RequestOverrides Overrides { get; set; }
+        IList<HostOverride> Overrides { get; set; }
 
         void SetSpan(string spanId, string parentSpanId); 
         void SetHostOverride(string serviceName, string host, int? port = null);

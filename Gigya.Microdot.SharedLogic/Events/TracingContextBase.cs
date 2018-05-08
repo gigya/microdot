@@ -26,9 +26,9 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public string ParentSpnaID => TryGetValue<string>(PARENT_SPAN_ID_KEY);
 
-        public RequestOverrides Overrides
+        public IList<HostOverride> Overrides
         {
-            get => TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+            get => TryGetValue<IList<HostOverride>>(OVERRIDES_KEY);
             set => Add(OVERRIDES_KEY, value);
         }
 
@@ -38,8 +38,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public HostOverride GetHostOverride(string serviceName)
         {
-            return TryGetValue<RequestOverrides>(OVERRIDES_KEY)
-                ?.Hosts
+            return TryGetValue<IList<HostOverride>>(OVERRIDES_KEY)
                 ?.SingleOrDefault(o => o.ServiceName == serviceName);
         }
 
@@ -51,28 +50,20 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public void SetHostOverride(string serviceName, string host, int? port = null)
         {
-            var overrides = TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+            var overrides = TryGetValue<IList<HostOverride>>(OVERRIDES_KEY) ?? new List<HostOverride>();
 
-            if (overrides == null)
-            {
-                overrides = new RequestOverrides();
-                Add(OVERRIDES_KEY, overrides);
-            }
-
-            if (overrides.Hosts == null)
-                overrides.Hosts = new List<HostOverride>();
-
-            var hostOverride = overrides.Hosts.SingleOrDefault(o => o.ServiceName == serviceName);
+            var hostOverride = overrides.SingleOrDefault(o => o.ServiceName == serviceName); 
 
             if (hostOverride == null)
             {
                 hostOverride = new HostOverride { ServiceName = serviceName, };
-                overrides.Hosts.Add(hostOverride);
+                overrides.Add(hostOverride);
             }
 
             hostOverride.Host = host;
             hostOverride.Port = port;
 
+            Add(OVERRIDES_KEY, overrides);
         }
 
         protected abstract void Add(string key, object value);
