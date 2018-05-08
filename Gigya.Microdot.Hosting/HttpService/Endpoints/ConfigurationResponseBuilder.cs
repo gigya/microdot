@@ -183,11 +183,19 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
         private string GetVersion(Assembly assembly)
         {
-            var assemblyVersion = assembly.GetName().Version.ToString();
-            var productVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            string assemblyVersion = assembly.GetName().Version.ToString();
 
-            if (productVersion != null && assemblyVersion != productVersion && assemblyVersion.StartsWith(productVersion) == false)
-                return $"{assemblyVersion} ({productVersion})";
+            try
+            {
+                string productVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+                if (productVersion != null && assemblyVersion != productVersion && assemblyVersion.StartsWith(productVersion) == false)
+                    return $"{assemblyVersion} ({productVersion})";
+            }
+            catch
+            {
+                // Ignore, best effort. GetCustomAttribute() can sometimes throw FileNotFoundException or other exceptions when it
+                // needs to load additional assemblies to resolve the attribute.
+            }
 
             return assemblyVersion;
         }
