@@ -147,7 +147,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
             
             ShutdownToken?.Cancel();
-            LoopingTask.GetAwaiter().GetResult();
+            try
+            {
+                LoopingTask?.Wait(TimeSpan.FromSeconds(3));
+            }
+            catch (TaskCanceledException) { }
+
             ShutdownToken?.Dispose();
         }
     }

@@ -61,7 +61,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
                 _environmentVariableProvider.DataCenter.Returns(DataCenter);
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
-                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InSingletonScope();
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
             });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
