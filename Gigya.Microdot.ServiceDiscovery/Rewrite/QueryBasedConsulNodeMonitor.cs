@@ -139,9 +139,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ErrorTime = DateTime.UtcNow;
         }
 
-
         /// <inheritdoc />
         public void Dispose()
+        {
+            DisposeAsync().Wait(TimeSpan.FromSeconds(3));
+        }
+
+        /// <inheritdoc />
+        public async Task DisposeAsync()
         {
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
@@ -149,7 +154,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken?.Cancel();
             try
             {
-                LoopingTask?.Wait(TimeSpan.FromSeconds(3));
+                await LoopingTask;
             }
             catch (TaskCanceledException) { }
 

@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -40,5 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// Returns true if the service was undeployed.
         /// </summary>
         bool WasUndeployed { get; }
+
+        Task DisposeAsync();
     }
 }

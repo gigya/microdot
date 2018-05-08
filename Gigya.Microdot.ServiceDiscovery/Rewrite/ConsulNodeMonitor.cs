@@ -140,9 +140,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 _versionLoopTask = LoadVersionLoop();
                 _nodesLoopTask = LoadNodesLoop();
+                await Task.WhenAll(_waitForNodesInitiation.Task, _waitForVersionInitiation.Task).ConfigureAwait(false);
             }
 
-            await Task.WhenAll(_waitForNodesInitiation.Task, _waitForVersionInitiation.Task).ConfigureAwait(false);
             await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
         }
 
@@ -317,13 +317,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void Dispose()
         {
+            DisposeAsync().Wait(TimeSpan.FromSeconds(3));
+        }
+
+        public async Task DisposeAsync()
+        {
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
             AggregatingHealthStatus.RemoveCheck(DeploymentIdentifier);
+
             ShutdownToken?.Cancel();
-            _nodesLoopTask?.Wait(TimeSpan.FromSeconds(3));
-            _versionLoopTask?.Wait(TimeSpan.FromSeconds(3));
+            if (_nodesLoopTask!=null)
+                await _nodesLoopTask.ConfigureAwait(false);
+            if (_versionLoopTask!=null)
+                await _versionLoopTask.ConfigureAwait(false);
+
             ShutdownToken?.Dispose();
         }
     }

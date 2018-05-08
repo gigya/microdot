@@ -55,6 +55,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             // nothing to dispose
         }
+        public Task DisposeAsync()
+        {
+            // nothing to dispose
+            return Task.FromResult(true);
+        }
     }
 
 }

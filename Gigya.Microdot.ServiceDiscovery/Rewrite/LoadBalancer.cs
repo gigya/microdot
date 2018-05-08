@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -147,9 +148,20 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_disposed)
                 return;
 
+            DisposeAsync().Wait(TimeSpan.FromSeconds(3));
+
+            _disposed = true;
+        }
+
+        public async Task DisposeAsync()
+        {
+            if (_disposed)
+                return;
+
             DisposeNodes(_monitoredNodes);
-            NodeSource.Dispose();
+            await NodeSource.DisposeAsync().ConfigureAwait(false);
             _healthMonitor.Dispose();
+
             _disposed = true;
         }
     }
