@@ -77,10 +77,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             if (disposing)
-            {
                 NodeMonitor?.Dispose();
-                ConsulServiceListMonitor?.Dispose();
-            }
 
             _disposed = true;
         }
