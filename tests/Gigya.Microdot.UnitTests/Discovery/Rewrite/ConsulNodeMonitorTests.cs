@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
@@ -63,10 +64,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
             });
-            _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
+            _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";
 
             _deploymentIdentifier = $"{_serviceName}-prod";
-            _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};            
+            _consulConfig = new ConsulConfig { ErrorRetryInterval = TimeSpan.FromMilliseconds(10) };
         }
 
         [TearDown]
@@ -85,53 +86,76 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task ServiceExists()
         {
-            AddServiceNode();
-            await Init();
+            using (new TraceContext("AddServiceNode"))
+                AddServiceNode();
 
-            AssertOneDefaultNode();
+            using (new TraceContext("Init"))
+                await Init();
+
+            using (new TraceContext("AssertOneDefaultNode"))
+                AssertOneDefaultNode();
         }
 
-        [Test]        
+        [Test]
         public async Task ServiceAdded()
         {
-            await Init();
-            SetServiceVersion(Version);
-            AddServiceNode();
-            await WaitForUpdates();            
+            using (new TraceContext("init"))
+                await Init();
 
-            AssertOneDefaultNode();
+            using (new TraceContext("SetServiceVersion"))
+                SetServiceVersion(Version);
+            using (new TraceContext("AddServiceNode"))
+                AddServiceNode();
+            using (new TraceContext("WaitForUpdates"))
+                await WaitForUpdates();
+            using (new TraceContext("AssertOneDefaultNode"))
+                AssertOneDefaultNode();
         }
 
         [Test]
         public async Task NodeAdded()
         {
-            SetServiceVersion(Version);
-            AddServiceNode();
-            await Init();
+            using (new TraceContext("SetServiceVersion"))
+                SetServiceVersion(Version);
+            using (new TraceContext("AddServiceNode"))
+                AddServiceNode();
+            using (new TraceContext("Init"))
+                await Init();
             
-            AssertOneDefaultNode();
+            using (new TraceContext("AssertOneDefaultNode"))
+                AssertOneDefaultNode();
 
-            AddServiceNode(Host2);
-            await WaitForUpdates();
+            using (new TraceContext("AddServiceNode(Host2)"))
+                AddServiceNode(Host2);
+            using (new TraceContext("WaitForUpdates"))
+                await WaitForUpdates();
+
             _nodeMonitor.Nodes.Length.ShouldBe(2);
-            _nodeMonitor.Nodes[1].Hostname.ShouldBe(Host2);
+           _nodeMonitor.Nodes[1].Hostname.ShouldBe(Host2);
         }
 
 
         [Test]
         public async Task NodeRemoved()
         {
-            AddServiceNode();
-            AddServiceNode("nodeToRemove");
+            using (new TraceContext("AddServiceNode"))
+                AddServiceNode();
+            using (new TraceContext("AddServiceNode(nodeToRemove)"))
+                AddServiceNode("nodeToRemove");
 
-            await Init();
-            
-            _nodeMonitor.Nodes.Length.ShouldBe(2);
+            using (new TraceContext("Init"))
+                await Init();
 
-            RemoveServiceEndPoint("nodeToRemove");
-            await WaitForUpdates();
+            using (new TraceContext("_nodeMonitor.Nodes.Length.ShouldBe(2);"))
+                _nodeMonitor.Nodes.Length.ShouldBe(2);
 
-            AssertOneDefaultNode();
+            using (new TraceContext("RemoveServiceEndPoint(nodeToRemove)"))
+                RemoveServiceEndPoint("nodeToRemove");
+            using (new TraceContext("WaitForUpdates"))
+                await WaitForUpdates();
+
+            using (new TraceContext("AssertOneDefaultNode"))
+                AssertOneDefaultNode();
         }
 
 
@@ -285,5 +309,49 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
+    }
+}
+public sealed class TraceContext : IDisposable
+{
+    private readonly string _context;
+    private readonly Stopwatch _stopwatch;
+
+    public static void Print(string message)
+    {
+        var result = $" {message} ".PadLeft(90 + (message.Length / 2), '*').PadRight(180, '*');
+        Console.WriteLine(result);
+    }
+
+    public static void Run(string context, Action action)
+    {
+        using (new TraceContext(context))
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Print($"Exception :{ex}");
+                throw;
+            }
+        }
+    }
+
+    public TraceContext(string context)
+    {
+        _stopwatch = new Stopwatch();
+        _context = context;
+        Console.WriteLine("");
+        Print($"Start {_context}");
+        _stopwatch.Start();
+    }
+
+    public void Dispose()
+    {
+        var time = _stopwatch.ElapsedMilliseconds;
+        _stopwatch.Stop();
+        Console.WriteLine("");
+        Print($"End {_context} ({time}ms)");
     }
 }
