@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Gigya.Microdot.Interfaces.HttpService;
@@ -12,10 +11,11 @@ namespace Gigya.Microdot.SharedLogic.Events
         protected const string PARENT_SPAN_ID_KEY = "ParentSpanID";
         protected const string REQUEST_ID_KEY = "ServiceTraceRequestID";
         protected const string OVERRIDES_KEY = "Overrides";
+
         private const string SPAN_START_TIME = "SpanStartTime";
         private const string REQUEST_DEATH_TIME = "RequestDeathTime";
 
-        private class DatTimeClassWrapper
+        private class ValueWrapperToClass
         {
             public DateTimeOffset? DateTime { get; set; }
         }
@@ -42,8 +42,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         public DateTimeOffset? SpanStartTime
         {
-            get => TryGetValue<DatTimeClassWrapper>(SPAN_START_TIME)?.DateTime;
-            set => Add(SPAN_START_TIME, new DatTimeClassWrapper { DateTime = value });
+            get => TryGetValue<ValueWrapperToClass>(SPAN_START_TIME)?.DateTime;
+            set => Add(SPAN_START_TIME, new ValueWrapperToClass { DateTime = value });
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         public DateTimeOffset? AbandonRequestBy
         {
-            get => TryGetValue<DatTimeClassWrapper>(REQUEST_DEATH_TIME)?.DateTime;
+            get => TryGetValue<ValueWrapperToClass>(REQUEST_DEATH_TIME)?.DateTime;
             set => Add(REQUEST_DEATH_TIME, value);
         }
 

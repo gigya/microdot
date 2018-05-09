@@ -333,13 +333,13 @@ namespace Gigya.Microdot.ServiceProxy
 
             request.TracingData = new TracingData
             {
-                HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
-                ServiceName = CurrentApplicationInfo.Name,
-                RequestID = _tracingContext.RequestID,
+                HostName         = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
+                ServiceName      = CurrentApplicationInfo.Name,
+                RequestID        = _tracingContext.RequestID,
 
-                SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = _tracingContext.SpanID,
-				 SpanStartTime    = DateTimeOffset.UtcNow,
+                SpanID           = Guid.NewGuid().ToString("N"), //Each call is new span                
+                ParentSpanID     = _tracingContext.SpanID,
+                SpanStartTime    = DateTimeOffset.UtcNow,
                 AbandonRequestBy = _tracingContext.AbandonRequestBy,
             };
             PrepareRequest?.Invoke(request);

@@ -462,7 +462,6 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
-
             _tracingContext.SpanStartTime    = request.TracingData.SpanStartTime;
             _tracingContext.AbandonRequestBy = request.TracingData.AbandonRequestBy;
 
