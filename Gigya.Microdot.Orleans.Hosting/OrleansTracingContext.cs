@@ -36,8 +36,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             dictionary?.TryGetValue(key, out result);
 
-            
-            
             return result as T;
         }
 

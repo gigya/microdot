@@ -219,7 +219,7 @@ namespace Gigya.Microdot.ServiceProxy
             var wrh = HttpMessageHandler as HttpClientHandler;
 
             if (wrh == null)
-                throw new ProgrammaticException("When using HTTPS in ServiceProxy, only WebRequestHandler is supported.", unencrypted: new Tags { { "HandlerType", HttpMessageHandler.GetType().FullName } });
+                throw new ProgrammaticException("When using HTTPS in ServiceProxy, only HttpClientHandler is supported.", unencrypted: new Tags { { "HandlerType", HttpMessageHandler.GetType().FullName } });
 
             var clientCert = CertificateLocator.GetCertificate("Client");
             var clientRootCertHash = clientCert.GetHashOfRootCertificate();

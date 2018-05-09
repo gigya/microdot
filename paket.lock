@@ -141,7 +141,7 @@ NUGET
     System.IO.FileSystem.Primitives (4.3) - redirects: off
     System.Linq (4.3) - redirects: off
     System.Linq.Expressions (4.3) - redirects: off
-    System.Net.Http (4.3.3) - copy_content_to_output_dir: never, redirects: off
+    System.Net.Http (4.3.3) - redirects: off
       System.Security.Cryptography.X509Certificates (>= 4.3)
     System.Reflection (4.3) - redirects: off
     System.Reflection.Metadata (1.5)
