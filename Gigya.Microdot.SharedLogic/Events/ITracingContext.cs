@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Gigya.Microdot.Interfaces.HttpService;
 
 namespace Gigya.Microdot.SharedLogic.Events
@@ -8,6 +9,9 @@ namespace Gigya.Microdot.SharedLogic.Events
         string RequestID { get; set; }
         string SpanID { get; }
         string ParentSpnaID { get; }
+
+        DateTimeOffset? SpanStartTime { get; set; }
+        DateTimeOffset? AbandonRequestBy { get; set; }
         IList<HostOverride> Overrides { get; set; }
 
         void SetSpan(string spanId, string parentSpanId); 

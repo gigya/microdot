@@ -12,8 +12,13 @@ namespace Gigya.Microdot.SharedLogic.Events
         protected const string PARENT_SPAN_ID_KEY = "ParentSpanID";
         protected const string REQUEST_ID_KEY = "ServiceTraceRequestID";
         protected const string OVERRIDES_KEY = "Overrides";
+        private const string SPAN_START_TIME = "SpanStartTime";
+        private const string REQUEST_DEATH_TIME = "RequestDeathTime";
 
-
+        private class DatTimeClassWrapper
+        {
+            public DateTimeOffset? DateTime { get; set; }
+        }
 
         public string RequestID
         {
@@ -31,6 +36,27 @@ namespace Gigya.Microdot.SharedLogic.Events
             get => TryGetValue<IList<HostOverride>>(OVERRIDES_KEY);
             set => Add(OVERRIDES_KEY, value);
         }
+
+        /// <summary>
+        /// The time at which the request was sent from the client.
+        /// </summary>
+        public DateTimeOffset? SpanStartTime
+        {
+            get => TryGetValue<DatTimeClassWrapper>(SPAN_START_TIME)?.DateTime;
+            set => Add(SPAN_START_TIME, new DatTimeClassWrapper { DateTime = value });
+        }
+
+        /// <summary>
+        /// The time at which the topmost API gateway is going to give up on the whole end-to-end request, after which
+        /// it makes no sense to try and handle it, or to subsequently call other services.
+        /// </summary>
+        public DateTimeOffset? AbandonRequestBy
+        {
+            get => TryGetValue<DatTimeClassWrapper>(REQUEST_DEATH_TIME)?.DateTime;
+            set => Add(REQUEST_DEATH_TIME, value);
+        }
+
+
 
         public abstract IDictionary<string, object> Export();
         

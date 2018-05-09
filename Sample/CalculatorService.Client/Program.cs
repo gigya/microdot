@@ -3,6 +3,7 @@ using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
 using Ninject;
 
 namespace CalculatorService.Client
