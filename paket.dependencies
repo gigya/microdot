@@ -29,7 +29,7 @@ nuget Microsoft.CodeAnalysis.CSharp ~> 2.0
 nuget Microsoft.CodeAnalysis.Common ~> 2.0
 nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 1.0
 nuget Microsoft.Extensions.DependencyInjection ~> 1.0
-nuget NETStandard.Library ~> 1.0
+nuget NETStandard.Library ~> 2.0
 
 #Ninject
 nuget Ninject ~> 3.3
