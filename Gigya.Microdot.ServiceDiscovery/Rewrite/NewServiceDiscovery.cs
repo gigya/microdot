@@ -137,7 +137,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task ReloadMasterEnvironmentLoadBalancer()
         {
-            await RemoveMasterPool().ConfigureAwait(false);
+            RemoveMasterPool();
             if (_masterDeployment.Equals(_originatingEnvironmentDeployment))
                 return;
 
@@ -146,34 +146,31 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task ReloadOriginatingEnvironmentLoadBalancer()
         {            
-            await RemoveOriginatingPool().ConfigureAwait(false);
+            RemoveOriginatingPool();
             OriginatingEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
         private async Task ReloadNoEnvironmentLoadBalancer()
         {
-            await RemoveNoEnvironmentPool().ConfigureAwait(false);
+            RemoveNoEnvironmentPool();
             NoEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_noEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);            
         }
 
-        private async Task RemoveOriginatingPool()
+        private void RemoveOriginatingPool()
         {
-            if (OriginatingEnvironmentLoadBalancer!=null)
-                await OriginatingEnvironmentLoadBalancer.DisposeAsync().ConfigureAwait(false);
+            OriginatingEnvironmentLoadBalancer?.DisposeAsync();
             OriginatingEnvironmentLoadBalancer = null;
         }
 
-        private async Task RemoveMasterPool()
+        private void RemoveMasterPool()
         {
-            if (MasterEnvironmentLoadBalancer!=null)
-                await MasterEnvironmentLoadBalancer.DisposeAsync().ConfigureAwait(false);
+            MasterEnvironmentLoadBalancer?.DisposeAsync();
             MasterEnvironmentLoadBalancer = null;
         }
 
-        private async Task RemoveNoEnvironmentPool()
+        private void RemoveNoEnvironmentPool()
         {
-            if (NoEnvironmentLoadBalancer!=null)
-                await NoEnvironmentLoadBalancer.DisposeAsync().ConfigureAwait(false);
+            NoEnvironmentLoadBalancer?.DisposeAsync();
             NoEnvironmentLoadBalancer = null;
         }
 

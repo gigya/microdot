@@ -100,6 +100,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             await _waitForInitiation.Task.ConfigureAwait(false);
             await _initTask.ConfigureAwait(false);
+
+            // If we leave _initiated without change, it might get to int.Max and then Interlocked.Increment may put it back to int.Min.
+            // At some point, it might get back to zero. To prevent it, we set it back to a lower value.
+            _initiated = 2;
         }
         
 
