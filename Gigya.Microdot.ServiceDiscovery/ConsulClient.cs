@@ -77,7 +77,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _isDeploymentDefined = true;
 
         private bool _disposed;
-        private int _initialized = 0;
+        private int _initialized = 0;        
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
             ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
@@ -350,7 +350,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
         private async Task<ConsulResponse> CallConsul(string urlCommand, CancellationToken cancellationToken)
-        {
+        {            
             var timeout = GetConfig().HttpTimeout;
             ulong? modifyIndex = 0;
             string requestLog = string.Empty;
@@ -359,8 +359,11 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             try
             {
-                if (_httpClient == null)
-                    _httpClient = new HttpClient { BaseAddress = ConsulAddress };
+                if (_httpClient?.Timeout != timeout)
+                {
+                    _httpClient?.Dispose();
+                    _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+                }
 
                 requestLog = _httpClient.BaseAddress + urlCommand;
                 using (var timeoutcancellationToken = new CancellationTokenSource(timeout))

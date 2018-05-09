@@ -44,60 +44,73 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_disposed)
                 throw new ObjectDisposedException(nameof(ConsulClient));
 
-            using (var timeoutCancellationToken = new CancellationTokenSource(GetConfig().HttpTimeout))
-            using (CancellationTokenSource cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCancellationToken.Token))
-            {
-                string responseContent = null;
-                var consulResult = new ConsulResult<TResponse> { ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
+            var timeout = GetConfig().HttpTimeout;
 
+            if (HttpClient?.Timeout != timeout)
+            {
+                HttpClient?.Dispose();
+                HttpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+            }
+
+            string responseContent = null;
+            var consulResult = new ConsulResult<TResponse> {ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
+
+            try
+            {
+                HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+
+                using (response)
+                {
+                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    consulResult.StatusCode = response.StatusCode;
+                    consulResult.ResponseContent = responseContent;
+                    consulResult.ResponseDateTime = DateTime.UtcNow;
+                    consulResult.ModifyIndex = GetConsulIndex(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                consulResult.ConsulUnreachable(ex);
+                return consulResult;
+            }
+
+            Log.Debug(x => x("Response received from Consul",
+                unencryptedTags: new
+                {
+                    consulAddress = ConsulAddress,
+                    commandPath,
+                    responseCode = consulResult.StatusCode,
+                    responseContent
+                }));
+
+
+            if (consulResult.StatusCode == HttpStatusCode.OK)
+            {
                 try
                 {
-                    HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
-
-                    using (response)
-                    {
-                        responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        consulResult.StatusCode = response.StatusCode;
-                        consulResult.ResponseContent = responseContent;
-                        consulResult.ResponseDateTime = DateTime.UtcNow;
-                        consulResult.ModifyIndex = GetConsulIndex(response);
-                    }
+                    consulResult.Response = JsonConvert.DeserializeObject<TResponse>(responseContent);
                 }
                 catch (Exception ex)
                 {
-                    consulResult.ConsulUnreachable(ex);
-                    return consulResult;
+                    consulResult.UnparsableConsulResponse(ex);
                 }
-
-                Log.Debug(x => x("Response received from Consul", unencryptedTags: new { consulAddress = ConsulAddress, commandPath, responseCode = consulResult.StatusCode, responseContent }));
-
-
-                if (consulResult.StatusCode == HttpStatusCode.OK)
+            }
+            else
+            {
+                if (consulResult.StatusCode == HttpStatusCode.NotFound ||
+                    responseContent?.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase) == true)
                 {
-                    try
-                    {
-                        consulResult.Response = JsonConvert.DeserializeObject<TResponse>(responseContent);
-                    }
-                    catch (Exception ex)
-                    {
-                        consulResult.UnparsableConsulResponse(ex);
-                    }
+                    consulResult.IsDeployed = false;
+                    consulResult.ResponseContent =
+                        string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
                 }
                 else
                 {
-                    if (consulResult.StatusCode == HttpStatusCode.NotFound || responseContent?.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase) == true)
-                    {
-                        consulResult.IsDeployed = false;
-                        consulResult.ResponseContent = string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
-                    }
-                    else
-                    {
-                        consulResult.ConsulResponseError();
-                    }
+                    consulResult.ConsulResponseError();
                 }
-                
-                return consulResult;
             }
+
+            return consulResult;
         }
 
 

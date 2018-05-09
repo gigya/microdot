@@ -244,7 +244,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             if (_nodeMonitor.WasUndeployed)
             {
-                _nodeMonitor.Dispose();
+                await _nodeMonitor.DisposeAsync();
                 await Init();
             }
         }
