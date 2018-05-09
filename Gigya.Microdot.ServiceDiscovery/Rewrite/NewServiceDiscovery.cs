@@ -211,9 +211,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public void Dispose()
         {
             _disposed = true;
-            RemoveMasterPool().Wait(TimeSpan.FromSeconds(3));
-            RemoveOriginatingPool().Wait(TimeSpan.FromSeconds(3));
-            RemoveNoEnvironmentPool().Wait(TimeSpan.FromSeconds(3));
+            RemoveMasterPool();
+            RemoveOriginatingPool();
+            RemoveNoEnvironmentPool();
             _configBlockLink?.Dispose();
         }
     }
