@@ -238,12 +238,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     using (new TraceContext("Task.Run(()=>HandleConsulRequest(context))"))
                         Task.Run(()=>HandleConsulRequest(context));
                 }
-                catch (ObjectDisposedException)
+                catch (ObjectDisposedException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     break;
                 }
-                catch (HttpListenerException)
+                catch (HttpListenerException ex)
                 {
+                    Console.WriteLine(ex.Message);
                     break;
                 }
             }
