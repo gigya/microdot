@@ -49,7 +49,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             get
             {
                 if (_disposed > 0)
-                    throw new ObjectDisposedException(nameof(ConsulNodeMonitor));
+                    throw new ObjectDisposedException(nameof(QueryBasedConsulNodeMonitor));
 
                 if (WasUndeployed)
                     throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
