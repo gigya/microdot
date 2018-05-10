@@ -232,8 +232,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
                 try
                 {
-                    context = await _consulListener.GetContextAsync();
-                    HandleConsulRequest(context);
+                    using (new TraceContext("_consulListener.GetContextAsync()"))
+                        context = await _consulListener.GetContextAsync();
+
+                    using (new TraceContext("Task.Run(()=>HandleConsulRequest(context))"))
+                        Task.Run(()=>HandleConsulRequest(context));
                 }
                 catch (ObjectDisposedException)
                 {
