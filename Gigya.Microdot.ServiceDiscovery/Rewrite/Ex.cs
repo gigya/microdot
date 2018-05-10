@@ -16,16 +16,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 unencrypted: new Tags
                 {
                     { "requestedService", serviceName },
-                    { "missingConfigPath", $"Discovery.{serviceName}.Hosts" }
+                    { "missingConfigPath", $"Discovery.{serviceName}.Hosts" },
                 });
         }
 
-        public static ConfigurationException IncorrectHostFormatInConfig(string hosts)
+        public static ConfigurationException IncorrectHostFormatInConfig(string hosts, string serviceName)
         {
             return new ConfigurationException("A config-specified hostname name must contain at most one colon (:).",
                 unencrypted: new Tags
                 {
-                    { "hosts", hosts }
+                    { "hosts", hosts },
+                    { "configPath", $"Discovery.{serviceName}.Hosts" },
                 });
         }
 
@@ -37,7 +38,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 {
                     { "dc", dc },
                     { "serviceName", deploymentIdentifier.ServiceName },
-                    { "serviceEnv", deploymentIdentifier.DeploymentEnvironment }
+                    { "serviceEnv", deploymentIdentifier.DeploymentEnvironment },
                 });
         }
     }
