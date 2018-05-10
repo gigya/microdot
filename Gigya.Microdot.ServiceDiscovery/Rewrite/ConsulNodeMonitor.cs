@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -58,16 +59,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<ConsulConfig> getConfig, 
             Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
         {
-            DeploymentIdentifier = deploymentIdentifier;
-            Log = log;
-            ConsulServiceListMonitor = consulServiceListMonitor;
-            ConsulClient = consulClient;
-            DateTime = dateTime;
-            GetConfig = getConfig;
-            DataCenter = environmentVariableProvider.DataCenter;
-            ShutdownToken = new CancellationTokenSource();
-            AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");
-            AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier, CheckHealth);
+            using (new TraceContext("ConsulNodeMonitor.ctor"))
+            {
+                DeploymentIdentifier = deploymentIdentifier;
+                Log = log;
+                ConsulServiceListMonitor = consulServiceListMonitor;
+                ConsulClient = consulClient;
+                DateTime = dateTime;
+                GetConfig = getConfig;
+                DataCenter = environmentVariableProvider.DataCenter;
+                ShutdownToken = new CancellationTokenSource();
+                AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");
+                AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier, CheckHealth);
+            }
         }
 
 
@@ -134,16 +138,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public async Task Init()
         {
-            await ConsulServiceListMonitor.Init().ConfigureAwait(false);
+            using (new TraceContext("ConsulServiceListMonitor.Init()"))
+                await ConsulServiceListMonitor.Init().ConfigureAwait(false);
 
             if (Interlocked.Increment(ref _initiated) == 1)
             {
-                _versionLoopTask = LoadVersionLoop();
-                _nodesLoopTask = LoadNodesLoop();
-                await Task.WhenAll(_waitForNodesInitiation.Task, _waitForVersionInitiation.Task).ConfigureAwait(false);
+                using (new TraceContext("_versionLoopTask = LoadVersionLoop();"))
+                    _versionLoopTask = LoadVersionLoop();
+                using (new TraceContext("_nodesLoopTask = LoadNodesLoop();"))
+                    _nodesLoopTask = LoadNodesLoop();
+                using (new TraceContext("await Task.WhenAll(_waitForNodesInitiation.Task, _waitForVersionInitiation.Task)"))
+                    await Task.WhenAll(_waitForNodesInitiation.Task, _waitForVersionInitiation.Task).ConfigureAwait(false);
             }
 
-            await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
+            using (new TraceContext("await Task.WhenAll(_nodesInitTask, _versionInitTask)"))
+                await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
         }
 
         private async Task LoadVersionLoop()
@@ -338,3 +347,47 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     }
 }
 
+public sealed class TraceContext : IDisposable
+{
+    private readonly string _context;
+    private readonly Stopwatch _stopwatch;
+
+    public static void Print(string message)
+    {
+        var result = $" {message} ".PadLeft(90 + (message.Length / 2), '*').PadRight(180, '*');
+        Console.WriteLine(result);
+    }
+
+    public static void Run(string context, Action action)
+    {
+        using (new TraceContext(context))
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Print($"Exception :{ex}");
+                throw;
+            }
+        }
+    }
+
+    public TraceContext(string context)
+    {
+        _stopwatch = new Stopwatch();
+        _context = context;
+        Console.WriteLine("");
+        Print($"Start {_context}");
+        _stopwatch.Start();
+    }
+
+    public void Dispose()
+    {
+        var time = _stopwatch.ElapsedMilliseconds;
+        _stopwatch.Stop();
+        Console.WriteLine("");
+        Print($"End {_context} ({time}ms)");
+    }
+}

@@ -41,14 +41,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public ConsulServiceListMonitor(ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
-            Log = log;
-            ConsulClient = consulClient;
-            DateTime = dateTime;
-            GetConfig = getConfig;            
-            DataCenter = environmentVariableProvider.DataCenter;
-            ShutdownToken = new CancellationTokenSource();
+            using (new TraceContext("ConsulServiceListMonitor.ctor"))
+            {
+                Log = log;
+                ConsulClient = consulClient;
+                DateTime = dateTime;
+                GetConfig = getConfig;
+                DataCenter = environmentVariableProvider.DataCenter;
+                ShutdownToken = new CancellationTokenSource();
 
-            _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus);
+                _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus);
+            }
         }
 
 
@@ -95,11 +98,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             if (Interlocked.Increment(ref _initiated) == 1)
             {
-                LoopingTask = GetAllLoop();
+                using (new TraceContext("ServiceListMonitor Start loopingTask"))
+                    LoopingTask = GetAllLoop();
             }
 
-            await _waitForInitiation.Task.ConfigureAwait(false);
-            await _initTask.ConfigureAwait(false);
+            using (new TraceContext("await _waitForInitiation.Task.ConfigureAwait(false)")) ;
+                await _waitForInitiation.Task.ConfigureAwait(false);
+            using (new TraceContext("await _initTask.ConfigureAwait(false);"))
+                await _initTask.ConfigureAwait(false);
 
             // If we leave _initiated without change, it might get to int.Max and then Interlocked.Increment may put it back to int.Min.
             // At some point, it might get back to zero. To prevent it, we set it back to a lower value.

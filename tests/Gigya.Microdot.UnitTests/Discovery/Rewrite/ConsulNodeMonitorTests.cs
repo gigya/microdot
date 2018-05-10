@@ -250,8 +250,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private async Task Init()
         {
-            _nodeMonitor = _testingKernel.Get<Func<string, INodeMonitor>>()(_deploymentIdentifier);
-            await _nodeMonitor.Init();            
+            using (new TraceContext("createNodeMonitor"))
+                _nodeMonitor = _testingKernel.Get<Func<string, INodeMonitor>>()(_deploymentIdentifier);
+
+            using (new TraceContext("nodeMonitor.Init"))
+                await _nodeMonitor.Init();            
         }
 
 
@@ -309,49 +312,5 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-    }
-}
-public sealed class TraceContext : IDisposable
-{
-    private readonly string _context;
-    private readonly Stopwatch _stopwatch;
-
-    public static void Print(string message)
-    {
-        var result = $" {message} ".PadLeft(90 + (message.Length / 2), '*').PadRight(180, '*');
-        Console.WriteLine(result);
-    }
-
-    public static void Run(string context, Action action)
-    {
-        using (new TraceContext(context))
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                Print($"Exception :{ex}");
-                throw;
-            }
-        }
-    }
-
-    public TraceContext(string context)
-    {
-        _stopwatch = new Stopwatch();
-        _context = context;
-        Console.WriteLine("");
-        Print($"Start {_context}");
-        _stopwatch.Start();
-    }
-
-    public void Dispose()
-    {
-        var time = _stopwatch.ElapsedMilliseconds;
-        _stopwatch.Stop();
-        Console.WriteLine("");
-        Print($"End {_context} ({time}ms)");
     }
 }
