@@ -56,9 +56,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
             var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: port, serviceDrainTime: TimeSpan.FromSeconds(10));
-
             var dispose = Task.Run(() => customServiceTester.Dispose());
-         
+
+            await Task.Delay(300);
             var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
             await dispose;
