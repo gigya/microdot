@@ -98,7 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             string commandPath = $"v1/query/{DeploymentIdentifier}/execute?dc={DataCenter}";
             var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(commandPath, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (!consulResult.IsDeployed)
+            if (consulResult.IsUndeployed == false)
             {
                 WasUndeployed = true;
                 _nodes = new INode[0];
@@ -107,6 +107,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 ErrorResult(consulResult);
             }
+            // we assume that if there is no error and the service wasn't detected as UnDeployed then the service is definitely
+            // deployed since the query to /v1/query/service-env only succeeds if the service exists
             else
             {
                 ConsulQueryExecuteResponse queryResult = consulResult.Response;

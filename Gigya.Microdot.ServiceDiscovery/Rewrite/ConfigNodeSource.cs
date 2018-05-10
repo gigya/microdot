@@ -8,7 +8,8 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     /// <summary>
-    /// Nodes source is set by configuration
+    /// Provides service nodes from configuration. Note: Currently nodes are not specified per environment; it is
+    /// assumed they match the current environment and/or are agnostic to environments (i.e. global to the datacenter).
     /// </summary>
     public class ConfigNodeSource : INodeSource
     {
@@ -30,7 +31,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public ConfigNodeSource(DeploymentIdentifier deployment, Func<DiscoveryConfig> getConfig, ILog log)
         {
-            _serviceName = deployment.ServiceName;
+            _serviceName = deployment.ServiceName; // we don't need the environment
             GetConfig = getConfig;
             Log = log;
         }
@@ -47,11 +48,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 lock (_updateLocker)
                 {
-                    _lastConfig = config;
+                _lastConfig = config; // do last or other threads will take _nodes before they're ready
                     ServiceDiscoveryConfig serviceConfig = config.Services[_serviceName];
                     string hosts = serviceConfig.Hosts ?? string.Empty;
                     _nodes = hosts.Split(',', '\r', '\n')
                         .Where(e => !string.IsNullOrWhiteSpace(e))
+                        // trim?
                         .Select(h => CreateNode(h, serviceConfig))
                         .ToArray();
 
@@ -67,22 +69,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_nodes.Length == 0)
                 throw Ex.ZeroNodesInConfig(_serviceName);
 
-            return _nodes;
+            return _nodes; // not atomic; could be empty or null
         }
 
         private INode CreateNode(string hosts, ServiceDiscoveryConfig config)
         {
-            var parts = hosts
-                .Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(p => p.Trim())
-                .Where(p => string.IsNullOrEmpty(p) == false)
+            var parts = hosts // singular host
+                .Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries) // why remove?
+                .Select(p => p.Trim()) // so "us1a-nomad01      :1234" is legal?
+                .Where(p => string.IsNullOrEmpty(p) == false) // remove?
                 .ToArray();
 
             if (parts.Length > 2)
-                throw Ex.IncorrectHostFormatInConfig(hosts);
+                throw Ex.IncorrectHostFormatInConfig(hosts);  // add config path
 
             string hostName = parts[0];
-            int? port = parts.Length == 2 ? int.Parse(parts[1]) : config.DefaultPort;
+            int? port = parts.Length == 2 ? int.Parse(parts[1]) : config.DefaultPort; // check parse failure, write config path
 
             return new Node(hostName, port);
         }

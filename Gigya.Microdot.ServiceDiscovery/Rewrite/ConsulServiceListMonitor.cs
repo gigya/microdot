@@ -14,16 +14,12 @@ using Metrics;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     /// <summary>
-    /// Monitors Consul using KeyValue api, to get a list of all available services
+    /// Monitors Consul using KeyValue api, to get a list of all available <see cref="Services"/>.
+    /// Increments <see cref="Version"/> whenever the list is modified.
     /// </summary>
     public sealed class ConsulServiceListMonitor: IConsulServiceListMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
-
-        /// <summary>
-        /// Result of all keys on Consul
-        /// </summary>
-        private ImmutableHashSet<string> _allServices = new HashSet<string>().ToImmutableHashSet();
 
         private int _disposed;
         private int _initiated;
@@ -57,19 +53,32 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
+        // TODO: clients cannot obtain Services and the corresponding Version atomically. The order of checking these properties is important.
+        // expose ServicesListAndVersion instead
         /// <inheritdoc />
         public ImmutableHashSet<string> Services
         {
             get
             {
-                if (_allServices.Count == 0 && Error != null)
+                if (_servicesAndVersion.Services.Count == 0 && Error != null)
                     throw Error;
-                return _allServices;
+                return _servicesAndVersion.Services;
             }
         }
 
         /// <inheritdoc />
-        public int Version { get; private set; }
+        public int Version => _servicesAndVersion.Version;
+
+        class ServicesListAndVersion
+        {
+            /// <summary>
+            /// Result of all keys on Consul
+            /// </summary>
+            public ImmutableHashSet<string> Services = new HashSet<string>().ToImmutableHashSet();
+            public int Version;
+        }
+
+        ServicesListAndVersion _servicesAndVersion;
 
         private async Task GetAllLoop()
         {
@@ -81,6 +90,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 var modifyIndex = await _initTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {
+                    // If we got an error, we don't want to spam Consul so we wait a bit
+                    if (Error != null)
+                        await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
                     modifyIndex = await GetAll(modifyIndex).ConfigureAwait(false);
                 }
             }
@@ -109,39 +121,37 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<ulong> GetAll(ulong modifyIndex)
         {
-            ConsulConfig config = GetConfig();
-
-            if (Error != null)
-                await DateTime.DelayUntil(ErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
-
-            double maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
             string urlCommand =
-                $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={maxSecondsToWaitForResponse}s";
+                $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var consulResult = await ConsulClient.Call<string[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
             if (consulResult.Error != null)
             {
                 SetErrorResult(consulResult);
                 _healthStatus = HealthCheckResult.Unhealthy($"Error calling Consul: {consulResult.Error.Message}");
+                return 0;
             }
-            else if (consulResult.Response != null)
+            else
             {
                 var allKeys = consulResult.Response;
                 var allServiceNames = allKeys.Select(s => s.Substring("service/".Length));
-                _allServices = new HashSet<string>(allServiceNames)
+                var newServices = new HashSet<string>(allServiceNames)
                     .ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
 
-                Version++;
+                if (!newServices.SequenceEqual(_servicesAndVersion.Services))
+                    _servicesAndVersion = new ServicesListAndVersion { // update atomically
+                        Services = newServices,
+                        Version = _servicesAndVersion.Version + 1
+                    };
 
-                if (allKeys.Length == _allServices.Count)
-                    _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", allKeys));
+                if (allKeys.Length == _servicesAndVersion.Services.Count)
+                    _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", _servicesAndVersion.Services));
                 else
                     _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
 
                 Error = null;
                 return consulResult.ModifyIndex ?? 0;
             }
-            return 0;
         }
 
         private string[] GetDuplicateServiceNames(IEnumerable<string> allServices)
@@ -188,13 +198,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            ShutdownToken?.Cancel();
+            ShutdownToken.Cancel();
             try
             {
                 LoopingTask?.Wait(TimeSpan.FromSeconds(3));
             }
             catch (TaskCanceledException) {}
-            ShutdownToken?.Dispose();
+            ShutdownToken.Dispose();
             _serviceListHealthMonitor.Dispose();
         }
         

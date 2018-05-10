@@ -29,12 +29,15 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     /// <summary>
-    /// A node monitored by LoadBalancer
+    /// A node that exposes <see cref="IsReachable"/>=true until <see cref="ReportUnreachable"/> is called, at which time
+    /// <see cref="IsReachable"/> returns false and the provided <see cref="ReachabilityCheck"/> is used to test the remote
+    /// host using exponential backoff till the <see cref="ReachabilityCheck"/> returns true, or till
+    /// <see cref="ReportReachable"/> was called, at which time <see cref="IsReachable"/> is set back to true.
     /// </summary>
     public class MonitoredNode : Node, IMonitoredNode, IDisposable
     {
         private const double FirstAttemptDelaySeconds = 0.001;
-        private const double MaxAttemptDelaySeconds  = 10;
+        private const double MaxAttemptDelaySeconds  = 2;
         private const double DelayMultiplier = 2;
 
         private ReachabilityCheck ReachabilityCheck { get; }
@@ -88,7 +91,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var start = DateTime.UtcNow;
             var nextDelay = TimeSpan.FromSeconds(FirstAttemptDelaySeconds);
             var maxDelay = TimeSpan.FromSeconds(MaxAttemptDelaySeconds);
-            var attemptCount = 1;
+            var attemptCount = 0;
 
             while (true)
             {
@@ -105,7 +108,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(_ => _("The supplied reachability checker threw an exception while checking a remote host. See tags and inner exception for details.",
+                    Log.Error(_ => _("Programmatic error; the supplied reachability checker threw an exception while checking a remote host (instead of returning true/false).",
                         exception: ex,
                         unencryptedTags: new
                         {
@@ -118,7 +121,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (IsMonitoring == false)
                     return;
 
-                Log.Info(_ => _("A remote host is still unreachable, monitoring continues. See tags for details", unencryptedTags: new
+                Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", unencryptedTags: new
                 {
                     serviceName = _serviceName,
                     Hostname,
@@ -142,7 +145,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 IsMonitoring = false;
                 IsReachable = true;
 
-                Log.Info(_ => _("A remote host has become reachable. See tags for details.",
+                Log.Info(_ => _("A remote host has become reachable.",
                         unencryptedTags: new
                         {
                             serviceName = _serviceName,
