@@ -4,7 +4,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ReachabilityCheck
+    public class ReachabilityCheck // replace with delegate?
     {
         private readonly Func<INode, Task<bool>> _check;
 

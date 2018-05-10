@@ -53,32 +53,28 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
-        // TODO: clients cannot obtain Services and the corresponding Version atomically. The order of checking these properties is important.
-        // expose ServicesListAndVersion instead
-        /// <inheritdoc />
-        public ImmutableHashSet<string> Services
+
+
+        public bool DoesServiceExists(DeploymentIdentifier deploymentId, out DeploymentIdentifier normalizedDeploymentId)
         {
-            get
+            if (Services.Count == 0 && Error != null)
+                throw Error;
+            else
             {
-                if (_servicesAndVersion.Services.Count == 0 && Error != null)
-                    throw Error;
-                return _servicesAndVersion.Services;
+                if (!Services.TryGetValue(deploymentId.ToString(), out string normalizedServiceId))
+                {
+                    normalizedDeploymentId = null;
+                    return false;
+                }
+                if (deploymentId.ToString() == normalizedServiceId)
+                    normalizedDeploymentId = deploymentId;
+                else normalizedDeploymentId = new DeploymentIdentifier(normalizedServiceId.Substring(0, deploymentId.ServiceName.Length), deploymentId.DeploymentEnvironment);
+                return true;
             }
         }
 
-        /// <inheritdoc />
-        public int Version => _servicesAndVersion.Version;
+        ImmutableHashSet<string> Services = new HashSet<string>().ToImmutableHashSet();
 
-        class ServicesListAndVersion
-        {
-            /// <summary>
-            /// Result of all keys on Consul
-            /// </summary>
-            public ImmutableHashSet<string> Services = new HashSet<string>().ToImmutableHashSet();
-            public int Version;
-        }
-
-        ServicesListAndVersion _servicesAndVersion;
 
         private async Task GetAllLoop()
         {
@@ -117,7 +113,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // At some point, it might get back to zero. To prevent it, we set it back to a lower value.
             _initiated = 2;
         }
-        
+
 
         private async Task<ulong> GetAll(ulong modifyIndex)
         {
@@ -135,17 +131,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 var allKeys = consulResult.Response;
                 var allServiceNames = allKeys.Select(s => s.Substring("service/".Length));
-                var newServices = new HashSet<string>(allServiceNames)
-                    .ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
+                var newServices = new HashSet<string>(allServiceNames).ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
+                Services = newServices;
 
-                if (!newServices.SequenceEqual(_servicesAndVersion.Services))
-                    _servicesAndVersion = new ServicesListAndVersion { // update atomically
-                        Services = newServices,
-                        Version = _servicesAndVersion.Version + 1
-                    };
-
-                if (allKeys.Length == _servicesAndVersion.Services.Count)
-                    _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", _servicesAndVersion.Services));
+                if (allKeys.Length == Services.Count)
+                    _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
                 else
                     _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
 

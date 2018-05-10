@@ -46,10 +46,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private CancellationTokenSource ShutdownToken { get; }
         private EnvironmentException LastError { get; set; }
         private DateTime LastErrorTime { get; set; }
-        private string DeploymentIdentifier { get; }
+        private DeploymentIdentifier DeploymentIdentifier { get; }
 
         public ConsulNodeMonitor(
-            string deploymentIdentifier, 
+            DeploymentIdentifier deploymentIdentifier, 
             ILog log, 
             IConsulServiceListMonitor consulServiceListMonitor, 
             ConsulClient consulClient, 
@@ -67,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
             AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");
-            AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier, CheckHealth);
+            AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier.ToString(), CheckHealth);
         }
 
 
@@ -122,7 +122,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                _wasUndeployed = !ConsulServiceListMonitor.Services.Contains(DeploymentIdentifier);
+                _wasUndeployed = !ConsulServiceListMonitor.DoesServiceExists(DeploymentIdentifier, out var _);
                 if (_wasUndeployed)
                     ShutdownToken?.Cancel();
 
@@ -262,7 +262,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 Log.Error(message ?? "Consul error", exception: result?.Error, unencryptedTags: new
                 {
-                    serviceName   = DeploymentIdentifier,
+                    serviceName   = DeploymentIdentifier.ServiceName,
+                    serviceEnv   = DeploymentIdentifier.DeploymentEnvironment,
                     consulAddress = result?.ConsulAddress,
                     commandPath   = result?.CommandPath,
                     responseCode  = result?.StatusCode,
@@ -280,7 +281,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             
             LastError = new EnvironmentException(message?? "Consul error", error, unencrypted: new Tags{
-                { "serviceName", DeploymentIdentifier},
+                { "serviceName", DeploymentIdentifier.ServiceName},
+                { "serviceEnv", DeploymentIdentifier.DeploymentEnvironment},
                 { "consulAddress", result?.ConsulAddress},
                 { "commandPath", result?.CommandPath},
                 { "responseCode", result?.StatusCode?.ToString()},
@@ -331,7 +333,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            AggregatingHealthStatus.RemoveCheck(DeploymentIdentifier);
+            AggregatingHealthStatus.RemoveCheck(DeploymentIdentifier.ToString());
 
             ShutdownToken?.Cancel();
             if (_nodesLoopTask!=null)

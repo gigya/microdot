@@ -26,11 +26,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<ConsulConfig> GetConfig { get; }
         private Task LoopingTask { get; set; }
         private string DataCenter { get; }
-        private string DeploymentIdentifier { get; }
+        private DeploymentIdentifier DeploymentIdentifier { get; }
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
-        public QueryBasedConsulNodeMonitor(string deploymentIdentifier, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public QueryBasedConsulNodeMonitor(DeploymentIdentifier deploymentIdentifier, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
             DeploymentIdentifier = deploymentIdentifier;
             Log = log;

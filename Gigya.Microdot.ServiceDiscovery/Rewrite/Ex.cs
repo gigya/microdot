@@ -29,14 +29,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 });
         }
 
-        public static EnvironmentException ServiceNotDeployed(string dc, string deploymentIdentifier)
+        public static EnvironmentException ServiceNotDeployed(string dc, DeploymentIdentifier deploymentIdentifier)
         {
             return new EnvironmentException(
                 "The requested service is not deployed in the specified data center and environment. See tags for details.", 
                 unencrypted: new Tags
                 {
                     { "dc", dc },
-                    { "deploymentIdentifier", deploymentIdentifier }
+                    { "serviceName", deploymentIdentifier.ServiceName },
+                    { "serviceEnv", deploymentIdentifier.DeploymentEnvironment }
                 });
         }
     }

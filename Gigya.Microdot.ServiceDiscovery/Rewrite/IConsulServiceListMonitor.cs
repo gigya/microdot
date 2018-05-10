@@ -1,25 +1,16 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     /// <summary>
-    /// Monitors Consul using KeyValue api, to get a list of all available services
+    /// Monitors Consul using KeyValue api, caching the list of all available services and exposing <see cref="DoesServiceExists"/>.
+    /// This saves each instance of <see cref="ConsulNodeMonitor"/> (per service per env) from having to long-poll Consul.
     /// </summary>    
     public interface IConsulServiceListMonitor: IDisposable
     {
         Task Init();
 
-        /// <summary>
-        /// List of all known services in this data center. WARNING: Service names casing might differ than service discovery configurations.
-        /// This list is case insensitive.
-        /// </summary>
-        ImmutableHashSet<string> Services { get; }
-
-        /// <summary>
-        /// Incremented whenever the <see cref="Services"/> list is modified.
-        /// </summary>
-        int Version { get; }
+        bool DoesServiceExists(DeploymentIdentifier deploymentId, out DeploymentIdentifier normalizedDeploymentId);
     }
 }
