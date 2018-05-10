@@ -59,14 +59,11 @@ namespace Gigya.Microdot.SharedLogic
                 {
                     Assembly.LoadFrom(assemblyPath);
                 }
-                catch (Exception exception)
-                {
-                    int x = 0;
-                }
-                //catch (FileNotFoundException) { }
-                //catch (FileLoadException) { }
-                //catch (BadImageFormatException) { }
-                //catch (ReflectionTypeLoadException) { }
+                
+                catch (FileNotFoundException) { }
+                catch (FileLoadException) { }
+                catch (BadImageFormatException) { }
+                catch (ReflectionTypeLoadException) { }
             }
 
             Assemblies = AppDomain.CurrentDomain

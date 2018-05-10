@@ -120,9 +120,9 @@ namespace Gigya.Microdot.SharedLogic.Events
                     if (!IsEmpty(kvp.Value))
                         yield return new SerializedEventField
                         {
-                            Name = kvp.Key,
-                            Value = !member.Attribute.TruncateIfLong ? kvp.Value : kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
-                            Attribute = member.Attribute,
+                            Name          = kvp.Key,
+                            Value         = !member.Attribute.TruncateIfLong ? kvp.Value : kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
+                            Attribute     = member.Attribute,
                             ShouldEncrypt = member.Attribute.Encrypt,
                         };
         }

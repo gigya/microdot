@@ -146,9 +146,7 @@ namespace Gigya.Microdot.ServiceProxy
         {
             EventPublisher = eventPublisher;
             CertificateLocator = certificateLocator;
-
             Log = log;
-
             ServiceName = serviceName;
             GetDiscoveryConfig = getConfig;
             ExceptionSerializer = exceptionSerializer;
@@ -319,17 +317,7 @@ namespace Gigya.Microdot.ServiceProxy
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            //request.Overrides = TracingContext.TryGetOverrides();
             request.Overrides = _tracingContext.Overrides;
-
-
-
-            request.Overrides = _tracingContext.Overrides; //TODO: toli
-
-
-
-
-            //var requestID = TracingContext.TryGetRequestID(); //TODO: toli
 
             request.TracingData = new TracingData
             {
@@ -350,7 +338,6 @@ namespace Gigya.Microdot.ServiceProxy
                 var config = GetConfig();
                 var clientCallEvent = EventPublisher.CreateEvent();
                 clientCallEvent.TargetService = ServiceName;
-                //clientCallEvent.SpanId = _tracingContext.SpanID;
                 clientCallEvent.RequestId = request.TracingData?.RequestID;
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;

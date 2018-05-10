@@ -15,9 +15,11 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string SPAN_START_TIME = "SpanStartTime";
         private const string REQUEST_DEATH_TIME = "RequestDeathTime";
 
-        private class ValueWrapperToClass
+        private class Container<TItem>
         {
-            public DateTimeOffset? DateTime { get; set; }
+            public Container(TItem item) => Item = item;
+
+            public TItem Item { get; }
         }
 
         public string RequestID
@@ -42,8 +44,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         public DateTimeOffset? SpanStartTime
         {
-            get => TryGetValue<ValueWrapperToClass>(SPAN_START_TIME)?.DateTime;
-            set => Add(SPAN_START_TIME, new ValueWrapperToClass { DateTime = value });
+            get => TryGetValue<Container<DateTimeOffset?>>(SPAN_START_TIME)?.Item;
+            set => Add(SPAN_START_TIME, new Container<DateTimeOffset?>(value));
         }
 
         /// <summary>
@@ -52,15 +54,11 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         public DateTimeOffset? AbandonRequestBy
         {
-            get => TryGetValue<ValueWrapperToClass>(REQUEST_DEATH_TIME)?.DateTime;
-            set => Add(REQUEST_DEATH_TIME, value);
+            get => TryGetValue<Container<DateTimeOffset?>>(REQUEST_DEATH_TIME)?.Item;
+            set => Add(REQUEST_DEATH_TIME, new Container<DateTimeOffset?>(value));
         }
 
-
-
         public abstract IDictionary<string, object> Export();
-        
-
 
         public HostOverride GetHostOverride(string serviceName)
         {
@@ -78,7 +76,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             var overrides = TryGetValue<IList<HostOverride>>(OVERRIDES_KEY) ?? new List<HostOverride>();
 
-            var hostOverride = overrides.SingleOrDefault(o => o.ServiceName == serviceName); 
+            var hostOverride = overrides.SingleOrDefault(o => o.ServiceName == serviceName);
 
             if (hostOverride == null)
             {
@@ -95,76 +93,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         protected abstract void Add(string key, object value);
 
         protected abstract T TryGetValue<T>(string key) where T : class;
-
-        //protected abstract IDictionary<string, object> TracingData { get; set; }
-
-        //public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
-        //{
-        //    return TracingData.GetEnumerator();
-        //}
-
-        //IEnumerator IEnumerable.GetEnumerator()
-        //{
-        //    return ((IEnumerable)TracingData).GetEnumerator();
-        //}
-
-        //public void Add(KeyValuePair<string, object> item)
-        //{
-        //    TracingData.Add(item);
-        //}
-
-        //public void Clear()
-        //{
-        //    TracingData.Clear();
-        //}
-
-        //public bool Contains(KeyValuePair<string, object> item)
-        //{
-        //    return TracingData.Contains(item);
-        //}
-
-        //public void CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
-        //{
-        //    TracingData.CopyTo(array, arrayIndex);
-        //}
-
-        //public bool Remove(KeyValuePair<string, object> item)
-        //{
-        //    return TracingData.Remove(item);
-        //}
-
-        //public int Count => TracingData.Count;
-
-        //public bool IsReadOnly => TracingData.IsReadOnly;
-
-        //public bool ContainsKey(string key)
-        //{
-        //    return TracingData.ContainsKey(key);
-        //}
-
-        //public void Add(string key, object value)
-        //{
-        //    TracingData.Add(key, value);
-        //}
-
-        //public bool Remove(string key)
-        //{
-        //    return TracingData.Remove(key);
-        //}
-
-        //public bool TryGetValue(string key, out object value)
-        //{
-        //    return TracingData.TryGetValue(key, out value);
-        //}
-
-        //public object this[string key]
-        //{
-        //    get => TracingData[key];
-        //    set => TracingData[key] = value;
-        //}
-
-        //public ICollection<string> Keys => TracingData.Keys;
-
-        //public ICollection<object> Values => TracingData.Values;
+        
     }
 }

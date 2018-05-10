@@ -141,9 +141,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             GrainFactory = providerRuntime.GrainFactory;
             providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor);
 
-            //TODO: toli show/ask Daniel
-            //GrainClient.ClientInvokeCallback = OutgoingCallInterceptor;
-
             try
             {
                 if (AfterOrleansStartup != null)
@@ -171,12 +168,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         public TaskScheduler GrainTaskScheduler { get; set; }
 
 
-        private void OutgoingCallInterceptor(InvokeMethodRequest request, IGrain target)
-        {
-            _tracingContext.SpanStartTime = DateTimeOffset.UtcNow;
-        }
-
-
         private async Task<object> IncomingCallInterceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
         {
             if (targetMethod == null)
@@ -196,7 +187,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             try
             {
-                //RejectRequestIfLateOrOverloaded();
                 return await invoker.Invoke(target, request);
             }
             catch (HttpRequestException e)

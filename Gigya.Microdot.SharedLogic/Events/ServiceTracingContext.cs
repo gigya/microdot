@@ -5,27 +5,31 @@ namespace Gigya.Microdot.SharedLogic.Events
 {
     public class ServiceTracingContext : TracingContextBase
     {
-        private AsyncLocal<Dictionary<string, object>> Context { get; } = new AsyncLocal<Dictionary<string, object>> { Value = new Dictionary<string, object>() };
+        private readonly AsyncLocal<Dictionary<string, object>> _context;
 
+        public ServiceTracingContext()
+        {
+            _context = new AsyncLocal<Dictionary<string, object>> { Value = new Dictionary<string, object>() };
+        }
 
         public override IDictionary<string, object> Export()
         {
-            return Context.Value;
+            return _context.Value;
         }
 
         protected override void Add(string key, object value)
         {
-            var values = new Dictionary<string, object>(Context.Value) { [key] = value };
-            Context.Value = values;
+            var values = new Dictionary<string, object>(_context.Value) { [key] = value };
+            _context.Value = values;
         }
 
         protected override T TryGetValue<T>(string key)
         {
-            if (Context.Value == null)
+            if (_context.Value == null)
             {
                 return null;
             }
-            Context.Value.TryGetValue(key, out var result);
+            _context.Value.TryGetValue(key, out var result);
             return result as T;
         }
     }

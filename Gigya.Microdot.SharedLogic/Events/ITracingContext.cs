@@ -19,5 +19,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         HostOverride GetHostOverride(string serviceName);
 
         IDictionary<string, object> Export();
+
     }
 }

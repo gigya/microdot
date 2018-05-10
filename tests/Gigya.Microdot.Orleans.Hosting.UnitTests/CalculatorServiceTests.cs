@@ -166,7 +166,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             actual.CallId.ShouldBe(_tracingContext.RequestID);
             actual.ParentID.ShouldBe(_tracingContext.SpanID);
-            //actual.Overrides.Hosts.ShouldBe(_tracingContext.SpanID);
         }
 
         [Test]
