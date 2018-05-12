@@ -109,7 +109,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public static DateTimeOffset? SpanStartTime
         {
             get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
-            set => SetValue(SPAN_START_TIME, value);
+            set => CloneAndSetValue(SPAN_START_TIME, value);
         }
 
         /// <summary>
@@ -147,6 +147,18 @@ namespace Gigya.Microdot.SharedLogic.Events
             context[key] = value;
         }
 
+        // Implemented better in next Micrdot using Orleans 1.5
+        private static void CloneAndSetValue(string key, object value)
+        {
+            var context = GetContextData();
+
+            if(context == null)
+                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
+
+            var cloned = new Dictionary<string, object>(context);
+            cloned[key] = value;
+            CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, cloned);
+        }
 
         private static T TryGetValue<T>(string key) where T : class
         {
@@ -167,7 +179,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public static void SetUpStorage()
         {
             if (GetContextData() == null)
-            {                
+            {
                 CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, new Dictionary<string, object>());
             }
         }
