@@ -17,15 +17,15 @@ namespace Gigya.Microdot.Orleans.Hosting
         protected override void Add(string key, object value)
         {
             var dictionary = (IDictionary<string, object>)RequestContext.Get(MICRODOT_KEY);
-
+            IDictionary<string, object> cloneDictionary = null;
 
             if (dictionary == null)
-                dictionary = new Dictionary<string, object>();
+                cloneDictionary = new Dictionary<string, object>();
             else
-                dictionary = new Dictionary<string, object>(dictionary);
+                cloneDictionary = new Dictionary<string, object>(dictionary);
 
-            dictionary[key] = value;
-            RequestContext.Set(MICRODOT_KEY, dictionary);
+            cloneDictionary[key] = value;
+            RequestContext.Set(MICRODOT_KEY, cloneDictionary);
         }
 
         protected override T TryGetValue<T>(string key)

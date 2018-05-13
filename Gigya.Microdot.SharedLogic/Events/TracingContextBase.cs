@@ -15,6 +15,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string SPAN_START_TIME = "SpanStartTime";
         private const string REQUEST_DEATH_TIME = "RequestDeathTime";
 
+        [Serializable]
         private class Container<TItem>
         {
             public Container(TItem item) => Item = item;
