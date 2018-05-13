@@ -156,7 +156,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken?.Cancel();
             try
             {
-                await LoopingTask;
+                await LoopingTask.ConfigureAwait(false);
             }
             catch (TaskCanceledException) { }
 

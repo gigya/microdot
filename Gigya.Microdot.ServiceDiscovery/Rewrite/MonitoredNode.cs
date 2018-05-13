@@ -102,7 +102,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 {
                     attemptCount++;
 
-                    if (await ReachabilityCheck.Check(this).ConfigureAwait(false))
+                    if (await ReachabilityCheck(this).ConfigureAwait(false))
                         break;
 
                 }

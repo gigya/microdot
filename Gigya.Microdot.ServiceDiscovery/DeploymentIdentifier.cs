@@ -71,7 +71,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             unchecked
             {
                 if (IsEnvironmentSpecific)
-                    return ((ServiceName?.GetHashCode() ?? 0) * 397) ^ (DeploymentEnvironment?.GetHashCode() ?? 0);
+                    return ((ServiceName?.GetHashCode() ?? 0) * 397) ^ (DeploymentEnvironment.GetHashCode());
                 else
                     return ServiceName?.GetHashCode() ?? 0;
             }
