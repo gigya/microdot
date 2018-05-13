@@ -4,3 +4,4 @@ Newtonsoft.Json
 Metrics.NET
 System.Collections.Immutable
 System.Threading.Tasks.Dataflow
+System.ValueTuple

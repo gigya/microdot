@@ -29,6 +29,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Nito.AsyncEx;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
@@ -59,6 +60,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _disposed = false;
         private readonly ReachabilityCheck _reachabilityCheck;
         private readonly object _locker = new object();
+        private readonly AsyncLock _asyncLocker = new AsyncLock();
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
 
@@ -113,67 +115,62 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
         {
-            var newServiceConfig = discoveryConfig.Services[_serviceName];
-
-            lock (_locker)
+            using (_asyncLocker.Lock())
             {
+                if (discoveryConfig == LastConfig)
+                    return;
+
+                var newServiceConfig = discoveryConfig.Services[_serviceName];
+
                 if (newServiceConfig.Equals(LastServiceConfig) &&
                     discoveryConfig.EnvironmentFallbackEnabled == LastConfig.EnvironmentFallbackEnabled)
                     return;
 
                 LastConfig = discoveryConfig;
                 LastServiceConfig = newServiceConfig;
+
+                await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
+                await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
+                await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
             }
-            await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
-            await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
-            await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
         }
 
         private async Task ReloadMasterEnvironmentLoadBalancer()
         {
-            var newLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
-            lock (_locker)
-            {
-                RemoveMasterPool();
-                MasterEnvironmentLoadBalancer = newLoadBalancer;
-            }
+            RemoveMasterPool();
+            if (_masterDeployment.Equals(_originatingEnvironmentDeployment))
+                return;
+
+            MasterEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
         private async Task ReloadOriginatingEnvironmentLoadBalancer()
         {            
-            var newLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
-            lock (_locker)
-            {
-                RemoveOriginatingPool();
-                OriginatingEnvironmentLoadBalancer = newLoadBalancer;
-            }
+            RemoveOriginatingPool();
+            OriginatingEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
         private async Task ReloadNoEnvironmentLoadBalancer()
         {
-            var newLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_noEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
-            lock (_locker)
-            {
-                RemoveNoEnvironmentPool();
-                NoEnvironmentLoadBalancer = newLoadBalancer;
-            }
+            RemoveNoEnvironmentPool();
+            NoEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_noEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);            
         }
 
         private void RemoveOriginatingPool()
         {
-            OriginatingEnvironmentLoadBalancer?.Dispose();
+            OriginatingEnvironmentLoadBalancer?.DisposeAsync();
             OriginatingEnvironmentLoadBalancer = null;
         }
 
         private void RemoveMasterPool()
         {
-            MasterEnvironmentLoadBalancer?.Dispose();
+            MasterEnvironmentLoadBalancer?.DisposeAsync();
             MasterEnvironmentLoadBalancer = null;
         }
 
         private void RemoveNoEnvironmentPool()
         {
-            NoEnvironmentLoadBalancer?.Dispose();
+            NoEnvironmentLoadBalancer?.DisposeAsync();
             NoEnvironmentLoadBalancer = null;
         }
 
@@ -181,31 +178,34 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var config = GetConfig();
             if (config != LastConfig)
-                await ReloadRemoteHost(config);
+                await ReloadRemoteHost(config).ConfigureAwait(false);
 
-            if (MasterEnvironmentLoadBalancer?.WasUndeployed != false)
-                await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
-
-            if (OriginatingEnvironmentLoadBalancer?.WasUndeployed != false)
-                await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
-
-            if (NoEnvironmentLoadBalancer?.WasUndeployed != false)
-                await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
-
-            if (OriginatingEnvironmentLoadBalancer?.WasUndeployed == false)
+            using (await _asyncLocker.LockAsync().ConfigureAwait(false))
             {
-                return OriginatingEnvironmentLoadBalancer;
+                if (MasterEnvironmentLoadBalancer?.WasUndeployed != false)
+                    await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
+
+                if (OriginatingEnvironmentLoadBalancer?.WasUndeployed != false)
+                    await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
+
+                if (NoEnvironmentLoadBalancer?.WasUndeployed != false)
+                    await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
+
+                if (OriginatingEnvironmentLoadBalancer?.WasUndeployed == false)
+                {
+                    return OriginatingEnvironmentLoadBalancer;
+                }
+                else if (MasterEnvironmentLoadBalancer?.WasUndeployed == false && GetConfig().EnvironmentFallbackEnabled)
+                {
+                    return MasterEnvironmentLoadBalancer;
+                }
+                else if (NoEnvironmentLoadBalancer?.WasUndeployed == false)
+                {
+                    return NoEnvironmentLoadBalancer;
+                }
+                else
+                    return null;
             }
-            else if (MasterEnvironmentLoadBalancer?.WasUndeployed == false && GetConfig().EnvironmentFallbackEnabled)
-            {
-                return MasterEnvironmentLoadBalancer;
-            }
-            else if (NoEnvironmentLoadBalancer?.WasUndeployed == false)
-            {
-                return NoEnvironmentLoadBalancer;
-            }
-            else
-                return null;
         }
 
         public void Dispose()
@@ -213,6 +213,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _disposed = true;
             RemoveMasterPool();
             RemoveOriginatingPool();
+            RemoveNoEnvironmentPool();
             _configBlockLink?.Dispose();
         }
     }

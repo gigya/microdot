@@ -39,9 +39,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             if (disposing)
-            {
-                NodeMonitor?.Dispose();
-            }
+                DisposeAsync().Wait(TimeSpan.FromSeconds(3));
+
+            _disposed = true;
+        }
+
+        public async Task DisposeAsync()
+        {
+            if (_disposed)
+                return;
+
+            if (NodeMonitor!=null)
+                await NodeMonitor.DisposeAsync().ConfigureAwait(false);
 
             _disposed = true;
         }

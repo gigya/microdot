@@ -8,7 +8,8 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     /// <summary>
-    /// Nodes source is set by configuration
+    /// Provides service nodes from configuration. Note: Currently nodes are not specified per environment; it is
+    /// assumed they match the current environment and/or are agnostic to environments (i.e. global to the datacenter).
     /// </summary>
     public class ConfigNodeSource : INodeSource
     {
@@ -47,11 +48,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 lock (_updateLocker)
                 {
-                    _lastConfig = config;
                     ServiceDiscoveryConfig serviceConfig = config.Services[_serviceName];
                     string hosts = serviceConfig.Hosts ?? string.Empty;
-                    _nodes = hosts.Split(',', '\r', '\n')
-                        .Where(e => !string.IsNullOrWhiteSpace(e))
+                    _nodes = hosts.Replace("\r", "").Replace("\n", "").Split(',').Where(e => !string.IsNullOrWhiteSpace(e)).Select(_ => _.Trim())
                         .Select(h => CreateNode(h, serviceConfig))
                         .ToArray();
 
@@ -61,30 +60,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                         serviceName = _serviceName,
                         nodes = string.Join(",", _nodes.Select(n => n.ToString()))
                     }));
+                    _lastConfig = config;
                 }
             }
 
-            if (_nodes.Length == 0)
+            var nodes = _nodes;
+            if (nodes.Length == 0)
                 throw Ex.ZeroNodesInConfig(_serviceName);
 
-            return _nodes;
+            return nodes;
         }
 
-        private INode CreateNode(string hosts, ServiceDiscoveryConfig config)
+        private INode CreateNode(string host, ServiceDiscoveryConfig config)
         {
-            var parts = hosts
-                .Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(p => p.Trim())
-                .Where(p => string.IsNullOrEmpty(p) == false)
-                .ToArray();
-
-            if (parts.Length > 2)
-                throw Ex.IncorrectHostFormatInConfig(hosts);
-
+            var parts = host.Split(':');
             string hostName = parts[0];
-            int? port = parts.Length == 2 ? int.Parse(parts[1]) : config.DefaultPort;
-
-            return new Node(hostName, port);
+            if (parts.Length == 2 && ushort.TryParse(parts[1], out ushort port))
+                return new Node(hostName, port);
+            else if (parts.Length == 1)
+                return new Node(hostName, config.DefaultPort);
+            else throw Ex.IncorrectHostFormatInConfig(host, _serviceName);
         }
 
         /// <inheritdoc />
@@ -97,6 +92,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public void Dispose()
         {
             // nothing to dispose
+        }
+
+        public Task DisposeAsync()
+        {
+            // nothing to dispose
+            return Task.FromResult(true);            
         }
     }
 }

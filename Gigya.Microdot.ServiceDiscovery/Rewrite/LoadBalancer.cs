@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -34,6 +35,7 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+    // explain
     public class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
@@ -44,14 +46,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public string ServiceName { get; }
         private INode[] _sourceNodes;
         private IMonitoredNode[] _monitoredNodes = new IMonitoredNode[0];
-
-        public AggregatingHealthStatus HealthStatus { get; }
+        private readonly ComponentHealthMonitor _healthMonitor;        
 
         public LoadBalancer(
             INodeSource nodeSource, 
             DeploymentIdentifier deploymentIdentifier, 
             ReachabilityCheck reachabilityCheck,
-            Func<string, AggregatingHealthStatus> getAggregatingHealthStatus,
+            IHealthMonitor healthMonitor,
             IDateTime dateTime, 
             ILog log)
         {
@@ -61,8 +62,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             Log = log;
             GetNodesFromSource();
-            HealthStatus = getAggregatingHealthStatus("Discovery");
-            HealthStatus.RegisterCheck(ServiceName, CheckHealth);
+            _healthMonitor = healthMonitor.SetHealthFunction(ServiceName, CheckHealth);
         }
 
         public IMonitoredNode GetNode()
@@ -146,11 +146,23 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         protected virtual void Dispose(bool disposing)
         {
+            if (_disposed) // use interlocked
+                return;
+
+            DisposeAsync().Wait(TimeSpan.FromSeconds(3));
+
+            _disposed = true;
+        }
+
+        public async Task DisposeAsync()
+        {
             if (_disposed)
                 return;
 
             DisposeNodes(_monitoredNodes);
-            NodeSource.Dispose();
+            await NodeSource.DisposeAsync().ConfigureAwait(false);
+            _healthMonitor.Dispose();
+
             _disposed = true;
         }
     }

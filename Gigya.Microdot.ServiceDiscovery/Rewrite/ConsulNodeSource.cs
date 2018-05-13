@@ -13,9 +13,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool SupportsMultipleEnvironments => true;
 
         private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
-        private Func<string, INodeMonitor> GetNodeMonitor { get; }
+        private Func<DeploymentIdentifier, INodeMonitor> GetNodeMonitor { get; }
         private INodeMonitor NodeMonitor { get; set; }
-        private string _deploymentIdentifier;
+        private DeploymentIdentifier _deploymentIdentifier;
 
         private bool _disposed;
         private INode[] _lastKnownNodes;
@@ -24,11 +24,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public ConsulNodeSource(DeploymentIdentifier deploymentIdentifier,
             IConsulServiceListMonitor consulServiceListMonitor,
-            Func<string, INodeMonitor> getNodeMonitor)
+            Func<DeploymentIdentifier, INodeMonitor> getNodeMonitor)
         {
             ConsulServiceListMonitor = consulServiceListMonitor;
             GetNodeMonitor = getNodeMonitor;
-            _deploymentIdentifier = deploymentIdentifier.ToString();
+            _deploymentIdentifier = deploymentIdentifier;
         }
 
         /// <inheritdoc />
@@ -36,8 +36,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             await ConsulServiceListMonitor.Init().ConfigureAwait(false);
 
-            if (ConsulServiceListMonitor.Services.TryGetValue(_deploymentIdentifier, out string deploymentIdentifierMatchCasing))
+            if (ConsulServiceListMonitor.DoesServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing))
             {
+                // TODO: Remove if consul is guaranteed to be with correct casing
                 _deploymentIdentifier = deploymentIdentifierMatchCasing;
                 NodeMonitor = GetNodeMonitor(_deploymentIdentifier);
                 await NodeMonitor.Init().ConfigureAwait(false);
@@ -57,7 +58,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                _wasUndeployed = !(ConsulServiceListMonitor.Services.TryGetValue(_deploymentIdentifier, out string deploymentIdentifierMatchCasing));
+                // we do this to get the correct casing of the service name. TODO: can we rely on consul to use correct casings and remove the dependency on the services list
+                // and use some narrower API such as IsServiceExists(string serviceName) instead?
+                _wasUndeployed = !(ConsulServiceListMonitor.DoesServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing));
+                // TODO: Remove if consul is guaranteed to be with correct casing
                 if (deploymentIdentifierMatchCasing != _deploymentIdentifier)
                     _wasUndeployed = true;
 
@@ -77,12 +81,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             if (disposing)
-            {
-                NodeMonitor?.Dispose();
-                ConsulServiceListMonitor?.Dispose();
-            }
+                DisposeAsync().Wait(TimeSpan.FromSeconds(3));
 
             _disposed = true;
         }
+
+        public async Task DisposeAsync()
+        {
+            if (_disposed)
+                return;
+
+            if (NodeMonitor!=null)
+                await NodeMonitor.DisposeAsync().ConfigureAwait(false);
+
+            _disposed = true;
+        }
+
     }
 }

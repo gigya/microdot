@@ -61,7 +61,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
                 _environmentVariableProvider.DataCenter.Returns(DataCenter);
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
-                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope();
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
             });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
@@ -71,9 +70,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [TearDown]
-        public void Teardown()
+        public async Task Teardown()
         {
-            _nodeMonitor?.Dispose();
+            if (_nodeMonitor!=null)
+                await _nodeMonitor.DisposeAsync().ConfigureAwait(false);
             _testingKernel?.Dispose();
         }
 
@@ -243,7 +243,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private async Task ReloadNodeMonitorIfNeeded()
         {
             if (_nodeMonitor.WasUndeployed)
+            {
+                _nodeMonitor.DisposeAsync();
                 await Init();
+            }
         }
 
         private void AssertExceptionIsThrown()

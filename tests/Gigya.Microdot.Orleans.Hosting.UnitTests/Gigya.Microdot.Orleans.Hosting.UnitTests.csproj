@@ -368,5 +368,4 @@
     </When>
   </Choose>
   <Import Project="..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets" Condition="Exists('..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets')" Label="Paket" />
-  <Import Project="..\..\packages\NETStandard.Library\build\NETStandard.Library.targets" Condition="Exists('..\..\packages\NETStandard.Library\build\NETStandard.Library.targets')" Label="Paket" />
 </Project>

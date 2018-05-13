@@ -26,11 +26,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<ConsulConfig> GetConfig { get; }
         private Task LoopingTask { get; set; }
         private string DataCenter { get; }
-        private string DeploymentIdentifier { get; }
+        private DeploymentIdentifier DeploymentIdentifier { get; }
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
-        public QueryBasedConsulNodeMonitor(string deploymentIdentifier, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public QueryBasedConsulNodeMonitor(DeploymentIdentifier deploymentIdentifier, ILog log, ConsulClient consulClient, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
             DeploymentIdentifier = deploymentIdentifier;
             Log = log;
@@ -49,7 +49,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             get
             {
                 if (_disposed > 0)
-                    throw new ObjectDisposedException(nameof(ConsulNodeMonitor));
+                    throw new ObjectDisposedException(nameof(QueryBasedConsulNodeMonitor));
 
                 if (WasUndeployed)
                     throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
@@ -98,7 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             string commandPath = $"v1/query/{DeploymentIdentifier}/execute?dc={DataCenter}";
             var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(commandPath, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (!consulResult.IsDeployed)
+            if (consulResult.IsUndeployed == false)
             {
                 WasUndeployed = true;
                 _nodes = new INode[0];
@@ -107,6 +107,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 ErrorResult(consulResult);
             }
+            // we assume that if there is no error and the service wasn't detected as UnDeployed then the service is definitely
+            // deployed since the query to /v1/query/service-env only succeeds if the service exists
             else
             {
                 ConsulQueryExecuteResponse queryResult = consulResult.Response;
@@ -139,15 +141,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ErrorTime = DateTime.UtcNow;
         }
 
-
         /// <inheritdoc />
         public void Dispose()
+        {
+            DisposeAsync().Wait(TimeSpan.FromSeconds(3));
+        }
+
+        /// <inheritdoc />
+        public async Task DisposeAsync()
         {
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
             
             ShutdownToken?.Cancel();
-            LoopingTask.GetAwaiter().GetResult();
+            try
+            {
+                await LoopingTask.ConfigureAwait(false);
+            }
+            catch (TaskCanceledException) { }
+
             ShutdownToken?.Dispose();
         }
     }

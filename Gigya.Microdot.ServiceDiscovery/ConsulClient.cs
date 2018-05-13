@@ -77,7 +77,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _isDeploymentDefined = true;
 
         private bool _disposed;
-        private int _initialized = 0;
+        private int _initialized = 0;        
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
             ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
@@ -197,8 +197,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> LoadServiceVersion()
         {
             var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
             var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
@@ -239,8 +238,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
             var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={_allKeysModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={_allKeysModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
             var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
@@ -283,8 +281,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return new ConsulResponse { IsDeploymentDefined = false };
 
             var config = GetConfig();
-            var maxSecondsToWaitForResponse = Math.Max(0, config.HttpTimeout.TotalSeconds - 2);
-            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={maxSecondsToWaitForResponse}s";
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
             var response = await CallConsul(urlCommand, _loadEndpointsByHealthCancellationTokenSource.Token).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
@@ -350,7 +347,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         }
 
         private async Task<ConsulResponse> CallConsul(string urlCommand, CancellationToken cancellationToken)
-        {
+        {            
             var timeout = GetConfig().HttpTimeout;
             ulong? modifyIndex = 0;
             string requestLog = string.Empty;
@@ -359,8 +356,11 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             try
             {
-                if (_httpClient == null)
-                    _httpClient = new HttpClient { BaseAddress = ConsulAddress };
+                if (_httpClient?.Timeout != timeout)
+                {
+                    _httpClient?.Dispose();
+                    _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+                }
 
                 requestLog = _httpClient.BaseAddress + urlCommand;
                 using (var timeoutcancellationToken = new CancellationTokenSource(timeout))

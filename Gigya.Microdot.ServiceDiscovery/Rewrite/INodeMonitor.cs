@@ -25,5 +25,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// </summary>
         bool WasUndeployed { get; }
 
+        Task DisposeAsync();
     }
 }

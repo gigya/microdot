@@ -36,5 +36,7 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// Whether this source supports services which are deployed on multiple environments
         /// </summary>
         bool SupportsMultipleEnvironments { get; }
+
+        Task DisposeAsync();
     }
 }

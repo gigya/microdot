@@ -26,6 +26,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+    // ok
     /// <summary>
     /// Returns the current computer as the sole node. Never changes.
     /// </summary>
@@ -54,6 +55,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public void Dispose()
         {
             // nothing to dispose
+        }
+        public Task DisposeAsync()
+        {
+            // nothing to dispose
+            return Task.FromResult(true);
         }
     }
 
