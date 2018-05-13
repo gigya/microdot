@@ -89,26 +89,6 @@ namespace Gigya.Microdot.Ninject
             Type = type;
         }
 
-
-        //public object Create(IContext context)
-        //{
-        //    var serviceProxyType = typeof(IServiceProxyProvider<>).MakeGenericType(Type);
-        //    var clientProperty = serviceProxyType.GetProperty(nameof(IServiceProxyProvider<int>.Client));
-        //    var serviceProxy = clientProperty.GetValue(context.Kernel.Get(serviceProxyType));
-
-        //    if (context.Kernel.Get<IMetadataProvider>().HasCachedMethods(Type))
-        //    {
-        //        var cachingProxyType = typeof(CachingProxyProvider<>).MakeGenericType(Type);
-        //        var proxyProperty = cachingProxyType.GetProperty(nameof(CachingProxyProvider<int>.Proxy));
-        //        var cachingProxy = proxyProperty.GetValue(context.Kernel.Get(cachingProxyType,
-        //            new ConstructorArgument("dataSource", serviceProxy),
-        //            new ConstructorArgument("serviceName",(string)null)));
-        //        return cachingProxy;
-        //    }
-
-        //    return serviceProxy;
-        //}
-
         public object Create(IContext context)
         {
             var httpSettings = Type.GetCustomAttribute<HttpServiceAttribute>();
