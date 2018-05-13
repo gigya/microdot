@@ -29,7 +29,7 @@ using ServiceSchema = Gigya.Microdot.SharedLogic.HttpService.Schema.ServiceSchem
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public interface IServiceProxyProvider : IProxyable
+    public interface IServiceProxy : IProxyable
     {
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);
         Task<ServiceSchema> GetSchema();

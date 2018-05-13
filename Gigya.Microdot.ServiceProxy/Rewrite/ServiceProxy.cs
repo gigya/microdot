@@ -23,7 +23,7 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public class ServiceProxyProvider : IServiceProxyProvider
+    public class ServiceProxy : IServiceProxy
     {
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
@@ -48,10 +48,10 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         private IDiscoveryFactory DiscoveryFactory { get; }
         private ConcurrentDictionary<string, DeployedService> Deployments { get; } = new ConcurrentDictionary<string, DeployedService>();
         private ConcurrentDictionary<MethodInfo, Type> ResultReturnTypeCache { get; } = new ConcurrentDictionary<MethodInfo, Type>();
-        private string GetBaseUri(INode node, bool useHttps) => $"{(useHttps ? "https" : "http")}://{node.Hostname}:{node.Port ?? HttpSettings.BasePort}/";
+        private string GetBaseUri(INode node, bool useHttps) => $"{(useHttps ? "https" : "http")}://{node.Hostname}:{node.Port ?? HttpSettings.BasePort}";
 
 
-        public ServiceProxyProvider(string serviceName, HttpServiceAttribute httpSettings, Func<DiscoveryConfig> getDiscoveryConfig, Func<IMemoizer> memoizerFactory,
+        public ServiceProxy(string serviceName, HttpServiceAttribute httpSettings, Func<DiscoveryConfig> getDiscoveryConfig, Func<IMemoizer> memoizerFactory,
             IHttpClientFactory httpFactory, JsonExceptionSerializer exceptionSerializer, IEnvironmentVariableProvider envProvider,
             IDiscoveryFactory discoveryFactory)
         {
@@ -101,10 +101,11 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
             bool isMethodCached = false;
             MethodCachingPolicyConfig cachingPolicy = null;
-            DeployedService targetDeployment = await Route(config).ConfigureAwait(false);
+            DeployedService targetDeployment = null;
 
             if (node == null)
             {
+                targetDeployment = await Route(config).ConfigureAwait(false);
                 isMethodCached = targetDeployment.Schema.TryFindMethod(request.Target)?.IsCached ?? false;
                 cachingPolicy = config?.CachingPolicy?.Methods?[request.Target.MethodName] ?? CachingPolicyConfig.Default;
                 node = targetDeployment.LoadBalancer.GetNode();
@@ -138,8 +139,11 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             try
             {
                 HttpResponseMessage response = await http.SendAsync(request, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
-                string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                
+                string responseContent = null;
+
+                if (response.Content != null)
+                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
                 if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) == false && response.Headers.Contains(GigyaHttpHeaders.ProtocolVersion) == false)
                 {
                     var ex = Ex.NonMicrodotHost(uri, response.StatusCode);

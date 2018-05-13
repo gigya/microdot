@@ -74,9 +74,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(DataSource, args), taskResultType, policy, target.MethodName, string.Join(",", args), new []{target.TypeName, target.MethodName});
         }
 
-        public Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy)
+        public Task GetOrAdd(string key, Func<Task<object>> factory, Type taskResultType, CacheItemPolicyEx policy)
         {
-            return Cache.GetOrAdd(key, factory, taskResultType, policy, null, null, new string[0]);
+            return Cache.GetOrAddNoConversion(key, factory, taskResultType, policy, null, null, new string[0]);
         }
 
 

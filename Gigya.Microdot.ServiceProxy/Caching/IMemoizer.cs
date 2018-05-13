@@ -31,7 +31,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     public interface IMemoizer : IProxyable, IDisposable
     {
         object Memoize(MethodInfo method, object[] args, CacheItemPolicyEx policy);
-        Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy);
+        Task GetOrAdd(string key, Func<Task<object>> factory, Type taskResultType, CacheItemPolicyEx policy);
     }
 
 

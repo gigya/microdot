@@ -80,8 +80,6 @@ namespace Gigya.Microdot.Configuration
             //Normalize slashes
             LoadPathsFilePath = LoadPathsFilePath.Replace("\\", "/");
 
-            Trace.WriteLine("Started parsing configurations from location " + LoadPathsFilePath +"\n");
-
             var configPathDeclarations = ParseAndValidateConfigLines(LoadPathsFilePath, fileSystemInstance);
 
             ConfigFileDeclarations = ExpandConfigPathDeclarations(environmentVariableProvider, configPathDeclarations, environment.PlatformSpecificPathPrefix).ToArray();
@@ -132,7 +130,6 @@ namespace Gigya.Microdot.Configuration
                         configPath.Pattern = configPath.Pattern.Replace("$(appName)", AppName);
 
                     toSave.Add(configPath);
-                    Trace.WriteLine(configPath.Pattern + " priority=" + configPath.Priority + " " + SearchOption.TopDirectoryOnly);
                 }
             }
 

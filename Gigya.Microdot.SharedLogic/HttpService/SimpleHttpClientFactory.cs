@@ -25,11 +25,17 @@ using System.Net.Http;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {
-    class SimpleHttpClientFactory : IHttpClientFactory
+    public class SimpleHttpClientFactory : IHttpClientFactory
     {
-        private object SyncLock { get; set; }
+        private object SyncLock { get; } = new object();
+        private HttpClient Client { get; }
         private TimeSpan? RequestTimeout { get; set; }
-        private HttpClient Client { get; set; }
+        private bool WasInitialized { get; set; }
+
+        public SimpleHttpClientFactory(HttpClient client)
+        {
+            Client = client;
+        }
 
         public HttpClient GetClient(bool https, TimeSpan? requestTimeout)
         {
@@ -38,7 +44,7 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 
             lock (SyncLock)
             {
-                if (Client != null)
+                if (WasInitialized)
                 {
                     if (requestTimeout != RequestTimeout)
                         throw new ArgumentException("SimpleHttpClientFactory is a simpleton and is confused when his parameters are different from the first request.");
@@ -46,10 +52,11 @@ namespace Gigya.Microdot.SharedLogic.HttpService
                     return Client;
                 }
 
-                Client = new HttpClient();
-            
                 if (requestTimeout != null)
                     Client.Timeout = requestTimeout.Value;
+
+                RequestTimeout = requestTimeout;
+                WasInitialized = true;
 
                 return Client;
             }

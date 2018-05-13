@@ -66,8 +66,8 @@
     <Compile Include="Rewrite\DeployedService.cs" />
     <Compile Include="Rewrite\Ex.cs" />
     <Compile Include="IProxyable.cs" />
-    <Compile Include="Rewrite\IServiceProxyProvider.cs" />
-    <Compile Include="Rewrite\ServiceProxyProvider.cs" />
+    <Compile Include="Rewrite\IServiceProxy.cs" />
+    <Compile Include="Rewrite\ServiceProxy.cs" />
     <Compile Include="ServiceProxyExtensions.cs" />
     <Compile Include="ServiceProxyProvider.cs" />
     <Compile Include="ServiceProxyAssembly.cs" />

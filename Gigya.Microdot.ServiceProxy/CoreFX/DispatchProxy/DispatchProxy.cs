@@ -34,8 +34,14 @@ namespace System.Reflection.DispatchProxy
 		public static T Create<T, TProxy>()
 			where TProxy : DispatchProxy
 		{
-			return (T)DispatchProxyGenerator.CreateProxyInstance(typeof(TProxy), typeof(T));
+			return (T)Create<TProxy>(typeof(T));
 		}
+
+	    public static object Create<TProxy>(Type interfaceType)
+	        where TProxy : DispatchProxy
+	    {
+	        return DispatchProxyGenerator.CreateProxyInstance(typeof(TProxy), interfaceType);
+	    }
 	}
 }
 

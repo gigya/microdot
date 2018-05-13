@@ -376,7 +376,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = "AAAA";
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(content: $"'{expected}'"));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponse(content: $"'{expected}'"));
 
             var actual = await CreateClient(messageHandler).ToUpper("aaaa");
 
@@ -388,7 +388,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new RequestException("You request is invalid.").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
 
             Func<Task> action = async () => await CreateClient(messageHandler).ToUpper("aaaa");
 
@@ -400,7 +400,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new RequestException("You action is invalid, Mr. Customer.", 30000).ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RequestException>();
 
@@ -413,7 +413,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new EnvironmentException("You environment is invalid.").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<EnvironmentException>();
 
@@ -428,7 +428,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new RemoteServiceException("A service is invalid.", "someUri").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
@@ -442,7 +442,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var expected = new ProgrammaticException("You code is invalid.").ThrowAndCatch();
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
@@ -455,7 +455,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             string badJson = "not JSON!";
             var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(HttpStatusCode.InternalServerError, content: badJson));
+            messageHandler.When("/DemoService.ToUpper").Respond(HttpResponseFactory.GetResponse(HttpStatusCode.InternalServerError, content: badJson));
 
             var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 

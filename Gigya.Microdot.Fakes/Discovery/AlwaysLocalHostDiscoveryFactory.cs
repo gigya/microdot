@@ -23,29 +23,37 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {
     public class AlwaysLocalHostDiscoveryFactory : IDiscoveryFactory
     {
-        private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> CreateLoadBalancer {get;}
-
-        public AlwaysLocalHostDiscoveryFactory(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> createLoadBalancer)
-        {
-            CreateLoadBalancer = createLoadBalancer;
-        }
+        private ILoadBalancer LoadBalancer { get; } = new AlwaysLocalLoadBalancer();
 
         public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck)
         {
-            return CreateLoadBalancer(deploymentIdentifier, new LocalNodeSource(), reachabilityCheck);
+            return deploymentIdentifier.IsEnvironmentSpecific ? null : LoadBalancer;
         }
 
         public async Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
         {
             return new LocalNodeSource();
         }
+    }
+
+    public class AlwaysLocalLoadBalancer : ILoadBalancer
+    {
+        public bool WasUndeployed => false;
+        private IMonitoredNode Node { get; } = new FakeMonitoredNode(new Node(CurrentApplicationInfo.HostName));
+
+        public IMonitoredNode GetNode()
+        {
+            return Node;
+        }
+
+        public void Dispose() { }
     }
 }

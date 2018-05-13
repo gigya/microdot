@@ -53,23 +53,23 @@ namespace Gigya.Microdot.Testing.Shared
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();
-            Rebind<IDiscoveryFactory>().To<AlwaysLocalHostDiscoveryFactory>().InSingletonScope();
-            Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
-            var locationsParserMock = Substitute.For<IConfigurationLocationsParser>();
-            locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
-            Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
+            //Rebind<IDiscoveryFactory>().To<AlwaysLocalHostDiscoveryFactory>().InSingletonScope();
+            //Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
+            //var locationsParserMock = Substitute.For<IConfigurationLocationsParser>();
+            //locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
+            //Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
 
             additionalBindings?.Invoke(this);
 
-            Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
-                .To<ManualConfigurationEvents>()
-                .InSingletonScope();
+            //Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
+            //    .To<ManualConfigurationEvents>()
+            //    .InSingletonScope();
 
-            Rebind<IConfigItemsSource, OverridableConfigItems>()
-                .To<OverridableConfigItems>()
-                .InSingletonScope()
-                .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
+            //Rebind<IConfigItemsSource, OverridableConfigItems>()
+            //    .To<OverridableConfigItems>()
+            //    .InSingletonScope()
+            //    .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
 
 
 

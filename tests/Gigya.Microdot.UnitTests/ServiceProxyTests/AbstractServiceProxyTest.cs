@@ -6,14 +6,12 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
 
 using Ninject;
-using Ninject.Parameters;
-
 using NUnit.Framework;
+using RichardSzalay.MockHttp;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
@@ -46,11 +44,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
 
 
-        protected IDemoService CreateClient(HttpMessageHandler mockHttpMessageHandler = null)
+        protected IDemoService CreateClient(MockHttpMessageHandler handler = null)
         {
-            return unitTesting
-                .Get<ServiceProxyProviderSpy<IDemoService>>(new ConstructorArgument("httpMessageHandler", mockHttpMessageHandler ?? new WebRequestHandler()))
-                .Client;
+            if (handler == null)
+                unitTesting.Rebind<HttpClient>().ToSelf();
+            else
+            {
+                handler.When("/schema").Respond(HttpResponseFactory.GetResponse(content: "{ 'Interfaces': [] }"));
+                unitTesting.Rebind<HttpClient>().ToConstant(new HttpClient(handler));
+            }
+
+            return unitTesting.Get<IDemoService>();
         }
     }
 

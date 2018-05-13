@@ -172,6 +172,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
 
+        public Task GetOrAddNoConversion(string key, Func<Task<object>> factory, Type taskResultType, CacheItemPolicyEx policy, string groupName, string logData, string[] metricsKeys)
+        {
+            var getValueTask = GetOrAdd(key, factory, policy, groupName, logData, metricsKeys, taskResultType);
+            return getValueTask;
+        }
 
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string groupName, string logData, string[] metricsKeys, Type taskResultType)
         {

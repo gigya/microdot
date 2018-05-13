@@ -29,6 +29,8 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.ServiceProxy.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
@@ -76,6 +78,7 @@ namespace Gigya.Microdot.Ninject
             Kernel.BindPerKey<string, ReachabilityChecker, INewServiceDiscovery, NewServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
+            Kernel.BindPerString<IServiceProxy, ServiceProxy.Rewrite.ServiceProxy>();
             Kernel.BindPerString<AggregatingHealthStatus>();
 
             Rebind<MetricsContext>()
@@ -91,6 +94,9 @@ namespace Gigya.Microdot.Ninject
             Bind<INodeSource>().To<ConsulNodeSource>().InTransientScope();
             Bind<INodeSource>().To<ConsulQueryNodeSource>().InTransientScope();
             Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
+            Rebind<IMemoizer>().To<AsyncMemoizer>().InTransientScope();
+            Rebind<AsyncCache>().ToSelf().InTransientScope();
+
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();
             Rebind<INodeMonitor>().To<QueryBasedConsulNodeMonitor>().WhenInjectedInto<ConsulQueryNodeSource>().InTransientScope();
