@@ -178,9 +178,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var config = GetConfig();
             if (config != LastConfig)
-                await ReloadRemoteHost(config);
+                await ReloadRemoteHost(config).ConfigureAwait(false);
 
-            using (_asyncLocker.Lock())
+            using (await _asyncLocker.LockAsync().ConfigureAwait(false))
             {
                 if (MasterEnvironmentLoadBalancer?.WasUndeployed != false)
                     await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
