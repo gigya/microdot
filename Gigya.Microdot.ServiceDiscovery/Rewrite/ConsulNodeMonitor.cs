@@ -99,9 +99,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_disposed > 0)
                     throw new ObjectDisposedException(nameof(ConsulNodeMonitor));
 
-                if (WasUndeployed)
-                    throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
-
                 if (_nodes.Length == 0 && LastError != null)
                 {
                     if (LastError.StackTrace == null)
