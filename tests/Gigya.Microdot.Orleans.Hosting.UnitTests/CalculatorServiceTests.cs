@@ -80,7 +80,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
                 _tracingContext = AssemblyInitialize.ResolutionRoot.Get<ITracingContext>();
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true, serviceDrainTime: TimeSpan.MaxValue);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true);
 
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
