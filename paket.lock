@@ -101,7 +101,7 @@ NUGET
       Microsoft.Orleans.OrleansRuntime (>= 1.5.3)
     NETStandard.Library (2.0.3)
       Microsoft.NETCore.Platforms (>= 1.1)
-    Newtonsoft.Json (9.0.1)
+    Newtonsoft.Json (11.0.1)
     Ninject (3.3.4)
     Ninject.Extensions.Conventions (3.3)
       Ninject.Extensions.Factory (>= 3.3.2)
