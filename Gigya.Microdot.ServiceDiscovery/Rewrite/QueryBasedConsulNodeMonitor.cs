@@ -40,7 +40,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
 
-            LoopingTask = LoadNodesLoop();
+            LoopingTask = Task.Run(LoadNodesLoop);
         }
 
         /// <inheritdoc />

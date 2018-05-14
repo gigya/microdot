@@ -76,11 +76,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         ImmutableHashSet<string> Services = new HashSet<string>().ToImmutableHashSet();
 
 
-        private async Task GetAllLoop(Task<ulong> initTask)
+        private async Task GetAllLoop()
         {
             try
             {
-                var modifyIndex = await initTask.ConfigureAwait(false);
+                var modifyIndex = await _initTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {
                     // If we got an error, we don't want to spam Consul so we wait a bit
@@ -103,7 +103,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_initTask == null)
                 {
                     _initTask = GetAllServices(0);
-                    LoopingTask = GetAllLoop(_initTask);
+                    LoopingTask = Task.Run(GetAllLoop());
                 }
             }
   

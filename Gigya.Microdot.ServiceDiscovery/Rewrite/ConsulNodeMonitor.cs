@@ -138,8 +138,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     _versionInitTask = LoadVersion(0);
                     _nodesInitTask = LoadNodes(0);
 
-                    _versionLoopTask = LoadVersionLoop();
-                    _nodesLoopTask = LoadNodesLoop();
+                    _versionLoopTask = Task.Run(LoadVersionLoop);
+                    _nodesLoopTask = Task.Run(LoadNodesLoop);
                 }
             }
 
