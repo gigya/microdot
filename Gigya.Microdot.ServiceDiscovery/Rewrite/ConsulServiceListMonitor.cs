@@ -103,7 +103,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_initTask == null)
                 {
                     _initTask = GetAllServices(0);
-                    LoopingTask = Task.Run(GetAllLoop());
+                    LoopingTask = Task.Run(GetAllLoop);
                 }
             }
   
