@@ -47,6 +47,8 @@ namespace Gigya.Microdot.Fakes.Discovery
     public class AlwaysLocalLoadBalancer : ILoadBalancer
     {
         public bool WasUndeployed => false;
+        public async Task DisposeAsync() { }
+
         private IMonitoredNode Node { get; } = new FakeMonitoredNode(new Node(CurrentApplicationInfo.HostName));
 
         public IMonitoredNode GetNode()
