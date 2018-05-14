@@ -47,7 +47,6 @@ nuget Shouldly
 nuget NLog ~> 4.0
 
 
-#for kukarikisssss
 
 nuget System.Diagnostics.FileVersionInfo  redirects: off
 nuget System.IO.Compression redirects: off
