@@ -46,14 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
-    <Compile Include="Caching\AsyncMemoizerRevokesTests.cs" />
-    <Compile Include="Caching\AsyncMemoizerTests.cs" />
-    <Compile Include="Caching\CachingProxyTests.cs" />
-    <Compile Include="Caching\IThingFrobber.cs" />
-    <Compile Include="Configuration\BusSettings.cs" />
-    <Compile Include="Configuration\EnviromentVariablesFileReaderTests.cs" />
-    <Compile Include="Configuration\MasterConfigParserTests.cs" />
-    <Compile Include="Configuration\TypedConfigTest.cs" />
     <Compile Include="Discovery\ConfigNodeSourceTests.cs" />
     <Compile Include="Discovery\ConsulClientMock.cs" />
     <Compile Include="Discovery\ConsulClientTests.cs" />
@@ -73,38 +65,12 @@
     <Compile Include="Discovery\Rewrite\NewServiceDiscoveryConfigChangeTest.cs" />
     <Compile Include="Discovery\Rewrite\NewConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
-    <Compile Include="Events\EventSerializationTests.cs" />
-    <Compile Include="Monitor\HealthStatusTests.cs" />
-    <Compile Include="HttpServiceRequestTests.cs" />
     <Compile Include="IDemoService.cs" />
     <Compile Include="MetricsDataEquatable.cs" />
     <Compile Include="MetricsDataExtenstion.cs" />
-    <Compile Include="Monitor\MetricsStatisticsPublisherTests.cs" />
-    <Compile Include="Monitor\HealthMonitorTest.cs" />
-    <Compile Include="Caching\Host\CachingProxyTests.cs" />
-    <Compile Include="Caching\Host\ISlowService.cs" />
-    <Compile Include="Caching\Host\SlowService.cs" />
-    <Compile Include="Caching\Host\SlowServiceHost.cs" />
-    <Compile Include="NinjectExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Monitor\RequestTimings.cs" />
-    <Compile Include="Serialization\BusinessEntity.cs" />
-    <Compile Include="Serialization\ExceptionSerializationTests.cs" />
-    <Compile Include="Serialization\MyServiceException.cs" />
-    <Compile Include="ServiceListenerTests\HttpServiceListenerTests.cs" />
-    <Compile Include="ServiceListenerTests\MetricsTests.cs" />
-    <Compile Include="ServiceListenerTests\PortsAllocationTests.cs" />
-    <Compile Include="ServiceProxyTests\AbstractServiceProxyTest.cs" />
-    <Compile Include="ServiceProxyTests\BehaviorTests.cs" />
     <Compile Include="ExceptionExtensions.cs" />
-    <Compile Include="ServiceProxyTests\HttpRequestsFactory.cs" />
-    <Compile Include="ServiceProxyTests\JsonExceptionSerializerTests.cs" />
-    <Compile Include="ServiceProxyTests\MetricsTests.cs" />
-    <Compile Include="ServiceProxyTests\NinjectTest.cs" />
-    <Compile Include="ServiceSchemaTests.cs" />
     <Compile Include="SourceBlockShould.cs" />
-    <Compile Include="StringExtensionsTest.cs" />
-    <Compile Include="TagsExtractorTests.cs" />
     <Compile Include="TestingHost.cs" />
   </ItemGroup>
   <ItemGroup>

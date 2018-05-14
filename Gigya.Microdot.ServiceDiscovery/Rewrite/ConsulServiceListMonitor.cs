@@ -111,8 +111,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }
             }
   
-            return _initTask;            
-            using (new TraceContext("await _initTask.ConfigureAwait(false);"))
+            return _initTask;                        
         }
 
 

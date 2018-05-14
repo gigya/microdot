@@ -54,15 +54,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 using (new TraceContext($"ConsulClient call ({commandPath})"))
+                {
                     HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
 
-                using (response)
-                {
-                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    consulResult.StatusCode = response.StatusCode;
-                    consulResult.ResponseContent = responseContent;
-                    consulResult.ResponseDateTime = DateTime.UtcNow;
-                    consulResult.ModifyIndex = TryGetConsulIndex(response);
+                    using (response)
+                    {
+                        responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        consulResult.StatusCode = response.StatusCode;
+                        consulResult.ResponseContent = responseContent;
+                        consulResult.ResponseDateTime = DateTime.UtcNow;
+                        consulResult.ModifyIndex = TryGetConsulIndex(response);
+                    }
                 }
             }
             catch (Exception ex)
