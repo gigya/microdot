@@ -45,8 +45,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             var timeout = GetConfig().HttpTimeout;
 
-            if (HttpClient?.Timeout != timeout)
-                HttpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+            //if (HttpClient?.Timeout != timeout)
+                var httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
 
             string responseContent = null;
             var consulResult = new ConsulResult<TResponse> {ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
@@ -55,7 +55,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 using (new TraceContext($"ConsulClient call ({commandPath})"))
                 {
-                    HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                    HttpResponseMessage response = await httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
 
                     using (response)
                     {
