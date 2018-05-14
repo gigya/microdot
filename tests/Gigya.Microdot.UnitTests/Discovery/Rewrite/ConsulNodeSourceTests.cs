@@ -23,18 +23,17 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     {
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
-              
-        private readonly DeploymentIdentifier _deployment = new DeploymentIdentifier("MyService", "prod");
+
+        private DeploymentIdentifier _deploymentIdentifier;
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _consulSource;
         private ConsulConfig _consulConfig;
         private INodeMonitor _nodeMonitor;
-        private INode[] _consulNodes;        
+        private INode[] _consulNodes;
         private IConsulServiceListMonitor _consulServiceListMonitor;
         private Func<INode[]> _getConsulNodes;
-        private DeploymentIdentifier _deploymentIdentifier;
-        private DeploymentIdentifier _deploymentIdentifierOnConsul;        
+        private DeploymentIdentifier _deploymentIdentifierOnConsul;
         private bool _serviceExists;
 
         [OneTimeSetUp]
@@ -42,13 +41,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<Func<DeploymentIdentifier, INodeMonitor>>().ToConstant<Func<DeploymentIdentifier, INodeMonitor>>(s =>
-                {
-                    _deploymentIdentifierOnConsul = _deploymentIdentifier = s;
-                    return _nodeMonitor;
-                });
+                k.Rebind<Func<DeploymentIdentifier, INodeMonitor>>().ToConstant<Func<DeploymentIdentifier, INodeMonitor>>(s => _nodeMonitor);
                 k.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
+                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
             });
         }
 
@@ -61,6 +56,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [SetUp]
         public void Setup()
         {
+            _deploymentIdentifierOnConsul = _deploymentIdentifier = new DeploymentIdentifier("MyService", "prod");
             _consulNodes = new INode[0];
             _getConsulNodes = () => _consulNodes;
             _nodeMonitor = Substitute.For<INodeMonitor>();
@@ -68,7 +64,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _nodeMonitor.WasUndeployed.Returns(_ => !_serviceExists);
             _serviceExists = true;
             _consulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
-            _consulServiceListMonitor.ServiceExists(Arg.Any<DeploymentIdentifier>(), out var _)
+            _consulServiceListMonitor.ServiceExists(Arg.Any<DeploymentIdentifier>(), out var di)
                 .Returns(c =>
                 {
                     c[1] = _deploymentIdentifierOnConsul;
@@ -80,7 +76,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [TearDown]
         public void Teardown()
         {
-            _consulSource.Dispose();
+            _consulSource?.Dispose();
         }
 
         [Test]
@@ -89,7 +85,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupOneDefaultNode();
 
             Start();
-            
+
             AssertOneDefaultNode();
         }
 
@@ -112,8 +108,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         [Test]
         public async Task ServiceIsDeployedInLowerCase()
-        {            
-            ServiceExistsOnConsulInLowerCase();         
+        {
+            ServiceExistsOnConsulInLowerCase();
             SetupOneDefaultNode();
 
             await Start();
@@ -133,12 +129,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
 
         [Test]
-        public void ConsulErrorOnStart_ThrowErrorWhenGettingNodesList()
+        public async Task ConsulErrorOnStart_ThrowErrorWhenGettingNodesList()
         {
             SetupConsulError();
-            Start();
+            await Start();
             _consulSource.WasUndeployed.ShouldBeFalse();
-            Should.Throw<EnvironmentException>(()=> _consulSource.GetNodes());
+            Should.Throw<EnvironmentException>(() => _consulSource.GetNodes());
         }
 
         [Test]
@@ -147,13 +143,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             bool nodesMonitorInitiated = false;
             bool serviceListMonitorInitiated = false;
 
-            _nodeMonitor.Init().Returns(_=>{
-                                                    nodesMonitorInitiated = true;
-                                                    return Task.FromResult(1);});
+            _nodeMonitor.Init().Returns(_ => {
+                nodesMonitorInitiated = true;
+                return Task.FromResult(1);
+            });
             _consulServiceListMonitor.Init().Returns(_ => {
-                                                    serviceListMonitorInitiated = true;
-                                                    return Task.FromResult(1);
-                                                });
+                serviceListMonitorInitiated = true;
+                return Task.FromResult(1);
+            });
 
             CreateConsulSource();
             await Task.Delay(200);
@@ -173,7 +170,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void SetupOneDefaultNode()
         {
-            _consulNodes = new[] { new Node(Host1, Port1)};
+            _consulNodes = new[] { new Node(Host1, Port1) };
         }
 
         private void SetupConsulError()
@@ -194,9 +191,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         private void CreateConsulSource()
-        {            
-            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deployment);
-            _consulSource = sources.Single(x => x.Type == "Consul");            
+        {
+            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deploymentIdentifier);
+            _consulSource = sources.Single(x => x.Type == "Consul");
         }
 
         private void AssertOneDefaultNode()

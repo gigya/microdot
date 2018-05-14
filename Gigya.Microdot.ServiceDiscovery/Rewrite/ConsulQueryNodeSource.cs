@@ -6,16 +6,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class ConsulQueryNodeSource : INodeSource
     {
+        private DeploymentIdentifier DeploymentIdentifier { get; }
+        private Func<DeploymentIdentifier, INodeMonitor> GetNodeMonitor { get; }
         private bool _disposed;
-        public INodeMonitor NodeMonitor { get; set; }
+        private object _initLocker = new object();
+        private INodeMonitor NodeMonitor { get; set; }
 
         public ConsulQueryNodeSource(DeploymentIdentifier deploymentIdentifier, Func<DeploymentIdentifier, INodeMonitor> getNodeMonitor)
-        {            
-            NodeMonitor = getNodeMonitor(deploymentIdentifier);
+        {
+            DeploymentIdentifier = deploymentIdentifier;
+            GetNodeMonitor = getNodeMonitor;
         }
 
         public Task Init()
         {
+            lock (_initLocker)
+            {
+                if (NodeMonitor == null)
+                    NodeMonitor = GetNodeMonitor(DeploymentIdentifier);
+            }
             return NodeMonitor.Init();
         }
 
@@ -49,7 +58,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_disposed)
                 return;
 
-            if (NodeMonitor!=null)
+            if (NodeMonitor != null)
                 await NodeMonitor.DisposeAsync().ConfigureAwait(false);
 
             _disposed = true;

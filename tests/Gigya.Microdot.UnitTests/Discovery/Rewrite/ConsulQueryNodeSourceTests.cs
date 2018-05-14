@@ -63,7 +63,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [TearDown]
         public void Teardown()
         {
-            _consulSource.Dispose();
+            _consulSource?.Dispose();
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void ServiceNotDeployedOnConsul_ReturnWasUndeployedTrue()
         {
             _serviceIsDeployed = false;
-            CreateConsulSource();
+            Start();
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
 
