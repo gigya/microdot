@@ -35,6 +35,7 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+    // explain
     public class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
@@ -145,7 +146,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposed)
+            if (_disposed) // use interlocked
                 return;
 
             DisposeAsync().Wait(TimeSpan.FromSeconds(3));

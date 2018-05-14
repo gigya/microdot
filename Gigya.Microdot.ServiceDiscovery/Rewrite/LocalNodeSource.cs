@@ -26,6 +26,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+    // ok
     /// <summary>
     /// Returns the current computer as the sole node. Never changes.
     /// </summary>

@@ -15,49 +15,46 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class ConsulClient: IDisposable
     {
-        private bool _disposed;
+        private int _disposed = 0;
 
         protected HttpClient HttpClient { get; private set; }
 
         protected ILog Log { get; }
         protected IDateTime DateTime { get; }
         protected Func<ConsulConfig> GetConfig { get; }
-        public Uri ConsulAddress { get; set; }
-        protected string DataCenter { get; set; }
+        public Uri ConsulAddress => HttpClient.BaseAddress;
+
 
         public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
             if (!string.IsNullOrEmpty(environmentVariableProvider.ConsulAddress))
-                ConsulAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}");
+                HttpClient = new HttpClient { BaseAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}") };
             else
-                ConsulAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500");
+                HttpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
 
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
-            DataCenter = environmentVariableProvider.DataCenter;
-            HttpClient = new HttpClient { BaseAddress = ConsulAddress };
         }
+
 
         public async Task<ConsulResult<TResponse>> Call<TResponse>(string commandPath, CancellationToken cancellationToken)
         {
-            if (_disposed)
+            if (_disposed > 0)
                 throw new ObjectDisposedException(nameof(ConsulClient));
 
             var timeout = GetConfig().HttpTimeout;
 
             if (HttpClient?.Timeout != timeout)
-            {
-                HttpClient?.Dispose();
                 HttpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
-            }
 
             string responseContent = null;
             var consulResult = new ConsulResult<TResponse> {ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
 
             try
             {
-                HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                using (new TraceContext($"ConsulClient call ({commandPath})"))
+                    HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
 
                 using (response)
                 {
@@ -65,7 +62,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     consulResult.StatusCode = response.StatusCode;
                     consulResult.ResponseContent = responseContent;
                     consulResult.ResponseDateTime = DateTime.UtcNow;
-                    consulResult.ModifyIndex = GetConsulIndex(response);
+                    consulResult.ModifyIndex = TryGetConsulIndex(response);
                 }
             }
             catch (Exception ex)
@@ -100,9 +97,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (consulResult.StatusCode == HttpStatusCode.NotFound ||
                     responseContent?.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase) == true)
                 {
-                    consulResult.IsDeployed = false;
-                    consulResult.ResponseContent =
-                        string.IsNullOrEmpty(responseContent) ? "404 NotFound" : responseContent;
+                    consulResult.IsUndeployed = true;
+                    consulResult.ResponseContent = responseContent;
                 }
                 else
                 {
@@ -114,13 +110,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        private static ulong? GetConsulIndex(HttpResponseMessage response)
+        private static ulong? TryGetConsulIndex(HttpResponseMessage response)
         {
-            ulong? modifyIndex = null;
             response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
             if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out ulong consulIndexValue))
-                modifyIndex = consulIndexValue;
-            return modifyIndex;
+                return consulIndexValue;
+            else return null;
         }
 
 
@@ -133,13 +128,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposed)
+            if (Interlocked.Increment(ref _disposed) != 1) // is it the right place?
                 return;
 
             if (disposing)
                 HttpClient?.Dispose();
-
-            _disposed = true;
         }
 
     }

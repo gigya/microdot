@@ -6,7 +6,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public class ConsulResult<TResponse>
     {
-        public bool IsDeployed { get; set; } = true;
+        public bool? IsUndeployed { get; set; }
         public EnvironmentException Error { get; private set; }
         public string ConsulAddress { get; set; }
         public string CommandPath { get; set; }
@@ -18,7 +18,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void ConsulUnreachable(Exception innerException)
         {
-            Error = new EnvironmentException("Consul was unreachable. See tags and inner exception for details.",
+            Error = new EnvironmentException("Consul was unreachable.",
                 innerException,
                 unencrypted: new Tags
                 {
@@ -29,7 +29,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void ConsulResponseError()
         {
-            Error = new EnvironmentException("Consul returned a failure response (not 200 OK). See tags for details.",
+            Error = new EnvironmentException("Consul returned a failure response (not 200 OK).",
                 unencrypted: new Tags
                 {
                     { "consulAddress", ConsulAddress },
@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void UnparsableConsulResponse(Exception innerException)
         {
-            Error = new EnvironmentException("Error deserializing Consul response. See tags for details.",
+            Error = new EnvironmentException("Error deserializing Consul response.",
                 innerException,
                 unencrypted: new Tags
                 {

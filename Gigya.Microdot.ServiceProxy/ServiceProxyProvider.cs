@@ -165,7 +165,7 @@ namespace Gigya.Microdot.ServiceProxy
             _hostFailureCounter = metricsContext.Counter("HostFailure", Unit.Calls);
             _applicationExceptionCounter = metricsContext.Counter("ApplicationException", Unit.Calls);
 
-            ServiceDiscovery = serviceDiscoveryFactory(serviceName, new ReachabilityCheck(IsReachable));
+            ServiceDiscovery = serviceDiscoveryFactory(serviceName, IsReachable);
         }
 
 
