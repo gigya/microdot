@@ -98,7 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             string commandPath = $"v1/query/{DeploymentIdentifier}/execute?dc={DataCenter}";
             var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(commandPath, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (consulResult.IsUndeployed == false)
+            if (consulResult.IsUndeployed == true)
             {
                 WasUndeployed = true;
                 _nodes = new INode[0];

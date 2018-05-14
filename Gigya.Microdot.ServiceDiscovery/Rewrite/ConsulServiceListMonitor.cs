@@ -22,7 +22,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private CancellationTokenSource ShutdownToken { get; }
 
         private int _disposed;
-        private int _initiated;
+        private readonly object  _initLock = new object();
         private readonly TaskCompletionSource<bool> _waitForInitiation = new TaskCompletionSource<bool>();
         private Task<ulong> _initTask;
 
@@ -55,7 +55,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        public bool DoesServiceExists(DeploymentIdentifier deploymentId, out DeploymentIdentifier normalizedDeploymentId)
+        public bool ServiceExists(DeploymentIdentifier deploymentId, out DeploymentIdentifier normalizedDeploymentId)
         {
             if (Services.Count == 0 && Error != null)
                 throw Error;
@@ -76,20 +76,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         ImmutableHashSet<string> Services = new HashSet<string>().ToImmutableHashSet();
 
 
-        private async Task GetAllLoop()
+        private async Task GetAllLoop(Task<ulong> initTask)
         {
             try
             {
-                _initTask = GetAll(0);
-                _waitForInitiation.TrySetResult(true);
-
-                var modifyIndex = await _initTask.ConfigureAwait(false);
+                var modifyIndex = await initTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {
                     // If we got an error, we don't want to spam Consul so we wait a bit
                     if (Error != null)
                         await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
-                    modifyIndex = await GetAll(modifyIndex).ConfigureAwait(false);
+                    modifyIndex = await GetAllServices(modifyIndex).ConfigureAwait(false);
                 }
             }
             catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
@@ -99,23 +96,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public async Task Init()
+        public Task Init()
         {
-            if (Interlocked.Increment(ref _initiated) == 1)
+            lock (_initLock)
             {
-                LoopingTask = GetAllLoop();
+                if (_initTask == null)
+                {
+                    _initTask = GetAllServices(0);
+                    LoopingTask = GetAllLoop(_initTask);
+                }
             }
-
-            await _waitForInitiation.Task.ConfigureAwait(false);
-            await _initTask.ConfigureAwait(false);
-
-            // If we leave _initiated without change, it might get to int.Max and then Interlocked.Increment may put it back to int.Min.
-            // At some point, it might get back to zero. To prevent it, we set it back to a lower value.
-            _initiated = 2;
+  
+            return _initTask;            
         }
 
 
-        private async Task<ulong> GetAll(ulong modifyIndex)
+        private async Task<ulong> GetAllServices(ulong modifyIndex)
         {
             string urlCommand =
                 $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";

@@ -33,7 +33,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeMonitor _consulQueryNodeMonitor;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ConsulSimulator _consulSimulator;
-        private string _serviceName;
+        private DeploymentIdentifier _deploymentIdentifier;
         private DateTimeFake _dateTimeFake;
         private ConsulConfig _consulConfig;        
 
@@ -65,12 +65,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _consulSimulator = new ConsulSimulator(ConsulPort);
 
-            _serviceName = $"{ServiceName}_{Guid.NewGuid()}-prod";
+            _deploymentIdentifier = new DeploymentIdentifier($"{ServiceName}_{Guid.NewGuid()}", "prod");
 
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig{ReloadInterval = TimeSpan.FromMilliseconds(100)};
 
-            _consulQueryNodeMonitor = _testingKernel.Get<Func<string, QueryBasedConsulNodeMonitor>>()(_serviceName);
+            _consulQueryNodeMonitor = _testingKernel.Get<Func<DeploymentIdentifier, QueryBasedConsulNodeMonitor>>()(_deploymentIdentifier);
         }
 
         [TearDown]
@@ -97,7 +97,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         [Test]
         public async Task ServiceAdded()
-        {
+        {            
             await Init();
             AddServiceNode();
             await WaitForUpdates();
@@ -167,7 +167,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public async Task ServiceBecomesMissing()
+        public async Task ServiceRemoved()
         {
             AddServiceNode();
             await Init();
@@ -207,7 +207,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private Task Init()
         {
-            _consulQueryNodeMonitor = _testingKernel.Get<Func<string, QueryBasedConsulNodeMonitor>>()(_serviceName);
+            _consulQueryNodeMonitor = _testingKernel.Get<Func<DeploymentIdentifier, QueryBasedConsulNodeMonitor>>()(_deploymentIdentifier);
             return _consulQueryNodeMonitor.Init();
         }
 
@@ -229,19 +229,19 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             getNodesAction.ShouldThrow<EnvironmentException>();
         }
 
-        private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
+        private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version)
         {            
-            _consulSimulator.AddServiceNode(serviceName??_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceNode(_deploymentIdentifier.ToString(), new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
-        private async void RemoveServiceNode(string hostName = Host1, int port = Port1, string serviceName=null)
+        private async void RemoveServiceNode(string hostName = Host1, int port = Port1)
         {
-            _consulSimulator.RemoveServiceNode(serviceName??_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceNode(_deploymentIdentifier.ToString(), new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
-        private void SetServiceVersion(string version, string serviceName=null)
+        private void SetServiceVersion(string version)
         {
-            _consulSimulator.SetServiceVersion(serviceName??_serviceName, version);
+            _consulSimulator.SetServiceVersion(_deploymentIdentifier.ToString(), version);
         }
 
         private void SetConsulIsDown()
@@ -251,7 +251,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void RemoveService()
         {
-            _consulSimulator.RemoveService(_serviceName);
+            _consulSimulator.RemoveService(_deploymentIdentifier.ToString());
         }
 
     }

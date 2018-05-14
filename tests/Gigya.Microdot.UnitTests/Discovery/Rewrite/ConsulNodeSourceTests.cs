@@ -30,20 +30,21 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeSource _consulSource;
         private ConsulConfig _consulConfig;
         private INodeMonitor _nodeMonitor;
-        private INode[] _consulNodes;
-        private HashSet<string> _consulServicesList;
+        private INode[] _consulNodes;        
         private IConsulServiceListMonitor _consulServiceListMonitor;
         private Func<INode[]> _getConsulNodes;
-        private string _serviceName;
+        private DeploymentIdentifier _deploymentIdentifier;
+        private DeploymentIdentifier _deploymentIdentifierOnConsul;        
+        private bool _serviceExists;
 
         [OneTimeSetUp]
         public void SetupConsulListener()
         {
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<Func<string, INodeMonitor>>().ToConstant<Func<string,INodeMonitor>>(s =>
+                k.Rebind<Func<DeploymentIdentifier, INodeMonitor>>().ToConstant<Func<DeploymentIdentifier, INodeMonitor>>(s =>
                 {
-                    _serviceName = s;
+                    _deploymentIdentifierOnConsul = _deploymentIdentifier = s;
                     return _nodeMonitor;
                 });
                 k.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
@@ -62,13 +63,17 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _consulNodes = new INode[0];
             _getConsulNodes = () => _consulNodes;
-            _consulServicesList = new HashSet<string>(new[]{_deployment.ToString()});
             _nodeMonitor = Substitute.For<INodeMonitor>();
             _nodeMonitor.Nodes.Returns(_ => _getConsulNodes());
-            _nodeMonitor.WasUndeployed.Returns(_ => !_consulServicesList.Contains(_serviceName));
-            _consulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();            
-            _consulServiceListMonitor.Services.Returns(_ => _consulServicesList.ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase));
-
+            _nodeMonitor.WasUndeployed.Returns(_ => !_serviceExists);
+            _serviceExists = true;
+            _consulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
+            _consulServiceListMonitor.ServiceExists(Arg.Any<DeploymentIdentifier>(), out var _)
+                .Returns(c =>
+                {
+                    c[1] = _deploymentIdentifierOnConsul;
+                    return _serviceExists;
+                });
             _consulConfig = new ConsulConfig();
         }
 
@@ -91,7 +96,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public void ServiceNotDeployedOnConsul_ReturnWasUndeployedTrue()
         {
-            _consulServicesList.Clear();
+            _serviceExists = false;
             Start();
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
@@ -101,15 +106,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupOneDefaultNode();
             await Start();
-            _consulServicesList.Clear();            
+            _serviceExists = false;
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]
         public async Task ServiceIsDeployedInLowerCase()
-        {
-            var lowerCaseServiceName = _deployment.ToString().ToLower();
-            _consulServicesList = new HashSet<string>(new[] { lowerCaseServiceName });
+        {            
+            ServiceExistsOnConsulInLowerCase();         
             SetupOneDefaultNode();
 
             await Start();
@@ -120,12 +124,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task ServiceCasingIsChangedWhileMonitoring_MarkAsUndeployedInOrderToCauseItToBeReloaded()
         {
-            var lowerCaseServiceName = _deployment.ToString().ToLower();
-
             SetupOneDefaultNode();
             await Start();
 
-            _consulServicesList = new HashSet<string>(new[] { lowerCaseServiceName });
+            ServiceExistsOnConsulInLowerCase();
             _consulSource.WasUndeployed.ShouldBeTrue();
         }
 
@@ -177,6 +179,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private void SetupConsulError()
         {
             _getConsulNodes = () => throw new EnvironmentException("Error on Consul");
+        }
+
+        private void ServiceExistsOnConsulInLowerCase()
+        {
+            _deploymentIdentifierOnConsul = new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(),
+                _deploymentIdentifier.DeploymentEnvironment);
         }
 
         private async Task Start()

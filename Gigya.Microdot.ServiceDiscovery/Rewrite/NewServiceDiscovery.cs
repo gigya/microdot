@@ -115,7 +115,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
         {
-            using (_asyncLocker.Lock())
+            using (await _asyncLocker.LockAsync().ConfigureAwait(false))
             {
                 if (discoveryConfig == LastConfig)
                     return;

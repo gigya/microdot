@@ -119,7 +119,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                _wasUndeployed = !ConsulServiceListMonitor.DoesServiceExists(DeploymentIdentifier, out var _);
+                _wasUndeployed = !ConsulServiceListMonitor.ServiceExists(DeploymentIdentifier, out var _);
                 if (_wasUndeployed)
                     ShutdownToken?.Cancel();
 
