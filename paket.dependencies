@@ -9,7 +9,7 @@ nuget Gigya.ServiceContract ~> 2.0
 
 # Misc
 nuget Metrics.NET ~> 0.0
-nuget Newtonsoft.Json >= 9 lowest_matching: true
+nuget Newtonsoft.Json >= 11.0 >= 11.0.2 lowest_matching: true
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
