@@ -20,14 +20,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     [TestFixture]
     public class ConsulServiceListMonitorTests
     {
-        private const string ServiceName = "MyService-prod";
+        private const string ServiceName = "MyService";
+        private const string Env = "prod";
         private const int ConsulPort = 8502;
         private const string DataCenter = "us1";
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
         private const string Version = "1.0.0.1";
 
-        private string _serviceName;
+        private DeploymentIdentifier _deploymentIdentifier;
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private ConsulConfig _consulConfig;
@@ -63,7 +64,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void Setup()
         {
             _consulSimulator.Reset();
-            _serviceName = ServiceName + "_" + Guid.NewGuid();
+            _deploymentIdentifier = new DeploymentIdentifier(ServiceName + "_" + Guid.NewGuid(), Env);
 
             _consulConfig = new ConsulConfig();
         }
@@ -80,7 +81,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Init();
-            _consulServiceListMonitor.Services.ShouldNotContain(_serviceName);
+            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var _).ShouldBeFalse();
         }
 
         [Test]
@@ -112,6 +113,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        public async Task ServiceExistsWithDifferentCasing()
+        {
+            string serviceNameLowerCase = _deploymentIdentifier.ServiceName.ToLower();
+            AddService(deploymentIdentifier: new DeploymentIdentifier(serviceNameLowerCase, Env));
+            await Init();
+            ServiceShouldExistOnList(serviceNameLowerCase);
+        }
+
+        [Test]
         public async Task ErrorOnStart()
         {
             await Init();
@@ -119,7 +129,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Task.Delay(300);
             Should.Throw<EnvironmentException>(() =>
                                                 {
-                                                    var _ = _consulServiceListMonitor.Services;
+                                                    var _ = _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var _);
                                                 });
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
@@ -150,8 +160,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task ServiceListShouldAppearOnHealthCheck()
         {
-            AddService(serviceName: "Service1");
-            AddService(serviceName: "Service2");
+            AddService(deploymentIdentifier: new DeploymentIdentifier("Service1", Env));
+            AddService(deploymentIdentifier: new DeploymentIdentifier("Service2", Env));
             await Init();
             
             var healthStatus = GetHealthStatus();
@@ -164,15 +174,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task DuplicateService_HealthCheckIsRed()
         {
-            AddService(serviceName: _serviceName);
-            AddService(serviceName: _serviceName.ToLower());
+            AddService(deploymentIdentifier: _deploymentIdentifier);
+            AddService(deploymentIdentifier: new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(), Env));
             AddService("OtherService");
             await Init();
             
             var healthStatus = GetHealthStatus();
             healthStatus.IsHealthy.ShouldBeFalse();
-            healthStatus.Message.ShouldContain(_serviceName);
-            healthStatus.Message.ShouldContain(_serviceName.ToLower());
+            healthStatus.Message.ShouldContain(_deploymentIdentifier.ToString());
+            healthStatus.Message.ShouldContain(_deploymentIdentifier.ToString().ToLower());
             healthStatus.Message.ShouldNotContain("OtherService", "When ther exists duplicate services, only duplicate services should be listed on the health check message");
         }
 
@@ -187,24 +197,31 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator.SetError(new Exception("Fake Error on Consul"));
         }
 
-        private async void AddService(string hostName = Host1, int port = Port1, string version = Version, string serviceName = null)
+        private async void AddService(string hostName = Host1, int port = Port1, string version = Version, DeploymentIdentifier deploymentIdentifier = null)
         {
-            _consulSimulator.AddServiceNode(serviceName ?? _serviceName, new ConsulEndPoint { HostName = hostName, Port = port, Version = version });
+            _consulSimulator.AddServiceNode(deploymentIdentifier?.ToString() ?? _deploymentIdentifier.ToString(), new ConsulEndPoint { HostName = hostName, Port = port, Version = version });
         }
 
         private void RemoveService()
         {
-            _consulSimulator.RemoveService(_serviceName);
+            _consulSimulator.RemoveService(_deploymentIdentifier.ToString());
         }
 
         private void ServiceShouldExistOnList()
         {
-            _consulServiceListMonitor.Services.ShouldContain(_serviceName);
+            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var serviceIdentifierOnConsul).ShouldBeTrue();
+            ReferenceEquals(serviceIdentifierOnConsul, _deploymentIdentifier).ShouldBeTrue();
+        }
+
+        private void ServiceShouldExistOnList(string expectedServiceNameOnConsul)
+        {
+            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var serviceIdentifierOnConsul).ShouldBeTrue();
+            serviceIdentifierOnConsul.ServiceName.ShouldBe(expectedServiceNameOnConsul);
         }
 
         private void ServiceShouldNotExistOnList()
         {
-            _consulServiceListMonitor.Services.ShouldNotContain(_serviceName);
+            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var _).ShouldBeFalse();
         }
 
         private HealthCheckResult GetHealthStatus()

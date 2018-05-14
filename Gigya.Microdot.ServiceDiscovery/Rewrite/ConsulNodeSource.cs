@@ -36,7 +36,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             await ConsulServiceListMonitor.Init().ConfigureAwait(false);
 
-            if (ConsulServiceListMonitor.DoesServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing))
+            if (ConsulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing))
             {
                 // TODO: Remove if consul is guaranteed to be with correct casing
                 _deploymentIdentifier = deploymentIdentifierMatchCasing;
@@ -60,7 +60,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 // we do this to get the correct casing of the service name. TODO: can we rely on consul to use correct casings and remove the dependency on the services list
                 // and use some narrower API such as IsServiceExists(string serviceName) instead?
-                _wasUndeployed = !(ConsulServiceListMonitor.DoesServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing));
+                _wasUndeployed = !(ConsulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing));
                 // TODO: Remove if consul is guaranteed to be with correct casing
                 if (deploymentIdentifierMatchCasing != _deploymentIdentifier)
                     _wasUndeployed = true;

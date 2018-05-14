@@ -9,9 +9,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private bool _disposed;
         public INodeMonitor NodeMonitor { get; set; }
 
-        public ConsulQueryNodeSource(DeploymentIdentifier deploymentIdentifier, Func<string, INodeMonitor> getNodeMonitor)
+        public ConsulQueryNodeSource(DeploymentIdentifier deploymentIdentifier, Func<DeploymentIdentifier, INodeMonitor> getNodeMonitor)
         {            
-            NodeMonitor = getNodeMonitor(deploymentIdentifier.ToString());
+            NodeMonitor = getNodeMonitor(deploymentIdentifier);
         }
 
         public Task Init()
