@@ -49,6 +49,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly object _lock = new object();
         private Task _monitoringTask = Task.FromResult(1);
         private CancellationTokenSource _monitoringCancellationSource;
+        private int _monitoringAttemptCount;
+        private DateTime _monitoringStartTime;
+        private TimeSpan _monitoringNextDelay;
 
         public MonitoredNode(INode node, string serviceName, ReachabilityCheck reachabilityCheck, IDateTime dateTime, ILog log) : base(node.Hostname, node.Port)
         {
@@ -60,8 +63,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void ReportReachable()
         {
-            IsReachable = true;            
-            StopMonitoring();
+            lock (_lock)
+            {
+                IsReachable = true;
+                StopMonitoring();
+            }
         }
 
         public Exception LastException { get; private set; }
@@ -76,13 +82,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // grain's lifetime, when it is actually a global concern.
             lock (_lock)
             {
-                if (_monitoringTask.IsCompleted)
+                if (!_monitoringTask.IsCompleted)
                     return;
 
+                IsReachable = false;
                 _monitoringCancellationSource = new CancellationTokenSource();
-                _monitoringTask = Task.Run(StartMonitoring, _monitoringCancellationSource.Token);
-                
-                Task.Run(StartMonitoring);
+                _monitoringTask = Task.Run(StartMonitoring, _monitoringCancellationSource.Token);                               
             }
         }
 
@@ -90,32 +95,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         
         private async Task StartMonitoring()
         {
-            IsReachable = false;
-
-            var start = DateTime.UtcNow;
-            var nextDelay = TimeSpan.FromSeconds(FirstAttemptDelaySeconds);
-            var maxDelay = TimeSpan.FromSeconds(MaxAttemptDelaySeconds);
-            var attemptCount = 0;
+            _monitoringAttemptCount = 0;
+            _monitoringStartTime = DateTime.UtcNow;
+            _monitoringNextDelay = TimeSpan.FromSeconds(FirstAttemptDelaySeconds);            
 
             while (!_monitoringCancellationSource.Token.IsCancellationRequested)
             {
                 try
                 {
-                    attemptCount++;
+                    _monitoringAttemptCount++;
 
                     if (await ReachabilityCheck(this).ConfigureAwait(false))
                     {
-                        IsReachable = true;
+                        lock (_lock)
+                        {
+                            IsReachable = true;
+                        }
 
-                        Log.Info(_ => _("A remote host has become reachable.",
-                            unencryptedTags: new
-                            {
-                                serviceName = _serviceName,
-                                Hostname,
-                                Port,
-                                attemptCount,
-                                downtime = DateTime.UtcNow - start
-                            }));
+                        Log.Info(_ => _("Node has become reachable", unencryptedTags: UnencryptedTags));
 
                         return;
                     }
@@ -124,33 +121,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(_ => _("Programmatic error; the supplied reachability checker threw an exception while checking a remote host (instead of returning true/false).",
-                        exception: ex,
-                        unencryptedTags: new
-                        {
-                            serviceName = _serviceName,
-                            Hostname,
-                            Port
-                        }));
+                    Log.Error(_ => _("Programmatic error; the supplied reachability checker threw an exception while checking node reachability (instead of returning true/false)", exception: ex, unencryptedTags: UnencryptedTags));
                 }
 
-                Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", unencryptedTags: new
-                {
-                    serviceName = _serviceName,
-                    Hostname,
-                    Port,
-                    attemptCount,
-                    nextDelay,                    
-                    nextAttemptAt = DateTime.UtcNow + nextDelay,
-                    downtime = DateTime.UtcNow - start
-                }));
+                Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", unencryptedTags: UnencryptedTags));
 
-                await Task.Delay(nextDelay, _monitoringCancellationSource.Token).ConfigureAwait(false);
+                await Task.Delay(_monitoringNextDelay, _monitoringCancellationSource.Token).ConfigureAwait(false);
 
-                nextDelay = TimeSpan.FromMilliseconds(nextDelay.TotalMilliseconds * DelayMultiplier);
+                _monitoringNextDelay = TimeSpan.FromMilliseconds(_monitoringNextDelay.TotalMilliseconds * DelayMultiplier);
 
-                if (nextDelay > maxDelay)
-                    nextDelay = maxDelay;
+                if (_monitoringNextDelay.TotalSeconds > MaxAttemptDelaySeconds)
+                    _monitoringNextDelay = TimeSpan.FromSeconds(MaxAttemptDelaySeconds);
             }
 
        
@@ -162,5 +143,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _monitoringCancellationSource?.Cancel();
         }
 
+        private object UnencryptedTags => new
+        {
+            serviceName = _serviceName,
+            hostname = Hostname,
+            port = Port,
+            attemptCount = _monitoringAttemptCount,
+            nextDelay = _monitoringNextDelay,
+            nextAttemptAt = DateTime.UtcNow + _monitoringNextDelay,
+            downtime = DateTime.UtcNow - _monitoringStartTime
+        };
     }
 }
