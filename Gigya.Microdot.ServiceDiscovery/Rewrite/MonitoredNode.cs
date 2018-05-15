@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -34,7 +35,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// host using exponential backoff till the <see cref="ReachabilityCheck"/> returns true, or till
     /// <see cref="ReportReachable"/> was called, at which time <see cref="IsReachable"/> is set back to true.
     /// </summary>
-    public class MonitoredNode : Node, IMonitoredNode, IDisposable
+    public class MonitoredNode : Node, IMonitoredNode
     {
         private const double FirstAttemptDelaySeconds = 0.001;
         private const double MaxAttemptDelaySeconds  = 2;
@@ -46,6 +47,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly string _serviceName;
 
         private readonly object _lock = new object();
+        private Task _monitoringTask = Task.FromResult(1);
+        private CancellationTokenSource _monitoringCancellationSource;
 
         public MonitoredNode(INode node, string serviceName, ReachabilityCheck reachabilityCheck, IDateTime dateTime, ILog log) : base(node.Hostname, node.Port)
         {
@@ -65,45 +68,58 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void ReportUnreachable(Exception ex = null)
         {
-            IsReachable = false;
+            
             LastException = ex;
 
             // Task.Run is used here to have the long-running task of monitoring run on the thread pool,
             // otherwise it might prevent ASP.NET requests from completing or it might be tied to a specific
             // grain's lifetime, when it is actually a global concern.
-            Task.Run(StartMonitoring);            
+            lock (_lock)
+            {
+                if (_monitoringTask.IsCompleted)
+                    return;
+
+                _monitoringCancellationSource = new CancellationTokenSource();
+                _monitoringTask = Task.Run(StartMonitoring, _monitoringCancellationSource.Token);
+                
+                Task.Run(StartMonitoring);
+            }
         }
 
         public bool IsReachable { get; private set; } = true;
-
-        private bool IsMonitoring { get; set; }
-
+        
         private async Task StartMonitoring()
         {
-            lock (_lock)
-            {
-                if (IsMonitoring)
-                    return;
+            IsReachable = false;
 
-                IsMonitoring = true;
-            }
-            
             var start = DateTime.UtcNow;
             var nextDelay = TimeSpan.FromSeconds(FirstAttemptDelaySeconds);
             var maxDelay = TimeSpan.FromSeconds(MaxAttemptDelaySeconds);
             var attemptCount = 0;
 
-            while (true)
+            while (!_monitoringCancellationSource.Token.IsCancellationRequested)
             {
-                if (IsMonitoring == false)
-                    return;
-
                 try
                 {
                     attemptCount++;
 
                     if (await ReachabilityCheck(this).ConfigureAwait(false))
-                        break;
+                    {
+                        IsReachable = true;
+
+                        Log.Info(_ => _("A remote host has become reachable.",
+                            unencryptedTags: new
+                            {
+                                serviceName = _serviceName,
+                                Hostname,
+                                Port,
+                                attemptCount,
+                                downtime = DateTime.UtcNow - start
+                            }));
+
+                        return;
+                    }
+
 
                 }
                 catch (Exception ex)
@@ -118,9 +134,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                         }));
                 }
 
-                if (IsMonitoring == false)
-                    return;
-
                 Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", unencryptedTags: new
                 {
                     serviceName = _serviceName,
@@ -132,7 +145,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     downtime = DateTime.UtcNow - start
                 }));
 
-                await Task.Delay(nextDelay).ConfigureAwait(false);
+                await Task.Delay(nextDelay, _monitoringCancellationSource.Token).ConfigureAwait(false);
 
                 nextDelay = TimeSpan.FromMilliseconds(nextDelay.TotalMilliseconds * DelayMultiplier);
 
@@ -140,31 +153,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     nextDelay = maxDelay;
             }
 
+       
+        }
+
+        public void StopMonitoring()
+        {
             lock (_lock)
-            {
-                IsMonitoring = false;
-                IsReachable = true;
-
-                Log.Info(_ => _("A remote host has become reachable.",
-                        unencryptedTags: new
-                        {
-                            serviceName = _serviceName,
-                            Hostname,
-                            Port,
-                            attemptCount,
-                            downtime = DateTime.UtcNow - start
-                        }));
-            }
+                _monitoringCancellationSource?.Cancel();
         }
 
-        internal void StopMonitoring()
-        {
-            IsMonitoring = false;
-        }
-
-        public void Dispose()
-        {
-            StopMonitoring();
-        }
     }
 }

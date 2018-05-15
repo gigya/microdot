@@ -142,7 +142,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Init();
             _consulSimulator.Reset();
             AddService();
-            await Task.Delay(800);
+            await Task.Delay(1500);
             ServiceShouldExistOnList();
         }
 

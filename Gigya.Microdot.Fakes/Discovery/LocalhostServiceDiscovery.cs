@@ -69,5 +69,8 @@ namespace Gigya.Microdot.Fakes.Discovery
 
         public bool IsReachable => true;
         public Exception LastException => null;
+        public void StopMonitoring()
+        {            
+        }
     }
 }

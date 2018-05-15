@@ -19,6 +19,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private int _disposed;
         private INode[] _nodes = new INode[0];
         private Task _initTask;
+        private readonly object _initLocker = new object();
 
         private ILog Log { get; }
         private ConsulClient ConsulClient { get; }
@@ -38,9 +39,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             GetConfig = getConfig;
             DataCenter = environmentVariableProvider.DataCenter;
-            ShutdownToken = new CancellationTokenSource();
-
-            LoopingTask = Task.Run(LoadNodesLoop);
+            ShutdownToken = new CancellationTokenSource();            
         }
 
         /// <inheritdoc />
@@ -72,9 +71,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private async Task LoadNodesLoop()
         {
             try
-            {
-                _initTask = LoadNodes();
-
+            {               
                 while (!ShutdownToken.IsCancellationRequested)
                 {
                     await LoadNodes().ConfigureAwait(false);
@@ -88,7 +85,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public Task Init() => _initTask;
+        public async Task Init()
+        {
+            lock (_initLocker)
+            {
+                if (_initTask == null)
+                {
+                    _initTask = LoadNodes();
+                    LoopingTask = Task.Run(LoadNodesLoop);
+                }
+            }
+            await _initTask.ConfigureAwait(false);
+        }
 
         private async Task LoadNodes()
         {
@@ -156,7 +164,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken?.Cancel();
             try
             {
-                await LoopingTask.ConfigureAwait(false);
+                if (LoopingTask!=null)
+                    await LoopingTask.ConfigureAwait(false);
             }
             catch (TaskCanceledException) { }
 

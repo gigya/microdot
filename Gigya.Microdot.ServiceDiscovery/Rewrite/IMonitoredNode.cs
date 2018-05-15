@@ -6,7 +6,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// A node which can be monitored whether in is reachable or unreachable
     /// </summary>
-    public interface IMonitoredNode : INode, IDisposable
+    public interface IMonitoredNode : INode
     {
         /// <summary>
         /// Report that this node was responsive
@@ -29,5 +29,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// </summary>
         Exception LastException { get; }
 
+        /// <summary>
+        /// Stop the background monitoring of this node
+        /// </summary>
+        void StopMonitoring();
     }
 }

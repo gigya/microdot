@@ -134,7 +134,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             foreach (var monitoredNode in monitoredNodes)
             {
-                monitoredNode.Dispose();
+                monitoredNode.StopMonitoring();
             }
         }
 
