@@ -24,16 +24,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string ServiceVersion = "1.2.30.1234";
         private string _serviceName;
         private const string MASTER_ENVIRONMENT = "prod";
-        private const string ORIGINATING_ENVIRONMENT = "fake_env";
-        private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(5);
+        private const string ORIGINATING_ENVIRONMENT = "fake_env";        
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
-        private Dictionary<DeploymentIdentifier, INodeMonitor> _consulNodeMonitors;
+        private Dictionary<DeploymentIdentifier, INodeSource> _consulNodeSources;
         private Dictionary<DeploymentIdentifier, Func<INode[]>> _consulNodesResults;
         private IConsulServiceListMonitor _consulConsulServiceListMonitor;
         private HashSet<DeploymentIdentifier> _consulServiceList;        
-        private IEnvironmentVariableProvider _environmentVariableProvider;
-        private ManualConfigurationEvents _configRefresh;
+        private IEnvironmentVariableProvider _environmentVariableProvider;        
         private IDateTime _dateTimeMock;
         private int id;
         private const int Repeat = 1;
@@ -60,8 +58,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _dateTimeMock = Substitute.For<IDateTime>();
                 _dateTimeMock.Delay(Arg.Any<TimeSpan>()).Returns(c => Task.Delay(TimeSpan.FromMilliseconds(100)));
                 k.Rebind<IDateTime>().ToConstant(_dateTimeMock);
-            }, _configDic);
-            _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
+            }, _configDic);            
 
             var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
             Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
@@ -69,7 +66,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void SetupConsulMocks(IKernel kernel)
         {
-            _consulNodeMonitors = new Dictionary<DeploymentIdentifier, INodeMonitor>();
+            _consulNodeSources = new Dictionary<DeploymentIdentifier, INodeSource>();
             _consulNodesResults = new Dictionary<DeploymentIdentifier, Func<INode[]>>();
 
             _consulConsulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
@@ -81,7 +78,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                     return _consulServiceList.Contains(((DeploymentIdentifier) c.Args()[0]));
                 });            
 
-            kernel.Rebind<Func<DeploymentIdentifier, INodeMonitor>>().ToMethod(_ => GetNodeMonitorMock);
+            kernel.Rebind<Func<DeploymentIdentifier, INodeSource[]>>().ToMethod(_ => di=>new[]{GetNodeSourceMock(di)});
             kernel.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulConsulServiceListMonitor);
 
             CreateConsulMock(MasterService);
@@ -89,22 +86,29 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         }
 
-        private INodeMonitor GetNodeMonitorMock(DeploymentIdentifier di)
+        private INodeSource CreateNodeSourceMock(DeploymentIdentifier di)
         {
-            if (_consulNodeMonitors.ContainsKey(di))
-                return _consulNodeMonitors[di];
-            var mock = Substitute.For<INodeMonitor>();
-            mock.WasUndeployed.Returns(true);
+            var mock = Substitute.For<INodeSource>();
+            mock.Type.Returns("Consul");
+            mock.SupportsMultipleEnvironments.Returns(true);
+            mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(di));
+            mock.GetNodes().Returns(_ => _consulNodesResults[di]());
             return mock;
+        }
+
+        private INodeSource GetNodeSourceMock(DeploymentIdentifier di)
+        {
+            if (_consulNodeSources.ContainsKey(di))
+                return _consulNodeSources[di];
+            return CreateNodeSourceMock(di);
         }
 
         private void CreateConsulMock(DeploymentIdentifier di)
         {
-            var mock = Substitute.For<INodeMonitor>();
+            var mock = CreateNodeSourceMock(di);
+
             _consulNodesResults[di] = () => new INode[] {new Node(hostName: "dummy", version: ServiceVersion)};
-            mock.Nodes.Returns(_=>_consulNodesResults[di]());
-            mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(di));
-            _consulNodeMonitors[di] = mock;
+            _consulNodeSources[di] = mock;
 
             _consulServiceList.Add(di);            
         }
@@ -113,10 +117,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void TearDown()
         {
             _unitTestingKernel.Dispose();
-            foreach (var consulClient in _consulNodeMonitors)
-            {
-                consulClient.Value.Dispose();
-            }
         }
 
         [Test]
@@ -231,7 +231,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void SetMockToReturnHost(DeploymentIdentifier di)
         {
-            if (!_consulNodeMonitors.ContainsKey(di))
+            if (!_consulNodeSources.ContainsKey(di))
                 CreateConsulMock(di);
 
             var newNodes = new INode[]{new Node(HostnameFor(di))};

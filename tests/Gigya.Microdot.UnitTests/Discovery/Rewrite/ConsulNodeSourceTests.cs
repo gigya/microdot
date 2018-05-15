@@ -1,208 +1,348 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
-using Node = Gigya.Microdot.ServiceDiscovery.Rewrite.Node;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
+    [TestFixture]
     public class ConsulNodeSourceTests
     {
+        private const int ConsulPort = 8506;
+        private const string DataCenter = "us1";
+
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
+        private const string Version = "1.0.0.1";
 
-        private DeploymentIdentifier _deploymentIdentifier;
+        private const string Host2 = "Host2";
+        private const int Port2 = 5678;
+        private const string Version2 = "2.0.0.1";
 
         private TestingKernel<ConsoleLog> _testingKernel;
-        private INodeSource _consulSource;
+        private INodeSource _nodeSource;
+        private IEnvironmentVariableProvider _environmentVariableProvider;
+        private ConsulSimulator _consulSimulator;
+        private DeploymentIdentifier _deploymentIdentifier;
         private ConsulConfig _consulConfig;
-        private INodeMonitor _nodeMonitor;
-        private INode[] _consulNodes;
-        private IConsulServiceListMonitor _consulServiceListMonitor;
-        private Func<INode[]> _getConsulNodes;
-        private DeploymentIdentifier _deploymentIdentifierOnConsul;
-        private bool _serviceExists;
+
+        private string _serviceName;
 
         [OneTimeSetUp]
-        public void SetupConsulListener()
+        public void OneTimeSetup()
         {
-            _testingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<Func<DeploymentIdentifier, INodeMonitor>>().ToConstant<Func<DeploymentIdentifier, INodeMonitor>>(s => _nodeMonitor);
-                k.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulServiceListMonitor);
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
-            });
+            _consulSimulator = new ConsulSimulator(ConsulPort);
         }
 
         [OneTimeTearDown]
-        public void TearDownConsulListener()
+        public void OneTimeTearDown()
         {
+            _consulSimulator.Dispose();
             _testingKernel.Dispose();
         }
 
         [SetUp]
         public void Setup()
         {
-            _deploymentIdentifierOnConsul = _deploymentIdentifier = new DeploymentIdentifier("MyService", "prod");
-            _consulNodes = new INode[0];
-            _getConsulNodes = () => _consulNodes;
-            _nodeMonitor = Substitute.For<INodeMonitor>();
-            _nodeMonitor.Nodes.Returns(_ => _getConsulNodes());
-            _nodeMonitor.WasUndeployed.Returns(_ => !_serviceExists);
-            _serviceExists = true;
-            _consulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
-            _consulServiceListMonitor.ServiceExists(Arg.Any<DeploymentIdentifier>(), out var di)
-                .Returns(c =>
-                {
-                    c[1] = _deploymentIdentifierOnConsul;
-                    return _serviceExists;
-                });
-            _consulConfig = new ConsulConfig();
+            _consulSimulator.Reset();
+            _testingKernel = new TestingKernel<ConsoleLog>(k =>
+            {
+                _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
+                _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                _environmentVariableProvider.DataCenter.Returns(DataCenter);
+                k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
+                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
+            });
+            _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
+
+            _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod");
+            _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};            
         }
 
         [TearDown]
-        public void Teardown()
+        public async Task Teardown()
         {
-            _consulSource?.Dispose();
+            if (_nodeSource!=null)
+                await _nodeSource.Shutdown().ConfigureAwait(false);
+            _testingKernel?.Dispose();
+        }
+
+        public async Task WaitForUpdates()
+        {
+            await Task.Delay(1500).ConfigureAwait(false);
         }
 
         [Test]
-        public void GetNodes()
+        public async Task ServiceExists()
         {
-            SetupOneDefaultNode();
-
-            Start();
+            AddServiceNode();
+            await Init();
 
             AssertOneDefaultNode();
         }
 
         [Test]
-        public void ServiceNotDeployedOnConsul_ReturnWasUndeployedTrue()
+        public async Task ServiceNotExists()
         {
-            _serviceExists = false;
-            Start();
-            _consulSource.WasUndeployed.ShouldBeTrue();
+            await Init();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
         }
 
-        [Test]
-        public async Task ServiceBecomesNotDeployedOnConsul_ReturnWasUndeployedTrue()
-        {
-            SetupOneDefaultNode();
-            await Start();
-            _serviceExists = false;
-            _consulSource.WasUndeployed.ShouldBeTrue();
-        }
 
-        [Test]
-        public async Task ServiceIsDeployedInLowerCase()
+        [Test]        
+        public async Task ServiceAdded()
         {
-            ServiceExistsOnConsulInLowerCase();
-            SetupOneDefaultNode();
-
-            await Start();
+            await Init();
+            SetServiceVersion(Version);
+            AddServiceNode();
+            await WaitForUpdates();            
 
             AssertOneDefaultNode();
         }
 
         [Test]
-        public async Task ServiceCasingIsChangedWhileMonitoring_MarkAsUndeployedInOrderToCauseItToBeReloaded()
+        public async Task NodeAdded()
         {
-            SetupOneDefaultNode();
-            await Start();
+            SetServiceVersion(Version);
+            AddServiceNode();
+            await Init();
+            
+            AssertOneDefaultNode();
 
-            ServiceExistsOnConsulInLowerCase();
-            _consulSource.WasUndeployed.ShouldBeTrue();
+            AddServiceNode(Host2);
+            await WaitForUpdates();
+            var nodes = _nodeSource.GetNodes();
+            nodes.Length.ShouldBe(2);
+            nodes[1].Hostname.ShouldBe(Host2);
         }
 
 
         [Test]
-        public async Task ConsulErrorOnStart_ThrowErrorWhenGettingNodesList()
+        public async Task NodeRemoved()
         {
-            SetupConsulError();
-            await Start();
-            _consulSource.WasUndeployed.ShouldBeFalse();
-            Should.Throw<EnvironmentException>(() => _consulSource.GetNodes());
+            AddServiceNode();
+            AddServiceNode("nodeToRemove");
+
+            await Init();
+            
+            _nodeSource.GetNodes().Length.ShouldBe(2);
+
+            RemoveServiceEndPoint("nodeToRemove");
+            await WaitForUpdates();
+
+            AssertOneDefaultNode();
+        }
+
+
+        [Test]
+        public async Task ServiceVersionHasChanged()
+        {
+            AddServiceNode();
+            AddServiceNode(Host2, Port2, Version2);
+            await Init();
+            AssertOneDefaultNode();
+
+            SetServiceVersion(Version2);
+            await WaitForUpdates();
+
+            await ReloadNodeMonitorIfNeeded();
+            var nodes = _nodeSource.GetNodes();
+            nodes.Length.ShouldBe(1);
+            nodes[0].Hostname.ShouldBe(Host2);
+            nodes[0].Port.ShouldBe(Port2);
         }
 
         [Test]
-        public async Task InitMonitorsOnlyAfterInitAndNotOnCreation()
+        public async Task StartWithError()
         {
-            bool nodesMonitorInitiated = false;
-            bool serviceListMonitorInitiated = false;
+            AddServiceNode();
+            SetConsulIsDown();
 
-            _nodeMonitor.Init().Returns(_ => {
-                nodesMonitorInitiated = true;
-                return Task.FromResult(1);
-            });
-            _consulServiceListMonitor.Init().Returns(_ => {
-                serviceListMonitorInitiated = true;
-                return Task.FromResult(1);
-            });
-
-            CreateConsulSource();
-            await Task.Delay(200);
-            nodesMonitorInitiated.ShouldBeFalse("ConsulNodeMonitor.Init() was called before Init() was called");
-            serviceListMonitorInitiated.ShouldBeFalse("ConsulServiceListMonitor.Init() was called before Init() was called");
-            await _consulSource.Init();
-            nodesMonitorInitiated.ShouldBeTrue("ConsulNodeMonitor.Init() should be called when Init() is called");
-            serviceListMonitorInitiated.ShouldBeTrue("ConsulServiceListMonitor.Init() should be called when Init() is called");
+            await Init();
+            
+            AssertExceptionIsThrown();                       
         }
 
         [Test]
-        public void SupportMultipleEnvironments()
+        public async Task ErrorWhileRunning_KeepLastKnownResult()
         {
-            CreateConsulSource();
-            _consulSource.SupportsMultipleEnvironments.ShouldBeTrue();
+            AddServiceNode();
+            await Init();
+
+            SetConsulIsDown();
+            await WaitForUpdates();            
+
+            AssertOneDefaultNode();
         }
 
-        private void SetupOneDefaultNode()
+
+        [Test]
+        public async Task ErrorOnStart()
         {
-            _consulNodes = new[] { new Node(Host1, Port1) };
+            SetConsulIsDown();
+            await Init();
+
+            AssertExceptionIsThrown();            
         }
 
-        private void SetupConsulError()
+        [Test]
+        public async Task UpgradeVersion()
         {
-            _getConsulNodes = () => throw new EnvironmentException("Error on Consul");
+            AddServiceNode(hostName: "oldVersionHost", version: "1.0.0");
+            AddServiceNode(hostName: "newVersionHost", version: "2.0.0");
+            SetServiceVersion("1.0.0");
+
+            await Init();
+
+            await ReloadNodeMonitorIfNeeded();
+            var nodes = _nodeSource.GetNodes();
+            nodes.Length.ShouldBe(1);
+            nodes[0].Hostname.ShouldBe("oldVersionHost");
+
+            SetServiceVersion("2.0.0");
+            await WaitForUpdates();
+
+            await ReloadNodeMonitorIfNeeded();
+            nodes = _nodeSource.GetNodes();
+            nodes.Length.ShouldBe(1);
+            nodes[0].Hostname.ShouldBe("newVersionHost");
         }
 
-        private void ServiceExistsOnConsulInLowerCase()
+        [Test]
+        public async Task ServiceIsDeployedWithNoNodes_ThrowsEnvironmentException()
         {
-            _deploymentIdentifierOnConsul = new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(),
-                _deploymentIdentifier.DeploymentEnvironment);
+            SetServiceVersion("1.0.0");
+            await Init();
+            _nodeSource.WasUndeployed.ShouldBeFalse();
+            AssertExceptionIsThrown();
         }
 
-        private async Task Start()
+        [Test]        
+        public async Task ServiceUndeployed_StopMonitoring()
         {
-            CreateConsulSource();
-            await _consulSource.Init();
+            AddServiceNode();
+            await Init();
+            _nodeSource.WasUndeployed.ShouldBeFalse();
+
+            RemoveService();
+            await WaitForUpdates();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
+            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;            
+
+            AddServiceNode();
+            await WaitForUpdates();            
+            _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");            
+            _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
         }
 
-        private void CreateConsulSource()
+        [Test]
+        public async Task ServiceDeployedInLowerCase()
+        {
+            AddServiceNode(serviceName: _deploymentIdentifier.ToString().ToLower());
+            await Init();
+
+            AssertOneDefaultNode();
+        }
+
+
+        [Test]
+        public async Task ServiceCasingIsChanged_MarkAsUndeployedInOrderToCauseItToBeReloaded()
+        {
+            var lowerCaseServiceName = _deploymentIdentifier.ToString().ToLower();
+            AddServiceNode(serviceName: lowerCaseServiceName);
+            await Init();
+
+            AddServiceNode();
+            RemoveService(serviceName: lowerCaseServiceName);
+            await WaitForUpdates();
+
+            _nodeSource.WasUndeployed.ShouldBeTrue();            
+        }
+
+
+        [Test]
+        public async Task SupportMultipleEnvironments()
+        {
+            await Init();
+            _nodeSource.SupportsMultipleEnvironments.ShouldBeTrue();
+        }
+
+
+
+        private async Task Init()
         {
             var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deploymentIdentifier);
-            _consulSource = sources.Single(x => x.Type == "Consul");
+            _nodeSource = sources.Single(x => x.Type == "Consul");
+
+            await _nodeSource.Init();            
         }
 
-        private void AssertOneDefaultNode()
+
+        private async Task AssertOneDefaultNode()
         {
-            _consulSource.WasUndeployed.ShouldBeFalse();
-            var nodes = _consulSource.GetNodes();
+            await ReloadNodeMonitorIfNeeded();
+            _nodeSource.WasUndeployed.ShouldBeFalse();
+            var nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe(Host1);
             nodes[0].Port.ShouldBe(Port1);
         }
+
+        private async Task ReloadNodeMonitorIfNeeded()
+        {
+            if (_nodeSource.WasUndeployed)
+            {
+                _nodeSource.Shutdown();
+                await Init();
+            }
+        }
+
+        private void AssertExceptionIsThrown()
+        {
+            var getNodesAction = (Action) (() =>
+            {
+                _nodeSource.GetNodes();
+            });
+
+            getNodesAction.ShouldThrow<EnvironmentException>();
+        }
+
+        private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
+        {            
+            _consulSimulator.AddServiceNode(serviceName ?? _deploymentIdentifier.ToString(), new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+        }
+
+        private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1)
+        {
+            _consulSimulator.RemoveServiceNode(_deploymentIdentifier.ToString(), new ConsulEndPoint { HostName = hostName, Port = port});
+        }
+
+        private void SetServiceVersion(string version)
+        {
+            _consulSimulator.SetServiceVersion(_deploymentIdentifier.ToString(), version);
+        }
+
+        private void RemoveService(string serviceName=null)
+        {
+            _consulSimulator.RemoveService(serviceName ?? _deploymentIdentifier.ToString());
+        }
+
+        private void SetConsulIsDown()
+        {
+            _consulSimulator.SetError(new Exception("fake error"));
+        }
+
+
     }
 }

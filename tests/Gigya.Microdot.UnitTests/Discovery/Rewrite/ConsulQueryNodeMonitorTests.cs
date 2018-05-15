@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
@@ -8,6 +9,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
@@ -17,7 +19,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class QueryBasedConsulNodeMonitorTests
+    public class ConsulQueryNodeMonitorTests
     {
         private const string ServiceName = "MyService-prod";
         private const int ConsulPort = 8508;
@@ -30,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string Host2 = "Host2";
 
         private TestingKernel<ConsoleLog> _testingKernel;
-        private INodeMonitor _consulQueryNodeMonitor;
+        private INodeSource _nodeSource;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ConsulSimulator _consulSimulator;
         private DeploymentIdentifier _deploymentIdentifier;
@@ -70,14 +72,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig{ReloadInterval = TimeSpan.FromMilliseconds(100)};
 
-            _consulQueryNodeMonitor = _testingKernel.Get<Func<DeploymentIdentifier, QueryBasedConsulNodeMonitor>>()(_deploymentIdentifier);
+            CreateNodeSource();
         }
 
         [TearDown]
-        public void Teardown()
+        public async Task Teardown()
         {
-            _consulSimulator.Dispose();
-            _consulQueryNodeMonitor.Dispose();
+            _consulSimulator?.Dispose();
+            if (_nodeSource!=null)
+                await _nodeSource.Shutdown();
         }
 
         public async Task WaitForUpdates()
@@ -94,6 +97,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             AssertOneDefaultNode();
         }
+
+        [Test]
+        public async Task ServiceNotExists()
+        {
+            await Init();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
+        }
+
 
         [Test]
         public async Task ServiceAdded()
@@ -115,8 +126,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             AddServiceNode(Host2);
             await WaitForUpdates();
-            _consulQueryNodeMonitor.Nodes.Length.ShouldBe(2);
-            _consulQueryNodeMonitor.Nodes[1].Hostname.ShouldBe(Host2);
+            var nodes = _nodeSource.GetNodes();
+            nodes.Length.ShouldBe(2);
+            nodes[1].Hostname.ShouldBe(Host2);
         }
 
         [Test]
@@ -127,7 +139,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Init();
 
-            _consulQueryNodeMonitor.Nodes.Length.ShouldBe(2);
+            _nodeSource.GetNodes().Length.ShouldBe(2);
             
             RemoveServiceNode("endpointToRemove");
             await WaitForUpdates();
@@ -163,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Init();
-            _consulQueryNodeMonitor.WasUndeployed.ShouldBeTrue();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
         }
 
         [Test]
@@ -172,12 +184,18 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             await Init();
 
-            _consulQueryNodeMonitor.WasUndeployed.ShouldBeFalse();
+            _nodeSource.WasUndeployed.ShouldBeFalse();
 
             RemoveService();
             await WaitForUpdates();
 
-            _consulQueryNodeMonitor.WasUndeployed.ShouldBeTrue();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
+
+            // WasUndeployed stays true even after it was re-deployed. The source needs to be re-created to keep monitoring again
+            AddServiceNode();
+            await WaitForUpdates();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
+
         }
 
         [Test]        
@@ -186,7 +204,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             RemoveServiceNode();
             await Init();
-            _consulQueryNodeMonitor.WasUndeployed.ShouldBeFalse();
+            _nodeSource.WasUndeployed.ShouldBeFalse();
             ShouldThrowExceptionWhenRequestingNodes();
         }
 
@@ -196,7 +214,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             await Init();
 
-            _consulQueryNodeMonitor.WasUndeployed.ShouldBeTrue();
+            _nodeSource.WasUndeployed.ShouldBeTrue();
             await WaitForUpdates();
 
             AddServiceNode();
@@ -205,25 +223,40 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AssertOneDefaultNode();
         }
 
+        [Test]
+        public void SupportMultipleEnvironments()
+        {
+            CreateNodeSource();
+            _nodeSource.SupportsMultipleEnvironments.ShouldBeTrue();
+        }
+
+
         private Task Init()
         {
-            _consulQueryNodeMonitor = _testingKernel.Get<Func<DeploymentIdentifier, QueryBasedConsulNodeMonitor>>()(_deploymentIdentifier);
-            return _consulQueryNodeMonitor.Init();
+            CreateNodeSource();
+            return _nodeSource.Init();
+        }
+
+        private void CreateNodeSource()
+        {
+            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deploymentIdentifier);
+            _nodeSource = sources.Single(x => x.Type == "ConsulQuery");
         }
 
         private void AssertOneDefaultNode()
         {
-            _consulQueryNodeMonitor.WasUndeployed.ShouldBeFalse();
-            _consulQueryNodeMonitor.Nodes.Length.ShouldBe(1);
-            _consulQueryNodeMonitor.Nodes[0].Hostname.ShouldBe(Host1);
-            _consulQueryNodeMonitor.Nodes[0].Port.ShouldBe(Port1);
+            _nodeSource.WasUndeployed.ShouldBeFalse();
+            var nodes = _nodeSource.GetNodes();
+            nodes.Length.ShouldBe(1);
+            nodes[0].Hostname.ShouldBe(Host1);
+            nodes[0].Port.ShouldBe(Port1);
         }
 
         private void ShouldThrowExceptionWhenRequestingNodes()
         {
             var getNodesAction = (Action)(() =>
             {
-                var _ = _consulQueryNodeMonitor.Nodes;
+                _nodeSource.GetNodes();
             });
 
             getNodesAction.ShouldThrow<EnvironmentException>();

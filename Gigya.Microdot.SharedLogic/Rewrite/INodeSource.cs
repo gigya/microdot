@@ -7,7 +7,7 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
     /// <summary>
     /// A source which supplies updated list of available nodes for discovery of a specific service and environment
     /// </summary>
-    public interface INodeSource : IDisposable
+    public interface INodeSource 
     {
         /// <summary>
         /// Initialize this source (e.g. Consul source needs initialization to start monitoring Consul)
@@ -37,6 +37,6 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// </summary>
         bool SupportsMultipleEnvironments { get; }
 
-        Task DisposeAsync();
+        Task Shutdown();
     }
 }

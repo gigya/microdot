@@ -78,12 +78,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             var reachableNodes = nodes.Where(n => n.IsReachable).ToArray();
             if (!reachableNodes.Any())
-                throw new ServiceUnreachableException("All nodes are unreachable", unencrypted: new Tags
-                {
-                    {"serviceName", ServiceName},
-                    {"discoverySource", NodeSource.Type},
-                    {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}
-                });
+                throw new ServiceUnreachableException("All nodes are unreachable",
+                    nodes.FirstOrDefault(n=>n.LastException!=null)?.LastException,
+                    unencrypted: new Tags
+                    {
+                        {"serviceName", ServiceName},
+                        {"discoverySource", NodeSource.Type},
+                        {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}                    
+                    });
 
             var affinityToken = TracingContext.TryGetRequestID() ?? Guid.NewGuid().ToString("N");
             var index = (uint)affinityToken.GetHashCode();
@@ -160,7 +162,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             DisposeNodes(_monitoredNodes);
-            await NodeSource.DisposeAsync().ConfigureAwait(false);
+            await NodeSource.Shutdown().ConfigureAwait(false);
             _healthMonitor.Dispose();
 
             _disposed = true;
