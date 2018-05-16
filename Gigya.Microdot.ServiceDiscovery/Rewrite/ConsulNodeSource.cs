@@ -72,10 +72,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             GetConfig = getConfig;
             DataCenter = environmentVariableProvider.DataCenter;
-            ShutdownToken = new CancellationTokenSource();
+            ShutdownToken = new CancellationTokenSource();            
             AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");
-            AggregatingHealthStatus.RegisterCheck(_deploymentIdentifier.ToString(), CheckHealth);
-
         }
 
         /// <inheritdoc />
@@ -83,27 +81,42 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             await ConsulServiceListMonitor.Init().ConfigureAwait(false);
 
-            if (ConsulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing))
+            var serviceExists = false;
+            try
             {
-                // TODO: Remove if consul is guaranteed to be with correct casing
-                _deploymentIdentifier = deploymentIdentifierMatchCasing;
 
-                lock (_initLocker)
+                if (ConsulServiceListMonitor.ServiceExists(_deploymentIdentifier,
+                    out var deploymentIdentifierMatchCasing))
                 {
-                    if (_versionInitTask == null)
+                    // TODO: Remove if consul is guaranteed to be with correct casing
+                    _deploymentIdentifier = deploymentIdentifierMatchCasing;
+
+                    lock (_initLocker)
                     {
-                        _versionInitTask = LoadVersion(0);
-                        _nodesInitTask = LoadNodes(0);
+                        if (_versionInitTask == null)
+                        {
+                            _versionInitTask = LoadVersion(0);
+                            _nodesInitTask = LoadNodes(0);
 
-                        _versionLoopTask = Task.Run(LoadVersionLoop);
-                        _nodesLoopTask = Task.Run(LoadNodesLoop);
+                            _versionLoopTask = Task.Run(LoadVersionLoop);
+                            _nodesLoopTask = Task.Run(LoadNodesLoop);
+                        }
                     }
-                }
 
-                await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
+                    await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
+                }
+                else
+                    _wasUndeployed = true;
             }
-            else
-                _wasUndeployed = true;
+            catch (EnvironmentException ex)
+            {
+                LastError = ex;
+            }
+            finally
+            {
+                if (!_wasUndeployed)
+                    InitHealthCheck();
+            }
         }
 
         private string ActiveVersion
@@ -306,6 +319,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 { "lastNodesResponse", _lastNodesResult?.ResponseContent}
             });
             LastErrorTime = DateTime.UtcNow;
+        }
+
+        private void InitHealthCheck()
+        {
+            AggregatingHealthStatus.RegisterCheck(_deploymentIdentifier.ToString(), CheckHealth);
         }
 
         private HealthCheckResult CheckHealth()

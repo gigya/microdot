@@ -6,6 +6,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
@@ -53,7 +54,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [SetUp]
-        public void Setup()
+        public async Task Setup()
         {
             _consulSimulator.Reset();
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
@@ -67,7 +68,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
             _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod");
-            _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};            
+            _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};
         }
 
         [TearDown]
@@ -238,12 +239,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             RemoveService();
             await WaitForUpdates();
             _nodeSource.WasUndeployed.ShouldBeTrue();
-            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;            
 
             AddServiceNode();
             await WaitForUpdates();            
             _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");            
-            _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
         }
 
         [Test]

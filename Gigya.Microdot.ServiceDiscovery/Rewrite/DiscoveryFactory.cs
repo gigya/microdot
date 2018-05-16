@@ -37,12 +37,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var nodeSource = CreateNodeSource(deploymentIdentifier);
             await nodeSource.Init().ConfigureAwait(false);
-            if (nodeSource.WasUndeployed)
+            bool specificEnvironmentNotSupported = !nodeSource.SupportsMultipleEnvironments && deploymentIdentifier.IsEnvironmentSpecific;// if nodeSource not supports multiple environments, only the last fallback environment will get a valid nodeSource
+
+            if (nodeSource.WasUndeployed || specificEnvironmentNotSupported)
+            {
+                await nodeSource.Shutdown().ConfigureAwait(false);
                 return null;
-            if (!nodeSource.SupportsMultipleEnvironments && deploymentIdentifier.IsEnvironmentSpecific) // if nodeSource not supports multiple environments, only the last fallback environment will get a valid nodeSource
-                return null;
-            else              
-                return nodeSource;            
+            }
+
+            return nodeSource;        
         }
 
         private INodeSource CreateNodeSource(DeploymentIdentifier deploymentIdentifier)

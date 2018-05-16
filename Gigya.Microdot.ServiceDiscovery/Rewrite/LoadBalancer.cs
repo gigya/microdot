@@ -36,14 +36,15 @@ using Metrics;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     // explain
-    public class LoadBalancer: ILoadBalancer
+    public sealed class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
+        private readonly object _lock = new object();
         private INodeSource NodeSource { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
-        public string ServiceName { get; }
+        private string ServiceName { get; }
         private INode[] _sourceNodes;
         private IMonitoredNode[] _monitoredNodes = new IMonitoredNode[0];
         private readonly ComponentHealthMonitor _healthMonitor;        
@@ -105,34 +106,37 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (sourceNodes == _sourceNodes)
                 return;
 
-            var oldNodes = _monitoredNodes;
-            var newNodes = sourceNodes
-                .Select(n => new MonitoredNode(n, ServiceName, ReachabilityCheck, DateTime, Log)).ToArray();
-            var nodesToRemove = oldNodes.Except(newNodes).ToArray();
+            lock (_lock)
+            {
+                var oldNodes = _monitoredNodes;
+                var newNodes = sourceNodes.Select(n => new MonitoredNode(n, ServiceName, ReachabilityCheck, DateTime, Log)).ToArray();
+                var nodesToRemove = oldNodes.Except(newNodes).ToArray();
 
-            _monitoredNodes = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
-            DisposeNodes(nodesToRemove);
-            _sourceNodes = sourceNodes;
+                _monitoredNodes = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
+                StopMonitoringNodes(nodesToRemove);
+                _sourceNodes = sourceNodes;
+            }
         }
 
         private HealthCheckResult CheckHealth()
         {
-            if (_monitoredNodes.Length == 0)
+            var nodes = _monitoredNodes;
+            if (nodes.Length == 0)
                 return HealthCheckResult.Unhealthy($"No nodes were discovered by {NodeSource.Type}");
 
-            var unreachableNodes = _monitoredNodes.Where(n => !n.IsReachable).ToArray();
+            var unreachableNodes = nodes.Where(n => !n.IsReachable).ToArray();
             if (unreachableNodes.Length==0)
-                return HealthCheckResult.Healthy($"All {_monitoredNodes.Length} nodes are reachable");
+                return HealthCheckResult.Healthy($"All {nodes.Length} nodes are reachable");
 
             string message = string.Join("\r\n", unreachableNodes.Select(n=> $"    {n.ToString()} - {n.LastException?.Message}"));
-            var healthyNodesCount = _monitoredNodes.Length - unreachableNodes.Length;
+            var healthyNodesCount = nodes.Length - unreachableNodes.Length;
             if (healthyNodesCount==0)
-                return HealthCheckResult.Unhealthy($"All {_monitoredNodes.Length} nodes are unreachable\r\n{message}");
+                return HealthCheckResult.Unhealthy($"All {nodes.Length} nodes are unreachable\r\n{message}");
             else     
-                return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {_monitoredNodes.Length} are reachable. Unreachable nodes:\r\n{message}");
+                return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {nodes.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
-        private void DisposeNodes(IEnumerable<IMonitoredNode> monitoredNodes)
+        private void StopMonitoringNodes(IEnumerable<IMonitoredNode> monitoredNodes)
         {
             foreach (var monitoredNode in monitoredNodes)
             {
@@ -140,13 +144,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
-        protected virtual void Dispose(bool disposing)
+        public void Dispose()
         {
             if (_disposed) // use interlocked
                 return;
@@ -161,7 +160,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_disposed)
                 return;
 
-            DisposeNodes(_monitoredNodes);
+            StopMonitoringNodes(_monitoredNodes);
             await NodeSource.Shutdown().ConfigureAwait(false);
             _healthMonitor.Dispose();
 

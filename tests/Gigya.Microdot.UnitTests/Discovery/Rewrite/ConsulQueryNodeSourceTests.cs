@@ -19,7 +19,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class ConsulQueryNodeMonitorTests
+    public class ConsulQueryNodeSourceTests
     {
         private const string ServiceName = "MyService-prod";
         private const int ConsulPort = 8508;
@@ -95,7 +95,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Init();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             await WaitForUpdates();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
         }
 
         [Test]
@@ -122,7 +122,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetServiceVersion(Version);
             AddServiceNode();
             await Init();
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
 
             AddServiceNode(Host2);
             await WaitForUpdates();
@@ -144,7 +144,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             RemoveServiceNode("endpointToRemove");
             await WaitForUpdates();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
         }
 
 
@@ -168,7 +168,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetConsulIsDown();
             await WaitForUpdates();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
         }
 
         [Test]
@@ -220,7 +220,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             await WaitForUpdates();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
         }
 
         [Test]
@@ -243,8 +243,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _nodeSource = sources.Single(x => x.Type == "ConsulQuery");
         }
 
-        private void AssertOneDefaultNode()
+        private async Task AssertOneDefaultNode()
         {
+            await ReloadNodeMonitorIfNeeded();
             _nodeSource.WasUndeployed.ShouldBeFalse();
             var nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
@@ -252,6 +253,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             nodes[0].Port.ShouldBe(Port1);
         }
 
+        private async Task ReloadNodeMonitorIfNeeded()
+        {
+            if (_nodeSource.WasUndeployed)
+            {
+                _nodeSource.Shutdown();
+                await Init();
+            }
+        }
         private void ShouldThrowExceptionWhenRequestingNodes()
         {
             var getNodesAction = (Action)(() =>

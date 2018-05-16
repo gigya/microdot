@@ -103,8 +103,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _nodes = queryResult.Nodes.Select(n => n.ToNode()).ToArray<INode>();
                 if (_nodes.Length == 0)
                     ErrorResult(consulResult, "No endpoints were specified in Consul for the requested service and service's active version.");
-
-                WasUndeployed = false;
             }
         }
 
@@ -134,9 +132,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public INode[] GetNodes()
         {
-            if (WasUndeployed)
-                throw Ex.ServiceNotDeployed(DataCenter, DeploymentIdentifier);
-
             if (_nodes.Length == 0 && Error != null)
             {
                 if (Error.StackTrace == null)
@@ -148,7 +143,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return _nodes;
         }
 
-        public bool WasUndeployed { get; set; } = true;
+        public bool WasUndeployed { get; private set; } = false;
 
         public bool SupportsMultipleEnvironments => true;
 
