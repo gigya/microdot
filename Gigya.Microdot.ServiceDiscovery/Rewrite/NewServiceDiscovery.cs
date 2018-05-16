@@ -182,24 +182,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             using (await _asyncLocker.LockAsync().ConfigureAwait(false))
             {
-                if (MasterEnvironmentLoadBalancer?.WasUndeployed != false)
+                if (MasterEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
                     await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
 
-                if (OriginatingEnvironmentLoadBalancer?.WasUndeployed != false)
+                if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
                     await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
 
-                if (NoEnvironmentLoadBalancer?.WasUndeployed != false)
+                if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
                     await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
 
-                if (OriginatingEnvironmentLoadBalancer?.WasUndeployed == false)
+                if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 {
                     return OriginatingEnvironmentLoadBalancer;
                 }
-                else if (MasterEnvironmentLoadBalancer?.WasUndeployed == false && GetConfig().EnvironmentFallbackEnabled)
+                else if (MasterEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false && GetConfig().EnvironmentFallbackEnabled)
                 {
                     return MasterEnvironmentLoadBalancer;
                 }
-                else if (NoEnvironmentLoadBalancer?.WasUndeployed == false)
+                else if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 {
                     return NoEnvironmentLoadBalancer;
                 }

@@ -38,9 +38,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         IMonitoredNode GetNode();
 
         /// <summary>
-        /// Returns true if the service was undeployed.
+        /// Source of nodes, over which the load balancer is balancing
         /// </summary>
-        bool WasUndeployed { get; }
+        INodeSource NodeSource { get; }
 
         Task DisposeAsync();
     }

@@ -35,12 +35,14 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    // explain
+    /// <summary>
+    /// Provides a reachable node for each call to <see cref="GetNode"/>
+    /// </summary>
     public sealed class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
         private readonly object _lock = new object();
-        private INodeSource NodeSource { get; }
+
         private ReachabilityCheck ReachabilityCheck { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
@@ -65,6 +67,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetNodesFromSource();
             _healthMonitor = healthMonitor.SetHealthFunction(ServiceName, CheckHealth);
         }
+
+        /// <inheritdoc />
+        public INodeSource NodeSource { get; }
 
         public IMonitoredNode GetNode()
         {
@@ -92,10 +97,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var index = (uint)affinityToken.GetHashCode();
             
             return reachableNodes[index % reachableNodes.Length];
-        }
-
-        /// <inheritdoc />
-        public bool WasUndeployed => NodeSource.WasUndeployed;
+        }                
 
         private void GetNodesFromSource()
         {
