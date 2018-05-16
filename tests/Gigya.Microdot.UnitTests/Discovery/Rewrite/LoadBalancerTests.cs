@@ -28,6 +28,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -52,7 +53,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private LogSpy _log;
 
-        private Func<INode, Task<bool>> _reachabilityCheck;
+        private ReachabilityCheck _reachabilityCheck;
         private TestingKernel<LogSpy> _kernel;
 
         private INodeSource _nodeSource;
@@ -84,13 +85,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _log = (LogSpy)_kernel.Get<ILog>();
             _nodeSource = Substitute.For<INodeSource>();
             _nodeSource.GetNodes().Returns(_ => _getSourceNodes());
-            _reachabilityCheck = _ => Task.FromResult(false);
+            _reachabilityCheck = (n,c) => throw new EnvironmentException("node is unreachable");
 
             var createLoadBalancer = _kernel.Get<Func<INodeSource, DeploymentIdentifier, ReachabilityCheck, ILoadBalancer>>();
             _loadBalancer = createLoadBalancer(
                 _nodeSource,
                 new DeploymentIdentifier(ServiceName, Env),
-                new ReachabilityCheck(n=>_reachabilityCheck(n)));
+                (n,c)=>_reachabilityCheck(n,c));
         }
 
         [TearDown]
@@ -171,7 +172,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public void GetNode_NodeIsReachableAgain_NodeWillBeReturned()
+        public async Task GetNode_NodeIsReachableAgain_NodeWillBeReturned()
         {            
             SetupDefaultNodes();
 
@@ -180,7 +181,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             Get20Nodes().ShouldNotContain(selectedNode);
 
-            selectedNode.ReportReachable();
+            _reachabilityCheck = (_,__) => Task.FromResult(true);
+            await Task.Delay(1000);
+
             Get20Nodes().ShouldContain(selectedNode);
         }
 
@@ -220,7 +223,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task GetNode_NodeUnreachableThenReturnsInBackground_NodeShouldBeReturned()
         {
             SetupDefaultNodes();
-            _reachabilityCheck = _ => Task.FromResult(false);
+            _reachabilityCheck = (_,__) => throw new EnvironmentException("node is unreachable");
 
             var selectedNode = _loadBalancer.GetNode();
             selectedNode.ReportUnreachable();
@@ -228,7 +231,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             Get20Nodes().ShouldNotContain(selectedNode);
 
             var waitForReachablitiy = new TaskCompletionSource<bool>();
-            _reachabilityCheck = _ =>
+            _reachabilityCheck = (_,__) =>
             {
                 waitForReachablitiy.SetResult(true);
                 return Task.FromResult(true);
@@ -263,7 +266,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             
             Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode());
 
-            _reachabilityCheck = _ => Task.FromResult(true);
+            _reachabilityCheck = (_,__) => Task.FromResult(true);
 
             await Task.Delay(1000);
 
@@ -280,12 +283,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupDefaultNodes();
             var reachabilityException = new Exception("Simulated error while running reachability check");
 
-            _reachabilityCheck = _ => { throw reachabilityException; };
+            _reachabilityCheck = (_,__) => { throw reachabilityException; };
             Run20times(node => node.ReportUnreachable());
 
             await Task.Delay(1500);
 
-            _log.LogEntries.ToArray().ShouldContain(e => e.Severity == TraceEventType.Error && e.Exception == reachabilityException);
+            _log.LogEntries.ToArray().ShouldContain(e => e.Exception == reachabilityException);
         }
 
         private void SetupNoNodes()

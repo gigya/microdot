@@ -260,7 +260,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             var discovery =
                 _unitTestingKernel.Get<Func<string, ReachabilityCheck, INewServiceDiscovery>>()(_serviceName,
-                    x=>Task.FromResult(true));
+                    (n,c)=>Task.FromResult(true));
             return discovery;
         }
 

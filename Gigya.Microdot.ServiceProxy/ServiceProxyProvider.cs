@@ -30,6 +30,7 @@ using System.Net.Security;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Application.HttpService.Client;
@@ -49,6 +50,7 @@ using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Newtonsoft.Json;
 using Node = Gigya.Microdot.ServiceDiscovery.Rewrite.Node;
+using Timer = Metrics.Timer;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -263,23 +265,32 @@ namespace Gigya.Microdot.ServiceProxy
         }
 
 
-        public async Task<bool> IsReachable(INode node)
+        public async Task IsReachable(INode node, CancellationToken cancellationToken)
         {
-            try
-            {
-                var config = GetConfig();
-                var port = GetEffectivePort(node, config);
-                if (port == null)
-                    return false;
-                var uri = BuildUri(node.Hostname, port.Value, config);
-                var response = await GetHttpClient(config).GetAsync(uri, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
+            var config = GetConfig();
+            var port = GetEffectivePort(node, config);
+            if (port == null)
+                throw new ConfigurationException(
+                    "Node is unreachable. No port is configured",
+                    unencrypted: new Tags()
+                    {
+                        {"hostname", node.Hostname},
+                    });
+                    
+            var uri = BuildUri(node.Hostname, port.Value, config);
+            var response = await GetHttpClient(config).GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
 
-                return response.Headers.Contains(GigyaHttpHeaders.ServerHostname);
-            }
-            catch
-            {
-                return false;
-            }
+            if (!response.Headers.Contains(GigyaHttpHeaders.ServerHostname))
+                throw new EnvironmentException(
+                    $"Node is unreachable. Response does not contain header '{GigyaHttpHeaders.ServerHostname}'",
+                    unencrypted: new Tags()
+                    {
+                        {"hostname", node.Hostname},
+                        {"port", node.Port.ToString()},
+                        {"uri", uri},
+                        {"responseCode", response.StatusCode.ToString()},
+                        {"responseHeaders", string.Join(",", response.Headers.Select(h => h.Key))}
+                    });
         }
 
 

@@ -63,11 +63,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void ReportReachable()
         {
-            lock (_lock)
-            {
-                IsReachable = true;
-                StopMonitoring();
-            }
+            // TODO: add metrics about reachable/unreachable nodes
         }
 
         public Exception LastException { get; private set; }
@@ -77,54 +73,54 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             
             LastException = ex;
 
-            // Task.Run is used here to have the long-running task of monitoring run on the thread pool,
-            // otherwise it might prevent ASP.NET requests from completing or it might be tied to a specific
-            // grain's lifetime, when it is actually a global concern.
             lock (_lock)
             {
                 if (!_monitoringTask.IsCompleted)
                     return;
 
+                if (IsReachable)
+                   Log.Info(_ => _("Node has become unreachable", unencryptedTags: UnencryptedTags));
+
+
                 IsReachable = false;
                 _monitoringCancellationSource = new CancellationTokenSource();
-                _monitoringTask = Task.Run(StartMonitoring, _monitoringCancellationSource.Token);                               
+
+                // Task.Run is used here to have the long-running task of monitoring run on the thread pool,
+                // otherwise it might prevent ASP.NET requests from completing or it might be tied to a specific
+                // grain's lifetime, when it is actually a global concern.
+                _monitoringTask = Task.Run(()=>StartMonitoring(_monitoringCancellationSource.Token));                               
             }
         }
 
         public bool IsReachable { get; private set; } = true;
         
-        private async Task StartMonitoring()
+        private async Task StartMonitoring(CancellationToken cancellationToken)
         {
             _monitoringAttemptCount = 0;
             _monitoringStartTime = DateTime.UtcNow;
             _monitoringNextDelay = TimeSpan.FromSeconds(FirstAttemptDelaySeconds);            
 
-            while (!_monitoringCancellationSource.Token.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
                     _monitoringAttemptCount++;
 
-                    if (await ReachabilityCheck(this).ConfigureAwait(false))
+                    await ReachabilityCheck(this, cancellationToken).ConfigureAwait(false);
+                   
+                    // if ReachabilityCheck passed successfully, then service is reachable
+                    lock (_lock)
                     {
-                        lock (_lock)
-                        {
-                            IsReachable = true;
-                        }
-
+                        IsReachable = true;
                         Log.Info(_ => _("Node has become reachable", unencryptedTags: UnencryptedTags));
-
                         return;
-                    }
-
-
+                    }                 
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(_ => _("Programmatic error; the supplied reachability checker threw an exception while checking node reachability (instead of returning true/false)", exception: ex, unencryptedTags: UnencryptedTags));
+                    LastException = ex;
+                    Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", exception: ex, unencryptedTags: UnencryptedTags));
                 }
-
-                Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", unencryptedTags: UnencryptedTags));
 
                 await Task.Delay(_monitoringNextDelay, _monitoringCancellationSource.Token).ConfigureAwait(false);
 
@@ -133,8 +129,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_monitoringNextDelay.TotalSeconds > MaxAttemptDelaySeconds)
                     _monitoringNextDelay = TimeSpan.FromSeconds(MaxAttemptDelaySeconds);
             }
-
-       
         }
 
         public void StopMonitoring()
