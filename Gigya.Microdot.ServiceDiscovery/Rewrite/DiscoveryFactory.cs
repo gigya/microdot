@@ -49,41 +49,28 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public async Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
         {
-            var nodeSource = await CreateNodeSource(deploymentIdentifier).ConfigureAwait(false);
-            if (nodeSource == null)
-                return null;
-
-            bool specificEnvironmentNotSupported = !nodeSource.SupportsMultipleEnvironments && deploymentIdentifier.IsEnvironmentSpecific;// if nodeSource not supports multiple environments, only the last fallback environment will get a valid nodeSource
-
-            if (nodeSource.WasUndeployed || specificEnvironmentNotSupported)
-            {
-                nodeSource.Shutdown();
-                return null;
-            }
-
-            return nodeSource;        
-        }
-
-        private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier)
-        {
+            INodeSource nodeSource;
             var serviceConfig = GetConfig().Services[deploymentIdentifier.ServiceName];
             var sourceType = serviceConfig.Source;
             switch (sourceType)
             {
                 case "Config":
-                    return CreateConfigNodeSource(deploymentIdentifier);
+                    nodeSource = CreateConfigNodeSource(deploymentIdentifier); break;
                 case "Local":
-                    return CreateLocalNodeSource(deploymentIdentifier);
+                    nodeSource = CreateLocalNodeSource(deploymentIdentifier); break;
                 case "ConsulQuery":
                     var consulQueryNodeSource = CreateConsulQueryNodeSource(deploymentIdentifier);
                     await consulQueryNodeSource.Init().ConfigureAwait(false);
-                    return consulQueryNodeSource;                   
+                    nodeSource = consulQueryNodeSource;      
+                    break;
+                default:
+                    if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
+                        nodeSource = await factory.TryCreateNodeSource(deploymentIdentifier).ConfigureAwait(false);
+                    else throw new ConfigurationException($"Discovery Source '{serviceConfig.Source}' is not supported.");
+                    break;
             }
 
-            if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
-                return await factory.TryCreateNodeSource(deploymentIdentifier).ConfigureAwait(false);
-
-            throw new ConfigurationException($"Discovery Source '{serviceConfig.Source}' is not supported.");
+            return nodeSource;        
         }
     }
 }

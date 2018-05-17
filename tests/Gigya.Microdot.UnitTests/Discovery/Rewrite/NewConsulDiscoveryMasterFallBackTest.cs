@@ -83,7 +83,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeSource CreateNodeSourceMock(DeploymentIdentifier di)
         {
             var mock = Substitute.For<INodeSource>();            
-            mock.SupportsMultipleEnvironments.Returns(true);
             mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(di));
             mock.GetNodes().Returns(_ => _consulNodesResults[di]());
             return mock;

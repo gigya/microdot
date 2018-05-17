@@ -21,11 +21,6 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// </summary>
         bool WasUndeployed { get; }
 
-        /// <summary>
-        /// Whether this source supports services which are deployed on multiple environments
-        /// </summary>
-        bool SupportsMultipleEnvironments { get; }
-
         void Shutdown();
     }
 }

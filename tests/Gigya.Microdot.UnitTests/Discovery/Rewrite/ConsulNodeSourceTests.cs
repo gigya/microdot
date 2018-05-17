@@ -258,15 +258,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-        [Test]
-        public async Task SupportMultipleEnvironments()
-        {
-            AddServiceNode();
-            await Init();
-            _nodeSource.SupportsMultipleEnvironments.ShouldBeTrue();
-        }
-
-
 
         private async Task Init()
         {

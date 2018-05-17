@@ -51,8 +51,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSourceWasUndeployed = false;
             _consulSource = Substitute.For<INodeSource>();
             _configSource = Substitute.For<INodeSource>();
-            _consulSource.SupportsMultipleEnvironments.Returns(true);
-            _configSource.SupportsMultipleEnvironments.Returns(false);
             _consulSource.WasUndeployed.Returns(_ => _consulSourceWasUndeployed);
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();

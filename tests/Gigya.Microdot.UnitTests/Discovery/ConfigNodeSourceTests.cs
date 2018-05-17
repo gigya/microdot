@@ -121,12 +121,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void NotSupportsMultipleEnvironments()
-        {
-            _configNodeSource.SupportsMultipleEnvironments.ShouldBeFalse();
-        }
-
-        [Test]
         public void IsNeverUndeployed()
         {
             _configNodeSource.WasUndeployed.ShouldBeFalse();
