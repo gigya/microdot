@@ -79,8 +79,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task Teardown()
         {
             _consulSimulator?.Dispose();
-            if (_nodeSource!=null)
-                await _nodeSource.Shutdown();
+            _nodeSource?.Shutdown();
         }
 
         public async Task WaitForUpdates()

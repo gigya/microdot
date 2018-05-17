@@ -349,7 +349,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public async Task Shutdown()
+        public void Shutdown()
         {
             if (Interlocked.Increment(ref _stopped) != 1)
                 return;
@@ -357,11 +357,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             AggregatingHealthStatus.RemoveCheck(_deploymentIdentifier.ToString());
 
             ShutdownToken?.Cancel();
-            if (_nodesLoopTask != null)
-                await _nodesLoopTask.ConfigureAwait(false);
-            if (_versionLoopTask != null)
-                await _versionLoopTask.ConfigureAwait(false);
-
             ShutdownToken?.Dispose();
         }
 

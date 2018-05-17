@@ -52,10 +52,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // nothing to init
         }
 
-        public Task Shutdown()
+        public void Shutdown()
         {
-            // nothing to shutdown
-            return Task.FromResult(true);
+            // nothing to shutdown            
         }
     }
 

@@ -163,7 +163,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             StopMonitoringNodes(_monitoredNodes);
-            await NodeSource.Shutdown().ConfigureAwait(false);
+            NodeSource.Shutdown();
             _healthMonitor.Dispose();
 
             _disposed = true;

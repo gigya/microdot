@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             if (nodeSource.WasUndeployed || specificEnvironmentNotSupported)
             {
-                await nodeSource.Shutdown().ConfigureAwait(false);
+                nodeSource.Shutdown();
                 return null;
             }
 

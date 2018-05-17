@@ -147,19 +147,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool SupportsMultipleEnvironments => true;
 
-        public async Task Shutdown()
+        public void Shutdown()
         {
             if (Interlocked.Increment(ref _stopped) != 1)
                 return;
 
             ShutdownToken?.Cancel();
-            try
-            {
-                if (LoopingTask != null)
-                    await LoopingTask.ConfigureAwait(false);
-            }
-            catch (TaskCanceledException) { }
-
             ShutdownToken?.Dispose();
         }
     }

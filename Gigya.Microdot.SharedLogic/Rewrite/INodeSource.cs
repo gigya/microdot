@@ -37,6 +37,6 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// </summary>
         bool SupportsMultipleEnvironments { get; }
 
-        Task Shutdown();
+        void Shutdown();
     }
 }
