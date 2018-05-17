@@ -28,8 +28,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private Dictionary<DeploymentIdentifier, INodeSource> _consulNodeSources;
-        private Dictionary<DeploymentIdentifier, Func<INode[]>> _consulNodesResults;
-        private IConsulServiceListMonitor _consulConsulServiceListMonitor;
+        private Dictionary<DeploymentIdentifier, Func<INode[]>> _consulNodesResults;        
         private HashSet<DeploymentIdentifier> _consulServiceList;        
         private IEnvironmentVariableProvider _environmentVariableProvider;        
         private IDateTime _dateTimeMock;
@@ -68,18 +67,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _consulNodeSources = new Dictionary<DeploymentIdentifier, INodeSource>();
             _consulNodesResults = new Dictionary<DeploymentIdentifier, Func<INode[]>>();
-
-            _consulConsulServiceListMonitor = Substitute.For<IConsulServiceListMonitor>();
+            
             _consulServiceList = new HashSet<DeploymentIdentifier>();
-            _consulConsulServiceListMonitor.ServiceExists(Arg.Any<DeploymentIdentifier>(), out var _)
-                .Returns(c =>
-                {
-                    c[1] = c.Args()[0];
-                    return _consulServiceList.Contains(((DeploymentIdentifier) c.Args()[0]));
-                });            
 
-            kernel.Rebind<Func<DeploymentIdentifier, INodeSource[]>>().ToMethod(_ => di=>new[]{GetNodeSourceMock(di)});
-            kernel.Rebind<IConsulServiceListMonitor>().ToMethod(_ => _consulConsulServiceListMonitor);
+            var consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
+            consulNodeSourceFactory.Type.Returns("Consul");
+            consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(c=>GetNodeSourceMock(c.Arg<DeploymentIdentifier>()));
+            kernel.Rebind<INodeSourceFactory>().ToMethod(_ => consulNodeSourceFactory);            
 
             CreateConsulMock(MasterService);
             CreateConsulMock(OriginatingService);
@@ -88,8 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private INodeSource CreateNodeSourceMock(DeploymentIdentifier di)
         {
-            var mock = Substitute.For<INodeSource>();
-            mock.Type.Returns("Consul");
+            var mock = Substitute.For<INodeSource>();            
             mock.SupportsMultipleEnvironments.Returns(true);
             mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(di));
             mock.GetNodes().Returns(_ => _consulNodesResults[di]());

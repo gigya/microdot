@@ -96,7 +96,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceNotExists()
         {
             await Init();
-            _nodeSource.WasUndeployed.ShouldBeTrue();
+            _nodeSource.ShouldBeNull();
         }
 
 
@@ -161,17 +161,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe(Host2);
             nodes[0].Port.ShouldBe(Port2);
-        }
-
-        [Test]
-        public async Task StartWithError()
-        {
-            AddServiceNode();
-            SetConsulIsDown();
-
-            await Init();
-            
-            AssertExceptionIsThrown();                       
         }
 
         [Test]
@@ -272,6 +261,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task SupportMultipleEnvironments()
         {
+            AddServiceNode();
             await Init();
             _nodeSource.SupportsMultipleEnvironments.ShouldBeTrue();
         }
@@ -280,10 +270,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private async Task Init()
         {
-            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deploymentIdentifier);
-            _nodeSource = sources.Single(x => x.Type == "Consul");
-
-            await _nodeSource.Init();            
+            var factory = _testingKernel.Get<ConsulNodeSourceFactory>();
+            _nodeSource = await factory.TryCreateNodeSource(_deploymentIdentifier);            
         }
 
 

@@ -17,8 +17,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     [TestFixture]
     public class DiscoveryFactoryTests
     {
-        private const string Consul = "Consul";
+        private const string Consul = "Consul";        
         private const string Config = "Config";
+        private const string Local = "Local";
 
         private const string ServiceName = "ServiceName";
         private const string Env = "env";
@@ -26,14 +27,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private IDiscoveryFactory _factory;
 
         private TestingKernel<ConsoleLog> _kernel;
-        private INodeSource[] _nodeSources;
         private INodeSource _consulSource;
         private INodeSource _configSource;
-        private ILoadBalancer _consulLoadBalancer;
-        private ILoadBalancer _configLoadBalancer;
         private bool _consulSourceWasUndeployed;
-        private bool _consulSourceInitiated = false;
-        private DiscoveryConfig _discoveryConfig;        
+        private DiscoveryConfig _discoveryConfig;
+        private INodeSourceFactory _consulNodeSourceFactory;
 
 
         [OneTimeSetUp]
@@ -41,45 +39,26 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _kernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<Func<DeploymentIdentifier, INodeSource[]>>().ToMethod(c => i => _nodeSources);
+                k.Rebind<INodeSourceFactory>().ToMethod(c => _consulNodeSourceFactory);                
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(c=> () => _discoveryConfig);
                 k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>().InSingletonScope();
-                k.Rebind<Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer>>()
-                .ToMethod(c=> (di, source, rc)=>
-                {                    
-                    if (source == _consulSource)
-                        return _consulLoadBalancer;
-                    else if (source == _configSource)
-                        return _configLoadBalancer;
-                    else
-                        throw new Exception("Cannot create loadBalancer for unknown source");
-                });
             });
         }
 
         [SetUp]
         public void Setup()
         {
-            _consulSourceInitiated = false;
             _consulSourceWasUndeployed = false;
             _consulSource = Substitute.For<INodeSource>();
             _configSource = Substitute.For<INodeSource>();
-            _consulSource.Type.Returns(Consul);
-            _configSource.Type.Returns(Config);
             _consulSource.SupportsMultipleEnvironments.Returns(true);
             _configSource.SupportsMultipleEnvironments.Returns(false);
             _consulSource.WasUndeployed.Returns(_ => _consulSourceWasUndeployed);
-            _consulSource.Init().Returns(_ =>
-            {
-                _consulSourceInitiated = true;
-                return Task.FromResult(true);
-            });
 
-            _nodeSources = new []{_consulSource, _configSource};
+            _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
+            _consulNodeSourceFactory.Type.Returns(Consul);
+            _consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(_=>_consulSource);            
 
-            _consulLoadBalancer = Substitute.For<ILoadBalancer>();
-            _configLoadBalancer = Substitute.For<ILoadBalancer>();
-            
             _discoveryConfig = new DiscoveryConfig();
             _discoveryConfig.Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig());
 
@@ -92,7 +71,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             ConfigureServiceSource(Consul);
             var source = await TryCreateNodeSource();
             source.ShouldBe(_consulSource);
-            _consulSourceInitiated.ShouldBeTrue();            
         }
 
         [Test]
@@ -100,8 +78,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             ConfigureServiceSource(Consul);
             var loadBalancer = await TryCreateLoadBalancer();
-            loadBalancer.ShouldBe(_consulLoadBalancer);
-            _consulSourceInitiated.ShouldBeTrue();
+            loadBalancer.NodeSource.ShouldBe(_consulSource);            
         }
 
         [Test]
@@ -109,17 +86,31 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             ConfigureServiceSource(Config);
             var source = await TryCreateNodeSource(env: null);
-            source.ShouldBe(_configSource);   
-            _consulSourceInitiated.ShouldBeFalse();
+            source.GetType().ShouldBe(typeof(ConfigNodeSource));
         }
 
         [Test]
         public async Task TryCreateLoadBalancer_ReturnConfigLoadBalancer()
         {
             ConfigureServiceSource(Config);
-            var loadBalancer = await TryCreateLoadBalancer(env: null);
-            loadBalancer.ShouldBe(_configLoadBalancer);
-            _consulSourceInitiated.ShouldBeFalse();
+            var loadBalancer = await TryCreateLoadBalancer(env: null);            
+            loadBalancer.NodeSource.GetType().ShouldBe(typeof(ConfigNodeSource));
+        }
+
+        [Test]
+        public async Task TryCreateNodeSource_ReturnLocalSource()
+        {
+            ConfigureServiceSource(Local);
+            var source = await TryCreateNodeSource(env: null);
+            source.GetType().ShouldBe(typeof(LocalNodeSource));
+        }
+
+        [Test]
+        public async Task TryCreateLoadBalancer_ReturnLocalLoadBalancer()
+        {
+            ConfigureServiceSource(Local);
+            var loadBalancer = await TryCreateLoadBalancer(env: null);            
+            loadBalancer.NodeSource.GetType().ShouldBe(typeof(LocalNodeSource));
         }
 
         [Test]
@@ -160,6 +151,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private void ConfigureServiceSource(string source)
         {
             _discoveryConfig.Services[ServiceName].Source = source;
+            if (source==Config)
+                _discoveryConfig.Services[ServiceName].Hosts = "myhost";
         }
 
         private Task<INodeSource> TryCreateNodeSource(string serviceName = ServiceName, string env = Env)

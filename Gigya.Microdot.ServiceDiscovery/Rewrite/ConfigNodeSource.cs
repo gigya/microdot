@@ -11,7 +11,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// Provides service nodes from configuration. Note: Currently nodes are not specified per environment; it is
     /// assumed they match the current environment and/or are agnostic to environments (i.e. global to the datacenter).
     /// </summary>
-    public class ConfigNodeSource : INodeSource
+    internal class ConfigNodeSource : INodeSource
     {
         private DiscoveryConfig _lastConfig;
         private readonly string _serviceName;
@@ -21,9 +21,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ILog Log { get; }
 
         private readonly object _updateLocker = new object();
-
-        /// <inheritdoc />
-        public string Type => "Config";
 
         /// <inheritdoc />
         public bool SupportsMultipleEnvironments => false;
@@ -80,12 +77,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else if (parts.Length == 1)
                 return new Node(hostName, config.DefaultPort);
             else throw Ex.IncorrectHostFormatInConfig(host, _serviceName);
-        }
-
-        /// <inheritdoc />
-        public async Task Init()
-        {
-            // nothing to init
         }
 
         public void Shutdown()

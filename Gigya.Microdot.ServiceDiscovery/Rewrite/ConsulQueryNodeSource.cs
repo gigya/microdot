@@ -12,7 +12,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ConsulQueryNodeSource : INodeSource
+    internal class ConsulQueryNodeSource : INodeSource
     {
         private DeploymentIdentifier DeploymentIdentifier { get; }
         private int _stopped;
@@ -125,10 +125,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Error = error;
             ErrorTime = DateTime.UtcNow;
         }
-
-
-
-        public string Type => "ConsulQuery";
 
         public INode[] GetNodes()
         {

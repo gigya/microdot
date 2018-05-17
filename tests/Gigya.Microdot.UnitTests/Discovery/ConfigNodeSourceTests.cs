@@ -6,6 +6,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
@@ -42,8 +43,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             var deployment = new DeploymentIdentifier(ServiceName, "prod");
 
-            var sources = _kernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(deployment);
-            _configNodeSource = sources.Single(x => x.Type == "Config");
+            _configNodeSource = _kernel.Get<Func<DeploymentIdentifier, ConfigNodeSource>>()(deployment);            
         }
 
         private async Task SetConfigHosts(string hosts)

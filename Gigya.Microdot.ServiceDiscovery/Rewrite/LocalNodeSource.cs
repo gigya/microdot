@@ -39,18 +39,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _nodes = new []{new Node(CurrentApplicationInfo.HostName)};
         }
 
-        public string Type => "Local";
-
         public bool WasUndeployed => false;
 
         public INode[] GetNodes() => _nodes;
 
         public bool SupportsMultipleEnvironments => false;
-
-        public async Task Init()
-        {
-            // nothing to init
-        }
 
         public void Shutdown()
         {

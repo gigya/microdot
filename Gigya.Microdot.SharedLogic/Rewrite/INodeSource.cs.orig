@@ -10,6 +10,20 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
     public interface INodeSource 
     {
         /// <summary>
+<<<<<<< Updated upstream
+        /// Initialize this source (e.g. Consul source needs initialization to start monitoring Consul)
+        /// </summary>
+        /// <returns></returns>
+        Task Init(); // remove, since INodeSourceFactory will properly initialize the objects it returns (async)
+
+        /// <summary>
+        /// Type of this source (used in the "Source" entry of the discovery configuration)
+        /// </summary>
+        string Type { get; }
+
+        /// <summary>
+=======
+>>>>>>> Stashed changes
         /// Returns all nodes. Throws detailed exception if no nodes are available which includes the source's reason.
         /// </summary>
         /// <returns>A non-empty array of nodes.</returns>

@@ -18,7 +18,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class ConsulServiceListMonitorTests
+    public class ConsulNodeSourceFactoryTests
     {
         private const string ServiceName = "MyService";
         private const string Env = "prod";
@@ -31,10 +31,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private DeploymentIdentifier _deploymentIdentifier;
 
         private TestingKernel<ConsoleLog> _testingKernel;
-        private ConsulConfig _consulConfig;
-        private IConsulServiceListMonitor _consulServiceListMonitor;
+        private ConsulConfig _consulConfig;        
         private ConsulSimulator _consulSimulator;
         private IEnvironmentVariableProvider _environmentVariableProvider;
+        private ConsulNodeSourceFactory _factory;
 
         [OneTimeSetUp]
         public void SetupConsulListener()
@@ -48,8 +48,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
 
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
-
-                k.Rebind<IConsulServiceListMonitor>().To<ConsulServiceListMonitor>().InTransientScope(); // Set in transient scope in order to get a new instance per test.
             });
         }
 
@@ -73,24 +71,25 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [TearDown]
         public void TearDown()
         {
-            _consulServiceListMonitor?.Dispose();
+            _factory?.Dispose();
         }
 
 
         [Test]
         public async Task ServiceMissingOnStart()
         {
-            await Init();
-            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var _).ShouldBeFalse();
+            await Start();
+            var nodeSource = await _factory.TryCreateNodeSource(_deploymentIdentifier);
+            nodeSource.ShouldBeNull();
         }
 
         [Test]
         public async Task ServiceBecomesMissing()
         {
             AddService();
-            await Init();
+            await Start();
 
-            ServiceShouldExistOnList();
+            ShouldCreateNodeSource();
 
             RemoveService();
             await Task.Delay(300);
@@ -101,7 +100,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task ServiceAddedWhileRunning()
         {            
-            await Init();
+            await Start();
 
             ServiceShouldNotExistOnList();
 
@@ -109,27 +108,28 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Task.Delay(300);
 
-            ServiceShouldExistOnList();
+            ShouldCreateNodeSource();
         }
 
         [Test]
         public async Task ServiceExistsWithDifferentCasing()
         {
-            string serviceNameLowerCase = _deploymentIdentifier.ServiceName.ToLower();
-            AddService(deploymentIdentifier: new DeploymentIdentifier(serviceNameLowerCase, Env));
-            await Init();
-            ServiceShouldExistOnList(serviceNameLowerCase);
+            var deploymentIdentifierLowerCase = new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(), Env);
+            AddService(deploymentIdentifier: deploymentIdentifierLowerCase);
+            await Start();
+            ShouldCreateNodeSource(deploymentIdentifierLowerCase);
         }
 
         [Test]
         public async Task ErrorOnStart()
         {
-            await Init();
+            await Start();
             SetError();
             await Task.Delay(300);
-            Should.Throw<EnvironmentException>(() =>
+            Should.Throw<EnvironmentException>(async () =>
                                                 {
-                                                    var _ = _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var _);
+                                                    var nodeSource = await _factory.TryCreateNodeSource(_deploymentIdentifier);
+                                                    nodeSource.GetNodes();
                                                 });
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
@@ -139,21 +139,21 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _consulConfig.ErrorRetryInterval = TimeSpan.FromMilliseconds(10);
             SetError();
-            await Init();
+            await Start();
             _consulSimulator.Reset();
             AddService();
             await Task.Delay(1500);
-            ServiceShouldExistOnList();
+            ShouldCreateNodeSource();
         }
 
         [Test]
         public async Task ErrorWhileRunning_ServiceStillAppearsOnList()
         {
             AddService();
-            await Init();
+            await Start();
             SetError();
             await Task.Delay(800);
-            ServiceShouldExistOnList();
+            ShouldCreateNodeSource();
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
@@ -162,7 +162,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             AddService(deploymentIdentifier: new DeploymentIdentifier("Service1", Env));
             AddService(deploymentIdentifier: new DeploymentIdentifier("Service2", Env));
-            await Init();
+            await Start();
             
             var healthStatus = GetHealthStatus();
             healthStatus.IsHealthy.ShouldBeTrue();
@@ -177,7 +177,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddService(deploymentIdentifier: _deploymentIdentifier);
             AddService(deploymentIdentifier: new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(), Env));
             AddService("OtherService");
-            await Init();
+            await Start();
             
             var healthStatus = GetHealthStatus();
             healthStatus.IsHealthy.ShouldBeFalse();
@@ -186,10 +186,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             healthStatus.Message.ShouldNotContain("OtherService", "When ther exists duplicate services, only duplicate services should be listed on the health check message");
         }
 
-        public Task Init()
+        private async Task Start()
         {
-            _consulServiceListMonitor = _testingKernel.Get<IConsulServiceListMonitor>();
-            return _consulServiceListMonitor.Init();
+            _factory = _testingKernel.Get<ConsulNodeSourceFactory>();
+            // try get some NodeSource in order to start init
+            try { await _factory.TryCreateNodeSource(null);} catch { }
         }
 
         private void SetError()
@@ -207,21 +208,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator.RemoveService(_deploymentIdentifier.ToString());
         }
 
-        private void ServiceShouldExistOnList()
+        private void ShouldCreateNodeSource(DeploymentIdentifier expectedDeploymentIdentifier=null)
         {
-            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var serviceIdentifierOnConsul).ShouldBeTrue();
-            ReferenceEquals(serviceIdentifierOnConsul, _deploymentIdentifier).ShouldBeTrue();
-        }
-
-        private void ServiceShouldExistOnList(string expectedServiceNameOnConsul)
-        {
-            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var serviceIdentifierOnConsul).ShouldBeTrue();
-            serviceIdentifierOnConsul.ServiceName.ShouldBe(expectedServiceNameOnConsul);
+            _factory.TryCreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).ShouldNotBeNull();            
         }
 
         private void ServiceShouldNotExistOnList()
         {
-            _consulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var _).ShouldBeFalse();
+            _factory.TryCreateNodeSource(_deploymentIdentifier);
         }
 
         private HealthCheckResult GetHealthStatus()

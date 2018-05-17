@@ -32,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string Host2 = "Host2";
 
         private TestingKernel<ConsoleLog> _testingKernel;
-        private INodeSource _nodeSource;
+        private ConsulQueryNodeSource _nodeSource;
         private IEnvironmentVariableProvider _environmentVariableProvider;
         private ConsulSimulator _consulSimulator;
         private DeploymentIdentifier _deploymentIdentifier;
@@ -238,8 +238,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void CreateNodeSource()
         {
-            var sources = _testingKernel.Get<Func<DeploymentIdentifier, INodeSource[]>>()(_deploymentIdentifier);
-            _nodeSource = sources.Single(x => x.Type == "ConsulQuery");
+            _nodeSource = _testingKernel.Get<Func<DeploymentIdentifier, ConsulQueryNodeSource>>()(_deploymentIdentifier);            
         }
 
         private async Task AssertOneDefaultNode()

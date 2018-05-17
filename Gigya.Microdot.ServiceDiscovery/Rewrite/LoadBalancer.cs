@@ -38,7 +38,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// Provides a reachable node for each call to <see cref="GetNode"/>
     /// </summary>
-    public sealed class LoadBalancer: ILoadBalancer
+    internal sealed class LoadBalancer: ILoadBalancer
     {
         bool _disposed;
         private readonly object _lock = new object();
@@ -79,7 +79,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 throw new ServiceUnreachableException("No nodes were discovered for service", unencrypted: new Tags
                 {
                     {"serviceName", ServiceName},
-                    {"discoverySource", NodeSource.Type}
+                    {"nodeSource", NodeSource.GetType().Name}
                 });
 
             var reachableNodes = nodes.Where(n => n.IsReachable).ToArray();
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     unencrypted: new Tags
                     {
                         {"serviceName", ServiceName},
-                        {"discoverySource", NodeSource.Type},
+                        {"nodeSource", NodeSource.GetType().Name},
                         {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}                    
                     });
 
@@ -124,7 +124,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var nodes = _monitoredNodes;
             if (nodes.Length == 0)
-                return HealthCheckResult.Unhealthy($"No nodes were discovered by {NodeSource.Type}");
+                return HealthCheckResult.Unhealthy($"No nodes were discovered by {NodeSource.GetType().Name}");
 
             var unreachableNodes = nodes.Where(n => !n.IsReachable).ToArray();
             if (unreachableNodes.Length==0)

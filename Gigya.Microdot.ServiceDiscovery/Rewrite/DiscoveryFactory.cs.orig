@@ -12,9 +12,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     internal class DiscoveryFactory : IDiscoveryFactory
     {
         private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> CreateLoadBalancer { get; }
-        private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }        
+<<<<<<< Updated upstream
+        private Func<DeploymentIdentifier, INodeSource[]> CreateNodeSources { get; }
+        private Func<IConsulServiceListMonitor[]> CreateNodeSources { get; }
+=======
+        private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }
         private Func<DeploymentIdentifier, ConfigNodeSource> CreateConfigNodeSource { get; }
         private Func<DeploymentIdentifier, ConsulQueryNodeSource> CreateConsulQueryNodeSource { get; }
+>>>>>>> Stashed changes
         private Func<DiscoveryConfig> GetConfig { get; }
 
         private Dictionary<string, INodeSourceFactory> NodeSourceFactories { get; }
@@ -67,6 +72,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier)
         {
             var serviceConfig = GetConfig().Services[deploymentIdentifier.ServiceName];
+<<<<<<< Updated upstream
+            // Why create all sources and pick one? Can't we create just the needed one?
+            // what if the source changes at runtime?
+            var source = CreateNodeSources(deploymentIdentifier).FirstOrDefault(f => f.Type.Equals(serviceConfig.Source, StringComparison.InvariantCultureIgnoreCase));
+=======
             var sourceType = serviceConfig.Source;
             switch (sourceType)
             {
@@ -79,6 +89,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     await consulQueryNodeSource.Init().ConfigureAwait(false);
                     return consulQueryNodeSource;                   
             }
+>>>>>>> Stashed changes
 
             if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
                 return await factory.TryCreateNodeSource(deploymentIdentifier).ConfigureAwait(false);

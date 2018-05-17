@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
@@ -33,8 +34,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             var deployment = new DeploymentIdentifier("MyService", "prod");
 
-            var sources = _kernel.Get<Func<DeploymentIdentifier,INodeSource[]>>()(deployment);
-            _localNodeSource = sources.Single(x => x.Type == "Local");
+            _localNodeSource = _kernel.Get<Func<DeploymentIdentifier, LocalNodeSource>>()(deployment);            
         }
 
         [Test]

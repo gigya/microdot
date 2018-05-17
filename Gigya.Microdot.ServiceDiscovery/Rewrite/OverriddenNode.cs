@@ -9,7 +9,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// TODO: this class should be deleted after Discovery Rewrite is completed.
     /// </summary>
     [Obsolete("Delete this class after Discovery Rewrite is completed")]
-    public class OverriddenNode : IMonitoredNode
+    internal class OverriddenNode : IMonitoredNode
     {
         private string ServiceName { get; }
         public string Hostname { get; }

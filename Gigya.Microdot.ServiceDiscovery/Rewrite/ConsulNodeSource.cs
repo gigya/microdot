@@ -20,9 +20,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summery>
     internal class ConsulNodeSource: INodeSource
     {
-        /// <inheritdoc />
-        public virtual string Type => "Consul";
-
         public bool SupportsMultipleEnvironments => true;
 
         private readonly object _initLocker = new object();
@@ -46,10 +43,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private ILog Log { get; }
 
-        /// <summary>We use this to efficiently detect if the service was 
-        /// 
-        /// </summary>
-        private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
+        private Func<bool> IsDeployed { get; }
+
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
@@ -58,16 +53,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Task _nodesLoopTask;
         private Task _versionLoopTask;
         private CancellationTokenSource ShutdownToken { get; }
-        private EnvironmentException LastError { get; set; }
+        internal EnvironmentException LastError { get; set; }
         private DateTime LastErrorTime { get; set; }
         
-        private DeploymentIdentifier _deploymentIdentifier;
+        private readonly DeploymentIdentifier _deploymentIdentifier;
 
         private int _stopped;
         private bool _wasUndeployed;
 
-        public ConsulNodeSource(DeploymentIdentifier deploymentIdentifier,
-            IConsulServiceListMonitor consulServiceListMonitor,            
+        public ConsulNodeSource(
+            DeploymentIdentifier deploymentIdentifier,
+            Func<bool> isDeployed,            
             ILog log,            
             ConsulClient consulClient,
             IEnvironmentVariableProvider environmentVariableProvider,
@@ -76,11 +72,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
 
         {
-            ConsulServiceListMonitor = consulServiceListMonitor;            
             _deploymentIdentifier = deploymentIdentifier;
-
+            IsDeployed = isDeployed;
             Log = log;
-            ConsulServiceListMonitor = consulServiceListMonitor;
             ConsulClient = consulClient;
             DateTime = dateTime;
             GetConfig = getConfig;
@@ -92,34 +86,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public async Task Init()
         {
-            await ConsulServiceListMonitor.Init().ConfigureAwait(false);
-
             var serviceExists = false;
             try
             {
-
-                if (ConsulServiceListMonitor.ServiceExists(_deploymentIdentifier,
-                    out var deploymentIdentifierMatchCasing))
+                lock (_initLocker)
                 {
-                    // TODO: Remove if consul is guaranteed to be with correct casing
-                    _deploymentIdentifier = deploymentIdentifierMatchCasing;
-
-                    lock (_initLocker)
+                    if (_versionInitTask == null)
                     {
-                        if (_versionInitTask == null)
-                        {
-                            _versionInitTask = LoadVersion(0);
-                            _nodesInitTask = LoadNodes(0);
+                        _versionInitTask = LoadVersion(0);
+                        _nodesInitTask = LoadNodes(0);
 
-                            _versionLoopTask = Task.Run(LoadVersionLoop);
-                            _nodesLoopTask = Task.Run(LoadNodesLoop);
-                        }
+                        _versionLoopTask = Task.Run(LoadVersionLoop);
+                        _nodesLoopTask = Task.Run(LoadNodesLoop);
                     }
-
-                    await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
                 }
-                else
-                    _wasUndeployed = true;
+
+                await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
             }
             catch (EnvironmentException ex)
             {
@@ -175,13 +157,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                // we do this to get the correct casing of the service name. TODO: can we rely on consul to use correct casings and remove the dependency on the services list
-                // and use some narrower API such as IsServiceExists(string serviceName) instead?
-                _wasUndeployed = !(ConsulServiceListMonitor.ServiceExists(_deploymentIdentifier, out var deploymentIdentifierMatchCasing));
-                // TODO: Remove if consul is guaranteed to be with correct casing
-                if (deploymentIdentifierMatchCasing != _deploymentIdentifier)
-                    _wasUndeployed = true;
-
+                _wasUndeployed = !IsDeployed();
                 return _wasUndeployed;
             }
         }
