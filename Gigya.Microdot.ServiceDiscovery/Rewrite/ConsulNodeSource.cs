@@ -18,7 +18,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// Monitors Consul using Health API and KeyValue API to find the current active version of a service,
     /// and provides a list of up-to-date, healthy nodes.
     /// </summery>
-    public class ConsulNodeSource: INodeSource
+    internal class ConsulNodeSource: INodeSource
     {
         /// <inheritdoc />
         public virtual string Type => "Consul";
@@ -29,13 +29,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Task<ulong> _nodesInitTask;
         private Task<ulong> _versionInitTask;
         
-        private string _activeVersion; // the currently active version of the service as obtained from the key-value store.
+        /// <summary>The currently active version of the service as obtained from the key-value store.</summary>
+        private string _activeVersion = null;
+
+        /// <summary>All of the service nodes, no matter the version.</summary>
         private Node[] _nodesOfAllVersions;
+
+        /// <summary>The subset of the service nodes that match the current version specified in the KV store.</summary>
         private INode[] _nodes = new INode[0];
+
+        /// <summary>Used by the VERSION loop to provide more details about NODES in exceptions.</summary>
         private ConsulResult<ServiceEntry[]> _lastNodesResult;
+
+        /// <summary>Used by the NODES loop to provide more details about VERSIONS in exceptions.</summary>
         private ConsulResult<KeyValueResponse[]> _lastVersionResult;
 
         private ILog Log { get; }
+
+        /// <summary>We use this to efficiently detect if the service was 
+        /// 
+        /// </summary>
         private IConsulServiceListMonitor ConsulServiceListMonitor { get; }
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }

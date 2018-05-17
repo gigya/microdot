@@ -12,6 +12,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> CreateLoadBalancer { get; }
         private Func<DeploymentIdentifier, INodeSource[]> CreateNodeSources { get; }
+        private Func<IConsulServiceListMonitor[]> CreateNodeSources { get; }
         private Func<DiscoveryConfig> GetConfig { get; }
 
         /// <inheritdoc />
@@ -51,6 +52,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private INodeSource CreateNodeSource(DeploymentIdentifier deploymentIdentifier)
         {
             var serviceConfig = GetConfig().Services[deploymentIdentifier.ServiceName];
+            // Why create all sources and pick one? Can't we create just the needed one?
+            // what if the source changes at runtime?
             var source = CreateNodeSources(deploymentIdentifier).FirstOrDefault(f => f.Type.Equals(serviceConfig.Source, StringComparison.InvariantCultureIgnoreCase));
 
             if (source == null)

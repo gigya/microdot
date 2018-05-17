@@ -13,7 +13,7 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// Initialize this source (e.g. Consul source needs initialization to start monitoring Consul)
         /// </summary>
         /// <returns></returns>
-        Task Init();
+        Task Init(); // remove, since INodeSourceFactory will properly initialize the objects it returns (async)
 
         /// <summary>
         /// Type of this source (used in the "Source" entry of the discovery configuration)

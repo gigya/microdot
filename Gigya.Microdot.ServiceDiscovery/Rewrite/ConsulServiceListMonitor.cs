@@ -13,11 +13,8 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    /// <summary>
-    /// Monitors Consul using KeyValue api, to get a list of all available <see cref="Services"/>.
-    /// Increments <see cref="Version"/> whenever the list is modified.
-    /// </summary>
-    public sealed class ConsulServiceListMonitor: IConsulServiceListMonitor
+    /// <inheritdoc />
+    internal sealed class ConsulServiceListMonitor: IConsulServiceListMonitor
     {
         private CancellationTokenSource ShutdownToken { get; }
 
