@@ -43,8 +43,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private ILog Log { get; }
 
-        private Func<bool> IsDeployed { get; }
-
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
@@ -63,7 +61,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public ConsulNodeSource(
             DeploymentIdentifier deploymentIdentifier,
-            Func<bool> isDeployed,            
             ILog log,            
             ConsulClient consulClient,
             IEnvironmentVariableProvider environmentVariableProvider,
@@ -72,8 +69,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
 
         {
-            _deploymentIdentifier = deploymentIdentifier;
-            IsDeployed = isDeployed;
+            _deploymentIdentifier = deploymentIdentifier;            
             Log = log;
             ConsulClient = consulClient;
             DateTime = dateTime;
@@ -86,7 +82,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public async Task Init()
         {
-            var serviceExists = false;
             try
             {
                 lock (_initLocker)
@@ -157,17 +152,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                if (!IsDeployed())
-                    SetUndeployed();
-                
                 return _wasUndeployed;
             }
-        }
-
-        private void SetUndeployed()
-        {
-            _wasUndeployed = true;
-            ShutdownToken.Cancel();
         }
 
         private async Task LoadVersionLoop()
@@ -216,7 +202,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             if (_lastVersionResponse.IsUndeployed == true)
             {
-                SetUndeployed();
+                _wasUndeployed = true;
+                ShutdownToken.Cancel();
             }
             else
             {

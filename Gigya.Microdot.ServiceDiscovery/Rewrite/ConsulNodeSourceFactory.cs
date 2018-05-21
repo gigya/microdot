@@ -21,7 +21,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     internal sealed class ConsulNodeSourceFactory : INodeSourceFactory, IDisposable
     {
-        private Func<DeploymentIdentifier, Func<bool>, ConsulNodeSource> CreateConsulNodeSource { get; }
+        private Func<DeploymentIdentifier, ConsulNodeSource> CreateConsulNodeSource { get; }
         private CancellationTokenSource ShutdownToken { get; }
 
         private int _disposed;
@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Task LoopingTask { get; set; }
 
         /// <inheritdoc />
-        public ConsulNodeSourceFactory(ILog log, ConsulClient consulClient, Func<DeploymentIdentifier, Func<bool>, ConsulNodeSource> createConsulNodeSource, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
+        public ConsulNodeSourceFactory(ILog log, ConsulClient consulClient, Func<DeploymentIdentifier, ConsulNodeSource> createConsulNodeSource, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
             Log = log;
             ConsulClient = consulClient;
@@ -56,32 +56,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             await Init().ConfigureAwait(false);
 
-            try
+            if (ServiceExists(deploymentIdentifier))
             {
-                if (ServiceExists(deploymentIdentifier, out var deploymentIdentifierMatchCasing))
-                {
-                    var consulNodeSource = CreateConsulNodeSource(deploymentIdentifierMatchCasing,
-                        () => ServiceNameMatchByCasing(deploymentIdentifierMatchCasing));
-                    await consulNodeSource.Init().ConfigureAwait(false);
-                    return consulNodeSource;
-                }
-                return null;
+                var consulNodeSource = CreateConsulNodeSource(deploymentIdentifier);
+                await consulNodeSource.Init().ConfigureAwait(false);
+                return consulNodeSource;
             }
-            catch (EnvironmentException ex)
-            {
-                var errorNodeSource = CreateConsulNodeSource(deploymentIdentifier, () => false);
-                errorNodeSource.LastError = ex;
-                return errorNodeSource;
-            }
-        }
-
-        private bool ServiceNameMatchByCasing(DeploymentIdentifier deploymentIdentifier)
-        {
-            return ServiceExists(deploymentIdentifier, out var deploymentIdentifierMatchCasing)
-                   // TODO: can we rely on consul to use correct casings and remove the dependency on the services list
-                   // and use some narrower API such as IsServiceExists(string serviceName) instead?
-                   // We can remove the following line if consul is guaranteed to be with correct casing
-                     && deploymentIdentifierMatchCasing == deploymentIdentifier;
+            return null;
         }
 
         private string DataCenter { get; }
@@ -90,25 +71,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private DateTime ErrorTime { get; set; }
 
 
-        private bool ServiceExists(DeploymentIdentifier deploymentId, out DeploymentIdentifier normalizedDeploymentId)
+        private bool ServiceExists(DeploymentIdentifier deploymentIdentifier)
         {
             if (Services.Count == 0 && Error != null)
                 throw Error;
-            else
-            {
-                if (!Services.TryGetValue(deploymentId.ToString(), out string normalizedServiceId))
-                {
-                    normalizedDeploymentId = null;
-                    return false;
-                }
-                if (deploymentId.ToString() == normalizedServiceId)
-                    normalizedDeploymentId = deploymentId;
-                else normalizedDeploymentId = new DeploymentIdentifier(normalizedServiceId.Substring(0, deploymentId.ServiceName.Length), deploymentId.DeploymentEnvironment);
-                return true;
-            }
+
+            return Services.Contains(deploymentIdentifier.ToString());
         }
 
-        ImmutableHashSet<string> Services = new HashSet<string>().ToImmutableHashSet();
+        HashSet<string> Services = new HashSet<string>();
 
 
         private async Task GetAllLoop()
@@ -159,14 +130,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             else
             {
-                var services = consulResult.Result;                
-                var newServices = new HashSet<string>(services).ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
-                Services = newServices;
+                var servicesResult = consulResult.Result;
 
-                if (services.Length == Services.Count)
+                Services = new HashSet<string>(servicesResult);
+                var caseInsensitiveServices = new HashSet<string>(servicesResult, StringComparer.InvariantCultureIgnoreCase);
+
+                if (Services.Count == caseInsensitiveServices.Count)
                     _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
                 else
-                    _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(services)));
+                    _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(servicesResult)));
 
                 Error = null;
                 return consulResult.ModifyIndex ?? 0;
