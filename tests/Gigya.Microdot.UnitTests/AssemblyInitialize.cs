@@ -29,8 +29,7 @@ public class AssemblyInitialize
 {
     [OneTimeSetUp]
     public void SetUp()
-    {
-        ServicePointManager.DefaultConnectionLimit = 200;
+    {        
         try
         {
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
