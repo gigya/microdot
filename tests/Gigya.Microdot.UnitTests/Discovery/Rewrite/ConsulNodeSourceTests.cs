@@ -217,7 +217,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AssertExceptionIsThrown();
         }
 
-        [Test]        
+        [Test]
         public async Task ServiceUndeployed_StopMonitoring()
         {
             AddServiceNode();
@@ -227,10 +227,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             RemoveService();
             await WaitForUpdates();
             _nodeSource.WasUndeployed.ShouldBeTrue();
+            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;
 
             AddServiceNode();
-            await WaitForUpdates();            
-            _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");            
+            await WaitForUpdates();
+            _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");
+            _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
         }
 
         [Test]

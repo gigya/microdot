@@ -157,9 +157,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (_wasUndeployed)
                     return true;
 
-                _wasUndeployed = !IsDeployed();
+                if (!IsDeployed())
+                    SetUndeployed();
+                
                 return _wasUndeployed;
             }
+        }
+
+        private void SetUndeployed()
+        {
+            _wasUndeployed = true;
+            ShutdownToken.Cancel();
         }
 
         private async Task LoadVersionLoop()
@@ -207,7 +215,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 ErrorResult(_lastVersionResult);
             }
-            else if (_lastVersionResult.IsUndeployed == true || _lastVersionResult.Response == null)
+            if (_lastVersionResult.IsUndeployed == true)
+            {
+                SetUndeployed();
+            }
+            else if (_lastVersionResult.Response == null)
             {
                 ErrorResult(_lastVersionResult, "Unexpected result from Consul");
                 // This situation is ignored because other processes are responsible for indicating when a service is undeployed.
@@ -241,8 +253,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             else if (_lastNodesResult.IsUndeployed == true || _lastNodesResult.Response == null)
             {
-                ErrorResult(_lastNodesResult, "Unexpected result from Consul");
-                // TODO: if _lastNodesResult.IsUndeployed then we probably should also _wasUndeployed = true;
+                ErrorResult(_lastNodesResult, "Unexpected result from Consul");                
             }
             else
             {
