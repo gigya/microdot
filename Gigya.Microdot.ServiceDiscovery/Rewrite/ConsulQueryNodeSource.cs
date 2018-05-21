@@ -83,42 +83,38 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Error != null)
                 await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
 
-            string commandPath = $"v1/query/{DeploymentIdentifier}/execute?dc={DataCenter}";
-            var consulResult = await ConsulClient.Call<ConsulQueryExecuteResponse>(commandPath, ShutdownToken.Token).ConfigureAwait(false);
+            var response = await ConsulClient.GetNodesByQuery(DeploymentIdentifier, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (consulResult.IsUndeployed == true)
+            if (response.IsUndeployed == true)
             {
                 WasUndeployed = true;
                 _nodes = new INode[0];
             }
-            else if (consulResult.Error != null)
+            else if (response.Error != null)
             {
-                ErrorResult(consulResult);
+                ErrorResult(response);
             }
-            // we assume that if there is no error and the service wasn't detected as UnDeployed then the service is definitely
-            // deployed since the query to /v1/query/service-env only succeeds if the service exists
             else
             {
-                ConsulQueryExecuteResponse queryResult = consulResult.Response;
-                _nodes = queryResult.Nodes.Select(n => n.ToNode()).ToArray<INode>();
+                _nodes = response.Result;
                 if (_nodes.Length == 0)
-                    ErrorResult(consulResult, "No endpoints were specified in Consul for the requested service and service's active version.");
+                    ErrorResult(response, "No endpoints were specified in Consul for the requested service and service's active version.");
             }
         }
 
-        private void ErrorResult<T>(ConsulResult<T> result, string errorMessage = null)
+        private void ErrorResult<T>(ConsulResponse<T> response, string errorMessage = null)
         {
-            EnvironmentException error = result.Error ?? new EnvironmentException(errorMessage);
+            EnvironmentException error = response.Error ?? new EnvironmentException(errorMessage);
 
             if (error.InnerException is TaskCanceledException == false)
             {
-                Log.Error("Error calling Consul", exception: result.Error, unencryptedTags: new
+                Log.Error("Error calling Consul", exception: response.Error, unencryptedTags: new
                 {
                     serviceName = DeploymentIdentifier,
-                    consulAddress = result.ConsulAddress,
-                    commandPath = result.CommandPath,
-                    responseCode = result.StatusCode,
-                    content = result.ResponseContent
+                    consulAddress = response.ConsulAddress,
+                    commandPath = response.CommandPath,
+                    responseCode = response.StatusCode,
+                    content = response.ResponseContent
                 });
             }
 

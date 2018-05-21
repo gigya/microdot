@@ -9,6 +9,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -17,13 +18,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private int _disposed = 0;
 
-        protected HttpClient HttpClient { get; private set; }
+        private HttpClient HttpClient { get; set; }
 
-        protected ILog Log { get; }
-        protected IDateTime DateTime { get; }
-        protected Func<ConsulConfig> GetConfig { get; }
-        public Uri ConsulAddress => HttpClient.BaseAddress;
+        private ILog Log { get; }
+        private IDateTime DateTime { get; }
+        private Func<ConsulConfig> GetConfig { get; }
+        private Uri ConsulAddress => HttpClient.BaseAddress;
 
+
+        private string DataCenter { get; }
 
         public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
@@ -32,13 +35,112 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else
                 HttpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
 
+            DataCenter = environmentVariableProvider.DataCenter;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
         }
 
+        public async Task<ConsulResponse<Node[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        {
+            string urlCommand = $"v1/health/service/{deploymentIdentifier}?dc={DataCenter}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var response = await Call<Node[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                try
+                {
+                    var serviceEntries = JsonConvert.DeserializeObject<ServiceEntry[]>(response.ResponseContent);
+                    response.Result = serviceEntries.Select(e => e.ToNode()).ToArray();
+                }
+                catch (Exception ex)
+                {
+                    response.UnparsableConsulResponse(ex);
+                }
+            }
+            else
+                response.ConsulResponseError();
 
-        public async Task<ConsulResult<TResponse>> Call<TResponse>(string commandPath, CancellationToken cancellationToken)
+            return response;
+        }
+
+        public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        {
+            string urlCommand = $"v1/kv/service/{deploymentIdentifier}?dc={DataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var response = await Call<string>(urlCommand, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                response.IsUndeployed = true;
+            }
+            else if (response.StatusCode == HttpStatusCode.OK)
+            {
+                try
+                {
+                    var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
+                    response.Result = keyValues.SingleOrDefault()?.TryDecodeValue()?.Version;
+                    response.IsUndeployed = false;
+                }
+                catch (Exception ex)
+                {
+                    response.UnparsableConsulResponse(ex);
+                }
+            }
+            else
+                response.ConsulResponseError();
+
+            return response;
+        }
+
+        public async Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
+        {
+            string urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                try
+                {   
+                    var fullServiceNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);                    
+                    var serviceNames = fullServiceNames.Select(s => s.Substring("service/".Length)).ToArray();
+                    response.Result = serviceNames;
+                }
+                catch (Exception ex)
+                {
+                    response.UnparsableConsulResponse(ex);
+                }
+            }
+            else
+                response.ConsulResponseError();
+
+            return response;
+        }
+
+        public async Task<ConsulResponse<INode[]>> GetNodesByQuery(DeploymentIdentifier deploymentIdentifier, CancellationToken cancellationToken)
+        {
+            string urlCommand = $"v1/query/{deploymentIdentifier}/execute?dc={DataCenter}";
+            var response = await Call<INode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                try
+                {
+                    var result = JsonConvert.DeserializeObject<ConsulQueryExecuteResponse>(response.ResponseContent);
+                    response.Result = result.Nodes.Select(n => n.ToNode()).ToArray<INode>();
+                    response.IsUndeployed = false;
+                }
+                catch (Exception ex)
+                {
+                    response.UnparsableConsulResponse(ex);
+                }
+            }
+            else if (response.ResponseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
+            {
+                response.IsUndeployed = true;
+            }
+            else
+                response.ConsulResponseError();
+
+            return response;
+        }
+
+        private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken)
         {
             if (_disposed > 0)
                 throw new ObjectDisposedException(nameof(ConsulClient));
@@ -49,7 +151,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 HttpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
 
             string responseContent = null;
-            var consulResult = new ConsulResult<TResponse> {ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
+            var consulResult = new ConsulResponse<T> {ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
 
             try
             {
@@ -80,30 +182,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }));
 
 
-            if (consulResult.StatusCode == HttpStatusCode.OK)
-            {
-                try
-                {
-                    consulResult.Response = JsonConvert.DeserializeObject<TResponse>(responseContent);
-                }
-                catch (Exception ex)
-                {
-                    consulResult.UnparsableConsulResponse(ex);
-                }
-            }
-            else
-            {
-                if (consulResult.StatusCode == HttpStatusCode.NotFound ||
-                    responseContent?.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase) == true)
-                {
-                    consulResult.IsUndeployed = true;
-                    consulResult.ResponseContent = responseContent;
-                }
-                else
-                {
-                    consulResult.ConsulResponseError();
-                }
-            }
 
             return consulResult;
         }

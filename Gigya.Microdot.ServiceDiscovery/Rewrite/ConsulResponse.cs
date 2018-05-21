@@ -4,14 +4,14 @@ using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ConsulResult<TResponse>
+    public class ConsulResponse<TResult>
     {
         public bool? IsUndeployed { get; set; }
         public EnvironmentException Error { get; private set; }
         public string ConsulAddress { get; set; }
         public string CommandPath { get; set; }
         public string ResponseContent { get; set; }
-        public TResponse Response { get; set; }
+        public TResult Result { get; set; }
         public DateTime ResponseDateTime { get; set; }
         public HttpStatusCode? StatusCode { get; set; }
         public ulong? ModifyIndex { get; set; }
@@ -48,7 +48,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     { "consulAddress", ConsulAddress },
                     { "commandPath", CommandPath },
                     { "responseContent", ResponseContent },
-                    { "expectedResponseType", typeof(TResponse).Name }
+                    { "expectedResponseType", typeof(TResult).Name }
                 });
         }
     }

@@ -46,7 +46,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ReachabilityCheck ReachabilityCheck { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
-        private string ServiceName { get; }
+        private string DeploymentIdentifier { get; }
         private INode[] _sourceNodes;
         private IMonitoredNode[] _monitoredNodes = new IMonitoredNode[0];
         private readonly ComponentHealthMonitor _healthMonitor;        
@@ -59,13 +59,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             IDateTime dateTime, 
             ILog log)
         {
-            ServiceName = deploymentIdentifier.ToString();
+            DeploymentIdentifier = deploymentIdentifier.ToString();
             NodeSource = nodeSource;
             ReachabilityCheck = reachabilityCheck;
             DateTime = dateTime;
             Log = log;
             GetNodesFromSource();
-            _healthMonitor = healthMonitor.SetHealthFunction(ServiceName, CheckHealth);
+            _healthMonitor = healthMonitor.SetHealthFunction(DeploymentIdentifier, CheckHealth);
         }
 
         /// <inheritdoc />
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (nodes.Length==0)
                 throw new ServiceUnreachableException("No nodes were discovered for service", unencrypted: new Tags
                 {
-                    {"serviceName", ServiceName},
+                    {"deploymentIdentifier", DeploymentIdentifier},
                     {"nodeSource", NodeSource.GetType().Name}
                 });
 
@@ -88,7 +88,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     nodes.FirstOrDefault(n=>n.LastException!=null)?.LastException,
                     unencrypted: new Tags
                     {
-                        {"serviceName", ServiceName},
+                        {"deploymentIdentifier", DeploymentIdentifier},
                         {"nodeSource", NodeSource.GetType().Name},
                         {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}                    
                     });
@@ -111,7 +111,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             lock (_lock)
             {
                 var oldNodes = _monitoredNodes;
-                var newNodes = sourceNodes.Select(n => new MonitoredNode(n, ServiceName, ReachabilityCheck, DateTime, Log)).ToArray();
+                var newNodes = sourceNodes.Select(n => new MonitoredNode(n, DeploymentIdentifier, ReachabilityCheck, DateTime, Log)).ToArray();
                 var nodesToRemove = oldNodes.Except(newNodes).ToArray();
 
                 _monitoredNodes = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();

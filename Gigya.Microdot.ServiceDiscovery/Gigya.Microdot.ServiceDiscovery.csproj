@@ -81,7 +81,7 @@
     <Compile Include="Rewrite\ConsulClient.cs" />
     <Compile Include="Rewrite\ConsulNodeSource.cs" />
     <Compile Include="Rewrite\ConsulQueryNodeSource.cs" />
-    <Compile Include="Rewrite\ConsulResult.cs" />
+    <Compile Include="Rewrite\ConsulResponse.cs" />
     <Compile Include="Rewrite\ConsulNodeSourceFactory.cs" />
     <Compile Include="Rewrite\ILoadBalancer.cs" />
     <Compile Include="Rewrite\LoadBalancer.cs" />

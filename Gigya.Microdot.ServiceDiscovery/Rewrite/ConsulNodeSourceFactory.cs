@@ -149,9 +149,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<ulong> GetAllServices(ulong modifyIndex)
         {
-            string urlCommand =
-                $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var consulResult = await ConsulClient.Call<string[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
+            var consulResult = await ConsulClient.GetAllServices(modifyIndex, ShutdownToken.Token).ConfigureAwait(false);
 
             if (consulResult.Error != null)
             {
@@ -161,15 +159,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             else
             {
-                var allKeys = consulResult.Response;
-                var allServiceNames = allKeys.Select(s => s.Substring("service/".Length));
-                var newServices = new HashSet<string>(allServiceNames).ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
+                var services = consulResult.Result;                
+                var newServices = new HashSet<string>(services).ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
                 Services = newServices;
 
-                if (allKeys.Length == Services.Count)
+                if (services.Length == Services.Count)
                     _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
                 else
-                    _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(allKeys)));
+                    _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(services)));
 
                 Error = null;
                 return consulResult.ModifyIndex ?? 0;
@@ -194,18 +191,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         
-        private void SetErrorResult<T>(ConsulResult<T> result)
+        private void SetErrorResult<T>(ConsulResponse<T> response)
         {
-            var error = result.Error;
+            var error = response.Error;
 
             if (error.InnerException is TaskCanceledException == false)
             {
-                Log.Error("Error calling Consul to get all services list", exception: result.Error, unencryptedTags: new
+                Log.Error("Error calling Consul to get all services list", exception: response.Error, unencryptedTags: new
                 {
-                    consulAddress = result.ConsulAddress,
-                    commandPath = result.CommandPath,
-                    responseCode = result.StatusCode,
-                    content = result.ResponseContent
+                    consulAddress = response.ConsulAddress,
+                    commandPath = response.CommandPath,
+                    responseCode = response.StatusCode,
+                    content = response.ResponseContent
                 });
             }
 

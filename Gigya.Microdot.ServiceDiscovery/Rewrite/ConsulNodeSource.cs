@@ -36,10 +36,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private INode[] _nodes = new INode[0];
 
         /// <summary>Used by the VERSION loop to provide more details about NODES in exceptions.</summary>
-        private ConsulResult<ServiceEntry[]> _lastNodesResult;
+        private ConsulResponse<Node[]> _lastNodesResponse;
 
         /// <summary>Used by the NODES loop to provide more details about VERSIONS in exceptions.</summary>
-        private ConsulResult<KeyValueResponse[]> _lastVersionResult;
+        private ConsulResponse<string> _lastVersionResponse;
 
         private ILog Log { get; }
 
@@ -207,31 +207,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ConsulConfig config = GetConfig();
 
             await DateTime.DelayUntil(LastErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
+            
+            _lastVersionResponse = await ConsulClient.GetDeploymentVersion(_deploymentIdentifier, modifyIndex, ShutdownToken.Token).ConfigureAwait(false);
 
-            string urlCommand = $"v1/kv/service/{_deploymentIdentifier}?dc={DataCenter}&index={modifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
-            _lastVersionResult = await ConsulClient.Call<KeyValueResponse[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
-
-            if (_lastVersionResult.Error != null)
+            if (_lastVersionResponse.Error != null)
             {
-                ErrorResult(_lastVersionResult);
+                ErrorResult(_lastVersionResponse);
             }
-            if (_lastVersionResult.IsUndeployed == true)
+            if (_lastVersionResponse.IsUndeployed == true)
             {
                 SetUndeployed();
             }
-            else if (_lastVersionResult.Response == null)
-            {
-                ErrorResult(_lastVersionResult, "Unexpected result from Consul");
-                // This situation is ignored because other processes are responsible for indicating when a service is undeployed.
-            }
             else
             {
-                string version = _lastVersionResult.Response?.SingleOrDefault()?.TryDecodeValue()?.Version;
+                string version = _lastVersionResponse.Result;
 
                 if (version != null)
                 {
                     ActiveVersion = version;
-                    return _lastVersionResult.ModifyIndex ?? 0;
+                    return _lastVersionResponse.ModifyIndex ?? 0;
                 }
             }
 
@@ -244,21 +238,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             await DateTime.DelayUntil(LastErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
 
-            string urlCommand = $"v1/health/service/{_deploymentIdentifier}?dc={DataCenter}&passing&index={modifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
-            _lastNodesResult = await ConsulClient.Call<ServiceEntry[]>(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
+            _lastNodesResponse = await ConsulClient.GetHealthyNodes(_deploymentIdentifier, modifyIndex, ShutdownToken.Token).ConfigureAwait(false);
 
-            if (_lastNodesResult.Error != null)
+            if (_lastNodesResponse.Error != null)
             {
-                ErrorResult(_lastNodesResult);
-            }
-            else if (_lastNodesResult.IsUndeployed == true || _lastNodesResult.Response == null)
-            {
-                ErrorResult(_lastNodesResult, "Unexpected result from Consul");                
+                ErrorResult(_lastNodesResponse);
             }
             else
             {
-                NodesOfAllVersions = _lastNodesResult.Response.Select(n => n.ToNode()).ToArray();
-                return _lastNodesResult.ModifyIndex ?? 0;
+                NodesOfAllVersions = _lastNodesResponse.Result;
+                return _lastNodesResponse.ModifyIndex ?? 0;
             }
             return 0;
         }
@@ -269,54 +258,54 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 _nodes = NodesOfAllVersions.Where(n => n.Version == ActiveVersion).ToArray();
                 if (_nodes.Length == 0)
-                    ErrorResult(_lastNodesResult, "No endpoints were specified in Consul for the requested service and service's active version.");
+                    ErrorResult(_lastNodesResponse, "No endpoints were specified in Consul for the requested service and service's active version.");
                 else
                     LastError = null;
             }
         }
 
-        private void ErrorResult<T>(ConsulResult<T> result, string message = null)
+        private void ErrorResult<T>(ConsulResponse<T> response, string message = null)
         {
-            EnvironmentException error = result.Error ?? new EnvironmentException(message);
+            EnvironmentException error = response.Error ?? new EnvironmentException(message);
 
             if (error.InnerException is TaskCanceledException == false)
             {
-                Log.Error(message ?? "Consul error", exception: result?.Error, unencryptedTags: new
+                Log.Error(message ?? "Consul error", exception: response?.Error, unencryptedTags: new
                 {
                     serviceName = _deploymentIdentifier.ServiceName,
                     serviceEnv = _deploymentIdentifier.DeploymentEnvironment,
-                    consulAddress = result?.ConsulAddress,
-                    commandPath = result?.CommandPath,
-                    responseCode = result?.StatusCode,
-                    content = result?.ResponseContent,
+                    consulAddress = response?.ConsulAddress,
+                    commandPath = response?.CommandPath,
+                    responseCode = response?.StatusCode,
+                    content = response?.ResponseContent,
                     activeVersion = ActiveVersion,
 
-                    lastVersionResponseCode = _lastVersionResult?.StatusCode,
-                    lastVersionCommand = _lastVersionResult?.CommandPath,
-                    lastVersionResponse = _lastVersionResult?.ResponseContent,
+                    lastVersionResponseCode = _lastVersionResponse?.StatusCode,
+                    lastVersionCommand = _lastVersionResponse?.CommandPath,
+                    lastVersionResponse = _lastVersionResponse?.ResponseContent,
 
-                    lastNodesResponseCode = _lastNodesResult?.StatusCode,
-                    lastNodesCommand = _lastNodesResult?.CommandPath,
-                    lastNodesResponse = _lastNodesResult?.ResponseContent,
+                    lastNodesResponseCode = _lastNodesResponse?.StatusCode,
+                    lastNodesCommand = _lastNodesResponse?.CommandPath,
+                    lastNodesResponse = _lastNodesResponse?.ResponseContent,
                 });
             }
 
             LastError = new EnvironmentException(message ?? "Consul error", error, unencrypted: new Tags{
                 { "serviceName", _deploymentIdentifier.ServiceName},
                 { "serviceEnv", _deploymentIdentifier.DeploymentEnvironment},
-                { "consulAddress", result?.ConsulAddress},
-                { "commandPath", result?.CommandPath},
-                { "responseCode", result?.StatusCode?.ToString()},
-                { "content", result?.ResponseContent},
+                { "consulAddress", response?.ConsulAddress},
+                { "commandPath", response?.CommandPath},
+                { "responseCode", response?.StatusCode?.ToString()},
+                { "content", response?.ResponseContent},
                 { "activeVersion", ActiveVersion},
 
-                { "lastVersionResponseCode", _lastVersionResult?.StatusCode.ToString() },
-                { "lastVersionCommand", _lastVersionResult?.CommandPath},
-                { "lastVersionResponse", _lastVersionResult?.ResponseContent},
+                { "lastVersionResponseCode", _lastVersionResponse?.StatusCode.ToString() },
+                { "lastVersionCommand", _lastVersionResponse?.CommandPath},
+                { "lastVersionResponse", _lastVersionResponse?.ResponseContent},
 
-                { "lastNodesResponseCode", _lastNodesResult?.StatusCode.ToString() },
-                { "lastNodesCommand", _lastNodesResult?.CommandPath},
-                { "lastNodesResponse", _lastNodesResult?.ResponseContent}
+                { "lastNodesResponseCode", _lastNodesResponse?.StatusCode.ToString() },
+                { "lastNodesCommand", _lastNodesResponse?.CommandPath},
+                { "lastNodesResponse", _lastNodesResponse?.ResponseContent}
             });
             LastErrorTime = DateTime.UtcNow;
         }
@@ -331,7 +320,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (WasUndeployed)
                 HealthCheckResult.Healthy($"Not exists on Consul (key value store)");
 
-            var error = _lastNodesResult?.Error ?? _lastVersionResult?.Error ?? LastError;
+            var error = _lastNodesResponse?.Error ?? _lastVersionResponse?.Error ?? LastError;
             if (error != null)
             {
                 return HealthCheckResult.Unhealthy($"Consul error: " + error.Message);
