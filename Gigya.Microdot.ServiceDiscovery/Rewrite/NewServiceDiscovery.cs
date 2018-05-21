@@ -28,7 +28,9 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Metrics;
 using Nito.AsyncEx;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -53,7 +55,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ILog Log { get; }
         private readonly IDiscoveryFactory _discoveryFactory;
         private Func<DiscoveryConfig> GetConfig { get; }
-
+        private AggregatingHealthStatus AggregatingHealthStatus { get; }
 
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
@@ -64,13 +66,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
 
+        private Func<HealthCheckResult> _checkHealth;
+
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
                                 IEnvironmentVariableProvider environmentVariableProvider,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log,
-                                IDiscoveryFactory discoveryFactory)
+                                IDiscoveryFactory discoveryFactory,
+                                Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
         {
             Log = log;
             _discoveryFactory = discoveryFactory;            
@@ -85,9 +90,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // Must be run in Task.Run() because of incorrect Orleans scheduling
             _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
             _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
+
+            AggregatingHealthStatus = getAggregatingHealthStatus("Discovery");
+            AggregatingHealthStatus.RegisterCheck(_serviceName, _checkHealth);
+            _checkHealth = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
         }
-
-
 
         public async Task<IMonitoredNode> GetNode()
         {
@@ -176,6 +183,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<ILoadBalancer> GetRelevantLoadBalancer()
         {
+            var serviceExistsOnMasterEnvironment = false;
             var config = GetConfig();
             if (config != LastConfig)
                 await ReloadRemoteHost(config).ConfigureAwait(false);
@@ -193,19 +201,47 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 {
+                    _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' [{OriginatingEnvironmentLoadBalancer.NodeSource.GetType().Name}]");
                     return OriginatingEnvironmentLoadBalancer;
                 }
-                else if (MasterEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false && GetConfig().EnvironmentFallbackEnabled)
+
+                if (MasterEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 {
-                    return MasterEnvironmentLoadBalancer;
+                    if (GetConfig().EnvironmentFallbackEnabled)
+                    {
+                        _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'  [{MasterEnvironmentLoadBalancer.NodeSource.GetType().Name}]");
+                        return MasterEnvironmentLoadBalancer;
+                    }
+                    else
+                        serviceExistsOnMasterEnvironment = true;
                 }
-                //else if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
+
+                //if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 //{
+                //    _healthStatus = HealthCheckResult.Healthy($"Discovered without specific environment [{NoEnvironmentLoadBalancer.NodeSource.GetType().Name}]");
                 //    return NoEnvironmentLoadBalancer;
                 //}
+
+                var lastAccessTime = DateTime.UtcNow;
+                if (serviceExistsOnMasterEnvironment)
+                    _checkHealth = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
                 else
-                    return null;
+                    _checkHealth = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
+                return null;
             }
+        }
+
+        private Func<HealthCheckResult> BadHealthForLimitedPeriod(HealthCheckResult unhealthy)
+        {
+            var lastBadStateTime = DateTime.UtcNow;
+            return () =>
+            {
+                if (DateTime.UtcNow > lastBadStateTime.AddMinutes(10))
+                    return HealthCheckResult.Healthy("Not requested for more than 10 minutes. " + unhealthy.Message);
+                else
+                    return unhealthy;
+            };
+
         }
 
         public void Dispose()
@@ -215,6 +251,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             RemoveOriginatingPool();
 //            RemoveNoEnvironmentPool();
             _configBlockLink?.Dispose();
+            AggregatingHealthStatus.RemoveCheck(_serviceName);
         }
     }
 
