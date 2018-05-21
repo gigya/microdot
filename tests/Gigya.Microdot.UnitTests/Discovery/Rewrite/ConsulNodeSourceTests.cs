@@ -180,9 +180,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ErrorOnStart()
         {
             SetConsulIsDown();
-            await Init();
-
-            AssertExceptionIsThrown();            
+            Init().ShouldThrow<EnvironmentException>();
         }
 
         [Test]
@@ -243,23 +241,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             AssertOneDefaultNode();
         }
-
-
-        [Test]
-        public async Task ServiceCasingIsChanged_MarkAsUndeployedInOrderToCauseItToBeReloaded()
-        {
-            var lowerCaseServiceName = _deploymentIdentifier.ToString().ToLower();
-            AddServiceNode(serviceName: lowerCaseServiceName);
-            await Init();
-
-            AddServiceNode();
-            RemoveService(serviceName: lowerCaseServiceName);
-            await WaitForUpdates();
-
-            _nodeSource.WasUndeployed.ShouldBeTrue();            
-        }
-
-
 
         private async Task Init()
         {

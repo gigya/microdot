@@ -45,10 +45,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private readonly DeploymentIdentifier _masterDeployment;
         private readonly DeploymentIdentifier _originatingEnvironmentDeployment;
-        private readonly DeploymentIdentifier _noEnvironmentDeployment;
+//        private readonly DeploymentIdentifier _noEnvironmentDeployment;
         private ILoadBalancer MasterEnvironmentLoadBalancer { get; set; }
         private ILoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
-        private ILoadBalancer NoEnvironmentLoadBalancer { get; set; }
+//        private ILoadBalancer NoEnvironmentLoadBalancer { get; set; }
 
         private ILog Log { get; }
         private readonly IDiscoveryFactory _discoveryFactory;
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             
             _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
-            _noEnvironmentDeployment = new DeploymentIdentifier(serviceName);
+//            _noEnvironmentDeployment = new DeploymentIdentifier(serviceName);
 
             _reachabilityCheck = reachabilityCheck;
             GetConfig = discoveryConfigFactory;
@@ -131,7 +131,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
                 await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
-                await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
+//                await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
             }
         }
 
@@ -150,11 +150,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             OriginatingEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
-        private async Task ReloadNoEnvironmentLoadBalancer()
-        {
-            RemoveNoEnvironmentPool();
-            NoEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_noEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);            
-        }
+        //private async Task ReloadNoEnvironmentLoadBalancer()
+        //{
+        //    RemoveNoEnvironmentPool();
+        //    NoEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_noEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);            
+        //}
 
         private void RemoveOriginatingPool()
         {
@@ -168,11 +168,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             MasterEnvironmentLoadBalancer = null;
         }
 
-        private void RemoveNoEnvironmentPool()
-        {
-            NoEnvironmentLoadBalancer?.DisposeAsync();
-            NoEnvironmentLoadBalancer = null;
-        }
+        //private void RemoveNoEnvironmentPool()
+        //{
+        //    NoEnvironmentLoadBalancer?.DisposeAsync();
+        //    NoEnvironmentLoadBalancer = null;
+        //}
 
         private async Task<ILoadBalancer> GetRelevantLoadBalancer()
         {
@@ -188,8 +188,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
                     await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
 
-                if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
-                    await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
+                //if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
+                //    await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
 
                 if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 {
@@ -199,10 +199,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 {
                     return MasterEnvironmentLoadBalancer;
                 }
-                else if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
-                {
-                    return NoEnvironmentLoadBalancer;
-                }
+                //else if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
+                //{
+                //    return NoEnvironmentLoadBalancer;
+                //}
                 else
                     return null;
             }
@@ -213,7 +213,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _disposed = true;
             RemoveMasterPool();
             RemoveOriginatingPool();
-            RemoveNoEnvironmentPool();
+//            RemoveNoEnvironmentPool();
             _configBlockLink?.Dispose();
         }
     }

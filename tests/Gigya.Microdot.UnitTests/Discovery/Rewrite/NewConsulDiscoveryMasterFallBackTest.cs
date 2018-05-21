@@ -217,7 +217,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
 
             SetMockToReturnServiceNotDefined(MasterService);
-
+            
             Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNode());
         }
 

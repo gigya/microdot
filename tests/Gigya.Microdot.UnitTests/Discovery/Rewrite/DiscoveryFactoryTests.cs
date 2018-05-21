@@ -55,7 +55,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _consulNodeSourceFactory.Type.Returns(Consul);
-            _consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(_=>_consulSource);            
+            _consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(_=> _consulSourceWasUndeployed? null : _consulSource);            
 
             _discoveryConfig = new DiscoveryConfig();
             _discoveryConfig.Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig());
