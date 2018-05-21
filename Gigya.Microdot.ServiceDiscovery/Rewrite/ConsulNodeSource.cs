@@ -47,7 +47,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private AggregatingHealthStatus AggregatingHealthStatus { get; }
-        private string DataCenter { get; }
         private Task _nodesLoopTask;
         private Task _versionLoopTask;
         private CancellationTokenSource ShutdownToken { get; }
@@ -63,7 +62,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DeploymentIdentifier deploymentIdentifier,
             ILog log,            
             ConsulClient consulClient,
-            IEnvironmentVariableProvider environmentVariableProvider,
             IDateTime dateTime,
             Func<ConsulConfig> getConfig,
             Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
@@ -74,7 +72,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ConsulClient = consulClient;
             DateTime = dateTime;
             GetConfig = getConfig;
-            DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();            
             AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient");
         }

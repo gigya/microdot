@@ -37,14 +37,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Task LoopingTask { get; set; }
 
         /// <inheritdoc />
-        public ConsulNodeSourceFactory(ILog log, ConsulClient consulClient, Func<DeploymentIdentifier, ConsulNodeSource> createConsulNodeSource, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
+        public ConsulNodeSourceFactory(ILog log, ConsulClient consulClient, Func<DeploymentIdentifier, ConsulNodeSource> createConsulNodeSource, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
             Log = log;
             ConsulClient = consulClient;
             CreateConsulNodeSource = createConsulNodeSource;
             DateTime = dateTime;
             GetConfig = getConfig;            
-            DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
 
             _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus);
@@ -64,8 +63,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             return null;
         }
-
-        private string DataCenter { get; }
 
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }

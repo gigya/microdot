@@ -29,7 +29,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private Task LoopingTask { get; set; }
-        private string DataCenter { get; }
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
@@ -37,7 +36,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DeploymentIdentifier deploymentIdentifier, 
             ILog log, 
             ConsulClient consulClient, 
-            IEnvironmentVariableProvider environmentVariableProvider, 
             IDateTime dateTime, 
             Func<ConsulConfig> getConfig)
         {
@@ -46,7 +44,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ConsulClient = consulClient;
             DateTime = dateTime;
             GetConfig = getConfig;
-            DataCenter = environmentVariableProvider.DataCenter;
             ShutdownToken = new CancellationTokenSource();
         }
 
