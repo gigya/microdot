@@ -8,8 +8,10 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
+using Metrics;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -64,6 +66,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _environmentVariableProvider.DataCenter.Returns(DataCenter);
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
+                k.Rebind<ConsulNodeSourceFactory>().ToSelf().InSingletonScope();
             });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
@@ -90,6 +93,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Init();
 
             AssertOneDefaultNode();
+            GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
         [Test]
@@ -109,6 +113,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await WaitForUpdates();            
 
             AssertOneDefaultNode();
+            GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
         [Test]
@@ -161,6 +166,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe(Host2);
             nodes[0].Port.ShouldBe(Port2);
+            GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
         [Test]
@@ -173,6 +179,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await WaitForUpdates();            
 
             AssertOneDefaultNode();
+            GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
 
@@ -204,6 +211,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe("newVersionHost");
+            GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
         [Test]
@@ -213,6 +221,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Init();
             _nodeSource.WasUndeployed.ShouldBeFalse();
             AssertExceptionIsThrown();
+            GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
         [Test]
@@ -231,6 +240,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await WaitForUpdates();
             _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");
             _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
+            GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
         [Test]
@@ -261,9 +271,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private async Task ReloadNodeMonitorIfNeeded()
         {
-            if (_nodeSource.WasUndeployed)
+            if (_nodeSource?.WasUndeployed!=false)
             {
-                _nodeSource.Shutdown();
+                _nodeSource?.Shutdown();
                 await Init();
             }
         }
@@ -276,6 +286,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             });
 
             getNodesAction.ShouldThrow<EnvironmentException>();
+        }
+
+        private HealthCheckResult GetHealthStatus()
+        {
+            var healthMonitor = (FakeHealthMonitor)_testingKernel.Get<IHealthMonitor>();
+            return healthMonitor.Monitors["ConsulClient"]();
         }
 
         private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)

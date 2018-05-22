@@ -4,7 +4,6 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -23,8 +22,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool SupportsMultipleEnvironments => true;
 
         private readonly object _initLocker = new object();
-        private Task<ulong> _nodesInitTask;
-        private Task<ulong> _versionInitTask;
+        private Task<ConsulResponse<Node[]>> _nodesInitTask;
+        private Task<ConsulResponse<string>> _versionInitTask;
         
         /// <summary>The currently active version of the service as obtained from the key-value store.</summary>
         private string _activeVersion = null;
@@ -47,8 +46,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private AggregatingHealthStatus AggregatingHealthStatus { get; }
-        private Task _nodesLoopTask;
-        private Task _versionLoopTask;
         private CancellationTokenSource ShutdownToken { get; }
         internal EnvironmentException LastError { get; set; }
         private DateTime LastErrorTime { get; set; }
@@ -57,6 +54,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private int _stopped;
         private bool _wasUndeployed;
+        private TaskCompletionSource<bool> _initCompleted;
 
         public ConsulNodeSource(
             DeploymentIdentifier deploymentIdentifier,
@@ -85,46 +83,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 {
                     if (_versionInitTask == null)
                     {
-                        _versionInitTask = LoadVersion(0);
-                        _nodesInitTask = LoadNodes(0);
+                        InitHealthCheck();
 
-                        _versionLoopTask = Task.Run(LoadVersionLoop);
-                        _nodesLoopTask = Task.Run(LoadNodesLoop);
+                        _versionInitTask = LoadVersion(0, ShutdownToken.Token);
+                        _nodesInitTask = LoadNodes(0, ShutdownToken.Token);
+                        _initCompleted = new TaskCompletionSource<bool>();
+                        Task.Run(LoadVersionNodesLoop);
                     }
                 }
 
-                await Task.WhenAll(_nodesInitTask, _versionInitTask).ConfigureAwait(false);
+                await _initCompleted.Task.ConfigureAwait(false);
             }
             catch (EnvironmentException ex)
             {
                 LastError = ex;
             }
-            finally
-            {
-                if (!_wasUndeployed)
-                    InitHealthCheck();
-            }
         }
 
-        private string ActiveVersion
-        {
-            get => _activeVersion;
-            set
-            {
-                _activeVersion = value;
-                SetNodesByActiveVersion();
-            }
-        }
+        private string ActiveVersion => _lastVersionResponse?.Result;
 
-        private Node[] NodesOfAllVersions
-        {
-            get => _nodesOfAllVersions;
-            set
-            {
-                _nodesOfAllVersions = value;
-                SetNodesByActiveVersion();
-            }
-        }
+        private Node[] NodesOfAllVersions => _lastNodesResponse?.Result;
 
 
         /// <inheritdoc />
@@ -153,14 +131,54 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
-        private async Task LoadVersionLoop()
+        private async Task LoadVersionNodesLoop()
         {
             try
             {
-                var modifyIndex = await _versionInitTask.ConfigureAwait(false);
+                var versionResponse = await _versionInitTask.ConfigureAwait(false);
+                var nodesResponse = await _nodesInitTask.ConfigureAwait(false);
                 while (!ShutdownToken.IsCancellationRequested)
                 {
-                    modifyIndex = await LoadVersion(modifyIndex).ConfigureAwait(false);
+                    if (versionResponse.IsUndeployed == true)
+                    {
+                        _wasUndeployed = true;
+                        ShutdownToken.Cancel();
+                        return;
+                    }
+
+                    var version = versionResponse.Result;
+                    var nodes = nodesResponse.Result;
+
+                    if (version == null)
+                        LogError(versionResponse, "Cannot obtain active version for the requested service");
+                    else if (nodes != null)
+                    {
+                        _nodes = nodes.Where(n => n.Version == version).ToArray();
+                        if (_nodes.Length == 0)
+                            LogError(nodesResponse, "No nodes were specified in Consul for the requested service and service's active version.");
+                        else
+                            LastError = null;
+                    }
+                    _initCompleted.TrySetResult(true);
+
+                    using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(ShutdownToken.Token))
+                    {
+                        var loadVersion = LoadVersion(versionResponse.ModifyIndex, cancellationSource.Token);
+                        var loadNodes = LoadNodes(versionResponse.ModifyIndex, cancellationSource.Token);
+
+                        await Task.WhenAny(loadVersion, loadNodes).ConfigureAwait(false);
+                        cancellationSource.Cancel();
+
+                        var newVersionResponse = await loadVersion.ConfigureAwait(false);
+                        if (newVersionResponse.Error == null)
+                            versionResponse = newVersionResponse;
+
+                        var newNodesResponse = await loadNodes.ConfigureAwait(false);
+                        if (newNodesResponse.Error == null)
+                            nodesResponse = newNodesResponse;
+                    }
+
+                    await DateTime.DelayUntil(LastErrorTime + GetConfig().ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
                 }
             }
             catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
@@ -169,86 +187,33 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
-        private async Task LoadNodesLoop()
-        {
-            try
-            {
-                var modifyIndex = await _nodesInitTask.ConfigureAwait(false);
-                while (!ShutdownToken.IsCancellationRequested)
-                {
-                    modifyIndex = await LoadNodes(modifyIndex).ConfigureAwait(false);
-                }
-            }
-            catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
-            {
-                // Ignore exception during shutdown.
-            }
-        }
 
-        private async Task<ulong> LoadVersion(ulong modifyIndex)
+        private async Task<ConsulResponse<string>> LoadVersion(ulong? modifyIndex, CancellationToken cancellationToken)
         {
-            ConsulConfig config = GetConfig();
-
-            await DateTime.DelayUntil(LastErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
-            
-            _lastVersionResponse = await ConsulClient.GetDeploymentVersion(_deploymentIdentifier, modifyIndex, ShutdownToken.Token).ConfigureAwait(false);
+            _lastVersionResponse = await ConsulClient.GetDeploymentVersion(_deploymentIdentifier, modifyIndex ?? 0, cancellationToken).ConfigureAwait(false);
 
             if (_lastVersionResponse.Error != null)
             {
-                ErrorResult(_lastVersionResponse);
-            }
-            if (_lastVersionResponse.IsUndeployed == true)
-            {
-                _wasUndeployed = true;
-                ShutdownToken.Cancel();
-            }
-            else
-            {
-                string version = _lastVersionResponse.Result;
-
-                if (version != null)
-                {
-                    ActiveVersion = version;
-                    return _lastVersionResponse.ModifyIndex ?? 0;
-                }
+                LogError(_lastVersionResponse);
             }
 
-            return 0;
+            return _lastVersionResponse;
         }
 
-        private async Task<ulong> LoadNodes(ulong modifyIndex)
+        private async Task<ConsulResponse<Node[]>> LoadNodes(ulong? modifyIndex, CancellationToken cancellationToken)
         {
-            ConsulConfig config = GetConfig();
-
-            await DateTime.DelayUntil(LastErrorTime + config.ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
-
-            _lastNodesResponse = await ConsulClient.GetHealthyNodes(_deploymentIdentifier, modifyIndex, ShutdownToken.Token).ConfigureAwait(false);
+            _lastNodesResponse = await ConsulClient.GetHealthyNodes(_deploymentIdentifier, modifyIndex ?? 0, cancellationToken).ConfigureAwait(false);
 
             if (_lastNodesResponse.Error != null)
             {
-                ErrorResult(_lastNodesResponse);
+                LogError(_lastNodesResponse);
             }
-            else
-            {
-                NodesOfAllVersions = _lastNodesResponse.Result;
-                return _lastNodesResponse.ModifyIndex ?? 0;
-            }
-            return 0;
+
+            return _lastNodesResponse;
         }
 
-        private void SetNodesByActiveVersion()
-        {
-            if (ActiveVersion != null && NodesOfAllVersions != null)
-            {
-                _nodes = NodesOfAllVersions.Where(n => n.Version == ActiveVersion).ToArray();
-                if (_nodes.Length == 0)
-                    ErrorResult(_lastNodesResponse, "No endpoints were specified in Consul for the requested service and service's active version.");
-                else
-                    LastError = null;
-            }
-        }
 
-        private void ErrorResult<T>(ConsulResponse<T> response, string message = null)
+        private void LogError<T>(ConsulResponse<T> response, string message = null)
         {
             EnvironmentException error = response.Error ?? new EnvironmentException(message);
 
@@ -272,26 +237,28 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     lastNodesCommand = _lastNodesResponse?.CommandPath,
                     lastNodesResponse = _lastNodesResponse?.ResponseContent,
                 });
+
+
+                LastError = new EnvironmentException(message ?? "Consul error", error, unencrypted: new Tags
+                {
+                    {"serviceName", _deploymentIdentifier.ServiceName},
+                    {"serviceEnv", _deploymentIdentifier.DeploymentEnvironment},
+                    {"consulAddress", response?.ConsulAddress},
+                    {"commandPath", response?.CommandPath},
+                    {"responseCode", response?.StatusCode?.ToString()},
+                    {"content", response?.ResponseContent},
+                    {"activeVersion", ActiveVersion},
+
+                    {"lastVersionResponseCode", _lastVersionResponse?.StatusCode.ToString()},
+                    {"lastVersionCommand", _lastVersionResponse?.CommandPath},
+                    {"lastVersionResponse", _lastVersionResponse?.ResponseContent},
+
+                    {"lastNodesResponseCode", _lastNodesResponse?.StatusCode.ToString()},
+                    {"lastNodesCommand", _lastNodesResponse?.CommandPath},
+                    {"lastNodesResponse", _lastNodesResponse?.ResponseContent}
+                });
+                LastErrorTime = DateTime.UtcNow;
             }
-
-            LastError = new EnvironmentException(message ?? "Consul error", error, unencrypted: new Tags{
-                { "serviceName", _deploymentIdentifier.ServiceName},
-                { "serviceEnv", _deploymentIdentifier.DeploymentEnvironment},
-                { "consulAddress", response?.ConsulAddress},
-                { "commandPath", response?.CommandPath},
-                { "responseCode", response?.StatusCode?.ToString()},
-                { "content", response?.ResponseContent},
-                { "activeVersion", ActiveVersion},
-
-                { "lastVersionResponseCode", _lastVersionResponse?.StatusCode.ToString() },
-                { "lastVersionCommand", _lastVersionResponse?.CommandPath},
-                { "lastVersionResponse", _lastVersionResponse?.ResponseContent},
-
-                { "lastNodesResponseCode", _lastNodesResponse?.StatusCode.ToString() },
-                { "lastNodesCommand", _lastNodesResponse?.CommandPath},
-                { "lastNodesResponse", _lastNodesResponse?.ResponseContent}
-            });
-            LastErrorTime = DateTime.UtcNow;
         }
 
         private void InitHealthCheck()
@@ -301,22 +268,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private HealthCheckResult CheckHealth()
         {
-            if (WasUndeployed)
-                HealthCheckResult.Healthy($"Not exists on Consul (key value store)");
+            if (WasUndeployed) 
+                return HealthCheckResult.Unhealthy($"Not exists on Consul (key value store)");
 
-            var error = _lastNodesResponse?.Error ?? _lastVersionResponse?.Error ?? LastError;
+            var possibleErrors = new[] {_lastNodesResponse?.Error, _lastVersionResponse?.Error, LastError}.Where(e=>e!=null);
+            var error = possibleErrors.FirstOrDefault(e=>!(e.InnerException is TaskCanceledException));
             if (error != null)
             {
-                return HealthCheckResult.Unhealthy($"Consul error: " + error.Message);
+                return HealthCheckResult.Unhealthy("Consul error: " + error.RawMessage);
             }
 
             string healthMessage;
-
-            var nodes = GetNodes();
-            if (nodes.Length < NodesOfAllVersions?.Length)
-                healthMessage = $"{nodes.Length} nodes matching to version {ActiveVersion} from total of {NodesOfAllVersions.Length} nodes";
+            
+            if (_nodes.Length < NodesOfAllVersions?.Length)
+                healthMessage = $"{_nodes.Length} nodes matching to version {ActiveVersion} from total of {NodesOfAllVersions.Length} nodes";
             else
-                healthMessage = $"{nodes.Length} nodes";
+                healthMessage = $"{_nodes.Length} nodes";
 
             return HealthCheckResult.Healthy(healthMessage);
         }

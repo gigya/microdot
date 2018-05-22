@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ConsulClient: IDisposable
+    public class ConsulClient : IDisposable
     {
         private int _disposed = 0;
 
@@ -57,7 +57,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     response.UnparsableConsulResponse(ex);
                 }
             }
-            else
+            else if (response.Error == null)
                 response.ConsulResponseError();
 
             return response;
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     response.UnparsableConsulResponse(ex);
                 }
             }
-            else
+            else if (response.Error == null)
                 response.ConsulResponseError();
 
             return response;
@@ -97,8 +97,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 try
-                {   
-                    var fullServiceNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);                    
+                {
+                    var fullServiceNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);
                     var serviceNames = fullServiceNames.Select(s => s.Substring("service/".Length)).ToArray();
                     response.Result = serviceNames;
                 }
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     response.UnparsableConsulResponse(ex);
                 }
             }
-            else
+            else if (response.Error == null)
                 response.ConsulResponseError();
 
             return response;
@@ -134,7 +134,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 response.IsUndeployed = true;
             }
-            else
+            else if (response.Error == null)
                 response.ConsulResponseError();
 
             return response;
@@ -148,10 +148,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var timeout = GetConfig().HttpTimeout;
 
             if (HttpClient?.Timeout != timeout)
-                HttpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
+                HttpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = timeout };
 
             string responseContent = null;
-            var consulResult = new ConsulResponse<T> {ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath};
+            var consulResult = new ConsulResponse<T> { ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath };
 
             try
             {
