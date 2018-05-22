@@ -61,7 +61,7 @@
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
     <Compile Include="ServcieShutdownSource.cs" />
-    <Compile Include="Rewrite\INode.cs" />
+    <Compile Include="Rewrite\Node.cs" />
     <Compile Include="Rewrite\INodeSource.cs" />
     <Compile Include="Utils\Assert.cs" />
     <Compile Include="BaseCommonConfig.cs" />

@@ -20,7 +20,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private CancellationTokenSource ShutdownToken { get; }
         
-        private INode[] _nodes = new INode[0];
+        private Node[] _nodes = new Node[0];
         private Task _initTask;
         
 
@@ -85,7 +85,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (response.IsUndeployed == true)
             {
                 WasUndeployed = true;
-                _nodes = new INode[0];
+                _nodes = new Node[0];
             }
             else if (response.Error != null)
             {
@@ -119,7 +119,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ErrorTime = DateTime.UtcNow;
         }
 
-        public INode[] GetNodes()
+        public Node[] GetNodes()
         {
             if (_nodes.Length == 0 && Error != null)
             {

@@ -35,7 +35,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// host using exponential backoff till the <see cref="ReachabilityCheck"/> returns true, or till
     /// <see cref="ReportReachable"/> was called, at which time <see cref="IsReachable"/> is set back to true.
     /// </summary>
-    public class MonitoredNode : Node, IMonitoredNode
+    internal class MonitoredNode : Node, IMonitoredNode
     {
         private const double FirstAttemptDelaySeconds = 0.001;
         private const double MaxAttemptDelaySeconds  = 2;
@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private DateTime _monitoringStartTime;
         private TimeSpan _monitoringNextDelay;
 
-        public MonitoredNode(INode node, string serviceName, ReachabilityCheck reachabilityCheck, IDateTime dateTime, ILog log) : base(node.Hostname, node.Port)
+        public MonitoredNode(Node node, string serviceName, ReachabilityCheck reachabilityCheck, IDateTime dateTime, ILog log) : base(node.Hostname, node.Port)
         {
             _serviceName = serviceName;
             ReachabilityCheck = reachabilityCheck;

@@ -1,23 +1,15 @@
-﻿using Gigya.Microdot.SharedLogic.Rewrite;
-
-namespace Gigya.Microdot.ServiceDiscovery.Rewrite
+﻿namespace Gigya.Microdot.SharedLogic.Rewrite
 {
-    public class Node : INode
+    public class Node
     {
-        public Node(string hostName, int? port = null, string version = null)
+        public Node(string hostName, int? port = null)
         {
             Hostname = hostName;
             Port = port;
-            Version = version;
         }
 
         public string Hostname { get; }
         public int? Port { get; }
-        
-        /// <summary>
-        /// Version of this node (relevant only for Consul nodes)
-        /// </summary>
-        public string Version { get; }
 
         public override string ToString()
         {
@@ -26,8 +18,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public override bool Equals(object obj)
         {
-            var other = obj as INode;
-            if (other == null)
+            if (!(obj is Node other))
                 return false;
 
             return other.Hostname == Hostname && other.Port == Port;
@@ -38,7 +29,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             unchecked
             {
-                return ((Hostname?.GetHashCode() ?? 0) * 397) ^ (Port?.GetHashCode()??1);
+                return ((Hostname?.GetHashCode() ?? 0) * 397) ^ (Port?.GetHashCode() ?? 1);
             }
         }
     }

@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ConsulClient : IDisposable
+    internal class ConsulClient : IDisposable
     {
         private int _disposed = 0;
 
@@ -41,16 +41,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetConfig = getConfig;
         }
 
-        public async Task<ConsulResponse<Node[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/health/service/{deploymentIdentifier}?dc={DataCenter}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var response = await Call<Node[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 try
                 {
                     var serviceEntries = JsonConvert.DeserializeObject<ServiceEntry[]>(response.ResponseContent);
-                    response.Result = serviceEntries.Select(e => e.ToNode()).ToArray();
+                    response.Result = serviceEntries.Select(ToNode).ToArray();
                 }
                 catch (Exception ex)
                 {
@@ -113,16 +113,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response;
         }
 
-        public async Task<ConsulResponse<INode[]>> GetNodesByQuery(DeploymentIdentifier deploymentIdentifier, CancellationToken cancellationToken)
+        public async Task<ConsulResponse<Node[]>> GetNodesByQuery(DeploymentIdentifier deploymentIdentifier, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/query/{deploymentIdentifier}/execute?dc={DataCenter}";
-            var response = await Call<INode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            var response = await Call<Node[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 try
                 {
                     var result = JsonConvert.DeserializeObject<ConsulQueryExecuteResponse>(response.ResponseContent);
-                    response.Result = result.Nodes.Select(n => n.ToNode()).ToArray<INode>();
+                    response.Result = result.Nodes.Select(ToNode).ToArray<Node>();
                     response.IsUndeployed = false;
                 }
                 catch (Exception ex)
@@ -186,6 +186,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return consulResult;
         }
 
+        private ConsulNode ToNode(ServiceEntry serviceEntry)
+        {
+            const string versionPrefix = "version:";
+            string versionTag = serviceEntry.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            string version = versionTag?.Substring(versionPrefix.Length);
+
+            return new ConsulNode(serviceEntry.Node.Name, serviceEntry.Service?.Port, version);
+        }
 
         private static ulong? TryGetConsulIndex(HttpResponseMessage response)
         {

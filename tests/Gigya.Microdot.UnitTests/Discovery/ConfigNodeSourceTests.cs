@@ -126,7 +126,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configNodeSource.WasUndeployed.ShouldBeFalse();
         }
 
-        private INode[] GetNodes()
+        private Node[] GetNodes()
         {
             return _configNodeSource.GetNodes();
         }

@@ -15,7 +15,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         private DiscoveryConfig _lastConfig;
         private readonly string _serviceName;
-        private INode[] _nodes;
+        private Node[] _nodes;
 
         private Func<DiscoveryConfig> GetConfig { get; }
         private ILog Log { get; }
@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool WasUndeployed => false;
 
         /// <inheritdoc />
-        public INode[] GetNodes()
+        public Node[] GetNodes()
         {
             DiscoveryConfig config = GetConfig();
 
@@ -68,7 +68,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return nodes;
         }
 
-        private INode CreateNode(string host, ServiceDiscoveryConfig config)
+        private Node CreateNode(string host, ServiceDiscoveryConfig config)
         {
             var parts = host.Split(':');
             string hostName = parts[0];

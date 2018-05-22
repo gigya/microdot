@@ -35,7 +35,7 @@ namespace Gigya.Microdot.SharedLogic.HttpService
     }
 
     [Serializable]
-    public class HostOverride : INode
+    public class HostOverride 
     {
         [JsonProperty]
         public string ServiceName { get; set; }

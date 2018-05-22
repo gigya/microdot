@@ -14,7 +14,7 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// </summary>
         /// <returns>A non-empty array of nodes.</returns>
         /// <exception cref="EnvironmentException">Thrown when no nodes are available, the service was undeployed or an error occurred.</exception>
-        INode[] GetNodes();
+        Node[] GetNodes();
 
         /// <summary>
         /// Returns true if the service was undeployed.

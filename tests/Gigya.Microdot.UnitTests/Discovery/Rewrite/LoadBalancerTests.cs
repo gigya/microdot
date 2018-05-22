@@ -40,7 +40,6 @@ using NSubstitute;
 using NUnit.Framework;
 
 using Shouldly;
-using Node = Gigya.Microdot.ServiceDiscovery.Rewrite.Node;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
@@ -58,14 +57,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private INodeSource _nodeSource;
 
-        private INode Node1 = new Node("Host1", 111);
-        private INode Node2 = new Node("Host2", 222);
-        private INode Node3 = new Node("Host3", 333);
-        private INode Node4 = new Node("Host4", 444);
-        private INode Node5 = new Node("Host5", 555);
-        private INode Node6 = new Node("Host6", 666);
+        private Node Node1 = new Node("Host1", 111);
+        private Node Node2 = new Node("Host2", 222);
+        private Node Node3 = new Node("Host3", 333);
+        private Node Node4 = new Node("Host4", 444);
+        private Node Node5 = new Node("Host5", 555);
+        private Node Node6 = new Node("Host6", 666);
 
-        private Func<INode[]> _getSourceNodes = () => new INode[0];
+        private Func<Node[]> _getSourceNodes = () => new Node[0];
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -105,9 +104,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupDefaultNodes();
 
-            var allEndpoints = Get20Nodes();
+            var allNodes = Get20Nodes();
 
-            new[] { Node1, Node2, Node3 }.ShouldBeSubsetOf(allEndpoints);
+            allNodes.ShouldContain(new[] { Node1, Node2, Node3 });
+        }
+
+        private void NodesShouldContain(IMonitoredNode[] allNodes, Node node1)
+        {
+            allNodes.ShouldContain(n=>n.Hostname==node1.Hostname && n.Port==node1.Port);
         }
 
         [Test]
@@ -130,8 +134,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             
 
             var res = Get20Nodes();
-            res.Distinct()
-               .ShouldBe(new[] { Node4, Node5, Node6 }, true);
+            res.ShouldNotContain(new[] { Node1, Node2, Node3 });
+            res.ShouldContain(new[] { Node4, Node5, Node6 });
         }
 
         [Test]
@@ -296,7 +300,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupSourceNodes( /* no nodes */);
         }
 
-        private void SetupSourceNodes(params INode[] nodes)
+        private void SetupSourceNodes(params Node[] nodes)
         {
             _getSourceNodes = () => nodes;
         }
@@ -306,7 +310,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupSourceNodes(Node1, Node2, Node3);
         }
 
-        INode[] Get20Nodes()
+        IMonitoredNode[] Get20Nodes()
         {
             return Enumerable.Repeat(1, 20).Select(x => _loadBalancer.GetNode()).ToArray();
         }
@@ -315,8 +319,36 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var healthMonitor = (FakeHealthMonitor)_kernel.Get<IHealthMonitor>();
             return healthMonitor.Monitors[new DeploymentIdentifier(ServiceName,Env).ToString()].Invoke();
         }
+    }
 
 
+    internal static class MonitoredNodeAssertionExtensions
+    {
+        public static void ShouldContain(this IMonitoredNode[] actualNodes, Node expectedNode)
+        {
+            actualNodes.ShouldContain(n => n.Hostname == expectedNode.Hostname && n.Port == expectedNode.Port);
+        }
+
+        public static void ShouldContain(this IMonitoredNode[] actualNodes, Node[] expectedNodes)
+        {
+            foreach (var expectedNode in expectedNodes)
+            {
+                actualNodes.ShouldContain(expectedNode);
+            }            
+        }
+
+        public static void ShouldNotContain(this IMonitoredNode[] actualNodes, Node expectedNode)
+        {
+            actualNodes.ShouldNotContain(n => n.Hostname == expectedNode.Hostname && n.Port == expectedNode.Port);
+        }
+
+        public static void ShouldNotContain(this IMonitoredNode[] actualNodes, Node[] expectedNodes)
+        {
+            foreach (var expectedNode in expectedNodes)
+            {
+                actualNodes.ShouldNotContain(expectedNode);
+            }
+        }
     }
 
 

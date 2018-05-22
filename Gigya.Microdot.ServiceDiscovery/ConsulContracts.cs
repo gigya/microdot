@@ -18,14 +18,6 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public AgentService Service { get; set; }
 
-        public Node ToNode()
-        {
-            const string versionPrefix = "version:";
-            string versionTag = Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
-            string version = versionTag?.Substring(versionPrefix.Length);
-
-            return new Node(Node.Name, Service?.Port, version);
-        }
     }
 
     public class NodeEntry

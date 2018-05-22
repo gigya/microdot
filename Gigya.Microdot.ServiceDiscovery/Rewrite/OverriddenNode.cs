@@ -41,17 +41,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 });
         }
 
-        public bool IsReachable => true;
-        public Exception LastException => null;
-        public void StopMonitoring()
-        {            
-        }
-
         public void ReportReachable()
         {
         }
-
-        public void Dispose()
-        { }
     }
 }

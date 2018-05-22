@@ -22,20 +22,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public bool SupportsMultipleEnvironments => true;
 
         private readonly object _initLocker = new object();
-        private Task<ConsulResponse<Node[]>> _nodesInitTask;
+        private Task<ConsulResponse<ConsulNode[]>> _nodesInitTask;
         private Task<ConsulResponse<string>> _versionInitTask;
-        
-        /// <summary>The currently active version of the service as obtained from the key-value store.</summary>
-        private string _activeVersion = null;
-
-        /// <summary>All of the service nodes, no matter the version.</summary>
-        private Node[] _nodesOfAllVersions;
 
         /// <summary>The subset of the service nodes that match the current version specified in the KV store.</summary>
-        private INode[] _nodes = new INode[0];
+        private Node[] _nodes = new Node[0];
 
         /// <summary>Used by the VERSION loop to provide more details about NODES in exceptions.</summary>
-        private ConsulResponse<Node[]> _lastNodesResponse;
+        private ConsulResponse<ConsulNode[]> _lastNodesResponse;
 
         /// <summary>Used by the NODES loop to provide more details about VERSIONS in exceptions.</summary>
         private ConsulResponse<string> _lastVersionResponse;
@@ -102,11 +96,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private string ActiveVersion => _lastVersionResponse?.Result;
 
-        private Node[] NodesOfAllVersions => _lastNodesResponse?.Result;
+        private ConsulNode[] NodesOfAllVersions => _lastNodesResponse?.Result;
 
 
         /// <inheritdoc />
-        public INode[] GetNodes()
+        public Node[] GetNodes()
         {
             if (_nodes.Length == 0 && LastError != null)
             {
@@ -200,7 +194,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return _lastVersionResponse;
         }
 
-        private async Task<ConsulResponse<Node[]>> LoadNodes(ulong? modifyIndex, CancellationToken cancellationToken)
+        private async Task<ConsulResponse<ConsulNode[]>> LoadNodes(ulong? modifyIndex, CancellationToken cancellationToken)
         {
             _lastNodesResponse = await ConsulClient.GetHealthyNodes(_deploymentIdentifier, modifyIndex ?? 0, cancellationToken).ConfigureAwait(false);
 

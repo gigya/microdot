@@ -44,17 +44,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly object _lock = new object();
 
         private ReachabilityCheck ReachabilityCheck { get; }
+        private Func<Node, string, ReachabilityCheck, MonitoredNode> CreateMonitoredNode { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
         private string DeploymentIdentifier { get; }
-        private INode[] _sourceNodes;
-        private IMonitoredNode[] _monitoredNodes = new IMonitoredNode[0];
+        private Node[] _sourceNodes;
+        private MonitoredNode[] _monitoredNodes = new MonitoredNode[0];
         private readonly ComponentHealthMonitor _healthMonitor;        
 
         public LoadBalancer(
             INodeSource nodeSource, 
             DeploymentIdentifier deploymentIdentifier, 
             ReachabilityCheck reachabilityCheck,
+            Func<Node, string, ReachabilityCheck, MonitoredNode> createMonitoredNode,
             IHealthMonitor healthMonitor,
             IDateTime dateTime, 
             ILog log)
@@ -62,6 +64,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DeploymentIdentifier = deploymentIdentifier.ToString();
             NodeSource = nodeSource;
             ReachabilityCheck = reachabilityCheck;
+            CreateMonitoredNode = createMonitoredNode;
             DateTime = dateTime;
             Log = log;
             GetNodesFromSource();
@@ -111,7 +114,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             lock (_lock)
             {
                 var oldNodes = _monitoredNodes;
-                var newNodes = sourceNodes.Select(n => new MonitoredNode(n, DeploymentIdentifier, ReachabilityCheck, DateTime, Log)).ToArray();
+                var newNodes = sourceNodes.Select(n => CreateMonitoredNode(n, DeploymentIdentifier, ReachabilityCheck)).ToArray();
                 var nodesToRemove = oldNodes.Except(newNodes).ToArray();
 
                 _monitoredNodes = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
@@ -138,7 +141,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {nodes.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
-        private void StopMonitoringNodes(IEnumerable<IMonitoredNode> monitoredNodes)
+        private void StopMonitoringNodes(IEnumerable<MonitoredNode> monitoredNodes)
         {
             foreach (var monitoredNode in monitoredNodes)
             {

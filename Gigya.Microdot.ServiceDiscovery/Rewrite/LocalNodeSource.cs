@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     public class LocalNodeSource : INodeSource
     {
-        private static readonly INode[] _nodes;
+        private static readonly Node[] _nodes;
 
         static LocalNodeSource()
         {
@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool WasUndeployed => false;
 
-        public INode[] GetNodes() => _nodes;
+        public Node[] GetNodes() => _nodes;
 
         public bool SupportsMultipleEnvironments => false;
 

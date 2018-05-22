@@ -14,7 +14,6 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
-using Node = Gigya.Microdot.ServiceDiscovery.Rewrite.Node;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
@@ -28,7 +27,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private Dictionary<DeploymentIdentifier, INodeSource> _consulNodeSources;
-        private Dictionary<DeploymentIdentifier, Func<INode[]>> _consulNodesResults;        
+        private Dictionary<DeploymentIdentifier, Func<Node[]>> _consulNodesResults;        
         private HashSet<DeploymentIdentifier> _consulServiceList;        
         private IEnvironmentVariableProvider _environmentVariableProvider;        
         private IDateTime _dateTimeMock;
@@ -66,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private void SetupConsulMocks(IKernel kernel)
         {
             _consulNodeSources = new Dictionary<DeploymentIdentifier, INodeSource>();
-            _consulNodesResults = new Dictionary<DeploymentIdentifier, Func<INode[]>>();
+            _consulNodesResults = new Dictionary<DeploymentIdentifier, Func<Node[]>>();
             
             _consulServiceList = new HashSet<DeploymentIdentifier>();
 
@@ -99,7 +98,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             var mock = CreateNodeSourceMock(di);
 
-            _consulNodesResults[di] = () => new INode[] {new Node(hostName: "dummy", version: ServiceVersion)};
+            _consulNodesResults[di] = () => new Node[] {new ConsulNode(hostName: "dummy", version: ServiceVersion)};
             _consulNodeSources[di] = mock;
 
             _consulServiceList.Add(di);            
@@ -226,7 +225,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             if (!_consulNodeSources.ContainsKey(di))
                 CreateConsulMock(di);
 
-            var newNodes = new INode[]{new Node(HostnameFor(di))};
+            var newNodes = new Node[]{new Node(HostnameFor(di))};
             _consulNodesResults[di] = () => newNodes;
 
             _consulServiceList.Add(di);            

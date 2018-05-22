@@ -60,6 +60,7 @@
     <Compile Include="ConsulContracts.cs" />
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
+    <Compile Include="Rewrite\ConsulNode.cs" />
     <Compile Include="Rewrite\DiscoveryFactory.cs" />
     <Compile Include="Rewrite\Ex.cs" />
     <Compile Include="Rewrite\IDiscoveryFactory.cs" />
@@ -87,7 +88,6 @@
     <Compile Include="Rewrite\LoadBalancer.cs" />
     <Compile Include="Rewrite\LocalNodeSource.cs" />
     <Compile Include="Rewrite\MonitoredNode.cs" />
-    <Compile Include="Rewrite\Node.cs" />
     <Compile Include="Rewrite\OverriddenNode.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
     <Compile Include="DeploymentIdentifier.cs" />

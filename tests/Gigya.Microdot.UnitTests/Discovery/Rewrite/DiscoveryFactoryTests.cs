@@ -27,8 +27,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private IDiscoveryFactory _factory;
 
         private TestingKernel<ConsoleLog> _kernel;
-        private INodeSource _consulSource;
-        private INodeSource _configSource;
+        private INodeSource _consulSource;        
         private bool _consulSourceWasUndeployed;
         private DiscoveryConfig _discoveryConfig;
         private INodeSourceFactory _consulNodeSourceFactory;
@@ -49,8 +48,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void Setup()
         {
             _consulSourceWasUndeployed = false;
-            _consulSource = Substitute.For<INodeSource>();
-            _configSource = Substitute.For<INodeSource>();
+            _consulSource = Substitute.For<INodeSource>();            
             _consulSource.WasUndeployed.Returns(_ => _consulSourceWasUndeployed);
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
@@ -110,23 +108,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var loadBalancer = await TryCreateLoadBalancer(env: null);            
             loadBalancer.NodeSource.GetType().ShouldBe(typeof(LocalNodeSource));
         }
-
-        [Test]
-        public async Task TryCreateNodeSource_NotSupportsMultipleEnvironments_EnvironmentSpecific_ReturnNull()
-        {
-            ConfigureServiceSource(Config);
-            var source = await TryCreateNodeSource();
-            source.ShouldBeNull();            
-        }
-
-        [Test]
-        public async Task TryCreateLoadBalancer__NotSupportsMultipleEnvironments_EnvironmentSpecific_ReturnNull()
-        {
-            ConfigureServiceSource(Config);
-            var loadBalancer = await TryCreateLoadBalancer();
-            loadBalancer.ShouldBeNull();            
-        }
-
 
         [Test]
         public async Task TryCreateNodeSource_ReturnNullIfServiceUndeployed()

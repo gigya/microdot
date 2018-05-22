@@ -45,19 +45,15 @@ namespace Gigya.Microdot.Fakes.Discovery
 
     internal class FakeMonitoredNode : IMonitoredNode
     {
-        private readonly INode _node;
+        private readonly Node _node;
 
-        public FakeMonitoredNode(INode node)
+        public FakeMonitoredNode(Node node)
         {
             _node = node;
         }
 
         public string Hostname => _node.Hostname;
         public int? Port => _node.Port;
-
-        public void Dispose()
-        {            
-        }
 
         public void ReportReachable()
         {            
@@ -67,10 +63,5 @@ namespace Gigya.Microdot.Fakes.Discovery
         {            
         }
 
-        public bool IsReachable => true;
-        public Exception LastException => null;
-        public void StopMonitoring()
-        {            
-        }
     }
 }

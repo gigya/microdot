@@ -49,7 +49,6 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Newtonsoft.Json;
-using Node = Gigya.Microdot.ServiceDiscovery.Rewrite.Node;
 using Timer = Metrics.Timer;
 
 namespace Gigya.Microdot.ServiceProxy
@@ -265,7 +264,7 @@ namespace Gigya.Microdot.ServiceProxy
         }
 
 
-        public async Task IsReachable(INode node, CancellationToken cancellationToken)
+        public async Task IsReachable(Node node, CancellationToken cancellationToken)
         {
             var config = GetConfig();
             var port = GetEffectivePort(node, config);
@@ -301,7 +300,7 @@ namespace Gigya.Microdot.ServiceProxy
             return string.Format(urlTemplate, hostName, port);
         }
 
-        private int? GetEffectivePort(INode node, ServiceDiscoveryConfig config)
+        private int? GetEffectivePort(Node node, ServiceDiscoveryConfig config)
         {
             return node.Port ?? DefaultPort ?? config.DefaultPort;
         }
@@ -348,7 +347,7 @@ namespace Gigya.Microdot.ServiceProxy
                 HttpResponseMessage response;
                 IMonitoredNode node = await ServiceDiscovery.GetNode().ConfigureAwait(false);
 
-                int? effectivePort = GetEffectivePort(node, config);
+                int? effectivePort = GetEffectivePort((Node)node, config);
                 if (effectivePort == null)
                     throw new ConfigurationException("Cannot access service. Service Port not configured. See tags to find missing configuration", unencrypted: new Tags {
                         {"ServiceName", ServiceName },
