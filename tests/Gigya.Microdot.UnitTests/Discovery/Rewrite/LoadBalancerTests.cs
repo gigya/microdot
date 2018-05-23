@@ -109,7 +109,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             allNodes.ShouldContain(new[] { Node1, Node2, Node3 });
         }
 
-        private void NodesShouldContain(IMonitoredNode[] allNodes, Node node1)
+        private void NodesShouldContain(Node[] allNodes, Node node1)
         {
             allNodes.ShouldContain(n=>n.Hostname==node1.Hostname && n.Port==node1.Port);
         }
@@ -163,7 +163,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupSourceNodes(allNodes);
 
             var unreachableNode = _loadBalancer.GetNode();
-            unreachableNode.ReportUnreachable();
+            _loadBalancer.ReportUnreachable(unreachableNode);
 
             var nodes = Get20Nodes();
             foreach (var node in allNodes)
@@ -181,7 +181,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupDefaultNodes();
 
             var selectedNode = _loadBalancer.GetNode();
-            selectedNode.ReportUnreachable();
+            _loadBalancer.ReportUnreachable(selectedNode);            
 
             Get20Nodes().ShouldNotContain(selectedNode);
 
@@ -199,7 +199,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             Run20times(node =>
             {
                 if (node.Equals(Node2))
-                    node.ReportUnreachable();
+                    _loadBalancer.ReportUnreachable(node);                    
             });
 
             var healthResult = GetHealthStatus();
@@ -208,7 +208,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-        private void Run20times(Action<IMonitoredNode> act)
+        private void Run20times(Action<Node> act)
         {
             for (int i = 0; i < 20; i++)
             {
@@ -230,7 +230,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _reachabilityCheck = (_,__) => throw new EnvironmentException("node is unreachable");
 
             var selectedNode = _loadBalancer.GetNode();
-            selectedNode.ReportUnreachable();
+            _loadBalancer.ReportUnreachable(selectedNode);            
 
             Get20Nodes().ShouldNotContain(selectedNode);
 
@@ -251,7 +251,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupSourceNodes(Node1,Node2,Node3);
 
-            Run20times(node =>node.ReportUnreachable());
+            Run20times(node =>_loadBalancer.ReportUnreachable(node));
 
             Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode());
             var healthStatus = GetHealthStatus();
@@ -266,7 +266,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task GetNode_AllNodesUnreachableThenAllNodesReachable_ReturnsAllNodes()
         {
             SetupSourceNodes(Node1,Node2,Node3);
-            Run20times(node => node.ReportUnreachable());
+            Run20times(node => _loadBalancer.ReportUnreachable(node));
             
             Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode());
 
@@ -288,7 +288,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var reachabilityException = new Exception("Simulated error while running reachability check");
 
             _reachabilityCheck = (_,__) => { throw reachabilityException; };
-            Run20times(node => node.ReportUnreachable());
+            Run20times(node => _loadBalancer.ReportUnreachable(node));
 
             await Task.Delay(1500);
 
@@ -310,7 +310,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupSourceNodes(Node1, Node2, Node3);
         }
 
-        IMonitoredNode[] Get20Nodes()
+        Node[] Get20Nodes()
         {
             return Enumerable.Repeat(1, 20).Select(x => _loadBalancer.GetNode()).ToArray();
         }
@@ -324,12 +324,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
     internal static class MonitoredNodeAssertionExtensions
     {
-        public static void ShouldContain(this IMonitoredNode[] actualNodes, Node expectedNode)
+        public static void ShouldContain(this Node[] actualNodes, Node expectedNode)
         {
             actualNodes.ShouldContain(n => n.Hostname == expectedNode.Hostname && n.Port == expectedNode.Port);
         }
 
-        public static void ShouldContain(this IMonitoredNode[] actualNodes, Node[] expectedNodes)
+        public static void ShouldContain(this Node[] actualNodes, Node[] expectedNodes)
         {
             foreach (var expectedNode in expectedNodes)
             {
@@ -337,12 +337,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             }            
         }
 
-        public static void ShouldNotContain(this IMonitoredNode[] actualNodes, Node expectedNode)
+        public static void ShouldNotContain(this Node[] actualNodes, Node expectedNode)
         {
             actualNodes.ShouldNotContain(n => n.Hostname == expectedNode.Hostname && n.Port == expectedNode.Port);
         }
 
-        public static void ShouldNotContain(this IMonitoredNode[] actualNodes, Node[] expectedNodes)
+        public static void ShouldNotContain(this Node[] actualNodes, Node[] expectedNodes)
         {
             foreach (var expectedNode in expectedNodes)
             {

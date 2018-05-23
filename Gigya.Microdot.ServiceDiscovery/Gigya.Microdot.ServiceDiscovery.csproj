@@ -64,7 +64,6 @@
     <Compile Include="Rewrite\DiscoveryFactory.cs" />
     <Compile Include="Rewrite\Ex.cs" />
     <Compile Include="Rewrite\IDiscoveryFactory.cs" />
-    <Compile Include="Rewrite\IMonitoredNode.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\INodeSourceFactory.cs" />
     <Compile Include="EndPoint.cs" />
@@ -87,8 +86,7 @@
     <Compile Include="Rewrite\ILoadBalancer.cs" />
     <Compile Include="Rewrite\LoadBalancer.cs" />
     <Compile Include="Rewrite\LocalNodeSource.cs" />
-    <Compile Include="Rewrite\MonitoredNode.cs" />
-    <Compile Include="Rewrite\OverriddenNode.cs" />
+    <Compile Include="Rewrite\NodeMonitoringState.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
     <Compile Include="DeploymentIdentifier.cs" />
     <Compile Include="Rewrite\NewServiceDiscovery.cs" />

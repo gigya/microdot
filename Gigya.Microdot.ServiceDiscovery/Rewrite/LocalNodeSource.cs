@@ -43,8 +43,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public Node[] GetNodes() => _nodes;
 
-        public bool SupportsMultipleEnvironments => false;
-
         public void Shutdown()
         {
             // nothing to shutdown            

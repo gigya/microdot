@@ -1,15 +1,14 @@
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public interface INewServiceDiscovery
     {
         /// <summary>
-        /// Retrieves the next reachable <see cref="IMonitoredNode"/>.
+        /// Retrieves a LoadBalancer which can be used to get a reachable <see cref="IMonitoredNode"/>.
         /// </summary>
-        /// <returns>A reachable <see cref="IMonitoredNode"/>.</returns>
-        /// <exception cref="EnvironmentException">Thrown when there is no reachable <see cref="IMonitoredNode"/> available.</exception>
-        Task<IMonitoredNode> GetNode();
+        Task<ILoadBalancer> GetLoadBalancer();
     }
 }

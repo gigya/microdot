@@ -26,12 +26,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private const string ORIGINATING_ENVIRONMENT = "fake_env";        
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
-        private Dictionary<DeploymentIdentifier, INodeSource> _consulNodeSources;
-        private Dictionary<DeploymentIdentifier, Func<Node[]>> _consulNodesResults;        
+        private Dictionary<DeploymentIdentifier, INodeSource> _consulNodeSources;        
         private HashSet<DeploymentIdentifier> _consulServiceList;        
         private IEnvironmentVariableProvider _environmentVariableProvider;        
         private IDateTime _dateTimeMock;
         private int id;
+        private Func<DeploymentIdentifier, INodeSource> _getNodeSourceFromFactory;
         private const int Repeat = 1;
 
         [SetUp]
@@ -64,14 +64,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void SetupConsulMocks(IKernel kernel)
         {
-            _consulNodeSources = new Dictionary<DeploymentIdentifier, INodeSource>();
-            _consulNodesResults = new Dictionary<DeploymentIdentifier, Func<Node[]>>();
+            _consulNodeSources = new Dictionary<DeploymentIdentifier, INodeSource>();            
             
             _consulServiceList = new HashSet<DeploymentIdentifier>();
 
+            _getNodeSourceFromFactory = GetNodeSourceMock;
             var consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             consulNodeSourceFactory.Type.Returns("Consul");
-            consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(c=>GetNodeSourceMock(c.Arg<DeploymentIdentifier>()));
+            consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(c=>_getNodeSourceFromFactory(c.Arg<DeploymentIdentifier>()));
             kernel.Rebind<INodeSourceFactory>().ToMethod(_ => consulNodeSourceFactory);            
 
             CreateConsulMock(MasterService);
@@ -82,8 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeSource CreateNodeSourceMock(DeploymentIdentifier di)
         {
             var mock = Substitute.For<INodeSource>();            
-            mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(di));
-            mock.GetNodes().Returns(_ => _consulNodesResults[di]());
+            mock.WasUndeployed.Returns(_ => !_consulServiceList.Contains(di));            
             return mock;
         }
 
@@ -97,8 +96,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private void CreateConsulMock(DeploymentIdentifier di)
         {
             var mock = CreateNodeSourceMock(di);
-
-            _consulNodesResults[di] = () => new Node[] {new ConsulNode(hostName: "dummy", version: ServiceVersion)};
+            
             _consulNodeSources[di] = mock;
 
             _consulServiceList.Add(di);            
@@ -116,8 +114,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
-            var nextHost = GetServiceDiscovery().GetNode();
-            nextHost.Result.Hostname.ShouldBe(HostnameFor(MasterService));
+            var loadBalancer = await GetServiceDiscovery().GetLoadBalancer();
+            loadBalancer.NodeSource.ShouldBe(_consulNodeSources[MasterService]);
         }
 
         [Test]
@@ -128,19 +126,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
-            
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNode());            
-        }
 
-        [Test]
-        [Ignore("New ServiceDiscovery implementation does not support DataCenter scopes")]
-        [Repeat(Repeat)]
-        public async Task ScopeDataCenterShouldUseServiceNameWithNoEnvironment()
-        {
-            _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "DataCenter";
-            SetMockToReturnHost(new DeploymentIdentifier(_serviceName));
-            var nextHost = GetServiceDiscovery().GetNode();
-            (await nextHost).Hostname.ShouldBe(_serviceName);
+            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetLoadBalancer());
         }
 
         [Test]
@@ -155,14 +142,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
             
-            var node = discovey.GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(OriginatingService));
+            var loadBalancer = await discovey.GetLoadBalancer();
+            loadBalancer.NodeSource.ShouldBe(_consulNodeSources[OriginatingService]);            
 
             SetMockToReturnServiceNotDefined(OriginatingService);
             
 
-            node = discovey.GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(MasterService));
+            loadBalancer = await discovey.GetLoadBalancer();
+            loadBalancer.NodeSource.ShouldBe(_consulNodeSources[MasterService]);            
         }
 
         [Test]
@@ -177,13 +164,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = discovey.GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(MasterService));
-
+            var loadBalancer = await discovey.GetLoadBalancer();
+            loadBalancer.NodeSource.ShouldBe(_consulNodeSources[MasterService]);
+            
             SetMockToReturnHost(OriginatingService);
             
-            node = discovey.GetNode();
-            node.Result.Hostname.ShouldBe(HostnameFor(OriginatingService));
+            loadBalancer = await discovey.GetLoadBalancer();
+            loadBalancer.NodeSource.ShouldBe(_consulNodeSources[OriginatingService]);            
         }
 
         [Test]
@@ -192,7 +179,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNode());
+            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetLoadBalancer());
         }
 
         [Test]
@@ -202,13 +189,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var nextHost = GetServiceDiscovery().GetNode();
-            (await nextHost).Hostname.ShouldBe(HostnameFor(OriginatingService));
+            var loadBalancer = await GetServiceDiscovery().GetLoadBalancer();
+            loadBalancer.NodeSource.ShouldBe(_consulNodeSources[OriginatingService]);            
         }
 
         [Test]
         [Repeat(Repeat)]
-        public void MasterShouldNotFallBack()
+        public async Task MasterShouldNotFallBack()
         {
             _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
             _environmentVariableProvider.DataCenter.Returns("il3");
@@ -216,17 +203,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
 
             SetMockToReturnServiceNotDefined(MasterService);
-            
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetNode());
+
+            Should.Throw<EnvironmentException>(()=> GetServiceDiscovery().GetLoadBalancer());
         }
 
         private void SetMockToReturnHost(DeploymentIdentifier di)
         {
             if (!_consulNodeSources.ContainsKey(di))
                 CreateConsulMock(di);
-
-            var newNodes = new Node[]{new Node(HostnameFor(di))};
-            _consulNodesResults[di] = () => newNodes;
 
             _consulServiceList.Add(di);            
         }
@@ -236,9 +220,16 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulServiceList.Remove(di);            
         }
 
-        private void SetMockToReturnError(DeploymentIdentifier di)
+        private void SetMockToReturnError(DeploymentIdentifier badDeploymentIdentifier)
         {
-            _consulNodesResults[di] = () => throw new EnvironmentException("Mock: some error");
+            var getNodeSourceFromFactory = _getNodeSourceFromFactory;
+            _getNodeSourceFromFactory = di =>
+            {
+                if (di.Equals(badDeploymentIdentifier))
+                    throw new EnvironmentException("Mock: some error");
+                else
+                    return getNodeSourceFromFactory(di);
+            };
         }
 
         [Test]
@@ -257,8 +248,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
 
         private DeploymentIdentifier MasterService => new DeploymentIdentifier(_serviceName, MASTER_ENVIRONMENT);
-        private DeploymentIdentifier OriginatingService => new DeploymentIdentifier(_serviceName, ORIGINATING_ENVIRONMENT);
-        private string HostnameFor(DeploymentIdentifier di) => $"{di.DeploymentEnvironment}-host";
+        private DeploymentIdentifier OriginatingService => new DeploymentIdentifier(_serviceName, ORIGINATING_ENVIRONMENT);        
 
     }
 }

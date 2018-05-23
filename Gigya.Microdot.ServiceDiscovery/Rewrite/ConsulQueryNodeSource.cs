@@ -134,8 +134,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool WasUndeployed { get; private set; } = false;
 
-        public bool SupportsMultipleEnvironments => true;
-
         public void Shutdown()
         {
             if (Interlocked.Increment(ref _stopped) != 1)

@@ -40,6 +40,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
@@ -345,9 +346,14 @@ namespace Gigya.Microdot.ServiceProxy
 
                 string responseContent;
                 HttpResponseMessage response;
-                IMonitoredNode node = await ServiceDiscovery.GetNode().ConfigureAwait(false);
+                ILoadBalancer loadBalancer = null;
+                if (!TryGetHostOverride(out Node node))
+                {
+                    loadBalancer = await ServiceDiscovery.GetLoadBalancer().ConfigureAwait(false);
+                    node = loadBalancer.GetNode();
+                }
 
-                int? effectivePort = GetEffectivePort((Node)node, config);
+                int? effectivePort = GetEffectivePort(node, config);
                 if (effectivePort == null)
                     throw new ConfigurationException("Cannot access service. Service Port not configured. See tags to find missing configuration", unencrypted: new Tags {
                         {"ServiceName", ServiceName },
@@ -404,11 +410,17 @@ namespace Gigya.Microdot.ServiceProxy
                         exception: ex,
                         unencryptedTags: new {uri});
 
-                    node.ReportUnreachable(ex);
+                    
+                    loadBalancer?.ReportUnreachable(node, ex);
+
                     _hostFailureCounter.Increment("RequestFailure");
                     clientCallEvent.Exception = ex;
                     EventPublisher.TryPublish(clientCallEvent); // fire and forget!
-                    continue;
+
+                    if (loadBalancer == null) // overriden node
+                        throw OverridenNodeUnreachable(node, ex);
+                    else
+                        continue;
                 }
                 catch (TaskCanceledException ex)
                 {
@@ -435,8 +447,6 @@ namespace Gigya.Microdot.ServiceProxy
                 {
                     try
                     {
-                        node.ReportReachable();
-
                         if(response.IsSuccessStatusCode)
                         {
                             var returnObj = _deserializationTime.Time(() => JsonConvert.DeserializeObject(responseContent, resultReturnType, jsonSettings));
@@ -517,7 +527,7 @@ namespace Gigya.Microdot.ServiceProxy
                         new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}"):
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
 
-                    node.ReportUnreachable(exception);
+                    loadBalancer?.ReportUnreachable(node, exception);
                     _hostFailureCounter.Increment("NotGigyaHost");
 
                     if(response.StatusCode == HttpStatusCode.ServiceUnavailable)
@@ -527,9 +537,26 @@ namespace Gigya.Microdot.ServiceProxy
 
                     clientCallEvent.ErrCode = 500001;//(int)GSErrors.General_Server_Error;
                     EventPublisher.TryPublish(clientCallEvent); // fire and forget!
+
+                    if (loadBalancer == null)
+                        throw OverridenNodeUnreachable(node, exception);
                 }
             }
         }
+
+        private bool TryGetHostOverride(out Node nodeOverride)
+        {
+            var hostOverride = TracingContext.GetHostOverride(ServiceName);
+            if (hostOverride == null)
+            {
+                nodeOverride = null;
+                return false;
+            }
+
+            nodeOverride = new Node(hostOverride.Hostname, hostOverride.Port ?? GetConfig().DefaultPort);
+            return true;
+        }
+
 
         public async Task<ServiceSchema> GetSchema()
         {
@@ -556,5 +583,22 @@ namespace Gigya.Microdot.ServiceProxy
 
             Disposed = true;
         }
+
+            public ServiceUnreachableException OverridenNodeUnreachable(Node node, Exception ex = null)
+            {
+                throw new ServiceUnreachableException("Failed to reach an overridden node. Please make sure the " +
+                                                      "overrides specified are reachable from all services that participate in the request. See inner " +
+                                                      "exception for details and tags for information on which override caused this issue.",
+                    ex,
+                    unencrypted: new Tags
+                    {
+                        { "overriddenServiceName", ServiceName },
+                        { "overriddenHostName", node.Hostname },
+                        { "overriddenPort", node.Port?.ToString() }
+
+                    });
+            }
+
+
     }
 }

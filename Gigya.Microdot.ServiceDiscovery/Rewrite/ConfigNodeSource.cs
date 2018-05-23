@@ -23,9 +23,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly object _updateLocker = new object();
 
         /// <inheritdoc />
-        public bool SupportsMultipleEnvironments => false;
-
-        /// <inheritdoc />
         public ConfigNodeSource(DeploymentIdentifier deployment, Func<DiscoveryConfig> getConfig, ILog log)
         {
             _serviceName = deployment.ServiceName;

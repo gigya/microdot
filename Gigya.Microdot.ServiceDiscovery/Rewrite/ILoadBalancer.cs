@@ -35,13 +35,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <summary>
         /// Retrieves the a node which is considered to be reachable.
         /// </summary>
-        IMonitoredNode GetNode();
+        Node GetNode();
 
         /// <summary>
         /// Source of nodes, over which the load balancer is balancing
         /// </summary>
         INodeSource NodeSource { get; }
 
-        Task DisposeAsync();
+        /// <summary>
+        /// Report that a node was not responsive
+        /// </summary>
+        void ReportUnreachable(Node node, Exception ex = null);
     }
 }

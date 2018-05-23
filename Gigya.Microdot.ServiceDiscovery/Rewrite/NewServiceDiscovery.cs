@@ -83,7 +83,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             
             _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
-//            _noEnvironmentDeployment = new DeploymentIdentifier(serviceName);
 
             _reachabilityCheck = reachabilityCheck;
             GetConfig = discoveryConfigFactory;
@@ -96,28 +95,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _checkHealth = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
         }
 
-        public async Task<IMonitoredNode> GetNode()
+        public async Task<ILoadBalancer> GetLoadBalancer()
         {
             await _initTask.ConfigureAwait(false);
-            
-            IMonitoredNode node = TryGetHostOverride();
-            if (node != null)
-                return node;
-
-            ILoadBalancer relevantLoadBalancer = await GetRelevantLoadBalancer();
-            if (relevantLoadBalancer==null)            
-                throw new ServiceUnreachableException("Service is not deployed");
-
-            return relevantLoadBalancer.GetNode();
-        }
-
-        private IMonitoredNode TryGetHostOverride()
-        {
-            var hostOverride = TracingContext.GetHostOverride(_serviceName);
-            if (hostOverride == null)
-                return null;
-
-            return new OverriddenNode(_serviceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().Services[_serviceName].DefaultPort);            
+            return await GetRelevantLoadBalancer().ConfigureAwait(false);
         }
 
         private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
@@ -138,7 +119,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
                 await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
-//                await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
             }
         }
 
@@ -157,29 +137,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             OriginatingEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
-        //private async Task ReloadNoEnvironmentLoadBalancer()
-        //{
-        //    RemoveNoEnvironmentPool();
-        //    NoEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_noEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);            
-        //}
-
         private void RemoveOriginatingPool()
         {
-            OriginatingEnvironmentLoadBalancer?.DisposeAsync();
+            OriginatingEnvironmentLoadBalancer?.Dispose();
             OriginatingEnvironmentLoadBalancer = null;
         }
 
         private void RemoveMasterPool()
         {
-            MasterEnvironmentLoadBalancer?.DisposeAsync();
+            MasterEnvironmentLoadBalancer?.Dispose();
             MasterEnvironmentLoadBalancer = null;
         }
-
-        //private void RemoveNoEnvironmentPool()
-        //{
-        //    NoEnvironmentLoadBalancer?.DisposeAsync();
-        //    NoEnvironmentLoadBalancer = null;
-        //}
 
         private async Task<ILoadBalancer> GetRelevantLoadBalancer()
         {
@@ -196,8 +164,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
                     await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
 
-                //if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
-                //    await ReloadNoEnvironmentLoadBalancer().ConfigureAwait(false);
 
                 if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
                 {
@@ -216,18 +182,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                         serviceExistsOnMasterEnvironment = true;
                 }
 
-                //if (NoEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
-                //{
-                //    _healthStatus = HealthCheckResult.Healthy($"Discovered without specific environment [{NoEnvironmentLoadBalancer.NodeSource.GetType().Name}]");
-                //    return NoEnvironmentLoadBalancer;
-                //}
-
-                var lastAccessTime = DateTime.UtcNow;
                 if (serviceExistsOnMasterEnvironment)
                     _checkHealth = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
                 else
                     _checkHealth = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
-                return null;
+
+                throw new ServiceUnreachableException("Service is not deployed");
             }
         }
 
@@ -249,7 +209,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _disposed = true;
             RemoveMasterPool();
             RemoveOriginatingPool();
-//            RemoveNoEnvironmentPool();
             _configBlockLink?.Dispose();
             AggregatingHealthStatus.RemoveCheck(_serviceName);
         }

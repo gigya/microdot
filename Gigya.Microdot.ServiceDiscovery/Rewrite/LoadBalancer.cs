@@ -22,7 +22,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
@@ -40,23 +42,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     internal sealed class LoadBalancer: ILoadBalancer
     {
-        bool _disposed;
+        int _disposed = 0;
         private readonly object _lock = new object();
 
         private ReachabilityCheck ReachabilityCheck { get; }
-        private Func<Node, string, ReachabilityCheck, MonitoredNode> CreateMonitoredNode { get; }
+        private Func<Node, string, ReachabilityCheck, Action, NodeMonitoringState> CreateNodeMonitoringState { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
         private string DeploymentIdentifier { get; }
+        private EnvironmentException LastException { get; set; }
+
         private Node[] _sourceNodes;
-        private MonitoredNode[] _monitoredNodes = new MonitoredNode[0];
+        private Node[] _reachableNodes;
+        private NodeMonitoringState[] _nodesState = new NodeMonitoringState[0];
         private readonly ComponentHealthMonitor _healthMonitor;        
 
         public LoadBalancer(
             INodeSource nodeSource, 
             DeploymentIdentifier deploymentIdentifier, 
             ReachabilityCheck reachabilityCheck,
-            Func<Node, string, ReachabilityCheck, MonitoredNode> createMonitoredNode,
+            Func<Node, string, ReachabilityCheck, Action, NodeMonitoringState> createNodeMonitoringState,
             IHealthMonitor healthMonitor,
             IDateTime dateTime, 
             ILog log)
@@ -64,7 +69,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DeploymentIdentifier = deploymentIdentifier.ToString();
             NodeSource = nodeSource;
             ReachabilityCheck = reachabilityCheck;
-            CreateMonitoredNode = createMonitoredNode;
+            CreateNodeMonitoringState = createNodeMonitoringState;
             DateTime = dateTime;
             Log = log;
             GetNodesFromSource();
@@ -74,18 +79,18 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public INodeSource NodeSource { get; }
 
-        public IMonitoredNode GetNode()
+        public Node GetNode()
         {
             GetNodesFromSource();
-            var nodes = _monitoredNodes;
-            if (nodes.Length==0)
+            var nodes = _nodesState;
+            if (!nodes.Any())
                 throw new ServiceUnreachableException("No nodes were discovered for service", unencrypted: new Tags
                 {
                     {"deploymentIdentifier", DeploymentIdentifier},
                     {"nodeSource", NodeSource.GetType().Name}
                 });
 
-            var reachableNodes = nodes.Where(n => n.IsReachable).ToArray();
+            var reachableNodes = _reachableNodes; // get current state of reachable nodes
             if (!reachableNodes.Any())
                 throw new ServiceUnreachableException("All nodes are unreachable",
                     nodes.FirstOrDefault(n=>n.LastException!=null)?.LastException,
@@ -95,37 +100,56 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                         {"nodeSource", NodeSource.GetType().Name},
                         {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}                    
                     });
-
+            
             var affinityToken = TracingContext.TryGetRequestID() ?? Guid.NewGuid().ToString("N");
             var index = (uint)affinityToken.GetHashCode();
             
             return reachableNodes[index % reachableNodes.Length];
-        }                
+        }
+
+        private void SetReachableNodes()
+        {
+            _reachableNodes = _nodesState.Where(s => s.IsReachable).Select(s=>s.Node).ToArray();
+        }
 
         private void GetNodesFromSource()
         {
-            if (_disposed)
+            if (_disposed>0)
                 return;
 
-            var sourceNodes = NodeSource.GetNodes();
-            if (sourceNodes == _sourceNodes)
-                return;
-
-            lock (_lock)
+            try
             {
-                var oldNodes = _monitoredNodes;
-                var newNodes = sourceNodes.Select(n => CreateMonitoredNode(n, DeploymentIdentifier, ReachabilityCheck)).ToArray();
-                var nodesToRemove = oldNodes.Except(newNodes).ToArray();
+                var sourceNodes = NodeSource.GetNodes();
+                if (sourceNodes == _sourceNodes)
+                    return;
 
-                _monitoredNodes = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
-                StopMonitoringNodes(nodesToRemove);
-                _sourceNodes = sourceNodes;
+                var newNodes = sourceNodes.Select(CreateState).ToArray();
+
+                lock (_lock)
+                {
+                    var oldNodes = _nodesState;
+                    var nodesToRemove = oldNodes.Except(newNodes).ToArray();
+
+                    _nodesState = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
+                    StopMonitoringNodes(nodesToRemove);
+                    _sourceNodes = sourceNodes;
+                    SetReachableNodes();
+                }
             }
+            catch (EnvironmentException ex)
+            {
+                LastException = ex;
+            }
+        }
+
+        private NodeMonitoringState CreateState(Node node)
+        {
+            return CreateNodeMonitoringState(node, DeploymentIdentifier, ReachabilityCheck, SetReachableNodes);
         }
 
         private HealthCheckResult CheckHealth()
         {
-            var nodes = _monitoredNodes;
+            var nodes = _nodesState;
             if (nodes.Length == 0)
                 return HealthCheckResult.Unhealthy($"No nodes were discovered by {NodeSource.GetType().Name}");
 
@@ -133,7 +157,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (unreachableNodes.Length==0)
                 return HealthCheckResult.Healthy($"All {nodes.Length} nodes are reachable");
 
-            string message = string.Join("\r\n", unreachableNodes.Select(n=> $"    {n.ToString()} - {n.LastException?.Message}"));
+            string message = string.Join("\r\n", unreachableNodes.Select(n=> $"    {n.Node.ToString()} - {n.LastException?.Message}"));
             var healthyNodesCount = nodes.Length - unreachableNodes.Length;
             if (healthyNodesCount==0)
                 return HealthCheckResult.Unhealthy($"All {nodes.Length} nodes are unreachable\r\n{message}");
@@ -141,7 +165,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {nodes.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
-        private void StopMonitoringNodes(IEnumerable<MonitoredNode> monitoredNodes)
+        private void StopMonitoringNodes(IEnumerable<NodeMonitoringState> monitoredNodes)
         {
             foreach (var monitoredNode in monitoredNodes)
             {
@@ -149,27 +173,23 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+        public void ReportUnreachable(Node node, Exception ex)
+        {
+            var nodeState = _nodesState.FirstOrDefault(s => s.Node.Equals(node));
+            nodeState?.ReportUnreachable(ex);
+        }
+
 
         public void Dispose()
         {
-            if (_disposed) // use interlocked
+            if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            DisposeAsync().Wait(TimeSpan.FromSeconds(3));
-
-            _disposed = true;
-        }
-
-        public async Task DisposeAsync()
-        {
-            if (_disposed)
-                return;
-
-            StopMonitoringNodes(_monitoredNodes);
+            StopMonitoringNodes(_nodesState);
             NodeSource.Shutdown();
-            _healthMonitor.Dispose();
-
-            _disposed = true;
+            _healthMonitor.Dispose();            
         }
+
+
     }
 }

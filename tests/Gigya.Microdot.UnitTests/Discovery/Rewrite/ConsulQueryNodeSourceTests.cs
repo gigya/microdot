@@ -222,14 +222,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await AssertOneDefaultNode();
         }
 
-        [Test]
-        public void SupportMultipleEnvironments()
-        {
-            CreateNodeSource();
-            _nodeSource.SupportsMultipleEnvironments.ShouldBeTrue();
-        }
-
-
         private Task Init()
         {
             CreateNodeSource();

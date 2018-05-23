@@ -35,33 +35,34 @@ namespace Gigya.Microdot.Fakes.Discovery
 
     public class LocalhostServiceDiscovery : INewServiceDiscovery
     {
-        private static readonly IMonitoredNode _node = new FakeMonitoredNode(new LocalNodeSource().GetNodes().First());
-       
-        public Task<IMonitoredNode> GetNode()
+        private readonly ILoadBalancer _localhostLoadBalancer = new LocalhostLoadBalancer();
+
+        public Task<ILoadBalancer> GetLoadBalancer()
         {
-            return Task.FromResult(_node);
+            return Task.FromResult(_localhostLoadBalancer);
         }
+
     }
 
-    internal class FakeMonitoredNode : IMonitoredNode
+    public class LocalhostLoadBalancer : ILoadBalancer
     {
-        private readonly Node _node;
+        readonly INodeSource _localNodeSource = new LocalNodeSource();
 
-        public FakeMonitoredNode(Node node)
+        public Node GetNode()
         {
-            _node = node;
+            return _localNodeSource.GetNodes().First();
         }
 
-        public string Hostname => _node.Hostname;
-        public int? Port => _node.Port;
+        public INodeSource NodeSource { get; }
 
-        public void ReportReachable()
-        {            
+        public void ReportUnreachable(Node node, Exception ex = null)
+        {
         }
 
-        public void ReportUnreachable(Exception ex = null)
-        {            
-        }
+        public void Dispose()
+        {
 
+        }
     }
+
 }

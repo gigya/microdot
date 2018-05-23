@@ -19,8 +19,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summery>
     internal class ConsulNodeSource: INodeSource
     {
-        public bool SupportsMultipleEnvironments => true;
-
         private readonly object _initLocker = new object();
         private Task<ConsulResponse<ConsulNode[]>> _nodesInitTask;
         private Task<ConsulResponse<string>> _versionInitTask;
