@@ -104,14 +104,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetupDefaultNodes();
 
-            var allNodes = Get20Nodes();
+            var allEndpoints = Get20Nodes();
 
-            allNodes.ShouldContain(new[] { Node1, Node2, Node3 });
-        }
-
-        private void NodesShouldContain(Node[] allNodes, Node node1)
-        {
-            allNodes.ShouldContain(n=>n.Hostname==node1.Hostname && n.Port==node1.Port);
+            new[] { Node1, Node2, Node3 }.ShouldBeSubsetOf(allEndpoints);
         }
 
         [Test]
@@ -134,8 +129,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             
 
             var res = Get20Nodes();
-            res.ShouldNotContain(new[] { Node1, Node2, Node3 });
-            res.ShouldContain(new[] { Node4, Node5, Node6 });
+            res.Distinct()
+                .ShouldBe(new[] { Node4, Node5, Node6 }, true);
         }
 
         [Test]
@@ -295,6 +290,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _log.LogEntries.ToArray().ShouldContain(e => e.Exception == reachabilityException);
         }
 
+        [Test]
+        public async Task ErrorGettingNodes_MatchingExceptionIsThrown()
+        {
+            var expectedException = new EnvironmentException("Error getting nodes");
+            SetupErrorGettingNodes(expectedException);
+            var actualException = Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode(), "No nodes were discovered for service");
+            actualException.InnerException.ShouldBe(expectedException);
+        }
+
         private void SetupNoNodes()
         {
             SetupSourceNodes( /* no nodes */);
@@ -303,6 +307,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private void SetupSourceNodes(params Node[] nodes)
         {
             _getSourceNodes = () => nodes;
+        }
+
+        private void SetupErrorGettingNodes(Exception ex)
+        {
+            _getSourceNodes = () => throw ex;
         }
 
         private void SetupDefaultNodes()
@@ -320,36 +329,5 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             return healthMonitor.Monitors[new DeploymentIdentifier(ServiceName,Env).ToString()].Invoke();
         }
     }
-
-
-    internal static class MonitoredNodeAssertionExtensions
-    {
-        public static void ShouldContain(this Node[] actualNodes, Node expectedNode)
-        {
-            actualNodes.ShouldContain(n => n.Hostname == expectedNode.Hostname && n.Port == expectedNode.Port);
-        }
-
-        public static void ShouldContain(this Node[] actualNodes, Node[] expectedNodes)
-        {
-            foreach (var expectedNode in expectedNodes)
-            {
-                actualNodes.ShouldContain(expectedNode);
-            }            
-        }
-
-        public static void ShouldNotContain(this Node[] actualNodes, Node expectedNode)
-        {
-            actualNodes.ShouldNotContain(n => n.Hostname == expectedNode.Hostname && n.Port == expectedNode.Port);
-        }
-
-        public static void ShouldNotContain(this Node[] actualNodes, Node[] expectedNodes)
-        {
-            foreach (var expectedNode in expectedNodes)
-            {
-                actualNodes.ShouldNotContain(expectedNode);
-            }
-        }
-    }
-
 
 }

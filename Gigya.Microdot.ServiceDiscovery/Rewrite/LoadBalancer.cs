@@ -50,7 +50,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private ILog Log { get; }
         private string DeploymentIdentifier { get; }
-        private EnvironmentException LastException { get; set; }
+        private Exception LastException { get; set; }
 
         private Node[] _sourceNodes;
         private Node[] _reachableNodes;
@@ -84,11 +84,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetNodesFromSource();
             var nodes = _nodesState;
             if (!nodes.Any())
-                throw new ServiceUnreachableException("No nodes were discovered for service", unencrypted: new Tags
-                {
-                    {"deploymentIdentifier", DeploymentIdentifier},
-                    {"nodeSource", NodeSource.GetType().Name}
-                });
+                throw new ServiceUnreachableException("No nodes were discovered for service", 
+                    LastException,
+                    unencrypted: new Tags
+                    {
+                        {"deploymentIdentifier", DeploymentIdentifier},
+                        {"nodeSource", NodeSource.GetType().Name}
+                    });
 
             var reachableNodes = _reachableNodes; // get current state of reachable nodes
             if (!reachableNodes.Any())
@@ -136,7 +138,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     SetReachableNodes();
                 }
             }
-            catch (EnvironmentException ex)
+            catch (Exception ex)
             {
                 LastException = ex;
             }
