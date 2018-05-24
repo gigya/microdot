@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ConsulClient ConsulClient { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
-        private HealthCheckResult _healthStatus = HealthCheckResult.Healthy();
+        private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
         private readonly ComponentHealthMonitor _serviceListHealthMonitor;
         private Task LoopingTask { get; set; }
 

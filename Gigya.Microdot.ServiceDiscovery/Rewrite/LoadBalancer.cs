@@ -55,7 +55,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Node[] _sourceNodes;
         private Node[] _reachableNodes;
         private NodeMonitoringState[] _nodesState = new NodeMonitoringState[0];
-        private readonly ComponentHealthMonitor _healthMonitor;        
+        private readonly ComponentHealthMonitor _healthMonitor;
+        private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
 
         public LoadBalancer(
             INodeSource nodeSource, 
@@ -73,7 +74,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             Log = log;
             GetNodesFromSource();
-            _healthMonitor = healthMonitor.SetHealthFunction(DeploymentIdentifier, CheckHealth);
+            _healthMonitor = healthMonitor.SetHealthFunction(DeploymentIdentifier, ()=>_healthStatus);
         }
 
         /// <inheritdoc />
@@ -111,7 +112,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private void SetReachableNodes()
         {
-            _reachableNodes = _nodesState.Where(s => s.IsReachable).Select(s=>s.Node).ToArray();
+            var nodesState = _nodesState; // get current state
+            var reachableNodes = nodesState.Where(s => s.IsReachable).Select(s=>s.Node).ToArray();
+            _healthStatus = CheckHealth(nodesState, reachableNodes);
+            _reachableNodes = reachableNodes;
         }
 
         private void GetNodesFromSource()
@@ -149,22 +153,21 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return CreateNodeMonitoringState(node, DeploymentIdentifier, ReachabilityCheck, SetReachableNodes);
         }
 
-        private HealthCheckResult CheckHealth()
-        {
-            var nodes = _nodesState;
-            if (nodes.Length == 0)
+        private HealthCheckResult CheckHealth(NodeMonitoringState[] nodesState, Node[] reachableNodes)
+        {            
+            if (nodesState.Length == 0)
                 return HealthCheckResult.Unhealthy($"No nodes were discovered by {NodeSource.GetType().Name}");
 
-            var unreachableNodes = nodes.Where(n => !n.IsReachable).ToArray();
-            if (unreachableNodes.Length==0)
-                return HealthCheckResult.Healthy($"All {nodes.Length} nodes are reachable");
+            if (reachableNodes.Length==nodesState.Length)
+                return HealthCheckResult.Healthy($"All {nodesState.Length} nodes are reachable");
 
+            var unreachableNodes = nodesState.Where(n => !reachableNodes.Contains(n.Node));
             string message = string.Join("\r\n", unreachableNodes.Select(n=> $"    {n.Node.ToString()} - {n.LastException?.Message}"));
-            var healthyNodesCount = nodes.Length - unreachableNodes.Length;
-            if (healthyNodesCount==0)
-                return HealthCheckResult.Unhealthy($"All {nodes.Length} nodes are unreachable\r\n{message}");
+            
+            if (reachableNodes.Length==0)
+                return HealthCheckResult.Unhealthy($"All {nodesState.Length} nodes are unreachable\r\n{message}");
             else     
-                return HealthCheckResult.Healthy($"{healthyNodesCount} nodes out of {nodes.Length} are reachable. Unreachable nodes:\r\n{message}");
+                return HealthCheckResult.Healthy($"{reachableNodes.Length} nodes out of {nodesState.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
         private void StopMonitoringNodes(IEnumerable<NodeMonitoringState> monitoredNodes)
