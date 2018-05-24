@@ -28,7 +28,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         /// <summary>Contains either the subset of the service nodes that match the current version specified in the KV store, or
         /// an exception describing a Consul issue. Updated atomically. Copy reference before using!</summary>
-        private (INode[] Nodes, EnvironmentException LastError) _nodesOrError = (null, null);
+        private (Node[] Nodes, EnvironmentException LastError) _nodesOrError = (null, null);
 
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy();
 
@@ -57,7 +57,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
         /// <inheritdoc />
-        public INode[] GetNodes()
+        public Node[] GetNodes()
         {
             var nodes = _nodesOrError;
             if (nodes.LastError != null)
@@ -76,11 +76,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 Task<ConsulResponse<string>> deploymentVersionTask = ConsulClient.GetDeploymentVersion(DeploymentIdentifier, 0, _shutdownToken.Token);
-                Task<ConsulResponse<Node[]>> healthyNodesTask = ConsulClient.GetHealthyNodes(DeploymentIdentifier, 0, _shutdownToken.Token);
+                Task<ConsulResponse<ConsulNode[]>> healthyNodesTask = ConsulClient.GetHealthyNodes(DeploymentIdentifier, 0, _shutdownToken.Token);
                 await Task.WhenAll(deploymentVersionTask, healthyNodesTask).ConfigureAwait(false);
 
                 ConsulResponse<string> deploymentVersion = null;
-                ConsulResponse<Node[]> healthyNodes = null;
+                ConsulResponse<ConsulNode[]> healthyNodes = null;
 
                 while (!_shutdownToken.IsCancellationRequested)
                 {
@@ -118,7 +118,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        private void Update(ConsulResponse<string> deploymentVersion, ConsulResponse<Node[]> healthyNodes)
+        private void Update(ConsulResponse<string> deploymentVersion, ConsulResponse<ConsulNode[]> healthyNodes)
         {
             // Service no longer deployed
             if (deploymentVersion.IsUndeployed == true)
@@ -150,7 +150,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // All ok, update nodes
             else
             {
-                var nodes = healthyNodes.Result.Where(n => n.Version == deploymentVersion.Result).ToArray();
+                var nodes = healthyNodes.Result.Where(n => n.Version == deploymentVersion.Result).Select(_ => new Node(_.Hostname, _.Port)).ToArray();
                 if (nodes.Length < healthyNodes.Result.Length)
                     _healthStatus = HealthCheckResult.Healthy($"{nodes.Length} nodes matching to version {deploymentVersion.Result} from total of {healthyNodes.Result.Length} nodes");
                 else _healthStatus = HealthCheckResult.Healthy($"{nodes.Length} nodes");
@@ -160,7 +160,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        object MakeLogTags(ConsulResponse<string> deploymentResponse, ConsulResponse<Node[]> nodesResponse) => new
+        object MakeLogTags(ConsulResponse<string> deploymentResponse, ConsulResponse<ConsulNode[]> nodesResponse) => new
         {
             serviceName             = DeploymentIdentifier.ServiceName,
             serviceEnv              = DeploymentIdentifier.DeploymentEnvironment,
@@ -179,7 +179,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        Tags MakeExceptionTags(ConsulResponse<string> deploymentResponse, ConsulResponse<Node[]> nodesResponse) => new Tags
+        Tags MakeExceptionTags(ConsulResponse<string> deploymentResponse, ConsulResponse<ConsulNode[]> nodesResponse) => new Tags
         {
             {"serviceName",             DeploymentIdentifier.ServiceName},
             {"serviceEnv",              DeploymentIdentifier.DeploymentEnvironment},
