@@ -40,6 +40,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [OneTimeSetUp]
         public void SetupConsulListener()
         {
+            _consulSimulator = new ConsulSimulator(ConsulPort);
+
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
@@ -58,22 +60,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void TearDownConsulListener()
         {
             _testingKernel.Dispose();
+            _consulSimulator.Dispose();
         }
 
         [SetUp]
         public void Setup()
         {
-            _consulSimulator = new ConsulSimulator(ConsulPort);
-
+            _consulSimulator.Reset();
             _serviceName = ServiceName + "_" + Guid.NewGuid();
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            _consulSimulator.Dispose();
         }
 
         private Task<EndPointsResult> Start(ConsulMethod consulMethod)
