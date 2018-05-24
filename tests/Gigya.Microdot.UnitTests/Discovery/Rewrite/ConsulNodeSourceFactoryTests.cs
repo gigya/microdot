@@ -92,7 +92,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             ShouldCreateNodeSource();
 
             RemoveService();
-            await Task.Delay(300);
+            await Task.Delay(800);
 
             ServiceShouldNotExistOnList();
         }
@@ -106,7 +106,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             AddService();
 
-            await Task.Delay(300);
+            await Task.Delay(800);
 
             ShouldCreateNodeSource();
         }
@@ -125,7 +125,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             await Start();
             SetError();
-            await Task.Delay(300);
+            await Task.Delay(800);
             Should.Throw<EnvironmentException>(async () =>
                                                 {
                                                     var nodeSource = await _factory.TryCreateNodeSource(_deploymentIdentifier);
@@ -142,7 +142,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Start();
             _consulSimulator.Reset();
             AddService();
-            await Task.Delay(1500);
+            await Task.Delay(800);
             ShouldCreateNodeSource();
         }
 
