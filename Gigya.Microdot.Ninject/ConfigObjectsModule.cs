@@ -121,13 +121,18 @@ namespace Gigya.Microdot.Ninject
         {
             if (Creator == null)
             {
+                var getCreator = context.Kernel.Get<Func<Type, ConfigObjectCreator>>();
+                var service = context.Request.Service;
+                var uninitializedCreator = getCreator(IsSourceBlock(service) ? service.GetGenericArguments().Single() : service);
+
                 lock (_creatorLock)
+                {
                     if (Creator == null)
                     {
-                        var getCreator = context.Kernel.Get<Func<Type, ConfigObjectCreator>>();
-                        var service = context.Request.Service;
-                        Creator = getCreator(IsSourceBlock(service) ? service.GetGenericArguments().Single() : service);
+                        uninitializedCreator.Init();
+                        Creator = uninitializedCreator;
                     }
+                }
             }
             return Creator;
         }
