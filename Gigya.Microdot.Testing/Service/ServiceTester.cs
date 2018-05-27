@@ -55,7 +55,7 @@ namespace Gigya.Microdot.Testing.Service
 
         private HttpListener LogListener { get; set; }
 
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false,TimeSpan? serviceDrainTime=null)
+        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false,int? serviceDrainTime=null)
         {
             Log = log;
             ResolutionRoot = resolutionRoot;
@@ -202,7 +202,7 @@ namespace Gigya.Microdot.Testing.Service
         }
 
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, TimeSpan? shutdownWaitTime,TimeSpan? serviceDrainTime)
+        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, TimeSpan? shutdownWaitTime,int? serviceDrainTime)
         {
             if (isSecondary && basePortOverride == null)
                 throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
@@ -315,7 +315,7 @@ namespace Gigya.Microdot.Testing.Service
 
     public static class ServiceTesterExtensions
     {
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false,TimeSpan? serviceDrainTime=null)
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false,int? serviceDrainTime=null)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
             ServiceTester<TServiceHost> tester = kernel.Get<ServiceTester<TServiceHost>>(

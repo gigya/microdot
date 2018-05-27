@@ -73,7 +73,7 @@ namespace Gigya.Microdot.SharedLogic
         /// <summary>
         /// Specifies drain time in this time the servcie status will be 521.
         /// </summary>
-        public TimeSpan? ServiceDrainTime { get;  }
+        public int? ServiceDrainTimeSec { get;  }
         /// <summary>
         /// Defines wait time before service is stoping, default is 10 seconds.
         /// </summary>
@@ -98,7 +98,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null, TimeSpan? onStopWaitTimeInMs=null,TimeSpan? serviceDrainTime=null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, TimeSpan? onStopWaitTimeInMs=null,int? serviceDrainTime=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -108,7 +108,7 @@ namespace Gigya.Microdot.SharedLogic
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
             OnStopWaitTime = onStopWaitTimeInMs;
-            ServiceDrainTime = serviceDrainTime;
+            ServiceDrainTimeSec = serviceDrainTime;
             ApplyDefaults();
         }
 
@@ -127,7 +127,7 @@ namespace Gigya.Microdot.SharedLogic
             ShutdownWhenPidExits = TryParseInt(ParseStringArg(nameof(ShutdownWhenPidExits), args));
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
             OnStopWaitTime = TryParseTimeSpan(ParseStringArg(nameof(OnStopWaitTime), args));
-            ServiceDrainTime = TryParseTimeSpan(ParseStringArg(nameof(ServiceDrainTime), args));
+            ServiceDrainTimeSec = TryParseInt(ParseStringArg(nameof(ServiceDrainTimeSec), args));
             ProcessorAffinity = ParseProcessorIds(ParseStringArg(nameof(ProcessorAffinity), args));
             ApplyDefaults();
         }

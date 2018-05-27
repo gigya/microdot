@@ -55,10 +55,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task HealthCheck_ServcieDrain_StatueShouldBe521()
         {
             int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: port, serviceDrainTime: TimeSpan.FromSeconds(10));
+            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: port, serviceDrainTime: 10);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
-         
+            await  Task.Delay(200);
+
             var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
             await dispose;
