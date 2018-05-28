@@ -74,10 +74,11 @@ namespace Gigya.Microdot.SharedLogic
         /// Specifies drain time in this time the servcie status will be 521.
         /// </summary>
         public int? ServiceDrainTimeSec { get;  }
+
         /// <summary>
-        /// Defines wait time before service is stoping, default is 10 seconds.
+        /// Defines the time to wait for the service to stop, default is 10 seconds. After this time the service will be forcibly closed.
         /// </summary>
-        public int? OnStopWaitTimeSec { get;  }
+        public int? OnStopWaitTimeSec { get; set; }
 
         /// <summary>
         /// An array of processor IDs the service should run on, otherwise null if none are is specified. This also affects the degree
@@ -200,6 +201,10 @@ namespace Gigya.Microdot.SharedLogic
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
+            if (OnStopWaitTimeSec == null)
+                OnStopWaitTimeSec = 10;
+
             // ReSharper restore SwitchStatementMissingSomeCases
         }
 
