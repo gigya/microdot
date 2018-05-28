@@ -77,7 +77,7 @@ namespace Gigya.Microdot.SharedLogic
         /// <summary>
         /// Defines wait time before service is stoping, default is 10 seconds.
         /// </summary>
-        public TimeSpan? OnStopWaitTime { get;  }
+        public int? OnStopWaitTimeSec { get;  }
 
         /// <summary>
         /// An array of processor IDs the service should run on, otherwise null if none are is specified. This also affects the degree
@@ -98,7 +98,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null, TimeSpan? onStopWaitTimeInMs=null,int? serviceDrainTime=null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? shutdownWaitTimeSec=null,int? serviceDrainTimeSec=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -107,8 +107,8 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
-            OnStopWaitTime = onStopWaitTimeInMs;
-            ServiceDrainTimeSec = serviceDrainTime;
+            OnStopWaitTimeSec = shutdownWaitTimeSec;
+            ServiceDrainTimeSec = serviceDrainTimeSec;
             ApplyDefaults();
         }
 
@@ -126,13 +126,12 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = ParseStringArg(nameof(InstanceName), args);
             ShutdownWhenPidExits = TryParseInt(ParseStringArg(nameof(ShutdownWhenPidExits), args));
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
-            OnStopWaitTime = TryParseTimeSpan(ParseStringArg(nameof(OnStopWaitTime), args));
+            OnStopWaitTimeSec = TryParseInt(ParseStringArg(nameof(OnStopWaitTimeSec), args));
             ServiceDrainTimeSec = TryParseInt(ParseStringArg(nameof(ServiceDrainTimeSec), args));
             ProcessorAffinity = ParseProcessorIds(ParseStringArg(nameof(ProcessorAffinity), args));
             ApplyDefaults();
         }
 
-        private static TimeSpan? TryParseTimeSpan(string str) { return TimeSpan.TryParse(str, out TimeSpan val) ? (TimeSpan?)val : null; }
 
         private static int? TryParseInt(string str) { return int.TryParse(str, out int val) ? (int?)val : null; }
 

@@ -17,11 +17,20 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         [Test]
         public async Task ShouldCallSelfHostServcie()
         {
+            NonOrleansServiceTester<CalculatorServiceHost> serviceTester = null;
             var testingKernel = new TestingKernel<TraceLog>();
-            var serviceTester = testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(1111, TimeSpan.FromSeconds(10));
+            try
+            {
+               serviceTester = testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(1111, TimeSpan.FromSeconds(10));
+              (await serviceTester.GetServiceProxy<ICalculatorService>().Add(1, 2)).ShouldBe(3);
+            }
+            finally
+            {
+                serviceTester?.Dispose();
+                testingKernel.Dispose();
+            }
 
-            (await serviceTester.GetServiceProxy<ICalculatorService>().Add(1, 2)).ShouldBe(3);
-            serviceTester.Dispose();
+
         }
 
     }
