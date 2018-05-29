@@ -46,6 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     [TestFixture]
     public class LoadBalancerTests
     {
+        private const int Repeat = 3;
         private const string ServiceName = "ServiceName";
         private const string Env = "prod";
         private ILoadBalancer _loadBalancer;
@@ -141,6 +142,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public void GetNode_NodesListBecomesEmpty_Throws()
         {
             SetupDefaultNodes();
@@ -152,6 +154,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public void GetNode_AfterNodeReportedUnreachable_NodeWillNotBeReturned()
         {
             var allNodes = new[] {Node1, Node2, Node3};
@@ -171,6 +174,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public async Task GetNode_NodeIsReachableAgain_NodeWillBeReturned()
         {            
             SetupDefaultNodes();
@@ -187,6 +191,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public void GetNode_OnlyOneNodeUnreachable_ShouldStillBeHealthy()
         {
             SetupDefaultNodes();        
@@ -219,6 +224,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public async Task GetNode_NodeUnreachableThenReturnsInBackground_NodeShouldBeReturned()
         {
             SetupDefaultNodes();
@@ -242,6 +248,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public void GetNode_AllNodesUnreachable_ThrowsException()
         {
             SetupSourceNodes(Node1,Node2,Node3);
@@ -258,6 +265,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        [Repeat(Repeat)]
         public async Task GetNode_AllNodesUnreachableThenAllNodesReachable_ReturnsAllNodes()
         {
             SetupSourceNodes(Node1,Node2,Node3);
@@ -277,6 +285,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
 
         [Test]
+        [Repeat(Repeat)]
         public async Task GetNode_NodesUnreachableButReachabilityCheckThrows_ErrorIsLogged()
         {
             SetupDefaultNodes();
@@ -290,7 +299,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _log.LogEntries.ToArray().ShouldContain(e => e.Exception == reachabilityException);
         }
 
-        [Test]
+        [Test]        
         public async Task ErrorGettingNodes_MatchingExceptionIsThrown()
         {
             var expectedException = new EnvironmentException("Error getting nodes");

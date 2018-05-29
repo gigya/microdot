@@ -112,10 +112,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private void SetReachableNodes()
         {
-            var nodesState = _nodesState; // get current state
-            var reachableNodes = nodesState.Where(s => s.IsReachable).Select(s=>s.Node).ToArray();
-            _healthStatus = CheckHealth(nodesState, reachableNodes);
-            _reachableNodes = reachableNodes;
+            lock (_lock)
+            {
+                var reachableNodes = _nodesState.Where(s => s.IsReachable).Select(s => s.Node).ToArray();
+                _healthStatus = CheckHealth(_nodesState, reachableNodes);
+                _reachableNodes = reachableNodes;
+            }
         }
 
         private void GetNodesFromSource()
@@ -181,7 +183,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public void ReportUnreachable(Node node, Exception ex)
         {
             var nodeState = _nodesState.FirstOrDefault(s => s.Node.Equals(node));
-            nodeState?.ReportUnreachable(ex);
+            lock (_lock)
+                nodeState?.ReportUnreachable(ex);
         }
 
 
