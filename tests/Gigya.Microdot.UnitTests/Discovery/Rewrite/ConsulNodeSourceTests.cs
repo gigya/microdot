@@ -240,7 +240,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await WaitForUpdates();
             _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");
             _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
-            GetHealthStatus().IsHealthy.ShouldBeFalse();
+            GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
         [Test]
