@@ -61,9 +61,9 @@
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
     <Compile Include="Rewrite\ConsulNode.cs" />
-    <Compile Include="Rewrite\DiscoveryFactory.cs" />
+    <Compile Include="Rewrite\Discovery.cs" />
     <Compile Include="Rewrite\Ex.cs" />
-    <Compile Include="Rewrite\IDiscoveryFactory.cs" />
+    <Compile Include="Rewrite\IDiscovery.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\INodeSourceFactory.cs" />
     <Compile Include="EndPoint.cs" />

@@ -35,7 +35,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
-                k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
+                k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
                 _consulClientMock = new ConsulClientMock();
                 _consulClientMock.SetResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, ActiveVersion = ServiceVersion, IsQueryDefined = true });
@@ -60,7 +60,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _discoveryConfig.Services[ServiceName].Source = "Config";
             _discoveryConfig.Services[ServiceName].Hosts = "host3";
 
-            var node = (await _serviceDiscovery.GetLoadBalancer()).GetNode();
+            var node = await (await _serviceDiscovery.GetLoadBalancer()).GetNode();
             Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
             Assert.AreEqual("host3", node.Hostname);
         }
@@ -71,7 +71,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
             var loadBalancer = await _serviceDiscovery.GetLoadBalancer();
-            loadBalancer.GetNode().Hostname.ShouldContain(CurrentApplicationInfo.HostName);
+            (await loadBalancer.GetNode()).Hostname.ShouldContain(CurrentApplicationInfo.HostName);
         }
 
     }

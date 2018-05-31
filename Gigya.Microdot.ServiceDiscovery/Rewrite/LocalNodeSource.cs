@@ -47,6 +47,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             // nothing to shutdown            
         }
+
+        public string Type => "Local";
     }
 
 }

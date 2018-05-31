@@ -44,7 +44,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
+                        k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
             )
@@ -175,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
+                        k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
 
@@ -224,7 +224,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new TestingKernel<ConsoleLog>(
                     k =>
                     {
-                        k.Rebind<IDiscoveryFactory>().To<DiscoveryFactory>();
+                        k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                         k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
                     }, dict)
             )

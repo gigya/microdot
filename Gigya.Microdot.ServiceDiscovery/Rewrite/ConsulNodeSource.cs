@@ -212,5 +212,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _shutdownToken.Dispose();
         }
 
+        public string Type => "Consul";
     }
 }

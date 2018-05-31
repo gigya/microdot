@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 //        private ILoadBalancer NoEnvironmentLoadBalancer { get; set; }
 
         private ILog Log { get; }
-        private readonly IDiscoveryFactory _discoveryFactory;
+        private readonly IDiscovery _discovery;
         private Func<DiscoveryConfig> GetConfig { get; }
         private AggregatingHealthStatus AggregatingHealthStatus { get; }
 
@@ -74,11 +74,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log,
-                                IDiscoveryFactory discoveryFactory,
+                                IDiscovery discovery,
                                 Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
         {
             Log = log;
-            _discoveryFactory = discoveryFactory;            
+            _discovery = discovery;            
             _serviceName = serviceName;
             
             _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
@@ -128,13 +128,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_masterDeployment.Equals(_originatingEnvironmentDeployment))
                 return;
 
-            MasterEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
+            MasterEnvironmentLoadBalancer = await _discovery.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
         private async Task ReloadOriginatingEnvironmentLoadBalancer()
         {            
             RemoveOriginatingPool();
-            OriginatingEnvironmentLoadBalancer = await _discoveryFactory.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
+            OriginatingEnvironmentLoadBalancer = await _discovery.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
         }
 
         private void RemoveOriginatingPool()
@@ -158,24 +158,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             using (await _asyncLocker.LockAsync().ConfigureAwait(false))
             {
-                if (MasterEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
+                if (MasterEnvironmentLoadBalancer==null || await MasterEnvironmentLoadBalancer.WasUndeployed().ConfigureAwait(false))
                     await ReloadMasterEnvironmentLoadBalancer().ConfigureAwait(false);
 
-                if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed != false)
+                if (OriginatingEnvironmentLoadBalancer == null || await OriginatingEnvironmentLoadBalancer.WasUndeployed().ConfigureAwait(false))
                     await ReloadOriginatingEnvironmentLoadBalancer().ConfigureAwait(false);
 
 
-                if (OriginatingEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
+                if (OriginatingEnvironmentLoadBalancer!=null && await OriginatingEnvironmentLoadBalancer.WasUndeployed().ConfigureAwait(false) == false)
                 {
-                    _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' [{OriginatingEnvironmentLoadBalancer.NodeSource.GetType().Name}]");
+                    _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
                     return OriginatingEnvironmentLoadBalancer;
                 }
 
-                if (MasterEnvironmentLoadBalancer?.NodeSource?.WasUndeployed == false)
+                if (MasterEnvironmentLoadBalancer!=null && await MasterEnvironmentLoadBalancer.WasUndeployed().ConfigureAwait(false) == false)
                 {
                     if (GetConfig().EnvironmentFallbackEnabled)
                     {
-                        _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'  [{MasterEnvironmentLoadBalancer.NodeSource.GetType().Name}]");
+                        _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
                         return MasterEnvironmentLoadBalancer;
                     }
                     else

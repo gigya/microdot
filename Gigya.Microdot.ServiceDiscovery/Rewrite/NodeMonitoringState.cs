@@ -22,12 +22,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Task MonitoringTask { get; set; } = Task.FromResult(1);
         private CancellationTokenSource CancellationSource { get; set; }
         public Node Node { get; }
-        private string DeploymentIdentifier { get; }
+        private DeploymentIdentifier DeploymentIdentifier { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
 
         private readonly object _lock = new object();
 
-        public NodeMonitoringState(Node node, string deploymentIdentifier, ReachabilityCheck reachabilityCheck, Action reachabilityChanged, ILog log)
+        public NodeMonitoringState(Node node, DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, Action reachabilityChanged, ILog log)
         {
             Node = node;
             DeploymentIdentifier = deploymentIdentifier;
@@ -111,7 +111,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private object NodeUnencryptedTags() => new
         {
-            deploymentIdentifier = DeploymentIdentifier,
+            deploymentIdentifier = DeploymentIdentifier.ToString(),
             hostname = Node.Hostname,
             port = Node.Port,
             attemptCount = AttemptCount,

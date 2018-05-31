@@ -142,5 +142,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ShutdownToken?.Cancel();
             ShutdownToken?.Dispose();
         }
+
+        public string Type => "ConsulQuery";
     }
 }

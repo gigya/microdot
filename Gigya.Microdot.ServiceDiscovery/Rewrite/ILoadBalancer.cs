@@ -35,12 +35,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <summary>
         /// Retrieves the a node which is considered to be reachable.
         /// </summary>
-        Node GetNode();
+        Task<Node> GetNode();
 
         /// <summary>
-        /// Source of nodes, over which the load balancer is balancing
+        /// Returns true if the service was undeployed on the current environment
         /// </summary>
-        INodeSource NodeSource { get; }
+        Task<bool> WasUndeployed();
 
         /// <summary>
         /// Report that a node was not responsive

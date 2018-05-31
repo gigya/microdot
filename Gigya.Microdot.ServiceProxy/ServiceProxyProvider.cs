@@ -350,7 +350,7 @@ namespace Gigya.Microdot.ServiceProxy
                 if (!TryGetHostOverride(out Node node))
                 {
                     loadBalancer = await ServiceDiscovery.GetLoadBalancer().ConfigureAwait(false);
-                    node = loadBalancer.GetNode();
+                    node = await loadBalancer.GetNode().ConfigureAwait(false);
                 }
 
                 int? effectivePort = GetEffectivePort(node, config);

@@ -48,12 +48,12 @@ namespace Gigya.Microdot.Fakes.Discovery
     {
         readonly INodeSource _localNodeSource = new LocalNodeSource();
 
-        public Node GetNode()
+        public async Task<Node> GetNode()
         {
             return _localNodeSource.GetNodes().First();
         }
 
-        public INodeSource NodeSource { get; }
+        public Task<bool> WasUndeployed() => Task.FromResult(false);
 
         public void ReportUnreachable(Node node, Exception ex = null)
         {

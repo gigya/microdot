@@ -6,7 +6,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// Factory to get Discovery components: LoadBalancer and NodeSource
     /// </summary>
-    public interface IDiscoveryFactory
+    public interface IDiscovery
     {
         /// <summary>
         /// Creates a new <see cref="ILoadBalancer"/> for the given <see cref="DeploymentIdentifier"/>. 
@@ -18,11 +18,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck);
 
         /// <summary>
-        /// Creates a new <see cref="INodeSource"/> for the given <see cref="DeploymentIdentifier"/>.
-        /// A <see cref="INodeSource"/> can be used to get a list of nodes for the specific service at the specific environment
+        /// Returns a list of nodes for the given <see cref="DeploymentIdentifier"/>.
+        /// Returns null If the service is not deployed on this environment
         /// </summary>
         /// <param name="deploymentIdentifier">identifier for service and env for which LoadBalancer is requested</param>
-        /// <returns>a valid <see cref="INodeSource"/>, or null if the service is not implemented in the requested environment</returns>
-        Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier);
+        /// <returns>a list of <see cref="Node"/>, or null if the service is not deployed in the requested environment</returns>
+        Task<Node[]> GetNodes(DeploymentIdentifier deploymentIdentifier);
     }
 }
