@@ -45,7 +45,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ConsulClient = consulClient;
             DateTime = dateTime;
             GetConfig = getConfig;
-            AggregatingHealthStatus = getAggregatingHealthStatus("ConsulClient"); // TODO: rename to "Consul"
+            AggregatingHealthStatus = getAggregatingHealthStatus("Consul"); 
             AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier.ToString(), () => _healthStatus);
             Task.Run(UpdateLoop); // So that the loop doesn't run on a Grain task scheduler
         }

@@ -176,9 +176,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Init();
 
             SetConsulIsDown();
-            await WaitForUpdates();            
-
+            await WaitForUpdates();
+            
             AssertOneDefaultNode();
+
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
@@ -291,7 +292,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private HealthCheckResult GetHealthStatus()
         {
             var healthMonitor = (FakeHealthMonitor)_testingKernel.Get<IHealthMonitor>();
-            return healthMonitor.Monitors["ConsulClient"]();
+            return healthMonitor.Monitors["Consul"]();
         }
 
         private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
