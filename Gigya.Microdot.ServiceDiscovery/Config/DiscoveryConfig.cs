@@ -51,6 +51,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public TimeSpan? RequestTimeout { get; set; }
 
         /// <summary>
+        /// Time period to keep monitoring a deployed service after it was no longer requested
+        /// </summary>
+        public TimeSpan MonitoringLifetime { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <summary>
         /// When we lose connection to some endpoint, we wait this delay till we start trying to reconnect.
         /// </summary>
         [Obsolete("To be deleted after discovery refactoring")]

@@ -43,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public Node[] GetNodes() => _nodes;
 
-        public void Shutdown()
+        public void Dispose()
         {
             // nothing to shutdown            
         }

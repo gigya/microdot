@@ -12,7 +12,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    internal class ConsulQueryNodeSource : INodeSource
+    internal class ConsulQueryNodeSource : INodeSource, IDisposable
     {
         private DeploymentIdentifier DeploymentIdentifier { get; }
         private int _stopped;
@@ -134,7 +134,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public bool WasUndeployed { get; private set; } = false;
 
-        public void Shutdown()
+        public void Dispose()
         {
             if (Interlocked.Increment(ref _stopped) != 1)
                 return;

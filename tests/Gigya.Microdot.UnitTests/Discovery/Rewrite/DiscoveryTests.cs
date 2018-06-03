@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -10,6 +11,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
+using NSubstitute.Extensions;
 using NUnit.Framework;
 using Shouldly;
 
@@ -42,6 +44,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeSource _slowNodeSource;
         private INodeSourceFactory _slowNodeSourceFactory;
         private TaskCompletionSource<bool> _waitForSlowSourceCreation;
+        private DateTimeFake _dateTimeFake;
+        private int _consulSourceDisposedCounter;
 
 
         [OneTimeSetUp]
@@ -57,7 +61,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 k.Bind<INodeSourceFactory>().ToMethod(c => _slowNodeSourceFactory);
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(c => () => _discoveryConfig);                
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InTransientScope(); // get a different instance for each test
+                k.Rebind<IDateTime>().ToMethod(_=>_dateTimeFake);
             });
+        }
+
+        [OneTimeTearDown]
+        public void DisposeKernel()
+        {
+            _kernel.Dispose();
         }
 
         private void RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<TNodeSource>(IKernel kernel) where TNodeSource: INodeSource
@@ -73,6 +84,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [SetUp]
         public void Setup()
         {
+            _dateTimeFake = new DateTimeFake();
+
             _createdNodeSources = new List<Type>();
             SetupConsulNodeSource();
             SetupSlowNodeSource();
@@ -81,17 +94,20 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _discoveryConfig.Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig());
 
             _discovery = _kernel.Get<IDiscovery>();
-            _deploymentIdentifier = new DeploymentIdentifier(ServiceName, Env);
+            _deploymentIdentifier = new DeploymentIdentifier(ServiceName, Env);            
         }
 
         private void SetupConsulNodeSource()
         {
+            _consulSourceDisposedCounter = 0;
+
             _consulNode = new Node("ConsulNode", 123);
             _consulSourceWasUndeployed = false;
-            _consulSource = Substitute.For<INodeSource>();
+            _consulSource = Substitute.For<INodeSource, IDisposable>();
             _consulSource.WasUndeployed.Returns(_ => _consulSourceWasUndeployed);
             _consulSource.GetNodes().Returns(new[] {_consulNode});
-            _consulSource.Type.Returns(Consul);
+            _consulSource.Type.Returns(Consul);  
+            _consulSource.When(n=>((IDisposable)n).Dispose()).Do(_=>_consulSourceDisposedCounter++);
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _consulNodeSourceFactory.Type.Returns(Consul);
@@ -210,6 +226,23 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             ConfigureServiceSource(SlowSource);
             await GetNodesThreeTimesFromSlowSource();
             _createdNodeSources.Count.ShouldBe(2);
+        }
+
+        [Test]
+        public async Task DisposeNodeSourceAfterLifetimeIsPassed()
+        {
+            ConfigureServiceSource(Consul);
+            _discoveryConfig.MonitoringLifetime = TimeSpan.FromMinutes(2);
+            await GetNodes();
+            _createdNodeSources.Count.ShouldBe(1);
+
+            _dateTimeFake.UtcNow += TimeSpan.FromMinutes(3);
+            _dateTimeFake.StopDelay();
+            await Task.Delay(100);
+            await GetNodes();
+            // first NodeSource was disposed after being not-in-use for more than 2 minutes. A new NodeSource should have been created
+            _createdNodeSources.Count.ShouldBe(2);
+            _consulSourceDisposedCounter.ShouldBe(1);
         }
 
         private void ConfigureServiceSource(string source)

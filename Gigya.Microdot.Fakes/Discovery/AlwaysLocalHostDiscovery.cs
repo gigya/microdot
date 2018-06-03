@@ -48,5 +48,8 @@ namespace Gigya.Microdot.Fakes.Discovery
             return new LocalNodeSource().GetNodes();
         }
 
+        public void Dispose()
+        {
+        }
     }
 }

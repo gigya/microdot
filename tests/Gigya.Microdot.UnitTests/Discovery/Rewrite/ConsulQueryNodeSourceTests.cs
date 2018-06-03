@@ -79,7 +79,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task Teardown()
         {
             _consulSimulator?.Dispose();
-            _nodeSource?.Shutdown();
+            _nodeSource?.Dispose();
         }
 
         public async Task WaitForUpdates()
@@ -247,7 +247,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             if (_nodeSource.WasUndeployed)
             {
-                _nodeSource.Shutdown();
+                _nodeSource.Dispose();
                 await Init();
             }
         }

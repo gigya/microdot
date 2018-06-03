@@ -17,7 +17,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// Monitors Consul using Health API and KeyValue API to find the current active version of a service,
     /// and provides a list of up-to-date, healthy nodes.
     /// </summary>
-    internal class ConsulNodeSource: INodeSource
+    internal class ConsulNodeSource: INodeSource, IDisposable
     {
         private ILog Log { get; }
         private ConsulClient ConsulClient { get; }
@@ -201,7 +201,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private int _stopped = 0;
         private readonly CancellationTokenSource _shutdownToken = new CancellationTokenSource();
 
-        public void Shutdown()
+        public void Dispose()
         {
             if (Interlocked.Increment(ref _stopped) != 1)
                 return;

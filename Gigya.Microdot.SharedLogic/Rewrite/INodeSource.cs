@@ -21,7 +21,7 @@ namespace Gigya.Microdot.SharedLogic.Rewrite
         /// </summary>
         bool WasUndeployed { get; }
 
-        void Shutdown();
+        void Dispose();
 
         /// <summary>
         /// Type of this Source. This type should be matching to the config entry 'Source' (at: Discovery.Services.[serviceName].Source)

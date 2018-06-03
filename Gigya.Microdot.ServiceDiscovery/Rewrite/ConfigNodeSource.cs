@@ -76,7 +76,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else throw Ex.IncorrectHostFormatInConfig(host, _serviceName);
         }
 
-        public void Shutdown()
+        public void Dispose()
         {
             // nothing to shutdown            
         }

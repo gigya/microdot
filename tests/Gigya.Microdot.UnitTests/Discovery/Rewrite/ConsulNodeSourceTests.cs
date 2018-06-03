@@ -77,7 +77,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [TearDown]
         public async Task Teardown()
         {
-            _nodeSource?.Shutdown();
+            _nodeSource?.Dispose();
             _testingKernel?.Dispose();
         }
 
@@ -273,7 +273,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             if (_nodeSource?.WasUndeployed!=false)
             {
-                _nodeSource?.Shutdown();
+                _nodeSource?.Dispose();
                 await Init();
             }
         }

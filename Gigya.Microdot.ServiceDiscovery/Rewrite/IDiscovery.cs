@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -6,7 +7,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// <summary>
     /// Factory to get Discovery components: LoadBalancer and NodeSource
     /// </summary>
-    public interface IDiscovery
+    public interface IDiscovery: IDisposable
     {
         /// <summary>
         /// Creates a new <see cref="ILoadBalancer"/> for the given <see cref="DeploymentIdentifier"/>. 
