@@ -76,7 +76,7 @@ namespace Gigya.Microdot.SharedLogic
         public int? ServiceDrainTimeSec { get;  }
 
         /// <summary>
-        /// Defines the time to wait for the service to stop, default is 10 seconds. After this time the service will be forcibly closed.
+        /// Defines the time to wait for the service to stop, default is 10 seconds. Only after OnStopWaitTimeSec+ServiceDrainTimeSec the service will be forcibly closed.
         /// </summary>
         public int? OnStopWaitTimeSec { get; set; }
 
