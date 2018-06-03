@@ -208,6 +208,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void SetError(Exception error)
         {
             _httpErrorFake = error;
+            IncreaseKeyValueModifyIndex();
+            IncreaseHealthModifyIndex();
         }
 
         private void IncreaseHealthModifyIndex()
