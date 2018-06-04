@@ -11,7 +11,6 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
-using NSubstitute.Extensions;
 using NUnit.Framework;
 using Shouldly;
 
@@ -37,8 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private List<Type> _createdNodeSources;
         private DeploymentIdentifier _deploymentIdentifier;
 
-        private Node _consulNode;
-        private INodeSource _consulSource;
+        private Node _consulNode;        
         private INodeSourceFactory _consulNodeSourceFactory;
 
         private INodeSource _slowNodeSource;
@@ -102,21 +100,27 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSourceDisposedCounter = 0;
 
             _consulNode = new Node("ConsulNode", 123);
-            _consulSourceWasUndeployed = false;
-            _consulSource = Substitute.For<INodeSource, IDisposable>();
-            _consulSource.WasUndeployed.Returns(_ => _consulSourceWasUndeployed);
-            _consulSource.GetNodes().Returns(new[] {_consulNode});
-            _consulSource.Type.Returns(Consul);  
-            _consulSource.When(n=>((IDisposable)n).Dispose()).Do(_=>_consulSourceDisposedCounter++);
+            _consulSourceWasUndeployed = false;            
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _consulNodeSourceFactory.Type.Returns(Consul);
+            _consulNodeSourceFactory.MayCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(_=>!_consulSourceWasUndeployed);
             _consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>())
                 .Returns(_ =>
                 {
                     _createdNodeSources.Add(typeof(INodeSource));
-                    return _consulSourceWasUndeployed ? null : _consulSource;
+                    return _consulSourceWasUndeployed ? null : CreateNewConsulSource(); 
                 });
+        }
+
+        private INodeSource CreateNewConsulSource()
+        {
+            var consulSource = Substitute.For<INodeSource, IDisposable>();
+            consulSource.WasUndeployed.Returns(_=>_consulSourceWasUndeployed);
+            consulSource.GetNodes().Returns(new[] {_consulNode});
+            consulSource.Type.Returns(Consul);
+            consulSource.When(n => ((IDisposable) n).Dispose()).Do(_ => _consulSourceDisposedCounter++);
+            return consulSource;
         }
 
         private void SetupSlowNodeSource()
@@ -130,6 +134,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _slowNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _slowNodeSourceFactory.Type.Returns(SlowSource);
+            _slowNodeSourceFactory.MayCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(true);
             _slowNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>())
                 .Returns(async _ =>
                 {
@@ -225,6 +230,23 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             ConfigureServiceSource(SlowSource);
             await GetNodesThreeTimesFromSlowSource();
+            _createdNodeSources.Count.ShouldBe(2);
+        }
+
+        [Test]
+        public async Task GetNodes_ServiceUndeployed_DontTryToCreateNewNodeSourceUntilServiceIsRedeployed()
+        {
+            ConfigureServiceSource(Consul);
+            await GetNodes();
+            _createdNodeSources.Count.ShouldBe(1);
+
+            _consulSourceWasUndeployed = true;
+            await GetNodes();
+            await GetNodes();
+            _createdNodeSources.Count.ShouldBe(1);
+
+            _consulSourceWasUndeployed = false;
+            await GetNodes();
             _createdNodeSources.Count.ShouldBe(2);
         }
 

@@ -94,6 +94,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else
             {
                 _nodes = response.Result;
+                WasUndeployed = false;
                 if (_nodes.Length == 0)
                     ErrorResult(response, "No endpoints were specified in Consul for the requested service and service's active version.");
             }

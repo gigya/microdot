@@ -79,6 +79,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Start();
+            _factory.MayCreateNodeSource(_deploymentIdentifier).ShouldBeFalse();
             var nodeSource = await _factory.TryCreateNodeSource(_deploymentIdentifier);
             nodeSource.ShouldBeNull();
         }
@@ -94,7 +95,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             RemoveService();
             await Task.Delay(800);
 
-            ServiceShouldNotExistOnList();
+            NodeSourceCannotBeCreated();
         }
 
         [Test]
@@ -102,22 +103,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {            
             await Start();
 
-            ServiceShouldNotExistOnList();
+            NodeSourceCannotBeCreated();
 
             AddService();
 
             await Task.Delay(800);
 
             ShouldCreateNodeSource();
-        }
-
-        [Test]
-        public async Task ServiceExistsWithDifferentCasing()
-        {
-            var deploymentIdentifierLowerCase = new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(), Env);
-            AddService(deploymentIdentifier: deploymentIdentifierLowerCase);
-            await Start();
-            ShouldCreateNodeSource(deploymentIdentifierLowerCase);
         }
 
         [Test]
@@ -210,11 +202,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void ShouldCreateNodeSource(DeploymentIdentifier expectedDeploymentIdentifier=null)
         {
+            _factory.MayCreateNodeSource(_deploymentIdentifier).ShouldBeTrue();
             _factory.TryCreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).ShouldNotBeNull();            
         }
 
-        private void ServiceShouldNotExistOnList()
+        private void NodeSourceCannotBeCreated()
         {
+            _factory.MayCreateNodeSource(_deploymentIdentifier).ShouldBeFalse();        
             _factory.TryCreateNodeSource(_deploymentIdentifier);
         }
 

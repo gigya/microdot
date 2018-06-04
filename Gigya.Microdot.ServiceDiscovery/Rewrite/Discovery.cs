@@ -25,7 +25,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<DiscoveryConfig> GetConfig { get; }
 
         private Dictionary<string, INodeSourceFactory> NodeSourceFactories { get; }
-        private ConcurrentDictionary<DeploymentIdentifier, Task<INodeSource>> NodeSources { get; }
+        private ConcurrentDictionary<DeploymentIdentifier, Lazy<Task<INodeSource>>> NodeSources { get; }
         private ConcurrentDictionary<DeploymentIdentifier, DateTime> NodeSourceLastRequested { get; }
         /// <inheritdoc />
         public Discovery(Func<DiscoveryConfig> getConfig, 
@@ -43,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             CreateLocalNodeSource = createLocalNodeSource;
             CreateConfigNodeSource = createConfigNodeSource;
             NodeSourceFactories = nodeSourceFactories.ToDictionary(factory => factory.Type);
-            NodeSources = new ConcurrentDictionary<DeploymentIdentifier, Task<INodeSource>>();
+            NodeSources = new ConcurrentDictionary<DeploymentIdentifier, Lazy<Task<INodeSource>>>();
             NodeSourceLastRequested = new ConcurrentDictionary<DeploymentIdentifier, DateTime>();
             _cleanupTask = Task.Run(CleanupLoop);
         }
@@ -64,45 +64,56 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             NodeSourceLastRequested.AddOrUpdate(deploymentIdentifier, DateTime.UtcNow, (_,__) => DateTime.UtcNow);
 
             INodeSource nodeSource = null;            
-            if (NodeSources.TryGetValue(deploymentIdentifier, out Task<INodeSource> getNodeSourceTask))
+            if (NodeSources.TryGetValue(deploymentIdentifier, out Lazy<Task<INodeSource>> getNodeSourceTask))
             {
-                nodeSource = await getNodeSourceTask.ConfigureAwait(false);
+                nodeSource = await getNodeSourceTask.Value.ConfigureAwait(false);
                 // for an existing nodeSource, if it is was undeployed or is deprecated, we need to reload it in order to check if it was re-deployed                                                
-                if (IsDeprecated(nodeSource, deploymentIdentifier))
-                {                    
-                    Task<INodeSource> getNewNodeSourceTask;
-                    lock (_nodeSourcesLocker)
+                if (nodeSource==null || nodeSource.WasUndeployed || IsDeprecated(nodeSource, deploymentIdentifier))
+                {
+                    if (NodeSourceMayBeCreated(deploymentIdentifier))
                     {
-                        // if no other thread has updated the dictionary with a new nodeSource, then try create a new nodeSource                        
-                        if (NodeSources.TryGetValue(deploymentIdentifier, out getNewNodeSourceTask))
-                            if (getNewNodeSourceTask == getNodeSourceTask)
+                        Lazy<Task<INodeSource>> getNewNodeSourceTask;
+                        lock (_nodeSourcesLocker)
+                        {
+                            // if no other thread has updated the dictionary with a new nodeSource, then try create a new nodeSource                        
+                            if (NodeSources.TryGetValue(deploymentIdentifier, out getNewNodeSourceTask))
+                                if (getNewNodeSourceTask == getNodeSourceTask)
+                                {
+                                    getNewNodeSourceTask = NodeSources[deploymentIdentifier] =
+                                        new Lazy<Task<INodeSource>>(()=> TryCreateNodeSource(deploymentIdentifier));
+                                    nodeSource?.Dispose();
+                                }
+                        }
+                        nodeSource = await getNewNodeSourceTask.Value.ConfigureAwait(false);
+                    }
+                    else // NodeSource cannot be created. Don't try to re-create the nodeSource
+                    {
+                        if (nodeSource != null)
+                            lock (_nodeSourcesLocker)
                             {
-                                getNewNodeSourceTask = NodeSources[deploymentIdentifier] =
-                                            TryCreateNodeSource(deploymentIdentifier);
+                                if (NodeSources.TryGetValue(deploymentIdentifier, out var getNewNodeSourceTask))
+                                    if (getNewNodeSourceTask == getNodeSourceTask)
+                                        if (!nodeSource.WasUndeployed)
+                                            nodeSource.Dispose();                            
+                                NodeSources[deploymentIdentifier] = new Lazy<Task<INodeSource>>(()=> Task.FromResult<INodeSource>(null));
                             }
                     }
-                    nodeSource = await getNewNodeSourceTask.ConfigureAwait(false);
                 }
             }
             else 
             {
                 // nodeSource not exists on cache. Try create a new nodeSource
-                getNodeSourceTask = NodeSources.GetOrAdd(deploymentIdentifier, _ => TryCreateNodeSource(deploymentIdentifier));
-                nodeSource = await getNodeSourceTask.ConfigureAwait(false);
+                getNodeSourceTask = NodeSources.GetOrAdd(deploymentIdentifier, _ => new Lazy<Task<INodeSource>>(()=> TryCreateNodeSource(deploymentIdentifier)));
+                nodeSource = await getNodeSourceTask.Value.ConfigureAwait(false);
             }
-            if (WasUndeployed(nodeSource))
+            if (nodeSource==null || nodeSource.WasUndeployed)
                 return null;
             else
                 return nodeSource.GetNodes();
         }
 
-        private bool WasUndeployed(INodeSource nodeSource) => nodeSource?.WasUndeployed != false;
-
         private bool IsDeprecated(INodeSource nodeSource, DeploymentIdentifier deploymentIdentifier)
         {
-            if (WasUndeployed(nodeSource))
-                return true;
-
             var expectedSourceType = GetSourceType(deploymentIdentifier);
             return nodeSource.Type != expectedSourceType;
         }
@@ -133,6 +144,27 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return nodeSource;        
         }
 
+        private bool NodeSourceMayBeCreated(DeploymentIdentifier deploymentIdentifier)
+        {
+            var sourceType = GetSourceType(deploymentIdentifier);
+            switch (sourceType)
+            {
+                case "Config":
+                case "Local":
+                    return true;
+                case "ConsulQuery":
+                    if (!NodeSources.TryGetValue(deploymentIdentifier, out var nodeSource) 
+                        || !nodeSource.Value.IsCompleted 
+                        || nodeSource.Value.Result.Type != "ConsulQuery")
+                        return true;
+                    return !nodeSource.Value.Result.WasUndeployed;
+                default:
+                    if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
+                        return factory.MayCreateNodeSource(deploymentIdentifier);
+                    else throw new ConfigurationException($"Discovery Source '{sourceType}' is not supported.");                    
+            }
+        }
+
         private string GetSourceType(DeploymentIdentifier deploymentIdentifier)
         {
             var serviceConfig = GetConfig().Services[deploymentIdentifier.ServiceName];
@@ -150,7 +182,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     {
                         if (NodeSources.TryRemove(nodeSourceLastRequested.Key, out var getNodeSourceTask))
                         {
-                            if (getNodeSourceTask.IsCompleted && getNodeSourceTask.Result is IDisposable disposableNodeSource)
+                            if (getNodeSourceTask.Value.IsCompleted && getNodeSourceTask.Value.Result is IDisposable disposableNodeSource)
                                 disposableNodeSource.Dispose();
 
                             NodeSourceLastRequested.TryRemove(nodeSourceLastRequested.Key, out var _);                            

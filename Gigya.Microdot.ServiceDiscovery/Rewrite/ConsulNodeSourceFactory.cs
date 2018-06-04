@@ -64,6 +64,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return null;
         }
 
+        public bool MayCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
+        {
+            return ServiceExists(deploymentIdentifier);
+        }
+
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 

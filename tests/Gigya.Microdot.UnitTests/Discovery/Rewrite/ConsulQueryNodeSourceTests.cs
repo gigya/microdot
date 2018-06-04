@@ -190,10 +190,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _nodeSource.WasUndeployed.ShouldBeTrue();
 
-            // WasUndeployed stays true even after it was re-deployed. The source needs to be re-created to keep monitoring again
+            // WasUndeployed returns to false after it was re-deployed
             AddServiceNode();
             await WaitForUpdates();
-            _nodeSource.WasUndeployed.ShouldBeTrue();
+            _nodeSource.WasUndeployed.ShouldBeFalse();
 
         }
 
