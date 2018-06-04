@@ -267,7 +267,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private Task<ILoadBalancer> TryCreateLoadBalancer()
         {
-            return _discovery.TryCreateLoadBalancer(_deploymentIdentifier, null);
+            return _discovery.TryCreateLoadBalancer(_deploymentIdentifier, null, TrafficRouting.RandomByRequestID);
         }
 
         private async Task<Node[]> GetNodes()

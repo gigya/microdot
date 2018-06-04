@@ -17,7 +17,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private object _nodeSourcesLocker = new object();
         private Task _cleanupTask;
         private CancellationTokenSource _shutdownTokenSource = new CancellationTokenSource();
-        private Func<DeploymentIdentifier, ReachabilityCheck, ILoadBalancer> CreateLoadBalancer { get; }
+        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer> CreateLoadBalancer { get; }
         private IDateTime DateTime { get; }
         private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }        
         private Func<DeploymentIdentifier, ConfigNodeSource> CreateConfigNodeSource { get; }
@@ -29,7 +29,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ConcurrentDictionary<DeploymentIdentifier, DateTime> NodeSourceLastRequested { get; }
         /// <inheritdoc />
         public Discovery(Func<DiscoveryConfig> getConfig, 
-            Func<DeploymentIdentifier, ReachabilityCheck, ILoadBalancer> createLoadBalancer, 
+            Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer> createLoadBalancer, 
             IDateTime dateTime,
             INodeSourceFactory[] nodeSourceFactories, 
             Func<DeploymentIdentifier, LocalNodeSource> createLocalNodeSource, 
@@ -49,11 +49,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <inheritdoc />
-        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck)
+        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRouting trafficRouting)
         {
             var nodes = await GetNodes(deploymentIdentifier);
             if (nodes != null)
-                return CreateLoadBalancer(deploymentIdentifier, reachabilityCheck);
+                return CreateLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRouting);
             else
                 return null;
         }

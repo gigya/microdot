@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulServiceList = new HashSet<DeploymentIdentifier>();
 
             var discovery = Substitute.For<IDiscovery>();            
-            discovery.TryCreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>()).Returns(c => GetLoadBalancerMock(c.Arg<DeploymentIdentifier>()));
+            discovery.TryCreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRouting.RandomByRequestID).Returns(c => GetLoadBalancerMock(c.Arg<DeploymentIdentifier>()));
             kernel.Rebind<IDiscovery>().ToMethod(_ => discovery);
 
             CreateConsulMock(MasterService);

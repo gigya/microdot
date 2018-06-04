@@ -31,16 +31,16 @@ namespace Gigya.Microdot.Fakes.Discovery
 {
     public class AlwaysLocalHostDiscovery : IDiscovery
     {
-        private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> CreateLoadBalancer {get;}
+        private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRouting, ILoadBalancer> CreateLoadBalancer {get;}
 
-        public AlwaysLocalHostDiscovery(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, ILoadBalancer> createLoadBalancer)
+        public AlwaysLocalHostDiscovery(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRouting, ILoadBalancer> createLoadBalancer)
         {
             CreateLoadBalancer = createLoadBalancer;
         }
 
-        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck)
+        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRouting trafficRouting)
         {
-            return CreateLoadBalancer(deploymentIdentifier, new LocalNodeSource(), reachabilityCheck);
+            return CreateLoadBalancer(deploymentIdentifier, new LocalNodeSource(), reachabilityCheck, trafficRouting);
         }
 
         public async Task<Node[]> GetNodes(DeploymentIdentifier deploymentIdentifier)

@@ -36,7 +36,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
-{
+{    
     /// <summary>
     /// Provides a reachable node for each call to <see cref="GetNode"/>
     /// </summary>
@@ -49,6 +49,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private IDiscovery Discovery { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
+        private TrafficRouting TrafficRouting { get; }
         private Func<Node, DeploymentIdentifier, ReachabilityCheck, Action, NodeMonitoringState> CreateNodeMonitoringState { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
@@ -65,6 +66,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             IDiscovery discovery,
             DeploymentIdentifier deploymentIdentifier, 
             ReachabilityCheck reachabilityCheck,
+            TrafficRouting trafficRouting,
             Func<Node, DeploymentIdentifier, ReachabilityCheck, Action, NodeMonitoringState> createNodeMonitoringState,
             IHealthMonitor healthMonitor,
             IDateTime dateTime, 
@@ -73,6 +75,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DeploymentIdentifier = deploymentIdentifier;
             Discovery = discovery;
             ReachabilityCheck = reachabilityCheck;
+            TrafficRouting = trafficRouting;
             CreateNodeMonitoringState = createNodeMonitoringState;
             DateTime = dateTime;
             Log = log;            
@@ -100,11 +103,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                         {"deploymentIdentifier", DeploymentIdentifier.ToString()},                        
                         {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}                    
                     });
-            
-            var affinityToken = TracingContext.TryGetRequestID() ?? Guid.NewGuid().ToString("N");
-            var index = (uint)affinityToken.GetHashCode();
-            
+                        
+            var index = GetIndexByTrafficRouting();            
             return reachableNodes[index % reachableNodes.Length];
+        }
+
+        private int _roundRobinIndex = 0;
+        private uint GetIndexByTrafficRouting()
+        {
+            switch (TrafficRouting)
+            {
+                case TrafficRouting.RoundRobin:                    
+                    return (uint)Interlocked.Increment(ref _roundRobinIndex);
+                case TrafficRouting.RandomByRequestID:
+                    var affinityToken = TracingContext.TryGetRequestID() ?? Guid.NewGuid().ToString("N");
+                    return (uint)affinityToken.GetHashCode();
+                default:
+                    throw new ProgrammaticException($"The {nameof(TrafficRouting)} '{TrafficRouting}' is not supported by LoadBalancer.");
+            }
+
         }
 
         public async Task<bool> WasUndeployed()

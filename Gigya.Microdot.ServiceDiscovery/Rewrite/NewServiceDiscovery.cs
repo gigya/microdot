@@ -128,13 +128,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (_masterDeployment.Equals(_originatingEnvironmentDeployment))
                 return;
 
-            MasterEnvironmentLoadBalancer = await _discovery.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck).ConfigureAwait(false);
+            MasterEnvironmentLoadBalancer = await _discovery.TryCreateLoadBalancer(_masterDeployment, _reachabilityCheck, TrafficRouting.RandomByRequestID).ConfigureAwait(false);
         }
 
         private async Task ReloadOriginatingEnvironmentLoadBalancer()
         {            
             RemoveOriginatingPool();
-            OriginatingEnvironmentLoadBalancer = await _discovery.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck).ConfigureAwait(false);
+            OriginatingEnvironmentLoadBalancer = await _discovery.TryCreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck, TrafficRouting.RandomByRequestID).ConfigureAwait(false);
         }
 
         private void RemoveOriginatingPool()
