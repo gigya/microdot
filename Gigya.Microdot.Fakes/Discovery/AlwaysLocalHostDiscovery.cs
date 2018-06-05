@@ -29,11 +29,11 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {
-    public class AlwaysLocalHostDiscovery : IDiscovery
+    public class AlwaysLocalhostDiscovery : IDiscovery
     {
         private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRouting, ILoadBalancer> CreateLoadBalancer {get;}
 
-        public AlwaysLocalHostDiscovery(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRouting, ILoadBalancer> createLoadBalancer)
+        public AlwaysLocalhostDiscovery(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRouting, ILoadBalancer> createLoadBalancer)
         {
             CreateLoadBalancer = createLoadBalancer;
         }
