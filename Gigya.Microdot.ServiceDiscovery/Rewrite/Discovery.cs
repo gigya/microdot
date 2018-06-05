@@ -11,42 +11,48 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+
     /// <inheritdoc />
     internal sealed class Discovery : IDiscovery
     {
-        private object _nodeSourcesLocker = new object();
-        private Task _cleanupTask;
-        private CancellationTokenSource _shutdownTokenSource = new CancellationTokenSource();
+
         private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer> CreateLoadBalancer { get; }
         private IDateTime DateTime { get; }
+        private Func<DiscoveryConfig> GetConfig { get; }
         private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }        
         private Func<DeploymentIdentifier, ConfigNodeSource> CreateConfigNodeSource { get; }
-        private Func<DeploymentIdentifier, ConsulQueryNodeSource> CreateConsulQueryNodeSource { get; }
-        private Func<DiscoveryConfig> GetConfig { get; }
-
         private Dictionary<string, INodeSourceFactory> NodeSourceFactories { get; }
-        private ConcurrentDictionary<DeploymentIdentifier, Lazy<Task<INodeSource>>> NodeSources { get; }
-        private ConcurrentDictionary<DeploymentIdentifier, DateTime> NodeSourceLastRequested { get; }
+
+        class NodeSourceAndAccesstime
+        {
+            public string NodeSourceType;
+            public Task<INodeSource> NodeSourceTask;
+            public DateTime LastAccessTime;
+        }
+
+        private readonly ConcurrentDictionary<DeploymentIdentifier, Lazy<NodeSourceAndAccesstime>> _nodeSources
+            = new ConcurrentDictionary<DeploymentIdentifier, Lazy<NodeSourceAndAccesstime>>();
+
+
+
         /// <inheritdoc />
         public Discovery(Func<DiscoveryConfig> getConfig, 
             Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer> createLoadBalancer, 
             IDateTime dateTime,
             INodeSourceFactory[] nodeSourceFactories, 
             Func<DeploymentIdentifier, LocalNodeSource> createLocalNodeSource, 
-            Func<DeploymentIdentifier, ConfigNodeSource> createConfigNodeSource,
-            Func<DeploymentIdentifier, ConsulQueryNodeSource> createConsulQueryNodeSource)
+            Func<DeploymentIdentifier, ConfigNodeSource> createConfigNodeSource)
         {
-            CreateConsulQueryNodeSource = createConsulQueryNodeSource;
             GetConfig = getConfig;
             CreateLoadBalancer = createLoadBalancer;
             DateTime = dateTime;
             CreateLocalNodeSource = createLocalNodeSource;
             CreateConfigNodeSource = createConfigNodeSource;
             NodeSourceFactories = nodeSourceFactories.ToDictionary(factory => factory.Type);
-            NodeSources = new ConcurrentDictionary<DeploymentIdentifier, Lazy<Task<INodeSource>>>();
-            NodeSourceLastRequested = new ConcurrentDictionary<DeploymentIdentifier, DateTime>();
-            _cleanupTask = Task.Run(CleanupLoop);
+            Task.Run(() => CleanupLoop()); // Use default task scheduler
         }
+
+
 
         /// <inheritdoc />
         public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRouting trafficRouting)
@@ -58,85 +64,69 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return null;
         }
 
+
+
         /// <inheritdoc />
         public async Task<Node[]> GetNodes(DeploymentIdentifier deploymentIdentifier)
         {
-            NodeSourceLastRequested.AddOrUpdate(deploymentIdentifier, DateTime.UtcNow, (_,__) => DateTime.UtcNow);
-
-            INodeSource nodeSource = null;            
-            if (NodeSources.TryGetValue(deploymentIdentifier, out Lazy<Task<INodeSource>> getNodeSourceTask))
+            // We have a cached node source; query it
+            if (_nodeSources.TryGetValue(deploymentIdentifier, out Lazy<NodeSourceAndAccesstime> lazySource))
             {
-                nodeSource = await getNodeSourceTask.Value.ConfigureAwait(false);
-                // for an existing nodeSource, if it is was undeployed or is deprecated, we need to reload it in order to check if it was re-deployed                                                
-                if (nodeSource==null || nodeSource.WasUndeployed || IsDeprecated(nodeSource, deploymentIdentifier))
-                {
-                    if (NodeSourceMayBeCreated(deploymentIdentifier))
-                    {
-                        Lazy<Task<INodeSource>> getNewNodeSourceTask;
-                        lock (_nodeSourcesLocker)
-                        {
-                            // if no other thread has updated the dictionary with a new nodeSource, then try create a new nodeSource                        
-                            if (NodeSources.TryGetValue(deploymentIdentifier, out getNewNodeSourceTask))
-                                if (getNewNodeSourceTask == getNodeSourceTask)
-                                {
-                                    getNewNodeSourceTask = NodeSources[deploymentIdentifier] =
-                                        new Lazy<Task<INodeSource>>(()=> TryCreateNodeSource(deploymentIdentifier));
-                                    nodeSource?.Dispose();
-                                }
-                        }
-                        nodeSource = await getNewNodeSourceTask.Value.ConfigureAwait(false);
-                    }
-                    else // NodeSource cannot be created. Don't try to re-create the nodeSource
-                    {
-                        if (nodeSource != null)
-                            lock (_nodeSourcesLocker)
-                            {
-                                if (NodeSources.TryGetValue(deploymentIdentifier, out var getNewNodeSourceTask))
-                                    if (getNewNodeSourceTask == getNodeSourceTask)
-                                        if (!nodeSource.WasUndeployed)
-                                            nodeSource.Dispose();                            
-                                NodeSources[deploymentIdentifier] = new Lazy<Task<INodeSource>>(()=> Task.FromResult<INodeSource>(null));
-                            }
-                    }
-                }
-            }
-            else 
-            {
-                // nodeSource not exists on cache. Try create a new nodeSource
-                getNodeSourceTask = NodeSources.GetOrAdd(deploymentIdentifier, _ => new Lazy<Task<INodeSource>>(()=> TryCreateNodeSource(deploymentIdentifier)));
-                nodeSource = await getNodeSourceTask.Value.ConfigureAwait(false);
-            }
-            if (nodeSource==null || nodeSource.WasUndeployed)
-                return null;
-            else
+                lazySource.Value.LastAccessTime = DateTime.UtcNow;
+                var nodeSource = await lazySource.Value.NodeSourceTask.ConfigureAwait(false);
                 return nodeSource.GetNodes();
+            }
+
+            // No node source but the service is deployed; create one and query it
+            else if (NodeSourceMayBeCreated(deploymentIdentifier))
+            {
+                string sourceType = GetConfiguredSourceType(deploymentIdentifier);
+                lazySource = _nodeSources.GetOrAdd(deploymentIdentifier, _ => new Lazy<NodeSourceAndAccesstime>(() =>
+                    new NodeSourceAndAccesstime {
+                        NodeSourceType = sourceType,
+                        LastAccessTime = DateTime.UtcNow,
+                        NodeSourceTask = CreateNodeSource(sourceType, deploymentIdentifier)
+                    }));
+                var nodeSource = await lazySource.Value.NodeSourceTask.ConfigureAwait(false);
+                return nodeSource.GetNodes();
+            }
+
+            // No node source and the service is not deployed; return empty list of nodes
+            else return null;
         }
 
-        private bool IsDeprecated(INodeSource nodeSource, DeploymentIdentifier deploymentIdentifier)
+
+
+        private bool NodeSourceMayBeCreated(DeploymentIdentifier deploymentIdentifier)
         {
-            var expectedSourceType = GetSourceType(deploymentIdentifier);
-            return nodeSource.Type != expectedSourceType;
+            var sourceType = GetConfiguredSourceType(deploymentIdentifier);
+            switch (sourceType)
+            {
+                case "Config":
+                case "Local":
+                    return true;
+                default:
+                    if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
+                        return factory.IsServiceDeployed(deploymentIdentifier);
+                    else throw new ConfigurationException($"Discovery Source '{sourceType}' is not supported.");                    
+            }
         }
+
+
 
         /// <inheritdoc />
-        private async Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
+        private async Task<INodeSource> CreateNodeSource(string sourceType, DeploymentIdentifier deploymentIdentifier)
         {
             INodeSource nodeSource;
-            var sourceType = GetSourceType(deploymentIdentifier);
             switch (sourceType)
             {
                 case "Config":
                     nodeSource = CreateConfigNodeSource(deploymentIdentifier); break;
                 case "Local":
                     nodeSource = CreateLocalNodeSource(deploymentIdentifier); break;
-                case "ConsulQuery":
-                    var consulQueryNodeSource = CreateConsulQueryNodeSource(deploymentIdentifier);
-                    await consulQueryNodeSource.Init().ConfigureAwait(false);
-                    nodeSource = consulQueryNodeSource;      
-                    break;
                 default:
                     if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
-                        nodeSource = await factory.TryCreateNodeSource(deploymentIdentifier).ConfigureAwait(false);
+                        nodeSource = await factory.CreateNodeSource(deploymentIdentifier).ConfigureAwait(false);
                     else throw new ConfigurationException($"Discovery Source '{sourceType}' is not supported.");
                     break;
             }
@@ -144,60 +134,50 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return nodeSource;        
         }
 
-        private bool NodeSourceMayBeCreated(DeploymentIdentifier deploymentIdentifier)
-        {
-            var sourceType = GetSourceType(deploymentIdentifier);
-            switch (sourceType)
-            {
-                case "Config":
-                case "Local":
-                    return true;
-                case "ConsulQuery":
-                    if (!NodeSources.TryGetValue(deploymentIdentifier, out var nodeSource) 
-                        || !nodeSource.Value.IsCompleted 
-                        || nodeSource.Value.Result.Type != "ConsulQuery")
-                        return true;
-                    return !nodeSource.Value.Result.WasUndeployed;
-                default:
-                    if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
-                        return factory.MayCreateNodeSource(deploymentIdentifier);
-                    else throw new ConfigurationException($"Discovery Source '{sourceType}' is not supported.");                    
-            }
-        }
 
-        private string GetSourceType(DeploymentIdentifier deploymentIdentifier)
+
+        private string GetConfiguredSourceType(DeploymentIdentifier deploymentIdentifier)
         {
             var serviceConfig = GetConfig().Services[deploymentIdentifier.ServiceName];
             return serviceConfig.Source;
         }
 
-        private async Task CleanupLoop()
+
+
+        // Continuously scans the list of node sources and removes ones that haven't been used in a while or whose type
+        // differs from configuration.
+        private async void CleanupLoop()
         {
             while (!_shutdownTokenSource.Token.IsCancellationRequested)
             {
-                var lifetime = GetConfig().MonitoringLifetime;
-                foreach (var nodeSourceLastRequested in NodeSourceLastRequested.ToArray())
+                try
                 {
-                    if (nodeSourceLastRequested.Value + lifetime < DateTime.UtcNow)
-                    {
-                        if (NodeSources.TryRemove(nodeSourceLastRequested.Key, out var getNodeSourceTask))
-                        {
-                            if (getNodeSourceTask.Value.IsCompleted && getNodeSourceTask.Value.Result is IDisposable disposableNodeSource)
-                                disposableNodeSource.Dispose();
+                    var expiryTime = DateTime.UtcNow - GetConfig().MonitoringLifetime;
 
-                            NodeSourceLastRequested.TryRemove(nodeSourceLastRequested.Key, out var _);                            
+                    foreach (var nodeSource in _nodeSources)
+                        if (   nodeSource.Value.Value.LastAccessTime < expiryTime
+                            || nodeSource.Value.Value.NodeSourceType != GetConfiguredSourceType(nodeSource.Key))
+                        {
+    #pragma warning disable 4014
+                            nodeSource.Value.Value.NodeSourceTask.ContinueWith(t => t.Result.Dispose());
+    #pragma warning restore 4014
+                            _nodeSources.TryRemove(nodeSource.Key, out _);
                         }
-                    }
+
+                    await DateTime.Delay(TimeSpan.FromSeconds(1), _shutdownTokenSource.Token);
                 }
-                await DateTime.Delay(TimeSpan.FromSeconds(30), _shutdownTokenSource.Token);
+                catch {} // Shouldn't happen, but just in case. Cleanup musn't stop.
             }
         }
+
+
+
+        private readonly CancellationTokenSource _shutdownTokenSource = new CancellationTokenSource();
 
         public void Dispose()
         {
             _shutdownTokenSource.Cancel();
             _shutdownTokenSource.Dispose();
-            _cleanupTask.Dispose();
         }
     }
 }

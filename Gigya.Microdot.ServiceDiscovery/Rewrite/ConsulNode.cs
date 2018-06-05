@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.Rewrite;
+﻿using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+
     internal class ConsulNode: Node
     {
         public ConsulNode(string hostName, int? port = null, string version=null) : base(hostName, port)

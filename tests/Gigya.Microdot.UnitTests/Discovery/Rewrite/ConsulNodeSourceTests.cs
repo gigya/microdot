@@ -256,7 +256,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private async Task Init()
         {
             var factory = _testingKernel.Get<ConsulNodeSourceFactory>();
-            _nodeSource = await factory.TryCreateNodeSource(_deploymentIdentifier);            
+            _nodeSource = await factory.CreateNodeSource(_deploymentIdentifier);            
         }
 
 

@@ -1,6 +1,4 @@
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {

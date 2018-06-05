@@ -9,37 +9,37 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+
     internal class ConsulClient : IDisposable
     {
-        private int _disposed = 0;
-
-        private HttpClient HttpClient { get; set; }
-
         private ILog Log { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
-        private Uri ConsulAddress => HttpClient.BaseAddress;
-
-
+        private Uri ConsulAddress => _httpClient.BaseAddress;
         private string DataCenter { get; }
+        private HttpClient _httpClient;
+        private int _disposed = 0;
+
+
 
         public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            if (!string.IsNullOrEmpty(environmentVariableProvider.ConsulAddress))
-                HttpClient = new HttpClient { BaseAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}") };
-            else
-                HttpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
-
             DataCenter = environmentVariableProvider.DataCenter;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
+
+            if (environmentVariableProvider.ConsulAddress != null)
+                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}") };
+            else
+                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
         }
+
+
 
         public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
@@ -62,6 +62,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             return response;
         }
+
+
 
         public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
@@ -90,6 +92,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response;
         }
 
+
+
         public async Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
@@ -113,49 +117,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response;
         }
 
-        public async Task<ConsulResponse<Node[]>> GetNodesByQuery(DeploymentIdentifier deploymentIdentifier, CancellationToken cancellationToken)
-        {
-            string urlCommand = $"v1/query/{deploymentIdentifier}/execute?dc={DataCenter}";
-            var response = await Call<Node[]>(urlCommand, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                try
-                {
-                    var result = JsonConvert.DeserializeObject<ConsulQueryExecuteResponse>(response.ResponseContent);
-                    response.Result = result.Nodes.Select(ToNode).ToArray<Node>();
-                    response.IsUndeployed = false;
-                }
-                catch (Exception ex)
-                {
-                    response.UnparsableConsulResponse(ex);
-                }
-            }
-            else if (response.ResponseContent.EndsWith("Query not found", StringComparison.InvariantCultureIgnoreCase))
-            {
-                response.IsUndeployed = true;
-            }
-            else if (response.Error == null)
-                response.ConsulResponseError();
 
-            return response;
-        }
 
         private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken)
         {
             if (_disposed > 0)
                 throw new ObjectDisposedException(nameof(ConsulClient));
 
-            var timeout = GetConfig().HttpTimeout;
+            var timeout = GetConfig().HttpTaskTimeout;
 
-            if (HttpClient?.Timeout != timeout)
-                HttpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = timeout };
+            if (_httpClient.Timeout != timeout)
+                _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = timeout };
 
             string responseContent = null;
             var consulResult = new ConsulResponse<T> { ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath };
 
             try
             {
-                HttpResponseMessage response = await HttpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+                HttpResponseMessage response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
 
                 using (response)
                 {
@@ -181,10 +160,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     responseContent
                 }));
 
-
-
             return consulResult;
         }
+
+
 
         private ConsulNode ToNode(ServiceEntry serviceEntry)
         {
@@ -195,6 +174,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return new ConsulNode(serviceEntry.Node.Name, serviceEntry.Service?.Port, version);
         }
 
+
+
         private static ulong? TryGetConsulIndex(HttpResponseMessage response)
         {
             response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
@@ -204,21 +185,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
+
         /// <inheritdoc />
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Interlocked.Increment(ref _disposed) != 1) // is it the right place?
+            if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            if (disposing)
-                HttpClient?.Dispose();
+            _httpClient.Dispose();
         }
-
     }
 }

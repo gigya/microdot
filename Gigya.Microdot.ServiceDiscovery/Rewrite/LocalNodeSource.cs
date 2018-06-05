@@ -20,13 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading.Tasks;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    // ok
     /// <summary>
     /// Returns the current computer as the sole node. Never changes.
     /// </summary>
@@ -39,16 +37,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _nodes = new []{new Node(CurrentApplicationInfo.HostName)};
         }
 
-        public bool WasUndeployed => false;
-
         public Node[] GetNodes() => _nodes;
 
         public void Dispose()
         {
             // nothing to shutdown            
         }
-
-        public string Type => "Local";
     }
 
 }

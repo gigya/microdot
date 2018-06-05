@@ -20,7 +20,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     public class DiscoveryTests
     {
         private const string Consul = "Consul";
-        private const string ConsulQuery = "ConsulQuery";
         private const string SlowSource = "SlowSource";
         private const string Config = "Config";
         private const string Local = "Local";
@@ -53,7 +52,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             {
                 RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<LocalNodeSource>(k);
                 RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<ConfigNodeSource>(k);
-                RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<ConsulQueryNodeSource>(k);
 
                 k.Rebind<INodeSourceFactory>().ToMethod(c => _consulNodeSourceFactory);
                 k.Bind<INodeSourceFactory>().ToMethod(c => _slowNodeSourceFactory);
@@ -104,8 +102,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _consulNodeSourceFactory.Type.Returns(Consul);
-            _consulNodeSourceFactory.MayCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(_=>!_consulSourceWasUndeployed);
-            _consulNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>())
+            _consulNodeSourceFactory.IsServiceDeployed(Arg.Any<DeploymentIdentifier>()).Returns(_=>!_consulSourceWasUndeployed);
+            _consulNodeSourceFactory.CreateNodeSource(Arg.Any<DeploymentIdentifier>())
                 .Returns(_ =>
                 {
                     _createdNodeSources.Add(typeof(INodeSource));
@@ -134,8 +132,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _slowNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _slowNodeSourceFactory.Type.Returns(SlowSource);
-            _slowNodeSourceFactory.MayCreateNodeSource(Arg.Any<DeploymentIdentifier>()).Returns(true);
-            _slowNodeSourceFactory.TryCreateNodeSource(Arg.Any<DeploymentIdentifier>())
+            _slowNodeSourceFactory.IsServiceDeployed(Arg.Any<DeploymentIdentifier>()).Returns(true);
+            _slowNodeSourceFactory.CreateNodeSource(Arg.Any<DeploymentIdentifier>())
                 .Returns(async _ =>
                 {
                     _createdNodeSources.Add(typeof(INodeSource));
@@ -158,14 +156,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             ConfigureServiceSource(Config);
             await TryCreateLoadBalancer();
             _createdNodeSources.Single().ShouldBe(typeof(ConfigNodeSource));
-        }
-
-        [Test]
-        public async Task TryCreateLoadBalancer_GetNodesFromConsulQueryNodeSource()
-        {
-            ConfigureServiceSource(ConsulQuery);
-            await TryCreateLoadBalancer();
-            _createdNodeSources.Single().ShouldBe(typeof(ConsulQueryNodeSource));
         }
 
         [Test]

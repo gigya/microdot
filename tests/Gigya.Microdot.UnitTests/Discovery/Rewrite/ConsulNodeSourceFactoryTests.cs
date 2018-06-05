@@ -79,8 +79,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Start();
-            _factory.MayCreateNodeSource(_deploymentIdentifier).ShouldBeFalse();
-            var nodeSource = await _factory.TryCreateNodeSource(_deploymentIdentifier);
+            _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeFalse();
+            var nodeSource = await _factory.CreateNodeSource(_deploymentIdentifier);
             nodeSource.ShouldBeNull();
         }
 
@@ -120,7 +120,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Task.Delay(800);
             Should.Throw<EnvironmentException>(async () =>
                                                 {
-                                                    var nodeSource = await _factory.TryCreateNodeSource(_deploymentIdentifier);
+                                                    var nodeSource = await _factory.CreateNodeSource(_deploymentIdentifier);
                                                     nodeSource.GetNodes();
                                                 });
             GetHealthStatus().IsHealthy.ShouldBeFalse();
@@ -182,7 +182,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _factory = _testingKernel.Get<ConsulNodeSourceFactory>();
             // try get some NodeSource in order to start init
-            try { await _factory.TryCreateNodeSource(null);} catch { }
+            try { await _factory.CreateNodeSource(null);} catch { }
         }
 
         private void SetError()
@@ -202,14 +202,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private void ShouldCreateNodeSource(DeploymentIdentifier expectedDeploymentIdentifier=null)
         {
-            _factory.MayCreateNodeSource(_deploymentIdentifier).ShouldBeTrue();
-            _factory.TryCreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).ShouldNotBeNull();            
+            _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeTrue();
+            _factory.CreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).ShouldNotBeNull();            
         }
 
         private void NodeSourceCannotBeCreated()
         {
-            _factory.MayCreateNodeSource(_deploymentIdentifier).ShouldBeFalse();        
-            _factory.TryCreateNodeSource(_deploymentIdentifier);
+            _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeFalse();        
+            _factory.CreateNodeSource(_deploymentIdentifier);
         }
 
         private HealthCheckResult GetHealthStatus()

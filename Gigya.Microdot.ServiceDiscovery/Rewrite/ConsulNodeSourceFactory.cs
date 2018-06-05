@@ -1,61 +1,65 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+
     /// <summary>
     /// Monitors Consul using KeyValue api, to get a list of all available <see cref="Services"/>.
-    /// Creates instances of ConsulNodeSourceFactory using the list of known services.
+    /// Creates instances of <see cref="ConsulNodeSource"/> using the list of known services.
     /// </summary>
-    internal sealed class ConsulNodeSourceFactory : INodeSourceFactory, IDisposable
+    internal sealed class ConsulNodeSourceFactory : INodeSourceFactory
     {
-        private Func<DeploymentIdentifier, ConsulNodeSource> CreateConsulNodeSource { get; }
-        private CancellationTokenSource ShutdownToken { get; }
-
-        private int _disposed;
-        private readonly object  _initLock = new object();        
-        private Task<ulong> _initTask;
-
         ILog Log { get; }
         private ConsulClient ConsulClient { get; }
+        private Func<DeploymentIdentifier, ConsulNodeSource> CreateConsulNodeSource { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
+
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
         private readonly ComponentHealthMonitor _serviceListHealthMonitor;
-        private Task LoopingTask { get; set; }
+
+        private Task<ulong> _initTask;
+        private Task _loopingTask;
+        private readonly CancellationTokenSource _shutdownToken = new CancellationTokenSource();
+        private int _disposed;
+
+
 
         /// <inheritdoc />
-        public ConsulNodeSourceFactory(ILog log, ConsulClient consulClient, Func<DeploymentIdentifier, ConsulNodeSource> createConsulNodeSource, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
+        public ConsulNodeSourceFactory(ILog log, ConsulClient consulClient, Func<DeploymentIdentifier,
+            ConsulNodeSource> createConsulNodeSource, IDateTime dateTime, Func<ConsulConfig> getConfig, IHealthMonitor healthMonitor)
         {
             Log = log;
             ConsulClient = consulClient;
             CreateConsulNodeSource = createConsulNodeSource;
             DateTime = dateTime;
             GetConfig = getConfig;            
-            ShutdownToken = new CancellationTokenSource();
 
-            _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus);
+            _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus); // nest under "Consul" along with other consul-related healths.
+            _initTask = GetAllServices(0);
+            _loopingTask = Task.Run(GetAllLoop);
         }
+
+
 
         public string Type => "Consul";
 
-        public async Task<INodeSource> TryCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
-        {
-            await Init().ConfigureAwait(false);
 
-            if (ServiceExists(deploymentIdentifier))
+
+        public async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier)
+        {
+            await _initTask.ConfigureAwait(false);
+
+            if (IsServiceDeployed(deploymentIdentifier))
             {
                 var consulNodeSource = CreateConsulNodeSource(deploymentIdentifier);
                 await consulNodeSource.Init().ConfigureAwait(false);
@@ -64,16 +68,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return null;
         }
 
-        public bool MayCreateNodeSource(DeploymentIdentifier deploymentIdentifier)
-        {
-            return ServiceExists(deploymentIdentifier);
-        }
-
         private Exception Error { get; set; }
         private DateTime ErrorTime { get; set; }
 
 
-        private bool ServiceExists(DeploymentIdentifier deploymentIdentifier)
+        public bool IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
         {
             if (Services.Count == 0 && Error != null)
                 throw Error;
@@ -89,40 +88,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 var modifyIndex = await _initTask.ConfigureAwait(false);
-                while (!ShutdownToken.IsCancellationRequested)
+                while (!_shutdownToken.IsCancellationRequested)
                 {
                     // If we got an error, we don't want to spam Consul so we wait a bit
                     if (Error != null)
-                        await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, ShutdownToken.Token).ConfigureAwait(false);
+                        await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, _shutdownToken.Token).ConfigureAwait(false);
                     modifyIndex = await GetAllServices(modifyIndex).ConfigureAwait(false);
                 }
             }
-            catch (TaskCanceledException) when (ShutdownToken.IsCancellationRequested)
+            catch (TaskCanceledException) when (_shutdownToken.IsCancellationRequested)
             {
                 // Ignore exception during shutdown.
             }
         }
 
-        /// <inheritdoc />
-        private Task Init()
-        {
-            if (_initTask == null)
-                lock (_initLock)
-                {
-                    if (_initTask == null)
-                    {
-                        _initTask = GetAllServices(0);
-                        LoopingTask = Task.Run(GetAllLoop);
-                    }
-                }
-  
-            return _initTask;            
-        }
-
 
         private async Task<ulong> GetAllServices(ulong modifyIndex)
         {
-            var consulResult = await ConsulClient.GetAllServices(modifyIndex, ShutdownToken.Token).ConfigureAwait(false);
+            var consulResult = await ConsulClient.GetAllServices(modifyIndex, _shutdownToken.Token).ConfigureAwait(false);
 
             if (consulResult.Error != null)
             {
@@ -191,13 +174,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            ShutdownToken.Cancel();
+            _shutdownToken.Cancel();
             try
             {
-                LoopingTask?.Wait(TimeSpan.FromSeconds(3));
+                _loopingTask.Wait(TimeSpan.FromSeconds(3));
             }
             catch (TaskCanceledException) {}
-            ShutdownToken.Dispose();
+            _shutdownToken.Dispose();
             _serviceListHealthMonitor.Dispose();
         }
         

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -16,11 +17,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private DiscoveryConfig _lastConfig;
         private readonly string _serviceName;
         private Node[] _nodes;
+        private readonly object _updateLocker = new object();
 
         private Func<DiscoveryConfig> GetConfig { get; }
         private ILog Log { get; }
 
-        private readonly object _updateLocker = new object();
 
         /// <inheritdoc />
         public ConfigNodeSource(DeploymentIdentifier deployment, Func<DiscoveryConfig> getConfig, ILog log)
@@ -30,40 +31,62 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Log = log;
         }
 
-        /// <inheritdoc />
-        public bool WasUndeployed => false;
 
         /// <inheritdoc />
         public Node[] GetNodes()
         {
-            DiscoveryConfig config = GetConfig();
+            ReloadNodesIfNeeded();
+
+            var nodes = _nodes;
+            if (nodes.Length == 0)
+                throw new ServiceUnreachableException(
+                    "No nodes were specified in the configuration for the requested service. Please make sure you've specified a list of " + 
+                    "hosts for the requested service in the configuration. If you're a developer and want to access a service on your local " +
+                    "machine, change service configuration to Discovery.[requestedService].Mode=\"Local\". See tags for the name of the " +
+                    "service requested, and for the configuration path where the list of nodes are expected to be specified.",
+                    unencrypted: new Tags
+                    {
+                        { "requestedService", _serviceName },
+                        { "missingConfigPath", $"Discovery.{_serviceName}.Hosts" },
+                    });
+
+            return nodes;
+        }
+
+
+        private void ReloadNodesIfNeeded()
+        {
+            var config = GetConfig();
 
             if (_lastConfig != config)
             {
                 lock (_updateLocker)
                 {
-                    ServiceDiscoveryConfig serviceConfig = config.Services[_serviceName];
-                    string hosts = serviceConfig.Hosts ?? string.Empty;
-                    _nodes = hosts.Replace("\r", "").Replace("\n", "").Split(',').Where(e => !string.IsNullOrWhiteSpace(e)).Select(_ => _.Trim())
-                        .Select(h => CreateNode(h, serviceConfig))
-                        .ToArray();
-
-                    Log.Debug(_ => _("Loaded nodes from config. See tags for details.", unencryptedTags: new
+                    if (_lastConfig != config)
                     {
-                        configPath = $"Discovery.{_serviceName}",
-                        serviceName = _serviceName,
-                        nodes = string.Join(",", _nodes.Select(n => n.ToString()))
-                    }));
-                    _lastConfig = config;
+                        if (!config.Services.TryGetValue(_serviceName, out var serviceConfig))
+                            serviceConfig = new ServiceDiscoveryConfig();
+
+                        var newNodes = (serviceConfig.Hosts ?? string.Empty).Replace("\r", "").Replace("\n", "").Split(',')
+                            .Select(_ => _.Trim()).Where(_ => !string.IsNullOrEmpty(_)).OrderBy(k => k).Select(_ => CreateNode(_, serviceConfig)).ToArray();
+
+                        if (_nodes == null || !_nodes.SequenceEqual(newNodes))
+                        {
+                            _nodes = newNodes;
+                            Log.Debug(_ => _("Loaded nodes from config.", unencryptedTags: new
+                            {
+                                configPath  = $"Discovery.{_serviceName}.Hosts",
+                                serviceName = _serviceName,
+                                nodes       = string.Join(",", _nodes.Select(n => n.ToString()))
+                            }));
+                        }
+
+                        _lastConfig = config;
+                    }
                 }
             }
-
-            var nodes = _nodes;
-            if (nodes.Length == 0)
-                throw Ex.ZeroNodesInConfig(_serviceName);
-
-            return nodes;
         }
+
 
         private Node CreateNode(string host, ServiceDiscoveryConfig config)
         {
@@ -76,11 +99,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else throw Ex.IncorrectHostFormatInConfig(host, _serviceName);
         }
 
+
+
         public void Dispose()
         {
             // nothing to shutdown            
         }
-
-        public string Type => "Config";
     }
 }
