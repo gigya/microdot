@@ -77,7 +77,9 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _isDeploymentDefined = true;
 
         private bool _disposed;
-        private int _initialized = 0;        
+        private int _initialized = 0;
+        private readonly IDisposable _healthCheck;
+        private Func<HealthCheckResult> _getHealthStatus;
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
             ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
@@ -101,6 +103,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             _resultChanged = new BufferBlock<EndPointsResult>();
             _initializedVersion = new TaskCompletionSource<bool>();
             ShutdownToken = new CancellationTokenSource();
+            _healthCheck = _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, ()=>_getHealthStatus());
         }
 
         public Task Init()
@@ -443,7 +446,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Content = responseContent
             });
 
-            _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () => HealthCheckResult.Unhealthy($"Consul error: " + ex.Message));
+            _getHealthStatus =  ()=>HealthCheckResult.Unhealthy($"Consul error: " + ex.Message);
 
             if (Result != null && Result.Error == null)
                 return;
@@ -477,8 +480,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     IsQueryDefined = false
                 };
 
-                _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin,
-                    () => HealthCheckResult.Healthy($"Service doesn't exist on Consul"));
+                _getHealthStatus = ()=>HealthCheckResult.Healthy($"Service doesn't exist on Consul");
             }
         }
 
@@ -513,13 +515,13 @@ namespace Gigya.Microdot.ServiceDiscovery
                 }
 
 
-                _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () =>
+                _getHealthStatus = () =>
                     {
                         if (_serviceName == _serviceNameOrigin)
                             return HealthCheckResult.Healthy(healthMessage);
                         else
                             return HealthCheckResult.Healthy($"Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
-                    });
+                    };
 
                 Result = new EndPointsResult
                 {
@@ -552,7 +554,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             _loadEndpointsByHealthCancellationTokenSource?.Cancel();
             _waitForConfigChange.TrySetCanceled();
             _initializedVersion.TrySetCanceled();
-            _aggregatedHealthStatus.RemoveCheck(_serviceNameOrigin);
+            _healthCheck.Dispose();            
         }
 
 

@@ -64,7 +64,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
 
-        private Func<HealthCheckResult> _checkHealth;
+        private Func<HealthCheckResult> _getHealthStatus;
+        private readonly IDisposable _healthCheck;
 
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
@@ -89,8 +90,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
 
             AggregatingHealthStatus = getAggregatingHealthStatus("Discovery");
-            AggregatingHealthStatus.RegisterCheck(_serviceName, _checkHealth);
-            _checkHealth = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
+            _healthCheck = AggregatingHealthStatus.RegisterCheck(_serviceName, _getHealthStatus);
+            _getHealthStatus = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
         }
 
         public async Task<ILoadBalancer> GetLoadBalancer()
@@ -165,7 +166,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                 if (OriginatingEnvironmentLoadBalancer!=null && await OriginatingEnvironmentLoadBalancer.WasUndeployed().ConfigureAwait(false) == false)
                 {
-                    _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
+                    _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
                     return OriginatingEnvironmentLoadBalancer;
                 }
 
@@ -173,7 +174,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 {
                     if (GetConfig().EnvironmentFallbackEnabled)
                     {
-                        _checkHealth = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
+                        _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
                         return MasterEnvironmentLoadBalancer;
                     }
                     else
@@ -181,9 +182,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }
 
                 if (serviceExistsOnMasterEnvironment)
-                    _checkHealth = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
+                    _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
                 else
-                    _checkHealth = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
+                    _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
 
                 throw new ServiceUnreachableException("Service is not deployed");
             }
@@ -208,7 +209,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             RemoveMasterPool();
             RemoveOriginatingPool();
             _configBlockLink?.Dispose();
-            AggregatingHealthStatus.RemoveCheck(_serviceName);
+            _healthCheck.Dispose();
         }
     }
 

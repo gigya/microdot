@@ -31,6 +31,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private (Node[] Nodes, EnvironmentException LastError) _nodesOrError = (null, null);
 
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy();
+        private IDisposable _healthCheck;
 
         public ConsulNodeSource(
             DeploymentIdentifier deploymentIdentifier,
@@ -46,7 +47,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             GetConfig = getConfig;
             AggregatingHealthStatus = getAggregatingHealthStatus("Consul"); 
-            AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier.ToString(), () => _healthStatus);
+            _healthCheck = AggregatingHealthStatus.RegisterCheck(DeploymentIdentifier.ToString(), () => _healthStatus);
             Task.Run(UpdateLoop); // So that the loop doesn't run on a Grain task scheduler
         }
 
@@ -209,7 +210,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Interlocked.Increment(ref _stopped) != 1)
                 return;
 
-            AggregatingHealthStatus.RemoveCheck(DeploymentIdentifier.ToString()); // TODO: handle case where another instance might have registered with that ID; don't unregister it; use a handle?
+            _healthCheck.Dispose();
 
             _shutdownToken.Cancel();
             _shutdownToken.Dispose();
