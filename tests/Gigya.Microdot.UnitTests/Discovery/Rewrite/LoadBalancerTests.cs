@@ -88,13 +88,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _reachabilityCheck = (n,c) => throw new EnvironmentException("node is unreachable");                       
         }
 
-        private void CreateLoadBalancer(TrafficRouting trafficRouting=TrafficRouting.RandomByRequestID)
+        private void CreateLoadBalancer(TrafficRoutingStrategy trafficRoutingStrategy=TrafficRoutingStrategy.RandomByRequestID)
         {
-            var createLoadBalancer = _kernel.Get<Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer>>();
+            var createLoadBalancer = _kernel.Get<Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer>>();
             _loadBalancer = createLoadBalancer(
                 new DeploymentIdentifier(ServiceName, Env),
                 (n, c) => _reachabilityCheck(n, c),
-                trafficRouting);
+                trafficRoutingStrategy);
         }
 
         [TearDown]
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Repeat(Repeat)]
         public async Task GetNode_RoutingTrafficRoundRobin_GetDiffenent3NodesAfterExactly3Times()
         {
-            CreateLoadBalancer(TrafficRouting.RoundRobin);
+            CreateLoadBalancer(TrafficRoutingStrategy.RoundRobin);
             SetupDefaultNodes();
             var allEndpoints = await GetNodes(times:3);
             allEndpoints.ShouldContain(Node1);

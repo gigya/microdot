@@ -94,7 +94,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     Log.Info(_ => _("A remote host is still unreachable, monitoring continues.", exception: ex, unencryptedTags: NodeUnencryptedTags()));
                 }
 
-                await Task.Delay(NextDelay, CancellationSource.Token).ConfigureAwait(false);
+                await Task.Delay(NextDelay, cancellationToken).ConfigureAwait(false);
 
                 NextDelay = TimeSpan.FromMilliseconds(NextDelay.TotalMilliseconds * DelayMultiplier);
 

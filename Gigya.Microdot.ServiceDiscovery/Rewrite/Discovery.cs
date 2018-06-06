@@ -18,7 +18,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     internal sealed class Discovery : IDiscovery
     {
 
-        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer> CreateLoadBalancer { get; }
+        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> CreateLoadBalancer { get; }
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetConfig { get; }
         private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }        
@@ -39,7 +39,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         /// <inheritdoc />
         public Discovery(Func<DiscoveryConfig> getConfig, 
-            Func<DeploymentIdentifier, ReachabilityCheck, TrafficRouting, ILoadBalancer> createLoadBalancer, 
+            Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> createLoadBalancer, 
             IDateTime dateTime,
             INodeSourceFactory[] nodeSourceFactories, 
             Func<DeploymentIdentifier, LocalNodeSource> createLocalNodeSource, 
@@ -57,11 +57,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
         /// <inheritdoc />
-        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRouting trafficRouting)
+        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
         {
             var nodes = await GetNodes(deploymentIdentifier);
             if (nodes != null)
-                return CreateLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRouting);
+                return CreateLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRoutingStrategy);
             else
                 return null;
         }

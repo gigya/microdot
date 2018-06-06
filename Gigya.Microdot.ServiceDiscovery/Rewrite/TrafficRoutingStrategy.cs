@@ -3,7 +3,7 @@
     /// <summary>
     /// Defines the strategy to use on LoadBalancer, for routing the traffic between the different nodes
     /// </summary>
-    public enum TrafficRouting
+    public enum TrafficRoutingStrategy
     {
         /// <summary>
         /// The traffic will be routed to a different node for each call, so that the traffic will spread equally between all nodes
