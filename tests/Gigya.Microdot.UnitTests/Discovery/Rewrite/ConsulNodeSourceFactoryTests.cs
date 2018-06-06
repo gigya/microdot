@@ -113,6 +113,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
+        public async Task ServiceWithNoNodes()
+        {
+            SetServiceVersion();
+            await Start();
+            ShouldCreateNodeSource();
+        }
+
+        [Test]
         public async Task ErrorOnStart()
         {
             await Start();
@@ -200,16 +208,21 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator.RemoveService(_deploymentIdentifier.ToString());
         }
 
+        private void SetServiceVersion(string version=Version)
+        {
+            _consulSimulator.SetServiceVersion(_deploymentIdentifier.ToString(), version);
+        }
+
         private void ShouldCreateNodeSource(DeploymentIdentifier expectedDeploymentIdentifier=null)
         {
             _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeTrue();
-            _factory.CreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).ShouldNotBeNull();            
+            _factory.CreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).Result.ShouldNotBeNull();            
         }
 
         private void NodeSourceCannotBeCreated()
         {
             _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeFalse();        
-            _factory.CreateNodeSource(_deploymentIdentifier);
+            _factory.CreateNodeSource(_deploymentIdentifier).Result.ShouldBeNull();
         }
 
         private HealthCheckResult GetHealthStatus()

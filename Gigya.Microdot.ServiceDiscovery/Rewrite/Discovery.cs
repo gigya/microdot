@@ -78,7 +78,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
 
             // No node source but the service is deployed; create one and query it
-            else if (NodeSourceMayBeCreated(deploymentIdentifier))
+            else if (IsServiceDeployed(deploymentIdentifier))
             {
                 string sourceType = GetConfiguredSourceType(deploymentIdentifier);
                 lazySource = _nodeSources.GetOrAdd(deploymentIdentifier, _ => new Lazy<NodeSourceAndAccesstime>(() =>
@@ -91,13 +91,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return nodeSource.GetNodes();
             }
 
-            // No node source and the service is not deployed; return empty list of nodes
+            // No node source and the service is not deployed; return null
             else return null;
         }
 
 
 
-        private bool NodeSourceMayBeCreated(DeploymentIdentifier deploymentIdentifier)
+        private bool IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
         {
             var sourceType = GetConfiguredSourceType(deploymentIdentifier);
             switch (sourceType)
@@ -156,7 +156,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
                     foreach (var nodeSource in _nodeSources)
                         if (   nodeSource.Value.Value.LastAccessTime < expiryTime
-                            || nodeSource.Value.Value.NodeSourceType != GetConfiguredSourceType(nodeSource.Key))
+                            || nodeSource.Value.Value.NodeSourceType != GetConfiguredSourceType(nodeSource.Key)
+                            || !IsServiceDeployed(nodeSource.Key))
                         {
     #pragma warning disable 4014
                             nodeSource.Value.Value.NodeSourceTask.ContinueWith(t => t.Result.Dispose());

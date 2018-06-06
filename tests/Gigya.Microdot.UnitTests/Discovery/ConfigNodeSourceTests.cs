@@ -120,12 +120,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         }
 
-        [Test]
-        public void IsNeverUndeployed()
-        {
-            _configNodeSource.WasUndeployed.ShouldBeFalse();
-        }
-
         private Node[] GetNodes()
         {
             return _configNodeSource.GetNodes();

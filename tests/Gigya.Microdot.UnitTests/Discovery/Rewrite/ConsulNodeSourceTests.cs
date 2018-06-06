@@ -41,6 +41,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private ConsulConfig _consulConfig;
 
         private string _serviceName;
+        private ConsulNodeSourceFactory _consulNodeSourceFactory;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -66,12 +67,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 _environmentVariableProvider.DataCenter.Returns(DataCenter);
                 k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
-                k.Rebind<ConsulNodeSourceFactory>().ToSelf().InSingletonScope();
+                k.Rebind<ConsulNodeSourceFactory>().ToSelf().InTransientScope();
             });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
             _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod");
             _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};
+            _consulNodeSourceFactory = _testingKernel.Get<ConsulNodeSourceFactory>();
         }
 
         [TearDown]
@@ -92,7 +94,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             await Init();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
             GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
@@ -103,30 +105,17 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _nodeSource.ShouldBeNull();
         }
 
-
-        [Test]        
-        public async Task ServiceAdded()
-        {
-            await Init();
-            SetServiceVersion(Version);
-            AddServiceNode();
-            await WaitForUpdates();            
-
-            AssertOneDefaultNode();
-            GetHealthStatus().IsHealthy.ShouldBeTrue();
-        }
-
         [Test]
         public async Task NodeAdded()
         {
             SetServiceVersion(Version);
-            AddServiceNode();
+            AddServiceNode();            
             await Init();
             
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();            
 
             AddServiceNode(Host2);
-            await WaitForUpdates();
+            await WaitForUpdates();            
             var nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(2);
             nodes[1].Hostname.ShouldBe(Host2);
@@ -146,7 +135,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             RemoveServiceEndPoint("nodeToRemove");
             await WaitForUpdates();
 
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
         }
 
 
@@ -156,12 +145,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddServiceNode();
             AddServiceNode(Host2, Port2, Version2);
             await Init();
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
 
             SetServiceVersion(Version2);
             await WaitForUpdates();
-
-            await ReloadNodeMonitorIfNeeded();
+            
             var nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe(Host2);
@@ -178,7 +166,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetConsulIsDown();
             await WaitForUpdates();
             
-            AssertOneDefaultNode();
+            await AssertOneDefaultNode();
 
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
@@ -199,16 +187,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetServiceVersion("1.0.0");
 
             await Init();
-
-            await ReloadNodeMonitorIfNeeded();
+            
             var nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe("oldVersionHost");
 
             SetServiceVersion("2.0.0");
             await WaitForUpdates();
-
-            await ReloadNodeMonitorIfNeeded();
+            
             nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe("newVersionHost");
@@ -220,7 +206,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetServiceVersion("1.0.0");
             await Init();
-            _nodeSource.WasUndeployed.ShouldBeFalse();
             AssertExceptionIsThrown();
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
@@ -230,53 +215,30 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             AddServiceNode();
             await Init();
-            _nodeSource.WasUndeployed.ShouldBeFalse();
 
             RemoveService();
             await WaitForUpdates();
-            _nodeSource.WasUndeployed.ShouldBeTrue();
             var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;
 
             AddServiceNode();
             await WaitForUpdates();
-            _nodeSource.WasUndeployed.ShouldBeTrue("WasUndeployed should still be true because monitoring was already stopped");
             _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
             GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
-        [Test]
-        public async Task ServiceDeployedInLowerCase()
-        {
-            AddServiceNode(serviceName: _deploymentIdentifier.ToString().ToLower());
-            await Init();
-
-            AssertOneDefaultNode();
-        }
-
         private async Task Init()
         {
-            var factory = _testingKernel.Get<ConsulNodeSourceFactory>();
-            _nodeSource = await factory.CreateNodeSource(_deploymentIdentifier);            
+            await WaitForUpdates();
+            _nodeSource = await _consulNodeSourceFactory.CreateNodeSource(_deploymentIdentifier);            
         }
 
 
         private async Task AssertOneDefaultNode()
         {
-            await ReloadNodeMonitorIfNeeded();
-            _nodeSource.WasUndeployed.ShouldBeFalse();
             var nodes = _nodeSource.GetNodes();
             nodes.Length.ShouldBe(1);
             nodes[0].Hostname.ShouldBe(Host1);
             nodes[0].Port.ShouldBe(Port1);
-        }
-
-        private async Task ReloadNodeMonitorIfNeeded()
-        {
-            if (_nodeSource?.WasUndeployed!=false)
-            {
-                _nodeSource?.Dispose();
-                await Init();
-            }
         }
 
         private void AssertExceptionIsThrown()

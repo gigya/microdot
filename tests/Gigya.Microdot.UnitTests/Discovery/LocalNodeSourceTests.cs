@@ -45,11 +45,5 @@ namespace Gigya.Microdot.UnitTests.Discovery
             node.Port.ShouldBeNull();
         }
 
-        [Test]
-        public void IsNeverUndeployed()
-        {
-            _localNodeSource.WasUndeployed.ShouldBeFalse();
-        }
-
     }
 }

@@ -102,7 +102,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _consulNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _consulNodeSourceFactory.Type.Returns(Consul);
-            _consulNodeSourceFactory.IsServiceDeployed(Arg.Any<DeploymentIdentifier>()).Returns(_=>!_consulSourceWasUndeployed);
+            _consulNodeSourceFactory.IsServiceDeployed(Arg.Any<DeploymentIdentifier>()).Returns(c=> !_consulSourceWasUndeployed);
             _consulNodeSourceFactory.CreateNodeSource(Arg.Any<DeploymentIdentifier>())
                 .Returns(_ =>
                 {
@@ -114,9 +114,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private INodeSource CreateNewConsulSource()
         {
             var consulSource = Substitute.For<INodeSource, IDisposable>();
-            consulSource.WasUndeployed.Returns(_=>_consulSourceWasUndeployed);
-            consulSource.GetNodes().Returns(new[] {_consulNode});
-            consulSource.Type.Returns(Consul);
+            consulSource.GetNodes().Returns(new[] {_consulNode});            
             consulSource.When(n => ((IDisposable) n).Dispose()).Do(_ => _consulSourceDisposedCounter++);
             return consulSource;
         }
@@ -126,9 +124,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _waitForSlowSourceCreation = new TaskCompletionSource<bool>();
 
             _slowNodeSource = Substitute.For<INodeSource>();
-            _slowNodeSource.WasUndeployed.Returns(false);
             _slowNodeSource.GetNodes().Returns(new Node[0] );
-            _slowNodeSource.Type.Returns(SlowSource);
 
             _slowNodeSourceFactory = Substitute.For<INodeSourceFactory>();
             _slowNodeSourceFactory.Type.Returns(SlowSource);
@@ -200,6 +196,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             (await GetNodes()).ShouldNotContain(_consulNode);
 
             ConfigureServiceSource(Consul);
+            await WaitForCleanup();
             (await GetNodes()).ShouldContain(_consulNode);
         }
 
@@ -219,6 +216,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _createdNodeSources.Count.ShouldBe(1);
 
             ConfigureServiceSource(SlowSource);
+            await WaitForCleanup();
             await GetNodesThreeTimesFromSlowSource();
             _createdNodeSources.Count.ShouldBe(2);
         }
@@ -231,12 +229,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _createdNodeSources.Count.ShouldBe(1);
 
             _consulSourceWasUndeployed = true;
-            await GetNodes();
-            await GetNodes();
+            await WaitForCleanup();
+            (await GetNodes()).ShouldBeNull();            
             _createdNodeSources.Count.ShouldBe(1);
 
             _consulSourceWasUndeployed = false;
-            await GetNodes();
+            await WaitForCleanup();
+            (await GetNodes()).ShouldNotBeNull();
             _createdNodeSources.Count.ShouldBe(2);
         }
 
@@ -249,19 +248,25 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _createdNodeSources.Count.ShouldBe(1);
 
             _dateTimeFake.UtcNow += TimeSpan.FromMinutes(3);
-            _dateTimeFake.StopDelay();
-            await Task.Delay(100);
+            await WaitForCleanup();
             await GetNodes();
             // first NodeSource was disposed after being not-in-use for more than 2 minutes. A new NodeSource should have been created
             _createdNodeSources.Count.ShouldBe(2);
             _consulSourceDisposedCounter.ShouldBe(1);
         }
 
-        private void ConfigureServiceSource(string source)
+        private async Task WaitForCleanup()
         {
-            _discoveryConfig.Services[ServiceName].Source = source;
-            if (source == Config)
-                _discoveryConfig.Services[ServiceName].Hosts = "myhost";
+            await Task.Delay(100);
+            _dateTimeFake.StopDelay();
+            await Task.Delay(100);
+        }
+
+        private void ConfigureServiceSource(string sourceType)
+        {
+            _discoveryConfig.Services[_deploymentIdentifier.ServiceName].Source = sourceType;
+            if (sourceType == Config)
+                _discoveryConfig.Services[_deploymentIdentifier.ServiceName].Hosts = "myhost";
         }
 
         private async Task GetNodesThreeTimesFromSlowSource()
