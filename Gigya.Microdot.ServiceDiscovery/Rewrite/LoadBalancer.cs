@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,31 +41,33 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     internal sealed class LoadBalancer: ILoadBalancer
     {
-        int _disposed = 0;
-        private bool _isMonitoring = true;
-        private readonly object _lock = new object();
-        private bool _wasUndeployed;
-
         private IDiscovery Discovery { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
-        private TrafficRouting TrafficRouting { get; }
+        private TrafficRoutingStrategy TrafficRoutingStrategy { get; }
         private Func<Node, DeploymentIdentifier, ReachabilityCheck, Action, NodeMonitoringState> CreateNodeMonitoringState { get; }
         private IDateTime DateTime { get; }
         private ILog Log { get; }
         private DeploymentIdentifier DeploymentIdentifier { get; }
         private Exception LastException { get; set; }
 
-        private Node[] _sourceNodes;
+        private Node[] _lastDiscoveredNodes;
         private Node[] _reachableNodes;
-        private NodeMonitoringState[] _nodesState = new NodeMonitoringState[0];
+        private NodeMonitoringState[] _nodesMonitoringState = new NodeMonitoringState[0];
         private readonly ComponentHealthMonitor _healthMonitor;
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
+
+        int _disposed = 0;
+        private bool _isMonitoring = true;
+        private readonly object _lock = new object();
+        private bool _wasUndeployed;
+
+
 
         public LoadBalancer(
             IDiscovery discovery,
             DeploymentIdentifier deploymentIdentifier, 
             ReachabilityCheck reachabilityCheck,
-            TrafficRouting trafficRouting,
+            TrafficRoutingStrategy trafficRoutingStrategy,
             Func<Node, DeploymentIdentifier, ReachabilityCheck, Action, NodeMonitoringState> createNodeMonitoringState,
             IHealthMonitor healthMonitor,
             IDateTime dateTime, 
@@ -75,17 +76,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DeploymentIdentifier = deploymentIdentifier;
             Discovery = discovery;
             ReachabilityCheck = reachabilityCheck;
-            TrafficRouting = trafficRouting;
+            TrafficRoutingStrategy = trafficRoutingStrategy;
             CreateNodeMonitoringState = createNodeMonitoringState;
             DateTime = dateTime;
             Log = log;            
             _healthMonitor = healthMonitor.SetHealthFunction(DeploymentIdentifier.ToString(), ()=>_healthStatus);
         }
 
+
+
         public async Task<Node> GetNode()
         {
-            await GetNodesFromSource().ConfigureAwait(false);
-            var nodes = _nodesState;
+            await LoadNodesFromSource().ConfigureAwait(false);
+            var nodes = _nodesMonitoringState;
             if (!nodes.Any())
                 throw new ServiceUnreachableException("No nodes were discovered for service", 
                     LastException,
@@ -101,34 +104,39 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     unencrypted: new Tags
                     {
                         {"deploymentIdentifier", DeploymentIdentifier.ToString()},                        
-                        {"nodes", string.Join(",", nodes.Select(n=>n.ToString()))}                    
+                        {"nodes", string.Join(",", nodes.Select(n=>n.Node.ToString()))}                    
                     });
                         
-            var index = GetIndexByTrafficRouting();            
+            var index = GetIndexByTrafficRoutingStrategy();            
             return reachableNodes[index % reachableNodes.Length];
         }
 
-        private int _roundRobinIndex = 0;
-        private uint GetIndexByTrafficRouting()
-        {
-            switch (TrafficRouting)
-            {
-                case TrafficRouting.RoundRobin:                    
-                    return (uint)Interlocked.Increment(ref _roundRobinIndex);
-                case TrafficRouting.RandomByRequestID:
-                    var affinityToken = TracingContext.TryGetRequestID() ?? Guid.NewGuid().ToString("N");
-                    return (uint)affinityToken.GetHashCode();
-                default:
-                    throw new ProgrammaticException($"The {nameof(TrafficRouting)} '{TrafficRouting}' is not supported by LoadBalancer.");
-            }
 
+
+        private int _roundRobinIndex = 0;
+
+        private uint GetIndexByTrafficRoutingStrategy()
+        {
+            switch (TrafficRoutingStrategy)
+            {
+                case TrafficRoutingStrategy.RoundRobin:                    
+                    return (uint)Interlocked.Increment(ref _roundRobinIndex);
+                case TrafficRoutingStrategy.RandomByRequestID:
+                    return (uint?)TracingContext.TryGetRequestID()?.GetHashCode() ?? (uint)Interlocked.Increment(ref _roundRobinIndex);
+                default:
+                    throw new ProgrammaticException($"The {nameof(TrafficRoutingStrategy)} '{TrafficRoutingStrategy}' is not supported by LoadBalancer.");
+            }
         }
+
+
 
         public async Task<bool> WasUndeployed()
         {
-            await GetNodesFromSource().ConfigureAwait(false);
+            await LoadNodesFromSource().ConfigureAwait(false);
             return _wasUndeployed;
         }
+
+
 
         private void SetReachableNodes()
         {
@@ -137,13 +145,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             lock (_lock)
             {
-                var reachableNodes = _nodesState.Where(s => s.IsReachable).Select(s => s.Node).ToArray();
-                _healthStatus = CheckHealth(_nodesState, reachableNodes);
+                var reachableNodes = _nodesMonitoringState.Where(s => s.IsReachable).Select(s => s.Node).ToArray();
+                _healthStatus = CheckHealth(_nodesMonitoringState, reachableNodes);
                 _reachableNodes = reachableNodes;
             }
         }
 
-        private async Task GetNodesFromSource()
+
+
+        private async Task LoadNodesFromSource()
         {
             if (_disposed>0)
                 return;
@@ -158,19 +168,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     return;
                 }
 
-                if (sourceNodes == _sourceNodes)
+                if (sourceNodes == _lastDiscoveredNodes)
                     return;
 
                 var newNodes = sourceNodes.Select(CreateState).ToArray();
 
                 lock (_lock)
                 {
-                    var oldNodes = _nodesState;
+                    var oldNodes = _nodesMonitoringState;
                     var nodesToRemove = oldNodes.Except(newNodes).ToArray();
 
-                    _nodesState = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
+                    _nodesMonitoringState = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
                     StopMonitoringNodes(nodesToRemove);
-                    _sourceNodes = sourceNodes;
+                    _lastDiscoveredNodes = sourceNodes;
                     SetReachableNodes();
                 }
             }
@@ -180,10 +190,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+
+
         private NodeMonitoringState CreateState(Node node)
         {
             return CreateNodeMonitoringState(node, DeploymentIdentifier, ReachabilityCheck, SetReachableNodes);
         }
+
+
 
         private HealthCheckResult CheckHealth(NodeMonitoringState[] nodesState, Node[] reachableNodes)
         {            
@@ -202,6 +216,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return HealthCheckResult.Healthy($"{reachableNodes.Length} nodes out of {nodesState.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
+
+
         private void StopMonitoringNodes(IEnumerable<NodeMonitoringState> monitoredNodes)
         {
             foreach (var monitoredNode in monitoredNodes)
@@ -210,9 +226,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
+
+
         public void ReportUnreachable(Node node, Exception ex)
         {
-            var nodeState = _nodesState.FirstOrDefault(s => s.Node.Equals(node));
+            var nodeState = _nodesMonitoringState.FirstOrDefault(s => s.Node.Equals(node));
             lock (_lock)
                 nodeState?.ReportUnreachable(ex);
         }
@@ -222,7 +240,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             lock (_lock)
             {
                 _isMonitoring = false;
-                StopMonitoringNodes(_nodesState);
+                StopMonitoringNodes(_nodesMonitoringState);
             }
         }
 
@@ -231,7 +249,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Interlocked.Increment(ref _disposed) != 1)
                 return;
 
-            StopMonitoringNodes(_nodesState);
+            StopMonitoringNodes(_nodesMonitoringState);
             
             _healthMonitor.Dispose();            
         }

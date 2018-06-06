@@ -27,10 +27,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
         private readonly ComponentHealthMonitor _serviceListHealthMonitor;
 
-        private Task<ulong> _initTask;
-        private Task _loopingTask;
         private readonly CancellationTokenSource _shutdownToken = new CancellationTokenSource();
-        private int _disposed;
+        private readonly TaskCompletionSource<bool> _initCompleted = new TaskCompletionSource<bool>();
 
 
 
@@ -45,8 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetConfig = getConfig;            
 
             _serviceListHealthMonitor = healthMonitor.SetHealthFunction("ConsulServiceList", () => _healthStatus); // nest under "Consul" along with other consul-related healths.
-            _initTask = GetAllServices(0);
-            _loopingTask = Task.Run(GetAllLoop);
+            Task.Run(() => GetAllLoop());
         }
 
 
@@ -57,9 +54,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public async Task<INodeSource> CreateNodeSource(DeploymentIdentifier deploymentIdentifier)
         {
-            await _initTask.ConfigureAwait(false);
+            await _initCompleted.Task.ConfigureAwait(false);
 
-            if (IsServiceDeployed(deploymentIdentifier))
+            if (await IsServiceDeployed(deploymentIdentifier).ConfigureAwait(false))
             {
                 var consulNodeSource = CreateConsulNodeSource(deploymentIdentifier);
                 await consulNodeSource.Init().ConfigureAwait(false);
@@ -69,31 +66,35 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         private Exception Error { get; set; }
-        private DateTime ErrorTime { get; set; }
 
 
-        public bool IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
+        public async Task<bool> IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
         {
+            await _initCompleted.Task.ConfigureAwait(false);
             if (Services.Count == 0 && Error != null)
                 throw Error;
 
             return Services.Contains(deploymentIdentifier.ToString());
         }
 
+        // We can't store DeploymentIdentifier's here since we can't reliably parse them when they return from Consul
+        // as strings (due to '-' separators in service names)
         HashSet<string> Services = new HashSet<string>();
 
 
-        private async Task GetAllLoop()
+        private async void GetAllLoop()
         {
             try
             {
-                var modifyIndex = await _initTask.ConfigureAwait(false);
+                ulong? modifyIndex = null;
                 while (!_shutdownToken.IsCancellationRequested)
                 {
+                    modifyIndex = await GetAllServices(modifyIndex ?? 0).ConfigureAwait(false);
+                    _initCompleted.TrySetResult(true);
+
                     // If we got an error, we don't want to spam Consul so we wait a bit
-                    if (Error != null)
-                        await DateTime.DelayUntil(ErrorTime + GetConfig().ErrorRetryInterval, _shutdownToken.Token).ConfigureAwait(false);
-                    modifyIndex = await GetAllServices(modifyIndex).ConfigureAwait(false);
+                    if (modifyIndex == null)
+                        await DateTime.Delay(GetConfig().ErrorRetryInterval, _shutdownToken.Token).ConfigureAwait(false);
                 }
             }
             catch (TaskCanceledException) when (_shutdownToken.IsCancellationRequested)
@@ -103,70 +104,38 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        private async Task<ulong> GetAllServices(ulong modifyIndex)
+        private async Task<ulong?> GetAllServices(ulong modifyIndex)
         {
             var consulResult = await ConsulClient.GetAllServices(modifyIndex, _shutdownToken.Token).ConfigureAwait(false);
 
             if (consulResult.Error != null)
             {
-                SetErrorResult(consulResult);
+                if (consulResult.Error.InnerException is TaskCanceledException == false)
+                {
+                    Log.Error("Error calling Consul to get all services list", exception: consulResult.Error, unencryptedTags: new
+                    {
+                        consulAddress = consulResult.ConsulAddress,
+                        commandPath   = consulResult.CommandPath,
+                        responseCode  = consulResult.StatusCode,
+                        content       = consulResult.ResponseContent
+                    });
+                }
+
                 _healthStatus = HealthCheckResult.Unhealthy($"Error calling Consul: {consulResult.Error.Message}");
-                return 0;
+                Error = consulResult.Error;
+                return null;
             }
             else
             {
-                var servicesResult = consulResult.Result;
-
-                Services = new HashSet<string>(servicesResult);
-                var caseInsensitiveServices = new HashSet<string>(servicesResult, StringComparer.InvariantCultureIgnoreCase);
-
-                if (Services.Count == caseInsensitiveServices.Count)
-                    _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
-                else
-                    _healthStatus = HealthCheckResult.Unhealthy("Service list contains duplicate services: " + string.Join(", ", GetDuplicateServiceNames(servicesResult)));
-
+                Services = new HashSet<string>(consulResult.Result);
+                _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
                 Error = null;
-                return consulResult.ModifyIndex ?? 0;
+                return consulResult.ModifyIndex;
             }
         }
 
-        private string[] GetDuplicateServiceNames(IEnumerable<string> allServices)
-        {
-            var list = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-            var duplicateList = new HashSet<string>();
-            foreach (var service in allServices)
-            {
-                if (list.Contains(service))
-                {
-                    var existingService = list.First(x => x.Equals(service, StringComparison.CurrentCultureIgnoreCase));
-                    duplicateList.Add(existingService);
-                    duplicateList.Add(service);
-                }
-                list.Add(service);
-            }
-            return duplicateList.ToArray();
-        }
 
-        
-        private void SetErrorResult<T>(ConsulResponse<T> response)
-        {
-            var error = response.Error;
-
-            if (error.InnerException is TaskCanceledException == false)
-            {
-                Log.Error("Error calling Consul to get all services list", exception: response.Error, unencryptedTags: new
-                {
-                    consulAddress = response.ConsulAddress,
-                    commandPath = response.CommandPath,
-                    responseCode = response.StatusCode,
-                    content = response.ResponseContent
-                });
-            }
-
-            Error = error;
-            ErrorTime = DateTime.UtcNow;            
-        }
-
+        private int _disposed;
 
         /// <inheritdoc />
         public void Dispose()
@@ -175,11 +144,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             _shutdownToken.Cancel();
-            try
-            {
-                _loopingTask.Wait(TimeSpan.FromSeconds(3));
-            }
-            catch (TaskCanceledException) {}
             _shutdownToken.Dispose();
             _serviceListHealthMonitor.Dispose();
         }

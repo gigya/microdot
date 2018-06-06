@@ -16,7 +16,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <summary>
         /// Reports whether a service is known to be deployed.
         /// </summary>
-        bool IsServiceDeployed(DeploymentIdentifier deploymentIdentifier);
+        Task<bool> IsServiceDeployed(DeploymentIdentifier deploymentIdentifier);
 
         /// <summary>
         /// Creates a new <see cref="INodeSource"/> for the given <see cref="DeploymentIdentifier"/>.

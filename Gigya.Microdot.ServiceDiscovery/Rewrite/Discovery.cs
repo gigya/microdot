@@ -13,6 +13,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
 
     /// <inheritdoc />
+    /// <remarks>it currently takes this class 1 second to detect that a service was undeployed or the confiugred source type changed.
+    /// During that time, the last known good nodes are returned.</remarks>
     internal sealed class Discovery : IDiscovery
     {
 
@@ -78,7 +80,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
 
             // No node source but the service is deployed; create one and query it
-            else if (IsServiceDeployed(deploymentIdentifier))
+            else if (await IsServiceDeployed(deploymentIdentifier).ConfigureAwait(false))
             {
                 string sourceType = GetConfiguredSourceType(deploymentIdentifier);
                 lazySource = _nodeSources.GetOrAdd(deploymentIdentifier, _ => new Lazy<NodeSourceAndAccesstime>(() =>
@@ -97,7 +99,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        private bool IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
+        private async Task<bool> IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
         {
             var sourceType = GetConfiguredSourceType(deploymentIdentifier);
             switch (sourceType)
@@ -107,7 +109,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     return true;
                 default:
                     if (NodeSourceFactories.TryGetValue(sourceType, out var factory))
-                        return factory.IsServiceDeployed(deploymentIdentifier);
+                        return await factory.IsServiceDeployed(deploymentIdentifier).ConfigureAwait(false);
                     else throw new ConfigurationException($"Discovery Source '{sourceType}' is not supported.");                    
             }
         }
@@ -157,7 +159,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     foreach (var nodeSource in _nodeSources)
                         if (   nodeSource.Value.Value.LastAccessTime < expiryTime
                             || nodeSource.Value.Value.NodeSourceType != GetConfiguredSourceType(nodeSource.Key)
-                            || !IsServiceDeployed(nodeSource.Key))
+                            || !await IsServiceDeployed(nodeSource.Key).ConfigureAwait(false))
                         {
     #pragma warning disable 4014
                             nodeSource.Value.Value.NodeSourceTask.ContinueWith(t => t.Result.Dispose());
