@@ -79,7 +79,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceMissingOnStart()
         {
             await Start();
-            _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeFalse();
+            (await _factory.IsServiceDeployed(_deploymentIdentifier)).ShouldBeFalse();
             var nodeSource = await _factory.CreateNodeSource(_deploymentIdentifier);
             nodeSource.ShouldBeNull();
         }
@@ -90,12 +90,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             AddService();
             await Start();
 
-            ShouldCreateNodeSource();
+            await ShouldCreateNodeSource();
 
             RemoveService();
             await Task.Delay(800);
 
-            NodeSourceCannotBeCreated();
+            await NodeSourceCannotBeCreated();
         }
 
         [Test]
@@ -103,13 +103,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {            
             await Start();
 
-            NodeSourceCannotBeCreated();
+            await NodeSourceCannotBeCreated();
 
             AddService();
 
             await Task.Delay(800);
 
-            ShouldCreateNodeSource();
+            await ShouldCreateNodeSource();
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetServiceVersion();
             await Start();
-            ShouldCreateNodeSource();
+            await ShouldCreateNodeSource();
         }
 
         [Test]
@@ -143,7 +143,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator.Reset();
             AddService();
             await Task.Delay(800);
-            ShouldCreateNodeSource();
+            await ShouldCreateNodeSource();
         }
 
         [Test]
@@ -153,7 +153,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Start();
             SetError();
             await Task.Delay(800);
-            ShouldCreateNodeSource();
+            await ShouldCreateNodeSource();
             GetHealthStatus().IsHealthy.ShouldBeFalse();
         }
 
@@ -169,21 +169,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             healthStatus.Message.ShouldContain("Service1");
             healthStatus.Message.ShouldContain("Service2");
-        }
-
-        [Test]
-        public async Task DuplicateService_HealthCheckIsRed()
-        {
-            AddService(deploymentIdentifier: _deploymentIdentifier);
-            AddService(deploymentIdentifier: new DeploymentIdentifier(_deploymentIdentifier.ServiceName.ToLower(), Env));
-            AddService("OtherService");
-            await Start();
-            
-            var healthStatus = GetHealthStatus();
-            healthStatus.IsHealthy.ShouldBeFalse();
-            healthStatus.Message.ShouldContain(_deploymentIdentifier.ToString());
-            healthStatus.Message.ShouldContain(_deploymentIdentifier.ToString().ToLower());
-            healthStatus.Message.ShouldNotContain("OtherService", "When ther exists duplicate services, only duplicate services should be listed on the health check message");
         }
 
         private async Task Start()
@@ -213,15 +198,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator.SetServiceVersion(_deploymentIdentifier.ToString(), version);
         }
 
-        private void ShouldCreateNodeSource(DeploymentIdentifier expectedDeploymentIdentifier=null)
+        private async Task ShouldCreateNodeSource(DeploymentIdentifier expectedDeploymentIdentifier=null)
         {
-            _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeTrue();
+            (await _factory.IsServiceDeployed(_deploymentIdentifier)).ShouldBeTrue();
             _factory.CreateNodeSource(_deploymentIdentifier??expectedDeploymentIdentifier).Result.ShouldNotBeNull();            
         }
 
-        private void NodeSourceCannotBeCreated()
+        private async Task NodeSourceCannotBeCreated()
         {
-            _factory.IsServiceDeployed(_deploymentIdentifier).ShouldBeFalse();        
+            (await _factory.IsServiceDeployed(_deploymentIdentifier)).ShouldBeFalse();        
             _factory.CreateNodeSource(_deploymentIdentifier).Result.ShouldBeNull();
         }
 
