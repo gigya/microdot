@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic;
 using Ninject;
 using NUnit.Framework;
 using Shouldly;
@@ -37,7 +38,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             try
             {
                 Host = new SlowServiceHost(k => { Service = k.Get<ISlowService>(); });
-                StopTask = Host.RunAsync();
+                StopTask = Host.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
             }
             catch (Exception ex)
             {

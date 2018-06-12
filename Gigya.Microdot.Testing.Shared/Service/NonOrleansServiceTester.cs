@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
         public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
         {
-            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime);
+            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime.HasValue?(int?)shutdownWaitTime.Value.TotalSeconds:null);
 
             BasePort = basePortOverride;
             ResolutionRoot = resolutionRoot;
