@@ -11,6 +11,7 @@ using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.Testing;
@@ -54,7 +55,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             TracingContext.SetRequestID("1");
 
             _testinghost = new TestingHost<IDemoService>();
-            _stopTask = _testinghost.RunAsync();
+            _stopTask = _testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
         }
 
 
