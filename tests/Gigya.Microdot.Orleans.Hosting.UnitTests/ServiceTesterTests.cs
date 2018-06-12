@@ -21,21 +21,32 @@
 #endregion
 
 using System;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Linq;
+using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.Testing.Service;
+using NUnit.Framework;
+using Shouldly;
 
-[assembly: AssemblyCompany("Gigya Inc.")]
-[assembly: AssemblyCopyright("© 2018 Gigya Inc.")]
-[assembly: AssemblyDescription("Microdot Framework")]
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
+{
+    [TestFixture]
+    public class ServiceTesterTests
+    {
+        private ServiceTester<CalculatorServiceHost> _tester;
+        
 
-[assembly: AssemblyVersion("1.10.5.0")]
-[assembly: AssemblyFileVersion("1.10.5.0")] 
-[assembly: AssemblyInformationalVersion("1.10.5.0")]
+        [Test]
+        public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
+        {
+            _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(8555,shutdownWaitTime:TimeSpan.Zero);
 
+            Action act = () => _tester.Dispose();
+            act.ShouldThrow<Exception>().Message.ShouldContain("service failed to shutdown gracefully");
+        }
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(false)]
+    }
 
+}
