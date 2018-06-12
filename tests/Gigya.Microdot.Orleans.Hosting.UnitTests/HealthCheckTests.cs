@@ -38,11 +38,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     {
         private ServiceTester<CalculatorServiceHost> tester;
 
-
+        private int mainPort = 9555;
         [OneTimeSetUp]
         public void SetUp()
         {
-            tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
+            tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(mainPort);
         }
 
         [OneTimeTearDown]
@@ -69,7 +69,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void HealthCheck_NotHealthy_ShouldReturn500()
         {
             tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6555/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
 
@@ -77,14 +77,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void HealthCheck_Healthy_ShouldReturn200()
         {
             tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(true);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6555/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Test]
         public void HealthCheck_NotImplemented_ShouldReturn200()
         {
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:6555/{nameof(ICalculatorService).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
             httpResponseMessage.Content.ShouldNotBeNull();
         }
