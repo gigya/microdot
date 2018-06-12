@@ -181,15 +181,17 @@ namespace Gigya.Microdot.Testing.Service
             {
                 if (ServiceAppDomain != null)
                 {
-                  ServiceAppDomain.RunOnContext(() =>
+                    ServiceAppDomain.RunOnContext(() =>
                     {
-                        Host.Stop();//don't use host.dispose, host.stop should do all the work
+                        Host.Stop(); //don't use host.dispose, host.stop should do all the work
 
                         var completed = StopTask.Wait(60000);
 
                         if (!completed)
                             throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
-                        if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted&& Host.WaitForServiceGracefullyStoppedAsync(). Result==false)
+
+                        if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
+                            Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
                             throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
 
                     });

@@ -43,7 +43,7 @@ namespace Gigya.Microdot.Hosting.Service
         private DelegatingServiceBase WindowsService { get; set; }
         private ManualResetEvent StopEvent { get; }
         private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
-        private TaskCompletionSource<bool> ServiceGracefullyStopped { get; set; }
+        private TaskCompletionSource<StopResult> ServiceGracefullyStopped { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
         private readonly string _serviceName;
         protected CrashHandler CrashHandler { get; set; }
@@ -67,8 +67,8 @@ namespace Gigya.Microdot.Hosting.Service
 
             StopEvent = new ManualResetEvent(true);
             ServiceStartedEvent = new TaskCompletionSource<object>();
-            ServiceGracefullyStopped = new TaskCompletionSource<bool>();
-            ServiceGracefullyStopped.SetResult(true);
+            ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
+            ServiceGracefullyStopped.SetResult(StopResult.None);
 
             _serviceName = GetType().Name;
 
@@ -82,7 +82,7 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         public void Run(ServiceArguments argumentsOverride = null)
         {
-            ServiceGracefullyStopped = new TaskCompletionSource<bool>();
+            ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
             CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
 
@@ -118,7 +118,7 @@ namespace Gigya.Microdot.Hosting.Service
                     {
                         Console.WriteLine($"Service cannot start because monitored PID {Arguments.ShutdownWhenPidExits} is not running. Exception: {e}");
                         Environment.ExitCode = 1;
-                        ServiceGracefullyStopped.SetResult(true);
+                        ServiceGracefullyStopped.SetResult(StopResult.None);
                         return;
                     }
 
@@ -181,13 +181,15 @@ namespace Gigya.Microdot.Hosting.Service
 
                 Console.WriteLine("   ***   Shutting down...   ***   ");
 
-                int gracefullyShoutDownTimeSec = (Arguments.OnStopWaitTimeSec ?? 0) + (Arguments.ServiceDrainTimeSec ?? 0);
-                bool isServiceGracefullyStopped =  Task.Run(() => OnStop()).Wait(TimeSpan.FromSeconds(gracefullyShoutDownTimeSec));
+                var maxShutdownTime = TimeSpan.FromSeconds((Arguments.OnStopWaitTimeSec ?? 0) + (Arguments.ServiceDrainTimeSec ?? 0));
+                bool isServiceGracefullyStopped =  Task.Run(() => OnStop()).Wait(maxShutdownTime);
+
                 if( isServiceGracefullyStopped ==false )
-                    Console.WriteLine($"   ***  not stop gracefully on time ({gracefullyShoutDownTimeSec}sec) going to kill service  ***   ");
+                    Console.WriteLine($"   ***  Service failed to stop gracefully in the allotted time ({maxShutdownTime}), continuing with forced shutdown.   ***   ");
 
                 ServiceStartedEvent = new TaskCompletionSource<object>();
-                ServiceGracefullyStopped.SetResult(isServiceGracefullyStopped);
+
+                ServiceGracefullyStopped.SetResult(isServiceGracefullyStopped ? StopResult.Graceful : StopResult.Force);
                 MonitoredShutdownProcess?.Dispose();
 
                 if (Arguments.ServiceStartupMode == ServiceStartupMode.CommandLineInteractive)
@@ -218,7 +220,7 @@ namespace Gigya.Microdot.Hosting.Service
             return ServiceStartedEvent.Task;
         }
 
-        public Task<bool> WaitForServiceGracefullyStoppedAsync()
+        public Task<StopResult> WaitForServiceGracefullyStoppedAsync()
         {
             return ServiceGracefullyStopped.Task;
         }
@@ -357,4 +359,6 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
     }
+    public enum StopResult { None, Graceful, Force}
+
 }
