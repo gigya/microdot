@@ -28,6 +28,7 @@ using System.Linq;
 using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.Testing.Shared.Helpers;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
 using NSubstitute;
@@ -38,16 +39,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     [TestFixture]
     public class ReflectionMetaDataExtensionTests
     {
-        private int _numOfProperties;
         private ILog _logMocked;
 
         [SetUp]
         public void OneTimeSetup()
         {
-            _numOfProperties = typeof(PersonMockData).GetProperties().Length;
             _logMocked = Substitute.For<ILog>();
-
         }
+
 
         [Test]
         [TestCase(nameof(PersonMockData.Sensitive), Sensitivity.Sensitive)]
@@ -61,109 +60,80 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             PropertiesMetadataPropertiesCache.ExtractSensitivity(expectedSensitiveProperty).ShouldBe(expected);
         }
 
-
         [Test]
-        public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent2()
+        [TestCase(nameof(PersonMockData.FieldNonSensitive), Sensitivity.NonSensitive)]
+        [TestCase(nameof(PersonMockData.FieldSensitive), Sensitivity.Sensitive)]
+        [TestCase(nameof(PersonMockData.FieldCryptic), Sensitivity.Secretive)]
+        public void ExtracFieldsSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity? expected)
         {
-            var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToList();
+            var field = typeof(PersonMockData).GetField(actualValue);
 
-            reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
-
-            foreach (var reflectionMetadata in reflectionMetadataInfos)
-            {
-                var propertyInfo = typeof(PersonMockData).GetProperty(reflectionMetadata.PropertyName);
-
-                var result = reflectionMetadata.ValueExtractor(mock);
-
-                if (propertyInfo.GetValue(mock).Equals(result) == false)
-                {
-                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
-                }
-            }
+            PropertiesMetadataPropertiesCache.ExtractSensitivity(field).ShouldBe(expected);
         }
 
+
         [Test]
-        public void ExtracPropertiesValues_ExtractDataFromObject_ShouldBeEquivilent()
+        public void ExtracPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToList();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.PropertyName);
+            var numberProperties = CalculateFieldsAndProperties(mock);
 
-            reflectionMetadataInfos.Count.ShouldBe(_numOfProperties);
+            reflectionMetadataInfos.Count.ShouldBe(numberProperties);
 
-            foreach (var reflectionMetadata in reflectionMetadataInfos)
+            int count = 0;
+            foreach (var member in DissectPropertyInfoMetadata.GetMembers(mock))
             {
-                var propertyInfo = typeof(PersonMockData).GetProperty(reflectionMetadata.PropertyName);
+                var result = reflectionMetadataInfos[member.Name].ValueExtractor(mock);
 
-                var result = reflectionMetadata.ValueExtractor(mock);
-
-                if (propertyInfo.GetValue(mock).Equals(result) == false)
-                {
-                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
-                }
+                member.Value.ShouldBe(result, $"Propery name {member.Name} doesn't exists.");
+                count++;
             }
+
+            count.ShouldBe(numberProperties);
+            reflectionMetadataInfos.Count.ShouldBe(numberProperties);
         }
 
         [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
-            const string crypticPropertyName = nameof(PersonMockData.Cryptic);
-            const string sensitivePropertyName = nameof(PersonMockData.Sensitive);
-
-            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var mock = new PersonMockData();
-            var arguments = cache.ParseIntoParams(mock);
-
-            foreach (var arg in arguments.Where(x => x.Sensitivity != null))
-            {
-                if (arg.Name == crypticPropertyName)
-                {
-                    arg.Sensitivity.ShouldBe(Sensitivity.Secretive);
-                    typeof(PersonMockData).GetProperty(crypticPropertyName).GetValue(mock).ShouldBe(mock.Cryptic);
-                }
-
-                if (arg.Name == sensitivePropertyName)
-                {
-                    arg.Sensitivity.ShouldBe(Sensitivity.Sensitive);
-                    typeof(PersonMockData).GetProperty(sensitivePropertyName).GetValue(mock).ShouldBe(mock.Sensitive);
-                }
-            }
-        }
-
-
-        [Test]
-        public void PropertyMetadata_Extract_All_Public_Properties()
-        {
             var cache = new PropertiesMetadataPropertiesCache(_logMocked);
-            var mock = new PersonMockData();
-            var arguments = cache.ParseIntoParams(mock).ToList();
+            var numberProperties = CalculateFieldsAndProperties(mock);
 
-            arguments.Count.ShouldBe(_numOfProperties);
-            foreach (var param in arguments)
-            {
-                var propertyInfo = typeof(PersonMockData).GetProperty(param.Name);
 
-                if (propertyInfo.GetValue(mock).ToString().Equals(param.Value.ToString()) == false)
-                {
-                    throw new InvalidDataException($"Propery name {propertyInfo.Name} doesn't exists.");
-                }
-            }
+            var metadataCacheParams = cache.ParseIntoParams(mock);
+            var dissectedParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(mock).ToDictionary(x => x.Name);
+
+            int count = AssertBetweenCacheParamAndDissectParams(metadataCacheParams, dissectedParams);
+
+            metadataCacheParams.Count().ShouldBe(dissectedParams.Count);
+            count.ShouldBe(dissectedParams.Count);
+
         }
 
 
         [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCrypticWithInheritenceAndException_ShouldBeEquivilent()
         {
-            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var mock = new TeacherWithExceptionMock();
-            var arguments = cache.ParseIntoParams(mock);
+            var cache = new PropertiesMetadataPropertiesCache(_logMocked);
+            var numberProperties = CalculateFieldsAndProperties(mock);
 
-            arguments.Count().ShouldBe(mock.GetType().GetProperties().Length - 1);
 
-            ArgumentVerivications(mock,arguments);
+            var dissectedParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(mock).ToDictionary(x => x.Name);
+
+
+            var parseParams = cache.ParseIntoParams(mock);
+            int count = AssertBetweenCacheParamAndDissectParams(parseParams, dissectedParams);
+
+            parseParams.Count().ShouldBe(dissectedParams.Count - 1);
+            count.ShouldBe(dissectedParams.Count - 1);
 
             _logMocked.Received().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+
         }
+
 
         [Test]
         public void ExtracPropertiesValues_SendTwoPeople_ShouldBeEquivilent()
@@ -171,17 +141,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var person = new PersonMockData();
             var teacher = new TeacherWithExceptionMock();
+
+
             var teacherArguments = cache.ParseIntoParams(teacher);
             var personArguments = cache.ParseIntoParams(person);
 
-            personArguments.Count().ShouldBe(person.GetType().GetProperties().Length);
+            var personDissect = DissectPropertyInfoMetadata.GetMemberWithSensitivity(person).ToDictionary(x => x.Name);
 
-            ArgumentVerivications(person, personArguments);
+
+            var count = AssertBetweenCacheParamAndDissectParams(personArguments, personDissect);
+
             _logMocked.DidNotReceive().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
+            count.ShouldBe(CalculateFieldsAndProperties(person));
 
-            teacherArguments.Count().ShouldBe(teacher.GetType().GetProperties().Length - 1);
-            ArgumentVerivications(teacher, teacherArguments);
 
+            var teacherDissect = DissectPropertyInfoMetadata.GetMemberWithSensitivity(teacher).ToDictionary(x => x.Name);
+
+            count = AssertBetweenCacheParamAndDissectParams(teacherArguments, teacherDissect);
+            count.ShouldBe(teacherDissect.Count-1);
             _logMocked.Received().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
         }
 
@@ -190,6 +167,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var people = GeneratePeople(10000).ToList();
+            var numOfProperties = CalculateFieldsAndProperties(new PersonMockData());
             var stopWatch = new Stopwatch();
 
             stopWatch.Start();
@@ -197,112 +175,31 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             foreach (var person in people)
             {
                 var tmpParams = cache.ParseIntoParams(person);
-                tmpParams.Count().ShouldBe(_numOfProperties);
+                tmpParams.Count().ShouldBe(numOfProperties);
             }
             stopWatch.Stop();
         }
 
-        private void ArgumentVerivications(object instance, IEnumerable<MetadataCacheParam> arguments)
+        private static int AssertBetweenCacheParamAndDissectParams(IEnumerable<MetadataCacheParam> @params, Dictionary<string, (object Value, MemberTypes MemberType, string Name, Sensitivity? Sensitivity, bool WithException, MemberInfo Member)> actual)
         {
-            foreach (var arg in arguments)
+            int count = 0;
+            foreach (var param in @params)
             {
-                switch (arg.Sensitivity)
-                {
+                var metadata = actual[param.Name];
 
-                    case Sensitivity.Secretive:
+                param.Sensitivity.ShouldBe(metadata.Sensitivity);
+                param.Value.ShouldBe(metadata.Value);
 
-                        Varification<SensitiveAttribute>(instance, arg.Name, arg.Value, arg.Sensitivity);
-                        break;
-
-                    case Sensitivity.Sensitive:
-
-                        Varification<SensitiveAttribute>(instance, arg.Name, arg.Value, arg.Sensitivity);
-                        break;
-
-                    case Sensitivity.NonSensitive:
-
-                        Varification<NonSensitiveAttribute>(instance, arg.Name, arg.Value, arg.Sensitivity);
-                        break;
-
-                    default:
-
-                        //With no attributes.
-                        instance.GetType().GetProperty(arg.Name).GetCustomAttributes().Count().ShouldBe(0);
-
-                        if (TryGetValue(instance, arg.Name, out var value))
-                        {
-                            value.ShouldBe(value);
-                            break;
-                        }
-                        throw new NotImplementedException();
-                }
+                count++;
             }
+
+            return count;
         }
 
-        private void Varification<TAttribute>(object mock, string propName, object value, Sensitivity? sensitivity) where TAttribute : Attribute
+        private int CalculateFieldsAndProperties<TInstance>(TInstance instance) where TInstance : class
         {
-            var attribute = GetAttribute<TAttribute>(mock, propName);
-            object tmpValue;
-
-            if (TryGetValue(mock, propName, out tmpValue))
-            {
-                value.ShouldBe(value);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-
-            if (attribute is null == false)
-            {
-                if (attribute is SensitiveAttribute)
-                {
-                    (attribute as SensitiveAttribute).Secretive.ShouldBe(sensitivity == Sensitivity.Secretive);
-                }
-                else
-                {
-                    if (attribute is NonSensitiveAttribute)
-                    {
-                        sensitivity.ShouldBe(Sensitivity.NonSensitive);
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
-            }
-        }
-
-        private TAttribute GetAttribute<TAttribute>(object instance, string propName) where TAttribute : Attribute
-        {
-            var type = instance.GetType();
-            var attribute = default(TAttribute);
-
-            try
-            {
-                return type.GetProperty(propName).GetCustomAttribute<TAttribute>();
-            }
-            catch (Exception e)
-            {
-                return null;
-            }
-        }
-
-        private bool TryGetValue(object instance, string name, out object value)
-        {
-            var type = instance.GetType();
-            try
-            {
-                value = type.GetProperty(name).GetValue(instance);
-                return true;
-            }
-            catch (Exception e)
-            {
-                value = null;
-
-            }
-
-            return false;
+            var numOfProperties = instance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Length + typeof(PersonMockData).GetFields(BindingFlags.Public | BindingFlags.Instance).Length;
+            return numOfProperties;
         }
 
         private IEnumerable<PersonMockData> GeneratePeople(int amount)
@@ -311,6 +208,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 yield return new PersonMockData { ID = i, Name = "Name", Cryptic = true };
             }
+
+
         }
 
         #region MockData
@@ -330,6 +229,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             [Sensitive(Secretive = true)]
 
             public bool Cryptic { get; set; } = true;
+
+
+            [NonSensitive]
+            public string FieldNonSensitive = "FieldName";
+
+
+            [Sensitive(Secretive = false)]
+
+            public string FieldSensitive = "FieldSensitive";
+
+            [Sensitive(Secretive = true)]
+
+            public string FieldCryptic = "FieldCryptic";
 
         }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Gigya.Microdot.SharedLogic.Events;
@@ -17,7 +18,7 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
             }
         }
 
-        public static Sensitivity? ExtractSensitivityFromPropertyInfo(PropertyInfo propertyInfo)
+        public static Sensitivity? ExtractSensitivityFromPropertyInfo(MemberInfo propertyInfo)
         {
             var attribute = propertyInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
@@ -39,6 +40,48 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
             }
 
             return null;
+        }
+
+
+        public static IEnumerable<(object Value, MemberTypes MemberType, string Name, Sensitivity? Sensitivity, bool WithException, MemberInfo Member)> GetMemberWithSensitivity<TInstance>(TInstance instance, Sensitivity defualtSensitivity = Sensitivity.Sensitive) where TInstance : class
+        {
+            var members = GetMembers(instance);
+
+            foreach (var member in members)
+            {
+                var sensitivity = ExtractSensitivityFromPropertyInfo(member.Member);
+                yield return (member.Value, member.MemberType, member.Name, sensitivity, member.WithException, member.Member);
+            }
+        }
+
+        public static IEnumerable<(object Value, MemberTypes MemberType, string Name, bool WithException, MemberInfo Member)> GetMembers<TInstance>(TInstance instance) where TInstance : class
+        {
+            var members = typeof(TInstance).FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null);
+
+            foreach (var member in members)
+            {
+                var withException = false;
+                if (member.MemberType == MemberTypes.Property)
+                {
+                    object value = null;
+
+                    try
+                    {
+                        value = ((PropertyInfo)member).GetValue(instance);
+                    }
+                    catch (Exception)
+                    {
+                        withException = true;
+                    }
+
+                    yield return (value, MemberTypes.Property, member.Name, withException, member);
+                }
+                else
+                {
+                    if (member.MemberType == MemberTypes.Field)
+                        yield return (((FieldInfo)member).GetValue(instance), MemberTypes.Field, member.Name, withException, member);
+                }
+            }
         }
     }
 }
