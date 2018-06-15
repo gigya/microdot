@@ -104,83 +104,37 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
         {
-            var members = type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null);
-
-            var metadatas = new List<ReflectionMetadataInfo>();
-
-            foreach (var member in members)
+            foreach (var member in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null))
             {
+
+                var instanceParameter = Expression.Parameter(typeof(object), "target");
+                MemberExpression memberExpression = null;
                 if (member.MemberType == MemberTypes.Property)
                 {
-                    var instanceParameter = Expression.Parameter(typeof(object), "target");
-                    var prop = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType),(PropertyInfo)member);
-
-                    var  lambda = Expression.Lambda<Func<object,object>>(
-                        Expression.Convert(prop, typeof(object)),
-                        instanceParameter
-                    );
-
-                    metadatas.Add(new ReflectionMetadataInfo
-                    {
-                        PropertyName = member.Name,
-                        ValueExtractor = lambda.Compile(),
-                        Sensitivity = ExtractSensitivity(member)
-                    });
+                    memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType),(PropertyInfo)member);
                 }
                 else
                 {
                     if (member.MemberType == MemberTypes.Field)
                     {
-                        var instanceParameter = Expression.Parameter(typeof(object), "target");
-
-                        var prop = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
-
-                        var lambda = Expression.Lambda<Func<object, object>>(
-                            Expression.Convert(prop, typeof(object)),
-                            instanceParameter
-                        );
-
-                        metadatas.Add(new ReflectionMetadataInfo
-                        {
-                            PropertyName = member.Name,
-                            ValueExtractor = lambda.Compile(),
-                            Sensitivity = ExtractSensitivity(member)
-                        });
+                        memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType),(FieldInfo) member);
                     }
                 }
+
+                var lambda = Expression.Lambda<Func<object, object>>(Expression.Convert(memberExpression, typeof(object)),instanceParameter);
+
+                yield return new ReflectionMetadataInfo
+                {
+                    PropertyName = member.Name,
+                    ValueExtractor = lambda.Compile(),
+                    Sensitivity = ExtractSensitivity(member)
+                };
             }
-
-            //var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
-            //    .Select(x => new
-            //    {
-            //        Getter = x.GetGetMethod(),
-            //        PropertyName = x.Name,
-            //        Sensitivity = ExtractSensitivity(x) // nullable
-            //    });
-
-            ////var metadatas = new List<ReflectionMetadataInfo>();
-
-            //foreach (var getter in getters)
-            //{
-            //    var entity = Expression.Parameter(typeof(object));
-            //    var getterCall = Expression.Call(Expression.Convert(entity, type), getter.Getter);
-            //    var castToObject = Expression.Convert(getterCall, typeof(object));
-            //    var lambda = Expression.Lambda<Func<object, object>>(castToObject, entity);
-
-            //    metadatas.Add(new ReflectionMetadataInfo
-            //    {
-            //        PropertyName = getter.PropertyName,
-            //        ValueExtractor = lambda.Compile(),
-            //        Sensitivity = getter.Sensitivity
-            //    });
-            //}
-
-            return metadatas;
         }
 
-        internal static Sensitivity? ExtractSensitivity(MemberInfo propertyInfo)
+        internal static Sensitivity? ExtractSensitivity(MemberInfo memberInfo)
         {
-            var attribute = propertyInfo.GetCustomAttributes()
+            var attribute = memberInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
 
             if (attribute != null)

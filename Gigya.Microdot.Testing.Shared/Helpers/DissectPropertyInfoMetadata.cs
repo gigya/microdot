@@ -9,15 +9,6 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
 {
     public static class DissectPropertyInfoMetadata
     {
-        public static IEnumerable<(PropertyInfo PropertyInfo, Sensitivity Sensitivity)> DissectPropertis<TType>(TType instance, Sensitivity defualtSensitivity = Sensitivity.Sensitive) where TType : class
-        {
-            foreach (var propertyInfo in instance.GetType().GetProperties())
-            {
-                var sensitivity = ExtractSensitivityFromPropertyInfo(propertyInfo) ?? defualtSensitivity;
-                yield return (propertyInfo, sensitivity);
-            }
-        }
-
         public static Sensitivity? ExtractSensitivityFromPropertyInfo(MemberInfo propertyInfo)
         {
             var attribute = propertyInfo.GetCustomAttributes()
@@ -45,7 +36,7 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
 
         public static IEnumerable<(object Value, MemberTypes MemberType, string Name, Sensitivity? Sensitivity, bool WithException, MemberInfo Member)> GetMemberWithSensitivity<TInstance>(TInstance instance, Sensitivity defualtSensitivity = Sensitivity.Sensitive) where TInstance : class
         {
-            var members = GetMembers(instance);
+            var members = GetMembers(instance).ToArray();
 
             foreach (var member in members)
             {
@@ -56,7 +47,7 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
 
         public static IEnumerable<(object Value, MemberTypes MemberType, string Name, bool WithException, MemberInfo Member)> GetMembers<TInstance>(TInstance instance) where TInstance : class
         {
-            var members = typeof(TInstance).FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null);
+            var members = instance.GetType().FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null);
 
             foreach (var member in members)
             {

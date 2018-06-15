@@ -375,6 +375,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         }
 
+
+
+
         [Test]
         public async Task LogGrainId()
         {
@@ -408,9 +411,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Serializable]
         public class Teacher : Person
         {
+
+            [NonSensitive]
+            public string FieldNonSensitive = "FieldName";
+
+
+            [Sensitive(Secretive = false)]
+
+            public string FieldSensitive = "FieldSensitive";
+
+            [Sensitive(Secretive = true)]
+
+            public string FieldCryptic = "FieldCryptic";
+
+
             [NonSensitive]
             public string School { get; set; } = "Busmat";
         }
+
         #endregion
     }
 }
