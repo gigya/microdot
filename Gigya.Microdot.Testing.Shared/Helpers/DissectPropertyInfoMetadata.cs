@@ -47,7 +47,8 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
 
         public static IEnumerable<(object Value, MemberTypes MemberType, string Name, bool WithException, MemberInfo Member)> GetMembers<TInstance>(TInstance instance) where TInstance : class
         {
-            var members = instance.GetType().FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null);
+            var members = instance.GetType().FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
+                .Where(x => (x is FieldInfo) || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead));
 
             foreach (var member in members)
             {

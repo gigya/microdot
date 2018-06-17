@@ -104,9 +104,11 @@ namespace Gigya.Microdot.SharedLogic.Events
         internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
         {
             var list = new List<ReflectionMetadataInfo>();
+            var members = type.FindMembers(MemberTypes.Property | MemberTypes.Field,
+                    BindingFlags.Public | BindingFlags.Instance, null, null)
+                .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead));
 
-            foreach (var member in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
-                                  .Where(x=> x is FieldInfo  || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead) ))
+          foreach (var member in members)
             {
                 var instanceParameter = Expression.Parameter(typeof(object), "target");
                 MemberExpression memberExpression = null;

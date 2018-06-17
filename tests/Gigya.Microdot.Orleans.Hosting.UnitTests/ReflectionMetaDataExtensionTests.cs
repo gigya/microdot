@@ -99,13 +99,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var mock = new PersonMockData();
             var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
-            var numberProperties = CalculateFieldsAndProperties(mock);
-
-            reflectionMetadataInfos.Count.ShouldBe(numberProperties);
+            var dissectParams = DissectPropertyInfoMetadata.GetMembers(mock);
+            var numberProperties = dissectParams.Count();
 
 
             int count = 0;
-            foreach (var member in DissectPropertyInfoMetadata.GetMembers(mock))
+            foreach (var member in dissectParams)
             {
                 var result = reflectionMetadataInfos[member.Name].ValueExtractor(mock);
 
@@ -123,7 +122,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var mock = new PersonMockData();
             var cache = new PropertiesMetadataPropertiesCache(_logMocked);
-            var numberProperties = CalculateFieldsAndProperties(mock);
 
 
             var metadataCacheParams = cache.ParseIntoParams(mock);
@@ -172,7 +170,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var count = AssertBetweenCacheParamAndDissectParams(personArguments, personDissect);
 
             _logMocked.DidNotReceive().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
-            count.ShouldBe(CalculateFieldsAndProperties(person));
+            count.ShouldBe(personDissect.Count);
 
 
             var teacherDissect = DissectPropertyInfoMetadata.GetMemberWithSensitivity(teacher).ToDictionary(x => x.Name);
@@ -187,7 +185,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var cache = new PropertiesMetadataPropertiesCache(_logMocked);
             var people = GeneratePeople(10000).ToList();
-            var numOfProperties = CalculateFieldsAndProperties(new PersonMockData());
+            var numOfProperties = DissectPropertyInfoMetadata.GetMemberWithSensitivity(new PersonMockData());
             var stopWatch = new Stopwatch();
 
             stopWatch.Start();
@@ -195,7 +193,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             foreach (var person in people)
             {
                 var tmpParams = cache.ParseIntoParams(person);
-                tmpParams.Count().ShouldBe(numOfProperties);
+                tmpParams.Count().ShouldBe(numOfProperties.Count());
             }
             stopWatch.Stop();
         }
@@ -214,12 +212,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
 
             return count;
-        }
-
-        private int CalculateFieldsAndProperties<TInstance>(TInstance instance) where TInstance : class
-        {
-            var numOfProperties = instance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Length + typeof(PersonMockData).GetFields(BindingFlags.Public | BindingFlags.Instance).Length;
-            return numOfProperties;
         }
 
         private IEnumerable<PersonMockData> GeneratePeople(int amount)
@@ -279,7 +271,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public bool Cryptic { get; set; } = true; 
             #endregion
 
-            #region PRIVATE Properties - Should be Ignored
+            #region Ignored Properties - Should be Ignored
 
             private int PrivateID { get; set; } = 10;
 
@@ -294,9 +286,16 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             [Sensitive(Secretive = true)]
 
-            private bool PrivateCryptic { get; set; } = true; 
+            private bool PrivateCryptic { get; set; } = true;
             #endregion
 
+
+
+            [NonSensitive]
+            public string PublicWithoutGet
+            {
+                set => value =  "Mocky";
+            } 
 
             //Redundant Members - Should be Ignored
             public void ShouldBeIgnoreMetho()
