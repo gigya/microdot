@@ -33,6 +33,13 @@ using Gigya.ServiceContract.Attributes;
 namespace Gigya.Microdot.SharedLogic.Events
 {
 
+    public class ReflectionMetadataInfo
+    {
+        public string Name { get; set; }
+        public Func<object, object> ValueExtractor { get; set; }
+        public Sensitivity? Sensitivity { get; set; }
+    }
+
     public interface IPropertiesMetadataPropertiesCache
     {
         IEnumerable<MetadataCacheParam> ParseIntoParams(object instance);
@@ -50,12 +57,12 @@ namespace Gigya.Microdot.SharedLogic.Events
     public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
         private readonly ILog _log;
-        private readonly ConcurrentDictionary<Type, (string Name, Func<object, object> ValueExtractor, Sensitivity? Sensitivity)[]> _propertyMetadataCache;
+        private readonly ConcurrentDictionary<Type, ReflectionMetadataInfo[]> _propertyMetadataCache;
 
         public PropertiesMetadataPropertiesCache(ILog log)
         {
             _log = log;
-            _propertyMetadataCache = new ConcurrentDictionary<Type, (string Name, Func<object, object> ValueExtractor, Sensitivity? Sensitivity)[]>();
+            _propertyMetadataCache = new ConcurrentDictionary<Type, ReflectionMetadataInfo[]>();
 
         }
 
@@ -94,7 +101,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-        internal static IEnumerable<(string Name, Func<object, object> ValueExtractor, Sensitivity? Sensitivity)> ExtracPropertiesMetadata(object instance, Type type)
+        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
         {
             foreach (var member in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null))
             {
@@ -113,7 +120,12 @@ namespace Gigya.Microdot.SharedLogic.Events
                 }
 
                 var lambda = Expression.Lambda<Func<object, object>>(Expression.Convert(memberExpression, typeof(object)), instanceParameter);
-                yield return (member.Name, lambda.Compile(), ExtractSensitivity(member));
+                yield return new ReflectionMetadataInfo
+                {
+                    Name = member.Name,
+                    ValueExtractor = lambda.Compile(),
+                    Sensitivity = ExtractSensitivity(member)
+                };
             }
         }
 

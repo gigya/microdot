@@ -23,7 +23,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
@@ -58,8 +57,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var expectedSensitiveProperty = typeof(PersonMockData).GetProperty(actualValue);
 
             PropertiesMetadataPropertiesCache.ExtractSensitivity(expectedSensitiveProperty).ShouldBe(expected);
-
-
         }
 
         [Test]
@@ -82,8 +79,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var mock = new PersonMockData();
             var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
 
-
-
             reflectionMetadataInfos[nameof(PersonMockData.FieldNonSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldNonSensitive);
             reflectionMetadataInfos[nameof(PersonMockData.FieldSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldSensitive);
             reflectionMetadataInfos[nameof(PersonMockData.FieldCryptic)].ValueExtractor(mock).ShouldBe(mock.FieldCryptic);
@@ -96,8 +91,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             reflectionMetadataInfos.Count.ShouldBe(numberOfPrivatePropertiesAndFields);
         }
-
-
 
         [Test]
         public void ExtracPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
@@ -125,9 +118,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             reflectionMetadataInfos.Count.ShouldBe(numberProperties);
         }
 
-
-
-
         [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
@@ -146,13 +136,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         }
 
-
         [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCrypticWithInheritenceAndException_ShouldBeEquivilent()
         {
             var mock = new TeacherWithExceptionMock();
             var cache = new PropertiesMetadataPropertiesCache(_logMocked);
-            var numberProperties = CalculateFieldsAndProperties(mock);
 
 
             var dissectedParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(mock).ToDictionary(x => x.Name);
@@ -165,9 +153,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             count.ShouldBe(dissectedParams.Count - 1);
 
             _logMocked.Received().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
-
         }
-
 
         [Test]
         public void ExtracPropertiesValues_SendTwoPeople_ShouldBeEquivilent()
@@ -242,8 +228,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 yield return new PersonMockData { ID = i, Name = "Name", Cryptic = true };
             }
-
-
         }
 
         #region MockData
