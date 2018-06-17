@@ -33,14 +33,6 @@ using Gigya.ServiceContract.Attributes;
 namespace Gigya.Microdot.SharedLogic.Events
 {
 
-    public class ReflectionMetadataInfo
-    {
-        public string PropertyName { get; set; }
-        public Func<object, object> ValueExtractor { get; set; }
-
-        public Sensitivity? Sensitivity { get; set; }
-    }
-
     public interface IPropertiesMetadataPropertiesCache
     {
         IEnumerable<MetadataCacheParam> ParseIntoParams(object instance);
@@ -58,12 +50,12 @@ namespace Gigya.Microdot.SharedLogic.Events
     public class PropertiesMetadataPropertiesCache : IPropertiesMetadataPropertiesCache
     {
         private readonly ILog _log;
-        private readonly ConcurrentDictionary<Type, ReflectionMetadataInfo[]> _propertyMetadataCache;
+        private readonly ConcurrentDictionary<Type, (string Name, Func<object, object> ValueExtractor, Sensitivity? Sensitivity)[]> _propertyMetadataCache;
 
         public PropertiesMetadataPropertiesCache(ILog log)
         {
             _log = log;
-            _propertyMetadataCache = new ConcurrentDictionary<Type, ReflectionMetadataInfo[]>();
+            _propertyMetadataCache = new ConcurrentDictionary<Type, (string Name, Func<object, object> ValueExtractor, Sensitivity? Sensitivity)[]>();
 
         }
 
@@ -89,46 +81,39 @@ namespace Gigya.Microdot.SharedLogic.Events
                 }
                 catch (Exception ex)
                 {
-                    _log.Warn("This property is invalid", unencryptedTags: new { propertyName = item.PropertyName }, exception: ex);
+                    _log.Warn("This property is invalid", unencryptedTags: new { propertyName = item.Name }, exception: ex);
                     continue;
                 }
 
                 yield return new MetadataCacheParam
                 {
-                    Name = item.PropertyName,
+                    Name = item.Name,
                     Value = value,
                     Sensitivity = item.Sensitivity
                 };
             }
         }
 
-        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
+        internal static IEnumerable<(string Name, Func<object, object> ValueExtractor, Sensitivity? Sensitivity)> ExtracPropertiesMetadata(object instance, Type type)
         {
             foreach (var member in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null))
             {
-
                 var instanceParameter = Expression.Parameter(typeof(object), "target");
                 MemberExpression memberExpression = null;
                 if (member.MemberType == MemberTypes.Property)
                 {
-                    memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType),(PropertyInfo)member);
+                    memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType), (PropertyInfo)member);
                 }
                 else
                 {
                     if (member.MemberType == MemberTypes.Field)
                     {
-                        memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType),(FieldInfo) member);
+                        memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
                     }
                 }
 
-                var lambda = Expression.Lambda<Func<object, object>>(Expression.Convert(memberExpression, typeof(object)),instanceParameter);
-
-                yield return new ReflectionMetadataInfo
-                {
-                    PropertyName = member.Name,
-                    ValueExtractor = lambda.Compile(),
-                    Sensitivity = ExtractSensitivity(member)
-                };
+                var lambda = Expression.Lambda<Func<object, object>>(Expression.Convert(memberExpression, typeof(object)), instanceParameter);
+                yield return (member.Name, lambda.Compile(), ExtractSensitivity(member));
             }
         }
 

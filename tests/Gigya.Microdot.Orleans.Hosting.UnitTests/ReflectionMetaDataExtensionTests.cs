@@ -58,6 +58,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var expectedSensitiveProperty = typeof(PersonMockData).GetProperty(actualValue);
 
             PropertiesMetadataPropertiesCache.ExtractSensitivity(expectedSensitiveProperty).ShouldBe(expected);
+
+
         }
 
         [Test]
@@ -75,11 +77,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void ExtracPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
+            const int numberOfPrivatePropertiesAndFields = 8;
+
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.PropertyName);
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
             var numberProperties = CalculateFieldsAndProperties(mock);
 
             reflectionMetadataInfos.Count.ShouldBe(numberProperties);
+
 
             int count = 0;
             foreach (var member in DissectPropertyInfoMetadata.GetMembers(mock))
@@ -91,6 +96,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             }
 
             count.ShouldBe(numberProperties);
+            count.ShouldBe(numberOfPrivatePropertiesAndFields);
             reflectionMetadataInfos.Count.ShouldBe(numberProperties);
         }
 
@@ -158,7 +164,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var teacherDissect = DissectPropertyInfoMetadata.GetMemberWithSensitivity(teacher).ToDictionary(x => x.Name);
 
             count = AssertBetweenCacheParamAndDissectParams(teacherArguments, teacherDissect);
-            count.ShouldBe(teacherDissect.Count-1);
+            count.ShouldBe(teacherDissect.Count - 1);
             _logMocked.Received().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
         }
 
@@ -215,6 +221,44 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         #region MockData
         private class PersonMockData
         {
+            //PRIVATE - Should be Ignored
+
+            [NonSensitive]
+            private string PrivateFieldNonSensitive = "PrivateFieldName";
+
+
+            [Sensitive(Secretive = false)]
+
+            private string PrivateFieldSensitive = "PrivateFieldSensitive";
+
+            [Sensitive(Secretive = true)]
+
+            private string PrivateFieldCryptic = "PrivateFieldCryptic";
+
+
+            //--------------------------------------------------------------------------------------------------------------------------------------
+            //--------------------------------------------------------------------------------------------------------------------------------------
+
+            //PUBLIC
+
+            [NonSensitive]
+            public string FieldNonSensitive = "FieldName";
+
+
+            [Sensitive(Secretive = false)]
+
+            public string FieldSensitive = "FieldSensitive";
+
+            [Sensitive(Secretive = true)]
+
+            public string FieldCryptic = "FieldCryptic";
+
+
+            //--------------------------------------------------------------------------------------------------------------------------------------
+            //--------------------------------------------------------------------------------------------------------------------------------------
+
+            //PUBLIC Properties
+
             public int ID { get; set; } = 10;
 
             [NonSensitive]
@@ -231,17 +275,35 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public bool Cryptic { get; set; } = true;
 
 
-            [NonSensitive]
-            public string FieldNonSensitive = "FieldName";
+            //--------------------------------------------------------------------------------------------------------------------------------------
+            //--------------------------------------------------------------------------------------------------------------------------------------
 
+            //PRIVATE Properties - Should be Ignored
+
+            private int PrivateID { get; set; } = 10;
+
+            [NonSensitive]
+            private string PrivateName { get; set; } = "Mocky";
+
+            private bool PrivateIsMale { get; set; } = false;
 
             [Sensitive(Secretive = false)]
 
-            public string FieldSensitive = "FieldSensitive";
+            private bool PrivateSensitive { get; set; } = true;
 
             [Sensitive(Secretive = true)]
 
-            public string FieldCryptic = "FieldCryptic";
+            private bool PrivateCryptic { get; set; } = true;
+
+            //--------------------------------------------------------------------------------------------------------------------------------------
+            //--------------------------------------------------------------------------------------------------------------------------------------
+
+            //PUBLIC Methods - Should be Ignored
+
+            public void ShouldBeIgnoreMetho()
+            {
+
+            }
 
         }
 
