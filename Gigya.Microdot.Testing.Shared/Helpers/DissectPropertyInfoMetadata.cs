@@ -9,9 +9,9 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
 {
     public static class DissectPropertyInfoMetadata
     {
-        public static Sensitivity? ExtractSensitivityFromPropertyInfo(MemberInfo propertyInfo)
+        public static Sensitivity? ExtractSensitivityFromPropertyInfo(MemberInfo memberInfo)
         {
-            var attribute = propertyInfo.GetCustomAttributes()
+            var attribute = memberInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
 
             if (attribute != null)
