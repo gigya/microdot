@@ -236,7 +236,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             }
             return true;
         }
-        
+
+        public async Task CreateMock(CalculatorServiceTests.ClassWithSingleSensitivityAttribute person)
+        {
+            await Task.FromResult(1);
+        }
+
+        public async Task<bool> CreateClassWithSingleSensitivityAttribute(CalculatorServiceTests.ClassWithSingleSensitivityAttribute classWithSingleSensitivity)
+        {
+            return true;
+        }
+
         private string AddPrifix(string prefix, string param)
         {
             return $"{prefix.Substring(0, 1).ToLower()}{prefix.Substring(1)}_{param}";

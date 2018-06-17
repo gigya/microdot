@@ -375,6 +375,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         }
 
+        [Test]
+        public async Task WithoutLogField_And_With_Inner_Property_WithSensitivity_ThrowException()
+        {
+            var person = new ClassWithSingleSensitivityAttribute();
+
+            
+            await Service.CreateMock(person);
+            (await Service.CreateClassWithSingleSensitivityAttribute(person)).ShouldBeTrue();
+
+        }
+
 
 
 
@@ -385,6 +396,16 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         #region MockData
+
+
+        public class ClassWithSingleSensitivityAttribute
+        {
+            [Sensitive]
+            public string BackAccount { get; set; } = "Back Account 111--222-3333";
+
+        }
+
+
         public class Person
         {
             public int ID { get; set; } = 100;
