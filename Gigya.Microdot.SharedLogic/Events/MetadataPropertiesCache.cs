@@ -103,30 +103,34 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
         {
-            foreach (var member in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null))
+            var list = new List<ReflectionMetadataInfo>();
+
+            foreach (var member in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
+                                  .Where(x=> x is FieldInfo  || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead) ))
             {
                 var instanceParameter = Expression.Parameter(typeof(object), "target");
                 MemberExpression memberExpression = null;
+
                 if (member.MemberType == MemberTypes.Property)
                 {
                     memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType), (PropertyInfo)member);
                 }
-                else
-                {
-                    if (member.MemberType == MemberTypes.Field)
-                    {
-                        memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
-                    }
-                }
+                else if (member.MemberType == MemberTypes.Field)
+                     {
+                         memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
+                     }
 
-                var lambda = Expression.Lambda<Func<object, object>>(Expression.Convert(memberExpression, typeof(object)), instanceParameter);
-                yield return new ReflectionMetadataInfo
+                var converter = Expression.Convert(memberExpression, typeof(object));
+                var lambda = Expression.Lambda<Func<object, object>>(converter, instanceParameter);
+
+                list.Add(new ReflectionMetadataInfo
                 {
                     Name = member.Name,
                     ValueExtractor = lambda.Compile(),
                     Sensitivity = ExtractSensitivity(member)
-                };
+                });
             }
+            return list;
         }
 
         internal static Sensitivity? ExtractSensitivity(MemberInfo memberInfo)

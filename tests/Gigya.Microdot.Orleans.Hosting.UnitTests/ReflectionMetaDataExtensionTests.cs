@@ -233,11 +233,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         #region MockData
         private class PersonMockData
         {
-            //PRIVATE - Should be Ignored
 
+            #region Should be Ignored
             [NonSensitive]
             private string PrivateFieldNonSensitive = "PrivateFieldName";
-
 
             [Sensitive(Secretive = false)]
 
@@ -245,14 +244,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             [Sensitive(Secretive = true)]
 
-            private string PrivateFieldCryptic = "PrivateFieldCryptic";
+            private string PrivateFieldCryptic = "PrivateFieldCryptic"; 
+            #endregion
 
-
-            //--------------------------------------------------------------------------------------------------------------------------------------
-            //--------------------------------------------------------------------------------------------------------------------------------------
-
-            //PUBLIC
-
+            #region Log Fields
             [NonSensitive]
             public string FieldNonSensitive = "FieldName";
 
@@ -263,13 +258,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             [Sensitive(Secretive = true)]
 
-            public string FieldCryptic = "FieldCryptic";
+            public string FieldCryptic = "FieldCryptic"; 
+            #endregion
 
-
-            //--------------------------------------------------------------------------------------------------------------------------------------
-            //--------------------------------------------------------------------------------------------------------------------------------------
-
-            //PUBLIC Properties
+            #region PUBLIC Properties
 
             public int ID { get; set; } = 10;
 
@@ -284,13 +276,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             [Sensitive(Secretive = true)]
 
-            public bool Cryptic { get; set; } = true;
+            public bool Cryptic { get; set; } = true; 
+            #endregion
 
-
-            //--------------------------------------------------------------------------------------------------------------------------------------
-            //--------------------------------------------------------------------------------------------------------------------------------------
-
-            //PRIVATE Properties - Should be Ignored
+            #region PRIVATE Properties - Should be Ignored
 
             private int PrivateID { get; set; } = 10;
 
@@ -305,13 +294,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             [Sensitive(Secretive = true)]
 
-            private bool PrivateCryptic { get; set; } = true;
+            private bool PrivateCryptic { get; set; } = true; 
+            #endregion
 
-            //--------------------------------------------------------------------------------------------------------------------------------------
-            //--------------------------------------------------------------------------------------------------------------------------------------
 
-            //PUBLIC Methods - Should be Ignored
-
+            //Redundant Members - Should be Ignored
             public void ShouldBeIgnoreMetho()
             {
 
