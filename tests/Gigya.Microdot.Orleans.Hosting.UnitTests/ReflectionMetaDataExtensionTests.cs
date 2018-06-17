@@ -93,6 +93,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             reflectionMetadataInfos[nameof(PersonMockData.IsMale)].ValueExtractor(mock).ShouldBe(mock.IsMale);
             reflectionMetadataInfos[nameof(PersonMockData.Sensitive)].ValueExtractor(mock).ShouldBe(mock.Sensitive);
             reflectionMetadataInfos[nameof(PersonMockData.Cryptic)].ValueExtractor(mock).ShouldBe(mock.Cryptic);
+
+            reflectionMetadataInfos.Count.ShouldBe(numberOfPrivatePropertiesAndFields);
         }
 
 
