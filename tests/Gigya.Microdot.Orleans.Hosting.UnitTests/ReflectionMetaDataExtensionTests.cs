@@ -75,6 +75,29 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
 
         [Test]
+        public void ExtracMembersValues_ExtractDataFromObject_ShouldBeEquivilent()
+        {
+            const int numberOfPrivatePropertiesAndFields = 8;
+
+            var mock = new PersonMockData();
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
+
+
+
+            reflectionMetadataInfos[nameof(PersonMockData.FieldNonSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldNonSensitive);
+            reflectionMetadataInfos[nameof(PersonMockData.FieldSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldSensitive);
+            reflectionMetadataInfos[nameof(PersonMockData.FieldCryptic)].ValueExtractor(mock).ShouldBe(mock.FieldCryptic);
+
+            reflectionMetadataInfos[nameof(PersonMockData.ID)].ValueExtractor(mock).ShouldBe(mock.ID);
+            reflectionMetadataInfos[nameof(PersonMockData.Name)].ValueExtractor(mock).ShouldBe(mock.Name);
+            reflectionMetadataInfos[nameof(PersonMockData.IsMale)].ValueExtractor(mock).ShouldBe(mock.IsMale);
+            reflectionMetadataInfos[nameof(PersonMockData.Sensitive)].ValueExtractor(mock).ShouldBe(mock.Sensitive);
+            reflectionMetadataInfos[nameof(PersonMockData.Cryptic)].ValueExtractor(mock).ShouldBe(mock.Cryptic);
+        }
+
+
+
+        [Test]
         public void ExtracPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             const int numberOfPrivatePropertiesAndFields = 8;
@@ -99,6 +122,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             count.ShouldBe(numberOfPrivatePropertiesAndFields);
             reflectionMetadataInfos.Count.ShouldBe(numberProperties);
         }
+
+
+
 
         [Test]
         public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
