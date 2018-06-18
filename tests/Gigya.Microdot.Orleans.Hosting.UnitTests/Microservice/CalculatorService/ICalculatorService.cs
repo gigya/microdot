@@ -63,14 +63,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         Task<bool> IsLogParamSucceeded(List<string> sensitives, List<string> NoneSensitives, List<string> NotExists);
         Task CreatePerson([LogFields] CalculatorServiceTests.Person person);
-
-
         Task LogGrainId();
         Task<bool> ValidatePersonLogFields([LogFields] CalculatorServiceTests.Person person);
 
-        Task CreateMock(CalculatorServiceTests.ClassWithSingleSensitivityAttribute person);
-
-        Task<bool> CreateClassWithSingleSensitivityAttribute(
-             CalculatorServiceTests.ClassWithSingleSensitivityAttribute person);
     }
 }
