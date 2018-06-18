@@ -45,9 +45,7 @@ namespace Gigya.Microdot.Hosting.Validators
                 foreach (var method in serviceInterface.GetMethods())
                 {
                     if (method.GetCustomAttribute(typeof(SensitiveAttribute)) != null && method.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
-                    {
                         throw new ProgrammaticException($"[Sensitive] and [NonSensitive] can't both be applied on the same method ({method.Name}) on serviceInterface ({serviceInterface.Name})");
-                    }
 
                     foreach (var parameter in method.GetParameters())
                     {

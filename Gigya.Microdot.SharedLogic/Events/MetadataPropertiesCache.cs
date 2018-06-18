@@ -76,7 +76,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         private IEnumerable<MetadataCacheParam> ExtracParams(object instance, Type type)
         {
-            var propertyMetadata = _propertyMetadataCache.GetOrAdd(type, x => ExtracPropertiesMetadata(instance, type).ToArray());
+            var propertyMetadata = _propertyMetadataCache.GetOrAdd(type, x => ExtracMemberMetadata(instance, type).ToArray());
 
             foreach (var item in propertyMetadata)
             {
@@ -101,7 +101,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
+        internal static IEnumerable<ReflectionMetadataInfo> ExtracMemberMetadata(object instance, Type type)
         {
             var list = new List<ReflectionMetadataInfo>();
             var members = type.FindMembers(MemberTypes.Property | MemberTypes.Field,
@@ -114,13 +114,9 @@ namespace Gigya.Microdot.SharedLogic.Events
                 MemberExpression memberExpression = null;
 
                 if (member.MemberType == MemberTypes.Property)
-                {
                     memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType), (PropertyInfo)member);
-                }
                 else if (member.MemberType == MemberTypes.Field)
-                     {
-                         memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
-                     }
+                    memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
 
                 var converter = Expression.Convert(memberExpression, typeof(object));
                 var lambda = Expression.Lambda<Func<object, object>>(converter, instanceParameter);

@@ -77,7 +77,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const int numberOfPrivatePropertiesAndFields = 8;
 
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracMemberMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
 
             reflectionMetadataInfos[nameof(PersonMockData.FieldNonSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldNonSensitive);
             reflectionMetadataInfos[nameof(PersonMockData.FieldSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldSensitive);
@@ -98,7 +98,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const int numberOfPrivatePropertiesAndFields = 8;
 
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracPropertiesMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
+            var reflectionMetadataInfos = PropertiesMetadataPropertiesCache.ExtracMemberMetadata(mock, mock.GetType()).ToDictionary(x => x.Name);
             var dissectParams = DissectPropertyInfoMetadata.GetMembers(mock);
             var numberProperties = dissectParams.Count();
 
