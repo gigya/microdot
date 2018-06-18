@@ -57,7 +57,8 @@ namespace Gigya.Common.Application.UnitTests.Validation
         [TestCase(typeof(TwoAttributeOnTheSameMethod))]
         [TestCase(typeof(TwoAttributeOnTheeSameParameter))]
         [TestCase(typeof(IInvalid_WithoutLogFieldAndWithSensitivityOnProperty))]
-        [TestCase(typeof(IInvalid_WithoutLogFieldAndWithSensitivityOnField))]
+        [TestCase(typeof(IInvalid_WithoutLogFieldAndWithinNestedSensitivity))]
+        [TestCase(typeof(IInvalid_WithLogFieldAndWithSensitivityOnField))]
 
         public void ValidationShouldFail(Type typeToValidate)
         {
@@ -65,7 +66,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Assert.Throws<ProgrammaticException>(_serviceValidator.Validate);
         }
 
-        [TestCase(typeof(IValidMock))]
+        //[TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
 
         public void ValidationShouldSucceed(Type typeToValidate)
@@ -95,11 +96,11 @@ namespace Gigya.Common.Application.UnitTests.Validation
         [HttpService(Port, Name = "This service contains methods with invalid parameter types")]
         private interface IInvalid_WithoutLogFieldAndWithSensitivityOnProperty
         {
-            Task NotValid(SmallSchoolWithhAttribute smallSchoolWithhAttribute);
+            Task NotValid(SchoolWithhAttributeWithoutNested schoolWithhAttributeWithoutNested);
         }
 
 
-        public class SmallSchoolWithhAttribute
+        public class SchoolWithhAttributeWithoutNested
         {
             [Sensitive]
             public string Address { get; set; } = "Bad";
@@ -108,16 +109,16 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         #endregion
 
-        #region IInvalid_WithoutLogFieldAndWithSensitivityOnField
+        #region IInvalid_WithoutLogFieldAndWithinNestedSensitivity
 
         [HttpService(Port, Name = "This service contains methods with invalid parameter types")]
-        private interface IInvalid_WithoutLogFieldAndWithSensitivityOnField
+        private interface IInvalid_WithoutLogFieldAndWithinNestedSensitivity
         {
-            Task NotValid(SmallSchoolWithhAttributeOnField test);
+            Task NotValid(SchoolWithhLevel2Attribute test);
         }
 
 
-        public class SmallSchoolWithhAttributeOnField
+        public class SchoolWithhLevel2Attribute
         {
             public class StudentWithFieldAttribute
             {
@@ -142,24 +143,33 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         #endregion
 
+        #region IInvalid_WithLogFieldAndWithSensitivityOnField
+
+        [HttpService(Port, Name = "This service contains methods with invalid parameter types")]
+        private interface IInvalid_WithLogFieldAndWithSensitivityOnField
+        {
+            Task NotValid(SchoolWithhLevel2Attribute test);
+        }
+
+        #endregion
+
         #region IComplexParameterValidation
         [HttpService(Port, Name = "This service contains valid methods.")]
         public interface IComplexParameterValidation
         {
 
-            Task CreateSchoolWithLogField(SmallSchool school);
-            Task CreateSchoolWithLogField(SchoolValidatorWithoutAttributes schoolValidator1);
-            Task CreateSchoolWithLogField(SchoolValidatorWithoutAttributes schoolValidator1, SchoolValidatorWithoutAttributes schoolValidator2);
-            Task CreateSchoolWithLogField(SchoolValidatorWithoutAttributes schoolValidator1, SchoolValidatorWithoutAttributes schoolValidator2, string test);
+            Task CreateSchoolWithLogField(SchoolWithoutAttributes schoolWithoutAttributes);
+            Task CreateSchoolWithLogField(SchooWithNestedClassWithoutAttributes schoolValidator1);
+            Task CreateSchoolWithLogField(SchooWithNestedClassWithoutAttributes schoolValidator1, SchooWithNestedClassWithoutAttributes schoolValidator2, string test);
 
 
-            Task CreateSchoolWithoutLogField([LogFields]SchoolValidatorWithoutAttributes schoolValidator1);
-            Task CreateSchoolWithoutLogField([LogFields]SchoolValidatorWithoutAttributes schoolValidator1, SchoolValidatorWithoutAttributes schoolValidator2);
-            Task CreateSchoolWithoutLogField([LogFields]SchoolValidatorWithoutAttributes schoolValidator1, SchoolValidatorWithoutAttributes schoolValidator2, string test);
+            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithLevel1Attribute schoolValidator1);
+            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithoutAttributes schoolValidator1, SchooWithNestedClassWithoutAttributes schoolValidator2);
+            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithoutAttributes schoolValidator1, SchooWithNestedClassWithoutAttributes schoolValidator2, string test);
 
         }
 
-        public class SchoolValidatorWithoutAttributes
+        public class SchooWithNestedClassWithoutAttributes
         {
             public class StudentWithoutAttribute
             {
@@ -180,9 +190,31 @@ namespace Gigya.Common.Application.UnitTests.Validation
             public StudentWithoutAttribute Student { get; set; } = new StudentWithoutAttribute();
         }
 
-        public class SmallSchool
-        {
 
+        public class SchooWithNestedClassWithLevel1Attribute
+        {
+            public class PerosnWithoutAttribute
+            {
+                public string Name { get; set; } = "Maria";
+
+                public string FamilyName { get; set; } = "Bad";
+
+                public int Age { get; set; } = 20;
+            }
+
+            [Sensitive]
+            public string FieldName = "Maria";
+            public string SchoolName = "Maria";
+
+            public string Address { get; set; } = "Bad";
+            public string FieldAddress { get; set; } = "Bad";
+
+            public PerosnWithoutAttribute Student { get; set; } = new PerosnWithoutAttribute();
+        }
+
+        public class SchoolWithoutAttributes
+        {
+            [NonSensitive]
             public string FieldName { get; set; } = "Maria";
             public string SchoolName { get; set; } = "Maria";
         }

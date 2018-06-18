@@ -31,6 +31,7 @@ namespace Gigya.Microdot.Hosting.Validators
     public class SensitivityAttributesValidator : IValidator
     {
         private readonly IServiceInterfaceMapper _serviceInterfaceMapper;
+        private const int Level = 1;
 
         public SensitivityAttributesValidator(IServiceInterfaceMapper serviceInterfaceMapper)
         {
@@ -55,19 +56,16 @@ namespace Gigya.Microdot.Hosting.Validators
                             throw new ProgrammaticException($"[Sensitive] and [NonSensitive] can't both be applied on the same parameter ({parameter.Name}) in method ({method.Name}) on serviceInterface ({serviceInterface.Name})");
                         }
 
-                        if (parameter.ParameterType.IsClass && parameter.ParameterType != typeof(string))
-                        {
-                            if (parameter.GetCustomAttribute(typeof(LogFieldsAttribute)) == null)
-                            {
-                                SearchSensitivityAttribute(parameter.ParameterType);
-                            }
-                        }
+                        var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
+
+                        if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
+                            SearchSensitivityAttribute(parameter.ParameterType, logFieldExists, Level);
                     }
                 }
             }
         }
 
-        private void SearchSensitivityAttribute(Type type)
+        private void SearchSensitivityAttribute(Type type, bool logFieldExists, int level)
         {
             if (type.IsClass == false || type == typeof(string))
             {
@@ -76,24 +74,37 @@ namespace Gigya.Microdot.Hosting.Validators
 
             foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                if (IsSensitivityAttributeExists(property))
+                if (IsLegitimate(property, logFieldExists, level) == false)
                 {
                     throw new ProgrammaticException($"[SensitiveAttribute] should not be applied on a Property of an complex parameter withot LogField Attribute");
                 }
 
-                SearchSensitivityAttribute(property.PropertyType);
+                SearchSensitivityAttribute(property.PropertyType, logFieldExists, level + 1);
             }
 
             foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
             {
-                if (IsSensitivityAttributeExists(field))
+                if (IsLegitimate(field, logFieldExists, level) == false)
                 {
                     throw new ProgrammaticException($"[SensitiveAttribute] should not be applied on a Field of an complex parameter withot LogField Attribute");
                 }
 
-                SearchSensitivityAttribute(field.FieldType);
+                SearchSensitivityAttribute(field.FieldType, logFieldExists, level + 1);
             }
         }
-        private bool IsSensitivityAttributeExists(MemberInfo memberInfo) => Attribute.IsDefined(memberInfo, typeof(SensitiveAttribute));
+
+        private bool IsLegitimate(MemberInfo memberInfo, bool logFieldExists, int level)
+        {
+            if (Attribute.IsDefined(memberInfo, typeof(SensitiveAttribute)))
+            {
+                if (logFieldExists)
+                {
+                    return level == Level;
+                }
+                return false;
+            }
+
+            return true;
+        }
     }
 }
