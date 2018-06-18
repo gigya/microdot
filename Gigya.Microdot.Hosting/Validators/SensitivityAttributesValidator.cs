@@ -57,43 +57,53 @@ namespace Gigya.Microdot.Hosting.Validators
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
 
                         if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
-                            SearchSensitivityAttribute(parameter.ParameterType, logFieldExists, Level);
+                            try
+                            {
+                                VerifyMisplacedSensitivityAttribute(parameter.ParameterType, logFieldExists, Level);
+                            }
+                            catch (ArgumentException ex)
+                            {
+                                // better message also explaining attributes can't be put on nested members
+                                throw new ProgrammaticException($"[Sensitive] and [NonSensitive] should not be applied on a Property of an complex parameter without LogField Attribute" + ex.Message);
+                            }
                     }
                 }
             }
         }
 
-        private void SearchSensitivityAttribute(Type type, bool logFieldExists, int level)
+        private void VerifyMisplacedSensitivityAttribute(Type type, bool logFieldExists, int level)
         {
-            if (type.IsClass == false || type == typeof(string))
-            {
+
+            if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
                 return;
-            }
 
             foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
                 if (IsLegitimate(property, logFieldExists, level) == false)
-                {
-                    throw new ProgrammaticException($"[SensitiveAttribute] should not be applied on a Property of an complex parameter withot LogField Attribute");
-                }
+                    throw new ArgumentException(type.FullName);
 
-                SearchSensitivityAttribute(property.PropertyType, logFieldExists, level + 1);
+                try { VerifyMisplacedSensitivityAttribute(property.PropertyType, logFieldExists, level + 1); }
+                catch (ArgumentException ex) {
+                    throw new ArgumentException(type.FullName + " --> " + ex.Message);
+                }
             }
 
+            // try unify with loop above
             foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
             {
                 if (IsLegitimate(field, logFieldExists, level) == false)
-                {
-                    throw new ProgrammaticException($"[SensitiveAttribute] should not be applied on a Field of an complex parameter withot LogField Attribute");
-                }
+                    throw new ArgumentException(type.FullName);
 
-                SearchSensitivityAttribute(field.FieldType, logFieldExists, level + 1);
+                try { VerifyMisplacedSensitivityAttribute(field.FieldType, logFieldExists, level + 1); }
+                catch (ArgumentException ex) {
+                    throw new ArgumentException(type.FullName + " --> " + ex.Message);
+                }
             }
         }
 
         private bool IsLegitimate(MemberInfo memberInfo, bool logFieldExists, int level)
         {
-            if (Attribute.IsDefined(memberInfo, typeof(SensitiveAttribute)))
+            if (Attribute.IsDefined(memberInfo, typeof(SensitiveAttribute))) // incl. nonsensitive
             {
                 if (logFieldExists)
                 {
