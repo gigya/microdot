@@ -32,7 +32,6 @@ namespace Gigya.Microdot.Hosting.Validators
     {
         private readonly IServiceInterfaceMapper _serviceInterfaceMapper;
 
-
         public SensitivityAttributesValidator(IServiceInterfaceMapper serviceInterfaceMapper)
         {
             _serviceInterfaceMapper = serviceInterfaceMapper;
@@ -95,8 +94,6 @@ namespace Gigya.Microdot.Hosting.Validators
                 SearchSensitivityAttribute(field.FieldType);
             }
         }
-
-
         private bool IsSensitivityAttributeExists(MemberInfo memberInfo) => Attribute.IsDefined(memberInfo, typeof(SensitiveAttribute));
     }
 }
