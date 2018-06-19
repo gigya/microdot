@@ -113,20 +113,20 @@ namespace Gigya.Microdot.Hosting.Validators
             {
                 if (logFieldExists)
                 {
-                    reason = new SensitivityWrongLevelException(attribute.GetType().Name, Level, level);
+                    reason = new SensitivityAttributeInWrongLevelException(attribute.GetType().Name, Level, level);
                     return level == Level;
                 }
 
-                reason = new SensitivityAttributeExistsWithoutLogField(attribute.GetType().Name);
+                reason = new SensitivityAttributeExistsWithoutLogFieldAttribute(attribute.GetType().Name);
                 return false;
             }
 
             return true;
         }
 
-        private class SensitivityAttributeExistsWithoutLogField : Exception
+        private class SensitivityAttributeExistsWithoutLogFieldAttribute : Exception
         {
-            public SensitivityAttributeExistsWithoutLogField(string attribute)
+            public SensitivityAttributeExistsWithoutLogFieldAttribute(string attribute)
                 : base($"{attribute} appears when LogField is missing - Invalid behaviour")
             {
 
@@ -134,10 +134,10 @@ namespace Gigya.Microdot.Hosting.Validators
         }
 
 
-        private class SensitivityWrongLevelException : Exception
+        private class SensitivityAttributeInWrongLevelException : Exception
         {
 
-            public SensitivityWrongLevelException(string attribute, int expectedLevel, int actualLevel)
+            public SensitivityAttributeInWrongLevelException(string attribute, int expectedLevel, int actualLevel)
                     : base($"{attribute} Should have been on {expectedLevel} depth but was on {actualLevel} depth - Invalid behaviour")
 
             {
