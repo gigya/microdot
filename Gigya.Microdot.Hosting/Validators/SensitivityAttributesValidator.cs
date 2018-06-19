@@ -21,7 +21,9 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.ServiceContract.Attributes;
@@ -57,6 +59,7 @@ namespace Gigya.Microdot.Hosting.Validators
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
 
                         if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
+                        {
                             try
                             {
                                 VerifyMisplacedSensitivityAttribute(parameter.ParameterType, logFieldExists, Level);
@@ -64,8 +67,11 @@ namespace Gigya.Microdot.Hosting.Validators
                             catch (ArgumentException ex)
                             {
                                 // better message also explaining attributes can't be put on nested members
-                                throw new ProgrammaticException($"[Sensitive] and [NonSensitive] should not be applied on a Property of an complex parameter without LogField Attribute" + ex.Message);
+                                throw new ProgrammaticException(
+                                    $"[Sensitive] and [NonSensitive] should not be applied on a Property of an complex parameter without LogField Attribute" +
+                                    ex.Message);
                             }
+                        }
                     }
                 }
             }
@@ -77,42 +83,66 @@ namespace Gigya.Microdot.Hosting.Validators
             if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
                 return;
 
-            foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
+                                           .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead)))
             {
-                if (IsLegitimate(property, logFieldExists, level) == false)
-                    throw new ArgumentException(type.FullName);
+                Exception reason = null;
 
-                try { VerifyMisplacedSensitivityAttribute(property.PropertyType, logFieldExists, level + 1); }
-                catch (ArgumentException ex) {
-                    throw new ArgumentException(type.FullName + " --> " + ex.Message);
+                if (IsLegitimate(memberInfo, logFieldExists, level, ref  reason) == false)
+                    throw new ArgumentException($"On {type.FullName}::{memberInfo.Name} the following error occured ==> [{reason.Message}]");
+
+                try
+                {
+                    if (memberInfo is PropertyInfo propertyInfo)
+                        VerifyMisplacedSensitivityAttribute(propertyInfo.PropertyType, logFieldExists, level + 1);
+                    else
+                        VerifyMisplacedSensitivityAttribute(((FieldInfo)memberInfo).FieldType, logFieldExists, level + 1);
                 }
-            }
-
-            // try unify with loop above
-            foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
-            {
-                if (IsLegitimate(field, logFieldExists, level) == false)
-                    throw new ArgumentException(type.FullName);
-
-                try { VerifyMisplacedSensitivityAttribute(field.FieldType, logFieldExists, level + 1); }
-                catch (ArgumentException ex) {
+                catch (ArgumentException ex)
+                {
                     throw new ArgumentException(type.FullName + " --> " + ex.Message);
                 }
             }
         }
 
-        private bool IsLegitimate(MemberInfo memberInfo, bool logFieldExists, int level)
+        private bool IsLegitimate(MemberInfo memberInfo, bool logFieldExists, int level, ref Exception reason)
         {
-            if (Attribute.IsDefined(memberInfo, typeof(SensitiveAttribute))) // incl. nonsensitive
+            var attribute = memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) ?? memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute));
+
+            if (attribute != null)
             {
                 if (logFieldExists)
                 {
+                    reason = new SensitivityWrongLevelException(attribute.GetType().Name, Level, level);
                     return level == Level;
                 }
+
+                reason = new SensitivityAttributeExistsWithoutLogField(attribute.GetType().Name);
                 return false;
             }
 
             return true;
         }
+
+        private class SensitivityAttributeExistsWithoutLogField : Exception
+        {
+            public SensitivityAttributeExistsWithoutLogField(string attribute)
+                : base($"{attribute} appears when LogField is missing - Invalid behaviour")
+            {
+
+            }
+        }
+
+
+        private class SensitivityWrongLevelException : Exception
+        {
+
+            public SensitivityWrongLevelException(string attribute, int expectedLevel, int actualLevel)
+                    : base($"{attribute} Should have been on {expectedLevel} depth but was on {actualLevel} depth - Invalid behaviour")
+
+            {
+            }
+        }
+
     }
 }

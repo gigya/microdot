@@ -66,7 +66,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Assert.Throws<ProgrammaticException>(_serviceValidator.Validate);
         }
 
-        //[TestCase(typeof(IValidMock))]
+        [TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
 
         public void ValidationShouldSucceed(Type typeToValidate)
@@ -202,7 +202,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
                 public int Age { get; set; } = 20;
             }
 
-            [Sensitive]
+            [NonSensitive]
             public string FieldName = "Maria";
             public string SchoolName = "Maria";
 
@@ -214,12 +214,10 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         public class SchoolWithoutAttributes
         {
-            [NonSensitive]
             public string FieldName { get; set; } = "Maria";
             public string SchoolName { get; set; } = "Maria";
         }
         #endregion
-
 
         private interface IValidMock
         {
