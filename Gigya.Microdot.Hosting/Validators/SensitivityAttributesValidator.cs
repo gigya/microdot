@@ -76,9 +76,9 @@ namespace Gigya.Microdot.Hosting.Validators
 
                 if (memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
                     if (!logFieldExists)
-                        throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path)}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
+                        throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
                     else if (path.Count > 1)
-                        throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path)}' that is marked as [Sensitive] or [NonSensitive], but only root-level members can be marked as such.");
+                        throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but only root-level members can be marked as such.");
 
                 Type memberType = memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
                 VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path);
