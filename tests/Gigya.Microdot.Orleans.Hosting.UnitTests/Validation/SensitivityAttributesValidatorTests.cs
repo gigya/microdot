@@ -66,7 +66,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Assert.Throws<ProgrammaticException>(_serviceValidator.Validate);
         }
 
-        [TestCase(typeof(IValidMock))]
+        //[TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
 
         public void ValidationShouldSucceed(Type typeToValidate)
@@ -159,13 +159,13 @@ namespace Gigya.Common.Application.UnitTests.Validation
         {
 
             Task CreateSchoolWithLogField(SchoolWithoutAttributes schoolWithoutAttributes);
-            Task CreateSchoolWithLogField(SchooWithNestedClassWithoutAttributes schoolValidator1);
-            Task CreateSchoolWithLogField(SchooWithNestedClassWithoutAttributes schoolValidator1, SchooWithNestedClassWithoutAttributes schoolValidator2, string test);
+            Task CreateSchoolWithLogField(SchooWithNestedClassWithoutAttributes param1);
+            Task CreateSchoolWithLogField(SchooWithNestedClassWithoutAttributes param1, SchooWithNestedClassWithoutAttributes schoolValidator2, string test);
 
 
-            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithLevel1Attribute schoolValidator1);
-            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithoutAttributes schoolValidator1, SchooWithNestedClassWithoutAttributes schoolValidator2);
-            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithoutAttributes schoolValidator1, SchooWithNestedClassWithoutAttributes schoolValidator2, string test);
+            Task CreateSchoolWithoutLogField([LogFields]FactoryWithNestedClassWithAttribute factory);
+            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithoutAttributes param1, SchooWithNestedClassWithoutAttributes schoolValidator2);
+            Task CreateSchoolWithoutLogField([LogFields]SchooWithNestedClassWithoutAttributes param1, [LogFields]FactoryWithNestedClassWithAttribute factory, string test);
 
         }
 
@@ -191,25 +191,39 @@ namespace Gigya.Common.Application.UnitTests.Validation
         }
 
 
-        public class SchooWithNestedClassWithLevel1Attribute
+        public class FactoryWithNestedClassWithAttribute
         {
-            public class PerosnWithoutAttribute
+            public class WorkerWithoutAttribute
             {
-                public string Name { get; set; } = "Maria";
+                //[NonSensitive]
 
-                public string FamilyName { get; set; } = "Bad";
+                public string InnerName { get; set; } = "Maria";
 
-                public int Age { get; set; } = 20;
+                public string InnerFamilyName { get; set; } = "Bad";
+
+                public int InnerAge { get; set; } = 20;
             }
+
+
+
 
             [NonSensitive]
             public string FieldName = "Maria";
+            [NonSensitive]
+
             public string SchoolName = "Maria";
 
+
+            public WorkerWithoutAttribute Student { get; set; } = new WorkerWithoutAttribute();
+
+
+            [NonSensitive]
+
             public string Address { get; set; } = "Bad";
+            [NonSensitive]
+
             public string FieldAddress { get; set; } = "Bad";
 
-            public PerosnWithoutAttribute Student { get; set; } = new PerosnWithoutAttribute();
         }
 
         public class SchoolWithoutAttributes
