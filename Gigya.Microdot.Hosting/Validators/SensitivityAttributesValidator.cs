@@ -69,11 +69,11 @@ namespace Gigya.Microdot.Hosting.Validators
             if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
                 return;
 
-            path.Push(type.FullName);
-
             foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
                                            .Where(x => x is FieldInfo || (x is PropertyInfo propertyInfo) && propertyInfo.CanRead))
             {
+                path.Push(memberInfo.Name);
+
                 if (memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
                     if (!logFieldExists)
                         throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path)}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
@@ -82,9 +82,9 @@ namespace Gigya.Microdot.Hosting.Validators
 
                 Type memberType = memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
                 VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path);
-            }
 
-            path.Pop();
+                path.Pop();
+            }
         }
     }
 }
