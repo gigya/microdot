@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -33,7 +34,6 @@ namespace Gigya.Microdot.Hosting.Validators
     public class SensitivityAttributesValidator : IValidator
     {
         private readonly IServiceInterfaceMapper _serviceInterfaceMapper;
-        private const int Level = 1;
 
         public SensitivityAttributesValidator(IServiceInterfaceMapper serviceInterfaceMapper)
         {
@@ -60,89 +60,35 @@ namespace Gigya.Microdot.Hosting.Validators
 
                         if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
                         {
-                            try
-                            {
-                                VerifyMisplacedSensitivityAttribute(parameter.ParameterType, logFieldExists, Level);
-                            }
-                            catch (ArgumentException ex)
-                            {
-                                // better message also explaining attributes can't be put on nested members
-                                throw new ProgrammaticException(
-                                    $"[Sensitive] and [NonSensitive] should not be applied on a Property of an complex parameter without LogField Attribute" +
-                                    ex.Message);
-                            }
+                            var stack = new Stack<string>();
+                            if (FindFieldWithAttribute(parameter.ParameterType, stack))
+                                if (!logFieldExists)
+                                    throw new ProgrammaticException($"The method '{method.Name}' parameter '{parameter.Name}' has a member '{string.Join(" --> ", stack)}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
+                                else if (stack.Count > 1)
+                                    throw new ProgrammaticException($"The method '{method.Name}' parameter '{parameter.Name}' has a member '{string.Join(" --> ", stack)}' that is marked as [Sensitive] or [NonSensitive], but these are only allowed on the root object");
                         }
                     }
                 }
             }
         }
 
-        private void VerifyMisplacedSensitivityAttribute(Type type, bool logFieldExists, int level)
-        {
 
+        private bool FindFieldWithAttribute(Type type, Stack<string> path)
+        {
             if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
-                return;
+                return false;
+
+            path.Push(type.FullName);
 
             foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
-                                           .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead)))
-            {
-                Exception reason = null;
+                                           .Where(x => x is FieldInfo || (x is PropertyInfo propertyInfo) && propertyInfo.CanRead))
+                if (   FindFieldWithAttribute(memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType, path)
+                    || memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null
+                    || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
+                    return true;
 
-                if (IsLegitimate(memberInfo, logFieldExists, level, ref  reason) == false)
-                    throw new ArgumentException($"On {type.FullName}::{memberInfo.Name} the following error occured ==> [{reason.Message}]");
-
-                try
-                {
-                    if (memberInfo is PropertyInfo propertyInfo)
-                        VerifyMisplacedSensitivityAttribute(propertyInfo.PropertyType, logFieldExists, level + 1);
-                    else
-                        VerifyMisplacedSensitivityAttribute(((FieldInfo)memberInfo).FieldType, logFieldExists, level + 1);
-                }
-                catch (ArgumentException ex)
-                {
-                    throw new ArgumentException(type.FullName + " --> " + ex.Message);
-                }
-            }
+            path.Pop();
+            return false;
         }
-
-        private bool IsLegitimate(MemberInfo memberInfo, bool logFieldExists, int level, ref Exception reason)
-        {
-            var attribute = memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) ?? memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute));
-
-            if (attribute != null)
-            {
-                if (logFieldExists)
-                {
-                    reason = new SensitivityAttributeInWrongLevelException(attribute.GetType().Name, Level, level);
-                    return level == Level;
-                }
-
-                reason = new SensitivityAttributeExistsWithoutLogFieldAttribute(attribute.GetType().Name);
-                return false;
-            }
-
-            return true;
-        }
-
-        private class SensitivityAttributeExistsWithoutLogFieldAttribute : Exception
-        {
-            public SensitivityAttributeExistsWithoutLogFieldAttribute(string attribute)
-                : base($"{attribute} appears when LogField is missing - Invalid behaviour")
-            {
-
-            }
-        }
-
-
-        private class SensitivityAttributeInWrongLevelException : Exception
-        {
-
-            public SensitivityAttributeInWrongLevelException(string attribute, int expectedLevel, int actualLevel)
-                    : base($"{attribute} Should have been on {expectedLevel} depth but was on {actualLevel} depth - Invalid behaviour")
-
-            {
-            }
-        }
-
     }
 }
