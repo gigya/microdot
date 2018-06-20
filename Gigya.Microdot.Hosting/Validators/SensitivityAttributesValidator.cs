@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.ServiceContract.Attributes;
@@ -57,38 +56,35 @@ namespace Gigya.Microdot.Hosting.Validators
                         }
 
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
-
                         if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
-                        {
-                            var stack = new Stack<string>();
-                            if (FindFieldWithAttribute(parameter.ParameterType, stack))
-                                if (!logFieldExists)
-                                    throw new ProgrammaticException($"The method '{method.Name}' parameter '{parameter.Name}' has a member '{string.Join(" --> ", stack)}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
-                                else if (stack.Count > 1)
-                                    throw new ProgrammaticException($"The method '{method.Name}' parameter '{parameter.Name}' has a member '{string.Join(" --> ", stack)}' that is marked as [Sensitive] or [NonSensitive], but these are only allowed on the root object");
-                        }
+                            VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>());
                     }
                 }
             }
         }
 
 
-        private bool FindFieldWithAttribute(Type type, Stack<string> path)
+        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path)
         {
             if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
-                return false;
+                return;
 
             path.Push(type.FullName);
 
             foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
                                            .Where(x => x is FieldInfo || (x is PropertyInfo propertyInfo) && propertyInfo.CanRead))
-                if (   FindFieldWithAttribute(memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType, path)
-                    || memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null
-                    || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
-                    return true;
+            {
+                if (memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
+                    if (!logFieldExists)
+                        throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path)}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
+                    else if (path.Count > 1)
+                        throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path)}' that is marked as [Sensitive] or [NonSensitive], but only root-level members can be marked as such.");
+
+                Type memberType = memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
+                VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path);
+            }
 
             path.Pop();
-            return false;
         }
     }
 }
