@@ -28,9 +28,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("© 2018 Gigya Inc.")]
 [assembly: AssemblyDescription("Microdot Framework")]
 
-[assembly: AssemblyVersion("1.11.3")]
-[assembly: AssemblyFileVersion("1.11.3")] 
-[assembly: AssemblyInformationalVersion("1.11.3")]
+[assembly: AssemblyVersion("1.11.3.0")]
+[assembly: AssemblyFileVersion("1.11.3.0")] 
+[assembly: AssemblyInformationalVersion("1.11.3.0")]
 
 
 
