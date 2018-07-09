@@ -103,8 +103,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
                                    JsonExceptionSerializer exceptionSerializer, 
-                                   ServiceSchema serviceSchema,
-                                   JsonExceptionSerializer exceptionSerializer, 
+                                   ServiceSchema serviceSchema,                                   
                                    Func<LoadShedding> loadSheddingConfig,
                                    IServerRequestPublisher serverRequestPublisher)
 
