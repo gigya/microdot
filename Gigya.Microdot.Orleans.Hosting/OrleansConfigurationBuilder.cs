@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net;
 using Gigya.Microdot.Hosting.HttpService;
@@ -48,9 +47,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
 
     [Serializable]
-    public class OrleansSpecificServiceGrainAgeLimitConfig
+    public class GrainAgeLimitConfig
     {
-        public int GrainAgeLimitInMins { get; set; }
+        public double GrainAgeLimitInMins { get; set; }
         public string GrainType { get; set; }
 
     }
@@ -58,8 +57,8 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class OrleansConfig : IConfigObject
     {
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
-        public int DefaultGrainAgeLimitInMins { get; set; } = 30;
-        public IDictionary<string, OrleansSpecificServiceGrainAgeLimitConfig> GrainAgeLimits { get; set; }
+        public double DefaultGrainAgeLimitInMins { get; set; } = 30;
+        public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; }
 
         public ZooKeeperConfig ZooKeeper { get; set; }
 
@@ -174,14 +173,14 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 foreach (var service in orleansConfig.GrainAgeLimits.Values)
                 {
-                    var type = default(Type);
+                    Type type;
                     try
                     {
                         type = Type.GetType(service.GrainType) ?? throw new Exception();
                     }
                     catch (Exception e)
                     {
-                        throw new ArgumentException($"Assigning on {service.GrainType} has failed, because {service.GrainType} is invalid type\n{e.Message}");
+                        throw new ArgumentException($"Assigning Age Limit on {service.GrainType} has failed, because {service.GrainType} is an invalid type\n{e.Message}");
                     }
                     globals.Application.SetCollectionAgeLimit(type.FullName, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
                 }

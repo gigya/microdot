@@ -1,0 +1,4 @@
+The constructor to deserialize an object of type 'Orleans.CodeGeneration.GrainInterfaceUtils+RulesViolationException' was not found.
+   at Orleans.CodeGeneration.GrainClientGenerator.CreateGrainClient(CodeGenOptions options)
+   at Orleans.CodeGeneration.GrainClientGenerator.CreateGrainClientAssembly(CodeGenOptions options)
+   at Orleans.CodeGeneration.GrainClientGenerator.RunMain(String[] args)

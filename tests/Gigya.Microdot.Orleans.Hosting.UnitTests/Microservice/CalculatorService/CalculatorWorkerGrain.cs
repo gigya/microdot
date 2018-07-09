@@ -40,6 +40,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         private int _counter;
         private int _counter2;
 
+
         public CalculatorWorkerGrain(ILog log)
         {
             Log = log;

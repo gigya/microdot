@@ -29,6 +29,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Newtonsoft.Json;
 using Ninject;
 using Ninject.Syntax;
 
@@ -58,11 +59,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         private ILoggingModule LoggingModule { get; }
 
-        public CalculatorServiceHost() : this( true)
+        public CalculatorServiceHost() : this(true)
         { }
 
 
-        public CalculatorServiceHost( bool useHttpLog)
+        public CalculatorServiceHost(bool useHttpLog)
         {
             LoggingModule = new FakesLoggersModules(useHttpLog);
         }
