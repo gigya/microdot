@@ -6,6 +6,7 @@ using System.Threading.Tasks.Dataflow;
 
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -17,6 +18,7 @@ using Ninject;
 using NSubstitute;
 
 using NUnit.Framework;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
@@ -41,6 +43,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private string _requestedConsulServiceName;
         private TimeSpan _reloadInterval = TimeSpan.FromSeconds(1);
         private Dictionary<string, string> _configDic;
+        private Func<Task> _consulClientInitTask;
+        private DateTimeFake _dateTimeFake;
 
         [SetUp]
         public void Setup()
@@ -52,21 +56,30 @@ namespace Gigya.Microdot.UnitTests.Discovery
             environmentVarialbesMock.DeploymentEnvironment.Returns(ENV);
             Kernel.Rebind<IEnvironmentVariableProvider>().ToConstant(environmentVarialbesMock);
 
+            SetupDateTimeFake();
             SetupConsulClient();
         }
 
-        private void SetupConsulClient()
+        private void SetupDateTimeFake()
         {
+            _dateTimeFake = new DateTimeFake(manualDelay:true);
+            Kernel.Rebind<IDateTime>().ToConstant(_dateTimeFake);
+        }
+
+        private void SetupConsulClient()
+        {            
             SetConsulEndpoints(_endpointsBeforeChange);
             _resultChanged = new BroadcastBlock<EndPointsResult>(null);
             _consulClientMock = Substitute.For<IConsulClient>();
             _consulClientMock.Result.Returns(_ => _getConsulEndPoints());
             _consulClientMock.ResultChanged.Returns(_resultChanged);
+            _consulClientMock.Init().Returns(_=>_consulClientInitTask());
             Kernel.Rebind<Func<string, IConsulClient>>().ToMethod(c=> s =>
             {
                 _requestedConsulServiceName = s;
                 return _consulClientMock;
             });
+            _consulClientInitTask = ()=>Task.Run(()=>_resultChanged.SendAsync(_getConsulEndPoints()));
         }
 
         [TearDown]
@@ -77,10 +90,23 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public async Task ReturnEmptyListIfConsulNeverResponded()
+        public async Task ReturnEmptyListIfConsulHasError()
         {
-            ConsulNotResponding();
+            ConsulError();
             await GetFirstResult().ConfigureAwait(false);
+            AssertNoEndpoints();
+        }
+
+        [Test]
+        public async Task ReturnEmptyListIfConsulNeverResponds()
+        {
+            ConsulNotResponds();
+
+            var init = GetFirstResult().ConfigureAwait(false);
+            await Task.Delay(50);
+            _dateTimeFake.StopDelay(); // do not wait 10 seconds for timeout from Consul (in order to make test shorter)
+            await init;
+
             AssertNoEndpoints();
         }
 
@@ -109,7 +135,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var sourceFactory = Kernel.Get<Func<DeploymentIdentifier, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
             var serviceContext = new DeploymentIdentifier(SERVICE_NAME, ENV);
             _consulDiscoverySource = sourceFactory(serviceContext, config);
-            _consulDiscoverySource.Init();
+            await _consulDiscoverySource.Init();
             await GetNewResult();
         }
 
@@ -130,13 +156,20 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetConsulEndpoints(_endpointsAfterChange);
         }
 
-        private void ConsulNotResponding()
+        private void ConsulNotResponds()
+        {
+            _consulClientInitTask = ()=>new TaskCompletionSource<bool>().Task; // task which never ends
+            _getConsulEndPoints = () => null;
+        }
+
+        private void ConsulError()
         {
             _getConsulEndPoints = () => new EndPointsResult { Error = new Exception("Consul not responding") };
         }
 
         private void AssertNoEndpoints()
         {
+            _consulDiscoverySource.IsServiceDeploymentDefined.ShouldBe(true);
             Assert.AreEqual(0, _consulDiscoverySource.Result.EndPoints.Length, "Endpoints list should be empty");
         }
 
