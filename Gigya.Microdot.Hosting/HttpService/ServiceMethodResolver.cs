@@ -26,7 +26,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {

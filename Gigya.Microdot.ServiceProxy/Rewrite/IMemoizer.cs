@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,12 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Security.Cryptography.X509Certificates;
+using System;
+using System.Reflection;
+using System.Threading.Tasks;
+using Gigya.Microdot.ServiceProxy.Caching;
 
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public interface ICertificateLocator
+    interface IMemoizer : IProxyable, IDisposable
     {
-        X509Certificate2 GetCertificate(string certName);
+        object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
+        object GetOrAdd(string key, Func<Task> factory, CacheItemPolicyEx policy);
     }
 }

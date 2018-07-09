@@ -9,12 +9,12 @@ using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Newtonsoft.Json;
@@ -59,7 +59,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 //If we set Request Id we would like always to select same Host
                 TracingContext.SetRequestID("dumyId1");
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
                 string host;
                 for (int i = 0; i < 50; i++)
@@ -109,7 +109,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 TracingContext.SetHostOverride(serviceName, overrideHost, overridePort);
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 for (int i = 0; i < 50; i++)
                 {
                     var host = (string)await serviceProxy.Invoke(request, typeof(string));
@@ -148,7 +148,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             TracingContext.SetHostOverride(serviceName, overrideHost);
 
-            var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+            var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
             for (int i = 0; i < 50; i++)
             {
                 var host = (string)await serviceProxy.Invoke(request, typeof(string));
@@ -157,7 +157,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
         }
 
-        
+
         [Test]
         public async Task AllHostsAreHavingNetworkErrorsShouldTryEachTwice()
         {
@@ -192,7 +192,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
                 await act.ShouldThrowAsync<ServiceUnreachableException>();
@@ -227,20 +227,20 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
                     .When("*")
-                    .Respond( req =>
+                    .Respond(req =>
                     {
-                        bool disableReachabilityChecker = req.Content==null;
-                        if(disableReachabilityChecker) throw new HttpRequestException();
+                        bool disableReachabilityChecker = req.Content == null;
+                        if (disableReachabilityChecker) throw new HttpRequestException();
 
                         counter++;
-                    
-                        if ( req.RequestUri.Host == "host1") throw new HttpRequestException();
+
+                        if (req.RequestUri.Host == "host1") throw new HttpRequestException();
                         return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
                     });
 
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -293,7 +293,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 TracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -305,7 +305,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             }
         }
 
-        
+
         [Test]
         public async Task FailedHostShouldBeRemovedFromHostList()
         {
@@ -344,7 +344,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
 
-                var request = new HttpServiceRequest("testMethod", new Dictionary<string, object>());
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
                 for (int i = 0; i < 10; i++)
                 {
@@ -357,7 +357,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
 
 
-        
+
 
         [Test]
         public async Task ToUpper_MethodCallSucceeds_ResultIsCorrect()

@@ -44,6 +44,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Discovery\AlwaysLocalHost.cs" />
+    <Compile Include="Discovery\AlwaysLocalHostDiscovery.cs" />
     <Compile Include="MetricsInitializerFake.cs" />
     <Compile Include="ConsoleLog.cs" />
     <Compile Include="DateTimeFake.cs" />
@@ -127,5 +128,4 @@
       </ItemGroup>
     </When>
   </Choose>
-  <Import Project="..\packages\NETStandard.Library\build\NETStandard.Library.targets" Condition="Exists('..\packages\NETStandard.Library\build\NETStandard.Library.targets')" Label="Paket" />
 </Project>

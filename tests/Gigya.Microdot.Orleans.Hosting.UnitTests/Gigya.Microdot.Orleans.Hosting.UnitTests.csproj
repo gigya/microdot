@@ -57,6 +57,7 @@
     <Compile Include="Microservice\FakeRevokingManager.cs" />
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
     <Compile Include="Properties\orleans.codegen.cs" />
+    <Compile Include="ServiceSchemaTests.cs" />
     <Compile Include="ReflectionMetaDataExtensionTests.cs" />
     <Compile Include="ServiceTesterTests.cs" />
     <Compile Include="SchemaEndpointTests.cs" />
@@ -368,5 +369,4 @@
     </When>
   </Choose>
   <Import Project="..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets" Condition="Exists('..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets')" Label="Paket" />
-  <Import Project="..\..\packages\NETStandard.Library\build\NETStandard.Library.targets" Condition="Exists('..\..\packages\NETStandard.Library\build\NETStandard.Library.targets')" Label="Paket" />
 </Project>

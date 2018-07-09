@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Metrics;
 
@@ -29,7 +30,8 @@ namespace Gigya.Microdot.SharedLogic.Monitor
 {
     public class AggregatingHealthStatus
     {
-        private readonly ConcurrentDictionary<string, Func<HealthCheckResult>> _checks = new ConcurrentDictionary<string, Func<HealthCheckResult>>();
+        private readonly List<DisposableHealthCheck> _checks = new List<DisposableHealthCheck>();
+        private readonly object _locker = new object();
 
         public AggregatingHealthStatus(string componentName, IHealthMonitor healthMonitor)
         {
@@ -38,27 +40,65 @@ namespace Gigya.Microdot.SharedLogic.Monitor
 
         private HealthCheckResult HealthCheck()
         {
-            var results =_checks
-                .Select(c => new {c.Key, Result = c.Value()})
+            DisposableHealthCheck[] checks;
+            lock (_locker)
+            {
+                checks = _checks.ToArray(); // get the current state of the health-checks list
+            }
+
+            // don't call the health check functions inside a lock. It may run for a long time, 
+            // and in the worse case it may cause a dead-lock, if the function is locking something else that we depend on 
+            var results = checks                
+                .Select(c => new { c.Name, Result = c.CheckFunc() })
                 .OrderBy(c => c.Result.IsHealthy)
-                .ThenBy(c => c.Key)
+                .ThenBy(c => c.Name)
                 .ToArray();
 
             bool healthy = results.All(r => r.Result.IsHealthy);
-            string message = string.Join("\r\n", results.Select(r => (r.Result.IsHealthy ? "[OK] " : "[Unhealthy] ") + r.Result.Message));
+            string message = string.Join(Environment.NewLine, results.Select(r => $"{(r.Result.IsHealthy ? "[OK]" : "[Unhealthy]")} {r.Name} - {r.Result.Message}"));
 
             return healthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
         }
 
-
-        public void RegisterCheck(string name, Func<HealthCheckResult> checkFunc)
+        public IDisposable RegisterCheck(string name, Func<HealthCheckResult> checkFunc)
         {
-            _checks.AddOrUpdate(name, checkFunc, (a, b) => checkFunc);
+            lock (_locker)
+            {
+                var healthCheck = new DisposableHealthCheck(name, checkFunc, RemoveCheck);
+                _checks.Add(healthCheck);
+                return healthCheck;
+            }
         }
 
-        public void RemoveCheck(string name)
+        private void RemoveCheck(DisposableHealthCheck healthCheck)
         {
-            _checks.TryRemove(name, out var _);
+            lock (_locker)
+            {
+                _checks.Remove(healthCheck);
+            }
         }
+
+        private class DisposableHealthCheck : IDisposable
+        {
+            private readonly Action<DisposableHealthCheck> _disposed;
+            public string Name { get; }
+            public Func<HealthCheckResult> CheckFunc { get; private set; }
+
+            public DisposableHealthCheck(string name, Func<HealthCheckResult> checkFunc, Action<DisposableHealthCheck> whenDisposed)
+            {
+                _disposed = whenDisposed;
+                Name = name;
+                CheckFunc = checkFunc;
+            }
+
+            public void Dispose()
+            {                
+                _disposed(this);
+                CheckFunc = null;
+            }
+        }
+
+
     }
+
 }

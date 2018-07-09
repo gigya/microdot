@@ -53,7 +53,7 @@ namespace Gigya.Common.Contracts.UnitTests
 
     public class SensitiveAttribute : Attribute {}
 
-    [HttpService(100, Name = "ServiceName")]
+    [HttpService(100)]
     internal interface ITestInterface
     {
         [PublicEndpoint("demo.doSomething")]
@@ -77,7 +77,6 @@ namespace Gigya.Common.Contracts.UnitTests
             Assert.IsTrue(schema.Interfaces[0].Attributes[0].Attribute is HttpServiceAttribute);
             Assert.IsTrue(schema.Interfaces[0].Attributes[0].TypeName == typeof(HttpServiceAttribute).AssemblyQualifiedName);
             Assert.IsTrue((schema.Interfaces[0].Attributes[0].Attribute as HttpServiceAttribute).BasePort == 100);
-            Assert.IsTrue((schema.Interfaces[0].Attributes[0].Attribute as HttpServiceAttribute).Name == "ServiceName");
             Assert.IsTrue(schema.Interfaces[0].Methods.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Name == nameof(ITestInterface.DoSomething));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes.Length == 1);
