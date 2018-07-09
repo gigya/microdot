@@ -51,7 +51,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void TestMetricsOnSuccess()
         {
             TestingHost<IDemoService> testinghost = new TestingHost<IDemoService>();
-            var task = testinghost.RunAsync();
+            var task = testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
             testinghost.Instance.Increment(0).Returns((ulong)1);
         
          
@@ -73,7 +73,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void TestMetricsOnFailure()
         {
             TestingHost<IDemoService> testinghost = new TestingHost<IDemoService>();
-            var task = testinghost.RunAsync();
+            var task = testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
 
             testinghost.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
 

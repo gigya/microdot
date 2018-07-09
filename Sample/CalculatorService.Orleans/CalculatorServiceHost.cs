@@ -1,15 +1,12 @@
 ﻿using System;
-using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Ninject.Host;
-using Gigya.Microdot.SharedLogic;
-using Ninject;
+using Gigya.Microdot.Orleans.Ninject.Host;
 
-namespace CalculatorService
+namespace CalculatorService.Orleans
 {
 
-    class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
+    class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
         static void Main(string[] args)
         {
@@ -30,13 +27,6 @@ namespace CalculatorService
             }
         }
 
-        protected override ILoggingModule GetLoggingModule() => new NLogModule();
-
-        protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
-        {
-            kernel.Bind<ICalculatorService>().To<CalculatorService>();
-        }
-
-      
+        public override ILoggingModule GetLoggingModule() => new NLogModule();
     }
 }

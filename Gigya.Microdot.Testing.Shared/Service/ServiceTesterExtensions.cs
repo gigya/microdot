@@ -35,8 +35,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         {
             NonOrleansServiceTester<TServiceHost> tester = kernel.Get<NonOrleansServiceTester<TServiceHost>>(
                 new ConstructorArgument(nameof(basePortOverride), basePortOverride),
-                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime)
-            );
+                new ConstructorArgument(nameof(shutdownWaitTime),shutdownWaitTime));
          
             return tester;
         }

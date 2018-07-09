@@ -28,13 +28,16 @@ namespace Gigya.Microdot.SharedLogic.Events
         private Func<EventConfiguration> LoggingConfigFactory { get; }
         private IEnvironmentVariableProvider EnvProvider { get; }
         private IStackTraceEnhancer StackTraceEnhancer { get; }
+        private Func<EventConfiguration> EventConfig { get; }
 
 
-        public EventSerializer(Func<EventConfiguration> loggingConfigFactory, IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer)
+        public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
+            IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig)
         {
             LoggingConfigFactory = loggingConfigFactory;
             EnvProvider = envProvider;
             StackTraceEnhancer = stackTraceEnhancer;
+            EventConfig = eventConfig;
         }
 
 
@@ -88,7 +91,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
 
 
-        static IEnumerable<SerializedEventField> SerializeEventFieldAndSubfields(IEvent evt, MemberToSerialize member)
+        IEnumerable<SerializedEventField> SerializeEventFieldAndSubfields(IEvent evt, MemberToSerialize member)
         {
             if (member.Attribute.Encrypt && member.Attribute.AppendTypeSuffix)
                 throw new ProgrammaticException($"Event field '{evt.GetType().FullName}.{member.Name}' cannot be marked both as {nameof(member.Attribute.Encrypt)} and {nameof(member.Attribute.AppendTypeSuffix)}");
@@ -111,7 +114,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                         yield return new SerializedEventField
                         {
                             Name          = kvp.Key,
-                            Value         = kvp.Value,
+                            Value         = !member.Attribute.TruncateIfLong ? kvp.Value : kvp.Value.Substring(0, Math.Min(kvp.Value.Length, EventConfig().ParamTruncateLength)),
                             Attribute     = member.Attribute,
                             ShouldEncrypt = member.Attribute.Encrypt,
                         };

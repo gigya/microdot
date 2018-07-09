@@ -36,7 +36,7 @@ namespace Gigya.Common.Contracts.HttpService
 {
 
     /// <summary>
-    /// Contains a collection of interfaces, methods and method parameters, along with their attributes. Parameter types
+    /// Contains a collection of Binterfaces, methods and method parameters, along with their attributes. Parameter types
     /// and attributes are both weakly and strongly deserialized, so clients can convenienetly work with real objects if
     /// they reference the needed assemblies, or work against strings/JObjects if they don't.
     /// </summary>
@@ -64,7 +64,9 @@ namespace Gigya.Common.Contracts.HttpService
                 stream.Seek(0, SeekOrigin.Begin);
                 Hash = Convert.ToBase64String(sha.ComputeHash(stream));
             }
+            }
         }
+
     }
 
     public class InterfaceSchema

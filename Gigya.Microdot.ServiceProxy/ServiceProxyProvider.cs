@@ -312,11 +312,13 @@ namespace Gigya.Microdot.ServiceProxy
             request.Overrides = TracingContext.TryGetOverrides();
             request.TracingData = new TracingData
             {
-                HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
-                ServiceName = CurrentApplicationInfo.Name,
-                RequestID = TracingContext.TryGetRequestID(),
-                SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID()
+                HostName         = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
+                ServiceName      = CurrentApplicationInfo.Name,
+                RequestID        = TracingContext.TryGetRequestID(),
+                SpanID           = Guid.NewGuid().ToString("N"), //Each call is new span                
+                ParentSpanID     = TracingContext.TryGetSpanID(),
+                SpanStartTime    = DateTimeOffset.UtcNow,
+                AbandonRequestBy = TracingContext.AbandonRequestBy,
             };
             PrepareRequest?.Invoke(request);
             var requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));

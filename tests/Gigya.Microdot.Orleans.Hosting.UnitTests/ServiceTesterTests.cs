@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,26 +21,32 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.Testing.Service;
+using NUnit.Framework;
+using Shouldly;
 
-namespace Gigya.Microdot.ServiceProxy.Caching
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    public class AsyncCacheItem
+    [TestFixture]
+    public class ServiceTesterTests
     {
-        public object Lock { get; } = new object();
-        public DateTime NextRefreshTime { get; set; }
-        public Task<object> CurrentValueTask { get; set; }
-        public Task RefreshTask { get; set; }
+        private ServiceTester<CalculatorServiceHost> _tester;
+        
 
-        /// <summary>
-        /// Group name of this cache item (e.g. method name). 
-        /// The group name is used to configure whether extra logData should be written for items of this group.
-        /// </summary>
-        public string GroupName { get; set; }
+        [Test]
+        public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
+        {
+            _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(8555,shutdownWaitTime:TimeSpan.Zero);
 
-        /// <summary>
-        /// Extra data for log purposes (e.g. arguments list)
-        /// </summary>
-        public string LogData { get; set; }
+            Action act = () => _tester.Dispose();
+            act.ShouldThrow<Exception>().Message.ShouldContain("service failed to shutdown gracefully");
+        }
+
     }
+
 }
