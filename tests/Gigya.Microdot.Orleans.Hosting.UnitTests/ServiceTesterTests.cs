@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,35 +21,32 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Service;
-using Ninject.Syntax;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.Testing.Service;
+using NUnit.Framework;
+using Shouldly;
 
-namespace Gigya.Microdot.Testing.Shared.Service
+namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
+    [TestFixture]
+    public class ServiceTesterTests
     {
+        private ServiceTester<CalculatorServiceHost> _tester;
+        
 
-        private readonly TServiceHost _host = new TServiceHost();
-        private Task _stopTask;
-
-        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
+        [Test]
+        public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
         {
-            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime.HasValue?(int?)shutdownWaitTime.Value.TotalSeconds:null);
+            _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(8555,shutdownWaitTime:TimeSpan.Zero);
 
-            BasePort = basePortOverride;
-            ResolutionRoot = resolutionRoot;
-            _stopTask = _host.RunAsync(serviceArguments);
+            Action act = () => _tester.Dispose();
+            act.ShouldThrow<Exception>().Message.ShouldContain("service failed to shutdown gracefully");
         }
 
-        public override void Dispose()
-        {
-            _host.Stop();
-            _host.Dispose();
-            var completed = _stopTask.Wait(60000);
-
-            if (!completed)
-                throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
-        }
     }
+
 }

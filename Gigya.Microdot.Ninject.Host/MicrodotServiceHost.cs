@@ -155,10 +155,10 @@ namespace Gigya.Microdot.Ninject.Host
         /// </summary>        
         protected override void OnStop()
         {            
-            if (Arguments.ServiceDrainTime.HasValue)
+            if (Arguments.ServiceDrainTimeSec.HasValue)
             {
                 Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTime.Value);
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000 );
             }
             Dispose();
         }

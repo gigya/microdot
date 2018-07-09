@@ -40,6 +40,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
@@ -85,6 +86,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnumerable<ICustomEndpoint> CustomEndpoints { get; }
         private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
+        private Func<LoadShedding> LoadSheddingConfig { get; }
 
         private ServiceSchema ServiceSchema { get; }
 
@@ -102,6 +104,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
                                    JsonExceptionSerializer exceptionSerializer, 
                                    ServiceSchema serviceSchema,
+                                   JsonExceptionSerializer exceptionSerializer, 
+                                   Func<LoadShedding> loadSheddingConfig,
                                    IServerRequestPublisher serverRequestPublisher)
 
         {
@@ -115,6 +119,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             CustomEndpoints = customEndpoints.ToArray();
             EnvironmentVariableProvider = environmentVariableProvider;
             ExceptionSerializer = exceptionSerializer;
+            LoadSheddingConfig = loadSheddingConfig;
 
             if (serviceEndPointDefinition.UseSecureChannel)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -256,6 +261,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                             throw new RequestException("Invalid request", e);
                         }
 
+                        RejectRequestIfLateOrOverloaded();
+
                         var responseJson = await GetResponse(context, serviceMethod, requestData);
                         await TryWriteResponse(context, responseJson);
 
@@ -280,6 +287,57 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
                     }
                 }
+            }
+        }
+
+
+        private void RejectRequestIfLateOrOverloaded()
+        {
+            var config = LoadSheddingConfig();
+            var now = DateTimeOffset.UtcNow;
+
+            // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
+            if (   config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.Disabled
+                && TracingContext.SpanStartTime != null
+                && TracingContext.SpanStartTime.Value + config.DropMicrodotRequestsOlderThanSpanTimeBy < now)
+            {
+
+                if (config.DropMicrodotRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
+                    Log.Warn(_ => _("Accepted Microdot request despite that too much time passed since the client sent it to us.", unencryptedTags: new {
+                        clientSendTime    = TracingContext.SpanStartTime,
+                        currentTime       = now,
+                        maxDelayInSecs    = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds,
+                        actualDelayInSecs = (now -TracingContext.SpanStartTime.Value).TotalSeconds,
+                    }));
+
+                else if (config.DropMicrodotRequestsBySpanTime == LoadShedding.Toggle.Drop)
+                    throw new EnvironmentException("Dropping Microdot request since too much time passed since the client sent it to us.", unencrypted: new Tags {
+                        ["clientSendTime"]    = TracingContext.SpanStartTime.ToString(),
+                        ["currentTime"]       = now.ToString(),
+                        ["maxDelayInSecs"]    = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
+                        ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
+                    });
+            }
+
+            // Too much time passed since the API gateway initially sent this request till it reached us (potentially
+            // passing through other micro-services along the way). Log or reject the request, if needed.
+            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
+                && TracingContext.AbandonRequestBy != null
+                && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
+            {
+                if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
+                    Log.Warn(_ => _("Accepted Microdot request despite exceeding the API gateway timeout.", unencryptedTags: new {
+                        requestDeathTime = TracingContext.AbandonRequestBy,
+                        currentTime      = now,
+                        overTimeInSecs   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
+                    }));
+
+                else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
+                    throw new EnvironmentException("Dropping Microdot request since the API gateway timeout passed.", unencrypted: new Tags {
+                        ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
+                        ["currentTime"]      = now.ToString(),
+                        ["overTimeInSecs"]   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                    });
             }
         }
 
@@ -414,6 +472,9 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             TracingContext.SetRequestID(request.TracingData.RequestID);
             TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
+            TracingContext.SpanStartTime    = request.TracingData.SpanStartTime;
+            TracingContext.AbandonRequestBy = request.TracingData.AbandonRequestBy;
+
             return request;
         }
 

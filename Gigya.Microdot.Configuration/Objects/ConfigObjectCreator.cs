@@ -67,12 +67,15 @@ namespace Gigya.Microdot.Configuration.Objects
             ObjectType = objectType;
             ConfigCache = configCache;
             ConfigPath = GetConfigPath();
+            healthStatus = getAggregatedHealthCheck("Configuration");
             Validator = new DataAnnotationsValidator.DataAnnotationsValidator();
+        }
 
+        public void Init()
+        {
             Create();
             ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Create()));
             InitializeBroadcast();
-            healthStatus = getAggregatedHealthCheck("Configuration");
             healthStatus.RegisterCheck(ObjectType.Name, HealthCheck);
         }
 

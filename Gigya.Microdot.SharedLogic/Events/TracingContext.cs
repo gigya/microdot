@@ -35,6 +35,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string ORLEANS_REQUEST_CONTEXT_KEY = "#ORL_RC";
         private const string REQUEST_ID_KEY = "ServiceTraceRequestID";
         private const string OVERRIDES_KEY = "Overrides";
+        private const string SPAN_START_TIME = "SpanStartTime";
+        private const string REQUEST_DEATH_TIME = "RequestDeathTime";
 
 
         internal static void SetOverrides(RequestOverrides overrides)
@@ -105,6 +107,24 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
+        /// <summary>
+        /// The time at which the request was sent from the client.
+        /// </summary>
+        public static DateTimeOffset? SpanStartTime
+        {
+            get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
+            set => CloneAndSetValue(SPAN_START_TIME, value);
+        }
+
+        /// <summary>
+        /// The time at which the topmost API gateway is going to give up on the whole end-to-end request, after which
+        /// it makes no sense to try and handle it, or to subsequently call other services.
+        /// </summary>
+        public static DateTimeOffset? AbandonRequestBy
+        {
+            get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
+            set => SetValue(REQUEST_DEATH_TIME, value);
+        }
 
         /// <summary>
         /// This add requestID to logical call context in unsafe way (no copy on write)
@@ -131,6 +151,18 @@ namespace Gigya.Microdot.SharedLogic.Events
             context[key] = value;
         }
 
+        // Implemented better in next Micrdot using Orleans 1.5
+        private static void CloneAndSetValue(string key, object value)
+        {
+            var context = GetContextData();
+
+            if(context == null)
+                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
+
+            var cloned = new Dictionary<string, object>(context);
+            cloned[key] = value;
+            CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, cloned);
+        }
 
         private static T TryGetValue<T>(string key) where T : class
         {
@@ -139,13 +171,19 @@ namespace Gigya.Microdot.SharedLogic.Events
             return value as T;
         }
 
+        private static T? TryGetNullableValue<T>(string key) where T : struct
+        {
+            object value = null;
+            GetContextData()?.TryGetValue(key, out value);
+            return value as T?;
+        }
 
         /// Must setup localstorage in upper most task (one that opens other tasks)
         /// https://stackoverflow.com/questions/31953846/if-i-cant-use-tls-in-c-sharp-async-programming-what-can-i-use
         public static void SetUpStorage()
         {
             if (GetContextData() == null)
-            {                
+            {
                 CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, new Dictionary<string, object>());
             }
         }

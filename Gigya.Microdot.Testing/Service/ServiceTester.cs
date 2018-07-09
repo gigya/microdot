@@ -55,14 +55,14 @@ namespace Gigya.Microdot.Testing.Service
 
         private HttpListener LogListener { get; set; }
 
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false,TimeSpan? serviceDrainTime=null)
+        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false, int? serviceDrainTimeSec = null)
         {
             Log = log;
             ResolutionRoot = resolutionRoot;
             // ReSharper disable VirtualMemberCallInContructor
             InitializeInfrastructure();
 
-            var serviceArguments = GetServiceArguments(basePortOverride, isSecondary, shutdownWaitTime,serviceDrainTime);
+            var serviceArguments = GetServiceArguments(basePortOverride, isSecondary, shutdownWaitTime.HasValue ? (int?)shutdownWaitTime.Value.TotalSeconds : null, serviceDrainTimeSec);
 
             BasePort = serviceArguments.BasePortOverride.Value;
             ServiceAppDomain = Common.CreateDomain(typeof(TServiceHost).Name + BasePort);
@@ -173,25 +173,39 @@ namespace Gigya.Microdot.Testing.Service
 
         public override void Dispose()
         {
+
             if (GrainClient.IsInitialized)
-                GrainClient.Uninitialize();
-
-            if (ServiceAppDomain != null)
+                  GrainClient.Uninitialize();
+       
+            try
             {
-                ServiceAppDomain.RunOnContext(() =>
+                if (ServiceAppDomain != null)
                 {
-                    Host.Stop();//don't use host.dispose, host.stop should do all the work
-                   
-                    var completed = StopTask.Wait(60000);
+                    ServiceAppDomain.RunOnContext(() =>
+                    {
+                        Host.Stop(); //don't use host.dispose, host.stop should do all the work
 
-                    if (!completed)
-                        throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
-                });
+                        var completed = StopTask.Wait(60000);
 
-                Kill();
+                        if (!completed)
+                            throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
+
+                        if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
+                            Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
+                            throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
+
+                    });
+                     
+                    Kill();
+                }
             }
+            finally
+            {
+                LogListener.Close();
+            }
+          
 
-            LogListener.Close();
+            
         }
 
 
@@ -202,27 +216,27 @@ namespace Gigya.Microdot.Testing.Service
         }
 
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, TimeSpan? shutdownWaitTime,TimeSpan? serviceDrainTime)
+        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, int? shutdownWaitTime, int? serviceDrainTime)
         {
             if (isSecondary && basePortOverride == null)
                 throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
 
             var siloClusterMode = isSecondary ? SiloClusterMode.SecondaryNode : SiloClusterMode.PrimaryNode;
-            ServiceArguments arguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, onStopWaitTimeInMs: shutdownWaitTime,serviceDrainTime:serviceDrainTime);
+            ServiceArguments arguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
 
             if (basePortOverride != null)
                 return arguments;
 
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode, onStopWaitTimeInMs: shutdownWaitTime,serviceDrainTime:serviceDrainTime);
+            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
             var commonConfig = new BaseCommonConfig(serviceArguments);
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
             var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
 
-            return new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePort, onStopWaitTimeInMs: shutdownWaitTime,serviceDrainTime:serviceDrainTime);
+            return new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
         }
 
 
-        protected virtual void StartLogListener(int basePort, AppDomain appDomain,bool writeLogToFile)
+        protected virtual void StartLogListener(int basePort, AppDomain appDomain, bool writeLogToFile)
         {
             //Start Listen to http log
             var httpLogListenPort = basePort - 1;
@@ -237,7 +251,7 @@ namespace Gigya.Microdot.Testing.Service
         {
             if (writeLogToFile)
             {
-                File.WriteAllText("TestLog.txt","");
+                File.WriteAllText("TestLog.txt", "");
             }
             while (true)
             {
@@ -256,8 +270,8 @@ namespace Gigya.Microdot.Testing.Service
                         string log = await new StreamReader(context.Request.InputStream).ReadToEndAsync().ConfigureAwait(false);
                         Console.WriteLine(log);
                         //write to file, nunit has problem that if it crath we don't have any log
-                        if(writeLogToFile)
-                            File.AppendAllLines("TestLog.txt",new []{log});
+                        if (writeLogToFile)
+                            File.AppendAllLines("TestLog.txt", new[] { log });
 
                         context.Response.StatusCode = 200;
                     }
@@ -315,7 +329,7 @@ namespace Gigya.Microdot.Testing.Service
 
     public static class ServiceTesterExtensions
     {
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false,TimeSpan? serviceDrainTime=null)
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false, int? serviceDrainTimeSec = null)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
             ServiceTester<TServiceHost> tester = kernel.Get<ServiceTester<TServiceHost>>(
@@ -323,7 +337,7 @@ namespace Gigya.Microdot.Testing.Service
                 new ConstructorArgument(nameof(isSecondary), isSecondary),
                 new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime),
                 new ConstructorArgument(nameof(writeLogToFile), writeLogToFile),
-                new ConstructorArgument(nameof(serviceDrainTime), serviceDrainTime)
+                new ConstructorArgument(nameof(serviceDrainTimeSec), serviceDrainTimeSec)
                 );
 
             return tester;
