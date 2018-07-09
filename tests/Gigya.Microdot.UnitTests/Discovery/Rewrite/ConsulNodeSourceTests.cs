@@ -211,18 +211,16 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public async Task ServiceUndeployed_StopMonitoring()
+        public async Task Disposed_StopMonitoring()
         {
             AddServiceNode();
             await Init();
-
-            RemoveService();
+            
             await WaitForUpdates();
-            var healthRequestsCounterBeforeServiceWasRedeployed = _consulSimulator.HealthRequestsCounter;
+            var healthRequestsCounterBeforeDisposed = _consulSimulator.HealthRequestsCounter;
+            _nodeSource.Dispose();
 
-            AddServiceNode();
-            await WaitForUpdates();
-            _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeServiceWasRedeployed, "service monitoring should have been stopped when the service became undeployed");
+            _consulSimulator.HealthRequestsCounter.ShouldBe(healthRequestsCounterBeforeDisposed, "service monitoring should have been stopped when the service became undeployed");
             GetHealthStatus().IsHealthy.ShouldBeTrue();
         }
 
