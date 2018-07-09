@@ -55,12 +55,11 @@ namespace Gigya.Microdot.Orleans.Hosting
 
     }
 
-
     public class OrleansConfig : IConfigObject
     {
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
-        public int DefaultGrainAgeLimitInMins { get; set; }
-        public IImmutableDictionary<string, OrleansSpecificServiceGrainAgeLimitConfig> Services { get; set; }
+        public int DefaultGrainAgeLimitInMins { get; set; } = 30;
+        public IDictionary<string, OrleansSpecificServiceGrainAgeLimitConfig> GrainAgeLimits { get; set; }
 
         public ZooKeeperConfig ZooKeeper { get; set; }
 
@@ -171,9 +170,21 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             globals.Application.SetDefaultCollectionAgeLimit(TimeSpan.FromMinutes(orleansConfig.DefaultGrainAgeLimitInMins));
 
-            foreach (var service in orleansConfig.Services.Values)
+            if (orleansConfig.GrainAgeLimits != null)
             {
-                globals.Application.SetCollectionAgeLimit(service.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
+                foreach (var service in orleansConfig.GrainAgeLimits.Values)
+                {
+                    var type = default(Type);
+                    try
+                    {
+                        type = Type.GetType(service.GrainType) ?? throw new Exception();
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ArgumentException($"Assigning on {service.GrainType} has failed, because {service.GrainType} is invalid type\n{e.Message}");
+                    }
+                    globals.Application.SetCollectionAgeLimit(type.FullName, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
+                }
             }
 
         }
