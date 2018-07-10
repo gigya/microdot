@@ -31,7 +31,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private IConsulClient _consulClient;
-        private IEnvironmentVariableProvider _environmentVariableProvider;
+        private IEnvironment _environment;
         private ConsulSimulator _consulSimulator;
         private string _serviceName;
         private DateTimeFake _dateTimeFake;
@@ -44,10 +44,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-                _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environmentVariableProvider.DataCenter.Returns(DataCenter);
-                k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
+                _environment = Substitute.For<IEnvironment>();
+                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                _environment.DataCenter.Returns(DataCenter);
+                k.Rebind<IEnvironment>().ToMethod(_ => _environment);
 
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
 

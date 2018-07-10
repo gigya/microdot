@@ -28,6 +28,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Logging;
 using Gigya.Microdot.SharedLogic.Utils;
 
@@ -46,7 +47,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     /// </remarks>
     public class Event : IEvent
     {
-        public IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
+        public IEnvironment Environment { get; set; }
         public IStackTraceEnhancer StackTraceEnhancer { get; set; }
 
         public EventConfiguration Configuration { get; set; }
@@ -90,11 +91,11 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>The value of the %ENV% environment variable. </summary>
         [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
-        public string RuntimeENV => EnvironmentVariableProvider.DeploymentEnvironment;
+        public string RuntimeENV => Environment.DeploymentEnvironment;
 
         /// <summary>The value of the %DC% environment variable. .</summary>
         [EventField(EventConsts.runtimeDC, OmitFromAudit = true)]
-        public string RuntimeDC => EnvironmentVariableProvider.DataCenter;
+        public string RuntimeDC => Environment.DataCenter;
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]

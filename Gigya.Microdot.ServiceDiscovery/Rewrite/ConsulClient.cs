@@ -26,15 +26,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            DataCenter = environmentVariableProvider.DataCenter;
+            DataCenter = environment.DataCenter;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
 
-            if (environmentVariableProvider.ConsulAddress != null)
-                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}") };
+            if (environment.ConsulAddress != null)
+                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environment.ConsulAddress}") };
             else
                 _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
         }

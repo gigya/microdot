@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.HttpService;
@@ -70,14 +71,14 @@ namespace Gigya.Microdot.ServiceDiscovery
                                 ReachabilityChecker reachabilityChecker,
                                 IRemoteHostPoolFactory remoteHostPoolFactory,
                                 IDiscoverySourceLoader serviceDiscoveryLoader,
-                                IEnvironmentVariableProvider environmentVariableProvider,
+                                IEnvironment environment,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log)
         {
             Log = log;
             _serviceName = serviceName;
-            _originatingDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
+            _originatingDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityChecker = reachabilityChecker;

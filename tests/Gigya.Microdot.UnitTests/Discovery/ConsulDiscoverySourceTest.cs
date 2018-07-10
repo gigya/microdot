@@ -52,9 +52,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k => {}, _configDic);
 
-            var environmentVarialbesMock = Substitute.For<IEnvironmentVariableProvider>();
-            environmentVarialbesMock.DeploymentEnvironment.Returns(ENV);
-            Kernel.Rebind<IEnvironmentVariableProvider>().ToConstant(environmentVarialbesMock);
+            var environmentMock = Substitute.For<IEnvironment>();
+            environmentMock.DeploymentEnvironment.Returns(ENV);
+            Kernel.Rebind<IEnvironment>().ToConstant(environmentMock);
 
             SetupDateTimeFake();
             SetupConsulClient();

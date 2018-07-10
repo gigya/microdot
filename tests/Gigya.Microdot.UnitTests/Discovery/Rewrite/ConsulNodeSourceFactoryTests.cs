@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -33,7 +34,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _testingKernel;
         private ConsulConfig _consulConfig;        
         private ConsulSimulator _consulSimulator;
-        private IEnvironmentVariableProvider _environmentVariableProvider;
+        private IEnvironment _environment;
         private ConsulNodeSourceFactory _factory;
 
         [OneTimeSetUp]
@@ -42,10 +43,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator = new ConsulSimulator(ConsulPort);
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-                _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environmentVariableProvider.DataCenter.Returns(DataCenter);
-                k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
+                _environment = Substitute.For<IEnvironment>();
+                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                _environment.DataCenter.Returns(DataCenter);
+                k.Rebind<IEnvironment>().ToMethod(_ => _environment);
 
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
             });

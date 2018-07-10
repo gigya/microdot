@@ -21,27 +21,37 @@
 #endregion
 
 using System;
+using System.Net;
+using System.Reflection;
+using System.Security.Principal;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {
     public class EnvironmentInstance : IEnvironment
     {
-        public EnvironmentInstance()
+        private readonly IEnvironmentVariableProvider _environmentVariableProvider;
+
+        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider)
         {
-            PlatformID = Environment.OSVersion.Platform;
-            PlatformSpecificPathPrefix = PlatformID == PlatformID.Unix ? "/etc" : "D:";
+            _environmentVariableProvider = environmentVariableProvider;
+            DataCenter = environmentVariableProvider.GetEnvironmentVariable("DC");
+            DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
+            ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
         }
 
-        public PlatformID PlatformID { get; }
+        public string DataCenter { get; }
+        public string DeploymentEnvironment { get; }        
+        public string ConsulAddress { get; }
 
-        public string PlatformSpecificPathPrefix { get; }
-
+        [Obsolete("To be deleted on version 2.0")]
         public void SetEnvironmentVariableForProcess(string name, string value)
         {
-            Environment.SetEnvironmentVariable(name, value.ToLower(), EnvironmentVariableTarget.Process);
+            _environmentVariableProvider.SetEnvironmentVariableForProcess(name, value);
         }
 
-        public string GetEnvironmentVariable(string name) { return Environment.GetEnvironmentVariable(name)?.ToLower(); }
+        [Obsolete("To be deleted on version 2.0")]
+        public string GetEnvironmentVariable(string name) => _environmentVariableProvider.GetEnvironmentVariable(name); 
     }
 }

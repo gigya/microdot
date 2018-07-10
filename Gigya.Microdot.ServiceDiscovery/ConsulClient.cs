@@ -82,7 +82,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private Func<HealthCheckResult> _getHealthStatus;
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
-            ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
+            ISourceBlock<ConsulConfig> configChanged, IEnvironment environment,
             ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
         {
             _serviceName = serviceName;
@@ -91,12 +91,12 @@ namespace Gigya.Microdot.ServiceDiscovery
             GetConfig = getConfig;
             _dateTime = dateTime;
             Log = log;
-            DataCenter = environmentVariableProvider.DataCenter;
+            DataCenter = environment.DataCenter;
 
             _waitForConfigChange = new TaskCompletionSource<bool>();
             configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
 
-            var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
+            var address = environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
             ConsulAddress = new Uri($"http://{address}");
             _aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 

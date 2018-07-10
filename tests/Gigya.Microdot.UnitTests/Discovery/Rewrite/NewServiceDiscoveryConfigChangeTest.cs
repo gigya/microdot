@@ -5,10 +5,12 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;
@@ -34,7 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
+                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
                 _consulClientMock = new ConsulClientMock();

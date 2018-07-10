@@ -29,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private Dictionary<DeploymentIdentifier, ILoadBalancer> _loadBalancers;
         private Dictionary<DeploymentIdentifier, Func<Node>> _nodeResults;
         private HashSet<DeploymentIdentifier> _consulServiceList;
-        private IEnvironmentVariableProvider _environmentVariableProvider;
+        private IEnvironment _environment;
         private IDateTime _dateTimeMock;
         private int id;
         private const int Repeat = 1;
@@ -40,15 +40,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel?.Dispose();
             _serviceName = $"ServiceName{++id}";
 
-            _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-            _environmentVariableProvider.DataCenter.Returns("il3");
-            _environmentVariableProvider.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
-            _environmentVariableProvider.ConsulAddress.Returns((string)null);
+            _environment = Substitute.For<IEnvironment>();
+            _environment.DataCenter.Returns("il3");
+            _environment.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
+            _environment.ConsulAddress.Returns((string)null);
 
             _configDic = new Dictionary<string, string> { { "Discovery.EnvironmentFallbackEnabled", "true" } };
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
+                k.Rebind<IEnvironment>().ToConstant(_environment);
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
 
                 SetupConsulMocks(k);
@@ -58,8 +58,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 k.Rebind<IDateTime>().ToConstant(_dateTimeMock);
             }, _configDic);
 
-            var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
-            Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
+            var environment = _unitTestingKernel.Get<IEnvironment>();
+            Assert.AreEqual(_environment, environment);
         }
 
         private void SetupConsulMocks(IKernel kernel)
@@ -209,10 +209,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Repeat(Repeat)]
         public void MasterShouldNotFallBack()
         {
-            _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-            _environmentVariableProvider.DataCenter.Returns("il3");
-            _environmentVariableProvider.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
-            _unitTestingKernel.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
+            _environment = Substitute.For<IEnvironment>();
+            _environment.DataCenter.Returns("il3");
+            _environment.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
+            _unitTestingKernel.Rebind<IEnvironment>().ToConstant(_environment);
 
             SetMockToReturnServiceNotDefined(MasterService);
 

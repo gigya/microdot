@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Monitor;
@@ -69,7 +70,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
-                                IEnvironmentVariableProvider environmentVariableProvider,
+                                IEnvironment environment,
                                 ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log,
@@ -80,7 +81,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _discovery = discovery;            
             _serviceName = serviceName;
             
-            _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environmentVariableProvider.DeploymentEnvironment);
+            _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment);
             _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
 
             _reachabilityCheck = reachabilityCheck;
