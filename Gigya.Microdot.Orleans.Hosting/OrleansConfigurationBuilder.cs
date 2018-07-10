@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -71,7 +72,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         public Silo.SiloType SiloType { get; private set; }
 
 
-        public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
+        public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig, OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
                                            ClusterConfiguration clusterConfiguration, ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
                                            OrleansLogConsumer orleansLogConsumer, ZooKeeperLogConsumer zooKeeperLogConsumer, ServiceArguments serviceArguments)
         {
@@ -82,7 +83,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             var defaults = ClusterConfiguration.Defaults;
 
 
-            SetAgeLimits(globals, orleansConfig);
+            SetAgeLimits(globals, orleansConfig, orleansServiceInterfaceMapper);
 
             globals.ExpectedClusterSize = 1; // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds).
             globals.RegisterBootstrapProvider<DelegatingBootstrapProvider>(nameof(DelegatingBootstrapProvider));
@@ -165,7 +166,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        private void SetAgeLimits(GlobalConfiguration globals, OrleansConfig orleansConfig)
+        private void SetAgeLimits(GlobalConfiguration globals, OrleansConfig orleansConfig, OrleansServiceInterfaceMapper orleansServiceInterfaceMapper)
         {
             globals.Application.SetDefaultCollectionAgeLimit(TimeSpan.FromMinutes(orleansConfig.DefaultGrainAgeLimitInMins));
 
@@ -173,19 +174,17 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 foreach (var service in orleansConfig.GrainAgeLimits.Values)
                 {
-                    Type type;
                     try
                     {
-                        type = Type.GetType(service.GrainType) ?? throw new Exception();
+                        orleansServiceInterfaceMapper.ServiceClassesTypes.Single(x => x.FullName.Equals(service.GrainType));
                     }
                     catch (Exception e)
                     {
                         throw new ArgumentException($"Assigning Age Limit on {service.GrainType} has failed, because {service.GrainType} is an invalid type\n{e.Message}");
                     }
-                    globals.Application.SetCollectionAgeLimit(type.FullName, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
+                    globals.Application.SetCollectionAgeLimit(service.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
                 }
             }
-
         }
     }
 }

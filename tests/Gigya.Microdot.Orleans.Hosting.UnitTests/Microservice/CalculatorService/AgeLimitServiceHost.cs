@@ -22,7 +22,9 @@
 
 
 using System.Collections.Generic;
+using System.Linq;
 using Ninject;
+using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
@@ -35,13 +37,28 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             {
                 [ServiceName] = new GrainAgeLimitConfig
                 {
-                    GrainType =
-                        "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService, Gigya.Microdot.Orleans.Hosting.UnitTests",
+                    GrainType = "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService",
                     GrainAgeLimitInMins = 10
                 }
             };
+        }
+    }
 
+    public class GrainTestServiceHost : CalculatorServiceHost
+    {
 
+        protected override string ServiceName => "GrainTestService";
+        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
+        {
+            var originConfig = kernel.Get<OrleansConfig>();
+
+            originConfig.DefaultGrainAgeLimitInMins.ShouldBe(30); // From File
+            originConfig.GrainAgeLimits.Count.ShouldBe(1);
+
+            originConfig.GrainAgeLimits.Values.Single().GrainAgeLimitInMins.ShouldBe(12);
+            originConfig.GrainAgeLimits.Values.Single().GrainType.ShouldBe("Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService");
+
+            base.Configure(kernel,commonConfig);
         }
     }
 
@@ -55,14 +72,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             {
                 [ServiceName] = new GrainAgeLimitConfig
                 {
-                    GrainType =
-                        "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService, Gigya.Microdot.Orleans.Hosting.UnitTests",
+                    GrainType = "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService",
                     GrainAgeLimitInMins = 1 // 10 seconds!
-                    //GrainAgeLimitInMins = 0.5 // 10 seconds!
                 }
             };
-
-
         }
     }
 
@@ -79,10 +92,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                     GrainAgeLimitInMins = 10
                 }
             };
-
-
         }
     }
+
+
 
     public class WithNoneAgeLimitServiceHost : CalculatorServiceHost
     {
@@ -90,8 +103,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             var originConfig = kernel.Get<OrleansConfig>();
             originConfig.GrainAgeLimits = null;
-
-            //var copyConfig = JsonConvert.DeserializeObject<OrleansConfig>(JsonConvert.SerializeObject(originConfig));
         }
     }
 }

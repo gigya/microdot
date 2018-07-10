@@ -48,7 +48,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     public class GrainAgeLimitService : Grain, IGarinAgeLimitGrain
     {
         private readonly ILog _log;
-        private readonly Stopwatch _stopWatch;
 
         private static  bool _wasCollected = false;
 
@@ -56,8 +55,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public GrainAgeLimitService(ILog log)
         {
             _log = log;
-            _stopWatch = new Stopwatch();
-            _stopWatch.Start();
         }
 
         public async Task<bool> SendFake(string fake)
@@ -74,8 +71,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             await Task.Delay(150);
             return _wasCollected;
         }
-
-
 
         public override Task OnDeactivateAsync()
         {

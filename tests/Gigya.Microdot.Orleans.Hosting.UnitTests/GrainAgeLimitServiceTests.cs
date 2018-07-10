@@ -60,19 +60,29 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             service.SendFake("").Result.ShouldBeTrue();
         }
-
-
+        
         [Test]
         public async Task WithInvalidAgeLimitTest_ThrowArgumentException()
         {
             Should.Throw<ArgumentException>(() => AssemblyInitialize.ResolutionRoot.GetServiceTester<WithInvalidAgeLimitServiceHost>(basePortOverride: 6254, writeLogToFile: true));
         }
 
+        [Description("Loading real configuration from GrainTestService")]
+        [Test]
+        public async Task GrainTestServiceTest()
+        {
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<GrainTestServiceHost>(basePortOverride: 6154, writeLogToFile: true);
+            Tester = tester;
+            var service = tester.GetServiceProxy<IGarinAgeLimitService>();
+
+            service.SendFake("").Result.ShouldBeTrue();
+        }
+
         [Ignore("The test run to long - Should think of a better way to test it.")]
         [Test]
         public async Task ForceDiactivationAfter10Seconds()
         {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<With10SecondsAgeLimitServiceHost>(basePortOverride: 6154, writeLogToFile: true);
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<With10SecondsAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
