@@ -21,6 +21,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         private const string DEFAULT_ENV = "default_env";
 
         private IFileSystem _fileSystem;
+        private string _originalENV;
+        private string _originalZONE;
+        private string _originalDC;
 
         [SetUp]
         public void SetUp()
@@ -34,11 +37,14 @@ namespace Gigya.Microdot.UnitTests.Configuration
 	            GIGYA_CONFIG_PATHS_FILE: 'C:\\gigya\\Config\\loadPaths1.json',
             }");
 
-            Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", null);
+            _originalDC = Environment.GetEnvironmentVariable("DC");
+            _originalZONE = Environment.GetEnvironmentVariable("ZONE");
+            _originalENV = Environment.GetEnvironmentVariable("ENV");
             Environment.SetEnvironmentVariable("DC", DEFAULT_DC);
             Environment.SetEnvironmentVariable("ZONE", DEFAULT_ZONE);
             Environment.SetEnvironmentVariable("ENV", DEFAULT_ENV);
+            Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
+            Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", null);
         }
 
         [TearDown]
@@ -46,9 +52,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", null);
-            Environment.SetEnvironmentVariable("DC", null);
-            Environment.SetEnvironmentVariable("ZONE", null);
-            Environment.SetEnvironmentVariable("ENV", null);
+            Environment.SetEnvironmentVariable("DC", _originalDC);
+            Environment.SetEnvironmentVariable("ZONE", _originalZONE);
+            Environment.SetEnvironmentVariable("ENV", _originalENV);
         }
 
         [Test]
