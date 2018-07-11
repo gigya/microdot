@@ -37,11 +37,13 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         {
             _environmentVariableProvider = environmentVariableProvider;
             DataCenter = environmentVariableProvider.GetEnvironmentVariable("DC");
+            Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE");
             DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
         }
 
         public string DataCenter { get; }
+        public string Zone { get; }
         public string DeploymentEnvironment { get; }        
         public string ConsulAddress { get; }
 

@@ -32,6 +32,12 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         string DataCenter { get; }
 
         /// <summary>
+        /// Current Availability Zone within the DataCenter. Each dataCenter may contain more than one zone.
+        /// Initialized with environment variable ZONE
+        /// </summary>
+        string Zone { get; }
+
+        /// <summary>
         /// Initialized with environment variable ENV
         /// </summary>        
         string DeploymentEnvironment { get; }

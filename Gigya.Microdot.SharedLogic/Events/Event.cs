@@ -93,6 +93,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
         public string RuntimeENV => Environment.DeploymentEnvironment;
 
+        /// <summary>The value of the %ZONE% environment variable. .</summary>
+        [EventField(EventConsts.runtimeZONE, OmitFromAudit = true)]
+        public string RuntimeZONE => Environment.Zone;
+
         /// <summary>The value of the %DC% environment variable. .</summary>
         [EventField(EventConsts.runtimeDC, OmitFromAudit = true)]
         public string RuntimeDC => Environment.DataCenter;

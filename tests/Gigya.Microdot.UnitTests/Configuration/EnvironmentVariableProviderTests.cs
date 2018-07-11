@@ -14,9 +14,10 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
-    public class EnviromentVariableProviderTests
+    public class EnvironmentVariableProviderTests
     {
         private const string DEFAULT_DC = "default_dc";
+        private const string DEFAULT_ZONE = "default_zone";
         private const string DEFAULT_ENV = "default_env";
 
         private IFileSystem _fileSystem;
@@ -28,6 +29,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => @"{
                 DC: 'il11',
+                ZONE: 'a',
 	            ENV: 'orl11',	
 	            GIGYA_CONFIG_PATHS_FILE: 'C:\\gigya\\Config\\loadPaths1.json',
             }");
@@ -35,6 +37,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", null);
             Environment.SetEnvironmentVariable("DC", DEFAULT_DC);
+            Environment.SetEnvironmentVariable("ZONE", DEFAULT_ZONE);
             Environment.SetEnvironmentVariable("ENV", DEFAULT_ENV);
         }
 
@@ -44,6 +47,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", null);
             Environment.SetEnvironmentVariable("DC", null);
+            Environment.SetEnvironmentVariable("ZONE", null);
             Environment.SetEnvironmentVariable("ENV", null);
         }
 
@@ -69,22 +73,24 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             Environment.SetEnvironmentVariable("DC", "il2");
 
-            var enviromentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
+            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
 
-            enviromentVariableProvider.GetEnvironmentVariable("DC").ShouldBe("il11");
-            enviromentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
-            enviromentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
+            environmentVariableProvider.GetEnvironmentVariable("DC").ShouldBe("il11");
+            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("a");
+            environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
+            environmentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
         }
 
 
         [Test]
         public void ReadAndSeEnvVariables_AllEmpty()
         {
-            var enviromentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
+            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
 
-            enviromentVariableProvider.GetEnvironmentVariable("DC").ShouldBe("il11");
-            enviromentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
-            enviromentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
+            environmentVariableProvider.GetEnvironmentVariable("DC").ShouldBe("il11");
+            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("a");
+            environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
+            environmentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
         }
 
         [Test]
@@ -96,6 +102,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             // assert environment variables were not changed
             environmentVariableProvider.GetEnvironmentVariable("DC").ShouldBe(DEFAULT_DC);
+            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe(DEFAULT_ZONE);
             environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe(DEFAULT_ENV);
         }
 
