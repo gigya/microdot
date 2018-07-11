@@ -81,8 +81,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _discovery = discovery;            
             _serviceName = serviceName;
             
-            _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment);
-            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
+            _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment, environment);
+            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT, environment);
 
             _reachabilityCheck = reachabilityCheck;
             GetConfig = discoveryConfigFactory;

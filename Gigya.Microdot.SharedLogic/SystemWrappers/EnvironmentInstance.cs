@@ -24,6 +24,7 @@ using System;
 using System.Net;
 using System.Reflection;
 using System.Security.Principal;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
@@ -40,6 +41,9 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
             Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE");
             DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
+
+            if (string.IsNullOrEmpty(DataCenter) || string.IsNullOrEmpty(DeploymentEnvironment))
+                throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %DC%, %ENV%");
         }
 
         public string DataCenter { get; }

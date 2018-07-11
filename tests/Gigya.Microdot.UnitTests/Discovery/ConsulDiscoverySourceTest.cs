@@ -45,6 +45,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private Dictionary<string, string> _configDic;
         private Func<Task> _consulClientInitTask;
         private DateTimeFake _dateTimeFake;
+        private IEnvironment _environmentMock;
 
         [SetUp]
         public void Setup()
@@ -52,9 +53,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k => {}, _configDic);
 
-            var environmentMock = Substitute.For<IEnvironment>();
-            environmentMock.DeploymentEnvironment.Returns(ENV);
-            Kernel.Rebind<IEnvironment>().ToConstant(environmentMock);
+            _environmentMock = Substitute.For<IEnvironment>();
+            _environmentMock.DeploymentEnvironment.Returns(ENV);
+            Kernel.Rebind<IEnvironment>().ToConstant(_environmentMock);
 
             SetupDateTimeFake();
             SetupConsulClient();
@@ -133,7 +134,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 Scope = _serviceScope,
             };
             var sourceFactory = Kernel.Get<Func<DeploymentIdentifier, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
-            var serviceContext = new DeploymentIdentifier(SERVICE_NAME, ENV);
+            var serviceContext = new DeploymentIdentifier(SERVICE_NAME, ENV, _environmentMock);
             _consulDiscoverySource = sourceFactory(serviceContext, config);
             await _consulDiscoverySource.Init();
             await GetNewResult();

@@ -61,6 +61,7 @@
     <Compile Include="ConsulDiscoverySource.cs" />
     <Compile Include="DiscoverySourceLoader.cs" />
     <Compile Include="Rewrite\ConsulNode.cs" />
+    <Compile Include="Rewrite\ConsulServiceNameByDeploymentIdentifier.cs" />
     <Compile Include="Rewrite\Discovery.cs" />
     <Compile Include="Rewrite\Ex.cs" />
     <Compile Include="Rewrite\IDiscovery.cs" />

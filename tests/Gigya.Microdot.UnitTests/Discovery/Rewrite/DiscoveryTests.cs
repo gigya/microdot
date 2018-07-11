@@ -90,7 +90,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _discoveryConfig.Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig());
 
             _discovery = _kernel.Get<IDiscovery>();
-            _deploymentIdentifier = new DeploymentIdentifier(ServiceName, Env);            
+            _deploymentIdentifier = new DeploymentIdentifier(ServiceName, Env, Substitute.For<IEnvironment>());            
         }
 
         private void SetupConsulNodeSource()

@@ -72,7 +72,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
-            _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod");
+            _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod", Substitute.For<IEnvironment>());
             _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};
             _consulNodeSourceFactory = _testingKernel.Get<ConsulNodeSourceFactory>();
         }
@@ -258,29 +258,27 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
         {            
-            _consulSimulator.AddServiceNode(serviceName ?? _deploymentIdentifier.ToString(), new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceNode(serviceName ?? _deploymentIdentifier.GetConsulServiceName(), new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
         private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1)
         {
-            _consulSimulator.RemoveServiceNode(_deploymentIdentifier.ToString(), new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceNode(_deploymentIdentifier.GetConsulServiceName(), new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
         private void SetServiceVersion(string version)
         {
-            _consulSimulator.SetServiceVersion(_deploymentIdentifier.ToString(), version);
+            _consulSimulator.SetServiceVersion(_deploymentIdentifier.GetConsulServiceName(), version);
         }
 
         private void RemoveService(string serviceName=null)
         {
-            _consulSimulator.RemoveService(serviceName ?? _deploymentIdentifier.ToString());
+            _consulSimulator.RemoveService(serviceName ?? _deploymentIdentifier.GetConsulServiceName());
         }
 
         private void SetConsulIsDown()
         {
             _consulSimulator.SetError(new Exception("fake error"));
         }
-
-
     }
 }

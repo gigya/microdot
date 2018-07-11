@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -66,6 +67,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private Node Node6 = new Node("Host6", 666);
 
         private Func<Node[]> _getSourceNodes = () => new Node[0];
+        private IEnvironment _environment;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -85,14 +87,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _log = (LogSpy)_kernel.Get<ILog>();
             _discovery = Substitute.For<IDiscovery>();
             _discovery.GetNodes(Arg.Any<DeploymentIdentifier>()).Returns(_ => Task.FromResult(_getSourceNodes()));
-            _reachabilityCheck = (n,c) => throw new EnvironmentException("node is unreachable");                       
+            _reachabilityCheck = (n,c) => throw new EnvironmentException("node is unreachable");
+            _environment = Substitute.For<IEnvironment>();
         }
 
         private void CreateLoadBalancer(TrafficRoutingStrategy trafficRoutingStrategy=TrafficRoutingStrategy.RandomByRequestID)
         {
             var createLoadBalancer = _kernel.Get<Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer>>();
             _loadBalancer = createLoadBalancer(
-                new DeploymentIdentifier(ServiceName, Env),
+                new DeploymentIdentifier(ServiceName, Env, _environment),
                 (n, c) => _reachabilityCheck(n, c),
                 trafficRoutingStrategy);
         }
@@ -371,7 +374,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private HealthCheckResult GetHealthStatus()
         {
             var healthMonitor = (FakeHealthMonitor)_kernel.Get<IHealthMonitor>();
-            return healthMonitor.Monitors[new DeploymentIdentifier(ServiceName,Env).ToString()].Invoke();
+            return healthMonitor.Monitors[new DeploymentIdentifier(ServiceName,Env, _environment).ToString()].Invoke();
         }
     }
 

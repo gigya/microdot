@@ -132,17 +132,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        [Ignore("New ServiceDiscovery implementation does not support DataCenter scopes")]
-        [Repeat(Repeat)]
-        public async Task ScopeDataCenterShouldUseServiceNameWithNoEnvironment()
-        {
-            _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "DataCenter";
-            SetMockToReturnHost(new DeploymentIdentifier(_serviceName));
-            var nextHost = (await GetServiceDiscovery().GetLoadBalancer()).GetNode();
-            (await nextHost).Hostname.ShouldBe(_serviceName);
-        }
-
-        [Test]
         [Repeat(Repeat)]
         public async Task WhenServiceDeletedShouldFallBackToMaster()
         {
@@ -255,8 +244,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-        private DeploymentIdentifier MasterService => new DeploymentIdentifier(_serviceName, MASTER_ENVIRONMENT);
-        private DeploymentIdentifier OriginatingService => new DeploymentIdentifier(_serviceName, ORIGINATING_ENVIRONMENT);
+        private DeploymentIdentifier MasterService => new DeploymentIdentifier(_serviceName, MASTER_ENVIRONMENT, _environment);
+        private DeploymentIdentifier OriginatingService => new DeploymentIdentifier(_serviceName, ORIGINATING_ENVIRONMENT, _environment);
         private string HostnameFor(DeploymentIdentifier di) => $"{di.DeploymentEnvironment}-host";
 
     }

@@ -74,7 +74,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (Services.Count == 0 && Error != null)
                 throw Error;
 
-            return Services.Contains(deploymentIdentifier.ToString());
+            return Services.Contains(deploymentIdentifier.GetConsulServiceName());
         }
 
         // We can't store DeploymentIdentifier's here since we can't reliably parse them when they return from Consul

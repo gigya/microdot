@@ -78,8 +78,8 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             Log = log;
             _serviceName = serviceName;
-            _originatingDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment);
-            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT);
+            _originatingDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment, environment);
+            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT, environment);
 
             _reachabilityChecker = reachabilityChecker;
             _remoteHostPoolFactory = remoteHostPoolFactory;

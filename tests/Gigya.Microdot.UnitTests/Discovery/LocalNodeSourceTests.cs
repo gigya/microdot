@@ -2,11 +2,13 @@
 using System.Linq;
 using System.Net;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
+using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
 
@@ -32,7 +34,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [SetUp]
         public void Setup()
         {
-            var deployment = new DeploymentIdentifier("MyService", "prod");
+            var deployment = new DeploymentIdentifier("MyService", "prod", Substitute.For<IEnvironment>());
 
             _localNodeSource = _kernel.Get<Func<DeploymentIdentifier, LocalNodeSource>>()(deployment);            
         }

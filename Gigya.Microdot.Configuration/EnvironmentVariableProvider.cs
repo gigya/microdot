@@ -53,9 +53,6 @@ namespace Gigya.Microdot.Configuration
 
             DataCenter = GetEnvironmentVariable("DC");
             DeploymentEnvironment = GetEnvironmentVariable("ENV");
-
-            if (string.IsNullOrEmpty(DataCenter) || string.IsNullOrEmpty(DeploymentEnvironment))
-                throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %DC%, %ENV%");
         }
 
         public void SetEnvironmentVariableForProcess(string name, string value)

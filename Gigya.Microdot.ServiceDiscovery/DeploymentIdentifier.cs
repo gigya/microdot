@@ -19,32 +19,49 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
+
+using System.Security.Policy;
+using Gigya.Microdot.Interfaces.SystemWrappers;
+
 namespace Gigya.Microdot.ServiceDiscovery
 {
     public class DeploymentIdentifier
     {
         public string DeploymentEnvironment { get; }
         public string ServiceName { get; }
+        public string Zone { get; }
+        public string DataCenter { get; }
 
         public bool IsEnvironmentSpecific => string.IsNullOrEmpty(DeploymentEnvironment)==false;
 
-        public DeploymentIdentifier(string serviceName, string deploymentEnvironment)
+        /// <summary>
+        /// Create a new identifier for a service which is deployed on current datacenter and current zone
+        /// </summary>
+        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, IEnvironment environment)
         {
             DeploymentEnvironment = deploymentEnvironment?.ToLower();
             ServiceName = serviceName;
+            DataCenter = environment.DataCenter;
+            Zone = environment.Zone;
         }
 
-        public DeploymentIdentifier(string serviceName): this(serviceName, null)
-        { }
+        /// <summary>
+        /// Create a new identifier for a service which is deployed on a different datacenter or a different zone
+        /// </summary>
+        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, string dataCenter, string zone)
+        {
+            DeploymentEnvironment = deploymentEnvironment?.ToLower();
+            ServiceName = serviceName;
+            DataCenter = dataCenter;
+            Zone = zone;
+        }
 
         public override string ToString()
         {
-            if (IsEnvironmentSpecific)
-                return $"{ServiceName}-{DeploymentEnvironment}";
-            else
-                return ServiceName;
-        }
+            var serviceAndEnv = IsEnvironmentSpecific ? $"{ServiceName}-{DeploymentEnvironment}" : ServiceName;
 
+            return $"{DataCenter}{Zone}/{serviceAndEnv}";
+        }
 
         public override bool Equals(object obj)
         {
@@ -56,7 +73,12 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             if (obj is DeploymentIdentifier other)
             {
-                if (IsEnvironmentSpecific && other.IsEnvironmentSpecific)
+                if (Zone != other.Zone)
+                    return false;
+                if (DataCenter != other.DataCenter)
+                    return false;
+
+                if (IsEnvironmentSpecific || other.IsEnvironmentSpecific)
                     return DeploymentEnvironment == other.DeploymentEnvironment && ServiceName == other.ServiceName;
                 else
                     return ServiceName == other.ServiceName;
@@ -65,16 +87,18 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return false;
         }
 
-
         public override int GetHashCode()
         {
             unchecked
             {
+                var hashCode = ServiceName!=null? ServiceName.GetHashCode() : 0;
                 if (IsEnvironmentSpecific)
-                    return ((ServiceName?.GetHashCode() ?? 0) * 397) ^ (DeploymentEnvironment.GetHashCode());
-                else
-                    return ServiceName?.GetHashCode() ?? 0;
+                    hashCode = (hashCode * 397) ^ DeploymentEnvironment.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Zone != null ? Zone.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (DataCenter != null ? DataCenter.GetHashCode() : 0);
+                return hashCode;
             }
         }
+
     }
 }

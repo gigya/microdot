@@ -40,10 +40,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-
         public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            string urlCommand = $"v1/health/service/{deploymentIdentifier}?dc={DataCenter}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var service = deploymentIdentifier.GetConsulServiceName();
+            string urlCommand = $"v1/health/service/{service}?dc={DataCenter}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -64,10 +64,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-
         public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            string urlCommand = $"v1/kv/service/{deploymentIdentifier}?dc={DataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var service = deploymentIdentifier.GetConsulServiceName();
+            string urlCommand = $"v1/kv/service/{service}?dc={DataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<string>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -91,8 +91,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             return response;
         }
-
-
 
         public async Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
         {
@@ -162,8 +160,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             return consulResult;
         }
-
-
 
         private ConsulNode ToNode(ServiceEntry serviceEntry)
         {
