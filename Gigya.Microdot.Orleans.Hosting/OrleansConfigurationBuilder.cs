@@ -64,6 +64,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         public ZooKeeperConfig ZooKeeper { get; set; }
 
         public MySqlConfig MySql_v4_0 { get; set; }
+
     }
 
     public class OrleansConfigurationBuilder

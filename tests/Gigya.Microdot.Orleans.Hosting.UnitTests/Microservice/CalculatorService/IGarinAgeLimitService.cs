@@ -57,11 +57,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             _log = log;
         }
 
+
+        public override Task OnActivateAsync()
+        {
+            _wasCollected = false;
+            return base.OnActivateAsync();
+        }
+
         public async Task<bool> SendFake(string fake)
         {
 
             await Task.Delay(150);
-            //GrainFactory.GetGrain<IMockStat>(1).SetCode( "I Am Anatoliy");
+            _wasCollected = false;
             
             return true;
         }

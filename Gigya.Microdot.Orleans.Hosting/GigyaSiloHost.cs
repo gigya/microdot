@@ -21,6 +21,9 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
@@ -33,15 +36,18 @@ using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
+using NUnit.Framework.Internal;
 using Orleans;
 using Orleans.CodeGeneration;
 using Orleans.Providers;
+using Orleans.Runtime.Configuration;
 using Orleans.Runtime.Host;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
+        private ConcurrentDictionary<Type, OrleansConfig> _grainMapperToConfig;
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -52,14 +58,16 @@ namespace Gigya.Microdot.Orleans.Hosting
         private OrleansConfigurationBuilder ConfigBuilder { get; }
         private HttpServiceListener HttpServiceListener { get; }
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
+        private Func<OrleansConfig> OrleansConfig { get; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
 
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener,
-                             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig)
+                             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, Func<OrleansConfig> orleansConfig)
         {
             Log = log;
             ConfigBuilder = configBuilder;
+            OrleansConfig = orleansConfig;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
@@ -71,7 +79,11 @@ namespace Gigya.Microdot.Orleans.Hosting
             DelegatingBootstrapProvider.OnClose = BootstrapClose;
 
             EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
+
+
+            _grainMapperToConfig = new ConcurrentDictionary<Type, OrleansConfig>();
         }
+
 
         public void Start(Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
@@ -171,11 +183,41 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private async Task<object> IncomingCallInterceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
         {
+
             if (targetMethod == null)
                 throw new ArgumentNullException(nameof(targetMethod));
 
-            var declaringNameSpace = targetMethod.DeclaringType?.Namespace;
+            var grainType = targetMethod.DeclaringType;
+            var declaringNameSpace = grainType?.Namespace;
 
+            try
+            {
+                var orleanConfig = OrleansConfig();
+
+
+                if (_grainMapperToConfig.TryAdd(grainType, orleanConfig) == false) //verify whether this grain already was executed!
+                {
+                    if (_grainMapperToConfig[grainType] != orleanConfig) // was update in config File
+                    {
+                        _grainMapperToConfig[grainType] = orleanConfig;
+
+                        if (orleanConfig.GrainAgeLimits != null)
+                        {
+                            var config = orleanConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(grainType.FullName));
+                            if (config != null)
+                            {
+                                var clusterConfiguration = ConfigBuilder.ClusterConfiguration;
+                                clusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainType.FullName, TimeSpan.FromMinutes(config.GrainAgeLimitInMins));
+                            }
+                        }
+                    }
+                }
+            }
+
+            catch (Exception exception)
+            {
+                int x = 0;
+            }
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
             if (targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null ||
                declaringNameSpace?.StartsWith("Orleans") == true)
@@ -210,46 +252,50 @@ namespace Gigya.Microdot.Orleans.Hosting
             var now = DateTimeOffset.UtcNow;
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
-            if (   config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
+            if (config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
 
                 if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
-                    Log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new {
-                        clientSendTime    = TracingContext.SpanStartTime,
-                        currentTime       = now,
-                        maxDelayInSecs    = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
+                    Log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new
+                    {
+                        clientSendTime = TracingContext.SpanStartTime,
+                        currentTime = now,
+                        maxDelayInSecs = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
                         actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
                     }));
 
                 else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
-                    throw new EnvironmentException("Dropping Orleans request since too much time passed since the client sent it to us.", unencrypted: new Tags {
-                        ["clientSendTime"]    = TracingContext.SpanStartTime.ToString(),
-                        ["currentTime"]       = now.ToString(),
-                        ["maxDelayInSecs"]    = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
+                    throw new EnvironmentException("Dropping Orleans request since too much time passed since the client sent it to us.", unencrypted: new Tags
+                    {
+                        ["clientSendTime"] = TracingContext.SpanStartTime.ToString(),
+                        ["currentTime"] = now.ToString(),
+                        ["maxDelayInSecs"] = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
                         ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
                     });
             }
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
-            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
+            if (config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
                 && TracingContext.AbandonRequestBy != null
                 && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
-                    Log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new {
+                    Log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new
+                    {
                         requestDeathTime = TracingContext.AbandonRequestBy,
-                        currentTime      = now,
-                        overTimeInSecs   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
+                        currentTime = now,
+                        overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
 
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
-                    throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags {
+                    throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags
+                    {
                         ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
-                        ["currentTime"]      = now.ToString(),
-                        ["overTimeInSecs"]   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                        ["currentTime"] = now.ToString(),
+                        ["overTimeInSecs"] = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
                     });
             }
         }
@@ -285,7 +331,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             grainEvent.TargetType = targetMethod.DeclaringType?.FullName;
             grainEvent.TargetMethod = targetMethod.Name;
             grainEvent.Exception = ex;
-            grainEvent.ErrCode = ex != null ? null : (int?) 0;
+            grainEvent.ErrCode = ex != null ? null : (int?)0;
 
             try
             {

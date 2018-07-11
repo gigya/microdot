@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Testing.Service;
@@ -39,6 +40,59 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             Tester?.Dispose();
         }
+
+        //[Ignore("Temporarily")]
+        //[Test]
+        //public async Task DanielTest()
+        //{
+        //    var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<DanielWithAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
+        //    Tester = tester;
+        //    var service = tester.GetServiceProxy<IGarinAgeLimitService>();
+
+        //    service.SendFake("").Result.ShouldBeTrue();
+        //    var stopwatch = new Stopwatch();
+
+        //    await Task.Delay(TimeSpan.FromMinutes(5)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+
+
+        //    service.SendFake("").Result.ShouldBeTrue();
+
+
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+
+        //    int x = 0;
+
+
+        //    service.SendFake("").Result.ShouldBeTrue();
+        //    service.WasCollected().Result.ShouldBeFalse();
+
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+        //    await Task.Delay(TimeSpan.FromMinutes(1)); //GC.Collected!
+
+        //    x = 0;
+        //    x = 0;
+        //    x = 0;
+
+        //}
 
         [Test]
         public async Task WithNoneAgeLimitTest()
@@ -60,7 +114,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             service.SendFake("").Result.ShouldBeTrue();
         }
-        
+
         [Test]
         public async Task WithInvalidAgeLimitTest_ThrowArgumentException()
         {
