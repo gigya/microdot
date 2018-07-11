@@ -44,7 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
-        private readonly ConcurrentDictionary<Type, OrleansConfig> _grainMapperToConfig;
+        private object _lockedObject;
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -56,11 +56,15 @@ namespace Gigya.Microdot.Orleans.Hosting
         private HttpServiceListener HttpServiceListener { get; }
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
         private Func<OrleansConfig> OrleansConfig { get; }
+        public OrleansConfig PreviousOrleansConfig { get; private set; }
+
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
 
-        public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener,
-                             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, Func<OrleansConfig> orleansConfig)
+        public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
+            HttpServiceListener httpServiceListener,
+            IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
+            Func<OrleansConfig> orleansConfig)
         {
             Log = log;
             ConfigBuilder = configBuilder;
@@ -68,6 +72,8 @@ namespace Gigya.Microdot.Orleans.Hosting
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
+
+            PreviousOrleansConfig = orleansConfig();
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
                 throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
@@ -77,8 +83,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
 
+            _lockedObject = new object();
 
-            _grainMapperToConfig = new ConcurrentDictionary<Type, OrleansConfig>();
+
         }
 
 
@@ -187,33 +194,9 @@ namespace Gigya.Microdot.Orleans.Hosting
             var grainType = targetMethod.DeclaringType;
             var declaringNameSpace = grainType?.Namespace;
 
-            try
-            {
-                var orleanConfig = OrleansConfig();
+            UpdateOrleansAboutAgeLimitChange(grainType);
 
-                if (_grainMapperToConfig.TryAdd(grainType, orleanConfig) == false) //verify whether this grain already was executed!
-                {
-                    if (_grainMapperToConfig[grainType] != orleanConfig) // was update in config File
-                    {
-                        _grainMapperToConfig[grainType] = orleanConfig;
 
-                        if (orleanConfig.GrainAgeLimits != null)
-                        {
-                            var config = orleanConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(grainType.FullName));
-                            if (config != null)
-                            {
-                                var clusterConfiguration = ConfigBuilder.ClusterConfiguration;
-                                clusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainType.FullName, TimeSpan.FromMinutes(config.GrainAgeLimitInMins));
-                            }
-                        }
-                    }
-                }
-            }
-
-            catch (Exception exception)
-            {
-                int x = 0;
-            }
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
             if (targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null ||
                declaringNameSpace?.StartsWith("Orleans") == true)
@@ -238,6 +221,41 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 RequestTimings.Current.Request.Stop();
                 PublishEvent(targetMethod, target, ex);
+            }
+        }
+
+        private void UpdateOrleansAboutAgeLimitChange(Type grainType)
+        {
+            var orleanConfig = OrleansConfig();
+
+            if (PreviousOrleansConfig != orleanConfig) //Double locking
+            {
+                lock (_lockedObject)
+                {
+                    if (PreviousOrleansConfig != orleanConfig)
+                    {
+                        if (orleanConfig.GrainAgeLimits != null)
+                        {
+                            foreach (var service in orleanConfig.GrainAgeLimits.Values)
+                            {
+                                var grainAgeLimit = PreviousOrleansConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(service.GrainType));
+                                if (grainAgeLimit != null)
+                                {
+                                    if (grainAgeLimit.GrainAgeLimitInMins != service.GrainAgeLimitInMins)
+                                    {
+                                        ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
+                                    }
+                                }
+                                else //remove line
+                                {
+                                    ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainType.FullName, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
+                                }
+                            }
+                        }
+
+                        PreviousOrleansConfig = orleanConfig;
+                    }
+                }
             }
         }
 
