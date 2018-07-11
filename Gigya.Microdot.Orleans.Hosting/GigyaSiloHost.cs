@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -36,11 +35,9 @@ using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
-using NUnit.Framework.Internal;
 using Orleans;
 using Orleans.CodeGeneration;
 using Orleans.Providers;
-using Orleans.Runtime.Configuration;
 using Orleans.Runtime.Host;
 
 namespace Gigya.Microdot.Orleans.Hosting
