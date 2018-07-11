@@ -25,6 +25,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Events;
@@ -55,7 +56,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private OrleansConfigurationBuilder ConfigBuilder { get; }
         private HttpServiceListener HttpServiceListener { get; }
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
-        private Func<OrleansConfig> OrleansConfig { get; }
+        private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
         public OrleansConfig PreviousOrleansConfig { get; private set; }
 
         private Func<LoadShedding> LoadSheddingConfig { get; }
@@ -64,16 +65,18 @@ namespace Gigya.Microdot.Orleans.Hosting
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
             HttpServiceListener httpServiceListener,
             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
-            Func<OrleansConfig> orleansConfig)
+            ISourceBlock<OrleansConfig> orleansConfigSourceBlock,OrleansConfig orleansConfig)
         {
             Log = log;
             ConfigBuilder = configBuilder;
-            OrleansConfig = orleansConfig;
+            OrleansConfigSourceBlock = orleansConfigSourceBlock;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
 
-            PreviousOrleansConfig = orleansConfig();
+            PreviousOrleansConfig = orleansConfig;
+
+            OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config=>UpdateOrleansAboutAgeLimitChange(config)));
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
                 throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
@@ -87,6 +90,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 
 
         }
+
+
 
 
         public void Start(Func<IGrainFactory, Task> afterOrleansStartup = null,
@@ -194,8 +199,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             var grainType = targetMethod.DeclaringType;
             var declaringNameSpace = grainType?.Namespace;
 
-            UpdateOrleansAboutAgeLimitChange(grainType);
-
 
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
             if (targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null ||
@@ -223,42 +226,32 @@ namespace Gigya.Microdot.Orleans.Hosting
                 PublishEvent(targetMethod, target, ex);
             }
         }
-
-        private void UpdateOrleansAboutAgeLimitChange(Type grainType)
+        private void UpdateOrleansAboutAgeLimitChange(OrleansConfig orleanConfig)
         {
-            var orleanConfig = OrleansConfig();
-
-            if (PreviousOrleansConfig != orleanConfig) //Double locking
+            lock (_lockedObject)
             {
-                lock (_lockedObject)
+                if (orleanConfig.GrainAgeLimits != null)
                 {
-                    if (PreviousOrleansConfig != orleanConfig)
+                    foreach (var service in orleanConfig.GrainAgeLimits.Values)
                     {
-                        if (orleanConfig.GrainAgeLimits != null)
+                        var grainAgeLimit = PreviousOrleansConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(service.GrainType));
+                        if (grainAgeLimit != null)
                         {
-                            foreach (var service in orleanConfig.GrainAgeLimits.Values)
+                            if (grainAgeLimit.GrainAgeLimitInMins != service.GrainAgeLimitInMins)
                             {
-                                var grainAgeLimit = PreviousOrleansConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(service.GrainType));
-                                if (grainAgeLimit != null)
-                                {
-                                    if (grainAgeLimit.GrainAgeLimitInMins != service.GrainAgeLimitInMins)
-                                    {
-                                        ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
-                                    }
-                                }
-                                else //remove line
-                                {
-                                    ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainType.FullName, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
-                                }
+                                ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
                             }
                         }
-
-                        PreviousOrleansConfig = orleanConfig;
+                        else //in case that an configuration was removed!
+                        {
+                            ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
+                        }
                     }
                 }
+
+                PreviousOrleansConfig = orleanConfig;
             }
         }
-
 
         private void RejectRequestIfLateOrOverloaded()
         {

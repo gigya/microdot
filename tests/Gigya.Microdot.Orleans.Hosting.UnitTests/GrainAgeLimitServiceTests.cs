@@ -130,6 +130,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
             service.SendFake("").Result.ShouldBeTrue();
+
         }
 
         [Ignore("The test run to long - Should think of a better way to test it.")]
