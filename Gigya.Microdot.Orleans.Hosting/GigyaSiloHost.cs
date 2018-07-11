@@ -44,7 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
-        private ConcurrentDictionary<Type, OrleansConfig> _grainMapperToConfig;
+        private readonly ConcurrentDictionary<Type, OrleansConfig> _grainMapperToConfig;
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -190,7 +190,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             try
             {
                 var orleanConfig = OrleansConfig();
-
 
                 if (_grainMapperToConfig.TryAdd(grainType, orleanConfig) == false) //verify whether this grain already was executed!
                 {
