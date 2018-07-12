@@ -22,17 +22,24 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
+using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
+using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -46,6 +53,7 @@ namespace Gigya.Microdot.Ninject
         {
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
+            typeof(LoadBalancer),
             typeof(ConfigDiscoverySource)
         };
 
@@ -60,10 +68,11 @@ namespace Gigya.Microdot.Ninject
                 Kernel.Load<FuncModule>();
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly),typeof(ServiceDiscoveryAssembly));
-
+            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
+            
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
+            Kernel.BindPerKey<string, ReachabilityCheck, INewServiceDiscovery, NewServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
@@ -76,9 +85,18 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
+            Rebind<INodeSourceFactory>().To<ConsulNodeSourceFactory>().InTransientScope();
+            Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
+            Rebind<IDiscovery>().To<Discovery>().InSingletonScope();
+
+            Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();            
+
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();
+
+            Kernel.Rebind<ServiceSchema>().ToMethod(c =>
+                            new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
         }
 
 

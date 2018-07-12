@@ -19,50 +19,37 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.ServiceDiscovery
+
+using System;
+using System.Threading.Tasks;
+using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic.Rewrite;
+
+namespace Gigya.Microdot.Fakes.Discovery
 {
-    public class ServiceDeployment
+    public class AlwaysLocalhostDiscovery : IDiscovery
     {
-        public string DeploymentEnvironment { get; }
-        public string ServiceName { get; }
+        private Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> CreateLoadBalancer {get;}
 
-
-        public ServiceDeployment(string serviceName, string deploymentEnvironment)
+        public AlwaysLocalhostDiscovery(Func<DeploymentIdentifier, INodeSource, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> createLoadBalancer)
         {
-            DeploymentEnvironment = deploymentEnvironment.ToLower();
-            ServiceName = serviceName;
+            CreateLoadBalancer = createLoadBalancer;
         }
 
-
-        public override string ToString()
+        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
         {
-            return $"{ServiceName}-{DeploymentEnvironment}";
+            return CreateLoadBalancer(deploymentIdentifier, new LocalNodeSource(), reachabilityCheck, trafficRoutingStrategy);
         }
 
-
-        public override bool Equals(object obj)
+        public async Task<Node[]> GetNodes(DeploymentIdentifier deploymentIdentifier)
         {
-            if (ReferenceEquals(null, obj))
-                return false;
-
-            if (ReferenceEquals(this, obj))
-                return true;
-
-            ServiceDeployment other = obj as ServiceDeployment;
-
-            if (other == null)
-                return false;
-
-            return DeploymentEnvironment == other.DeploymentEnvironment && ServiceName == other.ServiceName;
+            return new LocalNodeSource().GetNodes();
         }
 
-
-        public override int GetHashCode()
+        public void Dispose()
         {
-            unchecked
-            {
-                return ((DeploymentEnvironment?.GetHashCode() ?? 0) * 397) ^ (ServiceName?.GetHashCode() ?? 0);
-            }
         }
     }
 }

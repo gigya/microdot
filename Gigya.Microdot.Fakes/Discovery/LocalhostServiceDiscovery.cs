@@ -20,31 +20,49 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {
 
-    public class LocalhostServiceDiscovery : IServiceDiscovery
+    public class LocalhostServiceDiscovery : INewServiceDiscovery
     {
-        private static readonly IEndPointHandle handle = new LocalhostEndPointHandle();
+        private readonly ILoadBalancer _localhostLoadBalancer = new LocalhostLoadBalancer();
 
-        private readonly Task<IEndPointHandle> _source = Task.FromResult(handle);
+        public Task<ILoadBalancer> GetLoadBalancer()
+        {
+            return Task.FromResult(_localhostLoadBalancer);
+        }
 
-        private readonly Task<EndPoint[]> allHosts = Task.FromResult(new[] { new EndPoint { HostName = handle.HostName, Port = handle.Port } });
-
-        public Task<IEndPointHandle> GetNextHost(string affinityToken = null) => _source;
-
-        public Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken) => _source;
-
-        public ISourceBlock<string> EndPointsChanged => new BroadcastBlock<string>(null);
-
-        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => new BroadcastBlock<ServiceReachabilityStatus>(null);
-
-        public Task<EndPoint[]> GetAllEndPoints() => allHosts;
     }
+
+    public class LocalhostLoadBalancer : ILoadBalancer
+    {
+        readonly INodeSource _localNodeSource = new LocalNodeSource();
+
+        public async Task<Node> GetNode()
+        {
+            return _localNodeSource.GetNodes().First();
+        }
+
+        public Task<bool> WasUndeployed() => Task.FromResult(false);
+
+        public void ReportUnreachable(Node node, Exception ex = null)
+        {
+        }
+
+        public void Dispose()
+        {
+
+        }
+    }
+
 }

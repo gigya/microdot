@@ -5,7 +5,7 @@ using Gigya.Microdot.UnitTests.ServiceProxyTests;
 
 namespace Gigya.Microdot.UnitTests
 {
-    [HttpService(5555,  Name = AbstractServiceProxyTest.SERVICE_NAME)]
+    [HttpService(5555)]
     public interface IDemoService
     {
         Task DoSomething();
@@ -15,7 +15,7 @@ namespace Gigya.Microdot.UnitTests
         Task<int> IncrementInt(int val);
     }
 
-    [HttpService(6555, UseHttps = true, Name = AbstractServiceProxyTest.SERVICE_NAME)]
+    [HttpService(6555, UseHttps = true)]
     public interface IDemoServiceSecure
     {
         Task DoSomething();

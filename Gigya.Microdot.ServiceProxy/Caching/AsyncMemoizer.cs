@@ -25,7 +25,8 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
 
@@ -62,7 +63,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             if (taskResultType == null)
                 throw new ArgumentException("The specified method doesn't return Task<T> and therefore cannot be memoized", nameof(method));
 
-            var target = new InvocationTarget(method);
+            var target = new InvocationTarget(method, method.GetParameters());
             string cacheKey = $"{target}#{GetArgumentHash(args)}";
             
             return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(dataSource, args), taskResultType, policy, target.MethodName, string.Join(",", args), new []{target.TypeName, target.MethodName});
@@ -80,6 +81,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 stream.Seek(0, SeekOrigin.Begin);
                 return Convert.ToBase64String(sha.ComputeHash(stream));
             }
+        }
+
+        public void Dispose()
+        {
+            Cache.TryDispose();
+            Metrics.TryDispose();
         }
     }
 }

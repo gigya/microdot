@@ -249,7 +249,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
     }
 
-    [HttpService(1234, Name="CachingTestService")]
+    [HttpService(1234)]
     public interface ICachingTestService
     {
         [Cached]

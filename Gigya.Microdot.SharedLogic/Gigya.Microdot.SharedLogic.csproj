@@ -52,11 +52,17 @@
     <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />
     <Compile Include="Exceptions\StackTraceEnhancer.cs" />
     <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />
+    <Compile Include="IHttpClientFactory.cs" />
+    <Compile Include="HttpService\HttpServiceRequest.cs" />
+    <Compile Include="HttpService\ICertificateLocator.cs" />
+    <Compile Include="HttpService\RequestOverrides.cs" />
+    <Compile Include="HttpService\ServiceReachabilityStatus.cs" />
     <Compile Include="Logging\LogBase.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
     <Compile Include="ServcieShutdownSource.cs" />
+    <Compile Include="Rewrite\Node.cs" />
     <Compile Include="Utils\Assert.cs" />
     <Compile Include="BaseCommonConfig.cs" />
     <Compile Include="Events\ClientCallEvent.cs" />

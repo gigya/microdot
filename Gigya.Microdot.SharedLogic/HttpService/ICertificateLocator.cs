@@ -20,29 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Security.Cryptography.X509Certificates;
 
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.SharedLogic.HttpService
 {
-    [Serializable]
-    public class RequestOverrides
+    public interface ICertificateLocator
     {
-        [JsonProperty]
-        public List<HostOverride> Hosts { get; set; }
-    }
-
-    [Serializable]
-    public class HostOverride
-    {
-        [JsonProperty]
-        public string ServiceName { get; set; }
-
-        [JsonProperty]
-        public string Host { get; set; }
-
-        [JsonProperty]
-        public int? Port { get; set; }
+        X509Certificate2 GetCertificate(string certName);
     }
 }

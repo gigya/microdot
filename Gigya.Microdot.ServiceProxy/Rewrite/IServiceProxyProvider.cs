@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -19,10 +19,37 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.Interfaces.HttpService
+
+using System;
+using System.Threading.Tasks;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Utils;
+using Newtonsoft.Json;
+
+namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public class ServiceReachabilityStatus
+    public interface IServiceProxyProvider : IProxyable
     {
-        public bool IsReachable { get; set; }
+        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);
+        Task<ServiceSchema> GetSchema();
+        HttpServiceAttribute HttpSettings { get; }
+    }
+
+    public class DeployedService : IDisposable
+    {
+        internal IMemoizer Memoizer { get; }
+        internal ServiceSchema Schema { get; set; }
+        internal ILoadBalancer LoadBalancer { get; }
+
+
+
+        public void Dispose()
+        {
+            Memoizer.TryDispose();
+            LoadBalancer.TryDispose();
+        }
     }
 }

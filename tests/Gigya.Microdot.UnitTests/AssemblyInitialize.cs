@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Net;
 using NUnit.Framework;
 
 [SetUpFixture]
@@ -28,7 +29,7 @@ public class AssemblyInitialize
 {
     [OneTimeSetUp]
     public void SetUp()
-    {
+    {        
         try
         {
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);

@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
@@ -38,9 +39,10 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public override string SourceName => Name;
         public override bool SupportsFallback => true;
-        public override bool IsServiceDeploymentDefined => ConsulClient.Result.IsQueryDefined;
+        public override bool IsServiceDeploymentDefined => Result.IsQueryDefined;
 
         private IConsulClient ConsulClient { get; set; }
+        public IDateTime DateTime { get; }
 
         private readonly Func<string, IConsulClient> _getConsulClient;
         private readonly ILog _log;
@@ -59,12 +61,14 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _disposed;
         
 
-        public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
+        public ConsulDiscoverySource(DeploymentIdentifier deploymentIdentifier,
+            IDateTime dateTime,
             Func<DiscoveryConfig> getConfig,
             Func<string, IConsulClient> getConsulClient, ILog log)
-            : base(GetDeploymentName(serviceDeployment, getConfig().Services[serviceDeployment.ServiceName]))
+            : base(GetDeploymentName(deploymentIdentifier, getConfig().Services[deploymentIdentifier.ServiceName]))
 
-        {            
+        {
+            DateTime = dateTime;
             _getConsulClient = getConsulClient;            
             _log = log;
 
@@ -86,7 +90,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task TimeoutIfNotReceivedFirstResult()
         {
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await DateTime.Delay(TimeSpan.FromSeconds(10));
             if (_firstResultInitialized.Task.GetAwaiter().IsCompleted)
                 return;
             ConsulResultChanged(new EndPointsResult
@@ -190,13 +194,13 @@ namespace Gigya.Microdot.ServiceDiscovery
             _disposed = true;
         }
 
-        public static string GetDeploymentName(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        public static string GetDeploymentName(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoverySettings)
         {
             if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
             {
-                return serviceDeployment.ServiceName;
+                return deploymentIdentifier.ServiceName;
             }
-            return $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+            return deploymentIdentifier.ToString();
         }
 
     }

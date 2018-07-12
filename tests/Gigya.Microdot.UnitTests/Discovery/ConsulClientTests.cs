@@ -59,18 +59,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [OneTimeTearDown]
         public void TearDownConsulListener()
         {
-            _consulSimulator.Dispose();
             _testingKernel.Dispose();
+            _consulSimulator.Dispose();
         }
 
         [SetUp]
         public void Setup()
         {
+            _consulSimulator.Reset();
             _serviceName = ServiceName + "_" + Guid.NewGuid();
             _dateTimeFake = new DateTimeFake(false);
             _consulConfig = new ConsulConfig();
-
-            _consulSimulator.Reset();            
         }
 
         private Task<EndPointsResult> Start(ConsulMethod consulMethod)
@@ -91,16 +90,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             AssertOneDefaultEndpoint(result);
         }
 
-        [Test]
+        [Test]       
         public async Task EndpointAdded_LongPolling()
         {
             await Start(ConsulMethod.LongPolling);
             var result = await GetResultAfter(() => AddServiceEndPoint());
 
             AssertOneDefaultEndpoint(result);
-            var delays = _dateTimeFake.DelaysRequested.ToArray();
-            delays.Length.ShouldBeLessThanOrEqualTo(4); // one kv call (find that service not deployed), one all-keys call (when service not deployed), one more kv call (after endpoint added), and one health call (to get endpoints)
-            delays.ShouldAllBe(d=>d.TotalSeconds==0); // don't wait between calls
         }
 
         [Test]
@@ -248,12 +244,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async void AddServiceEndPoint(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
         {            
-            _consulSimulator.AddServiceEndpoint(serviceName??_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceNode(serviceName??_serviceName, new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
         private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1, string serviceName=null)
         {
-            _consulSimulator.RemoveServiceEndpoint(serviceName??_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceNode(serviceName??_serviceName, new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
         private void SetServiceVersion(string version, string serviceName=null)
