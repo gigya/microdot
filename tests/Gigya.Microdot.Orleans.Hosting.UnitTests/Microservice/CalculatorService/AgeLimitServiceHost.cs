@@ -87,7 +87,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             {
                 [ServiceName] = new GrainAgeLimitConfig
                 {
-                    GrainType = "Fake - Should throw exception.",
+                    GrainType = "Fake - Should throw an exception.",
                     GrainAgeLimitInMins = 10
                 }
             };

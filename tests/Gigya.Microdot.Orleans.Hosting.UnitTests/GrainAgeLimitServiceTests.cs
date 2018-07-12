@@ -95,8 +95,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Task.Delay(TimeSpan.FromMinutes(2));
             service.WasCollected().Result.ShouldBeTrue();
         }
-
-
     }
 }
 
