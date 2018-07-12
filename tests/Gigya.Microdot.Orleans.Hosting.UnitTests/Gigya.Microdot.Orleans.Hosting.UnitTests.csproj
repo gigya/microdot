@@ -44,7 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
-    <Compile Include="LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
     <Compile Include="CalculatorServiceTests.cs" />
@@ -63,6 +63,7 @@
     <Compile Include="SchemaEndpointTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpyEventPublisher.cs" />
+    <Compile Include="Validation\SensitivityAttributesValidatorTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
