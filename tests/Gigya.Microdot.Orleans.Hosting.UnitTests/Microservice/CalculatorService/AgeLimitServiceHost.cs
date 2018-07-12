@@ -21,58 +21,13 @@
 #endregion
 
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Ninject;
-using Orleans.Runtime.Configuration;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
-    //public class DanielWithAgeLimitServiceHost : CalculatorServiceHost
-    //{
-    //    private const string GrainType = "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService";
-
-
-    //    private OrleansConfig _originConfig;
-    //    //private Thread _thread;
-    //    private ClusterConfiguration _cluster;
-
-    //    public DanielWithAgeLimitServiceHost()
-    //    {
-    //        //_thread = new Thread(ChangeConfig);
-    //        //_thread.Start();
-    //    }
-
-    //    protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
-    //    {
-    //        _originConfig = kernel.Get<OrleansConfig>();
-    //        _cluster  = kernel.Get<ClusterConfiguration>();
-    //        _originConfig.GrainAgeLimits = new Dictionary<string, GrainAgeLimitConfig>
-    //        {
-    //            [ServiceName] = new GrainAgeLimitConfig
-    //            {
-    //                GrainType = GrainType,
-    //                GrainAgeLimitInMins = 1
-    //            }
-    //        };
-
-    //        _originConfig.DefaultGrainAgeLimitInMins = 1;
-    //    }
-
-    //    //private void ChangeConfig()
-    //    //{
-    //    //    Thread.Sleep(TimeSpan.FromMinutes(5));
-    //    //    int x = 0;
-
-    //    //    _cluster.Globals.Application.SetCollectionAgeLimit(GrainType,TimeSpan.FromMinutes(1));
-    //    //    _cluster.Globals.Application.SetCollectionAgeLimit(GrainType,TimeSpan.FromMinutes(4));
-    //    //}
-    //}
-
-
     public class WithAgeLimitServiceHost : CalculatorServiceHost
     {
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
@@ -107,7 +62,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
     }
 
-
     public class With10SecondsAgeLimitServiceHost : CalculatorServiceHost
     {
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
@@ -139,8 +93,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             };
         }
     }
-
-
 
     public class WithNoneAgeLimitServiceHost : CalculatorServiceHost
     {

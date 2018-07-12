@@ -35,10 +35,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class OrleansServiceInterfaceMapper : ServiceInterfaceMapper
     {
         public override IEnumerable<Type> ServiceInterfaceTypes => Mappings.Keys;
-
         public IEnumerable<Type> ServiceClassesTypes { get; }
-
-
         private Dictionary<Type, Type> Mappings { get; }
 
 
@@ -51,7 +48,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 .ToDictionary(x => x.ServiceInterface, x => x.CallableInterface);
 
 
-            ServiceClassesTypes = assemblyProvider.GetAllTypes().Where(t => typeof(IGrain).IsAssignableFrom(t)).ToArray();
+            ServiceClassesTypes = assemblyProvider.GetAllTypes().Where(t => t.IsClass && typeof(IGrain).IsAssignableFrom(t)).ToArray();
 
             ExtractHealthStatusServiceType(Mappings.Values);
         }
