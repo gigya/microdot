@@ -222,15 +222,13 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 if (orleanConfig.GrainAgeLimits != null)
                 {
-                    foreach (var service in orleanConfig.GrainAgeLimits.Values)
+                    foreach (var grainAgeLimitConfig in orleanConfig.GrainAgeLimits.Values)
                     {
-                        var grainAgeLimit = PreviousOrleansConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(service.GrainType));
+                        var grainAgeLimit = PreviousOrleansConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(grainAgeLimitConfig.GrainType));
                         if (grainAgeLimit != null)
                         {
-                            if (grainAgeLimit.GrainAgeLimitInMins != service.GrainAgeLimitInMins)
-                            {
-                                ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
-                            }
+                            if (grainAgeLimit.GrainAgeLimitInMins != grainAgeLimitConfig.GrainAgeLimitInMins)
+                                ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(grainAgeLimitConfig.GrainAgeLimitInMins));
                         }
                         else //in case that an configuration was removed!
                         {
