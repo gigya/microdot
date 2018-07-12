@@ -48,7 +48,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
             service.SendFake("").Result.ShouldBeTrue();
-
         }
 
         [Test]
@@ -76,7 +75,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
             service.SendFake("").Result.ShouldBeTrue();
-
         }
 
         [Ignore("The test execution takes to long - Should think of a better way to test it.")]
@@ -96,7 +94,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             await Task.Delay(TimeSpan.FromMinutes(2));
             service.WasCollected().Result.ShouldBeTrue();
-
         }
 
 
