@@ -58,7 +58,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
         private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
         public OrleansConfig PreviousOrleansConfig { get; private set; }
-
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
 
@@ -69,13 +68,12 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             Log = log;
             ConfigBuilder = configBuilder;
-            OrleansConfigSourceBlock = orleansConfigSourceBlock;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
 
+            OrleansConfigSourceBlock = orleansConfigSourceBlock;
             PreviousOrleansConfig = orleansConfig;
-
             OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config=>UpdateOrleansAboutAgeLimitChange(config)));
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
@@ -87,12 +85,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
 
             _lockedObject = new object();
-
-
         }
-
-
-
 
         public void Start(Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
@@ -248,7 +241,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                         }
                     }
                 }
-
                 PreviousOrleansConfig = orleanConfig;
             }
         }
