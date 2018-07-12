@@ -172,7 +172,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 }
 
             }
-            catch (Exception)
+            catch (Exception )
             {
                 return false;
             }
@@ -190,50 +190,47 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             await Task.Delay(150);
 
             var prefixClassName = typeof(CalculatorServiceTests.Person).Name;
-
-            var dissectParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(person).Select(x => new
+            var expectedMetadata = DissectPropertyInfoMetadata.DissectPropertis(person).Select(x => new
             {
-                Member = x.Member,
-                Value = x.Value,
-                Sensitivity = x.Sensitivity ?? Sensitivity.Sensitive,
-                NewPropertyName = AddPrifix(prefixClassName, x.Name)
-            }).ToDictionary(x => x.NewPropertyName);
+                PropertyInfo = x.PropertyInfo,
+                Sensitivity = x.Sensitivity,
+                NewPropertyName = AddPrifix(prefixClassName, x.PropertyInfo.Name)
+            });
 
 
+            var expectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
+            var expectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).ToList();
+            var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
             var eventPublisher = _eventPublisher as SpyEventPublisher;
             var callEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
 
-
-            var nonSensitiveCount = dissectParams.Values.Count(x => x.Sensitivity == Sensitivity.NonSensitive);
-            var sensitiveCount = dissectParams.Values.Count(x => x.Sensitivity == Sensitivity.Sensitive);
-
-            nonSensitiveCount.ShouldBe(callEvent.UnencryptedServiceMethodArguments.Count());
-            sensitiveCount.ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
+            expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
 
             //Sensitive
             foreach (var argument in callEvent.EncryptedServiceMethodArguments)
             {
-                var param = dissectParams[argument.Key];
+                var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
 
-                if (param.Member.DeclaringType.IsClass == true && param.Member.DeclaringType != typeof(string))
+                if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
                 {
-                    JsonConvert.SerializeObject(param.Value).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
+                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
                 }
                 else
                 {
-                    param.Value.ShouldBe(argument.Value);
+                    metadata.PropertyInfo.GetValue(person, null).ShouldBe(argument.Value);
                 }
-            }
 
+                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+            }
             //NonSensitive
             foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
             {
-                var param = dissectParams[argument.Key];
+                var metadata = expectedNonSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
+                metadata.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
 
-                param.Value.ShouldBe(argument.Value);
-
-                param.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
+                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
             }
+
             return true;
         }
 

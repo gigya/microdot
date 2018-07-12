@@ -35,8 +35,9 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class ReflectionMetadataInfo
     {
-        public string Name { get; set; }
+        public string PropertyName { get; set; }
         public Func<object, object> ValueExtractor { get; set; }
+
         public Sensitivity? Sensitivity { get; set; }
     }
 
@@ -76,7 +77,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         private IEnumerable<MetadataCacheParam> ExtracParams(object instance, Type type)
         {
-            var propertyMetadata = _propertyMetadataCache.GetOrAdd(type, x => ExtracMemberMetadata(instance, type).ToArray());
+            var propertyMetadata = _propertyMetadataCache.GetOrAdd(type, x => ExtracPropertiesMetadata(instance, type).ToArray());
 
             foreach (var item in propertyMetadata)
             {
@@ -88,52 +89,52 @@ namespace Gigya.Microdot.SharedLogic.Events
                 }
                 catch (Exception ex)
                 {
-                    _log.Warn("This property is invalid", unencryptedTags: new { propertyName = item.Name }, exception: ex);
+                    _log.Warn("This property is invalid",unencryptedTags:new { propertyName= item.PropertyName},exception: ex);
                     continue;
                 }
 
                 yield return new MetadataCacheParam
                 {
-                    Name = item.Name,
+                    Name = item.PropertyName,
                     Value = value,
                     Sensitivity = item.Sensitivity
                 };
             }
         }
 
-        internal static IEnumerable<ReflectionMetadataInfo> ExtracMemberMetadata(object instance, Type type)
+        internal static IEnumerable<ReflectionMetadataInfo> ExtracPropertiesMetadata(object instance, Type type)
         {
-            var list = new List<ReflectionMetadataInfo>();
-            var members = type.FindMembers(MemberTypes.Property | MemberTypes.Field,
-                    BindingFlags.Public | BindingFlags.Instance, null, null)
-                .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead));
-
-          foreach (var member in members)
-            {
-                var instanceParameter = Expression.Parameter(typeof(object), "target");
-                MemberExpression memberExpression = null;
-
-                if (member.MemberType == MemberTypes.Property)
-                    memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType), (PropertyInfo)member);
-                else if (member.MemberType == MemberTypes.Field)
-                    memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
-
-                var converter = Expression.Convert(memberExpression, typeof(object));
-                var lambda = Expression.Lambda<Func<object, object>>(converter, instanceParameter);
-
-                list.Add(new ReflectionMetadataInfo
+            var getters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead)
+                .Select(x => new
                 {
-                    Name = member.Name,
+                    Getter = x.GetGetMethod(),
+                    PropertyName = x.Name,
+                    Sensitivity = ExtractSensitivity(x) // nullable
+                });
+
+            var metadatas = new List<ReflectionMetadataInfo>();
+
+            foreach (var getter in getters)
+            {
+                var entity = Expression.Parameter(typeof(object));
+                var getterCall = Expression.Call(Expression.Convert(entity, type), getter.Getter);
+                var castToObject = Expression.Convert(getterCall, typeof(object));
+                var lambda = Expression.Lambda<Func<object, object>>(castToObject, entity);
+
+                metadatas.Add(new ReflectionMetadataInfo
+                {
+                    PropertyName = getter.PropertyName,
                     ValueExtractor = lambda.Compile(),
-                    Sensitivity = ExtractSensitivity(member)
+                    Sensitivity = getter.Sensitivity
                 });
             }
-            return list;
+
+            return metadatas;
         }
 
-        internal static Sensitivity? ExtractSensitivity(MemberInfo memberInfo)
+        internal static Sensitivity? ExtractSensitivity(PropertyInfo propertyInfo)
         {
-            var attribute = memberInfo.GetCustomAttributes()
+            var attribute = propertyInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
 
             if (attribute != null)

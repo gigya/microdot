@@ -39,7 +39,6 @@ namespace Gigya.Common.Contracts.HttpService
 		{
 			BasePort = basePort;
 		}
-
         public string Name { get; set; }
 	}
 }
