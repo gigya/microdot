@@ -185,12 +185,10 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private async Task<object> IncomingCallInterceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
         {
-
             if (targetMethod == null)
                 throw new ArgumentNullException(nameof(targetMethod));
 
             var declaringNameSpace = targetMethod.DeclaringType?.Namespace;
-
 
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
             if (targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null ||
