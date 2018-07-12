@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private HttpServiceListener HttpServiceListener { get; }
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
         private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
-        public OrleansConfig PreviousOrleansConfig { get; private set; }
+        public static OrleansConfig PreviousOrleansConfig { get; private set; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
 
@@ -216,35 +217,61 @@ namespace Gigya.Microdot.Orleans.Hosting
                 PublishEvent(targetMethod, target, ex);
             }
         }
-        private void UpdateOrleansAboutAgeLimitChange(OrleansConfig orleanConfig)
-        {
-            lock (_lockedObject)
-            {
-                if (orleanConfig.GrainAgeLimits != null)
-                {
-                    foreach (var grainAgeLimitConfig in orleanConfig.GrainAgeLimits.Values)
-                    {
-                        var grainAgeLimit = PreviousOrleansConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(grainAgeLimitConfig.GrainType));
-                        if (grainAgeLimit != null)
-                        {
-                            if (grainAgeLimit.GrainAgeLimitInMins != grainAgeLimitConfig.GrainAgeLimitInMins)
-                                ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(grainAgeLimitConfig.GrainAgeLimitInMins));
-                        }
-                    }
 
-                    foreach (var previousGrainAgeLimitConfig in PreviousOrleansConfig.GrainAgeLimits.Values)
-                    {
-                        var grainAgeLimit = orleanConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(previousGrainAgeLimitConfig.GrainType));
-                        if (grainAgeLimit == null) //in case that an configuration was removed!
-                        {
-                            ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(previousGrainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
-                        }
-                    }
+        public static IEnumerable<GrainAgeLimitConfig> Minus(OrleansConfig config1, OrleansConfig config2)
+        {
+            foreach (var currentGrainAgeLimitConfig in config1.GrainAgeLimits.Values)
+            {
+                GrainAgeLimitConfig grainAgeLimit = null;
+                if (config2.GrainAgeLimits == null)
+                {
+                    yield return currentGrainAgeLimitConfig;
                 }
-                PreviousOrleansConfig = orleanConfig;
+                else
+                    grainAgeLimit = config2.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(currentGrainAgeLimitConfig.GrainType));
+
+
+                if (grainAgeLimit != null)
+                {
+                    if (grainAgeLimit.GrainAgeLimitInMins != currentGrainAgeLimitConfig.GrainAgeLimitInMins)
+                        yield return currentGrainAgeLimitConfig;
+                }
             }
         }
 
+        public void UpdateOrleansAboutAgeLimitChange(OrleansConfig orleanConfig)
+        {
+            lock (_lockedObject)
+            {
+                var previousAgeLimits = PreviousOrleansConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
+                var currentAgeLimits = orleanConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
+
+
+                foreach (var currentGrainAgeLimitConfig in currentAgeLimits.Values)
+                {
+                    var grainAgeLimit = previousAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(currentGrainAgeLimitConfig.GrainType)) ?? new GrainAgeLimitConfig
+                    {
+                        GrainType = currentGrainAgeLimitConfig.GrainType,
+                        GrainAgeLimitInMins = -1
+                    };
+
+
+                    if (grainAgeLimit.GrainAgeLimitInMins != currentGrainAgeLimitConfig.GrainAgeLimitInMins)
+                        ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(currentGrainAgeLimitConfig.GrainAgeLimitInMins));
+                }
+
+                foreach (var item in previousAgeLimits.Values)
+                {
+                    var grainAgeLimit = currentAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(item.GrainType));
+
+                    if (grainAgeLimit == null) //in case that an configuration was removed! - Restoring to default Age Limit
+                        ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(item.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
+                }
+
+                PreviousOrleansConfig = orleanConfig;
+            }
+        }
+      
         private void RejectRequestIfLateOrOverloaded()
         {
             var config = LoadSheddingConfig();
