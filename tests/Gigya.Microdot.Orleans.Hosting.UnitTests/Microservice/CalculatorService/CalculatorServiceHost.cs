@@ -29,7 +29,6 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using Newtonsoft.Json;
 using Ninject;
 using Ninject.Syntax;
 

@@ -40,10 +40,5 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         Task<int> DoInt(int a);
         Task<int> GetNextNum();
         Task<Revocable<int>> GetVersion(string id);
-
-        //Task<bool> StartStopWatch();
-        //Task<bool> StopStopWatch();
-
-
     }
 }
