@@ -189,8 +189,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             if (targetMethod == null)
                 throw new ArgumentNullException(nameof(targetMethod));
 
-            var grainType = targetMethod.DeclaringType;
-            var declaringNameSpace = grainType?.Namespace;
+            var declaringNameSpace = targetMethod.DeclaringType?.Namespace;
 
 
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
