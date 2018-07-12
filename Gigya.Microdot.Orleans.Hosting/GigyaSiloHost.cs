@@ -218,27 +218,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        public static IEnumerable<GrainAgeLimitConfig> Minus(OrleansConfig config1, OrleansConfig config2)
-        {
-            foreach (var currentGrainAgeLimitConfig in config1.GrainAgeLimits.Values)
-            {
-                GrainAgeLimitConfig grainAgeLimit = null;
-                if (config2.GrainAgeLimits == null)
-                {
-                    yield return currentGrainAgeLimitConfig;
-                }
-                else
-                    grainAgeLimit = config2.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(currentGrainAgeLimitConfig.GrainType));
-
-
-                if (grainAgeLimit != null)
-                {
-                    if (grainAgeLimit.GrainAgeLimitInMins != currentGrainAgeLimitConfig.GrainAgeLimitInMins)
-                        yield return currentGrainAgeLimitConfig;
-                }
-            }
-        }
-
         public void UpdateOrleansAboutAgeLimitChange(OrleansConfig orleanConfig)
         {
             lock (_lockedObject)
