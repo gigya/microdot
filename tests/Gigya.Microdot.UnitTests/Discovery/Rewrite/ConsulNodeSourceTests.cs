@@ -82,6 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _nodeSource?.Dispose();
             _testingKernel?.Dispose();
+            _consulNodeSourceFactory?.Dispose();
         }
 
         public async Task WaitForUpdates()
