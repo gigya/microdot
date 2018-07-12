@@ -83,7 +83,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             var globals = ClusterConfiguration.Globals;
             var defaults = ClusterConfiguration.Defaults;
 
-
             SetAgeLimits(globals, orleansConfig, orleansServiceInterfaceMapper);
 
             globals.ExpectedClusterSize = 1; // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds).
@@ -173,17 +172,17 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             if (orleansConfig.GrainAgeLimits != null)
             {
-                foreach (var service in orleansConfig.GrainAgeLimits.Values)
+                foreach (var grainAgeLimitConfig in orleansConfig.GrainAgeLimits.Values)
                 {
                     try
                     {
-                        orleansServiceInterfaceMapper.ServiceClassesTypes.Single(x => x.FullName.Equals(service.GrainType));
+                        orleansServiceInterfaceMapper.ServiceClassesTypes.Single(x => x.FullName.Equals(grainAgeLimitConfig.GrainType));
                     }
                     catch (Exception e)
                     {
-                        throw new ArgumentException($"Assigning Age Limit on {service.GrainType} has failed, because {service.GrainType} is an invalid type\n{e.Message}");
+                        throw new ArgumentException($"Assigning Age Limit on {grainAgeLimitConfig.GrainType} has failed, because {grainAgeLimitConfig.GrainType} is an invalid type\n{e.Message}");
                     }
-                    globals.Application.SetCollectionAgeLimit(service.GrainType, TimeSpan.FromMinutes(service.GrainAgeLimitInMins));
+                    globals.Application.SetCollectionAgeLimit(grainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(grainAgeLimitConfig.GrainAgeLimitInMins));
                 }
             }
         }
