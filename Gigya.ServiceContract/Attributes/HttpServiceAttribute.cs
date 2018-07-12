@@ -29,9 +29,9 @@ namespace Gigya.Common.Contracts.HttpService
 	{
         /// <summary>
         /// This is the port number that the service will listen to for incoming HTTP requests. Other ports (used for
-        /// Orleans, Metrics.Net, etc) are opened at sequencial numbers from this base offset. 
+        /// Orleans, Metrics.Net, etc) are opened at sequential numbers from this base offset. 
         /// </summary>
-		public int BasePort { get; private set; }
+		public int BasePort { get; set; }
 
         public bool UseHttps { get; set; }
 
@@ -39,7 +39,5 @@ namespace Gigya.Common.Contracts.HttpService
 		{
 			BasePort = basePort;
 		}
-
-        public string Name { get; set; }
 	}
 }
