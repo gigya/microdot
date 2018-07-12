@@ -64,7 +64,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
             HttpServiceListener httpServiceListener,
             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
-            ISourceBlock<OrleansConfig> orleansConfigSourceBlock,OrleansConfig orleansConfig)
+            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig)
         {
             Log = log;
             ConfigBuilder = configBuilder;
@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             OrleansConfigSourceBlock = orleansConfigSourceBlock;
             PreviousOrleansConfig = orleansConfig;
-            OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config=>UpdateOrleansAboutAgeLimitChange(config)));
+            OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config => UpdateOrleansAboutAgeLimitChange(config)));
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
                 throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
@@ -230,9 +230,14 @@ namespace Gigya.Microdot.Orleans.Hosting
                             if (grainAgeLimit.GrainAgeLimitInMins != grainAgeLimitConfig.GrainAgeLimitInMins)
                                 ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(grainAgeLimitConfig.GrainAgeLimitInMins));
                         }
-                        else //in case that an configuration was removed!
+                    }
+
+                    foreach (var previousGrainAgeLimitConfig in PreviousOrleansConfig.GrainAgeLimits.Values)
+                    {
+                        var grainAgeLimit = orleanConfig.GrainAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(previousGrainAgeLimitConfig.GrainType));
+                        if (grainAgeLimit == null) //in case that an configuration was removed!
                         {
-                            ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(grainAgeLimit.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
+                            ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(previousGrainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
                         }
                     }
                 }
