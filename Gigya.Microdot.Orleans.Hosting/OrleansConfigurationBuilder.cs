@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -59,7 +60,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     {
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
         public double DefaultGrainAgeLimitInMins { get; set; } = 30;
-        public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; }
+        public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
 
         public ZooKeeperConfig ZooKeeper { get; set; }
 
