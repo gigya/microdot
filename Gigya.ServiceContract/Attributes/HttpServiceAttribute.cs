@@ -39,5 +39,8 @@ namespace Gigya.Common.Contracts.HttpService
 		{
 			BasePort = basePort;
 		}
-	}
+
+        [Obsolete("This propery is no longer in use, and will be removed on Microdot version 2.0. Service name is now extracted from its interface's namespace.")]
+	    public string Name { get; set; }
+    }
 }

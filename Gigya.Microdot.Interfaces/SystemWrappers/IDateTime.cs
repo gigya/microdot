@@ -29,6 +29,9 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
     public interface IDateTime
     {
         DateTime UtcNow { get; }
+
+        [Obsolete("This method will be removed on Microdot version 2.0. Please use Delay(delay, cancellationToken = default(CancellationToke)) instead.")]
+        Task Delay(TimeSpan delay);
         Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken));
 
         Task DelayUntil(DateTime until, CancellationToken cancellationToken = default(CancellationToken));

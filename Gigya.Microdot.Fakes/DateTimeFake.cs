@@ -47,6 +47,7 @@ namespace Gigya.Microdot.Fakes
             _manualDelay = manualDelay;
         }
 
+        public Task Delay(TimeSpan delay) => Delay(delay, default(CancellationToken));
         public async Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken))
         {
             DelaysRequested.Add(delay);
