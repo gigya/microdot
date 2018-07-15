@@ -19,8 +19,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ILog Log { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
-        private Uri ConsulAddress => _httpClient.BaseAddress;
-        private string DataCenter { get; }
+        private Uri ConsulAddress => _httpClient.BaseAddress;        
         private HttpClient _httpClient;
         private int _disposed = 0;
 
@@ -28,7 +27,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            DataCenter = environment.DataCenter;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
@@ -42,8 +40,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            var service = deploymentIdentifier.GetConsulServiceName();
-            string urlCommand = $"v1/health/service/{service}?dc={DataCenter}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.GetConsulDataCenter()}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -65,9 +62,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
         public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
-        {
-            var service = deploymentIdentifier.GetConsulServiceName();
-            string urlCommand = $"v1/kv/service/{service}?dc={DataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+        {            
+            string urlCommand = $"v1/kv/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.GetConsulDataCenter()}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<string>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {

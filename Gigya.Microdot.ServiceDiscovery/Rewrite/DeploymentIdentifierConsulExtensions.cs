@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public static class ConsulServiceNameByDeploymentIdentifier
+    public static class DeploymentIdentifierConsulExtensions
     {
         /// <summary>
         /// Returns the service name as it is used by Consul, e.g. "ServiceName-env"
@@ -18,5 +18,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 deploymentIdentifier.ServiceName;
         }
 
+        public static string GetConsulDataCenter(this DeploymentIdentifier deploymentIdentifier)
+        {
+            return $"{deploymentIdentifier.DataCenter}{deploymentIdentifier.Zone}";
+        }
     }
 }
