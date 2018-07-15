@@ -46,6 +46,8 @@
     <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="GrainAgeLimitServiceTests.cs" />
     <Compile Include="LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
+    <Compile Include="Microservice\AgeLimitService\IGrainAgeLimitTestedService.cs" />
     <Compile Include="Microservice\CalculatorService\AgeLimitServiceHost.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
@@ -82,6 +84,10 @@
   </Target>
   -->
   <ItemGroup>
+    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
+      <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
+      <Name>Gigya.Microdot.Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
@@ -371,5 +377,4 @@
     </When>
   </Choose>
   <Import Project="..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets" Condition="Exists('..\..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets')" Label="Paket" />
-  <Import Project="..\..\packages\NETStandard.Library\build\NETStandard.Library.targets" Condition="Exists('..\..\packages\NETStandard.Library\build\NETStandard.Library.targets')" Label="Paket" />
 </Project>

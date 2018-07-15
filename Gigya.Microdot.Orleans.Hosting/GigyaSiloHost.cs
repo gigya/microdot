@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -252,7 +251,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 PreviousOrleansConfig = orleanConfig;
             }
         }
-      
+
         private void RejectRequestIfLateOrOverloaded()
         {
             var config = LoadSheddingConfig();

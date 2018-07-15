@@ -25,6 +25,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Logging;
 using Orleans;
 using Orleans.Concurrency;
@@ -32,7 +33,7 @@ using Orleans.Concurrency;
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     [HttpService(6540)]
-    public interface IGarinAgeLimitService 
+    public interface IGarinAgeLimitService
     {
         Task<bool> SendFake(string fake);
         Task<bool> WasCollected();
@@ -49,7 +50,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         private readonly ILog _log;
 
-        private static  bool _wasCollected = false;
+        private static bool _wasCollected = false;
 
 
         public GrainAgeLimitService(ILog log)
@@ -69,7 +70,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
             await Task.Delay(150);
             _wasCollected = false;
-            
+
             return true;
         }
 

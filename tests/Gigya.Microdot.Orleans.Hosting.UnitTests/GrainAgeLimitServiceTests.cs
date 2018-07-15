@@ -21,9 +21,15 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared;
+using Ninject;
 using NUnit.Framework;
 using Shouldly;
 
@@ -41,6 +47,39 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
+        public async Task ChangeableAgeLimitTest()
+        {
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<AgeLimitConfigUpdatesServiceHost>( writeLogToFile: true);
+            Tester = tester;
+            var service = tester.GetServiceProxy<IGrainConfigAgeTesterService>(timeout:TimeSpan.FromMinutes(20));
+
+            service.ChangeAgeLimitTo(2).Result.ShouldBeTrue();
+        }
+
+        [Test]
+        public async Task EranTest()
+        {
+            var kernel = new TestingKernel<ConsoleLog>(k => { });
+
+            var configRefresh = kernel.Get<ManualConfigurationEvents>();
+            var ConfigOverride =  kernel.GetConfigOverride();
+
+
+            var config = kernel.Get<OrleansConfig>();//Don't remove config should be created before it can reupdate 
+
+            double expected = 2;
+            ConfigOverride.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", expected.ToString());
+            ConfigOverride.SetValue("OrleansConfig.DefaultGrainAgeLimitInMins", expected.ToString());
+
+            
+            var x = await configRefresh.ApplyChanges<OrleansConfig>();
+            x.GrainAgeLimits["SiteService"].GrainAgeLimitInMins.ShouldBe(expected);
+            x.DefaultGrainAgeLimitInMins.ShouldBe(expected);
+
+
+        }
+
+        [Test]
         public async Task WithNoneAgeLimitTest()
         {
             var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WithNoneAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
@@ -49,6 +88,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             service.SendFake("").Result.ShouldBeTrue();
         }
+
+
 
         [Test]
         public async Task WithAgeLimitTest()
@@ -67,7 +108,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Description("Loading real configuration from GrainTestService")]
-        [Test]
+        //[Test]
         public async Task GrainTestServiceTest()
         {
             var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<GrainTestServiceHost>(basePortOverride: 6154, writeLogToFile: true);
@@ -75,6 +116,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
             service.SendFake("").Result.ShouldBeTrue();
+
+            await Task.Delay(TimeSpan.FromMinutes(1));
+            await Task.Delay(TimeSpan.FromMinutes(1));
+            await Task.Delay(TimeSpan.FromMinutes(2));
+            await Task.Delay(TimeSpan.FromMinutes(2));
+
         }
 
         [Ignore("The test execution takes to long - Should think of a better way to test it.")]

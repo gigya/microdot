@@ -79,6 +79,8 @@ namespace Gigya.Microdot.Configuration.Objects
             healthStatus.RegisterCheck(ObjectType.Name, HealthCheck);
         }
 
+        
+
 
         private HealthCheckResult HealthCheck()
         {
@@ -153,7 +155,7 @@ namespace Gigya.Microdot.Configuration.Objects
             SendChangeNotification = lambda.Compile();
         }
 
-
+       
         private void Create()
         {
             var errors = new List<ValidationResult>();
