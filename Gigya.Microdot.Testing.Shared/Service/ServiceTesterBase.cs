@@ -58,7 +58,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
         {
             var factory = ResolutionRoot
-                .Get<Func<string, Func<string, ReachabilityCheck, INewServiceDiscovery>, IServiceProxyProvider>>();
+                .Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));
 
             provider.DefaultPort = BasePort;
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
         public virtual TServiceInterface GetServiceProxy<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, INewServiceDiscovery>, IServiceProxyProvider>>();
+            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
 
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));
             provider.DefaultPort = BasePort;
@@ -103,7 +103,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
         public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, INewServiceDiscovery>, ServiceProxyProvider>>();
+            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxyProvider>>();
 
             var provider = factory(serviceName, (srName, r) => new LocalhostServiceDiscovery());
             provider.DefaultPort = BasePort;

@@ -33,36 +33,23 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 namespace Gigya.Microdot.Fakes.Discovery
 {
 
-    public class LocalhostServiceDiscovery : INewServiceDiscovery
+    public class LocalhostServiceDiscovery : IServiceDiscovery
     {
-        private readonly ILoadBalancer _localhostLoadBalancer = new LocalhostLoadBalancer();
+        private static readonly IEndPointHandle handle = new LocalhostEndPointHandle();
 
-        public Task<ILoadBalancer> GetLoadBalancer()
-        {
-            return Task.FromResult(_localhostLoadBalancer);
-        }
+        private readonly Task<IEndPointHandle> _source = Task.FromResult(handle);
 
-    }
+        private readonly Task<EndPoint[]> allHosts = Task.FromResult(new[] { new EndPoint { HostName = handle.HostName, Port = handle.Port } });
 
-    public class LocalhostLoadBalancer : ILoadBalancer
-    {
-        readonly INodeSource _localNodeSource = new LocalNodeSource();
+        public Task<IEndPointHandle> GetNextHost(string affinityToken = null) => _source;
 
-        public async Task<Node> GetNode()
-        {
-            return _localNodeSource.GetNodes().First();
-        }
+        public Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken) => _source;
 
-        public Task<bool> WasUndeployed() => Task.FromResult(false);
+        public ISourceBlock<string> EndPointsChanged => new BroadcastBlock<string>(null);
 
-        public void ReportUnreachable(Node node, Exception ex = null)
-        {
-        }
+        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => new BroadcastBlock<ServiceReachabilityStatus>(null);
 
-        public void Dispose()
-        {
-
-        }
+        public Task<EndPoint[]> GetAllEndPoints() => allHosts;
     }
 
 }
