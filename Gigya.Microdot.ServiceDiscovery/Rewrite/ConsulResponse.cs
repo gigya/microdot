@@ -16,6 +16,22 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public HttpStatusCode? StatusCode { get; set; }
         public ulong? ModifyIndex { get; set; }
 
+        public ConsulResponse<T> SetResult<T>(T result)
+        {
+            return new ConsulResponse<T>
+            {
+                IsUndeployed = IsUndeployed,
+                Error = Error,
+                CommandPath = CommandPath,
+                ConsulAddress = ConsulAddress,
+                ModifyIndex = ModifyIndex,
+                ResponseContent = ResponseContent,
+                ResponseDateTime = ResponseDateTime,
+                StatusCode = StatusCode,
+                Result = result
+            };
+        }
+
         public void ConsulUnreachable(Exception innerException)
         {
             Error = new EnvironmentException("Consul was unreachable.",

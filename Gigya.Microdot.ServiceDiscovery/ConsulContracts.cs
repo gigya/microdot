@@ -39,7 +39,7 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         public string Value { get; set; }
 
-        public ServiceKeyValue TryDecodeValue()
+        public T TryDecodeValue<T>() where T: class
         {
             if (Value == null)
                 return null;
@@ -47,7 +47,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             try
             {
                 var serialized = Encoding.UTF8.GetString(Convert.FromBase64String(Value));
-                return JsonConvert.DeserializeObject<ServiceKeyValue>(serialized);
+                return JsonConvert.DeserializeObject<T>(serialized);
             }
             catch
             {

@@ -31,6 +31,7 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
     {
         public DateTime UtcNow => DateTime.UtcNow;
 
+        public Task Delay(TimeSpan delay) => Delay(delay, default(CancellationToken));
         public Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken))
         {
             return Task.Delay(delay, cancellationToken);

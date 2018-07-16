@@ -20,6 +20,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private Uri ConsulAddress => _httpClient.BaseAddress;        
+        private string DataCenter { get; }
         private HttpClient _httpClient;
         private int _disposed = 0;
 
@@ -27,6 +28,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
+            DataCenter = environment.DataCenter;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
@@ -60,22 +62,65 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response;
         }
 
+        public Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, CancellationToken cancellationToken) where T : class
+        {
+            return GetKey<T>(modifyIndex, folder, key, DataCenter, cancellationToken);
+        }
+
+        public async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string dataCenter, CancellationToken cancellationToken) where T: class
+        {
+            T result = null;
+            string urlCommand = $"v1/kv/{folder}/{key}?dc={dataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                try
+                {
+                    var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
+                    result = keyValues.SingleOrDefault()?.TryDecodeValue<T>();                    
+                }
+                catch (Exception ex)
+                {
+                    response.UnparsableConsulResponse(ex);
+                }
+            }
+            else if (response.Error == null)
+                response.ConsulResponseError();
+
+            return response.SetResult(result);
+        }
 
         public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
-        {            
-            string urlCommand = $"v1/kv/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.GetConsulDataCenter()}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var response = await Call<string>(urlCommand, cancellationToken).ConfigureAwait(false);
+        {
+            string version = null;
+            var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.GetConsulDataCenter(), cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 response.IsUndeployed = true;
             }
             else if (response.StatusCode == HttpStatusCode.OK)
             {
+                version = response.Result?.Version;
+                response.IsUndeployed = false;
+            }
+            else if (response.Error == null)
+                response.ConsulResponseError();
+            return response.SetResult(version);
+        }
+
+
+
+        public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken)
+        {
+            string urlCommand = $"v1/kv/{folder}?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
                 try
                 {
-                    var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
-                    response.Result = keyValues.SingleOrDefault()?.TryDecodeValue()?.Version;
-                    response.IsUndeployed = false;
+                    var fullKeyNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);
+                    var keyNames = fullKeyNames.Select(s => s.Substring($"{folder}/".Length)).ToArray();
+                    response.Result = keyNames;
                 }
                 catch (Exception ex)
                 {
@@ -88,27 +133,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response;
         }
 
-        public async Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
-        {
-            string urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                try
-                {
-                    var fullServiceNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);
-                    var serviceNames = fullServiceNames.Select(s => s.Substring("service/".Length)).ToArray();
-                    response.Result = serviceNames;
-                }
-                catch (Exception ex)
-                {
-                    response.UnparsableConsulResponse(ex);
-                }
-            }
-            else if (response.Error == null)
-                response.ConsulResponseError();
 
-            return response;
+        public Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
+        {
+            return GetAllKeys(modifyIndex, "service", cancellationToken);
         }
 
 
