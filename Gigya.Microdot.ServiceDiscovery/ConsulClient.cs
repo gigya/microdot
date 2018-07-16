@@ -211,7 +211,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             else if (response.Success)
             {
                 var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
-                var version = keyValue?.SingleOrDefault()?.TryDecodeValue()?.Version;
+                var version = keyValue?.SingleOrDefault()?.TryDecodeValue<ServiceKeyValue>()?.Version;
 
                 if (version != null)
                 {
