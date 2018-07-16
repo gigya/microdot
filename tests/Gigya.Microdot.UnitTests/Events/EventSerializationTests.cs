@@ -209,7 +209,7 @@ namespace Gigya.Microdot.UnitTests.Events
     internal class NullEnvironment : IEnvironment
     {
         public string DataCenter => nameof(DataCenter);
-        public string Zone => nameof(Zone);
+        public string Region => nameof(Region);
         public string DeploymentEnvironment => nameof(DeploymentEnvironment);
         public string ConsulAddress => nameof(ConsulAddress);
 

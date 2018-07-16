@@ -29,38 +29,35 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         public string DeploymentEnvironment { get; }
         public string ServiceName { get; }
-        public string Zone { get; }
         public string DataCenter { get; }
 
         public bool IsEnvironmentSpecific => string.IsNullOrEmpty(DeploymentEnvironment)==false;
 
         /// <summary>
-        /// Create a new identifier for a service which is deployed on current datacenter and current zone
+        /// Create a new identifier for a service which is deployed on current datacenter 
         /// </summary>
         public DeploymentIdentifier(string serviceName, string deploymentEnvironment, IEnvironment environment)
         {
             DeploymentEnvironment = deploymentEnvironment?.ToLower();
             ServiceName = serviceName;
             DataCenter = environment.DataCenter;
-            Zone = environment.Zone;
         }
 
         /// <summary>
-        /// Create a new identifier for a service which is deployed on a different datacenter or a different zone
+        /// Create a new identifier for a service which is deployed on a different datacenter
         /// </summary>
-        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, string dataCenter, string zone)
+        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, string dataCenter)
         {
             DeploymentEnvironment = deploymentEnvironment?.ToLower();
             ServiceName = serviceName;
             DataCenter = dataCenter;
-            Zone = zone;
         }
 
         public override string ToString()
         {
             var serviceAndEnv = IsEnvironmentSpecific ? $"{ServiceName}-{DeploymentEnvironment}" : ServiceName;
 
-            return $"{DataCenter}{Zone}/{serviceAndEnv}";
+            return $"{serviceAndEnv} ({DataCenter})";
         }
 
         public override bool Equals(object obj)
@@ -73,8 +70,6 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             if (obj is DeploymentIdentifier other)
             {
-                if (Zone != other.Zone)
-                    return false;
                 if (DataCenter != other.DataCenter)
                     return false;
 
@@ -94,7 +89,6 @@ namespace Gigya.Microdot.ServiceDiscovery
                 var hashCode = ServiceName!=null? ServiceName.GetHashCode() : 0;
                 if (IsEnvironmentSpecific)
                     hashCode = (hashCode * 397) ^ DeploymentEnvironment.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Zone != null ? Zone.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (DataCenter != null ? DataCenter.GetHashCode() : 0);
                 return hashCode;
             }

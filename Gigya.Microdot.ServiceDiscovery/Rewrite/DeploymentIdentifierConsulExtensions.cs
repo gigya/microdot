@@ -20,7 +20,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public static string GetConsulDataCenter(this DeploymentIdentifier deploymentIdentifier)
         {
-            return $"{deploymentIdentifier.DataCenter}{deploymentIdentifier.Zone}";
+            return deploymentIdentifier.DataCenter;
         }
     }
 }

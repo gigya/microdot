@@ -89,17 +89,17 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.infrVersion, OmitFromAudit = true)]
         public string InfraVersion => CurrentApplicationInfo.InfraVersion.ToString(4);
 
-        /// <summary>The value of the %ENV% environment variable. </summary>
-        [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
-        public string RuntimeENV => Environment.DeploymentEnvironment;
-
-        /// <summary>The value of the %ZONE% environment variable. .</summary>
-        [EventField(EventConsts.runtimeZONE, OmitFromAudit = true)]
-        public string RuntimeZONE => Environment.Zone;
+        /// <summary>The value of the %REGION% environment variable. .</summary>
+        [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]
+        public string RuntimeREGION => Environment.Region;
 
         /// <summary>The value of the %DC% environment variable. .</summary>
         [EventField(EventConsts.runtimeDC, OmitFromAudit = true)]
         public string RuntimeDC => Environment.DataCenter;
+
+        /// <summary>The value of the %ENV% environment variable. </summary>
+        [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
+        public string RuntimeENV => Environment.DeploymentEnvironment;
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
