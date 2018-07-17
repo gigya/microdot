@@ -41,7 +41,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _serviceName = $"ServiceName{++id}";
 
             _environment = Substitute.For<IEnvironment>();
-            _environment.DataCenter.Returns("il3");
+            _environment.Zone.Returns("il3");
             _environment.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
             _environment.ConsulAddress.Returns((string)null);
 
@@ -199,7 +199,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void MasterShouldNotFallBack()
         {
             _environment = Substitute.For<IEnvironment>();
-            _environment.DataCenter.Returns("il3");
+            _environment.Zone.Returns("il3");
             _environment.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
             _unitTestingKernel.Rebind<IEnvironment>().ToConstant(_environment);
 

@@ -20,7 +20,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
         private Uri ConsulAddress => _httpClient.BaseAddress;        
-        private string DataCenter { get; }
+        private string Zone { get; }
         private HttpClient _httpClient;
         private int _disposed = 0;
 
@@ -28,7 +28,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            DataCenter = environment.DataCenter;
+            Zone = environment.Zone;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
@@ -42,7 +42,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.GetConsulDataCenter()}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -62,22 +62,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response;
         }
 
-        public Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, CancellationToken cancellationToken) where T : class
-        {
-            return GetKey<T>(modifyIndex, folder, key, DataCenter, cancellationToken);
-        }
 
-        public async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string dataCenter, CancellationToken cancellationToken) where T: class
+        public async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key,
+            string zone = null, CancellationToken cancellationToken=default(CancellationToken)) where T: class
         {
             T result = null;
-            string urlCommand = $"v1/kv/{folder}/{key}?dc={dataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/kv/{folder}/{key}?dc={zone ?? Zone}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 try
                 {
                     var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
-                    result = keyValues.SingleOrDefault()?.TryDecodeValue<T>();                    
+                    result = keyValues.SingleOrDefault()?.DecodeValue<T>();                    
                 }
                 catch (Exception ex)
                 {
@@ -93,7 +90,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string version = null;
-            var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.GetConsulDataCenter(), cancellationToken);
+            var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.Zone, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 response.IsUndeployed = true;
@@ -112,7 +109,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken)
         {
-            string urlCommand = $"v1/kv/{folder}?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {

@@ -197,7 +197,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public static string GetDeploymentName(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoverySettings)
         {
-            if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
+            if (serviceDiscoverySettings.Scope == ServiceScope.Zone)
             {
                 return deploymentIdentifier.ServiceName;
             }

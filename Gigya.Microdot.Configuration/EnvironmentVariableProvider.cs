@@ -51,7 +51,7 @@ namespace Gigya.Microdot.Configuration
 
             ReadFromFile(locEnvFilePath);
 
-            DataCenter = GetEnvironmentVariable("DC");
+            DataCenter = GetEnvironmentVariable("ZONE");
             DeploymentEnvironment = GetEnvironmentVariable("ENV");
         }
 

@@ -37,16 +37,16 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider)
         {
             _environmentVariableProvider = environmentVariableProvider;
-            DataCenter = environmentVariableProvider.GetEnvironmentVariable("DC");
+            Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE");
             Region = environmentVariableProvider.GetEnvironmentVariable("REGION");
             DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
 
-            if (string.IsNullOrEmpty(DataCenter) || string.IsNullOrEmpty(DeploymentEnvironment))
+            if (string.IsNullOrEmpty(Zone) || string.IsNullOrEmpty(DeploymentEnvironment))
                 throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %DC%, %ENV%");
         }
 
-        public string DataCenter { get; }
+        public string Zone { get; }
         public string Region { get; }
         public string DeploymentEnvironment { get; }        
         public string ConsulAddress { get; }

@@ -17,10 +17,5 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 $"{deploymentIdentifier.ServiceName}-{deploymentIdentifier.DeploymentEnvironment}" :
                 deploymentIdentifier.ServiceName;
         }
-
-        public static string GetConsulDataCenter(this DeploymentIdentifier deploymentIdentifier)
-        {
-            return deploymentIdentifier.DataCenter;
-        }
     }
 }

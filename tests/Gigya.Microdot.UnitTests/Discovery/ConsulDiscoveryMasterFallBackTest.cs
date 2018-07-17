@@ -45,7 +45,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _serviceName = $"ServiceName{++id}";
 
             _environment = Substitute.For<IEnvironment>();
-            _environment.DataCenter.Returns("il3");
+            _environment.Zone.Returns("il3");
             _environment.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
 
             _configDic = new Dictionary<string, string> {{"Discovery.EnvironmentFallbackEnabled", "true"}};
@@ -145,7 +145,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task ScopeDataCenterShouldUseServiceNameAsConsoleQuery()
         {
-            _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "DataCenter";
+            _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "Zone";
             SetMockToReturnHost(_serviceName);
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);
@@ -227,7 +227,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void MasterShouldNotFallBack()
         {
             _environment = Substitute.For<IEnvironment>();
-            _environment.DataCenter.Returns("il3");
+            _environment.Zone.Returns("il3");
             _environment.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
             _unitTestingKernel.Rebind<IEnvironment>().ToConstant(_environment);
 

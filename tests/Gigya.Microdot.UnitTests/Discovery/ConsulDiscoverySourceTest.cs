@@ -122,7 +122,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public async Task ServiceInDataCenterScope()
         {
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "DataCenter";            
+            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "Zone";            
             await GetFirstResult().ConfigureAwait(false);
             Assert.AreEqual($"{SERVICE_NAME}", _requestedConsulServiceName);
         }

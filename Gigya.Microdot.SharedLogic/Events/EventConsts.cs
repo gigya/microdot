@@ -69,6 +69,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public const string runtimeHost = "runtime.host";
         public const string runtimeREGION = "runtime.region";
+        public const string runtimeZONE = "runtime.zone";
         public const string runtimeDC = "runtime.dc";
         public const string runtimeENV = "runtime.env";
 

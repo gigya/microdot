@@ -46,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             {
                 _environment = Substitute.For<IEnvironment>();
                 _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environment.DataCenter.Returns(DataCenter);
+                _environment.Zone.Returns(DataCenter);
                 k.Rebind<IEnvironment>().ToMethod(_ => _environment);
 
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);

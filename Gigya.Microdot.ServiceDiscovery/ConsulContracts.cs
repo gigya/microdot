@@ -39,34 +39,15 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         public string Value { get; set; }
 
-        public T TryDecodeValue<T>() where T: class
+        public T DecodeValue<T>() where T : class
         {
-            if (Value == null)
-                return null;
-
-            try
-            {
-                var serialized = Encoding.UTF8.GetString(Convert.FromBase64String(Value));
-                return JsonConvert.DeserializeObject<T>(serialized);
-            }
-            catch
-            {
-                return null;
-            }
+            var serialized = Encoding.UTF8.GetString(Convert.FromBase64String(Value));
+            return JsonConvert.DeserializeObject<T>(serialized);
         }
     }
 
     public class ServiceKeyValue
     {
-        [JsonProperty("basePort")]
-        public int BasePort { get; set; }
-
-        [JsonProperty("dc")]
-        public string DataCenter { get; set; }
-
-        [JsonProperty("env")]
-        public string Environment { get; set; }
-
         [JsonProperty("version")]
         public string Version { get; set; }
     }

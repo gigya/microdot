@@ -19,6 +19,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
+
+using System;
+
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
     /// <summary>
@@ -26,10 +29,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     /// </summary>
     public enum ServiceScope
     {
-        /// This Service is in entire DataCenter scope, and should get requests from any environment within this data-center.
-        DataCenter,
+        /// This Service is in entire Zone scope, and should get requests from any environment within this data-center.
+        [Obsolete("Use Zone instead")]
+        DataCenter = 0,
+
+        /// This Service is in entire Zone scope, and should get requests from any environment within this data-center.
+        Zone = 0,
 
         /// This Service is in Environment scope, and should get requests only from other services in same environment and same data-center.
-        Environment
+        Environment = 1,
     }
 }

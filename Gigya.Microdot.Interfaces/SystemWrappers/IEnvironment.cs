@@ -27,18 +27,18 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
     public interface IEnvironment
     {
         /// <summary>
-        /// Current Region where the DataCenter is located. 
-        /// Initialized with environment variable REGION
+        /// The current Region this application runs in, e.g. "us1", "eu2".
+        /// Initialized from the environment variable "REGION".
         /// </summary>
         string Region { get; }
 
         /// <summary>
-        /// Initialized with environment variable DC
+        /// The current Zone this application runs in, e.g. "us1a" or "eu2c". Initialized from the environment variable "ZONE".
         /// </summary>
-        string DataCenter { get; }
+        string Zone { get; }
 
         /// <summary>
-        /// Initialized with environment variable ENV
+        /// The current environment this application runs in, e.g. "prod", "st1" or "canary". Initialized from the environment variable "ENV".
         /// </summary>        
         string DeploymentEnvironment { get; }
 

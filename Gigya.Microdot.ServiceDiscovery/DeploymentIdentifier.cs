@@ -20,44 +20,47 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Security.Policy;
+using System;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
     public class DeploymentIdentifier
     {
-        public string DeploymentEnvironment { get; }
-        public string ServiceName { get; }
-        public string DataCenter { get; }
+        /// <summary>The environment (e.g. "prod", "st1") of the service, if it's deployed in a specific environment (and
+        /// not per the whole zone). Null otherwise.</summary>
+        public string DeploymentEnvironment { get; } = null;
 
-        public bool IsEnvironmentSpecific => string.IsNullOrEmpty(DeploymentEnvironment)==false;
+        /// <summary>The name of the service (e.g. "AccountsService").</summary>
+        public string ServiceName { get; }
+
+        /// <summary>The zone of the service (e.g. "us1a").</summary>
+        public string Zone { get; }
+
+        public bool IsEnvironmentSpecific => DeploymentEnvironment == null;
 
         /// <summary>
         /// Create a new identifier for a service which is deployed on current datacenter 
         /// </summary>
-        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, IEnvironment environment)
-        {
-            DeploymentEnvironment = deploymentEnvironment?.ToLower();
-            ServiceName = serviceName;
-            DataCenter = environment.DataCenter;
-        }
+        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, IEnvironment environment) : this(serviceName, deploymentEnvironment, environment.Zone) { }
 
         /// <summary>
         /// Create a new identifier for a service which is deployed on a different datacenter
         /// </summary>
-        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, string dataCenter)
+        public DeploymentIdentifier(string serviceName, string deploymentEnvironment, string zone)
         {
             DeploymentEnvironment = deploymentEnvironment?.ToLower();
+            if (serviceName == null || zone == null)
+                throw new ArgumentNullException();
             ServiceName = serviceName;
-            DataCenter = dataCenter;
+            Zone = zone;
         }
 
         public override string ToString()
         {
             var serviceAndEnv = IsEnvironmentSpecific ? $"{ServiceName}-{DeploymentEnvironment}" : ServiceName;
 
-            return $"{serviceAndEnv} ({DataCenter})";
+            return $"{serviceAndEnv} ({Zone})";
         }
 
         public override bool Equals(object obj)
@@ -70,7 +73,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             if (obj is DeploymentIdentifier other)
             {
-                if (DataCenter != other.DataCenter)
+                if (Zone != other.Zone)
                     return false;
 
                 if (IsEnvironmentSpecific || other.IsEnvironmentSpecific)
@@ -86,10 +89,10 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             unchecked
             {
-                var hashCode = ServiceName!=null? ServiceName.GetHashCode() : 0;
+                var hashCode = ServiceName.GetHashCode();
                 if (IsEnvironmentSpecific)
                     hashCode = (hashCode * 397) ^ DeploymentEnvironment.GetHashCode();
-                hashCode = (hashCode * 397) ^ (DataCenter != null ? DataCenter.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ Zone.GetHashCode();
                 return hashCode;
             }
         }

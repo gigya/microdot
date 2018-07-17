@@ -52,7 +52,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 ServiceName = CurrentApplicationInfo.Name,
                 ServiceVersion = CurrentApplicationInfo.Version.ToString(),
                 HostName = CurrentApplicationInfo.HostName,
-                DataCenter = Environment.DataCenter,
+                DataCenter = Environment.Zone,
                 DeploymentEnvironment = Environment.DeploymentEnvironment
             };
 

@@ -53,7 +53,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             if (serviceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
                 return;
 
-            string dc = environment.DataCenter;
+            string dc = environment.Zone;
             string env = environment.DeploymentEnvironment;
 
          

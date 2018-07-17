@@ -29,7 +29,7 @@ namespace Gigya.Microdot.Interfaces.Configuration
         /// <summary>
         /// Initialized with environment variable DC
         /// </summary>
-        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironment.DataCenter instead")]
+        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironment.Zone instead")]
         string DataCenter { get; }
 
         /// <summary>
