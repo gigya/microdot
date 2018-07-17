@@ -43,7 +43,7 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
 
             if (string.IsNullOrEmpty(Zone) || string.IsNullOrEmpty(DeploymentEnvironment))
-                throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %DC%, %ENV%");
+                throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %ZONE%, %ENV%");
         }
 
         public string Zone { get; }

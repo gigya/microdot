@@ -24,7 +24,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     public class ConsulNodeSourceTests
     {
         private const int ConsulPort = 8506;
-        private const string DataCenter = "us1";
+        private const string Zone = "us1a";
 
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
@@ -65,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             {
                 _environment = Substitute.For<IEnvironment>();
                 _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environment.Zone.Returns(DataCenter);
+                _environment.Zone.Returns(Zone);
                 k.Rebind<IEnvironment>().ToMethod(_ => _environment);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
                 k.Rebind<ConsulNodeSourceFactory>().ToSelf().InTransientScope();

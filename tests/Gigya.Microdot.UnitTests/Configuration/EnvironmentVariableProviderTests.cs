@@ -17,13 +17,13 @@ namespace Gigya.Microdot.UnitTests.Configuration
     public class EnvironmentVariableProviderTests
     {
         private const string DEFAULT_REGION = "default_region";
-        private const string DEFAULT_DC = "default_dc";
+        private const string DEFAULT_ZONE = "default_zone";
         private const string DEFAULT_ENV = "default_env";
 
         private IFileSystem _fileSystem;
         private string _originalENV;
         private string _originalREGION;
-        private string _originalDC;
+        private string _originalZone;
 
         [SetUp]
         public void SetUp()
@@ -32,15 +32,15 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => @"{
                 REGION: 'il1',
-                DC: 'il1a',
+                ZONE: 'il1a',
 	            ENV: 'orl11',	
 	            GIGYA_CONFIG_PATHS_FILE: 'C:\\gigya\\Config\\loadPaths1.json',
             }");
 
             _originalREGION = Environment.GetEnvironmentVariable("REGION");
-            _originalDC = Environment.GetEnvironmentVariable("DC");
+            _originalZone = Environment.GetEnvironmentVariable("ZONE");
             _originalENV = Environment.GetEnvironmentVariable("ENV");
-            Environment.SetEnvironmentVariable("DC", DEFAULT_DC);
+            Environment.SetEnvironmentVariable("ZONE", DEFAULT_ZONE);
             Environment.SetEnvironmentVariable("REGION", DEFAULT_REGION);
             Environment.SetEnvironmentVariable("ENV", DEFAULT_ENV);
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
@@ -52,7 +52,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", null);
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", null);
-            Environment.SetEnvironmentVariable("DC", _originalDC);
+            Environment.SetEnvironmentVariable("ZONE", _originalZone);
             Environment.SetEnvironmentVariable("REGION", _originalREGION);
             Environment.SetEnvironmentVariable("ENV", _originalENV);
         }
@@ -77,11 +77,11 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [Test]
         public void ReadAndSeEnvVariables_SomeEmpty()
         {
-            Environment.SetEnvironmentVariable("DC", "il2");
+            Environment.SetEnvironmentVariable("ZONE", "il1b");
 
             var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
 
-            environmentVariableProvider.GetEnvironmentVariable("DC").ShouldBe("il1a");
+            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("il1a");
             environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe("il1");
             environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
             environmentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
@@ -93,7 +93,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
 
-            environmentVariableProvider.GetEnvironmentVariable("DC").ShouldBe("il1a");
+            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("il1a");
             environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe("il1");
             environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
             environmentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
 
             // assert environment variables were not changed
-            environmentVariableProvider.GetEnvironmentVariable("DC").ShouldBe(DEFAULT_DC);
+            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe(DEFAULT_ZONE);
             environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe(DEFAULT_REGION);
             environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe(DEFAULT_ENV);
         }

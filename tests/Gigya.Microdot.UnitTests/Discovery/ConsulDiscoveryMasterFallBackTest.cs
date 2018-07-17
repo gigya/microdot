@@ -143,7 +143,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         [Test]
         [Repeat(Repeat)]
-        public async Task ScopeDataCenterShouldUseServiceNameAsConsoleQuery()
+        public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
             _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "Zone";
             SetMockToReturnHost(_serviceName);
