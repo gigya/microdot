@@ -67,7 +67,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
-            service.SendFake("").Result.ShouldBeTrue();
+            service.Activate("").Result.ShouldBeTrue();
         }
 
         [Test]
@@ -77,7 +77,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
-            service.SendFake("").Result.ShouldBeTrue();
+            service.Activate("").Result.ShouldBeTrue();
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Description("Loading real configuration from GrainTestService")]
-        [Ignore("Require real config.")]
+        //[Ignore("Require real config.")]
         [Test]
         public async Task GrainTestServiceTest()
         {
@@ -95,27 +95,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
-            service.SendFake("").Result.ShouldBeTrue();
+            await service.Activate("");
+
+            //await Task.Delay(TimeSpan.FromMinutes(2));
+            //var result = await service.VerifyWhetherCollected();
+            //result.ShouldBeTrue();
+
+            await Task.Delay(TimeSpan.FromMinutes(20));
         }
-
-        //[Ignore("The test execution takes to long - Should think of a better way to test it.")]
-        //[Test]
-        //public async Task ManuelTest()
-        //{
-        //    var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<With10SecondsAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
-        //    Tester = tester;
-        //    var service = tester.GetServiceProxy<IGarinAgeLimitService>();
-
-        //    service.SendFake("").Result.ShouldBeTrue();
-        //    service.WasCollected().Result.ShouldBeFalse();
-
-        //    await Task.Delay(TimeSpan.FromSeconds(15));
-        //    service.WasCollected().Result.ShouldBeFalse();
-
-
-        //    await Task.Delay(TimeSpan.FromMinutes(2));
-        //    service.WasCollected().Result.ShouldBeTrue();
-        //}
     }
 }
 

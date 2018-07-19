@@ -35,8 +35,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     [HttpService(6540)]
     public interface IGarinAgeLimitService
     {
-        Task<bool> SendFake(string fake);
-        Task<bool> WasCollected();
+        Task<bool> Activate(string fake);
+        Task<bool> VerifyWhetherCollected();
     }
 
 
@@ -65,7 +65,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return base.OnActivateAsync();
         }
 
-        public async Task<bool> SendFake(string fake)
+        public async Task<bool> Activate(string fake)
         {
 
             await Task.Delay(150);
@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return true;
         }
 
-        public async Task<bool> WasCollected()
+        public async Task<bool> VerifyWhetherCollected()
         {
             await Task.Delay(150);
             return _wasCollected;

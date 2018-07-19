@@ -65,22 +65,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
     }
 
-    //public class With10SecondsAgeLimitServiceHost : CalculatorServiceHost
-    //{
-    //    protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
-    //    {
-    //        var originConfig = kernel.Get<OrleansConfig>();
-    //        originConfig.GrainAgeLimits = new Dictionary<string, GrainAgeLimitConfig>
-    //        {
-    //            [ServiceName] = new GrainAgeLimitConfig
-    //            {
-    //                GrainType = "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService",
-    //                GrainAgeLimitInMins = 1 // 10 seconds!
-    //            }
-    //        };
-    //    }
-    //}
-
     public class WithInvalidAgeLimitServiceHost : CalculatorServiceHost
     {
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
