@@ -151,7 +151,6 @@ namespace Gigya.Microdot.Configuration.Objects
             SendChangeNotification = lambda.Compile();
         }
 
-       
         private void Create()
         {
             var errors = new List<ValidationResult>();
