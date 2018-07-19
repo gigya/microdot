@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
+using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Ninject;
 using Orleans;
 using Orleans.Concurrency;
-using Shouldly;
+using Orleans.Storage;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService
 {
@@ -19,9 +17,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService
     public class AgeLimitConfigUpdatesServiceHost : CalculatorServiceHost
     {
         public Dictionary<string, string> MainConfig = new Dictionary<string, string> {
-            { "OrleansConfig.defaultGrainAgeLimitInMins", "1" },
-            { "OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "1"} ,
-            { "OrleansConfig.GrainAgeLimits.SiteService.grainType"          , "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService.GrainAgeLimitTestedService"}};
+            { "OrleansConfig.defaultGrainAgeLimitInMins", "1" }};
 
 
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
@@ -37,6 +33,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService
                           .InSingletonScope();
 
 
+            kernel.Rebind<OrleansCodeConfig>().ToConstant(new OrleansCodeConfig
+            {
+                StorageProviderTypeFullName = typeof(MemoryStorage).GetTypeInfo().FullName,
+                StorageProviderName = "OrleansStorage"
+
+            }).InSingletonScope();
+
+
             base.Configure(kernel, commonConfig);
         }
     }
@@ -45,9 +49,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService
     [HttpService(6540)]
     public interface IConfigAgeTesterService
     {
-        Task<bool> ChangeAgeLimitTo(int minutes);
-
-        Task<bool> DeactivationAccured();
+        Task<bool> SetDefaultAgeLimit();
+        Task<bool> ValidateTimestamps();
     }
 
     [HttpService(6540)]
@@ -57,66 +60,60 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService
     }
 
 
-    [StatelessWorker, Reentrant]
+
+    [Reentrant]
     public class GrainConfigAgeTesterService : Grain, IGrainConfigAgeTesterService
     {
-        private readonly ILog _log;
-        private IGrainAgeLimitTestedService _limitTested;
-        private static Stopwatch _stopwatch;
-        private int _expectedMinutWait;
-        private static AutoResetEvent _autoResetEvent;
+        private readonly ManualConfigurationEvents _configRefresh;
+        private readonly OverridableConfigItems _configOverride;
+        private readonly OrleansConfig _orleansConfig;
 
 
-        public GrainConfigAgeTesterService(ILog log)
+        public GrainConfigAgeTesterService(ManualConfigurationEvents configRefresh, OverridableConfigItems configOverride, OrleansConfig orleansConfig)
         {
-            _log = log;
-            _autoResetEvent = new AutoResetEvent(initialState: false);
+            _configRefresh = configRefresh;
+            _configOverride = configOverride;
+            _orleansConfig = orleansConfig;
         }
 
-        public override Task OnActivateAsync()
+        public async Task<bool> SetDefaultAgeLimit()
         {
-            //_limitTested = GrainFactory.GetGrain<IGrainAgeLimitTestedService>(new Random(Guid.NewGuid().GetHashCode()).Next());
-            return base.OnActivateAsync();
-        }
-
-        public async Task<bool> ChangeAgeLimitTo(int minutes)
-        {
-            var key = this.GetPrimaryKeyLong().ToString();
-            _stopwatch = new Stopwatch();
-            _stopwatch.Start();
-            var limitTested = GrainFactory.GetGrain<IGrainAgeLimitTestedService>(new Random(Guid.NewGuid().GetHashCode()).Next());
+            var expected = "2";
+            _configOverride.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "2");
+            _configOverride.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainType", typeof(GrainStubAgeLimit2MinuteService).FullName);
 
 
-            _expectedMinutWait = 1;
-            await limitTested.ChangeAgeLimit(_expectedMinutWait);
-
-            _autoResetEvent.WaitOne(timeout: TimeSpan.FromMinutes(3)).ShouldBeTrue();
+            var notification = await _configRefresh.ApplyChanges<OrleansConfig>();
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
 
-            _stopwatch = new Stopwatch();
-            //_expectedMinutWait = 2;
-            await _limitTested.ChangeAgeLimit(_expectedMinutWait);
-            _autoResetEvent.WaitOne(timeout: TimeSpan.FromMinutes(_expectedMinutWait)).ShouldBeTrue();
+            var minteService2 = GrainFactory.GetGrain<IGrainStubAgeLimit2MinuteService>(0);
+            await minteService2.Activate();
 
-
-            _stopwatch = new Stopwatch();
-            _expectedMinutWait = 1;
-            await _limitTested.ChangeAgeLimit(_expectedMinutWait);
-            _autoResetEvent.WaitOne(timeout: TimeSpan.FromMinutes(_expectedMinutWait)).ShouldBeTrue();
+            var default1MinuteService = GrainFactory.GetGrain<IGrainStubAgeLimitDefaultTime1MinuteService>(0);
+            await default1MinuteService.Activate();
 
             return true;
         }
 
-        public Task<bool> DeactivationAccured()
+        public async Task<bool> ValidateTimestamps()
         {
+            var timestamp = await GrainFactory.GetGrain<IGrainStubAgeLimit2MinuteService>(0).GetTimeStamp();
 
-            _stopwatch.Stop();
-            (Math.Abs(_stopwatch.Elapsed.Minutes - _expectedMinutWait) <= 1).ShouldBeTrue();
+            if (timestamp > new TimeSpan(0, 3, 5))
+            {
+                throw new Exception("Should be less than 2.5 minute.");
+            }
 
-            _autoResetEvent.Set();
+            timestamp = await GrainFactory.GetGrain<IGrainStubAgeLimitDefaultTime1MinuteService>(0).GetTimeStamp();
 
-            return Task.FromResult(true);
+            if (timestamp > new TimeSpan(0, 2, 0))
+            {
+                throw new Exception("Should be less than 1 minute.");
+            }
+
+
+            return true;
         }
-
     }
 }

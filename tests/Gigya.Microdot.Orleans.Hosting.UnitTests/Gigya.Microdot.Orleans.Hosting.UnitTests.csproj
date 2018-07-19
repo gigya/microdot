@@ -47,7 +47,8 @@
     <Compile Include="GrainAgeLimitServiceTests.cs" />
     <Compile Include="LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
-    <Compile Include="Microservice\AgeLimitService\IGrainAgeLimitTestedService.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimit2MinuteService.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimitTestedService2.cs" />
     <Compile Include="Microservice\CalculatorService\AgeLimitServiceHost.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
@@ -229,6 +230,17 @@
       <ItemGroup>
         <Reference Include="OrleansCodeGenerator">
           <HintPath>..\..\packages\Microsoft.Orleans.OrleansCodeGenerator\lib\net451\OrleansCodeGenerator.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="OrleansProviders">
+          <HintPath>..\..\packages\Microsoft.Orleans.OrleansProviders\lib\net451\OrleansProviders.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

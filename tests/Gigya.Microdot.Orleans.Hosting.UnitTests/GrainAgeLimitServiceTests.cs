@@ -53,7 +53,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Tester = tester;
             var service = tester.GetServiceProxy<IGrainConfigAgeTesterService>(timeout:TimeSpan.FromMinutes(20));
 
-            service.ChangeAgeLimitTo(2).Result.ShouldBeTrue();
+
+            await service.SetDefaultAgeLimit();
+
+            await Task.Delay(TimeSpan.FromMinutes(3.5));
+
+            service.ValidateTimestamps().Result.ShouldBeTrue();
         }
 
         [Test]

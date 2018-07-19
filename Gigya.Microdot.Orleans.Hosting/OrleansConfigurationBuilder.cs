@@ -34,6 +34,7 @@ using org.apache.zookeeper;
 using Orleans.Providers;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
+using Orleans.Storage;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -162,6 +163,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             if (string.IsNullOrEmpty(commonConfig.StorageProviderTypeFullName) == false)
             {
+                //globals.RegisterStorageProvider<MemoryStorage>("OrleansStorage");
                 globals.RegisterStorageProvider(commonConfig.StorageProviderTypeFullName, "Default");
                 globals.RegisterStorageProvider(commonConfig.StorageProviderTypeFullName, commonConfig.StorageProviderName);
             }
