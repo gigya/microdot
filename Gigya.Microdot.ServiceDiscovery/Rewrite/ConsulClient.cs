@@ -81,6 +81,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     response.UnparsableConsulResponse(ex);
                 }
             }
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+                response.IsUndeployed = true;
             else if (response.Error == null)
                 response.ConsulResponseError();
 

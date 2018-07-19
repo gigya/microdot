@@ -211,10 +211,12 @@ namespace Gigya.Microdot.ServiceDiscovery
             else if (response.Success)
             {
                 var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
-                var version = keyValue?.SingleOrDefault()?.DecodeValue<ServiceKeyValue>()?.Version;
-
-                if (version != null)
+                try
                 {
+                    var version = keyValue?.SingleOrDefault()?.DecodeValue<ServiceKeyValue>()?.Version;
+                    if (version==null)
+                        throw new EnvironmentException("Consul key-value response not contains Version");
+
                     lock (_setResultLocker)
                     {
                         _activeVersion = version;
@@ -222,9 +224,9 @@ namespace Gigya.Microdot.ServiceDiscovery
                         ForceReloadEndpointsByHealth();
                     }
                 }
-                else
+                catch(Exception ex)
                 {
-                    var exception = new EnvironmentException("Cannot extract service's active version from Consul response");
+                    var exception = new EnvironmentException("Cannot extract service's active version from Consul response", innerException: ex);
                     SetErrorResult(urlCommand, exception, null, response.ResponseContent);
                     response.Error = exception;
                 }

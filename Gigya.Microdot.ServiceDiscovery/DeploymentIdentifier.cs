@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// <summary>The zone of the service (e.g. "us1a").</summary>
         public string Zone { get; }
 
-        public bool IsEnvironmentSpecific => DeploymentEnvironment == null;
+        public bool IsEnvironmentSpecific => DeploymentEnvironment != null;
 
         /// <summary>
         /// Create a new identifier for a service which is deployed on current datacenter 
