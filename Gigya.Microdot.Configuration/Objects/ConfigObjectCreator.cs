@@ -79,9 +79,6 @@ namespace Gigya.Microdot.Configuration.Objects
             healthStatus.RegisterCheck(ObjectType.Name, HealthCheck);
         }
 
-        
-
-
         private HealthCheckResult HealthCheck()
         {
             if (ValidationErrors != null)
@@ -116,7 +113,6 @@ namespace Gigya.Microdot.Configuration.Objects
 
             return Latest;
         }
-
 
         private string GetConfigPath()
         {

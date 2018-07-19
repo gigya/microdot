@@ -70,8 +70,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             service.SendFake("").Result.ShouldBeTrue();
         }
 
-
-
         [Test]
         public async Task WithAgeLimitTest()
         {
