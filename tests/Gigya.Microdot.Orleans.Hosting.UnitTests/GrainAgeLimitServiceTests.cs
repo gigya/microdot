@@ -87,7 +87,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Description("Loading real configuration from GrainTestService")]
-        //[Ignore("Require real config.")]
+        [Ignore("Require real config.")]
         [Test]
         public async Task GrainTestServiceTest()
         {
