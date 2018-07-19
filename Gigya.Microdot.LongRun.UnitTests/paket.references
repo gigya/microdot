@@ -1,0 +1,13 @@
+Gigya.ServiceContract
+FluentAssertions
+Metrics.NET
+NSubstitute
+NUnit
+RichardSzalay.MockHttp
+Shouldly
+Ninject
+System.Threading.Tasks.Dataflow
+Castle.Core
+Microsoft.Orleans.Core
+DataAnnotationsValidator
+System.ComponentModel.Annotations

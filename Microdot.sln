@@ -67,6 +67,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Client", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Orleans", "Sample\CalculatorService.Orleans\CalculatorService.Orleans.csproj", "{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.LongRun.UnitTests", "Gigya.Microdot.LongRun.UnitTests\Gigya.Microdot.LongRun.UnitTests.csproj", "{90AA3681-11DC-4B60-AB48-7FE96F4A6269}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
