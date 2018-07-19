@@ -44,16 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
-<<<<<<< HEAD
     <Compile Include="GrainAgeLimitServiceTests.cs" />
-    <Compile Include="LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />
+    <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimit2MinuteService.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimitTestedService2.cs" />
     <Compile Include="Microservice\CalculatorService\AgeLimitServiceHost.cs" />
-=======
-    <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
->>>>>>> develop
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
     <Compile Include="CalculatorServiceTests.cs" />
@@ -62,7 +59,6 @@
     <Compile Include="Microservice\CalculatorService\ICalculatorService.cs" />
     <Compile Include="Microservice\CalculatorService\ICalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\ICalculatorWorkerGrain.cs" />
-    <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />
     <Compile Include="Microservice\CalculatorService\IUserGrainWithGuid.cs" />
     <Compile Include="Microservice\FakeRevokingManager.cs" />
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
