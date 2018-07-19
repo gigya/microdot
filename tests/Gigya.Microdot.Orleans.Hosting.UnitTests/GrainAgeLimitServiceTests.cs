@@ -21,9 +21,7 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
@@ -113,7 +111,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Description("Loading real configuration from GrainTestService")]
-        //[Test]
+        [Test]
         public async Task GrainTestServiceTest()
         {
             var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<GrainTestServiceHost>(basePortOverride: 6154, writeLogToFile: true);
@@ -121,12 +119,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
             service.SendFake("").Result.ShouldBeTrue();
-
-            await Task.Delay(TimeSpan.FromMinutes(1));
-            await Task.Delay(TimeSpan.FromMinutes(1));
-            await Task.Delay(TimeSpan.FromMinutes(2));
-            await Task.Delay(TimeSpan.FromMinutes(2));
-
         }
 
         [Ignore("The test execution takes to long - Should think of a better way to test it.")]

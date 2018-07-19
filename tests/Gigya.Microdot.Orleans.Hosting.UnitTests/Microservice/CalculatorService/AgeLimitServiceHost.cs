@@ -20,55 +20,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Orleans.Ninject.Host;
 using Ninject;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
-    //public class AgeLimitWithChangeaConfigurationServiceHost : CalculatorServiceHost
-    //{
-
-    //    public Dictionary<string, string> MainConfig = new Dictionary<string, string> {
-    //        { "OrleansConfig.defaultGrainAgeLimitInMins", "45" },
-    //        { "OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "1"} ,
-    //        { "OrleansConfig.GrainAgeLimits.SiteService.grainType"          , "Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.GrainAgeLimitService"}};
-
-
-    //    //protected override string ServiceName => "GrainTestService";
-
-
-    //    protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
-    //    {
-    //        kernel.Rebind<IConfigItemsSource, OverridableConfigItems>()
-    //            .To<OverridableConfigItems>()
-    //            .InSingletonScope()
-    //            .WithConstructorArgument("data", MainConfig);
-
-    //        base.Configure(kernel, commonConfig);
-    //    }
-    //}
-
-    
-
-
-    //public class ChangeAgeLimitServiceHost : CalculatorServiceHost
-    //{
-    //    protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
-    //    {
-    //        base.Configure(kernel, commonConfig);
-    //    }
-    //}
-
 
     public class WithAgeLimitServiceHost : CalculatorServiceHost
     {
