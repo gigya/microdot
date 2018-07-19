@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 
@@ -38,9 +39,10 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public override string SourceName => Name;
         public override bool SupportsFallback => true;
-        public override bool IsServiceDeploymentDefined => ConsulClient.Result.IsQueryDefined;
+        public override bool IsServiceDeploymentDefined => Result.IsQueryDefined;
 
         private IConsulClient ConsulClient { get; set; }
+        public IDateTime DateTime { get; }
 
         private readonly Func<string, IConsulClient> _getConsulClient;
         private readonly ILog _log;
@@ -60,11 +62,13 @@ namespace Gigya.Microdot.ServiceDiscovery
         
 
         public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
+            IDateTime dateTime,
             Func<DiscoveryConfig> getConfig,
             Func<string, IConsulClient> getConsulClient, ILog log)
             : base(GetDeploymentName(serviceDeployment, getConfig().Services[serviceDeployment.ServiceName]))
 
-        {            
+        {
+            DateTime = dateTime;
             _getConsulClient = getConsulClient;            
             _log = log;
 
@@ -86,7 +90,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task TimeoutIfNotReceivedFirstResult()
         {
-            await Task.Delay(TimeSpan.FromSeconds(10));
+            await DateTime.Delay(TimeSpan.FromSeconds(10));
             if (_firstResultInitialized.Task.GetAwaiter().IsCompleted)
                 return;
             ConsulResultChanged(new EndPointsResult

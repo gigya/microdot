@@ -44,12 +44,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
+<<<<<<< HEAD
     <Compile Include="GrainAgeLimitServiceTests.cs" />
     <Compile Include="LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimit2MinuteService.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimitTestedService2.cs" />
     <Compile Include="Microservice\CalculatorService\AgeLimitServiceHost.cs" />
+=======
+    <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
+>>>>>>> develop
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
     <Compile Include="CalculatorServiceTests.cs" />
@@ -68,6 +72,7 @@
     <Compile Include="SchemaEndpointTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpyEventPublisher.cs" />
+    <Compile Include="Validation\SensitivityAttributesValidatorTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -327,7 +332,9 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="System.ComponentModel.Composition">
+        <Reference Include="System.Runtime.CompilerServices.Unsafe">
+          <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
