@@ -44,6 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Tester?.Dispose();
         }
 
+        [Ignore("Run too much time.")]
         [Test]
         public async Task ChangeableAgeLimitTest()
         {
@@ -57,29 +58,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Task.Delay(TimeSpan.FromMinutes(3.5));
 
             service.ValidateTimestamps().Result.ShouldBeTrue();
-        }
-
-        [Test]
-        public async Task EranTest()
-        {
-            var kernel = new TestingKernel<ConsoleLog>(k => { });
-
-            var configRefresh = kernel.Get<ManualConfigurationEvents>();
-            var ConfigOverride =  kernel.GetConfigOverride();
-
-
-            var config = kernel.Get<OrleansConfig>();//Don't remove config should be created before it can reupdate 
-
-            double expected = 2;
-            ConfigOverride.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", expected.ToString());
-            ConfigOverride.SetValue("OrleansConfig.DefaultGrainAgeLimitInMins", expected.ToString());
-
-            
-            var x = await configRefresh.ApplyChanges<OrleansConfig>();
-            x.GrainAgeLimits["SiteService"].GrainAgeLimitInMins.ShouldBe(expected);
-            x.DefaultGrainAgeLimitInMins.ShouldBe(expected);
-
-
         }
 
         [Test]
@@ -111,34 +89,35 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Description("Loading real configuration from GrainTestService")]
+        [Ignore("Require real config.")]
         [Test]
         public async Task GrainTestServiceTest()
         {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<GrainTestServiceHost>(basePortOverride: 6154, writeLogToFile: true);
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<ReadingRealConfigurationServiceHost>(basePortOverride: 6154, writeLogToFile: true);
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
             service.SendFake("").Result.ShouldBeTrue();
         }
 
-        [Ignore("The test execution takes to long - Should think of a better way to test it.")]
-        [Test]
-        public async Task ForceDiactivationAfter10Seconds()
-        {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<With10SecondsAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
-            Tester = tester;
-            var service = tester.GetServiceProxy<IGarinAgeLimitService>();
+        //[Ignore("The test execution takes to long - Should think of a better way to test it.")]
+        //[Test]
+        //public async Task ManuelTest()
+        //{
+        //    var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<With10SecondsAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
+        //    Tester = tester;
+        //    var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
-            service.SendFake("").Result.ShouldBeTrue();
-            service.WasCollected().Result.ShouldBeFalse();
+        //    service.SendFake("").Result.ShouldBeTrue();
+        //    service.WasCollected().Result.ShouldBeFalse();
 
-            await Task.Delay(TimeSpan.FromSeconds(15));
-            service.WasCollected().Result.ShouldBeFalse();
+        //    await Task.Delay(TimeSpan.FromSeconds(15));
+        //    service.WasCollected().Result.ShouldBeFalse();
 
 
-            await Task.Delay(TimeSpan.FromMinutes(2));
-            service.WasCollected().Result.ShouldBeTrue();
-        }
+        //    await Task.Delay(TimeSpan.FromMinutes(2));
+        //    service.WasCollected().Result.ShouldBeTrue();
+        //}
     }
 }
 
