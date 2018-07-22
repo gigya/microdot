@@ -45,7 +45,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
-        private readonly object _lockedObject;
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -75,8 +74,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             OrleansConfigSourceBlock = orleansConfigSourceBlock;
             PreviousOrleansConfig = orleansConfig;
-
-            _lockedObject = new object();
             OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config => UpdateOrleansAgeLimitChange(config)));
 
             if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
@@ -221,7 +218,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public void UpdateOrleansAgeLimitChange(OrleansConfig orleanConfig)
         {
-            lock (_lockedObject)
+            try
             {
                 var previousAgeLimits = PreviousOrleansConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
                 var newAgeLimits = orleanConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
@@ -249,6 +246,10 @@ namespace Gigya.Microdot.Orleans.Hosting
                 }
 
                 PreviousOrleansConfig = orleanConfig;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Failed to reload configuration", exception: ex);
             }
         }
 

@@ -49,7 +49,6 @@ namespace Gigya.Microdot.Orleans.Hosting
     }
 
 
-    [Serializable]
     public class GrainAgeLimitConfig
     {
         public double GrainAgeLimitInMins { get; set; }
