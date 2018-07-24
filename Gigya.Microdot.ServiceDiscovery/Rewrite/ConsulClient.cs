@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
 
-    internal class ConsulClient : IDisposable
+    public class ConsulClient : IDisposable
     {
         private ILog Log { get; }
         private IDateTime DateTime { get; }
@@ -40,7 +40,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response.SetResult(result);
         }
 
-        public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        internal async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string version = null;
             var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.Zone, cancellationToken);
@@ -133,7 +133,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
+        internal Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
         {
             return GetAllKeys(modifyIndex, "service", cancellationToken);
         }
