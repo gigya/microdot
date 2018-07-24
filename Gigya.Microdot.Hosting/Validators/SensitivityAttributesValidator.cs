@@ -56,18 +56,30 @@ namespace Gigya.Microdot.Hosting.Validators
                         }
 
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
-                        if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
-                            VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>());
+                        VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>());
                     }
                 }
             }
         }
 
+        private bool IsIrrelevantTypes(Type type)
+        {
+            if (type.FullName?.StartsWith("System.") == true)
+                return true;
+
+            if (type.FullName?.StartsWith("Newtonsoft.Json.Linq.") == true)
+                return true;
+
+            return false;
+        }
 
         private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path)
         {
-            if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
+            if (type.IsClass == false || IsIrrelevantTypes(type))
                 return;
+
+            if (path.Count == 100)
+                throw new StackOverflowException($"In Method {methodName} {paramName} cuased for 'StackOverflowException' - Probably due to circular references.");
 
             foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
                                            .Where(x => x is FieldInfo || (x is PropertyInfo propertyInfo) && propertyInfo.CanRead))

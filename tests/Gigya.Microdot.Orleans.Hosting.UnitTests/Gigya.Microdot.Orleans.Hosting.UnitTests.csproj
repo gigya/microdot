@@ -44,7 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
+    <Compile Include="GrainAgeLimitServiceTests.cs" />
+    <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />
     <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimit2MinuteService.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimitTestedService2.cs" />
+    <Compile Include="Microservice\CalculatorService\AgeLimitServiceHost.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
     <Compile Include="CalculatorServiceTests.cs" />
@@ -80,6 +86,10 @@
   </Target>
   -->
   <ItemGroup>
+    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
+      <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
+      <Name>Gigya.Microdot.Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
@@ -221,6 +231,17 @@
       <ItemGroup>
         <Reference Include="OrleansCodeGenerator">
           <HintPath>..\..\packages\Microsoft.Orleans.OrleansCodeGenerator\lib\net451\OrleansCodeGenerator.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="OrleansProviders">
+          <HintPath>..\..\packages\Microsoft.Orleans.OrleansProviders\lib\net451\OrleansProviders.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

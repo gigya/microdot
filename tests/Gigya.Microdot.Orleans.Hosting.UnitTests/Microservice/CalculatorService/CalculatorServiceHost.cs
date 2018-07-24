@@ -58,11 +58,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         private ILoggingModule LoggingModule { get; }
 
-        public CalculatorServiceHost() : this( true)
+        public CalculatorServiceHost() : this(true)
         { }
 
 
-        public CalculatorServiceHost( bool useHttpLog)
+        public CalculatorServiceHost(bool useHttpLog)
         {
             LoggingModule = new FakesLoggersModules(useHttpLog);
         }
