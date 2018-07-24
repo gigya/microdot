@@ -13,8 +13,7 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-
-    public class ConsulClient : IDisposable
+    internal class ConsulClient : IConsulClient
     {
         private ILog Log { get; }
         private IDateTime DateTime { get; }
@@ -109,7 +108,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken)
+        public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken=default(CancellationToken))
         {
             string urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);

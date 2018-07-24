@@ -64,6 +64,7 @@
     <Compile Include="Rewrite\DeploymentIdentifierConsulExtensions.cs" />
     <Compile Include="Rewrite\Discovery.cs" />
     <Compile Include="Rewrite\Ex.cs" />
+    <Compile Include="Rewrite\IConsulClient.cs" />
     <Compile Include="Rewrite\IDiscovery.cs" />
     <Compile Include="Rewrite\INewServiceDiscovery.cs" />
     <Compile Include="Rewrite\INodeSource.cs" />

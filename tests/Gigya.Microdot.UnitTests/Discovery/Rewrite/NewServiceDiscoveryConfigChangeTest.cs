@@ -15,6 +15,7 @@ using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;
 using Shouldly;
+using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {

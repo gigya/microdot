@@ -89,7 +89,9 @@ namespace Gigya.Microdot.Ninject
             Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
             Rebind<IDiscovery>().To<Discovery>().InSingletonScope();
 
-            Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();            
+            Rebind<ServiceDiscovery.Rewrite.ConsulClient, ServiceDiscovery.Rewrite.IConsulClient>()
+                .To<ServiceDiscovery.Rewrite.ConsulClient>().InSingletonScope();            
+            
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
