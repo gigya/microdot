@@ -37,8 +37,8 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider)
         {
             _environmentVariableProvider = environmentVariableProvider;
-            Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE");
-            Region = environmentVariableProvider.GetEnvironmentVariable("REGION");
+            Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE") ?? environmentVariableProvider.GetEnvironmentVariable("DC");
+            Region = environmentVariableProvider.GetEnvironmentVariable("REGION") ?? environmentVariableProvider.GetEnvironmentVariable("DC");
             DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
 
