@@ -56,18 +56,31 @@ namespace Gigya.Microdot.Hosting.Validators
                         }
 
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
-                        if (parameter.ParameterType.IsClass && parameter.ParameterType.FullName?.StartsWith("System.") == false)
+                        if (parameter.ParameterType.IsClass && IsIrrelevantTypes(parameter.ParameterType) == false)
                             VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>());
                     }
                 }
             }
         }
 
+        private bool IsIrrelevantTypes(Type type)
+        {
+            if (type.FullName?.StartsWith("System.") == true)
+                return true;
 
-        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path)
+            if (type.FullName?.StartsWith("Newtonsoft.Json.Linq.") == true)
+                return true;
+
+            return false;
+        }
+
+        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path, int level = 0)
         {
             if (type.IsClass == false || type.FullName?.StartsWith("System.") == true)
                 return;
+
+            if (level == 100)
+                throw new StackOverflowException($"In Method {methodName} {paramName} cuased cuased for 'StackOverflowException' - Probably due to circular references.");
 
             foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
                                            .Where(x => x is FieldInfo || (x is PropertyInfo propertyInfo) && propertyInfo.CanRead))
@@ -81,7 +94,7 @@ namespace Gigya.Microdot.Hosting.Validators
                         throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but only root-level members can be marked as such.");
 
                 Type memberType = memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
-                VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path);
+                VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path, level + 1);
 
                 path.Pop();
             }
