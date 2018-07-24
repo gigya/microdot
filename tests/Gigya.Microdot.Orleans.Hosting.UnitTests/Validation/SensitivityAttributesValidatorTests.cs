@@ -29,6 +29,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.ServiceContract.Attributes;
+using Newtonsoft.Json.Linq;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -66,13 +67,20 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Assert.Throws<ProgrammaticException>(_serviceValidator.Validate);
         }
 
-        //[TestCase(typeof(IValidMock))]
+        [TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
 
         public void ValidationShouldSucceed(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
             _serviceValidator.Validate();
+        }
+
+        [Test]
+        public void DepthVerificationLess100()
+        {
+            _typesToValidate = new[] { typeof(IInvalidRecursionDepth100) };
+            Assert.Throws<StackOverflowException>(_serviceValidator.Validate);
         }
 
 
@@ -246,10 +254,21 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Task valid5([Sensitive] string test);
             [Sensitive]
             Task valid6([Sensitive] string test);
-            Task valid7([Sensitive] string test, [NonSensitive] string test2);
 
+            Task valid7([Sensitive] string test, [NonSensitive] string test2, JObject metaData,JToken jToken);
+        }
 
+        private interface IInvalidRecursionDepth100
+        {
+            Task Verification([NonSensitive]OuterStub stub);
+        }
 
+        public class OuterStub
+        {
+            public string Name { get; set; }
+            public string FamilyName { get; set; }
+
+            public OuterStub InnerStub { get; set; }
         }
     }
 }
