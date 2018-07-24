@@ -260,7 +260,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         private interface IInvalidRecursionDepth100
         {
-            Task Verification([NonSensitive]OuterStub jToken);
+            Task Verification([NonSensitive]OuterStub stub);
         }
 
         public class OuterStub
