@@ -6,7 +6,7 @@ namespace Gigya.Microdot.Ninject
 {
     public class RegexConfig : IConfigObject
     {
-        public int TimeoutInSeconds { get; set; } = 10;
+        public int TimeoutInSeconds { get; set; } = 1;
 
     }
 

@@ -65,8 +65,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         Task CreatePerson([LogFields] CalculatorServiceTests.Person person);
         Task LogGrainId();
         Task<bool> ValidatePersonLogFields([LogFields] CalculatorServiceTests.Person person);
-
-
         Task RegexTestWithDefaultTimeout(string pattern, string inputValue, int defaultTimeoutInSeconds);
     }
 }
