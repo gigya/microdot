@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        public static int DefaultTimeOutInseconds;
+        public static int DefaultTimeOutInseconds = 1;
         private ILoggingModule LoggingModule { get; }
 
         public CalculatorServiceHost() : this(true)
