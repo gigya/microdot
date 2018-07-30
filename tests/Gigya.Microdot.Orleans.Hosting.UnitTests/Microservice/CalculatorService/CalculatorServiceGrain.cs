@@ -238,20 +238,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return true;
         }
 
-        public async Task<bool> RegexTestPassing2SecondTimeout(string pattern, string inputValue, int timeoutInSeconds)
+        public async Task<bool> RegexTestWithDefaultTimeout(string pattern, string inputValue, int defaultTimeoutInSeconds)
         {
-            var regex = new Regex(pattern, RegexOptions.IgnoreCase, matchTimeout: TimeSpan.FromSeconds(timeoutInSeconds));
+            const int timeout = 3;
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase, matchTimeout: TimeSpan.FromSeconds(timeout));
+            regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(timeout));
             regex.IsMatch(inputValue);
-            return true;
-        }
 
-        public async Task<bool> RegexTestWithDefaultTimeout(string pattern, string inputValue, int timeoutInSeconds)
-        {  
-            var tmp = AppDomain.CurrentDomain.GetData("REGEX_DEFAULT_MATCH_TIMEOUT");
-            var regex = new Regex(pattern, RegexOptions.IgnoreCase);
-            var timeout = regex.MatchTimeout;
-            regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(timeoutInSeconds));
-
+            regex = new Regex(pattern, RegexOptions.IgnoreCase);
+            regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(defaultTimeoutInSeconds));
             Should.Throw<RegexMatchTimeoutException>(() => regex.IsMatch(inputValue));
             return true;
         }
