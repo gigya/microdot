@@ -93,6 +93,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
+            kernel.Get<IRegexConfigLoader>();
         }
 
         /// <summary>
@@ -133,6 +134,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
 
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+
         }
 
 

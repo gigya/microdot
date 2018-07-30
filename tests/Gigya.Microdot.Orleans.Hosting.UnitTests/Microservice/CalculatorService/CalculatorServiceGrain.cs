@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
@@ -236,6 +237,25 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             }
             return true;
         }
+
+        public async Task<bool> RegexTestPassing2SecondTimeout(string pattern, string inputValue, int timeoutInSeconds)
+        {
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase, matchTimeout: TimeSpan.FromSeconds(timeoutInSeconds));
+            regex.IsMatch(inputValue);
+            return true;
+        }
+
+        public async Task<bool> RegexTestWithDefaultTimeout(string pattern, string inputValue, int timeoutInSeconds)
+        {  
+            var tmp = AppDomain.CurrentDomain.GetData("REGEX_DEFAULT_MATCH_TIMEOUT");
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+            var timeout = regex.MatchTimeout;
+            regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(timeoutInSeconds));
+
+            Should.Throw<RegexMatchTimeoutException>(() => regex.IsMatch(inputValue));
+            return true;
+        }
+
 
         private string AddPrifix(string prefix, string param)
         {

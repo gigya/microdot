@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
@@ -380,6 +381,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             await Service.LogGrainId();
         }
+
+        [Test]
+        public async Task RegexTestWithoutTimeout()
+        {
+            await Service.RegexTestPassing2SecondTimeout(@"(a+)+$", "aaaaaaaaaaaaaaaaaaaaaa>", 2);
+        }
+
+        [Test]
+        public async Task RegexTestWithTimeout()
+        {
+            await Service.RegexTestWithDefaultTimeout(@"(a+)+$", "aaaaaaaaaaaaaaaaaaaaaa>", 1);
+        }
+
+
+
+
 
         #region MockData
         public class Person

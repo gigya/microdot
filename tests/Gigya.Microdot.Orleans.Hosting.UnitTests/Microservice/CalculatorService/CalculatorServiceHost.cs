@@ -81,6 +81,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
+
+            var regexConfig = kernel.Get<RegexConfig>();
+            regexConfig.TimeoutInSeconds = 1;
+
         }
 
         public class MockServiceValidator : ServiceValidator
