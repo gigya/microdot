@@ -385,8 +385,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task RegexTestWithTimeout()
         {
-            const  int defualtTimeoutInSeconds = 1;
-            await Service.RegexTestWithDefaultTimeout(@"(a+)+$", "aaaaaaaaaaaaaaaaaaaaaa>", defualtTimeoutInSeconds);
+            await Service.RegexTestWithDefaultTimeout(@"(a+)+$", "aaaaaaaaaaaaaaaaaaaaaa>", CalculatorServiceHost.DefaultTimeOutInseconds = 1);
         }
 
 
