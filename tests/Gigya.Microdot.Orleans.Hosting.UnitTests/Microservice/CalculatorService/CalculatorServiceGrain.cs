@@ -248,6 +248,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             Should.Throw<RegexMatchTimeoutException>(() => regex.IsMatch(inputValue));
             stopwatch.Stop();
 
+            (stopwatch.Elapsed.Seconds + 2<4).ShouldBeTrue();
             (stopwatch.Elapsed.Seconds +2 > defaultTimeoutInSeconds).ShouldBeTrue();
         }
 
