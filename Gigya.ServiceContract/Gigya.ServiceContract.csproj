@@ -44,6 +44,7 @@
     <Compile Include="Attributes\HttpServiceAttribute.cs" />
     <Compile Include="Attributes\LogFieldsAttribute.cs" />
     <Compile Include="Attributes\PublicEndpointAttribute.cs" />
+    <Compile Include="Attributes\ResponseFormat.cs" />
     <Compile Include="Exceptions\Breadcrumb.cs" />
     <Compile Include="Exceptions\EnvironmentException.cs" />
     <Compile Include="Exceptions\ProgrammaticException.cs" />
