@@ -69,11 +69,6 @@ namespace Gigya.Common.Contracts.HttpService
         public bool SkipDatacenterChecks { get; set; } = false;
 
         /// <summary>
-        ///  Specifies the default response format for this method.
-        /// </summary>
-        public ResponseFormat DefaultResponseFormat { get; set; } = ResponseFormat.None;
-
-        /// <summary>
         /// True if this method accepts a single parameter where the request parameters should be mapped to each of its properties,
         /// false if request parameters should be directly mapped to the method's parameters.
         /// </summary>
