@@ -241,15 +241,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public async Task RegexTestWithDefaultTimeout(string pattern, string inputValue, int defaultTimeoutInSeconds)
         {
-            var stopwatch = Stopwatch.StartNew();
-            var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+            var regex = new Regex(pattern);
 
             regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(defaultTimeoutInSeconds));
             Should.Throw<RegexMatchTimeoutException>(() => regex.IsMatch(inputValue));
-            stopwatch.Stop();
-
-            (stopwatch.Elapsed.Seconds + 2<4).ShouldBeTrue();
-            (stopwatch.Elapsed.Seconds +2 > defaultTimeoutInSeconds).ShouldBeTrue();
         }
 
         private string AddPrifix(string prefix, string param)

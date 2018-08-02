@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Ninject
 
         private void PopulateRegexWithDefaultTimeout(int timeoutInSeconds)
         {
-            var type = typeof(Regex); // MyClass is static class with static properties
+            var type = typeof(Regex);
             var p = type.GetField("DefaultMatchTimeout", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
             p.SetValue(null, TimeSpan.FromSeconds(timeoutInSeconds));
         }
