@@ -99,6 +99,7 @@ namespace Gigya.Microdot.Ninject.Host
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
+            kernel.Get<IRegexConfigLoader>();
         }
 
         /// <summary>

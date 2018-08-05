@@ -56,6 +56,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
+        public static int DefaultTimeOutInseconds = 1;
         private ILoggingModule LoggingModule { get; }
 
         public CalculatorServiceHost() : this(true)
@@ -81,6 +82,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
+
+            var regexConfig = kernel.Get<RegexConfig>();
+            regexConfig.TimeoutInSeconds = DefaultTimeOutInseconds;
+
         }
 
         public class MockServiceValidator : ServiceValidator
