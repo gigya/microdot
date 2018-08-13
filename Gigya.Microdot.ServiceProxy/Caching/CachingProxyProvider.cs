@@ -69,11 +69,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod)
+        private MethodCachingPolicyConfig GetConfig(string methodName)
         {
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
+            return config?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default;
+        }
 
-            return config?.CachingPolicy?.Methods?[targetMethod.Name] ?? CachingPolicyConfig.Default;
+
+        protected virtual string GetMethodNameForCachingPolicy(MethodInfo targetMethod, object[] args)
+        {
+            return targetMethod.Name;
         }
 
         protected virtual bool IsMethodCached(MethodInfo targetMethod, object[] args)
@@ -84,11 +89,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig(targetMethod);
-            if (config.Enabled.Value==false)
-                return targetMethod.Invoke(DataSource, args);
+            var config = GetConfig(GetMethodNameForCachingPolicy(targetMethod, args));
+            bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);
 
-            if (IsMethodCached(targetMethod, args))
+            if (useCache)
                 return Memoizer.Memoize(DataSource, targetMethod, args, new CacheItemPolicyEx(config));
             else
                 return targetMethod.Invoke(DataSource, args);
