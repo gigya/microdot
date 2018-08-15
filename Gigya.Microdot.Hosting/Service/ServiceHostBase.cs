@@ -86,18 +86,6 @@ namespace Gigya.Microdot.Hosting.Service
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
             CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
 
-/*
-            if (Arguments.ProcessorAffinity != null)
-            {
-                int processorAffinityMask = 0;
-
-                foreach (var cpuId in Arguments.ProcessorAffinity)
-                    processorAffinityMask |= 1 << cpuId;
-
-                Process.GetCurrentProcess().ProcessorAffinity = new IntPtr(processorAffinityMask);
-            }
-*/
-
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
                 Trace.WriteLine("Service starting as a Windows service...");
