@@ -92,8 +92,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             defaults.Port = endPointDefinition.SiloNetworkingPort;
             defaults.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
-            if (serviceArguments.ProcessorAffinity != null)
-                defaults.MaxActiveThreads = serviceArguments.ProcessorAffinity.Length;
+            defaults.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
 
             // Orleans log redirection
             defaults.TraceToConsole = false;
