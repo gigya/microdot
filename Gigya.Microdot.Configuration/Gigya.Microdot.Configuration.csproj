@@ -54,6 +54,7 @@
     <Compile Include="ConfigurationAssembly.cs" />
     <Compile Include="ConfigurationFilesWatcher.cs" />
     <Compile Include="ConfigurationLocationsParser.cs" />
+    <Compile Include="ConfigurationVerificator.cs" />
     <Compile Include="EnvironmentVariableProvider.cs" />
     <Compile Include="EnvironmentVariablesFileReader.cs" />
     <Compile Include="FileBasedConfigItemsSource.cs" />

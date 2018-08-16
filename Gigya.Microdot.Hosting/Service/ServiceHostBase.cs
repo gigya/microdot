@@ -27,6 +27,7 @@ using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.SharedLogic;
 
 
@@ -53,11 +54,12 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         protected virtual string ServiceName => _serviceName;
 
-        /// <summary>
+		protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
+
+	    /// <summary>
         /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
         /// </summary>
         protected virtual Version InfraVersion => null;
-
 
         protected ServiceHostBase()
         {
@@ -95,6 +97,10 @@ namespace Gigya.Microdot.Hosting.Service
                     Arguments = null; // Ensures OnWindowsServiceStart reloads parameters passed from Windows Service Manager.
 
                 ServiceBase.Run(WindowsService); // This calls OnWindowsServiceStart() on a different thread and blocks until the service stops.
+            }
+            else if (Arguments.ServiceStartupMode == ServiceStartupMode.VerifyConfigurations)
+            {
+	            OnVerifyConfiguration();
             }
             else
             {
@@ -202,7 +208,27 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
 
-        /// <summary>
+	    /// <summary>
+	    /// An extensibility point - this method is called in process of configuration objects verification.
+	    /// </summary>
+	    protected virtual void OnVerifyConfiguration()
+	    {
+		    if (ConfigurationVerificator == null)
+		    {
+			    Environment.ExitCode = 1;
+			    Console.WriteLine("ERROR: The configuration verification is not properly implemented.");
+		    }
+		    else
+		    {
+				var result = ConfigurationVerificator.Verify();
+			    Environment.ExitCode = result.IsSuccess ? 0 : 1;
+			    Console.WriteLine(result.ToString());
+		    }
+
+		    Console.WriteLine("   ***   Shutting down [configuration verification mode]. ***   ");
+	    }
+
+	    /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
         /// </summary>
         public Task WaitForServiceStartedAsync()

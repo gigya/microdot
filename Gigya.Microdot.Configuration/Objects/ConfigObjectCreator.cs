@@ -105,6 +105,7 @@ namespace Gigya.Microdot.Configuration.Objects
             {
                 throw new ConfigurationException("The config object failed validation.", unencrypted: new Tags
                 {
+					// Pay attention, at least the ConfigurationVerificator class relying on these keys to extract details of validation errors during the load.
                     { "ConfigObjectType", ObjectType.FullName },
                     { "ConfigObjectPath", ConfigPath },
                     { "ValidationErrors", ValidationErrors }

@@ -45,6 +45,7 @@
     </Compile>
     <Compile Include="ConfigEventFactory.cs" />
     <Compile Include="ConfigObjectsModule.cs" />
+    <Compile Include="ConfigVerificationModule.cs" />
     <Compile Include="ILoggingModule.cs" />
     <Compile Include="MicrodotConventions.cs" />
     <Compile Include="MicrodotHostingModule.cs" />

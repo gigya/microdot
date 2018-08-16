@@ -111,7 +111,15 @@ namespace Gigya.Microdot.Ninject.Host
 
         }
 
-        /// <summary>
+	    protected override void OnVerifyConfiguration()
+	    {
+		    Kernel = CreateKernel();
+		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
+		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+		    base.OnVerifyConfiguration();
+	    }
+
+	    /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
         /// can be overridden to customize which kernel is used (e.g. MockingKernel);
         /// </summary>

@@ -148,6 +148,7 @@ namespace Gigya.Microdot.SharedLogic
                         ConsoleOutputMode = ConsoleOutputMode.Color;
                         break;
                     case ServiceStartupMode.CommandLineNonInteractive:
+                    case ServiceStartupMode.VerifyConfigurations:
                         ConsoleOutputMode = ConsoleOutputMode.Standard;
                         break;
                     case ServiceStartupMode.WindowsService:
@@ -164,6 +165,7 @@ namespace Gigya.Microdot.SharedLogic
                 {
                     case ServiceStartupMode.CommandLineInteractive:
                     case ServiceStartupMode.CommandLineNonInteractive:
+                    case ServiceStartupMode.VerifyConfigurations:
                         SiloClusterMode = SiloClusterMode.PrimaryNode;
                         break;
                     case ServiceStartupMode.WindowsService:
@@ -226,7 +228,17 @@ namespace Gigya.Microdot.SharedLogic
         /// Specifies that the service will run as a Windows service. This is the default value when compiled with
         /// 'Release'.
         /// </summary>
-        WindowsService
+        WindowsService,
+
+		/// <summary>
+		/// Specifies that the service will run to verify configuration objects only (while performing only minimal required initialization).
+		/// Available IConfigObject implementations (config objects) in service assemblies will be instantiated to pass validations.
+		/// </summary>
+		/// <remarks>
+		/// The validation errors will be reported in console. Config objects will be discovered with <see cref="AssemblyProvider"/>
+		/// considering assemblies black list.
+		/// </remarks>
+	    VerifyConfigurations
     }
 
 
@@ -274,7 +286,8 @@ namespace Gigya.Microdot.SharedLogic
         /// Specifies that this node is the primary node in a local cluster, and should host it's own in-memory
         /// membership and reminder tables. This is the default when running as either
         /// <see cref="ServiceStartupMode.CommandLineInteractive" /> or
-        /// <see cref="ServiceStartupMode.CommandLineNonInteractive" />.
+        /// <see cref="ServiceStartupMode.CommandLineNonInteractive" /> or
+        /// <see cref="ServiceStartupMode.VerifyConfigurations" />.
         /// </summary>
         PrimaryNode,
 

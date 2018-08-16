@@ -22,6 +22,7 @@
 
 
 using System;
+using System.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
@@ -104,6 +105,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
 
         }
+
+	    protected override void OnVerifyConfiguration()
+	    {
+		    Kernel = CreateKernel();
+		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
+		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+		    base.OnVerifyConfiguration();
+	    }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
