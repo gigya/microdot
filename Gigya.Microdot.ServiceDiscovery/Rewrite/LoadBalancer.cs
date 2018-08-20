@@ -135,8 +135,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             lock (_lock)
             {
                 var reachableNodes = _nodesMonitoringState.Where(s => s.IsReachable).Select(s => s.Node).ToArray();
-                _healthStatus = CheckHealth(_nodesMonitoringState, reachableNodes);
                 _reachableNodes = reachableNodes;
+                _healthStatus = GetHealthStatus();
             }
         }
 
@@ -150,33 +150,30 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             try
             {
                 var sourceNodes = await Discovery.GetNodes(DeploymentIdentifier).ConfigureAwait(false);
-                if (sourceNodes == null)
-                {
-                    lock (_lock)
-                    {
-                        _isUndeployed = true;
-                        _healthStatus = HealthCheckResult.Healthy("Service is not deployed");
-                    }
-
-                    StopMonitoring();
-                    return;
-                }
-
                 if (sourceNodes == _lastDiscoveredNodes)
                     return;
 
-                var newNodes = sourceNodes.Select(CreateState).ToArray();
-
                 lock (_lock)
                 {
-                    var oldNodes = _nodesMonitoringState;
-                    var nodesToRemove = oldNodes.Except(newNodes).ToArray();
+                    if (sourceNodes == null)
+                    {
+                        _isUndeployed = true;
+                        StopMonitoringNodes(_nodesMonitoringState);
+                        _nodesMonitoringState = new NodeMonitoringState[0];
+                    }
+                    else
+                    {
+                        var newNodes = sourceNodes.Select(CreateState).ToArray();
 
-                    _nodesMonitoringState = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
-                    StopMonitoringNodes(nodesToRemove);
-                    _lastDiscoveredNodes = sourceNodes;
+                        var oldNodes = _nodesMonitoringState;
+                        var nodesToRemove = oldNodes.Except(newNodes).ToArray();
+
+                        _nodesMonitoringState = oldNodes.Except(nodesToRemove).Union(newNodes).ToArray();
+                        StopMonitoringNodes(nodesToRemove);
+                        _isUndeployed = false;
+                    }
                     SetReachableNodes();
-                    _isUndeployed = false;
+                    _lastDiscoveredNodes = sourceNodes;
                 }
             }
             catch (Exception ex)
@@ -194,21 +191,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        private HealthCheckResult CheckHealth(NodeMonitoringState[] nodesState, Node[] reachableNodes)
-        {            
-            if (nodesState.Length == 0)
+        private HealthCheckResult GetHealthStatus()
+        {
+            if (_isUndeployed)
+                return HealthCheckResult.Healthy("Service is not deployed");
+
+            if (_nodesMonitoringState.Length == 0)
                 return HealthCheckResult.Unhealthy($"No nodes were discovered");
 
-            if (reachableNodes.Length==nodesState.Length)
-                return HealthCheckResult.Healthy($"All {nodesState.Length} nodes are reachable");
+            if (_reachableNodes.Length==_nodesMonitoringState.Length)
+                return HealthCheckResult.Healthy($"All {_nodesMonitoringState.Length} nodes are reachable");
 
-            var unreachableNodes = nodesState.Where(n => !reachableNodes.Contains(n.Node));
+            var unreachableNodes = _nodesMonitoringState.Where(n => !_reachableNodes.Contains(n.Node));
             string message = string.Join("\r\n", unreachableNodes.Select(n=> $"    {n.Node.ToString()} - {n.LastException?.Message}"));
             
-            if (reachableNodes.Length==0)
-                return HealthCheckResult.Unhealthy($"All {nodesState.Length} nodes are unreachable\r\n{message}");
+            if (_reachableNodes.Length==0)
+                return HealthCheckResult.Unhealthy($"All {_nodesMonitoringState.Length} nodes are unreachable\r\n{message}");
             else     
-                return HealthCheckResult.Healthy($"{reachableNodes.Length} nodes out of {nodesState.Length} are reachable. Unreachable nodes:\r\n{message}");
+                return HealthCheckResult.Healthy($"{_reachableNodes.Length} nodes out of {_nodesMonitoringState.Length} are reachable. Unreachable nodes:\r\n{message}");
         }
 
 
@@ -230,13 +230,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 nodeState?.ReportUnreachable(ex);
         }
 
-        private void StopMonitoring()
-        {
-            lock (_lock)
-            {
-                StopMonitoringNodes(_nodesMonitoringState);
-            }
-        }
 
         public void Dispose()
         {
