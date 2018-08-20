@@ -1,12 +1,13 @@
 using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
     public interface INewServiceDiscovery
     {
         /// <summary>
-        /// Retrieves a LoadBalancer which can be used to get a reachable <see cref="IMonitoredNode"/>.
+        /// Retrieves a reachable <see cref="Node"/>, or null if service is not deployed.
         /// </summary>
-        Task<ILoadBalancer> GetLoadBalancer();
+        Task<Node> GetNode();
     }
 }

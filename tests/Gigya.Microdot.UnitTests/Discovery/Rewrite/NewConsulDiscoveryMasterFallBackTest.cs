@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulServiceList = new HashSet<DeploymentIdentifier>();
 
             var discovery = Substitute.For<IDiscovery>();            
-            discovery.TryCreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).Returns(c => GetLoadBalancerMock(c.Arg<DeploymentIdentifier>()));
+            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).Returns(c => GetLoadBalancerMock(c.Arg<DeploymentIdentifier>()));
             kernel.Rebind<IDiscovery>().ToMethod(_ => discovery);
 
             CreateConsulMock(MasterService);
@@ -80,9 +80,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private ILoadBalancer CreateLoadBalancerMock(DeploymentIdentifier di)
         {
-            var mock = Substitute.For<ILoadBalancer>();
-            mock.WasUndeployed().Returns(_ => Task.FromResult(!_consulServiceList.Contains(di)));
-            mock.GetNode().Returns(_ => _nodeResults[di]());
+            var mock = Substitute.For<ILoadBalancer>();            
+            mock.GetNode().Returns(_ => _consulServiceList.Contains(di) ? _nodeResults[di]() : null);
             return mock;
         }
 
@@ -115,8 +114,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
-            var nextHost = (await GetServiceDiscovery().GetLoadBalancer()).GetNode();
-            (await nextHost).Hostname.ShouldBe(HostnameFor(MasterService));
+            var nextHost = await GetServiceDiscovery().GetNode();
+            nextHost.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
         [Test]
@@ -128,7 +127,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
 
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetLoadBalancer());
+            Should.ThrowAsync<EnvironmentException>(()=>GetServiceDiscovery().GetNode());
         }
 
         [Test]
@@ -143,14 +142,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = (await discovey.GetLoadBalancer()).GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(OriginatingService));
+            var node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(OriginatingService));
 
             SetMockToReturnServiceNotDefined(OriginatingService);
 
 
-            node = (await discovey.GetLoadBalancer()).GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(MasterService));
+            node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
         [Test]
@@ -165,13 +164,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = (await discovey.GetLoadBalancer()).GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(MasterService));
+            var node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(MasterService));
 
             SetMockToReturnHost(OriginatingService);
 
-            node = (await discovey.GetLoadBalancer()).GetNode();
-            node.Result.Hostname.ShouldBe(HostnameFor(OriginatingService));
+            node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
         [Test]
@@ -180,7 +179,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            Should.Throw<EnvironmentException>(async () => (await GetServiceDiscovery().GetLoadBalancer()).GetNode());
+            Should.Throw<EnvironmentException>(async () => await GetServiceDiscovery().GetNode());
         }
 
         [Test]
@@ -190,8 +189,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var nextHost = (await GetServiceDiscovery().GetLoadBalancer()).GetNode();
-            (await nextHost).Hostname.ShouldBe(HostnameFor(OriginatingService));
+            var nextHost = await GetServiceDiscovery().GetNode();
+            nextHost.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
         [Test]
@@ -205,7 +204,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             SetMockToReturnServiceNotDefined(MasterService);
 
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetLoadBalancer());
+            Should.ThrowAsync<EnvironmentException>(() => GetServiceDiscovery().GetNode());
         }
 
         private void SetMockToReturnHost(DeploymentIdentifier di)

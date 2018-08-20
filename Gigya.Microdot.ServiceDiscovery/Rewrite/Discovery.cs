@@ -18,7 +18,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     internal sealed class Discovery : IDiscovery
     {
 
-        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> CreateLoadBalancer { get; }
+        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> _createLoadBalancer { get; }
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetConfig { get; }
         private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }        
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<DeploymentIdentifier, ConfigNodeSource> createConfigNodeSource)
         {
             GetConfig = getConfig;
-            CreateLoadBalancer = createLoadBalancer;
+            _createLoadBalancer = createLoadBalancer;
             DateTime = dateTime;
             CreateLocalNodeSource = createLocalNodeSource;
             CreateConfigNodeSource = createConfigNodeSource;
@@ -57,13 +57,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
         /// <inheritdoc />
-        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
+        public ILoadBalancer CreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
         {
-            var nodes = await GetNodes(deploymentIdentifier);
-            if (nodes != null)
-                return CreateLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRoutingStrategy);
-            else
-                return null;
+            return _createLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRoutingStrategy);
         }
 
 

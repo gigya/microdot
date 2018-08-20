@@ -139,36 +139,36 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public async Task TryCreateLoadBalancer_GetNodesFromConsulNodeSource()
+        public async Task CreateLoadBalancer_GetNodesFromConsulNodeSource()
         {
             ConfigureServiceSource(Consul);
-            var loadBalancer = await TryCreateLoadBalancer();
+            var loadBalancer = CreateLoadBalancer();
             (await loadBalancer.GetNode()).ShouldBe(_consulNode);            
         }
 
         [Test]
-        public async Task TryCreateLoadBalancer_GetNodesFromConfigNodeSource()
+        public async Task CreateLoadBalancer_GetNodesFromConfigNodeSource()
         {
             ConfigureServiceSource(Config);
-            await TryCreateLoadBalancer();
+            await CreateLoadBalancer().GetNode();
             _createdNodeSources.Single().ShouldBe(typeof(ConfigNodeSource));
         }
 
         [Test]
-        public async Task TryCreateLoadBalancer_GetNodesFromLocalNodeSource()
+        public async Task CreateLoadBalancer_GetNodesFromLocalNodeSource()
         {
             ConfigureServiceSource(Local);
-            await TryCreateLoadBalancer();
+            await CreateLoadBalancer().GetNode();
             _createdNodeSources.Single().ShouldBe(typeof(LocalNodeSource));
         }
 
         [Test]
-        public async Task TryCreateLoadBalancer_ReturnNullIfServiceUndeployed()
+        public async Task CreateLoadBalancer_ReturnNullIfServiceUndeployed()
         {
             ConfigureServiceSource(Consul);
             _consulSourceWasUndeployed = true;
-            var loadBalancer = await TryCreateLoadBalancer();
-            loadBalancer.ShouldBeNull();
+            var loadBalancer = CreateLoadBalancer();
+            (await loadBalancer.GetNode()).ShouldBeNull();
         }
 
         [Test]
@@ -282,9 +282,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _waitForSlowSourceCreation.SetResult(true);
         }
 
-        private Task<ILoadBalancer> TryCreateLoadBalancer()
+        private ILoadBalancer CreateLoadBalancer()
         {
-            return _discovery.TryCreateLoadBalancer(_deploymentIdentifier, null, TrafficRoutingStrategy.RandomByRequestID);
+            return _discovery.CreateLoadBalancer(_deploymentIdentifier, null, TrafficRoutingStrategy.RandomByRequestID);
         }
 
         private async Task<Node[]> GetNodes()

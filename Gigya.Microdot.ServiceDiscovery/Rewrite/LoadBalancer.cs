@@ -57,9 +57,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
 
         int _disposed = 0;
-        private bool _isMonitoring = true;
         private readonly object _lock = new object();
-        private bool _wasUndeployed;
+        private bool _isUndeployed;
 
 
 
@@ -88,6 +87,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public async Task<Node> GetNode()
         {
             await LoadNodesFromSource().ConfigureAwait(false);
+            if (_isUndeployed)
+                return null;
+
             var nodes = _nodesMonitoringState;
             if (!nodes.Any())
                 throw new ServiceUnreachableException("No nodes were discovered for service", 
@@ -103,8 +105,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     nodes.FirstOrDefault(n=>n.LastException!=null)?.LastException,
                     unencrypted: new Tags
                     {
-                        {"deploymentIdentifier", DeploymentIdentifier.ToString()},                        
-                        {"nodes", string.Join(",", nodes.Select(n=>n.Node.ToString()))}                    
+                        {"deploymentIdentifier", DeploymentIdentifier.ToString()},
+                        {"nodes", string.Join(",", nodes.Select(n=>n.Node.ToString()))}
                     });
                         
             var index = GetIndexByTrafficRoutingStrategy();            
@@ -128,21 +130,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
         }
 
-
-
-        public async Task<bool> WasUndeployed()
-        {
-            await LoadNodesFromSource().ConfigureAwait(false);
-            return _wasUndeployed;
-        }
-
-
-
         private void SetReachableNodes()
         {
-            if (!_isMonitoring)
-                return;
-
             lock (_lock)
             {
                 var reachableNodes = _nodesMonitoringState.Where(s => s.IsReachable).Select(s => s.Node).ToArray();
@@ -163,7 +152,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 var sourceNodes = await Discovery.GetNodes(DeploymentIdentifier).ConfigureAwait(false);
                 if (sourceNodes == null)
                 {
-                    _wasUndeployed = true;
+                    lock (_lock)
+                    {
+                        _isUndeployed = true;
+                        _healthStatus = HealthCheckResult.Healthy("Service is not deployed");
+                    }
+
                     StopMonitoring();
                     return;
                 }
@@ -182,6 +176,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     StopMonitoringNodes(nodesToRemove);
                     _lastDiscoveredNodes = sourceNodes;
                     SetReachableNodes();
+                    _isUndeployed = false;
                 }
             }
             catch (Exception ex)
@@ -239,7 +234,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             lock (_lock)
             {
-                _isMonitoring = false;
                 StopMonitoringNodes(_nodesMonitoringState);
             }
         }
