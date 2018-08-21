@@ -28,7 +28,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Fakes
 {
-    public class OverridableConfigItems :IConfigItemsSource
+    public class OverridableConfigItems : IConfigItemsSource
     {
         private Dictionary<string, string> Data { get; }
 
@@ -39,7 +39,7 @@ namespace Gigya.Microdot.Fakes
                                         Dictionary<string, string> data)
         {
             FileBasedConfigItemsSource = fileBasedConfigItemsSource;
-            Data = data;           
+            Data = data;
         }
 
 
@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Fakes
             ConfigItemsCollection configItemCollection = null;
 
             if (FileBasedConfigItemsSource != null)
-            configItemCollection = await FileBasedConfigItemsSource.GetConfiguration().ConfigureAwait(false);
+                configItemCollection = await FileBasedConfigItemsSource.GetConfiguration().ConfigureAwait(false);
             return new MockConfigItemsCollection(GetConfigItemsOverrides, configItemCollection);
         }
 
@@ -62,11 +62,12 @@ namespace Gigya.Microdot.Fakes
         private Dictionary<string, ConfigItem> GetConfigItemsOverrides()
         {
             var items = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
-            foreach(var item in Data)
+            foreach (var item in Data)
             {
                 items.Add(item.Key, new ConfigItem
                 {
-                    Key = item.Key, Value = item.Value,
+                    Key = item.Key,
+                    Value = item.Value,
                     Overrides = new List<ConfigItemInfo>
                     {
                         new ConfigItemInfo {

@@ -44,7 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInitialize.cs" />
-    <Compile Include="LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="GrainAgeLimitServiceTests.cs" />
+    <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />
+    <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimit2MinuteService.cs" />
+    <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimitTestedService2.cs" />
+    <Compile Include="Microservice\CalculatorService\AgeLimitServiceHost.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceGrain.cs" />
     <Compile Include="Microservice\CalculatorService\CalculatorServiceHost.cs" />
     <Compile Include="CalculatorServiceTests.cs" />
@@ -63,6 +69,7 @@
     <Compile Include="SchemaEndpointTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpyEventPublisher.cs" />
+    <Compile Include="Validation\SensitivityAttributesValidatorTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -80,6 +87,10 @@
   </Target>
   -->
   <ItemGroup>
+    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
+      <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
+      <Name>Gigya.Microdot.Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
@@ -230,6 +241,17 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
+        <Reference Include="OrleansProviders">
+          <HintPath>..\..\packages\Microsoft.Orleans.OrleansProviders\lib\net451\OrleansProviders.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
         <Reference Include="Newtonsoft.Json">
           <HintPath>..\..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
           <Private>True</Private>
@@ -307,7 +329,9 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="System.ComponentModel.Composition">
+        <Reference Include="System.Runtime.CompilerServices.Unsafe">
+          <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
