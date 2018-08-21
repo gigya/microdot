@@ -50,7 +50,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private DeploymentIdentifier DeploymentIdentifier { get; }
         private Exception LastException { get; set; }
 
-        private Node[] _lastDiscoveredNodes;
+        private Node[] _lastDiscoveredNodes = new Node[0];
         private Node[] _reachableNodes;
         private NodeMonitoringState[] _nodesMonitoringState = new NodeMonitoringState[0];
         private readonly ComponentHealthMonitor _healthMonitor;
