@@ -42,6 +42,7 @@ namespace Gigya.Microdot.Ninject
     /// </summary>
     public class MicrodotModule : NinjectModule
     {
+    
         private readonly Type[] NonSingletonBaseTypes =
         {
             typeof(ConsulDiscoverySource),
@@ -51,6 +52,9 @@ namespace Gigya.Microdot.Ninject
 
         public override void Load()
         {
+            //Need to be initialized before using any regex!
+            new RegexTimeoutInitializer().Init();
+
             Kernel
                 .Bind(typeof(ConcurrentDictionary<,>))
                 .To(typeof(DisposableConcurrentDictionary<,>))
