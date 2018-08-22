@@ -51,7 +51,7 @@ namespace Gigya.Microdot.Ninject
 
         public override void Load()
         {
-            Kernel.Bind<IRegexTimeoutInitializer,RegexTimeoutInitializer>().To<RegexTimeoutInitializer>().InSingletonScope();
+            Kernel.Bind<RegexTimeoutInitializer>().To<RegexTimeoutInitializer>().InSingletonScope();
 
             Kernel
                 .Bind(typeof(ConcurrentDictionary<,>))
