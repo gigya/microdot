@@ -126,8 +126,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void PreConfigure(IKernel kernel)
         {
             kernel.Load<MicrodotModule>();
-            //Need to be initialized before using any regex!
-            kernel.Get<RegexTimeoutInitializer>().Init();
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);

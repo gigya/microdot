@@ -11,17 +11,17 @@ namespace Gigya.Microdot.Ninject
     {
         public void Init()
         {
-            int regexDefaultMachTimeOutSeconds = 10;
+            int regexDefaultMachTimeOutMs =(int) TimeSpan.FromSeconds(10).TotalMilliseconds;
             try
             {
-                regexDefaultMachTimeOutSeconds = int.Parse(ConfigurationManager.AppSettings["regexDefaultMachTimeOut"]);
+                regexDefaultMachTimeOutMs = int.Parse(ConfigurationManager.AppSettings["regexDefaultMachTimeOutMs"]);
             }
             catch (Exception e)
             {
             }
 
-            AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT",TimeSpan.FromSeconds(regexDefaultMachTimeOutSeconds));
-            Console.WriteLine($"REGEX_DEFAULT_MATCH_TIMEOUT is set to {regexDefaultMachTimeOutSeconds} Seconds");
+            AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT",TimeSpan.FromMilliseconds(regexDefaultMachTimeOutMs));
+            Console.WriteLine($"REGEX_DEFAULT_MATCH_TIMEOUT is set to {regexDefaultMachTimeOutMs} ms");
         }
     }
 }
