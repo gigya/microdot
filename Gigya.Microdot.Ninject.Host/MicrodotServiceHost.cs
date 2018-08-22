@@ -22,7 +22,6 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
@@ -99,7 +98,6 @@ namespace Gigya.Microdot.Ninject.Host
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
-            kernel.Get<IRegexConfigLoader>();
         }
 
         /// <summary>
@@ -134,9 +132,12 @@ namespace Gigya.Microdot.Ninject.Host
         protected virtual void PreConfigure(IKernel kernel)
         {
             kernel.Load<MicrodotModule>();
+            //Need to be initialized before using any regex!
+            kernel.Get<IRegexTimeoutInitializer>().Init();
             kernel.Load<MicrodotHostingModule>();
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+
         }
 
         /// <summary>

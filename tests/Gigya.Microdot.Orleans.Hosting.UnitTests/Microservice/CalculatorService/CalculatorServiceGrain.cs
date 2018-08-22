@@ -239,12 +239,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return true;
         }
 
-        public async Task RegexTestWithDefaultTimeout(string pattern, string inputValue, int defaultTimeoutInSeconds)
+        public async Task RegexTestWithDefaultTimeoutDefault(int defaultTimeoutInSeconds)
         {
-            var regex = new Regex(pattern);
-
+            var regex = new Regex("a");
             regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(defaultTimeoutInSeconds));
-            Should.Throw<RegexMatchTimeoutException>(() => regex.IsMatch(inputValue));
         }
 
         private string AddPrifix(string prefix, string param)
