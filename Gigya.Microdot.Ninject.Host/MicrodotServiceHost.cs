@@ -136,6 +136,7 @@ namespace Gigya.Microdot.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            Kernel.Load<ConfigObjectsModule>();
         }
 
         /// <summary>

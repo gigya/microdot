@@ -21,8 +21,14 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             var testingKernel = new TestingKernel<TraceLog>();
             try
             {
-               serviceTester = testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(1111, TimeSpan.FromSeconds(10));
-              (await serviceTester.GetServiceProxy<ICalculatorService>().Add(1, 2)).ShouldBe(3);
+                serviceTester =
+                    testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(1111,
+                        TimeSpan.FromSeconds(10));
+                (await serviceTester.GetServiceProxy<ICalculatorService>().Add(1, 2)).ShouldBe(3);
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
             finally
             {
