@@ -23,12 +23,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Castle.Core.Logging;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
@@ -49,6 +51,9 @@ namespace Gigya.Microdot.Testing.Shared
 
 
             this.Load<MicrodotModule>();
+            new NLogModule().Bind(this.Rebind<ILog>(), this.Rebind<IEventPublisher>());
+            this.Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
+            this.Load<ConfigObjectsModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();

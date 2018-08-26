@@ -7,15 +7,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using CalculatorService.Interface;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Ninject;
 using Ninject.Activation;
+using Ninject.Extensions.Factory;
 
 namespace CalculatorService.Client
 {
@@ -36,11 +40,15 @@ namespace CalculatorService.Client
                 var kernel = new StandardKernel();
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
+                kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
+                kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
+                kernel.Bind<IConfigFuncFactory>().ToFactory();
+                kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();
 
-                AssemblyProvider aProvider = new AssemblyProvider(new ApplicationDirectoryProvider(new BaseCommonConfig()), new BaseCommonConfig(), new NLogLogger(typeof(ConfigObjectWrapper<>)));
+                AssemblyProvider aProvider = new AssemblyProvider(new ApplicationDirectoryProvider(new BaseCommonConfig()), new BaseCommonConfig(), new NLogLogger(typeof(ConfigObjectCreator)));
                 foreach (Assembly assembly in aProvider.GetAssemblies())
                 {
-                    foreach (Type configType in assembly.GetTypes().Where(t => (!t.IsGenericType || t.GetGenericTypeDefinition() != typeof(ConfigObjectWrapper<>)) && 
+                    foreach (Type configType in assembly.GetTypes().Where(t => !t.IsGenericType && 
                                                                                t.IsClass &&
                                                                                t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject))))
                     {
@@ -57,8 +65,10 @@ namespace CalculatorService.Client
                     }
                 }
 
+                kernel.Get<Func<DiscoveryConfig>>()();
+                kernel.Get<Func<DiscoveryConfig>>()();
                 ConfigCreatorTest configCreator = kernel.Get<ConfigCreatorTest>();
-                IConfigObject config = configCreator.GetConfig();
+                IConfigObject config = configCreator.GetDiscoveryConfig();
                 ISourceBlock<CacheConfig> sourceBlock = configCreator.GetISourceBlock();
                 Console.WriteLine("Sleeping");
                 Thread.Sleep(5000);

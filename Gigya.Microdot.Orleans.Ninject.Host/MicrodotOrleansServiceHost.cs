@@ -133,6 +133,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
 
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+            Kernel.Load<ConfigObjectsModule>();
         }
 
 
