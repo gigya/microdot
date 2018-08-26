@@ -51,9 +51,6 @@ namespace Gigya.Microdot.Testing.Shared
 
 
             this.Load<MicrodotModule>();
-            new NLogModule().Bind(this.Rebind<ILog>(), this.Rebind<IEventPublisher>());
-            this.Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
-            this.Load<ConfigObjectsModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();
@@ -74,9 +71,10 @@ namespace Gigya.Microdot.Testing.Shared
                 .InSingletonScope()
                 .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
 
-
-
             Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
+
+            this.Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
+            this.Load<ConfigObjectsModule>();
         }
 
         public OverridableConfigItems GetConfigOverride()
