@@ -73,6 +73,8 @@ namespace Gigya.Microdot.Ninject
 
                     dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, coc, nameof(ConfigObjectCreator.GetChangeNotificationsFunc));
                     kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
+
+                    kernel.Rebind(configType).ToMethod(i => coc.GetLatest());
                 }
             }
         }

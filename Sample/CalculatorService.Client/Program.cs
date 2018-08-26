@@ -62,14 +62,22 @@ namespace CalculatorService.Client
 
                         dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, coc, nameof(ConfigObjectCreator.GetChangeNotificationsFunc));
                         kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
+
+                        kernel.Rebind(configType).ToMethod(i => coc.GetLatest());
                     }
                 }
 
                 kernel.Get<Func<DiscoveryConfig>>()();
                 kernel.Get<Func<DiscoveryConfig>>()();
+                DiscoveryConfig dConfig = kernel.Get<DiscoveryConfig>();
                 ConfigCreatorTest configCreator = kernel.Get<ConfigCreatorTest>();
                 IConfigObject config = configCreator.GetDiscoveryConfig();
-                ISourceBlock<CacheConfig> sourceBlock = configCreator.GetISourceBlock();
+                DiscoveryConfig dConfig2 = configCreator.GetDiscConfig();
+                bool dConfigsEqual = ReferenceEquals(dConfig, dConfig2);
+                ISourceBlock<CacheConfig> sourceBlockByFunc = configCreator.GetISourceBlockByFunc();
+                ISourceBlock<MyConfig> sourceBlockDirect = configCreator.GetISourceBlockDirect();
+                ISourceBlock<MyConfig> sourceBlockByFactory = configCreator.GetISourceBlockByFactory();
+                bool sourceBlocksAreEqual = ReferenceEquals(sourceBlockDirect, sourceBlockByFactory);
                 Console.WriteLine("Sleeping");
                 Thread.Sleep(5000);
                 Console.WriteLine("Starting test...");
