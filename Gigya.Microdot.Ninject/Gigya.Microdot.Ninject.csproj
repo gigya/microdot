@@ -52,6 +52,7 @@
     <Compile Include="MicrodotModule.cs" />
     <Compile Include="NinjectExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegexTimeoutInitializer.cs" />
     <Compile Include="ServiceProxyModule.cs" />
   </ItemGroup>
   <ItemGroup>

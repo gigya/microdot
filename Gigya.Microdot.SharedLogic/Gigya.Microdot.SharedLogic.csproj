@@ -88,6 +88,7 @@
     <Compile Include="SystemWrappers\FileSystem.cs" />
     <Compile Include="SystemWrappers\EnvironmentInstance.cs" />
     <Compile Include="Security\WindowsStoreCertificateLocator.cs" />
+    <Compile Include="Utils\System.Diagnostics.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references">
