@@ -40,32 +40,6 @@ namespace CalculatorService.Client
                 var kernel = new StandardKernel();
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
-                kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
-                kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
-                kernel.Bind<IConfigFuncFactory>().ToFactory();
-                kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();
-
-                AssemblyProvider aProvider = new AssemblyProvider(new ApplicationDirectoryProvider(new BaseCommonConfig()), new BaseCommonConfig(), new NLogLogger(typeof(ConfigObjectCreator)));
-                foreach (Assembly assembly in aProvider.GetAssemblies())
-                {
-                    foreach (Type configType in assembly.GetTypes().Where(t => !t.IsGenericType && 
-                                                                               t.IsClass &&
-                                                                               t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject))))
-                    {
-                        ConfigObjectCreatorWrapper cocWrapper = new ConfigObjectCreatorWrapper(kernel, configType);
-                        
-                        dynamic getLataestLambda = GetGenericFuncCompiledLambda(configType, cocWrapper, nameof(ConfigObjectCreatorWrapper.GetTypedLatestFunc));
-                        kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
-
-                        Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
-                        kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
-
-                        dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, cocWrapper, nameof(ConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
-                        kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
-
-                        kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
-                    }
-                }
 
                 kernel.Get<Func<DiscoveryConfig>>()();
                 kernel.Get<Func<DiscoveryConfig>>()();

@@ -27,10 +27,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks.Dataflow;
+using Castle.Core.Logging;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Activation;
@@ -47,10 +49,11 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             Kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
-            //Kernel.Components.Add<IBindingResolver, ConfigObjectsBindingResolver>();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
             Kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();
+
+            Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
 
             SearchAssembliesAndRebindIConfig(Kernel);
         }
@@ -92,121 +95,4 @@ namespace Gigya.Microdot.Ninject
             return lambda;
         }
     }
-
-    //public sealed class ConfigObjectsBindingResolver : IBindingResolver
-    //{
-    //    private ConcurrentDictionary<Type, ConfigObjectProvider> ProviderPerType { get; } = new ConcurrentDictionary<Type, ConfigObjectProvider>();
-
-    //    public INinjectSettings Settings { get; set; }
-
-    //    public IEnumerable<IBinding> Resolve(Multimap<Type, IBinding> bindings, Type service)
-    //    {
-    //        Type configObjectType;
-    //        if (ConfigObjectProvider.IsConfigObject(service))
-    //            configObjectType = service;
-    //        else if (ConfigObjectProvider.IsSourceBlock(service) || ConfigObjectProvider.IsConfigObjectWrapper(service))
-    //            configObjectType = service.GetGenericArguments().Single();
-    //        else
-    //            return Enumerable.Empty<IBinding>();         
-
-    //        var provider = ProviderPerType.GetOrAdd(configObjectType, x => new ConfigObjectProvider());
-
-    //        return new[]
-    //        {
-    //            new Binding(service)
-    //            {
-    //                ProviderCallback = ctx => provider,
-    //                ScopeCallback = StandardScopeCallbacks.Transient
-    //            }
-    //        };
-    //    }
-
-    //    public void Dispose() {  }
-    //}
-
-
-    //public class ConfigObjectProvider : IProvider
-    //{        
-    //    public Type Type => typeof(IConfigObject);
-    //    private ConfigObjectCreator Creator { get; set; }
-
-    //    private readonly object _creatorLock;
-
-    //    private Type _sourceBlockType;
-
-    //    public ConfigObjectProvider()
-    //    {
-    //        _creatorLock = new object();
-    //    }
-
-
-    //    public object Create(IContext context)
-    //    {
-    //        var service = context.Request.Service;
-    //        if (service == _sourceBlockType)
-    //            return GetSourceBlock(context);
-
-    //        if (_sourceBlockType==null && IsSourceBlock(service))
-    //        {
-    //            _sourceBlockType = service;
-    //            return GetSourceBlock(context);
-    //        }
-
-    //        if (IsConfigObjectWrapper(service))
-    //        {
-    //            IConfigObjectWrapper wr = Activator.CreateInstance(service) as IConfigObjectWrapper;
-    //            wr.LatestConfig = GetCreator(context).GetLatest;
-
-    //            return wr;
-    //        }
-
-    //        return GetCreator(context).GetLatest();
-    //    }
-
-    //    private object GetSourceBlock(IContext context)
-    //    {
-    //        return GetCreator(context).ChangeNotifications;
-    //    }
-
-    //    private ConfigObjectCreator GetCreator(IContext context)
-    //    {
-    //        if (Creator == null)
-    //        {
-    //            var getCreator = context.Kernel.Get<Func<Type, ConfigObjectCreator>>();
-    //            var service = context.Request.Service;
-    //            var uninitializedCreator = getCreator(IsSourceBlock(service) || IsConfigObjectWrapper(service) ? service.GetGenericArguments().Single() : service);
-
-    //            lock (_creatorLock)
-    //            {
-    //                if (Creator == null)
-    //                {
-    //                    uninitializedCreator.Init();
-    //                    Creator = uninitializedCreator;
-    //                }
-    //            }
-    //        }
-    //        return Creator;
-    //    }
-
-    //    internal static bool IsConfigObject(Type service)
-    //    {
-    //        return service.IsClass && service.IsAbstract == false && typeof(IConfigObject).IsAssignableFrom(service);
-    //    }
-
-    //    internal static bool IsSourceBlock(Type service)
-    //    {
-    //        return 
-    //            service.IsGenericType && 
-    //            service.GetGenericTypeDefinition() == typeof(ISourceBlock<>) &&
-    //            IsConfigObject(service.GetGenericArguments().Single());
-    //    }
-
-    //    internal static bool IsConfigObjectWrapper(Type service)
-    //    {
-    //        return
-    //            service.IsGenericType &&
-    //            service.GetGenericTypeDefinition() == typeof(ConfigObjectWrapper<>) &&
-    //            IsConfigObject(service.GetGenericArguments().Single());
-    //    }
-    //}
 }
