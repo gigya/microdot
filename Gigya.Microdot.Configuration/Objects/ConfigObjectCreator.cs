@@ -114,8 +114,7 @@ namespace Gigya.Microdot.Configuration.Objects
             return Latest;
         }
 
-        public Func<T> GetTypedLatestFunc<T>() => () => (T) GetLatest();
-        public Func<T> GetChangeNotificationsFunc<T>() => () => (T) ChangeNotifications;
+        
 
         private string GetConfigPath()
         {

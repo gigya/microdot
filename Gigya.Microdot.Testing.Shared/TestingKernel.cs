@@ -60,7 +60,9 @@ namespace Gigya.Microdot.Testing.Shared
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
 
-            additionalBindings?.Invoke(this);
+            this.Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
+
+            
 
             Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
                 .To<ManualConfigurationEvents>()
@@ -72,9 +74,10 @@ namespace Gigya.Microdot.Testing.Shared
                 .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
 
             Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
-
-            this.Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
+           
             this.Load<ConfigObjectsModule>();
+
+            additionalBindings?.Invoke(this);
         }
 
         public OverridableConfigItems GetConfigOverride()

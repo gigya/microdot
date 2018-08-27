@@ -52,18 +52,18 @@ namespace CalculatorService.Client
                                                                                t.IsClass &&
                                                                                t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject))))
                     {
-                        ConfigObjectCreator coc = GetCreator(kernel, configType);
+                        ConfigObjectCreatorWrapper cocWrapper = new ConfigObjectCreatorWrapper(kernel, configType);
                         
-                        dynamic getLataestLambda = GetGenericFuncCompiledLambda(configType, coc, nameof(ConfigObjectCreator.GetTypedLatestFunc));
+                        dynamic getLataestLambda = GetGenericFuncCompiledLambda(configType, cocWrapper, nameof(ConfigObjectCreatorWrapper.GetTypedLatestFunc));
                         kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
 
                         Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
-                        kernel.Rebind(sourceBlockType).ToConstant(coc.ChangeNotifications);
+                        kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
 
-                        dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, coc, nameof(ConfigObjectCreator.GetChangeNotificationsFunc));
+                        dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, cocWrapper, nameof(ConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
                         kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
 
-                        kernel.Rebind(configType).ToMethod(i => coc.GetLatest());
+                        kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
                     }
                 }
 
@@ -96,10 +96,10 @@ namespace CalculatorService.Client
             }
         }
 
-        private static dynamic GetGenericFuncCompiledLambda(Type configType, ConfigObjectCreator coc, string functionName)
+        private static dynamic GetGenericFuncCompiledLambda(Type configType, ConfigObjectCreatorWrapper cocWrapper, string functionName)
         {
-            MethodInfo func = typeof(ConfigObjectCreator).GetMethod(functionName).MakeGenericMethod(configType);
-            Expression instance = Expression.Constant(coc);
+            MethodInfo func = typeof(ConfigObjectCreatorWrapper).GetMethod(functionName).MakeGenericMethod(configType);
+            Expression instance = Expression.Constant(cocWrapper);
             Expression callMethod = Expression.Call(instance, func);
             Type delegateType = typeof(Func<>).MakeGenericType(configType);
             Type parentExpressionType = typeof(Func<>).MakeGenericType(delegateType);
