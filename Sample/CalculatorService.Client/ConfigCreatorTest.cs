@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using CalculatorService.Interface;
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 
-namespace CalculatorService
+namespace CalculatorService.Client
 {
     public class ConfigCreatorTest
     {

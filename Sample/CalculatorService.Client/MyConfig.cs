@@ -1,6 +1,6 @@
 ﻿using Gigya.Microdot.Interfaces.Configuration;
 
-namespace CalculatorService
+namespace CalculatorService.Client
 {
     public class MyConfig : IConfigObject
     {
