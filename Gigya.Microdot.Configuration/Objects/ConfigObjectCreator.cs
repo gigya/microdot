@@ -38,7 +38,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration.Objects
 {
-    public class ConfigObjectCreator
+    public class ConfigObjectCreator : IConfigObjectCreator
     {
 
         /// <summary>

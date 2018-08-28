@@ -52,6 +52,7 @@
     <Compile Include="Caching\IThingFrobber.cs" />
     <Compile Include="Configuration\BusSettings.cs" />
     <Compile Include="Configuration\EnviromentVariablesFileReaderTests.cs" />
+    <Compile Include="Configuration\IConfigObjectRebindTest.cs" />
     <Compile Include="Configuration\MasterConfigParserTests.cs" />
     <Compile Include="Configuration\TypedConfigTest.cs" />
     <Compile Include="Discovery\ConsulClientMock.cs" />

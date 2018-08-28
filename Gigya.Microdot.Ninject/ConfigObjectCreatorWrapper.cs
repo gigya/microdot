@@ -1,23 +1,16 @@
 ﻿using System;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Ninject;
+#pragma warning disable 1591
 
 namespace Gigya.Microdot.Ninject
 {
-    public class ConfigObjectCreatorWrapper
+    public class ConfigObjectCreatorWrapper : IConfigObjectCreatorWrapper
     {
-        private ConfigObjectCreator _configObjectCreator;
-        private Type _configType;
-        private IKernel _kernel;
-
-        public object ChangeNotifications
-        {
-            get
-            {
-                EnsureCreator();
-                return _configObjectCreator.ChangeNotifications;
-            }
-        }
+        private IConfigObjectCreator _configObjectCreator;
+        private readonly Type _configType;
+        private readonly IKernel _kernel;
 
         public ConfigObjectCreatorWrapper(IKernel kernel, Type type)
         {
@@ -31,23 +24,24 @@ namespace Gigya.Microdot.Ninject
             return _configObjectCreator.GetLatest();
         }
 
-        public Func<T> GetTypedLatestFunc<T>() => () => (T)GetLatest();
-        public Func<T> GetChangeNotificationsFunc<T>() => () => (T)ChangeNotifications;
+        public Func<T> GetTypedLatestFunc<T>() where T : class => () => GetLatest() as T;
+        public Func<T> GetChangeNotificationsFunc<T>() where T : class => () => GetChangeNotifications() as T;
 
         public object GetChangeNotifications()
         {
-            return ChangeNotifications;
+            EnsureCreator();
+            return _configObjectCreator.ChangeNotifications;
         }
 
         private void EnsureCreator()
         {
             if (_configObjectCreator == null)
             {
+                var getCreator = _kernel.Get<Func<Type, IConfigObjectCreator>>();
                 lock (this)
                 {
                     if (_configObjectCreator == null)
                     {
-                        var getCreator = _kernel.Get<Func<Type, ConfigObjectCreator>>();
                         var uninitializedCreator = getCreator(_configType);
                         uninitializedCreator.Init();
 

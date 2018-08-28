@@ -39,6 +39,7 @@ using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Infrastructure;
 using Ninject.Modules;
+using Ninject.Parameters;
 using Ninject.Planning.Bindings;
 using Ninject.Planning.Bindings.Resolvers;
 
@@ -48,7 +49,8 @@ namespace Gigya.Microdot.Ninject
     {
         public override void Load()
         {
-            Kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
+            Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
+            Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
             Kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();
@@ -60,21 +62,22 @@ namespace Gigya.Microdot.Ninject
 
         private void SearchAssembliesAndRebindIConfig(IKernel kernel)
         {
+            //Add validator which constrants creation of sctrucs as config objects
             IAssemblyProvider aProvider = kernel.Get<IAssemblyProvider>();
             foreach (Assembly assembly in aProvider.GetAssemblies())
             {
-                foreach (Type configType in assembly.GetTypes().Where(t => !t.IsGenericType && t.IsClass &&
+                foreach (Type configType in assembly.GetTypes().Where(t => !t.IsGenericType && t.IsClass && !t.IsAbstract &&
                                                                            t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject))))
                 {
-                    ConfigObjectCreatorWrapper cocWrapper = new ConfigObjectCreatorWrapper(kernel, configType);
+                    IConfigObjectCreatorWrapper cocWrapper = kernel.Get<IConfigObjectCreatorWrapper>(new ConstructorArgument("type", configType));
 
-                    dynamic getLataestLambda = GetGenericFuncCompiledLambda(configType, cocWrapper, nameof(ConfigObjectCreatorWrapper.GetTypedLatestFunc));
+                    dynamic getLataestLambda = GetGenericFuncCompiledLambda(configType, cocWrapper, nameof(IConfigObjectCreatorWrapper.GetTypedLatestFunc));
                     kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
 
                     Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                     kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
 
-                    dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, cocWrapper, nameof(ConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
+                    dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, cocWrapper, nameof(IConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
                     kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
 
                     kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
@@ -82,9 +85,9 @@ namespace Gigya.Microdot.Ninject
             }
         }
 
-        private dynamic GetGenericFuncCompiledLambda(Type configType, ConfigObjectCreatorWrapper cocWrapper, string functionName)
-        {
-            MethodInfo func = typeof(ConfigObjectCreatorWrapper).GetMethod(functionName).MakeGenericMethod(configType);
+        private dynamic GetGenericFuncCompiledLambda(Type configType, IConfigObjectCreatorWrapper cocWrapper, string functionName)
+        {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
+            MethodInfo func = typeof(IConfigObjectCreatorWrapper).GetMethod(functionName).MakeGenericMethod(configType);
             Expression instance = Expression.Constant(cocWrapper);
             Expression callMethod = Expression.Call(instance, func);
             Type delegateType = typeof(Func<>).MakeGenericType(configType);
