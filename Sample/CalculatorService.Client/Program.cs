@@ -41,14 +41,15 @@ namespace CalculatorService.Client
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
 
-                //kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
 
-                //Console.WriteLine("Start test");
+                Console.WriteLine("Start test");
                 //RunObjectCreationTest(kernel, 2000000);
-               // ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
-               // EvaluateFunc(testClass, 2000000);
+                ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
+                testClass.GetISourceBlockByFunc();
+                EvaluateFunc(testClass, 2000000);
 
-                //Console.ReadLine();
+                Console.ReadLine();
 
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;
@@ -83,7 +84,7 @@ namespace CalculatorService.Client
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Parallel.For(0, count, pOptions, i => testClass.GetConfigByFunc());
+            Parallel.For(0, count, pOptions, i => testClass.GetISourceBlockByFunc());
 
             sw.Stop();
 

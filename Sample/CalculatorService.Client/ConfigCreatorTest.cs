@@ -16,12 +16,12 @@ namespace CalculatorService.Client
         private readonly Func<ISourceBlock<DiscoveryConfig>> _discConfigFuncSource;
 
         //public ConfigCreatorTest(Func<CacheConfig> config, ISourceBlock<MyConfig> myConfigSource, Func<ISourceBlock<CacheConfig>> cacheConfigSource, Func<DiscoveryConfig> discoveryConfig, DiscoveryConfig discConfig, IConfigEventFactory configFactory)
-        public ConfigCreatorTest(Func<DiscoveryConfig> discConfig)
+        public ConfigCreatorTest(Func<ISourceBlock<DiscoveryConfig>> discConfig)
         {
             //_config = config;
             //_discConfigSource = discConfig;
-            //_discConfigFuncSource = discConfig;
-            _disConfigFunc = discConfig;
+            _discConfigFuncSource = discConfig;
+            //_disConfigFunc = discConfig;
             //_discConfig = discConfig;
             //_configEventFactory = configFactory;
         }
