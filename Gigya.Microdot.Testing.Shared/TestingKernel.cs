@@ -23,14 +23,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Castle.Core.Logging;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;

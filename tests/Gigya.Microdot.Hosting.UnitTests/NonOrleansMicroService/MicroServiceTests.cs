@@ -26,10 +26,6 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
                         TimeSpan.FromSeconds(10));
                 (await serviceTester.GetServiceProxy<ICalculatorService>().Add(1, 2)).ShouldBe(3);
             }
-            catch (Exception ex)
-            {
-                throw;
-            }
             finally
             {
                 serviceTester?.Dispose();

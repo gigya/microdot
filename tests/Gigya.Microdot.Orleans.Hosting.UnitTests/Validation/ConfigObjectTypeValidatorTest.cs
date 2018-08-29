@@ -19,7 +19,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
     public class ConfigObjectTypeValidatorTest
     {
         [Test]
-        public void NotValid()
+        public void ThrowExceptionWhenValueTypeImplementsIConfigObject()
         {
             IAssemblyProvider assemblyProviderMock = Substitute.For<IAssemblyProvider>();
             assemblyProviderMock.GetAllTypes().Returns(new [] {typeof(ValueTypeConfig) });
@@ -30,7 +30,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
         }
 
         [Test]
-        public void Valid()
+        public void NoValueTypesInAssemblies_TestPassed()
         {
             IAssemblyProvider assemblyProviderMock = Substitute.For<IAssemblyProvider>();
             assemblyProviderMock.GetAllTypes().Returns(new Type[0]);

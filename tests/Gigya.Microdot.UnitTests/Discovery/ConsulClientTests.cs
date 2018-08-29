@@ -66,7 +66,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _serviceName = ServiceName + "_" + Guid.NewGuid();
             _dateTimeFake = new DateTimeFake(false);
-            _consulConfig = _testingKernel.Get<Func<ConsulConfig>>()();//new ConsulConfig();
+            _consulConfig = _testingKernel.Get<Func<ConsulConfig>>()();
 
             _consulSimulator.Reset();            
         }

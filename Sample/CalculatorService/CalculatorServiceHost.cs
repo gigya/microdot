@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Threading.Tasks.Dataflow;
 using CalculatorService.Interface;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;

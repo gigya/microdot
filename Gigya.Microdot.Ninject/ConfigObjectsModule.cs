@@ -21,27 +21,19 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks.Dataflow;
-using Castle.Core.Logging;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
-using Ninject.Activation;
 using Ninject.Extensions.Factory;
-using Ninject.Infrastructure;
 using Ninject.Modules;
 using Ninject.Parameters;
-using Ninject.Planning.Bindings;
-using Ninject.Planning.Bindings.Resolvers;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -50,7 +42,6 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
-            //Kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
             Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
@@ -63,7 +54,6 @@ namespace Gigya.Microdot.Ninject
 
         private void SearchAssembliesAndRebindIConfig(IKernel kernel)
         {
-            //Add validator which constrants creation of sctrucs as config objects
             IAssemblyProvider aProvider = kernel.Get<IAssemblyProvider>();
             foreach (Assembly assembly in aProvider.GetAssemblies())
             {

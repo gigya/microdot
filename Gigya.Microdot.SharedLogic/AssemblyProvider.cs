@@ -96,6 +96,7 @@ namespace Gigya.Microdot.SharedLogic
             {
                 if (ex is TypeLoadException || ex is FileNotFoundException)
                 {
+                    //This should be refactored in the future. Need to create Microdot logger
                     //Log.Warn(_ => _("Failed to retrieve the exported types from a specific assembly, " +
                     //    "probably due to a missing optional dependency. Skipping assembly. " +
                     //    "See tags and exceptions for details.",

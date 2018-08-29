@@ -92,7 +92,6 @@ namespace Gigya.Microdot.Configuration.Objects
             return HealthCheckResult.Healthy();
         }
 
-
         /// <summary>
         /// Gets the latest version of the configuration. This value is cached for quick retrieval. If the config object
         /// fails validation, an exception will be thrown.
@@ -114,8 +113,6 @@ namespace Gigya.Microdot.Configuration.Objects
             return Latest;
         }
 
-        
-
         private string GetConfigPath()
         {
             var configPath = ObjectType.Name;
@@ -132,7 +129,6 @@ namespace Gigya.Microdot.Configuration.Objects
 
             return configPath;
         }
-
 
         private void InitializeBroadcast()
         {
