@@ -41,47 +41,53 @@ namespace CalculatorService.Client
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
 
-                kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
+                //kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
 
-                ConfigCreatorTest configCreator = kernel.Get<ConfigCreatorTest>();
+                //Console.WriteLine("Start test");
+                //RunObjectCreationTest(kernel, 2000000);
+               // ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
+               // EvaluateFunc(testClass, 2000000);
 
-                Console.WriteLine("Sleeping");
-                Thread.Sleep(5000);
-                Console.WriteLine("Starting test...");
-
-                TestConfig(kernel, configCreator, 2000000);
-
-                Console.ReadLine();
+                //Console.ReadLine();
 
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;
                 Console.WriteLine($"Sum: {sum}");
             }
             catch (Exception ex)
-
             {
                 Console.Error.WriteLine(ex);
             }
         }
 
-        private static void TestConfig(StandardKernel kernel, ConfigCreatorTest configCreator, int calls)
+        private static void RunObjectCreationTest(IKernel kernel, int count)
         {
-            Console.WriteLine("Config test is started");
             ParallelOptions pOptions = new ParallelOptions();
             pOptions.MaxDegreeOfParallelism = 4;
+
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Parallel.For(0, calls, pOptions, i =>
-                                                {
-                                                    CacheConfig config = configCreator.GetConfig();
-                                                    //Console.WriteLine(config.LogRevokes);
-                                                    //kernel.Get<Func<CacheConfig>>()();
-                                                });
+            Parallel.For(0, count, pOptions, i => kernel.Get<ConfigCreatorTest>());
 
             sw.Stop();
 
-            Console.WriteLine($"Config test is finished with {calls} calls in {sw.Elapsed.TotalSeconds} seconds");
+            Console.WriteLine($"{count} objects created in {sw.Elapsed.TotalSeconds} seconds");
+        }
+
+        private static void EvaluateFunc(ConfigCreatorTest testClass, int count)
+        {
+            ParallelOptions pOptions = new ParallelOptions();
+            pOptions.MaxDegreeOfParallelism = 4;
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            Parallel.For(0, count, pOptions, i => testClass.GetConfigByFunc());
+
+            sw.Stop();
+
+            Console.WriteLine($"Function was evaluated {count} times in {sw.Elapsed.TotalSeconds} seconds");
         }
     }
 }

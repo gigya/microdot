@@ -50,6 +50,7 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
+            //Kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
             Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();

@@ -9,31 +9,33 @@ namespace CalculatorService.Client
     public class ConfigCreatorTest
     {
         //private readonly IConfiguration _config;
-        private readonly Func<CacheConfig> _config;
-        private readonly Func<DiscoveryConfig> _disCoveryConfig;
+        private readonly Func<DiscoveryConfig> _disConfigFunc;
         private readonly DiscoveryConfig _discConfig;
         private readonly IConfigEventFactory _configEventFactory;
-        private readonly ISourceBlock<MyConfig> _myConfigSource;
-        private readonly Func<ISourceBlock<CacheConfig>> _cacheConfigSource;
+        private readonly ISourceBlock<DiscoveryConfig> _discConfigSource;
+        private readonly Func<ISourceBlock<DiscoveryConfig>> _discConfigFuncSource;
 
-        public ConfigCreatorTest(Func<CacheConfig> config, ISourceBlock<MyConfig> myConfigSource, Func<ISourceBlock<CacheConfig>> cacheConfigSource, Func<DiscoveryConfig> discoveryConfig, DiscoveryConfig discConfig, IConfigEventFactory configFactory)
+        //public ConfigCreatorTest(Func<CacheConfig> config, ISourceBlock<MyConfig> myConfigSource, Func<ISourceBlock<CacheConfig>> cacheConfigSource, Func<DiscoveryConfig> discoveryConfig, DiscoveryConfig discConfig, IConfigEventFactory configFactory)
+        public ConfigCreatorTest(Func<DiscoveryConfig> discConfig)
         {
-            _config = config;
-            _myConfigSource = myConfigSource;
-            _cacheConfigSource = cacheConfigSource;
-            _disCoveryConfig = discoveryConfig;
-            _discConfig = discConfig;
-            _configEventFactory = configFactory;
+            //_config = config;
+            //_discConfigSource = discConfig;
+            //_discConfigFuncSource = discConfig;
+            _disConfigFunc = discConfig;
+            //_discConfig = discConfig;
+            //_configEventFactory = configFactory;
         }
+
+
         //public ConfigCreatorTest(Func<CacheConfig> config)
         //{
         //    _config = config;
         //}
 
-        public CacheConfig GetConfig()
+        public DiscoveryConfig GetConfigByFunc()
         {
             //return _config.GetObject<CacheConfig>();
-            return _config();
+            return _disConfigFunc();
         }
 
         public DiscoveryConfig GetDiscConfig()
@@ -42,24 +44,19 @@ namespace CalculatorService.Client
             return _discConfig;
         }
 
-        public ISourceBlock<CacheConfig> GetISourceBlockByFunc()
+        public ISourceBlock<DiscoveryConfig> GetISourceBlockByFunc()
         {
-            return _cacheConfigSource();
+            return _discConfigFuncSource();
         }
 
-        public ISourceBlock<MyConfig> GetISourceBlockDirect()
+        public ISourceBlock<DiscoveryConfig> GetISourceBlockDirect()
         {
-            return _myConfigSource;
-        }
-
-        public ISourceBlock<MyConfig> GetISourceBlockByFactory()
-        {
-            return _configEventFactory.GetChangeEvent<MyConfig>();
+            return _discConfigSource;
         }
 
         public DiscoveryConfig GetDiscoveryConfig()
         {
-            return _disCoveryConfig();
+            return _disConfigFunc();
         }
     }
 }
