@@ -62,31 +62,18 @@ namespace Gigya.Microdot.Ninject
                 {
                     IConfigObjectCreatorWrapper cocWrapper = kernel.Get<IConfigObjectCreatorWrapper>(new ConstructorArgument("type", configType));
 
-                    dynamic getLataestLambda = GetGenericFuncCompiledLambda(configType, cocWrapper, nameof(IConfigObjectCreatorWrapper.GetTypedLatestFunc));
+                    dynamic getLataestLambda = cocWrapper.GetGenericFuncCompiledLambda(configType, nameof(IConfigObjectCreatorWrapper.GetTypedLatestFunc));
                     kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
 
                     Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                     kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
 
-                    dynamic changeNotificationsLambda = GetGenericFuncCompiledLambda(sourceBlockType, cocWrapper, nameof(IConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
+                    dynamic changeNotificationsLambda = cocWrapper.GetGenericFuncCompiledLambda(sourceBlockType, nameof(IConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
                     kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
 
                     kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
                 }
             }
-        }
-
-        private dynamic GetGenericFuncCompiledLambda(Type configType, IConfigObjectCreatorWrapper cocWrapper, string functionName)
-        {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
-            MethodInfo func = typeof(IConfigObjectCreatorWrapper).GetMethod(functionName).MakeGenericMethod(configType);
-            Expression instance = Expression.Constant(cocWrapper);
-            Expression callMethod = Expression.Call(instance, func);
-            Type delegateType = typeof(Func<>).MakeGenericType(configType);
-            Type parentExpressionType = typeof(Func<>).MakeGenericType(delegateType);
-
-            dynamic lambda = Expression.Lambda(parentExpressionType, callMethod).Compile();
-
-            return lambda;
         }
     }
 }

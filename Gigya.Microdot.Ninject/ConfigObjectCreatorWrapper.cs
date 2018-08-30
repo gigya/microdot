@@ -21,6 +21,8 @@
 #endregion
 
 using System;
+using System.Linq.Expressions;
+using System.Reflection;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Ninject;
@@ -54,6 +56,19 @@ namespace Gigya.Microdot.Ninject
         {
             EnsureCreator();
             return _configObjectCreator.ChangeNotifications;
+        }
+
+        public dynamic GetGenericFuncCompiledLambda(Type configType, string functionName)
+        {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
+            MethodInfo func = typeof(IConfigObjectCreatorWrapper).GetMethod(functionName).MakeGenericMethod(configType);
+            Expression instance = Expression.Constant(this);
+            Expression callMethod = Expression.Call(instance, func);
+            Type delegateType = typeof(Func<>).MakeGenericType(configType);
+            Type parentExpressionType = typeof(Func<>).MakeGenericType(delegateType);
+
+            dynamic lambda = Expression.Lambda(parentExpressionType, callMethod).Compile();
+
+            return lambda;
         }
 
         private void EnsureCreator()

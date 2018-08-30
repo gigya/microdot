@@ -30,5 +30,7 @@ namespace Gigya.Microdot.Ninject
         Func<T> GetTypedLatestFunc<T>() where T : class;
         Func<T> GetChangeNotificationsFunc<T>() where T : class;
         object GetChangeNotifications();
+
+        dynamic GetGenericFuncCompiledLambda(Type configType, string functionName);
     }
 }
