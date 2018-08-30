@@ -92,9 +92,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 .InSingletonScope()
                 .WithConstructorArgument("data", new Dictionary<string, string>());
 
-            OverridableConfigItems x = kernel.Get<IConfigItemsSource>() as OverridableConfigItems;
-            x.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainType", "Fake - Should throw an exception.");
-            x.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "10");
+            OverridableConfigItems configItems = kernel.Get<IConfigItemsSource>() as OverridableConfigItems;
+            configItems.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainType", "Fake - Should throw an exception.");
+            configItems.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "10");
             
             base.Configure(kernel, commonConfig);
         }

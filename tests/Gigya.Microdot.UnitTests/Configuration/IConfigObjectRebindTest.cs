@@ -1,17 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Configuration.Objects;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -40,7 +31,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        public void RebindObject()
+        public void ShouldCallGetLatestWhileResolvingObject()
         {
             _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
             _testingKernel.Get<DiscoveryConfig>();
@@ -50,7 +41,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        public void RebindFuncObject()
+        public void ShouldCallGetLatestWhileResolvingFuncObject()
         {
             _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
             _testingKernel.Get<Func<DiscoveryConfig>>()();
@@ -60,24 +51,24 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        public void RebindISourceObject()
+        public void ShouldCallChangeNotificationsWhileResolvingISourceBlockObject()
         {
             _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
             _configWrapperMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
             _testingKernel.Get<ISourceBlock<DiscoveryConfig>>();
 
-            object notes = _configWrapperMock.Received(1).ChangeNotifications;
             _configWrapperMock.DidNotReceive().GetLatest();
+            object notifications = _configWrapperMock.Received(1).ChangeNotifications;
         }
 
         [Test]
-        public void RebindFuncISourceObject()
+        public void ShouldCallChangeNotificationsWhileResolvingFuncISourceBlockObject()
         {
             _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
             _configWrapperMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
             _testingKernel.Get<Func<ISourceBlock<DiscoveryConfig>>>()();
 
-            object notes = _configWrapperMock.Received(1).ChangeNotifications;
+            object notifications = _configWrapperMock.Received(1).ChangeNotifications;
             _configWrapperMock.DidNotReceive().GetLatest();
         }
     }

@@ -2,7 +2,7 @@
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.ServiceDiscovery.Config;
 
-namespace CalculatorService.Client
+namespace CalculatorService.Client.ConfigCreationBenchmarkTest
 {
     public abstract class ConfigCreatorTestBase<T> where T : class 
     {
