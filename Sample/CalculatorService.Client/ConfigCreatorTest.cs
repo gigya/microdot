@@ -10,57 +10,42 @@ using Gigya.Microdot.ServiceProxy.Caching;
 
 namespace CalculatorService.Client
 {
-    public class ConfigCreatorTest
+    public abstract class ConfigCreatorTestBase<T> where T : class
     {
-        //private readonly IConfiguration _config;
-        private readonly Func<DiscoveryConfig> _disConfigFunc;
-        private readonly DiscoveryConfig _discConfig;
-        private readonly IConfigEventFactory _configEventFactory;
-        private readonly ISourceBlock<DiscoveryConfig> _discConfigSource;
-        private readonly Func<ISourceBlock<DiscoveryConfig>> _discConfigFuncSource;
+        protected readonly T _config;
 
-        //public ConfigCreatorTest(Func<CacheConfig> config, ISourceBlock<MyConfig> myConfigSource, Func<ISourceBlock<CacheConfig>> cacheConfigSource, Func<DiscoveryConfig> discoveryConfig, DiscoveryConfig discConfig, IConfigEventFactory configFactory)
-        public ConfigCreatorTest(Func<ISourceBlock<DiscoveryConfig>> discConfig)
+        protected ConfigCreatorTestBase(T config)
         {
-            //_config = config;
-            //_discConfigSource = discConfig;
-            _discConfigFuncSource = discConfig;
-            //_disConfigFunc = discConfig;
-            //_discConfig = discConfig;
-            //_configEventFactory = configFactory;
+            _config = config;
         }
 
-
-        //public ConfigCreatorTest(Func<CacheConfig> config)
-        //{
-        //    _config = config;
-        //}
-
-        public DiscoveryConfig GetConfigByFunc()
+        public virtual T GetConfig()
         {
-            //return _config.GetObject<CacheConfig>();
-            return _disConfigFunc();
+            return _config;
         }
+    }
 
-        public DiscoveryConfig GetDiscConfig()
-        {
-            //return _config.GetObject<CacheConfig>();
-            return _discConfig;
-        }
+    public class ConfigCreatorTestObject : ConfigCreatorTestBase<DiscoveryConfig>
+    {
+        public ConfigCreatorTestObject(DiscoveryConfig config) : base(config)
+        { }
+    }
 
-        public ISourceBlock<DiscoveryConfig> GetISourceBlockByFunc()
-        {
-            return _discConfigFuncSource();
-        }
+    public class ConfigCreatorTestFuncObject : ConfigCreatorTestBase<Func<DiscoveryConfig>>
+    {
+        public ConfigCreatorTestFuncObject(Func<DiscoveryConfig> config) : base(config)
+        { }
+    }
 
-        public ISourceBlock<DiscoveryConfig> GetISourceBlockDirect()
-        {
-            return _discConfigSource;
-        }
+    public class ConfigCreatorTestISourceBlockObject : ConfigCreatorTestBase<ISourceBlock<DiscoveryConfig>>
+    {
+        public ConfigCreatorTestISourceBlockObject(ISourceBlock<DiscoveryConfig> config) : base(config)
+        { }
+    }
 
-        public DiscoveryConfig GetDiscoveryConfig()
-        {
-            return _disConfigFunc();
-        }
+    public class ConfigCreatorTestFuncISourceBlockObject : ConfigCreatorTestBase<Func<ISourceBlock<DiscoveryConfig>>>
+    {
+        public ConfigCreatorTestFuncISourceBlockObject(Func<ISourceBlock<DiscoveryConfig>> config) : base(config)
+        { }
     }
 }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Events;
 using Ninject;
 
 namespace CalculatorService.Client
@@ -28,13 +28,24 @@ namespace CalculatorService.Client
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
 
-                kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestObject>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestFuncObject>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestISourceBlockObject>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestFuncISourceBlockObject>().ToSelf().InTransientScope();
 
-                Console.WriteLine("Start test");
-                RunObjectCreationTest(kernel, 2000000);
-                //ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
-                //testClass.GetConfigByFunc();
-                //EvaluateFunc(testClass, 2000000);
+                Console.WriteLine("Resolving test...");
+
+                ParallelOptions pOptions = new ParallelOptions();
+                pOptions.MaxDegreeOfParallelism = 4;
+
+                RunObjectCreationTest<ConfigCreatorTestObject>(kernel, 2000000, pOptions);
+                RunObjectCreationTest<ConfigCreatorTestFuncObject>(kernel, 2000000, pOptions);
+                //RunObjectCreationTest<ConfigCreatorTestISourceBlockObject>(kernel, 2000000, pOptions);
+                //RunObjectCreationTest<ConfigCreatorTestFuncISourceBlockObject>(kernel, 2000000, pOptions);
+
+                ConfigCreatorTestFuncObject testClass = kernel.Get<ConfigCreatorTestFuncObject>();
+                testClass.GetConfig();
+                EvaluateFunc(testClass.GetConfig(), 2000000, pOptions);
 
                 Console.ReadLine();
 
@@ -48,30 +59,29 @@ namespace CalculatorService.Client
             }
         }
 
-        private static void RunObjectCreationTest(IKernel kernel, int count)
+        private static void RunObjectCreationTest<T>(IKernel kernel, int count, ParallelOptions pOptions)
         {
-            ParallelOptions pOptions = new ParallelOptions();
-            pOptions.MaxDegreeOfParallelism = 4;
+            Console.WriteLine($"Start resolving {count} {typeof(T).BaseType.GetGenericArguments()[0].FullName}");
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Parallel.For(0, count, pOptions, i => kernel.Get<ConfigCreatorTest>());
+            Parallel.For(0, count, pOptions, i => kernel.Get<T>());
 
             sw.Stop();
 
             Console.WriteLine($"{count} objects created in {sw.Elapsed.TotalSeconds} seconds");
+            Console.WriteLine();
         }
 
-        private static void EvaluateFunc(ConfigCreatorTest testClass, int count)
+        private static void EvaluateFunc<T>(Func<T> func, int count, ParallelOptions pOptions)
         {
-            ParallelOptions pOptions = new ParallelOptions();
-            pOptions.MaxDegreeOfParallelism = 4;
+            Console.WriteLine($"Start invoking {count} times");
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Parallel.For(0, count, pOptions, i => testClass.GetConfigByFunc());
+            Parallel.For(0, count, pOptions, i => func());
 
             sw.Stop();
 
