@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
@@ -30,9 +31,10 @@ namespace CalculatorService.Client
                 kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
 
                 Console.WriteLine("Start test");
-                //RunObjectCreationTest(kernel, 2000000);
-                ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
-                EvaluateFunc(testClass, 2000000);
+                RunObjectCreationTest(kernel, 2000000);
+                //ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
+                //testClass.GetConfigByFunc();
+                //EvaluateFunc(testClass, 2000000);
 
                 Console.ReadLine();
 
@@ -48,28 +50,32 @@ namespace CalculatorService.Client
 
         private static void RunObjectCreationTest(IKernel kernel, int count)
         {
+            ParallelOptions pOptions = new ParallelOptions();
+            pOptions.MaxDegreeOfParallelism = 4;
+
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            for (int i = 0; i < count; i++)
-            {
-                kernel.Get<ConfigCreatorTest>();
-            }
+
+            Parallel.For(0, count, pOptions, i => kernel.Get<ConfigCreatorTest>());
+
             sw.Stop();
 
-            Console.WriteLine($"{count} objects created in {sw.ElapsedMilliseconds / 1000} seconds");
+            Console.WriteLine($"{count} objects created in {sw.Elapsed.TotalSeconds} seconds");
         }
 
         private static void EvaluateFunc(ConfigCreatorTest testClass, int count)
         {
+            ParallelOptions pOptions = new ParallelOptions();
+            pOptions.MaxDegreeOfParallelism = 4;
+
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            for (int i = 0; i < count; i++)
-            {
-                testClass.GetISourceBlockByFunc();
-            }
+
+            Parallel.For(0, count, pOptions, i => testClass.GetConfigByFunc());
+
             sw.Stop();
 
-            Console.WriteLine($"Function was evaluated {count} times in {sw.ElapsedMilliseconds / 1000} seconds");
+            Console.WriteLine($"Function was evaluated {count} times in {sw.Elapsed.TotalSeconds} seconds");
         }
     }
 }
