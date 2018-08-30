@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Hosting.Validators
             if (configValueTypes.Count > 0)
             {
                 throw new ProgrammaticException(
-                    $"The type/s {string.Join(", ", configValueTypes.Select(t => t.Name))} are value types abd cannot implement IConfigObject interfaces");
+                    $"The type/s {string.Join(", ", configValueTypes.Select(t => t.Name))} are value types and cannot implement IConfigObject interfaces");
             }
         }
     }
