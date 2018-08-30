@@ -1,25 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using CalculatorService.Interface;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Configuration.Objects;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Events;
 using Ninject;
-using Ninject.Activation;
-using Ninject.Extensions.Factory;
 
 namespace CalculatorService.Client
 {
@@ -41,13 +27,19 @@ namespace CalculatorService.Client
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
 
-                kernel.Bind<ConfigCreatorTest>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestObject>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestFuncObject>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestISourceBlockObject>().ToSelf().InTransientScope();
+                kernel.Bind<ConfigCreatorTestFuncISourceBlockObject>().ToSelf().InTransientScope();
 
-                Console.WriteLine("Start test");
-                //RunObjectCreationTest(kernel, 2000000);
-                ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
-                testClass.GetISourceBlockByFunc();
-                EvaluateFunc(testClass, 2000000);
+                Console.WriteLine("Resolving test...");
+                RunObjectCreationTest<ConfigCreatorTestObject>(kernel, 2000000);
+                RunObjectCreationTest<ConfigCreatorTestFuncObject>(kernel, 2000000);
+                RunObjectCreationTest<ConfigCreatorTestISourceBlockObject>(kernel, 2000000);
+                RunObjectCreationTest<ConfigCreatorTestFuncISourceBlockObject>(kernel, 2000000);
+                //ConfigCreatorTest testClass = kernel.Get<ConfigCreatorTest>();
+                //testClass.GetConfigByFunc();
+                //EvaluateFunc(testClass, 2000000);
 
                 Console.ReadLine();
 
@@ -61,34 +53,37 @@ namespace CalculatorService.Client
             }
         }
 
-        private static void RunObjectCreationTest(IKernel kernel, int count)
+        private static void RunObjectCreationTest<T>(IKernel kernel, int count)
         {
+            Console.WriteLine($"Start resolving {count} {typeof(T).BaseType.GetGenericArguments()[0].FullName}");
+
             ParallelOptions pOptions = new ParallelOptions();
             pOptions.MaxDegreeOfParallelism = 4;
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            Parallel.For(0, count, pOptions, i => kernel.Get<ConfigCreatorTest>());
+            Parallel.For(0, count, pOptions, i => kernel.Get<T>());
 
             sw.Stop();
 
             Console.WriteLine($"{count} objects created in {sw.Elapsed.TotalSeconds} seconds");
+            Console.WriteLine();
         }
 
-        private static void EvaluateFunc(ConfigCreatorTest testClass, int count)
-        {
-            ParallelOptions pOptions = new ParallelOptions();
-            pOptions.MaxDegreeOfParallelism = 4;
+        //private static void EvaluateFunc(ConfigCreatorTest testClass, int count)
+        //{
+        //    ParallelOptions pOptions = new ParallelOptions();
+        //    pOptions.MaxDegreeOfParallelism = 4;
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+        //    Stopwatch sw = new Stopwatch();
+        //    sw.Start();
 
-            Parallel.For(0, count, pOptions, i => testClass.GetISourceBlockByFunc());
+        //    Parallel.For(0, count, pOptions, i => testClass.GetConfigByFunc());
 
-            sw.Stop();
+        //    sw.Stop();
 
-            Console.WriteLine($"Function was evaluated {count} times in {sw.Elapsed.TotalSeconds} seconds");
-        }
+        //    Console.WriteLine($"Function was evaluated {count} times in {sw.Elapsed.TotalSeconds} seconds");
+        //}
     }
 }
