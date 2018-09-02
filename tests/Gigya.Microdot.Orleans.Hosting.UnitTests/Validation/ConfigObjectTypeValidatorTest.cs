@@ -30,6 +30,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
         }
 
         [Test]
+        public void ThrowExceptionWhenGenericTypeImplementsIConfigObject()
+        {
+            IAssemblyProvider assemblyProviderMock = Substitute.For<IAssemblyProvider>();
+            assemblyProviderMock.GetAllTypes().Returns(new[] { typeof(GenericTypeConfig<string>) });
+
+            ConfigObjectTypeValidator configValidator = new ConfigObjectTypeValidator(assemblyProviderMock);
+
+            Assert.Throws<ProgrammaticException>(configValidator.Validate);
+        }
+
+        [Test]
         public void NoValueTypesInAssemblies_TestPassed()
         {
             IAssemblyProvider assemblyProviderMock = Substitute.For<IAssemblyProvider>();
@@ -42,5 +53,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
     }
 
     public struct ValueTypeConfig : IConfigObject
+    { }
+
+    public struct GenericTypeConfig<T> : IConfigObject
     { }
 }
