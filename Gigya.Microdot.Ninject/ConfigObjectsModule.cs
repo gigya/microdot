@@ -57,8 +57,7 @@ namespace Gigya.Microdot.Ninject
             IAssemblyProvider aProvider = kernel.Get<IAssemblyProvider>();
             foreach (Assembly assembly in aProvider.GetAssemblies())
             {
-                foreach (Type configType in assembly.GetTypes().Where(t => !t.IsGenericType && t.IsClass && !t.IsAbstract &&
-                                                                           t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject))))
+                foreach (Type configType in assembly.GetTypes().Where(ConfigObjectCreator.IsConfigObject))
                 {
                     IConfigObjectCreatorWrapper cocWrapper = kernel.Get<IConfigObjectCreatorWrapper>(new ConstructorArgument("type", configType));
 

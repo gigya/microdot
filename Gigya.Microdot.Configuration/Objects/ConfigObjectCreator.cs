@@ -113,6 +113,11 @@ namespace Gigya.Microdot.Configuration.Objects
             return Latest;
         }
 
+        public static bool IsConfigObject(Type service)
+        {
+            return service.IsClass && !service.IsAbstract && typeof(IConfigObject).IsAssignableFrom(service);
+        }
+
         private string GetConfigPath()
         {
             var configPath = ObjectType.Name;
