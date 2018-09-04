@@ -41,18 +41,11 @@ namespace Gigya.Microdot.Hosting.Validators
         public void Validate()
         {
             List<Type> configValueTypes = _assemblyProvider.GetAllTypes().Where(t => t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject) && 
-                                                                                                                                    (t.IsGenericType || t.GetTypeInfo().IsValueType))).ToList();
+                                                                                                                                    t.GetTypeInfo().IsValueType)).ToList();
 
             if (configValueTypes.Count == 0)
             {
                 return;
-            }
-
-            IEnumerable<Type> genericTypes = configValueTypes.Where(t => t.IsGenericType);
-            if (genericTypes.Any())
-            {
-                throw new ProgrammaticException(
-                    $"The type/s {string.Join(", ", genericTypes.Select(t => t.Name))} are generic types and cannot implement IConfigObject interfaces");
             }
 
             IEnumerable<Type> valueTypes = configValueTypes.Where(t => t.GetTypeInfo().IsValueType);
