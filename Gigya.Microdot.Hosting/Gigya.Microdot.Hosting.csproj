@@ -59,6 +59,7 @@
     <Compile Include="HttpService\Endpoints\HealthEndpoint.cs" />
     <Compile Include="HttpService\Endpoints\ICustomEndpoint.cs" />
     <Compile Include="Events\ServiceCallEvent.cs" />
+    <Compile Include="HttpService\IWarmup.cs" />
     <Compile Include="HttpService\ServerRequestPublisher.cs" />
     <Compile Include="HttpService\IdentityServiceInterfaceMapper.cs" />
     <Compile Include="HttpService\Endpoints\IHealthStatus.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="HttpService\ServiceMethodResolver.cs" />
     <Compile Include="Metrics\MetricsConfiguration.cs" />
     <Compile Include="Metrics\MetricsInitializer.cs" />
+    <Compile Include="Service\ServiceWarmup.cs" />
     <Compile Include="Validators\SensitivityAttributesValidator.cs" />
     <Compile Include="Service\ServiceHostBase.cs" />
     <Compile Include="Service\HostExtensionMethods.cs" />

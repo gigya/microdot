@@ -22,8 +22,10 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Reflection;
 using Gigya.Microdot.Hosting.HttpService;
 using Orleans;
+using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -43,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             return GrainCache.GetOrAdd(serviceMethod.GrainInterfaceType, t => GetGrain(serviceMethod.GrainInterfaceType));
         }
 
-        private IGrain GetGrain(Type grainInterfaceType)
+        public IGrain GetGrain(Type grainInterfaceType)
         {
             var getGrainMethod = typeof(IGrainFactory).GetMethod("GetGrain", new[] { typeof(long), typeof(string) })
                 .MakeGenericMethod(grainInterfaceType);

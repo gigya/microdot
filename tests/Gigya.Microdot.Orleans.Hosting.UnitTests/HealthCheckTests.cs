@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -87,6 +88,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
             httpResponseMessage.Content.ShouldNotBeNull();
+        }
+
+        [Test]
+        public void HealthCheck_ShouldWaitForWarmup()
+        {
+            Uri uri = new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IWaitableService).Substring(1)}.status");
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            var httpResponseMessage = new HttpClient().GetAsync(uri).Result;
+            sw.Stop();
+            Console.WriteLine(sw.Elapsed.TotalSeconds);
+            sw.Restart();
+            httpResponseMessage = new HttpClient().GetAsync(uri).Result;
+            sw.Stop();
+            Console.WriteLine(sw.Elapsed.TotalSeconds);
         }
     }
 }

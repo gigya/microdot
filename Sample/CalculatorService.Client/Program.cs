@@ -28,30 +28,37 @@ namespace CalculatorService.Client
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
 
-                kernel.Bind<ConfigCreatorTestObject>().ToSelf().InTransientScope();
-                kernel.Bind<ConfigCreatorTestFuncObject>().ToSelf().InTransientScope();
-                kernel.Bind<ConfigCreatorTestISourceBlockObject>().ToSelf().InTransientScope();
-                kernel.Bind<ConfigCreatorTestFuncISourceBlockObject>().ToSelf().InTransientScope();
+                //kernel.Bind<ConfigCreatorTestObject>().ToSelf().InTransientScope();
+                //kernel.Bind<ConfigCreatorTestFuncObject>().ToSelf().InTransientScope();
+                //kernel.Bind<ConfigCreatorTestISourceBlockObject>().ToSelf().InTransientScope();
+                //kernel.Bind<ConfigCreatorTestFuncISourceBlockObject>().ToSelf().InTransientScope();
 
-                Console.WriteLine("Resolving test...");
+                //Console.WriteLine("Resolving test...");
 
-                ParallelOptions pOptions = new ParallelOptions();
-                pOptions.MaxDegreeOfParallelism = 4;
+                //ParallelOptions pOptions = new ParallelOptions();
+                //pOptions.MaxDegreeOfParallelism = 4;
 
-                RunObjectCreationTest<ConfigCreatorTestObject>(kernel, 2000000, pOptions);
-                RunObjectCreationTest<ConfigCreatorTestFuncObject>(kernel, 2000000, pOptions);
-                //RunObjectCreationTest<ConfigCreatorTestISourceBlockObject>(kernel, 2000000, pOptions);
-                //RunObjectCreationTest<ConfigCreatorTestFuncISourceBlockObject>(kernel, 2000000, pOptions);
+                //RunObjectCreationTest<ConfigCreatorTestObject>(kernel, 2000000, pOptions);
+                //RunObjectCreationTest<ConfigCreatorTestFuncObject>(kernel, 2000000, pOptions);
+                ////RunObjectCreationTest<ConfigCreatorTestISourceBlockObject>(kernel, 2000000, pOptions);
+                ////RunObjectCreationTest<ConfigCreatorTestFuncISourceBlockObject>(kernel, 2000000, pOptions);
 
-                ConfigCreatorTestFuncObject testClass = kernel.Get<ConfigCreatorTestFuncObject>();
-                testClass.GetConfig();
-                EvaluateFunc(testClass.GetConfig(), 2000000, pOptions);
+                //ConfigCreatorTestFuncObject testClass = kernel.Get<ConfigCreatorTestFuncObject>();
+                //testClass.GetConfig();
+                //EvaluateFunc(testClass.GetConfig(), 2000000, pOptions);
 
-                Console.ReadLine();
+                //Console.ReadLine();
 
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 int sum = calculatorService.Add(2, 3).Result;
+                sw.Stop();
+
+                Console.WriteLine($"Add function evaluation time: {sw.Elapsed.TotalSeconds} sec");
                 Console.WriteLine($"Sum: {sum}");
+
+                Console.ReadLine();
             }
             catch (Exception ex)
             {

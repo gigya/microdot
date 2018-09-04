@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
@@ -37,6 +38,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 
     public class ProgrammableHealthGrain : Grain, IProgrammableHealthGrain
     {
+        public ProgrammableHealthGrain()
+        {
+
+        }
+
         private HealthStatusResult Health { get; set; }
 
 
@@ -50,6 +56,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task SetHealth(bool healthy)
         {
             Health = healthy ? new HealthStatusResult("I'm healthy") : new HealthStatusResult("I'm not healthy", false);
+        }
+    }
+
+    [HttpService(6556)]
+    public interface IWaitableService { }
+
+    public interface IWaitableServicehGrain : IWaitableService, IGrainWithIntegerKey
+    {
+    }
+
+    public class WaitableServiceGrain : Grain, IWaitableServicehGrain
+    {
+        public WaitableServiceGrain()
+        {
+            Thread.Sleep(5000);
         }
     }
 }

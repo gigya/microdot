@@ -45,6 +45,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
+        private IWarmup _grainsWarmup;
+
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -63,8 +65,10 @@ namespace Gigya.Microdot.Orleans.Hosting
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
             HttpServiceListener httpServiceListener,
             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
-            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig)
+            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig, IWarmup grainsWarmup)
         {
+            _grainsWarmup = grainsWarmup;
+
             Log = log;
             ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
@@ -99,8 +103,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 Type = ConfigBuilder.SiloType
             };
             Silo.InitializeOrleansSilo();
-
-
+            
             bool siloStartedSuccessfully = Silo.StartOrleansSilo(false);
 
             if (siloStartedSuccessfully)
@@ -156,6 +159,17 @@ namespace Gigya.Microdot.Orleans.Hosting
             catch (Exception ex)
             {
                 BootstrapException = ex;
+                throw;
+            }
+
+            try
+            {
+                _grainsWarmup.Warmup();
+            }
+            catch (Exception ex)
+            {
+                BootstrapException = ex;
+                Log.Error("Failed to warmup grains", exception: ex);
                 throw;
             }
 
