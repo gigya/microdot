@@ -22,14 +22,14 @@
 
 using System;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.SharedLogic.Exceptions;
-using System.Text;
-using Gigya.Microdot.Interfaces.Logging;
+
 
 namespace Gigya.Microdot.Configuration
 {
@@ -44,35 +44,63 @@ namespace Gigya.Microdot.Configuration
 		public class Results
 		{
 			/// <summary>
-			/// Indicates the success of verification.
+			/// A summary of specific type verification (for success or failure)
 			/// </summary>
-			/// <returns>False if at least one of types failed to pass the verification or any other failure, else True</returns>
-			public bool IsSuccess => _failedList.Any();
+			public class ResultPerType
+			{
+				/// <summary>
+				/// The verified config type
+				/// </summary>
+				public Type Type;
+				/// <summary>
+				/// The path of config file having an issue
+				/// </summary>
+				public string Path;
+				/// <summary>
+				/// The details of an issue with instantiating the config type
+				/// </summary>
+				public string Details;
+
+				/// <summary>
+				/// </summary>
+				public ResultPerType (Type configType, string configPath, string validationErrors)
+				{
+					Type = configType;
+					Path = configPath;
+					Details = validationErrors;
+				}
+			}
+
+			/// <summary>
+			/// Indicates the success of verification. False if at least one of types failed to pass the verification or any other failure, else True.
+			/// </summary>
+			public bool IsSuccess => _failedList.Any() == false;
+
 			/// <summary>
 			/// The total time in ms the verification took.
 			/// </summary>
 			public long ElapsedMs;
-			private readonly List<KeyValuePair<Type, Tuple<string,string>>> _failedList;
+			private readonly List<ResultPerType> _failedList;
 			private readonly List<Type> _passedList;
 			private readonly bool _duringBuild;
+
+			public IEnumerable<ResultPerType> Failed => _failedList;
+			public IEnumerable<Type> Passed => _passedList;
 
 			/// <summary>
 			/// </summary>
 			public Results()
 			{
-				_failedList = new List<KeyValuePair<Type, Tuple<string, string>>>();
+				_failedList = new List<ResultPerType>();
 				_passedList = new List<Type>();
 
-				// Recognize when running under the TeamCity
-				// https://confluence.jetbrains.com/display/TCD9/Predefined+Build+Parameters
+				// Recognize when running under the TeamCity, https://confluence.jetbrains.com/display/TCD9/Predefined+Build+Parameters
 				_duringBuild = Environment.GetEnvironmentVariable("BUILD_NUMBER") != null;
-
 			}
 
 			/// <summary>
 			/// Add indication the type passede verification
 			/// </summary>
-			/// <param name="configType"></param>
 			public void AddSuccess(Type configType)
 			{
 				_passedList.Add(configType);
@@ -81,12 +109,9 @@ namespace Gigya.Microdot.Configuration
 			/// <summary>
 			/// Add indication the type isn't passed verification with more details.
 			/// </summary>
-			/// <param name="configType"></param>
-			/// <param name="configPath"></param>
-			/// <param name="validationErrors"></param>
 			public void AddFailure(Type configType, string configPath, string validationErrors)
 			{
-				_failedList.Add(new KeyValuePair<Type, Tuple<string, string>>(configType, new Tuple<string, string>(configPath, validationErrors)));
+				_failedList.Add(new ResultPerType(configType, configPath, validationErrors));
 			}
 
 			/// <summary>
@@ -104,9 +129,9 @@ namespace Gigya.Microdot.Configuration
 
 					_failedList.ForEach(failure =>
 					{
-						buffer.AppendLine($"TYPE: {failure.Key?.FullName}");
-						buffer.AppendLine($"       PATH :  {failure.Value.Item1}");
-						buffer.AppendLine($"       ERROR:  {failure.Value.Item2}");
+						buffer.AppendLine($"TYPE: {failure.Type?.FullName}");
+						buffer.AppendLine($"       PATH :  {failure.Path}");
+						buffer.AppendLine($"       ERROR:  {failure.Details}");
 					});
 
 					if (_passedList.Count > 0)
@@ -126,59 +151,52 @@ namespace Gigya.Microdot.Configuration
 		}
 
 		private readonly Func<Type, ConfigObjectCreator> _configCreatorFunc;
-		private readonly IAssemblyProvider _configTypesProvider;
-		private readonly ILog _log;
+		private readonly IAssemblyProvider _assemblyProvider;
 
 		/// <summary>
 		/// </summary>
-		public ConfigurationVerificator (Func<Type, ConfigObjectCreator> configCreatorFunc, IAssemblyProvider configTypesProvider, ILog log)
+		public ConfigurationVerificator (Func<Type, ConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider)
 		{
 			_configCreatorFunc = configCreatorFunc;
-			_configTypesProvider = configTypesProvider;
-			_log = log;
+			_assemblyProvider = assemblyProvider;
 		}
 
 		/// <summary>
 		/// Run the discovery of IConfigObject descendants, instanciate them and grab validation or any other errors.
 		/// </summary>
+		/// <remarks>
+		/// Throwing, except <see cref="ConfigurationException"/>. On purpose to expose any exceptions except this one.
+		/// </remarks>
 		public Results Verify()
 		{
 			var result = new Results();
 			var watch = Stopwatch.StartNew();
-			try
-			{
-				// Get ConfigObject types in related binaries
-				var configObjectTypes = _configTypesProvider.GetAllTypes()
-					.Where(t => t.IsClass && !t.IsAbstract && typeof(IConfigObject).IsAssignableFrom(t))
-					.AsEnumerable();
+			
+			// Get ConfigObject types in related binaries
+			var configObjectTypes = _assemblyProvider.GetAllTypes()
+				.Where(t => t.IsClass && !t.IsAbstract && typeof(IConfigObject).IsAssignableFrom(t))
+				.AsEnumerable();
 
-				// Instanciate and grab validation issues
-				foreach (var configType in configObjectTypes)
+			// Instanciate and grab validation issues
+			foreach (var configType in configObjectTypes)
+			{
+				try
 				{
-					try
-					{
-						var creator = _configCreatorFunc(configType);
-						creator.Init();
-						creator.GetLatest();
+					var creator = _configCreatorFunc(configType);
+					creator.Init();
 
-						// throw new ConfigurationException("the type is not valid message", unencrypted: new Tags
-						// {
-						// 	{ "ConfigObjectPath", "some path to config" },
-						// 	{ "ValidationErrors", "very interesting error" }
-						// });
+					// ReSharper disable once UnusedVariable
+					// Only for debugging details
+					var objConfig = creator.GetLatest();
 
-						result.AddSuccess(configType);
-					}
-					catch (ConfigurationException ex)
-					{
-						result.AddFailure(configType, ex.UnencryptedTags?["ConfigObjectPath"], ex.UnencryptedTags?["ValidationErrors"]);
-					}
+					result.AddSuccess(configType);
 				}
-			}
-			catch (Exception ex)
-			{
-				result.AddFailure(null, "FAILED TO LOAD TYPES, check the service log for the details.", ex.Message);
-				_log.Error(_ => _($"Failed to retrieve the IConfigObject descendants for verification", exception:ex, includeStack:true));
+				catch (ConfigurationException ex)
+				{
+					var path = ex.UnencryptedTags?["ConfigObjectPath"] ?? ex.Message;
+					var error = ex.UnencryptedTags?["ValidationErrors"] ?? ex.InnerException?.Message;
+					result.AddFailure(configType, path, error);
+				}
 			}
 
 			result.ElapsedMs = watch.ElapsedMilliseconds;

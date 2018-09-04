@@ -216,7 +216,8 @@ namespace Gigya.Microdot.Hosting.Service
 		    if (ConfigurationVerificator == null)
 		    {
 			    Environment.ExitCode = 1;
-			    Console.WriteLine("ERROR: The configuration verification is not properly implemented.");
+			    Console.WriteLine("ERROR: The configuration verification is not properly implemented. " +
+			                      "To implement you need to override OnVerifyConfiguration base method and call to base.");
 		    }
 		    else
 		    {

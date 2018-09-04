@@ -20,19 +20,57 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Logging;
 using Ninject;
 using Ninject.Modules;
 
 namespace Gigya.Microdot.Ninject
 {
+	// ReSharper disable once ClassNeverInstantiated.Local
+
+	/// <summary>
+	/// </summary>
 	public class ConfigVerificationModule : NinjectModule
 	{
+		/// <summary>
+		/// Null ending implementation of log and event publisher to satisfy DI chain of initialization in configuration verification mode.
+		/// Strictly for config verification.
+		/// Should not be used in any other scenarios.
+		/// Subject to change.
+		/// </summary>
+		private sealed class ConfigVerificationNullLogAndPublisher : LogBase, IEventPublisher
+		{
+			protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
+			{
+				return Task.FromResult(true);
+			}
+
+			public override TraceEventType? MinimumTraceLevel { get => TraceEventType.Verbose; set{} }
+
+			private static readonly PublishingTasks PublishingTasks = new PublishingTasks
+			{
+				PublishEvent = Task.FromResult(true), 
+				PublishAudit = Task.FromResult(true)
+			};
+
+			public PublishingTasks TryPublish(IEvent evt)
+			{            
+				return PublishingTasks;
+			}
+		}
+
 		private readonly ILoggingModule _loggingModule;
 		private readonly ServiceArguments _arguments;
 
+		/// <summary>
+		/// </summary>
 		public ConfigVerificationModule (ILoggingModule loggingModule, ServiceArguments arguments)
 		{
 			_loggingModule = loggingModule;
@@ -47,6 +85,12 @@ namespace Gigya.Microdot.Ninject
 			Kernel.Rebind<ServiceArguments>().ToConstant(_arguments);
 			
 			_loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+
+			// Be ready that no ILog bound
+			if (Kernel.TryGet<ILog>() == null)
+			{
+				Kernel.Rebind<ILog, IEventPublisher>().To<ConfigVerificationNullLogAndPublisher>().InSingletonScope();
+			}
 		}
 	}
 }
