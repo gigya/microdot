@@ -316,7 +316,9 @@ namespace Gigya.Microdot.ServiceProxy
                 ServiceName = CurrentApplicationInfo.Name,
                 RequestID = TracingContext.TryGetRequestID(),
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID()
+                ParentSpanID = TracingContext.TryGetSpanID(),
+                SpanStartTime = DateTimeOffset.UtcNow,
+                AbandonRequestBy = TracingContext.AbandonRequestBy
             };
             PrepareRequest?.Invoke(request);
             var requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
