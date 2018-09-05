@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             return GrainCache.GetOrAdd(serviceMethod.GrainInterfaceType, t => GetGrain(serviceMethod.GrainInterfaceType));
         }
 
-        public IGrain GetGrain(Type grainInterfaceType)
+        private IGrain GetGrain(Type grainInterfaceType)
         {
             var getGrainMethod = typeof(IGrainFactory).GetMethod("GetGrain", new[] { typeof(long), typeof(string) })
                 .MakeGenericMethod(grainInterfaceType);
