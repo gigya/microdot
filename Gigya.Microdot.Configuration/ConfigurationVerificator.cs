@@ -122,7 +122,7 @@ namespace Gigya.Microdot.Configuration
 			public override string ToString()
 			{
 				var buffer = new StringBuilder();
-
+				//
 				buffer.AppendLine($"Is under TC build? : {_duringBuild }");
 				
 				if (_failedList.Count > 0)
