@@ -164,17 +164,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             try
             {
-                _grainsWarmup.Warmup();
-            }
-            catch (Exception ex)
-            {
-                BootstrapException = ex;
-                Log.Error("Failed to warmup grains", exception: ex);
-                throw;
-            }
-
-            try
-            {
                 HttpServiceListener.Start();
             }
             catch (Exception ex)

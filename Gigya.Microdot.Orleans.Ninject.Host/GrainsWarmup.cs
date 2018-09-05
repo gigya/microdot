@@ -33,16 +33,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             try
             {
-                foreach (Type serviceInterface in _orleansMapper.ServiceInterfaceTypes)
+                foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)
                 {
-                    Type grainInterface = _orleansMapper.GetGrainInterface(serviceInterface);
-                    IGrain grainReference = _grainActivator.GetGrain(grainInterface);
-                    MethodInfo method = typeof(GrainExtensions).GetMethod("Cast", BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic)
-                                        .MakeGenericMethod(grainInterface);
-                    object grain = method.Invoke(grainReference, new object[]{ grainReference });
+                    _kernel.Get(serviceClass);
                 }
             }
-            catch(Exception ex)
+            catch
             {
                 _taskCompletionSource.SetException(new Exception("Failed to warmup grains"));
 

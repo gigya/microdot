@@ -89,20 +89,5 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
             httpResponseMessage.Content.ShouldNotBeNull();
         }
-
-        [Test]
-        public void HealthCheck_ShouldWaitForWarmup()
-        {
-            Uri uri = new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IWaitableService).Substring(1)}.status");
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            var httpResponseMessage = new HttpClient().GetAsync(uri).Result;
-            sw.Stop();
-            Console.WriteLine(sw.Elapsed.TotalSeconds);
-            sw.Restart();
-            httpResponseMessage = new HttpClient().GetAsync(uri).Result;
-            sw.Stop();
-            Console.WriteLine(sw.Elapsed.TotalSeconds);
-        }
     }
 }

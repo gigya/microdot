@@ -23,8 +23,6 @@
 using System;
 using System.Collections.Concurrent;
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;

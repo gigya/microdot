@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
@@ -75,6 +76,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             PreInitialize(Kernel);
             OnInitilize(Kernel);
 
+            Warmup(Kernel);
+
             SiloHost = Kernel.Get<GigyaSiloHost>();
             SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
         }
@@ -102,6 +105,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
 
+        }
+
+        protected virtual void Warmup(IKernel kernel)
+        {
+            IWarmup warmup = kernel.Get<IWarmup>();
+            warmup.Warmup();
         }
 
         /// <summary>
