@@ -25,6 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
+
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Configuration.Objects;
@@ -44,7 +45,7 @@ namespace Gigya.Microdot.Configuration
 		public class Results
 		{
 			/// <summary>
-			/// A summary of specific type verification (for success or failure)
+			/// A summary of specific type verification (a success or failure)
 			/// </summary>
 			public class ResultPerType
 			{
@@ -72,7 +73,8 @@ namespace Gigya.Microdot.Configuration
 			}
 
 			/// <summary>
-			/// Indicates the success of verification. False if at least one of types failed to pass the verification or any other failure, else True.
+			/// Summarize the success of verification. False if at least one of types
+			/// failed to pass the verification or any other failure, else True.
 			/// </summary>
 			public bool IsSuccess => _failedList.Any() == false;
 
@@ -99,7 +101,7 @@ namespace Gigya.Microdot.Configuration
 			}
 
 			/// <summary>
-			/// Add indication the type passede verification
+			/// Add indication the type passed the verification
 			/// </summary>
 			public void AddSuccess(Type configType)
 			{
@@ -107,7 +109,7 @@ namespace Gigya.Microdot.Configuration
 			}
 
 			/// <summary>
-			/// Add indication the type isn't passed verification with more details.
+			/// Add indication the type didn't pass the verification with more details.
 			/// </summary>
 			public void AddFailure(Type configType, string configPath, string validationErrors)
 			{
@@ -121,7 +123,7 @@ namespace Gigya.Microdot.Configuration
 			{
 				var buffer = new StringBuilder();
 
-				if (!_duringBuild)
+				if (!_duringBuild) // command line execution
 				{
 					buffer.AppendLine();
 					if (_failedList.Count > 0)
@@ -186,7 +188,7 @@ namespace Gigya.Microdot.Configuration
 					creator.Init();
 
 					// ReSharper disable once UnusedVariable
-					// Only for debugging details
+					// Only for review in debugging  session
 					var objConfig = creator.GetLatest();
 
 					result.AddSuccess(configType);

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.UnitTests.Caching.Host;
+
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,6 +30,9 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			CurrentApplicationInfo.Init(APPNAME);
 		}
 
+		/// <summary>
+		/// Initial kernel setup
+		/// </summary>
 		public (StandardKernel k, IAssemblyProvider providerMock, IFileSystem fileSystemMock) Setup()
 		{
 			var k = new StandardKernel();
@@ -47,6 +52,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 		}
 
 		[Test]
+		[Description("check we recognize a broken XML file")]
 		public void WhenConfigIsNotValidXml()
 		{
 			var setup = Setup();
@@ -95,6 +101,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 		}
 
 		[Test]
+		[Description("check we recognize a violation of annotated property in config object")]
 		public void WhenAnnotationViolated()
 		{
 			var setup = Setup();
@@ -143,6 +150,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 		}
 
 		[Test]
+		[Description("check we actually loading the value for property from File, not the default in class")]
 		public void WhenValueLoadedFromConfigFile()
 		{
 			var setup = Setup();
@@ -183,8 +191,8 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			s.IsSuccess.ShouldBeTrue();
 		}
 
-
 		[Test]
+		[Description("check we recognize a case of a value is not converted into a another type")]
 		public void WhenValueIsNotSuitable()
 		{
 			var setup = Setup();
