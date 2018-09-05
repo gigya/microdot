@@ -123,30 +123,22 @@ namespace Gigya.Microdot.Configuration
 			{
 				var buffer = new StringBuilder();
 
-				if (!_duringBuild) // command line execution
+				buffer.AppendLine($"Is under TC build? : {_duringBuild }");
+				
+				if (_failedList.Count > 0)
+					buffer.AppendLine($"--->>>> Configuration objects failed to pass the verification <<<<-----".ToUpper());
+
+				_failedList.ForEach(failure =>
 				{
-					buffer.AppendLine();
-					if (_failedList.Count > 0)
-						buffer.AppendLine($"--->>>> Configuration objects failed to pass the verification <<<<-----".ToUpper());
+					buffer.AppendLine($"TYPE: {failure.Type?.FullName}");
+					buffer.AppendLine($"       PATH :  {failure.Path}");
+					buffer.AppendLine($"       ERROR:  {failure.Details}");
+				});
 
-					_failedList.ForEach(failure =>
-					{
-						buffer.AppendLine($"TYPE: {failure.Type?.FullName}");
-						buffer.AppendLine($"       PATH :  {failure.Path}");
-						buffer.AppendLine($"       ERROR:  {failure.Details}");
-					});
+				if (_passedList.Count > 0)
+					buffer.AppendLine($"The following {_passedList.Count} configuration objects passed the verification:");
 
-					if (_passedList.Count > 0)
-						buffer.AppendLine($"The following {_passedList.Count} configuration objects passed the verification:");
-
-					_passedList.ForEach(item => buffer.AppendLine($"    {item.FullName}"));
-				}
-				else
-				{
-					buffer.AppendLine();
-					// TODO: format the message with details accorfing to TC expectations
-					// https://confluence.jetbrains.com/display/TCD18/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingTests
-				}
+				_passedList.ForEach(item => buffer.AppendLine($"    {item.FullName}"));
 
 				return buffer.ToString();
 			}
