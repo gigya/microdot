@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
