@@ -45,9 +45,6 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
-            Kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();
-
-            Rebind<ServiceArguments>().ToConstant(new ServiceArguments());
 
             SearchAssembliesAndRebindIConfig(Kernel);
         }
