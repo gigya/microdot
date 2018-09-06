@@ -37,12 +37,15 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         private IActivator Activator { get; }
         private const int WebServerIsDown = 521;
 
-        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServiceDrainListener drainListener)
+        private readonly IWarmup _warmup;
+
+        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServiceDrainListener drainListener, IWarmup warmap)
         {
             _drainListener = drainListener;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             ServiceInterfaceMapper = serviceInterfaceMapper;
             Activator = activator;
+            _warmup = warmap;
         }
 
         public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
@@ -60,6 +63,8 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
                 if (serviceType == null)
                     throw new RequestException("Invalid service name");
+
+                await _warmup.WaitForWarmup();
 
                 if (ServiceInterfaceMapper.HealthStatusServiceType == null || serviceType.IsAssignableFrom(ServiceInterfaceMapper.HealthStatusServiceType) == false)
                 {

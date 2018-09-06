@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Modules;
@@ -40,6 +41,7 @@ namespace Gigya.Microdot.Ninject
             this.BindClassesAsSingleton(assemblies: new[] { typeof(HostingAssembly) });
             this.BindInterfacesAsSingleton(new List<Type> { typeof(IServiceInterfaceMapper) }, assemblies: new[] { typeof(HostingAssembly) });
             Bind<IServiceDrainListener,ServiceDrainController>().To<ServiceDrainController>().InSingletonScope();
+            Rebind<IWarmup>().To<ServiceWarmup>().InSingletonScope();
         }
     }
 }

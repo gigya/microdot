@@ -99,8 +99,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 Type = ConfigBuilder.SiloType
             };
             Silo.InitializeOrleansSilo();
-
-
+            
             bool siloStartedSuccessfully = Silo.StartOrleansSilo(false);
 
             if (siloStartedSuccessfully)

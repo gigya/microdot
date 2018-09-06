@@ -48,6 +48,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="GrainsWarmup.cs" />
     <Compile Include="NinjectOrleansServiceProvider.cs" />
     <Compile Include="MicrodotOrleansHostModule.cs" />
     <Compile Include="MicrodotOrleansServiceHost.cs" />

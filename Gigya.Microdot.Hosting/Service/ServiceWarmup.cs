@@ -20,36 +20,21 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+using Gigya.Microdot.Hosting.HttpService;
 
-namespace Gigya.Microdot.Hosting.HttpService
+namespace Gigya.Microdot.Hosting.Service
 {
-	/// <summary>
-	/// Mapping between service interfaces to grain interfaces. Used in Orleans for additional type information (for creating grain references).
-	/// The map is an identity map outside orleans.
-	/// </summary>
-    public interface IServiceInterfaceMapper
+    public class ServiceWarmup : IWarmup
     {
-		/// <summary>
-		/// The service interface discovered in this application.
-		/// </summary>
-		IEnumerable<Type> ServiceInterfaceTypes { get; }
+        public bool IsServiceWarmed { get; } = true;
+        public Task WaitForWarmup()
+        {
+            return Task.FromResult(true);
+        }
 
-        IEnumerable<Type> ServiceClassesTypes { get; }
-
-        /// <summary>
-        /// The service implementing IHealthStatus
-        /// </summary>
-	    Type HealthStatusServiceType { get; set; }
-
-
-	    /// <summary>
-		/// A method that maps a service interface to its corresponding grain interface. Used only in Orleans.
-		/// </summary>
-		/// <param name="serviceInterface">The service interface to map.</param>
-		/// <returns>The grain interface for the provided service interface, or the provideded parameter (identity) when not used in Orelans.</returns>
-		Type GetGrainInterface(Type serviceInterface);
+        public void Warmup()
+        {
+        }
     }
-
 }
