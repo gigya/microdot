@@ -47,13 +47,9 @@ namespace Gigya.Microdot.Hosting.Validators
             {
                 return;
             }
-
-            IEnumerable<Type> valueTypes = configValueTypes.Where(t => t.GetTypeInfo().IsValueType);
-            if (valueTypes.Any())
-            {
-                throw new ProgrammaticException(
-                    $"The type/s {string.Join(", ", valueTypes.Select(t => t.Name))} are value types and cannot implement IConfigObject interfaces");
-            }
+            
+            throw new ProgrammaticException(
+                $"The type/s {string.Join(", ", configValueTypes.Select(t => t.Name))} are value types and cannot implement IConfigObject interfaces");
         }
     }
 }
