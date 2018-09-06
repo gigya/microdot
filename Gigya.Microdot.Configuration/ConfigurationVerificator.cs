@@ -25,7 +25,7 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
-
+using System.Threading;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Configuration.Objects;
@@ -44,6 +44,21 @@ namespace Gigya.Microdot.Configuration
 		/// </summary>
 		public class Results
 		{
+			/// <summary>
+			/// The summary of verification formatting strategy
+			/// </summary>
+			public enum SummaryFormat
+			{
+				/// <summary>
+				/// Plaint console output
+				/// </summary>
+				Console,
+				/// <summary>
+				/// The TeamCity structured output
+				/// </summary>
+				TeamCity
+			}
+
 			/// <summary>
 			/// A summary of specific type verification (a success or failure)
 			/// </summary>
@@ -72,6 +87,90 @@ namespace Gigya.Microdot.Configuration
 				}
 			}
 
+		    private class TestSuiteContext : IDisposable
+		    {
+		        private readonly string _groupName;
+			    private readonly StringBuilder _buffer;
+			    private int _dispose;
+
+		        public TestSuiteContext(string groupName, StringBuilder buffer)
+		        {
+		            if (groupName.Contains("'")) 
+			            throw new ArgumentException("groupName can't contain '");
+		            
+			        if (groupName.Contains(Environment.NewLine)) 
+				        throw new ArgumentException("groupName NewLine");
+
+		            _groupName = groupName;
+			        _buffer = buffer;
+
+			        WriteLine($"##teamcity[testSuiteStarted  name='{_groupName}']");
+
+		        }
+
+		        public TestContext AddTest(string name)
+		        {
+		            var result = new TestContext(name, _buffer);
+		            return result;
+		        }
+
+		        public void Dispose()
+		        {
+		            if (Interlocked.CompareExchange(ref _dispose, 1, 0) == 1) 
+			            return;
+		            
+			        WriteLine($"##teamcity[testSuiteFinished  name='{_groupName}']");
+		        }
+
+			    private void WriteLine(string text)
+			    {
+				    _buffer.AppendLine(text);
+			    }
+		    }
+
+			private class TestContext : IDisposable
+		    {
+		        private readonly string _name;
+		        private int _dispose = 0;
+			    private readonly StringBuilder _buffer;
+
+			    internal TestContext(string testName, StringBuilder buffer)
+		        {
+		            //  if (testName.Length > 50) throw new ArgumentException("testName is to long");
+		            if (testName.Contains("'")) throw new ArgumentException("testName can't contain '");
+		            if (testName.Contains(Environment.NewLine)) throw new ArgumentException("testName NewLine");
+		            _name = testName;
+			        _buffer = buffer;
+			        WriteLine($"##teamcity[testStarted name='{_name}']");
+		        }
+
+		        public void ReportFailure(string message, string details)
+		        {
+		            WriteLine($"##teamcity[testFailed name='{_name}'  message='{message}' details='{details}']");
+
+		        }
+		        public void ReportFailure(string details)
+		        {
+		            WriteLine($"##teamcity[testFailed name='{_name}'  details='{details}']");
+		        }
+
+		        public void WriteMessage(string text)
+		        {
+		            WriteLine($"##teamcity[testStdOut name='{_name}'  out='{text}']");
+		        }
+
+		        public void Dispose()
+		        {
+		            if (Interlocked.CompareExchange(ref _dispose, 1, 0) == 0)
+		                WriteLine($"##teamcity[testFinished  name='{_name}']");
+		        }
+
+			    private void WriteLine(string text)
+			    {
+				    _buffer.AppendLine(text);
+			    }
+		    }
+
 			/// <summary>
 			/// Summarize the success of verification. False if at least one of types
 			/// failed to pass the verification or any other failure, else True.
@@ -84,7 +183,6 @@ namespace Gigya.Microdot.Configuration
 			public long ElapsedMs;
 			private readonly List<ResultPerType> _failedList;
 			private readonly List<Type> _passedList;
-			private readonly bool _duringBuild;
 
 			public IEnumerable<ResultPerType> Failed => _failedList;
 			public IEnumerable<Type> Passed => _passedList;
@@ -96,8 +194,6 @@ namespace Gigya.Microdot.Configuration
 				_failedList = new List<ResultPerType>();
 				_passedList = new List<Type>();
 
-				// Recognize when running under the TeamCity, https://confluence.jetbrains.com/display/TCD9/Predefined+Build+Parameters
-				_duringBuild = Environment.GetEnvironmentVariable("BUILD_NUMBER") != null;
 			}
 
 			/// <summary>
@@ -119,29 +215,58 @@ namespace Gigya.Microdot.Configuration
 			/// <summary>
 			/// Format to string for console or TeamCity
 			/// </summary>
-			public override string ToString()
+			public string Summarize(SummaryFormat? format = null)
 			{
-				var buffer = new StringBuilder();
-				
-				//
-				buffer.AppendLine($"Is under TC build? : {_duringBuild }");
-				
-				if (_failedList.Count > 0)
-					buffer.AppendLine($"--->>>> Configuration objects failed to pass the verification <<<<-----".ToUpper());
+				// Recognize when running under the TeamCity
+				// https://confluence.jetbrains.com/display/TCD9/Predefined+Build+Parameters
+				format = format ?? (Environment.GetEnvironmentVariable("BUILD_NUMBER") != null 
+					                        ? SummaryFormat.TeamCity 
+					                        : SummaryFormat.Console);
 
-				_failedList.ForEach(failure =>
+				var summary = new StringBuilder();
+
+				switch (format)
 				{
-					buffer.AppendLine($"TYPE: {failure.Type?.FullName}");
-					buffer.AppendLine($"       PATH :  {failure.Path}");
-					buffer.AppendLine($"       ERROR:  {failure.Details}");
-				});
+					case SummaryFormat.Console:
+					{
+						if (_failedList.Count > 0)
+							summary.AppendLine($"--->>>> Configuration objects FAILED to pass the verification <<<<-----".ToUpper());
 
-				if (_passedList.Count > 0)
-					buffer.AppendLine($"The following {_passedList.Count} configuration objects passed the verification:");
+						_failedList.ForEach(failure =>
+						{
+							summary.AppendLine($"TYPE: {failure.Type?.FullName}");
+							summary.AppendLine($"       PATH :  {failure.Path}");
+							summary.AppendLine($"       ERROR:  {failure.Details}");
+						});
 
-				_passedList.ForEach(item => buffer.AppendLine($"    {item.FullName}"));
+						if (_passedList.Count > 0)
+							summary.AppendLine($"The following {_passedList.Count} configuration objects passed the verification:");
 
-				return buffer.ToString();
+						_passedList.ForEach(item => summary.AppendLine($"    {item.FullName}"));
+						
+						return summary.ToString();
+					}
+					case SummaryFormat.TeamCity:
+					{
+						using (var suite = new TestSuiteContext("Configuration Verificator", summary))
+						{
+							_failedList.ForEach(failure =>
+							{
+								using (var test = suite.AddTest(failure.Type?.FullName))
+									test.ReportFailure($"Path: {failure.Path}", failure.Details);
+							});
+							_passedList.ForEach(item =>
+							{
+								using (var test = suite.AddTest(item.FullName))
+									test.WriteMessage("Verified successfully.");
+							});
+						}
+
+						return summary.ToString();
+					}
+					default:
+						throw new ArgumentException($"Unsupported summary format: {format}");
+				}
 			}
 		}
 

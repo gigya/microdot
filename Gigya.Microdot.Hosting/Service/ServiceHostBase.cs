@@ -223,7 +223,11 @@ namespace Gigya.Microdot.Hosting.Service
 		    {
 				var result = ConfigurationVerificator.Verify();
 			    Environment.ExitCode = result.IsSuccess ? 0 : 1;
-			    Console.WriteLine(result.ToString());
+			    var restore = Console.ForegroundColor;
+			    if (!result.IsSuccess)
+				    Console.ForegroundColor = ConsoleColor.Red;
+			    Console.WriteLine(result.Summarize());
+			    Console.ForegroundColor = restore;
 		    }
 
 		    Console.WriteLine("   ***   Shutting down [configuration verification mode]. ***   ");

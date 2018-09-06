@@ -19,6 +19,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 	/// <summary>
 	/// The tests to ensure Configuration Verificator is 
 	/// </summary>
+	[TestFixture]
 	public class VerificatorTests
 	{
 		private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";
@@ -91,18 +92,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			// 	TYPE: Gigya.Microdot.UnitTests.Configuration.Verificator.VerifiedConfig1
 			// PATH :  Missing or invalid configuration file: VerifiedConfig1.config
 			// ERROR:  Root element is missing.
-			// 	TYPE: Gigya.Microdot.UnitTests.Configuration.Verificator.VerifiedConfig2
-			// PATH :  Missing or invalid configuration file: VerifiedConfig1.config
-			// ERROR:  Root element is missing.
 
 			s.Failed.Any(failure => 
 				failure.Type.Name == typeof(VerifiedConfig2).Name &&
 				failure.Path.Contains("Missing or invalid configuration file")).ShouldBeTrue();
+
+			Console.WriteLine(s.Summarize());
 		}
 
 		[Test]
+		[TestCase("console")]
+		[TestCase("teamcity")]
 		[Description("check we recognize a violation of annotated property in config object")]
-		public void WhenAnnotationViolated()
+		public void WhenAnnotationViolated(string format)
 		{
 			var setup = Setup();
 
@@ -147,6 +149,10 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 				failure.Type.Name == typeof(VerifiedConfig2).Name &&
 				failure.Details.Contains("The Required field is required"))
 			.ShouldBeTrue("Expected a failure! When no value is given for the property");
+
+			Console.WriteLine(s.Summarize(format == "teamcity" 
+				? ConfigurationVerificator.Results.SummaryFormat.TeamCity : 
+				ConfigurationVerificator.Results.SummaryFormat.Console));
 		}
 
 		[Test]
@@ -189,6 +195,8 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 
 			s.Passed.Any(passed => passed == typeof(VerifiedConfig1)).ShouldBeTrue();
 			s.IsSuccess.ShouldBeTrue();
+
+			Console.WriteLine(s.Summarize());
 		}
 
 		[Test]
@@ -242,6 +250,8 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 					failure.Type.Name == typeof(VerifiedConfig3).Name &&
 					failure.Details.Contains("Failed to deserialize config object"))
 				.ShouldBeTrue("Test is expected to fail while string cannot be converted to an int.");
+
+			Console.WriteLine(s.Summarize());
 		}
 	}
 }
