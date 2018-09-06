@@ -29,15 +29,9 @@ namespace CalculatorService.Client
                 kernel.Load<NLogModule>();
 
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
                 int sum = calculatorService.Add(2, 3).Result;
-                sw.Stop();
 
-                Console.WriteLine($"Add function evaluation time: {sw.Elapsed.TotalSeconds} sec");
                 Console.WriteLine($"Sum: {sum}");
-
-                Console.ReadLine();
             }
             catch (Exception ex)
             {
