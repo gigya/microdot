@@ -22,10 +22,8 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Reflection;
 using Gigya.Microdot.Hosting.HttpService;
 using Orleans;
-using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

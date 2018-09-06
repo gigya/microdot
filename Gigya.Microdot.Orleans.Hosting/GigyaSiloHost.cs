@@ -45,8 +45,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
-        private IWarmup _grainsWarmup;
-
         public static IGrainFactory GrainFactory { get; private set; }
         private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
@@ -65,10 +63,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
             HttpServiceListener httpServiceListener,
             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
-            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig, IWarmup grainsWarmup)
+            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig)
         {
-            _grainsWarmup = grainsWarmup;
-
             Log = log;
             ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
