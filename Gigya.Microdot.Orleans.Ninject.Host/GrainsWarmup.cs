@@ -23,6 +23,7 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting;
 using Ninject;
 
@@ -30,17 +31,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 {
     public class GrainsWarmup : IWarmup
     {
-        private GrainActivator _grainActivator;
         private IServiceInterfaceMapper _orleansMapper;
         private TaskCompletionSource<bool> _taskCompletionSource;
         private IKernel _kernel;
+        private ILog _log;
 
-        public GrainsWarmup(IActivator grainActivator, IServiceInterfaceMapper orleansMapper, IKernel kernel)
+        public GrainsWarmup(IServiceInterfaceMapper orleansMapper, IKernel kernel, ILog log)
         {
-            _grainActivator = grainActivator as GrainActivator;
             _orleansMapper = orleansMapper;
             _taskCompletionSource = new TaskCompletionSource<bool>();
             _kernel = kernel;
+            _log = log;
         }
 
         public void Warmup()
@@ -57,11 +58,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     _kernel.Get(serviceClass);
                 }
             }
-            catch
+            catch(Exception ex)
             {
                 _taskCompletionSource.SetException(new Exception("Failed to warmup grains"));
-
-                throw;
+                _log.Error("Failed to warmup grains", ex);
             }
 
             _taskCompletionSource.SetResult(true);
@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         private bool OrleansInterfaces()
         {
-            return _grainActivator != null && _orleansMapper is OrleansServiceInterfaceMapper;
+            return _orleansMapper is OrleansServiceInterfaceMapper;
         }
     }
 }
