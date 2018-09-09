@@ -194,6 +194,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private async Task HandleRequest(HttpListenerContext context)
         {
             RequestTimings.ClearCurrentTimings();
+            Stopwatch responsSW = new Stopwatch();
             using (context.Response)
             {
                 var sw = Stopwatch.StartNew();
@@ -203,7 +204,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 {
                     foreach (var customEndpoint in CustomEndpoints)
                     {
-                        if (await customEndpoint.TryHandle(context, (data, status, type) => TryWriteResponse(context, data, status, type)))
+                        if (await customEndpoint.TryHandle(context, (data, status, type) => TryWriteResponse(context, data, responsSW, status, type)))
                         {
                             if (RequestTimings.Current.Request.ElapsedMS != null)
                                 _metaEndpointsRoundtripTime.Record((long)RequestTimings.Current.Request.ElapsedMS, TimeUnit.Milliseconds);
@@ -214,7 +215,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 catch (Exception e)
                 {
                     var ex = GetRelevantException(e);
-                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
+                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), responsSW, GetExceptionStatusCode(ex));
                     return;
                 }
 
@@ -231,6 +232,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
                     ServiceMethod serviceMethod = null;
+                    double? responseTime;
                     try
                     {
                         try
@@ -257,7 +259,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         RejectRequestIfLateOrOverloaded();
 
                         var responseJson = await GetResponse(context, serviceMethod, requestData);
-                        await TryWriteResponse(context, responseJson);
+                        responseTime = await TryWriteResponse(context, responseJson, responsSW);
 
                         _successCounter.Increment();
                     }
@@ -268,7 +270,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         ex = GetRelevantException(e);
 
                         string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
-                        await TryWriteResponse(context, json, GetExceptionStatusCode(ex));
+                        responseTime = await TryWriteResponse(context, json, responsSW, GetExceptionStatusCode(ex));
                     }
                     finally
                     {
@@ -414,8 +416,10 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
         }
 
-        private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
+        private async Task<double?> TryWriteResponse(HttpListenerContext context, string data, Stopwatch stopWatch, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
         {
+            double? responseTime = null;
+
             context.Response.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
 
             var body = Encoding.UTF8.GetBytes(data ?? "");
@@ -429,7 +433,11 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
             try
             {
+                stopWatch.Restart();
                 await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
+                stopWatch.Stop();
+
+                responseTime = stopWatch.Elapsed.TotalMilliseconds;
             }
             catch (HttpListenerException writeEx)
             {
@@ -444,6 +452,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                     },
                     encryptedTags: new { response = data }));
             }
+
+            return responseTime;
         }
 
 
