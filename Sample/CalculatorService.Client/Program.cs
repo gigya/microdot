@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Configuration;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using CalculatorService.Client.ConfigCreationBenchmarkTest;
 using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
@@ -29,11 +25,6 @@ namespace CalculatorService.Client
                 var kernel = new StandardKernel();
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
-
-                if (ConfigurationManager.AppSettings["EnableBenchmarkTest"] != null && Convert.ToBoolean(ConfigurationManager.AppSettings["EnableBenchmarkTest"]))
-                {
-                    new BenchmarkTest(kernel).RunBenchmark();
-                }
 
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;
