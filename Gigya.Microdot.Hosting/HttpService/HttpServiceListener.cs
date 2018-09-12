@@ -29,6 +29,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
@@ -232,7 +233,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
                     ServiceMethod serviceMethod = null;
-                    double? responseTime;
+                    double? responseTime = null;
                     try
                     {
                         try
@@ -279,10 +280,15 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
+                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds, responseTime);
                     }
                 }
             }
+        }
+
+        private double? LimitResponseTimeForPrinting(double? responseTIme)
+        {
+            return 
         }
 
 

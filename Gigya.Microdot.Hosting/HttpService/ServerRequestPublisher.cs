@@ -13,7 +13,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public interface IServerRequestPublisher
     {
-        void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime);
+        void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime, double? responseTime);
     }
 
     public class ServerRequestPublisher : IServerRequestPublisher
@@ -31,8 +31,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             _serviceEndPointDefinition = serviceEndPointDefinition;
         }
 
-        public void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod,
-            double requestTime)
+        public void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime, double? responseTime)
         {
             var callEvent = _eventPublisher.CreateEvent();
 
@@ -51,6 +50,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             callEvent.Exception = ex;
             callEvent.ActualTotalTime = requestTime;
             callEvent.ErrCode = ex != null ? null : (int?)0;
+            callEvent.ResponseTime = responseTime;
 
             _eventPublisher.TryPublish(callEvent);
         }
