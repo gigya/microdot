@@ -17,7 +17,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 {
 	/// <summary>
-	/// The tests to ensure Configuration Verificator is 
+	/// The tests to ensure Verificator recognizing the configuration failures in major cases we expect
 	/// </summary>
 	[TestFixture]
 	public class VerificatorTests
@@ -32,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 		}
 
 		/// <summary>
-		/// Initial kernel setup
+		/// Initial common kernel setup for mocks
 		/// </summary>
 		public (StandardKernel k, IAssemblyProvider providerMock, IFileSystem fileSystemMock) Setup()
 		{
@@ -54,7 +54,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 
 		[Test]
 		[Description("check we recognize a broken XML file")]
-		public void WhenConfigIsNotValidXml()
+		public void WhenConfigIsNotValidXmlShouldAddFailure()
 		{
 			var setup = Setup();
 
@@ -104,19 +104,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 		[TestCase("console")]
 		[TestCase("teamcity")]
 		[Description("check we recognize a violation of annotated property in config object")]
-		public void WhenAnnotationViolated(string format)
+		public void WhenDataAnnotationViolatedShouldAddFailure(string format)
 		{
 			var setup = Setup();
 
 			setup.providerMock.GetAllTypes().Returns(info => new[]
 			{
- 				typeof(VerifiedConfig2),
- 			});
+				typeof(VerifiedConfig2),
+			});
 
 			setup.fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
 			{
- 				"VerifiedConfig2.config",
- 			});
+				"VerifiedConfig2.config",
+			});
 
 			setup.fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
 			{
@@ -157,19 +157,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 
 		[Test]
 		[Description("check we actually loading the value for property from File, not the default in class")]
-		public void WhenValueLoadedFromConfigFile()
+		public void WhenValueLoadedFromConfigFileShouldSuccess()
 		{
 			var setup = Setup();
 
 			setup.providerMock.GetAllTypes().Returns(info => new[]
 			{
-		 				typeof(VerifiedConfig1),
-		 			});
+						typeof(VerifiedConfig1),
+					});
 
 			setup.fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
 			{
-		 				"VerifiedConfig1.config",
-		 			});
+						"VerifiedConfig1.config",
+					});
 
 			setup.fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
 			{
@@ -179,7 +179,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 					content =
 @"<configuration>
 		 <VerifiedConfig1>
-		 	<ValueLoaded>theValue</ValueLoaded>
+			<ValueLoaded>theValue</ValueLoaded>
 		 </VerifiedConfig1>
 		 </configuration>";
 				}
@@ -201,7 +201,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 
 		[Test]
 		[Description("check we recognize a case of a value is not converted into a another type")]
-		public void WhenValueIsNotSuitable()
+		public void WhenValueIsNotSuitableShouldAddFailure()
 		{
 			var setup = Setup();
 
@@ -223,7 +223,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 					content =
 						@"<configuration>
 		 <VerifiedConfig3>
-		 	<TheInt>theValue</TheInt>
+			<TheInt>theValue</TheInt>
 		 </VerifiedConfig3>
 		 </configuration>";
 				}
