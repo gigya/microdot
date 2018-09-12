@@ -64,8 +64,6 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 if (serviceType == null)
                     throw new RequestException("Invalid service name");
 
-                await _warmup.WaitForWarmup();
-
                 if (ServiceInterfaceMapper.HealthStatusServiceType == null || serviceType.IsAssignableFrom(ServiceInterfaceMapper.HealthStatusServiceType) == false)
                 {
                     await writeResponse(string.Empty).ConfigureAwait(false);

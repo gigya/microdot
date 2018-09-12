@@ -1,21 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.HttpService.Endpoints;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
-using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Service;
 using Ninject;
-using NSubstitute;
 using NUnit.Framework;
-using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {

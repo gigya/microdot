@@ -32,14 +32,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     public class GrainsWarmup : IWarmup
     {
         private IServiceInterfaceMapper _orleansMapper;
-        private TaskCompletionSource<bool> _taskCompletionSource;
         private IKernel _kernel;
         private ILog _log;
 
         public GrainsWarmup(IServiceInterfaceMapper orleansMapper, IKernel kernel, ILog log)
         {
             _orleansMapper = orleansMapper;
-            _taskCompletionSource = new TaskCompletionSource<bool>();
             _kernel = kernel;
             _log = log;
         }
@@ -60,16 +58,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
             catch(Exception ex)
             {
-                _taskCompletionSource.SetException(new Exception("Failed to warmup grains"));
                 _log.Error("Failed to warmup grains", ex);
+                throw;
             }
-
-            _taskCompletionSource.SetResult(true);
-        }
-
-        public async Task WaitForWarmup()
-        {
-            await _taskCompletionSource.Task;
         }
 
         private bool OrleansInterfaces()
