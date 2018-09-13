@@ -21,24 +21,30 @@
 #endregion
 
 using System;
-using System.Net;
-using System.Reflection;
-using System.Security.Principal;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {
+    [ConfigurationRoot("dataCenters", RootStrategy.ReplaceClassNameWithPath)]
+    public class DataCentersConfig : IConfigObject
+    {
+        public string Current { get; set; }
+    }
+
     public class EnvironmentInstance : IEnvironment
     {
         private readonly IEnvironmentVariableProvider _environmentVariableProvider;
+        private readonly string _region;
+        private Func<DataCentersConfig> GetDataCentersConfig { get; }
 
-        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider)
+        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider, Func<DataCentersConfig> getDataCentersConfig)
         {
             _environmentVariableProvider = environmentVariableProvider;
+            GetDataCentersConfig = getDataCentersConfig;
             Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE") ?? environmentVariableProvider.GetEnvironmentVariable("DC");
-            Region = environmentVariableProvider.GetEnvironmentVariable("REGION") ?? environmentVariableProvider.GetEnvironmentVariable("DC");
+            _region = environmentVariableProvider.GetEnvironmentVariable("REGION");
             DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
 
@@ -47,7 +53,7 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         }
 
         public string Zone { get; }
-        public string Region { get; }
+        public string Region => _region ?? GetDataCentersConfig().Current; // if environmentVariable %REGION% does not exist, take the region from DataCenters configuration (the region was previously called "DataCenter")
         public string DeploymentEnvironment { get; }        
         public string ConsulAddress { get; }
 
