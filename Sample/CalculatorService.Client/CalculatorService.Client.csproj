@@ -60,14 +60,6 @@
       <Project>{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}</Project>
       <Name>Gigya.Microdot.Ninject</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
-      <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
-      <Name>Gigya.Microdot.ServiceDiscovery</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj">
-      <Project>{1FCB2569-A640-4292-9CDC-821AEEF14813}</Project>
-      <Name>Gigya.Microdot.ServiceProxy</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
       <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
       <Name>Gigya.Microdot.SharedLogic</Name>
