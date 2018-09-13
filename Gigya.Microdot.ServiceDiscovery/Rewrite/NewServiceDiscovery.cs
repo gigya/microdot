@@ -23,6 +23,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -107,7 +108,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (!GetConfig().EnvironmentFallbackEnabled)
             {
                 _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
-                return null;
+                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags{{"serviceName",_serviceName}, {"environment", _originatingEnvironmentDeployment.DeploymentEnvironment}});
             }
 
             node = await MasterEnvironmentLoadBalancer.GetNode().ConfigureAwait(false);
@@ -118,7 +119,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
 
             _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
-            throw new ServiceUnreachableException("Service is not deployed");
+            throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _originatingEnvironmentDeployment.DeploymentEnvironment }, {"masterEnvironment", _masterDeployment.DeploymentEnvironment}});
         }
 
         private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
