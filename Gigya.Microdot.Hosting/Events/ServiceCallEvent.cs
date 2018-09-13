@@ -69,7 +69,7 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField("params", Encrypt = false, TruncateIfLong = true)]
         public IEnumerable<KeyValuePair<string, object>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
 
-        /// <summary> The time, neasured on response to client </summary>
+        /// <summary> The time, measured on response to client </summary>
         [EventField("cln.ResponseTime")]
         public double? ResponseTime { get; set; } = null;
 

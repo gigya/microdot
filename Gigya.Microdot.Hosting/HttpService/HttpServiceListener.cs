@@ -97,12 +97,13 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
+        private readonly Func<EventConfiguration> _eventConfig;
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
                                    IServerRequestPublisher serverRequestPublisher,
-                                   JsonExceptionSerializer exceptionSerializer, Func<LoadShedding> loadSheddingConfig)
+                                   JsonExceptionSerializer exceptionSerializer, Func<LoadShedding> loadSheddingConfig, Func<EventConfiguration> eventConfig)
         {
             _serverRequestPublisher = serverRequestPublisher;
             ServiceEndPointDefinition = serviceEndPointDefinition;
@@ -114,6 +115,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             EnvironmentVariableProvider = environmentVariableProvider;
             ExceptionSerializer = exceptionSerializer;
             LoadSheddingConfig = loadSheddingConfig;
+            _eventConfig = eventConfig;
 
             if (serviceEndPointDefinition.UseSecureChannel)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -280,15 +282,15 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds, responseTime);
+                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds, ValidateResponseTime(responseTime));
                     }
                 }
             }
         }
 
-        private double? LimitResponseTimeForPrinting(double? responseTIme)
+        private double? ValidateResponseTime(double? responseTIme)
         {
-            return 
+            return responseTIme < _eventConfig().MinResponseTimeForLog ? null : responseTIme;
         }
 
 
