@@ -28,11 +28,7 @@ namespace Gigya.Microdot.Hosting.Service
     public class ServiceWarmup : IWarmup
     {
         public bool IsServiceWarmed { get; } = true;
-        public Task WaitForWarmup()
-        {
-            return Task.FromResult(true);
-        }
-
+       
         public void Warmup()
         {
         }

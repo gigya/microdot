@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
-using Gigya.Microdot.Orleans.Ninject.Host;
+﻿using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Ninject;
+using NSubstitute;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService
 {
@@ -16,7 +10,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
         {
             base.Configure(kernel, commonConfig);
 
-            kernel.Rebind<DependantClass>().ToSelf().InSingletonScope();
+            kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
         }
     }
 }

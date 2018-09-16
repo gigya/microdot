@@ -13,38 +13,25 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         private int mainPort = 9555;
         
         [Test]
-        public async Task Warmup_InstanceReadyBeforeCallingMethod()
+        public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
             ServiceTester<WarmupTestServiceHost> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHost>(mainPort);
-
-
+            
             IWarmupTestServiceGrain grain = tester.GetGrainClient<IWarmupTestServiceGrain>(0);
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            int result = await grain.Test();
-            sw.Stop();
+            int result = await grain.TestWarmedTimes();
+            result = await grain.TestWarmedTimes();
+            result = await grain.TestWarmedTimes();
 
-            Assert.Less(sw.Elapsed.TotalMilliseconds, AssemblyInitialize.ResolutionRoot.Get<DependantClass>().SleepTime);
-            Assert.AreEqual(result, 2);
+            Assert.AreEqual(result, 1);
 
             tester.Dispose();
         }
 
         [Test]
-        public async Task NoWarmup_InstanceNotReadyBeforeCallingMethod()
+        public async Task VerifyWarmupBeforeSiloStart()
         {
-            ServiceTester<WarmupTestServiceHost_NoWarmup> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHost_NoWarmup>(mainPort);
-
-            IWarmupTestServiceGrain grain = tester.GetGrainClient<IWarmupTestServiceGrain>(0);
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            int result = await grain.Test();
-            sw.Stop();
-
-            Assert.Greater(sw.Elapsed.TotalMilliseconds, AssemblyInitialize.ResolutionRoot.Get<DependantClass>().SleepTime);
-            Assert.AreEqual(result, 2);
-
-            tester.Dispose();
+            WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
+            host.Run();
         }
     }
 }

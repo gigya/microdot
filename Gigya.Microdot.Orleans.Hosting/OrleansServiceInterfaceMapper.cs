@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class OrleansServiceInterfaceMapper : ServiceInterfaceMapper
     {
         public override IEnumerable<Type> ServiceInterfaceTypes => Mappings.Keys;
-        public override IEnumerable<Type> ServiceClassesTypes { get; }
+
         private Dictionary<Type, Type> Mappings { get; }
 
 

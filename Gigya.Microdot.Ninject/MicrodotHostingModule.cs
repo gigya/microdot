@@ -41,7 +41,6 @@ namespace Gigya.Microdot.Ninject
             this.BindClassesAsSingleton(assemblies: new[] { typeof(HostingAssembly) });
             this.BindInterfacesAsSingleton(new List<Type> { typeof(IServiceInterfaceMapper) }, assemblies: new[] { typeof(HostingAssembly) });
             Bind<IServiceDrainListener,ServiceDrainController>().To<ServiceDrainController>().InSingletonScope();
-            Rebind<IWarmup>().To<ServiceWarmup>().InSingletonScope();
         }
     }
 }

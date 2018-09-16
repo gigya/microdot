@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Orleans;
 
@@ -12,7 +7,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
     [HttpService(6556)]
     public interface IWarmupTestService
     {
-        Task<int> Test();
+        Task<int> TestWarmedTimes();
     }
 
     public interface IWarmupTestServiceGrain : IWarmupTestService, IGrainWithIntegerKey
@@ -22,26 +17,44 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 
     public class WarmupTestServiceGrain : Grain, IWarmupTestServiceGrain
     {
-        private DependantClass _dependantClass;
+        private readonly IDependantClassFake _dependantClassFake;
 
-        public WarmupTestServiceGrain(DependantClass dependantClass)
+        public WarmupTestServiceGrain(IDependantClassFake dependantClassFake)
         {
-            _dependantClass = dependantClass;
+            _dependantClassFake = dependantClassFake;
+            _dependantClassFake.ThisClassIsWarmed();
         }
 
-        public async Task<int> Test()
+        public async Task<int> TestWarmedTimes()
         {
-            return 2;
+            return _dependantClassFake.WarmedTimes;
         }
     }
 
-    public class DependantClass
+    public interface IDependantClassFake
     {
-        public int SleepTime = 5000;
+        int WarmedTimes { get; }
+        void IncreaseWarmedTimes();
+        bool ThisClassIsWarmed();
+    }
 
-        public DependantClass()
+    public class DependantClassFake : IDependantClassFake
+    {
+        public int WarmedTimes { get; private set; }
+
+        public DependantClassFake()
         {
-            Thread.Sleep(SleepTime);
+            IncreaseWarmedTimes();
+        }
+
+        public void IncreaseWarmedTimes()
+        {
+            WarmedTimes++;
+        }
+
+        public bool ThisClassIsWarmed()
+        {
+            return true;
         }
     }
 }

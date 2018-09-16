@@ -44,11 +44,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public void Warmup()
         {
-            if (!OrleansInterfaces())
-            {
-                return;
-            }
-
             try
             {
                 foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)
@@ -61,11 +56,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 _log.Error("Failed to warmup grains", ex);
                 throw;
             }
-        }
-
-        private bool OrleansInterfaces()
-        {
-            return _orleansMapper is OrleansServiceInterfaceMapper;
         }
     }
 }
