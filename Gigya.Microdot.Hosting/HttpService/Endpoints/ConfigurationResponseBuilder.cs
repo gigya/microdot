@@ -162,7 +162,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             return Environment.GetEnvironmentVariables()
                        .OfType<DictionaryEntry>()
                        .Select(x => new { Name = (string)x.Key, Value = (string)x.Value })
-                       .Where(x => x.Name.ToUpper() == "DC" || x.Name.ToUpper() == "ENV" || x.Name.ToUpper().Contains("GIGYA"))
+                       .Where(x => x.Name.ToUpper() == "DC" || x.Name.ToUpper() == "ZONE" || x.Name.ToUpper() == "REGION" || x.Name.ToUpper() == "ENV" || x.Name.ToUpper().Contains("GIGYA"))
                        .OrderBy(x => x.Name)
                        .ToDictionary(x => x.Name, x => x.Value);
         }

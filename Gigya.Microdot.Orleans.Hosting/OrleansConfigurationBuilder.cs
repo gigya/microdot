@@ -21,8 +21,10 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -32,10 +34,11 @@ using org.apache.zookeeper;
 using Orleans.Providers;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
+using Orleans.Storage;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public class ZooKeeperConfig 
+    public class ZooKeeperConfig
     {
         public string ConnectionString { get; set; }
     }
@@ -45,109 +48,144 @@ namespace Gigya.Microdot.Orleans.Hosting
         public string ConnectionString { get; set; }
     }
 
+
+    public class GrainAgeLimitConfig
+    {
+        public double GrainAgeLimitInMins { get; set; }
+        public string GrainType { get; set; }
+
+    }
+
     public class OrleansConfig : IConfigObject
     {
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
+        public double DefaultGrainAgeLimitInMins { get; set; } = 30;
+        public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
 
         public ZooKeeperConfig ZooKeeper { get; set; }
 
         public MySqlConfig MySql_v4_0 { get; set; }
+
     }
 
-	public class OrleansConfigurationBuilder
-	{
-	    public ClusterConfiguration ClusterConfiguration { get; }
+    public class OrleansConfigurationBuilder
+    {
+        public ClusterConfiguration ClusterConfiguration { get; }
         public Silo.SiloType SiloType { get; private set; }
 
 
-	    public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
-	                                       ClusterConfiguration clusterConfiguration, ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
-	                                       OrleansLogConsumer orleansLogConsumer, ZooKeeperLogConsumer zooKeeperLogConsumer, ServiceArguments serviceArguments)
-	    {
-	        ClusterConfiguration = clusterConfiguration;
+        public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig, OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
+                                           ClusterConfiguration clusterConfiguration, ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
+                                           OrleansLogConsumer orleansLogConsumer, ZooKeeperLogConsumer zooKeeperLogConsumer, ServiceArguments serviceArguments)
+        {
+            ClusterConfiguration = clusterConfiguration;
 
-	        SiloType = Silo.SiloType.Secondary;
-	        var globals = ClusterConfiguration.Globals;
-	        var defaults = ClusterConfiguration.Defaults;
-	        globals.ExpectedClusterSize = 1; // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds).
-	        globals.RegisterBootstrapProvider<DelegatingBootstrapProvider>(nameof(DelegatingBootstrapProvider));
-	        defaults.ProxyGatewayEndpoint = new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloGatewayPort);
-	        defaults.Port = endPointDefinition.SiloNetworkingPort;
-	        defaults.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
+            SiloType = Silo.SiloType.Secondary;
+            var globals = ClusterConfiguration.Globals;
+            var defaults = ClusterConfiguration.Defaults;
 
-	        if (serviceArguments.ProcessorAffinity != null)
-	            defaults.MaxActiveThreads = serviceArguments.ProcessorAffinity.Length;
+            SetAgeLimits(globals, orleansConfig, orleansServiceInterfaceMapper);
 
-	        // Orleans log redirection
-	        defaults.TraceToConsole = false;
-	        defaults.TraceFileName = null;
-	        defaults.TraceFilePattern = null;
-	        LogManager.LogConsumers.Add(orleansLogConsumer);
+            globals.ExpectedClusterSize = 1; // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds).
+            globals.RegisterBootstrapProvider<DelegatingBootstrapProvider>(nameof(DelegatingBootstrapProvider));
+            defaults.ProxyGatewayEndpoint = new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloGatewayPort);
+            defaults.Port = endPointDefinition.SiloNetworkingPort;
+            defaults.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
-	        // ZooKeeper log redirection
-	        ZooKeeper.LogToFile = false;
-	        ZooKeeper.LogToTrace = false;
-	        ZooKeeper.LogLevel = TraceLevel.Verbose;
-	        ZooKeeper.CustomLogConsumer = zooKeeperLogConsumer;
+            defaults.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
 
-	        //Setup Statistics
-	        var metricsProviderType = typeof(MetricsStatisticsPublisher);
-	        globals.ProviderConfigurations.Add("Statistics", new ProviderCategoryConfiguration("Statistics")
-	        {
-	            Providers = new Dictionary<string, IProviderConfiguration>
-	            {
-	                {
-	                    metricsProviderType.Name,
-	                    new ProviderConfiguration(new Dictionary<string, string>(), metricsProviderType.FullName, metricsProviderType.Name)
-	                }
-	            }
-	        });
-	        defaults.StatisticsProviderName = metricsProviderType.Name;
-	        defaults.StatisticsCollectionLevel = StatisticsLevel.Info;
-	        defaults.StatisticsLogWriteInterval = TimeSpan.Parse(orleansConfig.MetricsTableWriteInterval);
-	        defaults.StatisticsWriteLogStatisticsToTable = true;
+            // Orleans log redirection
+            defaults.TraceToConsole = false;
+            defaults.TraceFileName = null;
+            defaults.TraceFilePattern = null;
+            LogManager.LogConsumers.Add(orleansLogConsumer);
 
-	        if(commonConfig.ServiceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
-	        {
-	            defaults.HostNameOrIPAddress = "localhost";
-	            globals.ReminderServiceType = commonConfig.UseReminders
-	                ? GlobalConfiguration.ReminderServiceProviderType.ReminderTableGrain
-	                :GlobalConfiguration.ReminderServiceProviderType.Disabled;
+            // ZooKeeper log redirection
+            ZooKeeper.LogToFile = false;
+            ZooKeeper.LogToTrace = false;
+            ZooKeeper.LogLevel = TraceLevel.Verbose;
+            ZooKeeper.CustomLogConsumer = zooKeeperLogConsumer;
 
-	            globals.LivenessType = GlobalConfiguration.LivenessProviderType.MembershipTableGrain;
+            //Setup Statistics
+            var metricsProviderType = typeof(MetricsStatisticsPublisher);
+            globals.ProviderConfigurations.Add("Statistics", new ProviderCategoryConfiguration("Statistics")
+            {
+                Providers = new Dictionary<string, IProviderConfiguration>
+                {
+                    {
+                        metricsProviderType.Name,
+                        new ProviderConfiguration(new Dictionary<string, string>(), metricsProviderType.FullName, metricsProviderType.Name)
+                    }
+                }
+            });
+            defaults.StatisticsProviderName = metricsProviderType.Name;
+            defaults.StatisticsCollectionLevel = StatisticsLevel.Info;
+            defaults.StatisticsLogWriteInterval = TimeSpan.Parse(orleansConfig.MetricsTableWriteInterval);
+            defaults.StatisticsWriteLogStatisticsToTable = true;
 
-	            if(commonConfig.ServiceArguments.SiloClusterMode == SiloClusterMode.PrimaryNode)
-	            {
-	                globals.SeedNodes.Add(new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloNetworkingPort));
-	                SiloType = Silo.SiloType.Primary;
-	            }
-	            else
-	            {
-	                globals.SeedNodes.Add(new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloNetworkingPortOfPrimaryNode));
-	            }
-	        }
-	        else
-	        {
-	            globals.DeploymentId = clusterIdentity.DeploymentId;
-	            globals.LivenessType = GlobalConfiguration.LivenessProviderType.ZooKeeper;
-	            globals.DataConnectionString = orleansConfig.ZooKeeper.ConnectionString;
+            if (commonConfig.ServiceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
+            {
+                defaults.HostNameOrIPAddress = "localhost";
+                globals.ReminderServiceType = commonConfig.UseReminders
+                    ? GlobalConfiguration.ReminderServiceProviderType.ReminderTableGrain
+                    : GlobalConfiguration.ReminderServiceProviderType.Disabled;
 
-	            if(commonConfig.UseReminders)
-	            {
-	                globals.ServiceId = clusterIdentity.ServiceId;
-	                globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.SqlServer;
-	                globals.DataConnectionStringForReminders = orleansConfig.MySql_v4_0.ConnectionString;
-	                globals.AdoInvariantForReminders = "MySql.Data.MySqlClient";
-	            }
-	            else
-	                globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.Disabled;
-	        }
+                globals.LivenessType = GlobalConfiguration.LivenessProviderType.MembershipTableGrain;
 
-	        if(string.IsNullOrEmpty(commonConfig.StorageProviderTypeFullName)==false)
-	        {
-	            globals.RegisterStorageProvider(commonConfig.StorageProviderTypeFullName, "Default");
-	            globals.RegisterStorageProvider(commonConfig.StorageProviderTypeFullName, commonConfig.StorageProviderName);
-	        }
-	    }
-	}
+                if (commonConfig.ServiceArguments.SiloClusterMode == SiloClusterMode.PrimaryNode)
+                {
+                    globals.SeedNodes.Add(new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloNetworkingPort));
+                    SiloType = Silo.SiloType.Primary;
+                }
+                else
+                {
+                    globals.SeedNodes.Add(new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloNetworkingPortOfPrimaryNode));
+                }
+            }
+            else
+            {
+                globals.DeploymentId = clusterIdentity.DeploymentId;
+                globals.LivenessType = GlobalConfiguration.LivenessProviderType.ZooKeeper;
+                globals.DataConnectionString = orleansConfig.ZooKeeper.ConnectionString;
+
+                if (commonConfig.UseReminders)
+                {
+                    globals.ServiceId = clusterIdentity.ServiceId;
+                    globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.SqlServer;
+                    globals.DataConnectionStringForReminders = orleansConfig.MySql_v4_0.ConnectionString;
+                    globals.AdoInvariantForReminders = "MySql.Data.MySqlClient";
+                }
+                else
+                    globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.Disabled;
+            }
+
+            if (string.IsNullOrEmpty(commonConfig.StorageProviderTypeFullName) == false)
+            {
+                //globals.RegisterStorageProvider<MemoryStorage>("OrleansStorage");
+                globals.RegisterStorageProvider(commonConfig.StorageProviderTypeFullName, "Default");
+                globals.RegisterStorageProvider(commonConfig.StorageProviderTypeFullName, commonConfig.StorageProviderName);
+            }
+        }
+
+        private void SetAgeLimits(GlobalConfiguration globals, OrleansConfig orleansConfig, OrleansServiceInterfaceMapper orleansServiceInterfaceMapper)
+        {
+            globals.Application.SetDefaultCollectionAgeLimit(TimeSpan.FromMinutes(orleansConfig.DefaultGrainAgeLimitInMins));
+
+            if (orleansConfig.GrainAgeLimits != null)
+            {
+                foreach (var grainAgeLimitConfig in orleansConfig.GrainAgeLimits.Values)
+                {
+                    try
+                    {
+                        orleansServiceInterfaceMapper.ServiceClassesTypes.Single(x => x.FullName.Equals(grainAgeLimitConfig.GrainType));
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ArgumentException($"Assigning Age Limit on {grainAgeLimitConfig.GrainType} has failed, because {grainAgeLimitConfig.GrainType} is an invalid type\n{e.Message}");
+                    }
+                    globals.Application.SetCollectionAgeLimit(grainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(grainAgeLimitConfig.GrainAgeLimitInMins));
+                }
+            }
+        }
+    }
 }

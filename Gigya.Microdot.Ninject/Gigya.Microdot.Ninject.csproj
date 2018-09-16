@@ -51,6 +51,7 @@
     <Compile Include="MicrodotModule.cs" />
     <Compile Include="NinjectExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegexTimeoutInitializer.cs" />
     <Compile Include="ServiceProxyModule.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -158,17 +159,6 @@
       <ItemGroup>
         <Reference Include="Ninject.Extensions.Factory">
           <HintPath>..\packages\Ninject.Extensions.Factory\lib\net45\Ninject.Extensions.Factory.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
-      <ItemGroup>
-        <Reference Include="System.Runtime.InteropServices.RuntimeInformation">
-          <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

@@ -59,15 +59,6 @@ namespace Gigya.Microdot.SharedLogic.HttpService
                 throw new ArgumentNullException(nameof(arguments));
 
 			Arguments = new OrderedDictionary(arguments.Count);
-            Overrides = TracingContext.TryGetOverrides();
-            TracingData = new TracingData
-            {
-                HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
-                ServiceName = CurrentApplicationInfo.Name,
-                RequestID = TracingContext.TryGetRequestID(),
-                SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID()
-            };
         }
 
         /// <summary>

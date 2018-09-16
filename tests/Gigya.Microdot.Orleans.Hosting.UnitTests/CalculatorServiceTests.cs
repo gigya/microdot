@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
@@ -381,6 +382,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Service.LogGrainId();
         }
 
+        [Test]
+        public async Task RegexTestWithTimeout()
+        {
+            await Service.RegexTestWithDefaultTimeoutDefault( 10);
+        }
+
         #region MockData
         public class Person
         {
@@ -408,9 +415,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Serializable]
         public class Teacher : Person
         {
+
+            [NonSensitive]
+            public string FieldNonSensitive = "FieldName";
+
+
+            [Sensitive(Secretive = false)]
+
+            public string FieldSensitive = "FieldSensitive";
+
+            [Sensitive(Secretive = true)]
+
+            public string FieldCryptic = "FieldCryptic";
+
+
             [NonSensitive]
             public string School { get; set; } = "Busmat";
         }
+
         #endregion
     }
 }

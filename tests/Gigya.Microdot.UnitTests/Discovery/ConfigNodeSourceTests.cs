@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -11,6 +12,7 @@ using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
+using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
 
@@ -29,7 +31,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void OneTimeSetup()
         {
             _kernel = new TestingKernel<ConsoleLog>();
-            _kernel.Rebind<Func<DiscoveryConfig>>().ToMethod(c => () => _discoveryConfig);
+            _kernel.Rebind<Func<DiscoveryConfig>>().ToMethod(c => () => _discoveryConfig);            
         }
 
         [OneTimeTearDown]
@@ -41,7 +43,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [SetUp]
         public void Setup()
         {
-            var deployment = new DeploymentIdentifier(ServiceName, "prod");
+            var environment = Substitute.For<IEnvironment>();
+            var deployment = new DeploymentIdentifier(ServiceName, "prod", environment);
 
             _configNodeSource = _kernel.Get<Func<DeploymentIdentifier, ConfigNodeSource>>()(deployment);            
         }

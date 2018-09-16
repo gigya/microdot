@@ -39,6 +39,7 @@ using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
@@ -84,7 +85,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private ILog Log { get; }
         private IEventPublisher<ServiceCallEvent> EventPublisher { get; }
         private IEnumerable<ICustomEndpoint> CustomEndpoints { get; }
-        private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
+        private IEnvironment Environment { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
@@ -101,7 +102,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
-                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
+                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
                                    JsonExceptionSerializer exceptionSerializer, 
                                    ServiceSchema serviceSchema,                                   
                                    Func<LoadShedding> loadSheddingConfig,
@@ -116,7 +117,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             Log = log;
             EventPublisher = eventPublisher;
             CustomEndpoints = customEndpoints.ToArray();
-            EnvironmentVariableProvider = environmentVariableProvider;
+            Environment = environment;
             ExceptionSerializer = exceptionSerializer;
             LoadSheddingConfig = loadSheddingConfig;
 
@@ -429,8 +430,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.StatusCode = (int)httpStatus;
             context.Response.ContentLength64 = body.Length;
             context.Response.ContentType = contentType;
-            context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, EnvironmentVariableProvider.DataCenter);
-            context.Response.Headers.Add(GigyaHttpHeaders.Environment, EnvironmentVariableProvider.DeploymentEnvironment);
+            context.Response.Headers.Add(GigyaHttpHeaders.Zone, Environment.Zone);
+            context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
             context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);

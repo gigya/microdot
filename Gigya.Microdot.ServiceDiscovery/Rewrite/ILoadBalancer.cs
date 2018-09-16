@@ -33,14 +33,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     public interface ILoadBalancer: IDisposable
     {
         /// <summary>
-        /// Retrieves the a node which is considered to be reachable.
+        /// Retrieves a node which is considered to be reachable.
+        /// Returns null if the service is not implemented in the requested environment
         /// </summary>
         Task<Node> GetNode();
-
-        /// <summary>
-        /// Returns true if the service was undeployed on the current environment
-        /// </summary>
-        Task<bool> WasUndeployed();
 
         /// <summary>
         /// Report that a node was not responsive

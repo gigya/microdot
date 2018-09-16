@@ -1,4 +1,26 @@
-﻿using System;
+﻿#region Copyright 
+// Copyright 2017 Gigya Inc.  All rights reserved.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License.  
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+#endregion
+
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -13,37 +35,35 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-
-    internal class ConsulClient : IDisposable
+    internal class ConsulClient : IConsulClient
     {
         private ILog Log { get; }
         private IDateTime DateTime { get; }
         private Func<ConsulConfig> GetConfig { get; }
-        private Uri ConsulAddress => _httpClient.BaseAddress;
-        private string DataCenter { get; }
+        private Uri ConsulAddress => _httpClient.BaseAddress;        
+        private string Zone { get; }
         private HttpClient _httpClient;
         private int _disposed = 0;
 
 
 
-        public ConsulClient(ILog log, IEnvironmentVariableProvider environmentVariableProvider, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
         {
-            DataCenter = environmentVariableProvider.DataCenter;
+            Zone = environment.Zone;
             Log = log;
             DateTime = dateTime;
             GetConfig = getConfig;
 
-            if (environmentVariableProvider.ConsulAddress != null)
-                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environmentVariableProvider.ConsulAddress}") };
+            if (environment.ConsulAddress != null)
+                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environment.ConsulAddress}") };
             else
                 _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
         }
 
 
-
-        public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            string urlCommand = $"v1/health/service/{deploymentIdentifier}?dc={DataCenter}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -64,34 +84,36 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, CancellationToken cancellationToken) where T: class
+        public async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key,
+            string zone = null, CancellationToken cancellationToken=default(CancellationToken)) where T: class
         {
             T result = null;
-            string urlCommand = $"v1/kv/{folder}/{key}?dc={DataCenter}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/kv/{folder}/{key}?dc={zone ?? Zone}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 try
                 {
                     var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
-                    result = keyValues.SingleOrDefault()?.TryDecodeValue<T>();                    
+                    result = keyValues.SingleOrDefault()?.DecodeValue<T>();                    
                 }
                 catch (Exception ex)
                 {
                     response.UnparsableConsulResponse(ex);
                 }
             }
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+                response.IsUndeployed = true;
             else if (response.Error == null)
                 response.ConsulResponseError();
 
             return response.SetResult(result);
         }
 
-
-        public async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        internal async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string version = null;
-            var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.ToString(), cancellationToken);
+            var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.Zone, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 response.IsUndeployed = true;
@@ -103,15 +125,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             else if (response.Error == null)
                 response.ConsulResponseError();
-
             return response.SetResult(version);
         }
 
 
 
-        public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken)
+        public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken=default(CancellationToken))
         {
-            string urlCommand = $"v1/kv/{folder}?dc={DataCenter}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+            string urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -133,7 +154,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        public Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
+        internal Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex, CancellationToken cancellationToken)
         {
             return GetAllKeys(modifyIndex, "service", cancellationToken);
         }
@@ -183,8 +204,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             return consulResult;
         }
-
-
 
         private ConsulNode ToNode(ServiceEntry serviceEntry)
         {

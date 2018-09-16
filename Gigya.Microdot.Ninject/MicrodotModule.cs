@@ -49,6 +49,7 @@ namespace Gigya.Microdot.Ninject
     /// </summary>
     public class MicrodotModule : NinjectModule
     {
+    
         private readonly Type[] NonSingletonBaseTypes =
         {
             typeof(ConsulDiscoverySource),
@@ -59,6 +60,9 @@ namespace Gigya.Microdot.Ninject
 
         public override void Load()
         {
+            //Need to be initialized before using any regex!
+            new RegexTimeoutInitializer().Init();
+
             Kernel
                 .Bind(typeof(ConcurrentDictionary<,>))
                 .To(typeof(DisposableConcurrentDictionary<,>))
@@ -89,7 +93,9 @@ namespace Gigya.Microdot.Ninject
             Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
             Rebind<IDiscovery>().To<Discovery>().InSingletonScope();
 
-            Rebind<ServiceDiscovery.Rewrite.ConsulClient>().ToSelf().InSingletonScope();            
+            Rebind<ServiceDiscovery.Rewrite.ConsulClient, ServiceDiscovery.Rewrite.IConsulClient>()
+                .To<ServiceDiscovery.Rewrite.ConsulClient>().InSingletonScope();            
+            
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();

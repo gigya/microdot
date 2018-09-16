@@ -5,14 +5,17 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;
 using Shouldly;
+using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
@@ -34,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironmentVariableProvider>().To<EnvironmentVariableProvider>();
+                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
                 _consulClientMock = new ConsulClientMock();
@@ -60,7 +63,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _discoveryConfig.Services[ServiceName].Source = "Config";
             _discoveryConfig.Services[ServiceName].Hosts = "host3";
 
-            var node = await (await _serviceDiscovery.GetLoadBalancer()).GetNode();
+            var node = await _serviceDiscovery.GetNode();
             Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
             Assert.AreEqual("host3", node.Hostname);
         }
@@ -70,8 +73,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceSourceIsLocal()
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
-            var loadBalancer = await _serviceDiscovery.GetLoadBalancer();
-            (await loadBalancer.GetNode()).Hostname.ShouldContain(CurrentApplicationInfo.HostName);
+            var node = await _serviceDiscovery.GetNode();
+            node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
         }
 
     }

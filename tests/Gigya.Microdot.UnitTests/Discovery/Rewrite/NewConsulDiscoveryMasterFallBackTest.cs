@@ -29,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private Dictionary<DeploymentIdentifier, ILoadBalancer> _loadBalancers;
         private Dictionary<DeploymentIdentifier, Func<Node>> _nodeResults;
         private HashSet<DeploymentIdentifier> _consulServiceList;
-        private IEnvironmentVariableProvider _environmentVariableProvider;
+        private IEnvironment _environment;
         private IDateTime _dateTimeMock;
         private int id;
         private const int Repeat = 1;
@@ -40,15 +40,15 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _unitTestingKernel?.Dispose();
             _serviceName = $"ServiceName{++id}";
 
-            _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-            _environmentVariableProvider.DataCenter.Returns("il3");
-            _environmentVariableProvider.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
-            _environmentVariableProvider.ConsulAddress.Returns((string)null);
+            _environment = Substitute.For<IEnvironment>();
+            _environment.Zone.Returns("il3");
+            _environment.DeploymentEnvironment.Returns(ORIGINATING_ENVIRONMENT);
+            _environment.ConsulAddress.Returns((string)null);
 
             _configDic = new Dictionary<string, string> { { "Discovery.EnvironmentFallbackEnabled", "true" } };
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
+                k.Rebind<IEnvironment>().ToConstant(_environment);
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
 
                 SetupConsulMocks(k);
@@ -58,8 +58,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 k.Rebind<IDateTime>().ToConstant(_dateTimeMock);
             }, _configDic);
 
-            var environmentVariableProvider = _unitTestingKernel.Get<IEnvironmentVariableProvider>();
-            Assert.AreEqual(_environmentVariableProvider, environmentVariableProvider);
+            var environment = _unitTestingKernel.Get<IEnvironment>();
+            Assert.AreEqual(_environment, environment);
         }
 
         private void SetupConsulMocks(IKernel kernel)
@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulServiceList = new HashSet<DeploymentIdentifier>();
 
             var discovery = Substitute.For<IDiscovery>();            
-            discovery.TryCreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).Returns(c => GetLoadBalancerMock(c.Arg<DeploymentIdentifier>()));
+            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).Returns(c => GetLoadBalancerMock(c.Arg<DeploymentIdentifier>()));
             kernel.Rebind<IDiscovery>().ToMethod(_ => discovery);
 
             CreateConsulMock(MasterService);
@@ -80,9 +80,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private ILoadBalancer CreateLoadBalancerMock(DeploymentIdentifier di)
         {
-            var mock = Substitute.For<ILoadBalancer>();
-            mock.WasUndeployed().Returns(_ => Task.FromResult(!_consulServiceList.Contains(di)));
-            mock.GetNode().Returns(_ => _nodeResults[di]());
+            var mock = Substitute.For<ILoadBalancer>();            
+            mock.GetNode().Returns(_ => _consulServiceList.Contains(di) ? _nodeResults[di]() : null);
             return mock;
         }
 
@@ -115,8 +114,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
-            var nextHost = (await GetServiceDiscovery().GetLoadBalancer()).GetNode();
-            (await nextHost).Hostname.ShouldBe(HostnameFor(MasterService));
+            var nextHost = await GetServiceDiscovery().GetNode();
+            nextHost.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
         [Test]
@@ -128,18 +127,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
 
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetLoadBalancer());
-        }
-
-        [Test]
-        [Ignore("New ServiceDiscovery implementation does not support DataCenter scopes")]
-        [Repeat(Repeat)]
-        public async Task ScopeDataCenterShouldUseServiceNameWithNoEnvironment()
-        {
-            _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "DataCenter";
-            SetMockToReturnHost(new DeploymentIdentifier(_serviceName));
-            var nextHost = (await GetServiceDiscovery().GetLoadBalancer()).GetNode();
-            (await nextHost).Hostname.ShouldBe(_serviceName);
+            Should.ThrowAsync<EnvironmentException>(()=>GetServiceDiscovery().GetNode());
         }
 
         [Test]
@@ -154,14 +142,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = (await discovey.GetLoadBalancer()).GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(OriginatingService));
+            var node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(OriginatingService));
 
             SetMockToReturnServiceNotDefined(OriginatingService);
 
 
-            node = (await discovey.GetLoadBalancer()).GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(MasterService));
+            node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
         [Test]
@@ -176,13 +164,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = (await discovey.GetLoadBalancer()).GetNode();
-            (await node).Hostname.ShouldBe(HostnameFor(MasterService));
+            var node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(MasterService));
 
             SetMockToReturnHost(OriginatingService);
 
-            node = (await discovey.GetLoadBalancer()).GetNode();
-            node.Result.Hostname.ShouldBe(HostnameFor(OriginatingService));
+            node = await discovey.GetNode();
+            node.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
         [Test]
@@ -191,7 +179,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnError(OriginatingService);
-            Should.Throw<EnvironmentException>(async () => (await GetServiceDiscovery().GetLoadBalancer()).GetNode());
+            Should.Throw<EnvironmentException>(async () => await GetServiceDiscovery().GetNode());
         }
 
         [Test]
@@ -201,22 +189,22 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var nextHost = (await GetServiceDiscovery().GetLoadBalancer()).GetNode();
-            (await nextHost).Hostname.ShouldBe(HostnameFor(OriginatingService));
+            var nextHost = await GetServiceDiscovery().GetNode();
+            nextHost.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
         [Test]
         [Repeat(Repeat)]
         public void MasterShouldNotFallBack()
         {
-            _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-            _environmentVariableProvider.DataCenter.Returns("il3");
-            _environmentVariableProvider.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
-            _unitTestingKernel.Rebind<IEnvironmentVariableProvider>().ToConstant(_environmentVariableProvider);
+            _environment = Substitute.For<IEnvironment>();
+            _environment.Zone.Returns("il3");
+            _environment.DeploymentEnvironment.Returns(MASTER_ENVIRONMENT);
+            _unitTestingKernel.Rebind<IEnvironment>().ToConstant(_environment);
 
             SetMockToReturnServiceNotDefined(MasterService);
 
-            Should.Throw<EnvironmentException>(() => GetServiceDiscovery().GetLoadBalancer());
+            Should.ThrowAsync<EnvironmentException>(() => GetServiceDiscovery().GetNode());
         }
 
         private void SetMockToReturnHost(DeploymentIdentifier di)
@@ -255,8 +243,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
 
-        private DeploymentIdentifier MasterService => new DeploymentIdentifier(_serviceName, MASTER_ENVIRONMENT);
-        private DeploymentIdentifier OriginatingService => new DeploymentIdentifier(_serviceName, ORIGINATING_ENVIRONMENT);
+        private DeploymentIdentifier MasterService => new DeploymentIdentifier(_serviceName, MASTER_ENVIRONMENT, _environment);
+        private DeploymentIdentifier OriginatingService => new DeploymentIdentifier(_serviceName, ORIGINATING_ENVIRONMENT, _environment);
         private string HostnameFor(DeploymentIdentifier di) => $"{di.DeploymentEnvironment}-host";
 
     }

@@ -31,30 +31,32 @@ using Orleans;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    
+
     public class OrleansServiceInterfaceMapper : ServiceInterfaceMapper
     {
         public override IEnumerable<Type> ServiceInterfaceTypes => Mappings.Keys;
-
-
+        public IEnumerable<Type> ServiceClassesTypes { get; }
         private Dictionary<Type, Type> Mappings { get; }
 
 
-		public OrleansServiceInterfaceMapper(IAssemblyProvider assemblyProvider)
-		{
-			Mappings = assemblyProvider.GetAllTypes()
-				.Where(t => t.IsInterface && typeof(IGrain).IsAssignableFrom(t))
-				.SelectMany(t => t.GetInterfaces().Where(i => i.GetCustomAttribute<HttpServiceAttribute>()!=null)
-								  .Select(i => new { CallableInterface = t, ServiceInterface = i }))
-				.ToDictionary(x => x.ServiceInterface, x => x.CallableInterface);
-
-		    ExtractHealthStatusServiceType(Mappings.Values);
-		}
+        public OrleansServiceInterfaceMapper(IAssemblyProvider assemblyProvider)
+        {
+            Mappings = assemblyProvider.GetAllTypes()
+                .Where(t => t.IsInterface && typeof(IGrain).IsAssignableFrom(t))
+                .SelectMany(t => t.GetInterfaces().Where(i => i.GetCustomAttribute<HttpServiceAttribute>() != null)
+                                  .Select(i => new { CallableInterface = t, ServiceInterface = i }))
+                .ToDictionary(x => x.ServiceInterface, x => x.CallableInterface);
 
 
-	    public override Type GetGrainInterface(Type serviceInterface)
-		{
-			return Mappings[serviceInterface];
-		}
-	}
+            ServiceClassesTypes = assemblyProvider.GetAllTypes().Where(t => t.IsClass && typeof(IGrain).IsAssignableFrom(t)).ToArray();
+
+            ExtractHealthStatusServiceType(Mappings.Values);
+        }
+
+
+        public override Type GetGrainInterface(Type serviceInterface)
+        {
+            return Mappings[serviceInterface];
+        }
+    }
 }

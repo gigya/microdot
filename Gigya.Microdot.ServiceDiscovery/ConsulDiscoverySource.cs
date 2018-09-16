@@ -30,6 +30,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
@@ -196,11 +197,12 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public static string GetDeploymentName(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoverySettings)
         {
-            if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
+            if (serviceDiscoverySettings.Scope == ServiceScope.Zone)
             {
                 return deploymentIdentifier.ServiceName;
             }
-            return deploymentIdentifier.ToString();
+
+            return deploymentIdentifier.GetConsulServiceName();
         }
 
     }

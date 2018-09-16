@@ -61,7 +61,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public Uri ConsulAddress { get; }
 
-        private string DataCenter { get; }
+        private string Zone { get; }
 
         private CancellationTokenSource ShutdownToken { get; }
 
@@ -82,7 +82,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private Func<HealthCheckResult> _getHealthStatus;
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
-            ISourceBlock<ConsulConfig> configChanged, IEnvironmentVariableProvider environmentVariableProvider,
+            ISourceBlock<ConsulConfig> configChanged, IEnvironment environment,
             ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
         {
             _serviceName = serviceName;
@@ -91,12 +91,12 @@ namespace Gigya.Microdot.ServiceDiscovery
             GetConfig = getConfig;
             _dateTime = dateTime;
             Log = log;
-            DataCenter = environmentVariableProvider.DataCenter;
+            Zone = environment.Zone;
 
             _waitForConfigChange = new TaskCompletionSource<bool>();
             configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
 
-            var address = environmentVariableProvider.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
+            var address = environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
             ConsulAddress = new Uri($"http://{address}");
             _aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 
@@ -200,7 +200,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> LoadServiceVersion()
         {
             var config = GetConfig();
-            var urlCommand = $"v1/kv/service/{_serviceName}?dc={DataCenter}&index={_versionModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={Zone}&index={_versionModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
             var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
@@ -211,10 +211,12 @@ namespace Gigya.Microdot.ServiceDiscovery
             else if (response.Success)
             {
                 var keyValue = TryDeserialize<KeyValueResponse[]>(response.ResponseContent);
-                var version = keyValue?.SingleOrDefault()?.TryDecodeValue<ServiceKeyValue>()?.Version;
-
-                if (version != null)
+                try
                 {
+                    var version = keyValue?.SingleOrDefault()?.DecodeValue<ServiceKeyValue>()?.Version;
+                    if (version==null)
+                        throw new EnvironmentException("Consul key-value response not contains Version");
+
                     lock (_setResultLocker)
                     {
                         _activeVersion = version;
@@ -222,9 +224,9 @@ namespace Gigya.Microdot.ServiceDiscovery
                         ForceReloadEndpointsByHealth();
                     }
                 }
-                else
+                catch(Exception ex)
                 {
-                    var exception = new EnvironmentException("Cannot extract service's active version from Consul response");
+                    var exception = new EnvironmentException("Cannot extract service's active version from Consul response", innerException: ex);
                     SetErrorResult(urlCommand, exception, null, response.ResponseContent);
                     response.Error = exception;
                 }
@@ -241,7 +243,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
             var config = GetConfig();
-            var urlCommand = $"v1/kv/service?dc={DataCenter}&keys&index={_allKeysModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
+            var urlCommand = $"v1/kv/service?dc={Zone}&keys&index={_allKeysModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
             var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
@@ -284,7 +286,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return new ConsulResponse { IsDeploymentDefined = false };
 
             var config = GetConfig();
-            var urlCommand = $"v1/health/service/{_serviceName}?dc={DataCenter}&passing&index={_endpointsModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={Zone}&passing&index={_endpointsModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
             var response = await CallConsul(urlCommand, _loadEndpointsByHealthCancellationTokenSource.Token).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
@@ -324,7 +326,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task<ConsulResponse> LoadEndpointsByQuery()
         {
-            var consulQuery = $"v1/query/{_serviceName}/execute?dc={DataCenter}";
+            var consulQuery = $"v1/query/{_serviceName}/execute?dc={Zone}";
             var response = await CallConsul(consulQuery, ShutdownToken.Token).ConfigureAwait(false);
 
             if (response.Success)
@@ -421,6 +423,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             return modifyIndex;
         }
 
+        // TODO: remove catch, implement catches in callers
         protected T TryDeserialize<T>(string response)
         {
             if (response == null)

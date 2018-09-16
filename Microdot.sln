@@ -5,6 +5,7 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
 	ProjectSection(SolutionItems) = preProject
+		.paket\install.bat = .paket\install.bat
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
 		.paket\restore.bat = .paket\restore.bat

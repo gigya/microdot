@@ -22,7 +22,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
@@ -172,7 +174,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 }
 
             }
-            catch (Exception )
+            catch (Exception)
             {
                 return false;
             }
@@ -190,48 +192,57 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             await Task.Delay(150);
 
             var prefixClassName = typeof(CalculatorServiceTests.Person).Name;
-            var expectedMetadata = DissectPropertyInfoMetadata.DissectPropertis(person).Select(x => new
+
+            var dissectParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(person).Select(x => new
             {
-                PropertyInfo = x.PropertyInfo,
-                Sensitivity = x.Sensitivity,
-                NewPropertyName = AddPrifix(prefixClassName, x.PropertyInfo.Name)
-            });
+                Member = x.Member,
+                Value = x.Value,
+                Sensitivity = x.Sensitivity ?? Sensitivity.Sensitive,
+                NewPropertyName = AddPrifix(prefixClassName, x.Name)
+            }).ToDictionary(x => x.NewPropertyName);
 
 
-            var expectedSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Sensitive).ToList();
-            var expectedSecritiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.Secretive).ToList();
-            var expectedNonSensitiveProperties = expectedMetadata.Where(x => x.Sensitivity == Sensitivity.NonSensitive).ToList();
             var eventPublisher = _eventPublisher as SpyEventPublisher;
             var callEvent = eventPublisher.Events.OfType<ServiceCallEvent>().Last();
 
-            expectedSensitiveProperties.Count().ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
+
+            var nonSensitiveCount = dissectParams.Values.Count(x => x.Sensitivity == Sensitivity.NonSensitive);
+            var sensitiveCount = dissectParams.Values.Count(x => x.Sensitivity == Sensitivity.Sensitive);
+
+            nonSensitiveCount.ShouldBe(callEvent.UnencryptedServiceMethodArguments.Count());
+            sensitiveCount.ShouldBe(callEvent.EncryptedServiceMethodArguments.Count());
 
             //Sensitive
             foreach (var argument in callEvent.EncryptedServiceMethodArguments)
             {
-                var metadata = expectedSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
+                var param = dissectParams[argument.Key];
 
-                if (metadata.PropertyInfo.PropertyType.IsClass == true && metadata.PropertyInfo.PropertyType != typeof(string))
+                if (param.Member.DeclaringType.IsClass == true && param.Member.DeclaringType != typeof(string))
                 {
-                    JsonConvert.SerializeObject(metadata.PropertyInfo.GetValue(person, null)).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
+                    JsonConvert.SerializeObject(param.Value).ShouldBe(JsonConvert.SerializeObject(argument.Value)); //Json validation
                 }
                 else
                 {
-                    metadata.PropertyInfo.GetValue(person, null).ShouldBe(argument.Value);
+                    param.Value.ShouldBe(argument.Value);
                 }
-
-                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
             }
+
             //NonSensitive
             foreach (var argument in callEvent.UnencryptedServiceMethodArguments)
             {
-                var metadata = expectedNonSensitiveProperties.Single(x => x.NewPropertyName.Equals(argument.Key));
-                metadata.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
+                var param = dissectParams[argument.Key];
 
-                expectedSecritiveProperties.FirstOrDefault(x => x.NewPropertyName.Equals(argument.Key)).ShouldBeNull();
+                param.Value.ShouldBe(argument.Value);
+
+                param.Sensitivity.ShouldBe(Sensitivity.NonSensitive);
             }
-
             return true;
+        }
+
+        public async Task RegexTestWithDefaultTimeoutDefault(int defaultTimeoutInSeconds)
+        {
+            var regex = new Regex("a");
+            regex.MatchTimeout.ShouldBe(TimeSpan.FromSeconds(defaultTimeoutInSeconds));
         }
 
         private string AddPrifix(string prefix, string param)

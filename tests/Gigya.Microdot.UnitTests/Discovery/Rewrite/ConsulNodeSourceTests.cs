@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -23,7 +24,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     public class ConsulNodeSourceTests
     {
         private const int ConsulPort = 8506;
-        private const string DataCenter = "us1";
+        private const string Zone = "us1a";
 
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
@@ -35,7 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private TestingKernel<ConsoleLog> _testingKernel;
         private INodeSource _nodeSource;
-        private IEnvironmentVariableProvider _environmentVariableProvider;
+        private IEnvironment _environment;
         private ConsulSimulator _consulSimulator;
         private DeploymentIdentifier _deploymentIdentifier;
         private ConsulConfig _consulConfig;
@@ -62,16 +63,16 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _consulSimulator.Reset();
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                _environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-                _environmentVariableProvider.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environmentVariableProvider.DataCenter.Returns(DataCenter);
-                k.Rebind<IEnvironmentVariableProvider>().ToMethod(_ => _environmentVariableProvider);
+                _environment = Substitute.For<IEnvironment>();
+                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                _environment.Zone.Returns(Zone);
+                k.Rebind<IEnvironment>().ToMethod(_ => _environment);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
                 k.Rebind<ConsulNodeSourceFactory>().ToSelf().InTransientScope();
             });
             _serviceName = $"MyService_{Guid.NewGuid().ToString().Substring(5)}";            
 
-            _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod");
+            _deploymentIdentifier = new DeploymentIdentifier(_serviceName, "prod", Substitute.For<IEnvironment>());
             _consulConfig = new ConsulConfig {ErrorRetryInterval = TimeSpan.FromMilliseconds(10)};
             _consulNodeSourceFactory = _testingKernel.Get<ConsulNodeSourceFactory>();
         }
@@ -81,6 +82,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _nodeSource?.Dispose();
             _testingKernel?.Dispose();
+            _consulNodeSourceFactory?.Dispose();
         }
 
         public async Task WaitForUpdates()
@@ -257,29 +259,27 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private async void AddServiceNode(string hostName=Host1, int port=Port1, string version=Version, string serviceName=null)
         {            
-            _consulSimulator.AddServiceNode(serviceName ?? _deploymentIdentifier.ToString(), new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
+            _consulSimulator.AddServiceNode(serviceName ?? _deploymentIdentifier.GetConsulServiceName(), new ConsulEndPoint {HostName = hostName, Port = port, Version = version});         
         }
 
         private async void RemoveServiceEndPoint(string hostName = Host1, int port = Port1)
         {
-            _consulSimulator.RemoveServiceNode(_deploymentIdentifier.ToString(), new ConsulEndPoint { HostName = hostName, Port = port});
+            _consulSimulator.RemoveServiceNode(_deploymentIdentifier.GetConsulServiceName(), new ConsulEndPoint { HostName = hostName, Port = port});
         }
 
         private void SetServiceVersion(string version)
         {
-            _consulSimulator.SetServiceVersion(_deploymentIdentifier.ToString(), version);
+            _consulSimulator.SetServiceVersion(_deploymentIdentifier.GetConsulServiceName(), version);
         }
 
         private void RemoveService(string serviceName=null)
         {
-            _consulSimulator.RemoveService(serviceName ?? _deploymentIdentifier.ToString());
+            _consulSimulator.RemoveService(serviceName ?? _deploymentIdentifier.GetConsulServiceName());
         }
 
         private void SetConsulIsDown()
         {
             _consulSimulator.SetError(new Exception("fake error"));
         }
-
-
     }
 }

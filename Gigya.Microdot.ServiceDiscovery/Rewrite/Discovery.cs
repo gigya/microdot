@@ -1,4 +1,26 @@
-﻿using System;
+﻿#region Copyright 
+// Copyright 2017 Gigya Inc.  All rights reserved.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License"); 
+// you may not use this file except in compliance with the License.  
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+#endregion
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +40,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     internal sealed class Discovery : IDiscovery
     {
 
-        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> CreateLoadBalancer { get; }
+        private Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer> _createLoadBalancer { get; }
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetConfig { get; }
         private Func<DeploymentIdentifier, LocalNodeSource> CreateLocalNodeSource { get; }        
@@ -46,7 +68,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<DeploymentIdentifier, ConfigNodeSource> createConfigNodeSource)
         {
             GetConfig = getConfig;
-            CreateLoadBalancer = createLoadBalancer;
+            _createLoadBalancer = createLoadBalancer;
             DateTime = dateTime;
             CreateLocalNodeSource = createLocalNodeSource;
             CreateConfigNodeSource = createConfigNodeSource;
@@ -57,13 +79,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
         /// <inheritdoc />
-        public async Task<ILoadBalancer> TryCreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
+        public ILoadBalancer CreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
         {
-            var nodes = await GetNodes(deploymentIdentifier);
-            if (nodes != null)
-                return CreateLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRoutingStrategy);
-            else
-                return null;
+            return _createLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRoutingStrategy);
         }
 
 
