@@ -90,8 +90,7 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
             Rebind<INodeSourceFactory>().To<ConsulNodeSourceFactory>().InTransientScope();
-            Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
-            Rebind<IDiscovery>().To<Discovery>().InSingletonScope();
+            Bind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();            
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient, ServiceDiscovery.Rewrite.IConsulClient>()
                 .To<ServiceDiscovery.Rewrite.ConsulClient>().InSingletonScope();            
@@ -101,8 +100,9 @@ namespace Gigya.Microdot.Ninject
             Kernel.Load<ServiceProxyModule>();
             Kernel.Load<ConfigObjectsModule>();
 
-            Kernel.Rebind<ServiceSchema>().ToMethod(c =>
-                            new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
+            // ServiceSchema is at ServiceContracts, and cannot be depended on IServiceInterfaceMapper, which belongs to Microdot
+            Kernel.Rebind<ServiceSchema>()
+                .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
         }
 
 

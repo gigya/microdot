@@ -42,8 +42,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<ConsulConfig> GetConfig { get; }
         private Uri ConsulAddress => _httpClient.BaseAddress;        
         private string Zone { get; }
-        private HttpClient _httpClient;
-        private int _disposed = 0;
+        private readonly HttpClient _httpClient;
+        private bool _disposed = false;
 
 
 
@@ -55,57 +55,84 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             GetConfig = getConfig;
 
             if (environment.ConsulAddress != null)
-                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environment.ConsulAddress}") };
-            else
-                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500") };
-        }
+                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environment.ConsulAddress}"), Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
+			else
+				// we assume a Consul agent is installed locally on the machine.
+                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500"), Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
+		}
 
 
         internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
+	        if (response.StatusCode != HttpStatusCode.OK)
+	        {
+		        if (response.Error == null)
+			        response.Error = response.ConsulResponseCodeNotOk();
+	        }
+			else
+	        {
                 try
                 {
                     var serviceEntries = JsonConvert.DeserializeObject<ServiceEntry[]>(response.ResponseContent);
-                    response.Result = serviceEntries.Select(ToNode).ToArray();
+                    response.Response = serviceEntries.Select(ToNode).ToArray();
                 }
                 catch (Exception ex)
                 {
-                    response.UnparsableConsulResponse(ex);
+                    response.Error = response.UnparsableConsulResponse(ex);
                 }
             }
-            else if (response.Error == null)
-                response.ConsulResponseError();
 
             return response;
         }
 
 
-        public async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key,
-            string zone = null, CancellationToken cancellationToken=default(CancellationToken)) where T: class
+	    public Task<ConsulResponse<T>> GetKeyFromOtherZone<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+	    {
+			if (zone==null)
+				throw new ArgumentNullException(nameof(zone));
+
+		    return GetKey<T>(modifyIndex, folder, key, zone, cancellationToken);
+	    }
+
+	    public Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+	    {
+		    return GetKey<T>(modifyIndex, folder, key, Zone, cancellationToken);
+	    }
+
+		private async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken) where T: class
         {
-            T result = null;
-            string urlCommand = $"v1/kv/{folder}/{key}?dc={zone ?? Zone}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
+			if (folder==null)
+				throw new ArgumentNullException(nameof(folder));
+	        if (key == null)
+		        throw new ArgumentNullException(nameof(key));
+	        if (zone == null)
+		        throw new ArgumentNullException(nameof(zone));
+
+			T result = null;
+            string urlCommand = $"v1/kv/{folder}/{key}?dc={zone}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                try
-                {
-                    var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
-                    result = keyValues.SingleOrDefault()?.DecodeValue<T>();                    
-                }
-                catch (Exception ex)
-                {
-                    response.UnparsableConsulResponse(ex);
-                }
-            }
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-                response.IsUndeployed = true;
-            else if (response.Error == null)
-                response.ConsulResponseError();
+
+	        if (response.StatusCode == HttpStatusCode.NotFound)
+		        response.IsUndeployed = true;
+			else if (response.StatusCode != HttpStatusCode.OK)
+	        {
+		        if (response.Error == null)
+			        response.Error = response.ConsulResponseCodeNotOk();
+			}
+	        else
+	        {
+		        try
+		        {
+			        var keyValues = JsonConvert.DeserializeObject<KeyValueResponse[]>(response.ResponseContent);
+			        result = keyValues.SingleOrDefault()?.DecodeValue<T>();
+		        }
+		        catch (Exception ex)
+		        {
+			        response.Error = response.UnparsableConsulResponse(ex);
+		        }
+	        }
 
             return response.SetResult(result);
         }
@@ -118,13 +145,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 response.IsUndeployed = true;
             }
-            else if (response.StatusCode == HttpStatusCode.OK)
+			else if (response.StatusCode != HttpStatusCode.OK)
+			{
+	            if (response.Error == null)
+		            response.Error = response.ConsulResponseCodeNotOk();
+			}
+            else
             {
-                version = response.Result?.Version;
+                version = response.Response?.Version;
                 response.IsUndeployed = false;
             }
-            else if (response.Error == null)
-                response.ConsulResponseError();
+
             return response.SetResult(version);
         }
 
@@ -134,21 +165,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             string urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
             var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode == HttpStatusCode.OK)
+	        if (response.StatusCode != HttpStatusCode.OK)
+	        {
+		        if (response.Error == null)
+			        response.Error = response.ConsulResponseCodeNotOk();
+			}
+			else
             {
                 try
                 {
                     var fullKeyNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);
                     var keyNames = fullKeyNames.Select(s => s.Substring($"{folder}/".Length)).ToArray();
-                    response.Result = keyNames;
+                    response.Response = keyNames;
                 }
                 catch (Exception ex)
                 {
-                    response.UnparsableConsulResponse(ex);
+                    response.Error = response.UnparsableConsulResponse(ex);
                 }
             }
-            else if (response.Error == null)
-                response.ConsulResponseError();
 
             return response;
         }
@@ -163,33 +197,33 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken)
         {
-            if (_disposed > 0)
+            if (_disposed)
                 throw new ObjectDisposedException(nameof(ConsulClient));
 
             var timeout = GetConfig().HttpTaskTimeout;
-
-            if (_httpClient.Timeout != timeout)
-                _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = timeout };
 
             string responseContent = null;
             var consulResult = new ConsulResponse<T> { ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath };
 
             try
             {
-                HttpResponseMessage response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
-
-                using (response)
-                {
-                    responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    consulResult.StatusCode = response.StatusCode;
-                    consulResult.ResponseContent = responseContent;
-                    consulResult.ResponseDateTime = DateTime.UtcNow;
-                    consulResult.ModifyIndex = TryGetConsulIndex(response);
-                }
+	            using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
+	            using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
+	            {
+		            HttpResponseMessage response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
+		            using (response)
+		            {
+			            responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+			            consulResult.StatusCode = response.StatusCode;
+			            consulResult.ResponseContent = responseContent;
+			            consulResult.ResponseDateTime = DateTime.UtcNow;
+			            consulResult.ModifyIndex = TryGetConsulIndex(response);
+		            }
+	            }
             }
             catch (Exception ex)
             {
-                consulResult.ConsulUnreachable(ex);
+                consulResult.Error = consulResult.ConsulUnreachable(ex);
                 return consulResult;
             }
 
@@ -229,9 +263,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public void Dispose()
         {
-            if (Interlocked.Increment(ref _disposed) != 1)
-                return;
-
+            _disposed = true;                
             _httpClient.Dispose();
         }
     }

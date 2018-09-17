@@ -226,8 +226,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public void ReportUnreachable(Node node, Exception ex)
         {
             var nodeState = _nodesMonitoringState.FirstOrDefault(s => s.Node.Equals(node));
-            lock (_lock)
-                nodeState?.ReportUnreachable(ex);
+            nodeState?.ReportUnreachable(ex);
         }
 
 

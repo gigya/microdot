@@ -98,6 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             var address = environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
             ConsulAddress = new Uri($"http://{address}");
+            _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
             _aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 
             _resultChanged = new BufferBlock<EndPointsResult>();
@@ -361,12 +362,6 @@ namespace Gigya.Microdot.ServiceDiscovery
 
             try
             {
-                if (_httpClient?.Timeout != timeout)
-                {
-                    _httpClient?.Dispose();
-                    _httpClient = new HttpClient {BaseAddress = ConsulAddress, Timeout = timeout};
-                }
-
                 requestLog = _httpClient.BaseAddress + urlCommand;
                 using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
                 using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
@@ -422,8 +417,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 modifyIndex = consulIndexValue;
             return modifyIndex;
         }
-
-        // TODO: remove catch, implement catches in callers
+        
         protected T TryDeserialize<T>(string response)
         {
             if (response == null)

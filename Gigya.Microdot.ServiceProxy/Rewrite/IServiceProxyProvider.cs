@@ -31,6 +31,9 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
+	/// <summary>
+	/// This is a beta version. Please do not use it until it's ready
+	/// </summary>
     public interface IServiceProxyProvider : IProxyable
     {
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);

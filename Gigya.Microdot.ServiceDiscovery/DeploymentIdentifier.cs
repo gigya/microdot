@@ -37,6 +37,9 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// <summary>The zone of the service (e.g. "us1a").</summary>
         public string Zone { get; }
 
+        /// <summary>
+        /// Whether this deployment identifier points to a service deployed for a specific environment, or is it deployed for all environments
+        /// </summary>
         public bool IsEnvironmentSpecific => DeploymentEnvironment != null;
 
         /// <summary>
@@ -76,10 +79,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 if (Zone != other.Zone)
                     return false;
 
-                if (IsEnvironmentSpecific || other.IsEnvironmentSpecific)
-                    return DeploymentEnvironment == other.DeploymentEnvironment && ServiceName == other.ServiceName;
-                else
-                    return ServiceName == other.ServiceName;
+                return DeploymentEnvironment == other.DeploymentEnvironment && ServiceName == other.ServiceName;
             }
             else
                 return false;
@@ -90,8 +90,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             unchecked
             {
                 var hashCode = ServiceName.GetHashCode();
-                if (IsEnvironmentSpecific)
-                    hashCode = (hashCode * 397) ^ DeploymentEnvironment.GetHashCode();
+                hashCode = (hashCode * 397) ^ (DeploymentEnvironment?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ Zone.GetHashCode();
                 return hashCode;
             }

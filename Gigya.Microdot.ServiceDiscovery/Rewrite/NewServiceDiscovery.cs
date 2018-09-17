@@ -58,9 +58,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
-        private bool _disposed = false;
-        private readonly ReachabilityCheck _reachabilityCheck;
-        private readonly object _locker = new object();
+        private readonly ReachabilityCheck _reachabilityCheck;        
         private readonly AsyncLock _asyncLocker = new AsyncLock();
         private readonly IDisposable _configBlockLink;
         private readonly Task _initTask;
@@ -170,7 +168,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void Dispose()
         {
-            _disposed = true;
             MasterEnvironmentLoadBalancer.Dispose();
             OriginatingEnvironmentLoadBalancer.Dispose();
             _configBlockLink?.Dispose();

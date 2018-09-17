@@ -40,7 +40,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     internal sealed class ConsulNodeSourceFactory : INodeSourceFactory
     {
-        ILog Log { get; }
+	    private const int InitialModifyIndex = 0;
+
+		ILog Log { get; }
         private ConsulClient ConsulClient { get; }
         private Func<DeploymentIdentifier, ConsulNodeSource> CreateConsulNodeSource { get; }
         private IDateTime DateTime { get; }
@@ -108,14 +110,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             try
             {
-                ulong? modifyIndex = null;
+                ConsulResponse<string[]> consulResponse = null;
                 while (!_shutdownToken.IsCancellationRequested)
                 {
-                    modifyIndex = await GetAllServices(modifyIndex ?? 0).ConfigureAwait(false);
+	                consulResponse = await GetAllServices(consulResponse?.ModifyIndex ?? InitialModifyIndex).ConfigureAwait(false);
                     _initCompleted.TrySetResult(true);
 
                     // If we got an error, we don't want to spam Consul so we wait a bit
-                    if (modifyIndex == null)
+                    if (consulResponse.Error != null)
                         await DateTime.Delay(GetConfig().ErrorRetryInterval, _shutdownToken.Token).ConfigureAwait(false);
                 }
             }
@@ -126,34 +128,34 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        private async Task<ulong?> GetAllServices(ulong modifyIndex)
+        private async Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex)
         {
-            var consulResult = await ConsulClient.GetAllServices(modifyIndex, _shutdownToken.Token).ConfigureAwait(false);
+            var consulResponse = await ConsulClient.GetAllServices(modifyIndex, _shutdownToken.Token).ConfigureAwait(false);
 
-            if (consulResult.Error != null)
+            if (consulResponse.Error != null)
             {
-                if (consulResult.Error.InnerException is TaskCanceledException == false)
+                if (consulResponse.Error.InnerException is TaskCanceledException == false)
                 {
-                    Log.Error("Error calling Consul to get all services list", exception: consulResult.Error, unencryptedTags: new
+                    Log.Error("Error calling Consul to get all services list", exception: consulResponse.Error, unencryptedTags: new
                     {
-                        consulAddress = consulResult.ConsulAddress,
-                        commandPath   = consulResult.CommandPath,
-                        responseCode  = consulResult.StatusCode,
-                        content       = consulResult.ResponseContent
+                        consulAddress = consulResponse.ConsulAddress,
+                        commandPath   = consulResponse.CommandPath,
+                        responseCode  = consulResponse.StatusCode,
+                        content       = consulResponse.ResponseContent
                     });
                 }
 
-                _healthStatus = HealthCheckResult.Unhealthy($"Error calling Consul: {consulResult.Error.Message}");
-                Error = consulResult.Error;
-                return null;
+                _healthStatus = HealthCheckResult.Unhealthy($"Error calling Consul: {consulResponse.Error.Message}");
+                Error = consulResponse.Error;
             }
             else
             {
-                Services = new HashSet<string>(consulResult.Result);
+                Services = new HashSet<string>(consulResponse.Response);
                 _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
                 Error = null;
-                return consulResult.ModifyIndex;
             }
+
+	        return consulResponse;
         }
 
 

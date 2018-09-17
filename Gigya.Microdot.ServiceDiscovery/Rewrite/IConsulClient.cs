@@ -40,14 +40,27 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <returns></returns>
         Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken = default(CancellationToken));
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T">Type to be deserialized (Json) when reading the key value from Consul</typeparam>
-        /// <param name="modifyIndex">The modifyIndex of last response from Consul, to be used for long-polling. Should be zero (0) When calling Consul for the first time</param>
-        /// <param name="folder">folder of key-value store (e.g. "service", "flags")</param>
-        /// <param name="zone">zone where the key-value is requested. Null if key-value is requested in current zone</param>
-        /// <param name="cancellationToken">Token for cancelling the call to Consul</param>        
-        Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string zone = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
-    }
+		/// <summary>
+		/// Get the value of a key on Consul's key-value store, for Consul which is located on other Zone
+		/// </summary>
+		/// <typeparam name="T">Type to be deserialized (Json) when reading the key value from Consul</typeparam>
+		/// <param name="modifyIndex">The modifyIndex of last response from Consul, to be used for long-polling. Should be zero (0) When calling Consul for the first time</param>
+		/// <param name="folder">folder of key-value store (e.g. "service", "flags")</param>
+		/// <param name="key">the key which its value is requested</param>
+		/// <param name="cancellationToken">Token for cancelling the call to Consul</param>        
+		Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+
+		/// <summary>
+		/// Get the value of a key on Consul's key-value store
+		/// </summary>
+		/// <typeparam name="T">Type to be deserialized (Json) when reading the key value from Consul</typeparam>
+		/// <param name="modifyIndex">The modifyIndex of last response from Consul, to be used for long-polling. Should be zero (0) When calling Consul for the first time</param>
+		/// <param name="folder">folder of key-value store (e.g. "service", "flags")</param>
+		/// <param name="key">the key which its value is requested</param>
+		/// <param name="zone">zone where the key-value is requested</param>
+		/// <param name="cancellationToken">Token for cancelling the call to Consul</param>        
+		Task<ConsulResponse<T>> GetKeyFromOtherZone<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+
+
+	}
 }

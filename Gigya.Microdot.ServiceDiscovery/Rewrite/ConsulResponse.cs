@@ -26,14 +26,14 @@ using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ConsulResponse<TResult>
+    public class ConsulResponse<TResonse>
     {
         public bool? IsUndeployed { get; set; }
-        public EnvironmentException Error { get; private set; }
+        public EnvironmentException Error { get; set; }
         public string ConsulAddress { get; set; }
         public string CommandPath { get; set; }
         public string ResponseContent { get; set; }
-        public TResult Result { get; set; }
+        public TResonse Response { get; set; }
         public DateTime ResponseDateTime { get; set; }
         public HttpStatusCode? StatusCode { get; set; }
         public ulong? ModifyIndex { get; set; }
@@ -50,13 +50,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 ResponseContent = ResponseContent,
                 ResponseDateTime = ResponseDateTime,
                 StatusCode = StatusCode,
-                Result = result
+                Response = result
             };
         }
 
-        public void ConsulUnreachable(Exception innerException)
+        public EnvironmentException ConsulUnreachable(Exception innerException)
         {
-            Error = new EnvironmentException("Consul was unreachable.",
+            return new EnvironmentException("Consul was unreachable.",
                 innerException,
                 unencrypted: new Tags
                 {
@@ -65,9 +65,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 });
         }
 
-        public void ConsulResponseError()
+        public EnvironmentException ConsulResponseCodeNotOk()
         {
-            Error = new EnvironmentException("Consul returned a failure response (not 200 OK).",
+            return new EnvironmentException("Consul returned a failure response (not 200 OK).",
                 unencrypted: new Tags
                 {
                     { "consulAddress", ConsulAddress },
@@ -77,16 +77,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 });
         }
 
-        public void UnparsableConsulResponse(Exception innerException)
+        public EnvironmentException UnparsableConsulResponse(Exception innerException)
         {
-            Error = new EnvironmentException("Error deserializing Consul response.",
+            return new EnvironmentException("Error deserializing Consul response.",
                 innerException,
                 unencrypted: new Tags
                 {
                     { "consulAddress", ConsulAddress },
                     { "commandPath", CommandPath },
                     { "responseContent", ResponseContent },
-                    { "expectedResponseType", typeof(TResult).Name }
+                    { "expectedResponseType", typeof(TResonse).Name }
                 });
         }
     }

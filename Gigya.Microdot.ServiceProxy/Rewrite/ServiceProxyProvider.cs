@@ -14,7 +14,10 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public class ServiceProxyProvider : IServiceProxyProvider
+	/// <summary>
+	/// This is a beta version. Please do not use it until it's ready
+	/// </summary>
+	public class ServiceProxyProvider : IServiceProxyProvider
     {
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
