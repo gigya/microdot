@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Threading.Tasks;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
 using Ninject;
@@ -15,7 +16,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
-            ServiceTester<WarmupTestServiceHost> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHost>(mainPort);
+            ServiceTester<CalculatorServiceHost> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(mainPort);
             
             IWarmupTestServiceGrain grain = tester.GetGrainClient<IWarmupTestServiceGrain>(0);
             int result = await grain.TestWarmedTimes();
@@ -27,11 +28,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             tester.Dispose();
         }
 
-        [Test]
+        [Test][Repeat(2)]
         public async Task VerifyWarmupBeforeSiloStart()
         {
             WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
             host.Run();
+            await host.WaitForHostDisposed();
         }
     }
 }

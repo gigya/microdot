@@ -15,7 +15,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
             base(log, configBuilder, httpServiceListener, eventPublisher, loadSheddingConfig, orleansConfigSourceBlock, orleansConfig)
         {
             dependantClassFake.Received(1).ThisClassIsWarmed();
-            host.StopTest();
+            host.StopHost(); //awaitable, but can't be awaited in ctor. There is await into the "StopHost" method
         }
     }
 }

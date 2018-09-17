@@ -138,6 +138,10 @@ namespace Gigya.Microdot.Orleans.Hosting
                 }
             }
 
+
+            DelegatingBootstrapProvider.OnClose();
+            DelegatingBootstrapProvider.OnClose = null;
+            DelegatingBootstrapProvider.OnInit = null;
         }
 
         private async Task BootstrapInit(IProviderRuntime providerRuntime)

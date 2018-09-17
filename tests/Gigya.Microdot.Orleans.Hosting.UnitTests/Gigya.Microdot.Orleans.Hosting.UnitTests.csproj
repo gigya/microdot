@@ -48,7 +48,6 @@
     <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />
     <Compile Include="Microservice\WarmupTestService\GigyaSiloHostFake.cs" />
     <Compile Include="Microservice\WarmupTestService\WarmupTestServiceGrain.cs" />
-    <Compile Include="Microservice\WarmupTestService\WarmupTestServiceHost.cs" />
     <Compile Include="Microservice\WarmupTestService\WarmupTestServiceHostWithSiloHostFake.cs" />
     <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
