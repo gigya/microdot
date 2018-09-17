@@ -202,24 +202,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 var sw = Stopwatch.StartNew();
 
                 // Special endpoints should not be logged/measured/traced like regular endpoints
-                try
-                {
-                    foreach (var customEndpoint in CustomEndpoints)
-                    {
-                        if (await customEndpoint.TryHandle(context, (data, status, type) => TryWriteResponse(context, data, status, type)))
-                        {
-                            if (RequestTimings.Current.Request.ElapsedMS != null)
-                                _metaEndpointsRoundtripTime.Record((long)RequestTimings.Current.Request.ElapsedMS, TimeUnit.Milliseconds);
-                            return;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    var ex = GetRelevantException(e);
-                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
-                    return;
-                }
+                if (await TryHandleSpecialEndpoints(context)) return;
 
                 // Regular endpoint handling
                 using (_activeRequestsCounter.NewContext("Request"))
@@ -234,7 +217,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
                     ServiceMethod serviceMethod = null;
-                    double? responseTime = null;
+                    ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                     try
                     {
                         try
@@ -242,11 +225,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                             ValidateRequest(context);
                             await CheckSecureConnection(context);
 
-                            requestData = await ParseRequest(context);
-
+                            requestData = await GetRequestDataAndFillCallEvent(context, callEvent);
                             TracingContext.SetOverrides(requestData.Overrides);
-
-                            serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
+                            serviceMethod = GetServiceMethodAndFillCallEvent(requestData, callEvent);
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
                         }
                         catch (Exception e)
@@ -261,35 +242,81 @@ namespace Gigya.Microdot.Hosting.HttpService
                         RejectRequestIfLateOrOverloaded();
 
                         var responseJson = await GetResponse(context, serviceMethod, requestData);
-                        responseTime = await TryWriteResponse(context, responseJson);
+                        await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent);
 
                         _successCounter.Increment();
                     }
                     catch (Exception e)
                     {
-                        actualException = actualException ?? e;
+                        callEvent.FillException(actualException ?? e);
+
                         _failureCounter.Increment();
                         ex = GetRelevantException(e);
 
                         string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
-                        responseTime = await TryWriteResponse(context, json, GetExceptionStatusCode(ex));
+                        await TryWriteResponse(context, json, GetExceptionStatusCode(ex), serviceCallEvent: callEvent);
                     }
                     finally
                     {
                         sw.Stop();
+                        callEvent.FillActualTotalTime(sw.Elapsed.TotalMilliseconds);
+
                         _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds, ShouldWriteResponseTime(responseTime) ? responseTime : null);
+                        IEnumerable<DictionaryEntry> arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
+                        _serverRequestPublisher.TryPublish(callEvent, arguments, serviceMethod);
                     }
                 }
             }
         }
 
-        private bool ShouldWriteResponseTime(double? responseTIme)
+        private ServiceMethod GetServiceMethodAndFillCallEvent(HttpServiceRequest requestData, ServiceCallEvent callEvent)
         {
-            return responseTIme >= _eventConfig().MinResponseTimeForLog;
+            ServiceMethod serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
+            callEvent.FillByServiceMethod(serviceMethod);
+
+            return serviceMethod;
+        }
+
+        private async Task<HttpServiceRequest> GetRequestDataAndFillCallEvent(HttpListenerContext context, ServiceCallEvent callEvent)
+        {
+            HttpServiceRequest requestData = await ParseRequest(context);
+            callEvent.FillRequestData(requestData);
+
+            return requestData;
+        }
+
+        private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)
+        {
+            try
+            {
+                foreach (var customEndpoint in CustomEndpoints)
+                {
+                    if (await customEndpoint.TryHandle(context,
+                        (data, status, type) => TryWriteResponse(context, data, status, type)))
+                    {
+                        if (RequestTimings.Current.Request.ElapsedMS != null)
+                            _metaEndpointsRoundtripTime.Record((long) RequestTimings.Current.Request.ElapsedMS,
+                                TimeUnit.Milliseconds);
+                        return true;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                var ex = GetRelevantException(e);
+                await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ShouldWriteResponseTime(double? responseTime)
+        {
+            return responseTime >= _eventConfig().MinResponseTimeForLog;
         }
 
 
@@ -431,10 +458,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         /// <param name="httpStatus"></param>
         /// <param name="contentType"></param>
         /// <returns>double? - response time</returns>
-        private async Task<double?> TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
+        private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json", ServiceCallEvent serviceCallEvent = null)
         {
-            double? responseTime = null;
-
             context.Response.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
 
             var body = Encoding.UTF8.GetBytes(data ?? "");
@@ -448,7 +473,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
             try
             {
-                responseTime = await WriteResponseAndReturnResponseTime(context, body);
+                await WriteResponseAndReturnResponseTime(context, body, serviceCallEvent);
             }
             catch (HttpListenerException writeEx)
             {
@@ -463,20 +488,22 @@ namespace Gigya.Microdot.Hosting.HttpService
                     },
                     encryptedTags: new { response = data }));
             }
-
-            return responseTime;
         }
 
-        private async Task<double?> WriteResponseAndReturnResponseTime(HttpListenerContext context, byte[] body)
+        private async Task WriteResponseAndReturnResponseTime(HttpListenerContext context, byte[] body, ServiceCallEvent serviceCallEvent = null)
         {
-            double? responseTime;
             Stopwatch sw = new Stopwatch();
             sw.Start();
             await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
             sw.Stop();
 
-            responseTime = sw.Elapsed.TotalMilliseconds;
-            return responseTime;
+            if (serviceCallEvent == null)
+            {
+                return;
+            }
+
+            double? responseTime = sw.Elapsed.TotalMilliseconds;
+            serviceCallEvent.ResponseTime = ShouldWriteResponseTime(responseTime) ? responseTime : null;
         }
 
 

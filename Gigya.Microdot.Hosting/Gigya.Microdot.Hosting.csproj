@@ -62,6 +62,7 @@
     <Compile Include="HttpService\ServerRequestPublisher.cs" />
     <Compile Include="HttpService\IdentityServiceInterfaceMapper.cs" />
     <Compile Include="HttpService\Endpoints\IHealthStatus.cs" />
+    <Compile Include="HttpService\ServiceCallEventFillExtensions.cs" />
     <Compile Include="HttpService\ServiceInterfaceMapper.cs" />
     <Compile Include="HttpService\InstanceBasedActivator.cs" />
     <Compile Include="HttpService\IServiceInterfacesMapper.cs" />
