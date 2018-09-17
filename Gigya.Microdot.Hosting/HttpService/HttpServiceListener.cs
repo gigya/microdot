@@ -197,7 +197,6 @@ namespace Gigya.Microdot.Hosting.HttpService
         private async Task HandleRequest(HttpListenerContext context)
         {
             RequestTimings.ClearCurrentTimings();
-            Stopwatch responsSW = new Stopwatch();
             using (context.Response)
             {
                 var sw = Stopwatch.StartNew();
@@ -207,7 +206,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 {
                     foreach (var customEndpoint in CustomEndpoints)
                     {
-                        if (await customEndpoint.TryHandle(context, (data, status, type) => TryWriteResponse(context, data, responsSW, status, type)))
+                        if (await customEndpoint.TryHandle(context, (data, status, type) => TryWriteResponse(context, data, status, type)))
                         {
                             if (RequestTimings.Current.Request.ElapsedMS != null)
                                 _metaEndpointsRoundtripTime.Record((long)RequestTimings.Current.Request.ElapsedMS, TimeUnit.Milliseconds);
@@ -218,7 +217,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 catch (Exception e)
                 {
                     var ex = GetRelevantException(e);
-                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), responsSW, GetExceptionStatusCode(ex));
+                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
                     return;
                 }
 
@@ -262,7 +261,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         RejectRequestIfLateOrOverloaded();
 
                         var responseJson = await GetResponse(context, serviceMethod, requestData);
-                        responseTime = await TryWriteResponse(context, responseJson, responsSW);
+                        responseTime = await TryWriteResponse(context, responseJson);
 
                         _successCounter.Increment();
                     }
@@ -273,7 +272,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         ex = GetRelevantException(e);
 
                         string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
-                        responseTime = await TryWriteResponse(context, json, responsSW, GetExceptionStatusCode(ex));
+                        responseTime = await TryWriteResponse(context, json, GetExceptionStatusCode(ex));
                     }
                     finally
                     {
@@ -282,15 +281,15 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds, ValidateResponseTime(responseTime));
+                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds, ShouldWriteResponseTime(responseTime) ? responseTime : null);
                     }
                 }
             }
         }
 
-        private double? ValidateResponseTime(double? responseTIme)
+        private bool ShouldWriteResponseTime(double? responseTIme)
         {
-            return responseTIme < _eventConfig().MinResponseTimeForLog ? null : responseTIme;
+            return responseTIme >= _eventConfig().MinResponseTimeForLog;
         }
 
 
@@ -424,7 +423,15 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
         }
 
-        private async Task<double?> TryWriteResponse(HttpListenerContext context, string data, Stopwatch stopWatch, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
+        /// <summary>
+        /// Writes to response output stream and returns response time
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="data"></param>
+        /// <param name="httpStatus"></param>
+        /// <param name="contentType"></param>
+        /// <returns>double? - response time</returns>
+        private async Task<double?> TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
         {
             double? responseTime = null;
 
@@ -441,11 +448,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
             try
             {
-                stopWatch.Restart();
-                await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
-                stopWatch.Stop();
-
-                responseTime = stopWatch.Elapsed.TotalMilliseconds;
+                responseTime = await WriteResponseAndReturnResponseTime(context, body);
             }
             catch (HttpListenerException writeEx)
             {
@@ -461,6 +464,18 @@ namespace Gigya.Microdot.Hosting.HttpService
                     encryptedTags: new { response = data }));
             }
 
+            return responseTime;
+        }
+
+        private async Task<double?> WriteResponseAndReturnResponseTime(HttpListenerContext context, byte[] body)
+        {
+            double? responseTime;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
+            sw.Stop();
+
+            responseTime = sw.Elapsed.TotalMilliseconds;
             return responseTime;
         }
 
