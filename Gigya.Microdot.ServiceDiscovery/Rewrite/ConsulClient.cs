@@ -61,7 +61,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500"), Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
 		}
 
-
         internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
@@ -76,7 +75,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 try
                 {
                     var serviceEntries = JsonConvert.DeserializeObject<ServiceEntry[]>(response.ResponseContent);
-                    response.Response = serviceEntries.Select(ToNode).ToArray();
+                    response.ResponseObject = serviceEntries.Select(ToNode).ToArray();
                 }
                 catch (Exception ex)
                 {
@@ -152,7 +151,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 			}
             else
             {
-                version = response.Response?.Version;
+                version = response.ResponseObject?.Version;
                 response.IsUndeployed = false;
             }
 
@@ -176,7 +175,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 {
                     var fullKeyNames = JsonConvert.DeserializeObject<string[]>(response.ResponseContent);
                     var keyNames = fullKeyNames.Select(s => s.Substring($"{folder}/".Length)).ToArray();
-                    response.Response = keyNames;
+                    response.ResponseObject = keyNames;
                 }
                 catch (Exception ex)
                 {

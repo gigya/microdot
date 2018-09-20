@@ -113,7 +113,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 ConsulResponse<string[]> consulResponse = null;
                 while (!_shutdownToken.IsCancellationRequested)
                 {
-	                consulResponse = await GetAllServices(consulResponse?.ModifyIndex ?? InitialModifyIndex).ConfigureAwait(false);
+	                consulResponse = await UpdateAllServices(consulResponse?.ModifyIndex ?? InitialModifyIndex).ConfigureAwait(false);
                     _initCompleted.TrySetResult(true);
 
                     // If we got an error, we don't want to spam Consul so we wait a bit
@@ -128,7 +128,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-        private async Task<ConsulResponse<string[]>> GetAllServices(ulong modifyIndex)
+        private async Task<ConsulResponse<string[]>> UpdateAllServices(ulong modifyIndex)
         {
             var consulResponse = await ConsulClient.GetAllServices(modifyIndex, _shutdownToken.Token).ConfigureAwait(false);
 
@@ -150,7 +150,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             }
             else
             {
-                Services = new HashSet<string>(consulResponse.Response);
+                Services = new HashSet<string>(consulResponse.ResponseObject);
                 _healthStatus = HealthCheckResult.Healthy(string.Join("\r\n", Services));
                 Error = null;
             }

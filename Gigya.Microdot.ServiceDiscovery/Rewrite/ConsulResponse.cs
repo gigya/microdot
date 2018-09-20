@@ -33,7 +33,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public string ConsulAddress { get; set; }
         public string CommandPath { get; set; }
         public string ResponseContent { get; set; }
-        public TResonse Response { get; set; }
+        public TResonse ResponseObject { get; set; }
         public DateTime ResponseDateTime { get; set; }
         public HttpStatusCode? StatusCode { get; set; }
         public ulong? ModifyIndex { get; set; }
@@ -50,7 +50,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 ResponseContent = ResponseContent,
                 ResponseDateTime = ResponseDateTime,
                 StatusCode = StatusCode,
-                Response = result
+                ResponseObject = result
             };
         }
 
