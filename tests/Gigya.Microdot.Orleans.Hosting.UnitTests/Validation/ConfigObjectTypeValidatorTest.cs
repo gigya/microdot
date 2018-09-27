@@ -22,7 +22,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
         public void ThrowExceptionWhenValueTypeImplementsIConfigObject()
         {
             IAssemblyProvider assemblyProviderMock = Substitute.For<IAssemblyProvider>();
-            assemblyProviderMock.GetAllTypes().Returns(new [] {typeof(ValueTypeConfig) });
+            assemblyProviderMock.GetAllTypes().Returns(new [] {typeof(ReferenceTypeConfig), typeof(ValueTypeConfig) });
 
             ConfigObjectTypeValidator configValidator = new ConfigObjectTypeValidator(assemblyProviderMock);
 
@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
         public void NoValueTypesInAssemblies_TestPassed()
         {
             IAssemblyProvider assemblyProviderMock = Substitute.For<IAssemblyProvider>();
-            assemblyProviderMock.GetAllTypes().Returns(new Type[0]);
+            assemblyProviderMock.GetAllTypes().Returns(new[] { typeof(ReferenceTypeConfig) });
 
             ConfigObjectTypeValidator configValidator = new ConfigObjectTypeValidator(assemblyProviderMock);
 
@@ -42,5 +42,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
     }
 
     public struct ValueTypeConfig : IConfigObject
+    { }
+
+    public class ReferenceTypeConfig : IConfigObject
     { }
 }

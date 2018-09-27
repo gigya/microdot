@@ -23,10 +23,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Hosting.Validators
 {
@@ -40,8 +39,7 @@ namespace Gigya.Microdot.Hosting.Validators
         }
         public void Validate()
         {
-            List<Type> configValueTypes = _assemblyProvider.GetAllTypes().Where(t => t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject) && 
-                                                                                                                                    t.GetTypeInfo().IsValueType)).ToList();
+            List<Type> configValueTypes = _assemblyProvider.GetAllTypes().Where(t => !ConfigObjectCreator.IsConfigObject(t)).ToList();
 
             if (configValueTypes.Count == 0)
             {

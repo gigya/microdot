@@ -58,7 +58,17 @@ namespace Gigya.Microdot.Ninject
             return _configObjectCreator.ChangeNotifications;
         }
 
-        public dynamic GetGenericFuncCompiledLambda(Type configType, string functionName)
+        public dynamic GetLambdaOfGetLatest(Type configType)
+        {
+            return GetGenericFuncCompiledLambda(configType, nameof(GetTypedLatestFunc));
+        }
+
+        public dynamic GetLambdaOfChangeNotifications(Type configType)
+        {
+            return GetGenericFuncCompiledLambda(configType, nameof(GetChangeNotificationsFunc));
+        }
+
+        private dynamic GetGenericFuncCompiledLambda(Type configType, string functionName)
         {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
             MethodInfo func = typeof(IConfigObjectCreatorWrapper).GetMethod(functionName).MakeGenericMethod(configType);
             Expression instance = Expression.Constant(this);
@@ -77,15 +87,13 @@ namespace Gigya.Microdot.Ninject
             {
                 //Resolving from ninject should be performed out of the lock, to avoid potential dead locks, caused by locking, performed by ninject itself
                 Func<Type, IConfigObjectCreator> getCreator = _kernel.Get<Func<Type, IConfigObjectCreator>>();
-                IConfigObjectCreator uninitializedCreator = getCreator(_configType);
+                IConfigObjectCreator creator = getCreator(_configType);
 
                 lock (_lockObject)
                 {
                     if (_configObjectCreator == null)
                     {
-                        uninitializedCreator.Init();
-
-                        _configObjectCreator = uninitializedCreator;
+                        _configObjectCreator = creator;
                     }
                 }
             }

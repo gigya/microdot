@@ -25,7 +25,6 @@ namespace Gigya.Microdot.Configuration
     public interface IConfigObjectCreator
     {
         object ChangeNotifications { get; }
-        void Init();
         object GetLatest();
     }
 }

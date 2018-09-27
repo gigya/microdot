@@ -58,13 +58,13 @@ namespace Gigya.Microdot.Ninject
                 {
                     IConfigObjectCreatorWrapper cocWrapper = kernel.Get<IConfigObjectCreatorWrapper>(new ConstructorArgument("type", configType));
 
-                    dynamic getLataestLambda = cocWrapper.GetGenericFuncCompiledLambda(configType, nameof(IConfigObjectCreatorWrapper.GetTypedLatestFunc));
+                    dynamic getLataestLambda = cocWrapper.GetLambdaOfGetLatest(configType);
                     kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
 
                     Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                     kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
 
-                    dynamic changeNotificationsLambda = cocWrapper.GetGenericFuncCompiledLambda(sourceBlockType, nameof(IConfigObjectCreatorWrapper.GetChangeNotificationsFunc));
+                    dynamic changeNotificationsLambda = cocWrapper.GetLambdaOfChangeNotifications(sourceBlockType);
                     kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
 
                     kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
