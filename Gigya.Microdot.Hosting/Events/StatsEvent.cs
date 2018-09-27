@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
@@ -43,7 +44,9 @@ namespace Gigya.Microdot.Hosting.Events
                 foreach (var value in Timings.Value.UserStats)
                 {
                     userMeasurements.Add(value.Key + ".count", value.Value.TotalInstances.ToString());
-                    userMeasurements.Add(value.Key + ".avgMs", (value.Value.TotalTime.TotalMilliseconds / value.Value.TotalInstances).ToString(CultureInfo.InvariantCulture));
+                    userMeasurements.Add(value.Key + ".avgMs",
+                        (value.Value.TotalTime.TotalMilliseconds / value.Value.TotalInstances).ToString(CultureInfo
+                            .InvariantCulture));
                 }
 
                 return userMeasurements;
@@ -51,8 +54,11 @@ namespace Gigya.Microdot.Hosting.Events
         }
 
 
-        [EventField(EventConsts.statsTotalTime, OmitFromAudit = true)]
+        [EventField("stats.total.time", OmitFromAudit = true)]
         public virtual double? TotalTime => Timings.Value.Request.ElapsedMS;
+
+        [EventField("stats.processing.time", OmitFromAudit = true)]
+        public double? ProcessingTime => CalculateProcessingTime();
 
         [EventField("stats.mysql.time", OmitFromAudit = true)]
         public double? MySqlTime => Timings.Value.DataSource.MySql.Total.ElapsedMS;
@@ -155,7 +161,20 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField("stats.hades.deletes", OmitFromAudit = true)]
         public long? CallsHadesDelete => Timings.Value.DataSource.Hades.Delete.Calls;
 
+        private double? CalculateProcessingTime()
+        {
+            if (TotalTime == null)
+                return null;
 
+            double servicesTime = 0;
+            foreach (var serviceCall in Timings.Value.ServicesCallsDictionary.Values)
+            {
+                if (serviceCall.ElapsedMS != null)
+                    servicesTime += serviceCall.ElapsedMS.Value;
+            }
+
+            return TotalTime - servicesTime;
+        }
 
     }
 }

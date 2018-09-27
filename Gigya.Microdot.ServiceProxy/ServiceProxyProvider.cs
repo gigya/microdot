@@ -43,6 +43,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Newtonsoft.Json;
@@ -370,15 +371,20 @@ namespace Gigya.Microdot.ServiceProxy
                     httpContent.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
 
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
-                    try
+
+                    using (RequestTimings.Current.ServicesCallsDictionary[ServiceName].Measure())
                     {
-                        response = await GetHttpClient(config).PostAsync(uri, httpContent).ConfigureAwait(false);
-                        responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        try
+                        {
+                            response = await GetHttpClient(config).PostAsync(uri, httpContent).ConfigureAwait(false);
+                            responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
+                        }
                     }
-                    finally
-                    {
-                        clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
-                    }
+
                     if (response.Headers.TryGetValues(GigyaHttpHeaders.ExecutionTime, out IEnumerable<string> values))
                     {
                         var time = values.FirstOrDefault();
