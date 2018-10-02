@@ -156,9 +156,8 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 				failure.Details.Contains("The Required field is required"))
 			.ShouldBeTrue("Expected a failure! When no value is given for the property");
 
-			Console.WriteLine(s.Summarize(format == "teamcity" 
-				? ConfigurationVerificator.Results.SummaryFormat.TeamCity : 
-				ConfigurationVerificator.Results.SummaryFormat.Console));
+            // Don't write to console in TC mode, else will cause to "false positive" failure of test
+		    Console.WriteLine(s.Summarize(ConfigurationVerificator.Results.SummaryFormat.Console)); 
 		}
 
 		[Test]
