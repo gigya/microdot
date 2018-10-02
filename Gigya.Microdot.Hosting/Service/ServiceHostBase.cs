@@ -54,9 +54,9 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         protected virtual string ServiceName => _serviceName;
 
-		protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
+        protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
 
-	    /// <summary>
+        /// <summary>
         /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
         /// </summary>
         protected virtual Version InfraVersion => null;
@@ -100,7 +100,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
             else if (Arguments.ServiceStartupMode == ServiceStartupMode.VerifyConfigurations)
             {
-	            OnVerifyConfiguration();
+                OnVerifyConfiguration();
             }
             else
             {
@@ -208,32 +208,33 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
 
-	    /// <summary>
-	    /// An extensibility point - this method is called in process of configuration objects verification.
-	    /// </summary>
-	    protected virtual void OnVerifyConfiguration()
-	    {
-		    if (ConfigurationVerificator == null)
-		    {
-			    Environment.ExitCode = 1;
-			    Console.WriteLine("ERROR: The configuration verification is not properly implemented. " +
-			                      "To implement you need to override OnVerifyConfiguration base method and call to base.");
-		    }
-		    else
-		    {
-				var result = ConfigurationVerificator.Verify();
-			    Environment.ExitCode = result.IsSuccess ? 0 : 1;
-			    var restore = Console.ForegroundColor;
-			    if (!result.IsSuccess)
-				    Console.ForegroundColor = ConsoleColor.Red;
-			    Console.WriteLine(result.Summarize());
-			    Console.ForegroundColor = restore;
-		    }
+        /// <summary>
+        /// An extensibility point - this method is called in process of configuration objects verification.
+        /// </summary>
+        protected virtual void OnVerifyConfiguration()
+        {
+            if (ConfigurationVerificator == null)
+            {
+                Environment.ExitCode = 1;
+                Console.WriteLine("ERROR: The configuration verification is not properly implemented. " +
+                                  "To implement you need to override OnVerifyConfiguration base method and call to base.");
+            }
+            else
+            {
+                var result = ConfigurationVerificator.Verify();
+                Environment.ExitCode = result.IsSuccess ? 0 : 1;
+                var restore = Console.ForegroundColor;
+                if (!result.IsSuccess)
+                    Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(result.Summarize());
+                Console.ForegroundColor = restore;
+                // Provide hint only for console
+                if(result.Format == ConfigurationVerificator.Results.SummaryFormat.Console)
+                    Console.WriteLine("   ***   Shutting down [configuration verification mode]. ***   ");
+            }
+        }
 
-		    Console.WriteLine("   ***   Shutting down [configuration verification mode]. ***   ");
-	    }
-
-	    /// <summary>
+        /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
         /// </summary>
         public Task WaitForServiceStartedAsync()

@@ -100,6 +100,12 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			Console.WriteLine(s.Summarize());
 		}
 
+	    [Test]
+	    [Description("just to be able to serach in tests tree")]
+	    public void VerificatorTest()
+	    {
+	    }
+
 		[Test]
 		[TestCase("console")]
 		[TestCase("teamcity")]

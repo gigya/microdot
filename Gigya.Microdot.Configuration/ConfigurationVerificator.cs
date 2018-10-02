@@ -34,293 +34,304 @@ using Gigya.Microdot.SharedLogic.Exceptions;
 
 namespace Gigya.Microdot.Configuration
 {
-	/// <summary>
-	/// Incapsulates logic of IConfigObject descendants verification.
-	/// </summary>
-	public class ConfigurationVerificator
-	{
-		/// <summary>
-		/// Incapsulates logic of storing and formatting results of verification run.
-		/// </summary>
-		public class Results
-		{
-			/// <summary>
-			/// The summary of verification formatting strategy
-			/// </summary>
-			public enum SummaryFormat
-			{
-				/// <summary>
-				/// Plaint console output
-				/// </summary>
-				Console,
-				/// <summary>
-				/// The TeamCity structured output
-				/// </summary>
-				TeamCity
-			}
+    /// <summary>
+    /// Incapsulates logic of IConfigObject descendants verification.
+    /// </summary>
+    public class ConfigurationVerificator
+    {
+        /// <summary>
+        /// Incapsulates logic of storing and formatting results of verification run.
+        /// </summary>
+        public class Results
+        {
 
-			/// <summary>
-			/// A summary of specific type verification (a success or failure)
-			/// </summary>
-			public class ResultPerType
-			{
-				/// <summary>
-				/// The verified config type
-				/// </summary>
-				public Type Type;
-				/// <summary>
-				/// The path of config file having an issue
-				/// </summary>
-				public string Path;
-				/// <summary>
-				/// The details of an issue with instantiating the config type
-				/// </summary>
-				public string Details;
+            /// <summary>
+            /// The summary of verification formatting strategy
+            /// </summary>
+            public enum SummaryFormat
+            {
+                /// <summary>
+                /// Plaint console output
+                /// </summary>
+                Console,
+                /// <summary>
+                /// The TeamCity structured output
+                /// </summary>
+                TeamCity
+            }
 
-				/// <summary>
-				/// </summary>
-				public ResultPerType (Type configType, string configPath, string validationErrors)
-				{
-					Type = configType;
-					Path = configPath;
-					Details = validationErrors;
-				}
-			}
+            /// <summary>
+            /// A summary of specific type verification (a success or failure)
+            /// </summary>
+            public class ResultPerType
+            {
+                /// <summary>
+                /// The verified config type
+                /// </summary>
+                public Type Type;
+                /// <summary>
+                /// The path of config file having an issue
+                /// </summary>
+                public string Path;
+                /// <summary>
+                /// The details of an issue with instantiating the config type
+                /// </summary>
+                public string Details;
 
-		    private class TestSuiteContext : IDisposable
-		    {
-		        private readonly string _groupName;
-			    private readonly StringBuilder _buffer;
-			    private int _dispose;
+                /// <summary>
+                /// </summary>
+                public ResultPerType (Type configType, string configPath, string validationErrors)
+                {
+                    Type = configType;
+                    Path = configPath;
+                    Details = validationErrors;
+                }
+            }
 
-		        public TestSuiteContext(string groupName, StringBuilder buffer)
-		        {
-		            if (groupName.Contains("'")) 
-			            throw new ArgumentException("groupName can't contain '");
-		            
-			        if (groupName.Contains(Environment.NewLine)) 
-				        throw new ArgumentException("groupName NewLine");
+            private class TestSuiteContext : IDisposable
+            {
+                private readonly string _groupName;
+                private readonly StringBuilder _buffer;
+                private int _dispose;
 
-		            _groupName = groupName;
-			        _buffer = buffer;
+                public TestSuiteContext(string groupName, StringBuilder buffer)
+                {
+                    if (groupName.Contains("'")) 
+                        throw new ArgumentException("groupName can't contain '");
+                    
+                    if (groupName.Contains(Environment.NewLine)) 
+                        throw new ArgumentException("groupName NewLine");
 
-			        WriteLine($"##teamcity[testSuiteStarted  name='{_groupName}']");
+                    _groupName = groupName;
+                    _buffer = buffer;
 
-		        }
+                    WriteLine($"##teamcity[testSuiteStarted  name='{_groupName}']");
 
-		        public TestContext AddTest(string name)
-		        {
-		            var result = new TestContext(name, _buffer);
-		            return result;
-		        }
+                }
 
-		        public void Dispose()
-		        {
-		            if (Interlocked.CompareExchange(ref _dispose, 1, 0) == 1) 
-			            return;
-		            
-			        WriteLine($"##teamcity[testSuiteFinished  name='{_groupName}']");
-		        }
+                public TestContext AddTest(string name)
+                {
+                    var result = new TestContext(name, _buffer);
+                    return result;
+                }
 
-			    private void WriteLine(string text)
-			    {
-				    _buffer.AppendLine(text);
-			    }
-		    }
+                public void Dispose()
+                {
+                    if (Interlocked.CompareExchange(ref _dispose, 1, 0) == 1) 
+                        return;
+                    
+                    WriteLine($"##teamcity[testSuiteFinished  name='{_groupName}']");
+                }
 
-			private class TestContext : IDisposable
-		    {
-		        private readonly string _name;
-		        private int _dispose = 0;
-			    private readonly StringBuilder _buffer;
+                private void WriteLine(string text)
+                {
+                    _buffer.AppendLine(text);
+                }
+            }
 
-			    internal TestContext(string testName, StringBuilder buffer)
-		        {
-		            //  if (testName.Length > 50) throw new ArgumentException("testName is to long");
-		            if (testName.Contains("'")) throw new ArgumentException("testName can't contain '");
-		            if (testName.Contains(Environment.NewLine)) throw new ArgumentException("testName NewLine");
-		            _name = testName;
-			        _buffer = buffer;
-			        WriteLine($"##teamcity[testStarted name='{_name}']");
-		        }
+            private class TestContext : IDisposable
+            {
+                private readonly string _name;
+                private int _dispose = 0;
+                private readonly StringBuilder _buffer;
 
-		        public void ReportFailure(string message, string details)
-		        {
-		            WriteLine($"##teamcity[testFailed name='{_name}'  message='{message}' details='{details}']");
+                internal TestContext(string testName, StringBuilder buffer)
+                {
+                    //  if (testName.Length > 50) throw new ArgumentException("testName is to long");
+                    if (testName.Contains("'")) throw new ArgumentException("testName can't contain '");
+                    if (testName.Contains(Environment.NewLine)) throw new ArgumentException("testName NewLine");
+                    _name = testName;
+                    _buffer = buffer;
+                    WriteLine($"##teamcity[testStarted name='{_name}']");
+                }
 
-		        }
-		        public void ReportFailure(string details)
-		        {
-		            WriteLine($"##teamcity[testFailed name='{_name}'  details='{details}']");
-		        }
+                public void ReportFailure(string message, string details)
+                {
+                    WriteLine($"##teamcity[testFailed name='{_name}'  message='{message}' details='{details}']");
 
-		        public void WriteMessage(string text)
-		        {
-		            WriteLine($"##teamcity[testStdOut name='{_name}'  out='{text}']");
-		        }
+                }
+                public void ReportFailure(string details)
+                {
+                    WriteLine($"##teamcity[testFailed name='{_name}'  details='{details}']");
+                }
 
-		        public void Dispose()
-		        {
-		            if (Interlocked.CompareExchange(ref _dispose, 1, 0) == 0)
-		                WriteLine($"##teamcity[testFinished  name='{_name}']");
-		        }
+                public void WriteMessage(string text)
+                {
+                    WriteLine($"##teamcity[testStdOut name='{_name}'  out='{text}']");
+                }
 
-			    private void WriteLine(string text)
-			    {
-				    _buffer.AppendLine(text);
-			    }
-		    }
+                public void Dispose()
+                {
+                    if (Interlocked.CompareExchange(ref _dispose, 1, 0) == 0)
+                        WriteLine($"##teamcity[testFinished  name='{_name}']");
+                }
 
-			/// <summary>
-			/// Summarize the success of verification. False if at least one of types
-			/// failed to pass the verification or any other failure, else True.
-			/// </summary>
-			public bool IsSuccess => _failedList.Any() == false;
+                private void WriteLine(string text)
+                {
+                    _buffer.AppendLine(text);
+                }
+            }
 
-			/// <summary>
-			/// The total time in ms the verification took.
-			/// </summary>
-			public long ElapsedMs;
-			private readonly List<ResultPerType> _failedList;
-			private readonly List<Type> _passedList;
+            /// <summary>
+            /// Summarize the success of verification. False if at least one of types
+            /// failed to pass the verification or any other failure, else True.
+            /// </summary>
+            public bool IsSuccess => _failedList.Any() == false;
 
-			public IEnumerable<ResultPerType> Failed => _failedList;
-			public IEnumerable<Type> Passed => _passedList;
+            /// <summary>
+            /// The total time in ms the verification took.
+            /// </summary>
+            public long ElapsedMs;
+            private readonly List<ResultPerType> _failedList;
+            private readonly List<Type> _passedList;
+            private readonly string _environment;
 
-			/// <summary>
-			/// </summary>
-			public Results()
-			{
-				_failedList = new List<ResultPerType>();
-				_passedList = new List<Type>();
+            public IEnumerable<ResultPerType> Failed => _failedList;
+            public IEnumerable<Type> Passed => _passedList;
+            public SummaryFormat Format { get; private set; }
 
-			}
+            /// <summary>
+            /// </summary>
+            /// <param name="environment">The environment where results were gethered.</param>
+            public Results(string environment)
+            {
+                _environment = environment;
+                _failedList = new List<ResultPerType>();
+                _passedList = new List<Type>();
+                Format = SummaryFormat.Console;
+            }
 
-			/// <summary>
-			/// Add indication the type passed the verification
-			/// </summary>
-			public void AddSuccess(Type configType)
-			{
-				_passedList.Add(configType);
-			}
+            /// <summary>
+            /// Add indication the type passed the verification
+            /// </summary>
+            public void AddSuccess(Type configType)
+            {
+                _passedList.Add(configType);
+            }
 
-			/// <summary>
-			/// Add indication the type didn't pass the verification with more details.
-			/// </summary>
-			public void AddFailure(Type configType, string configPath, string validationErrors)
-			{
-				_failedList.Add(new ResultPerType(configType, configPath, validationErrors));
-			}
+            /// <summary>
+            /// Add indication the type didn't pass the verification with more details.
+            /// </summary>
+            public void AddFailure(Type configType, string configPath, string validationErrors)
+            {
+                _failedList.Add(new ResultPerType(configType, configPath, validationErrors));
+            }
 
-			/// <summary>
-			/// Format to string for console or TeamCity
-			/// </summary>
-			public string Summarize(SummaryFormat? format = null)
-			{
-				// Recognize when running under the TeamCity
-				// https://confluence.jetbrains.com/display/TCD9/Predefined+Build+Parameters
-				format = format ?? (Environment.GetEnvironmentVariable("BUILD_NUMBER") != null 
-					                        ? SummaryFormat.TeamCity 
-					                        : SummaryFormat.Console);
+            /// <summary>
+            /// Summarize verification results into a string for Console or TeamCity.
+            /// </summary>
+            public string Summarize(SummaryFormat? format = null)
+            {
+                // Recognize when running under the TeamCity
+                // https://confluence.jetbrains.com/display/TCD9/Predefined+Build+Parameters
+                format = format ?? (Environment.GetEnvironmentVariable("BUILD_NUMBER") != null 
+                                            ? SummaryFormat.TeamCity 
+                                            : SummaryFormat.Console);
 
-				var summary = new StringBuilder();
+                this.Format = format.Value;
 
-				switch (format)
-				{
-					case SummaryFormat.Console:
-					{
-						if (_failedList.Count > 0)
-							summary.AppendLine($"--->>>> Configuration objects FAILED to pass the verification <<<<-----".ToUpper());
+                var summary = new StringBuilder();
 
-						_failedList.ForEach(failure =>
-						{
-							summary.AppendLine($"TYPE: {failure.Type?.FullName}");
-							summary.AppendLine($"       PATH :  {failure.Path}");
-							summary.AppendLine($"       ERROR:  {failure.Details}");
-						});
+                switch (format)
+                {
+                    case SummaryFormat.Console:
+                    {
+                        if (_failedList.Count > 0)
+                            summary.AppendLine($"--->>>> Configuration objects FAILED to pass the verification <<<<-----".ToUpper());
 
-						if (_passedList.Count > 0)
-							summary.AppendLine($"The following {_passedList.Count} configuration objects passed the verification:");
+                        _failedList.ForEach(failure =>
+                        {
+                            summary.AppendLine($"TYPE: {failure.Type?.FullName}");
+                            summary.AppendLine($"       PATH :  {failure.Path}");
+                            summary.AppendLine($"       ERROR:  {failure.Details}");
+                        });
 
-						_passedList.ForEach(item => summary.AppendLine($"    {item.FullName}"));
-						
-						return summary.ToString();
-					}
-					case SummaryFormat.TeamCity:
-					{
-						using (var suite = new TestSuiteContext("Configuration Verificator", summary))
-						{
-							_failedList.ForEach(failure =>
-							{
-								using (var test = suite.AddTest(failure.Type?.FullName))
-									test.ReportFailure($"Path: {failure.Path}", failure.Details);
-							});
-							_passedList.ForEach(item =>
-							{
-								using (var test = suite.AddTest(item.FullName))
-									test.WriteMessage("Verified successfully.");
-							});
-						}
+                        if (_passedList.Count > 0)
+                            summary.AppendLine($"The following {_passedList.Count} configuration objects passed the verification:");
 
-						return summary.ToString();
-					}
-					default:
-						throw new ArgumentException($"Unsupported summary format: {format}");
-				}
-			}
-		}
+                        _passedList.ForEach(item => summary.AppendLine($"    {item.FullName}"));
+                        
+                        return summary.ToString();
+                    }
+                    case SummaryFormat.TeamCity:
+                    {
+                        // The title of suite describes the current environment
+                        using (var suite = new TestSuiteContext(_environment, summary))
+                        {
+                            _failedList.ForEach(failure =>
+                            {
+                                using (var test = suite.AddTest(failure.Type?.FullName))
+                                    test.ReportFailure($"Path: {failure.Path}", failure.Details);
+                            });
+                            _passedList.ForEach(item =>
+                            {
+                                using (var test = suite.AddTest(item.FullName))
+                                    test.WriteMessage("Verified successfully.");
+                            });
+                        }
+                        // Avoid additional newlines, as TC is sensitive for
+                        return summary.ToString().Trim();
+                    }
+                    default:
+                        throw new ArgumentException($"Unsupported summary format: {format}");
+                }
+            }
+        }
 
-		private readonly Func<Type, ConfigObjectCreator> _configCreatorFunc;
-		private readonly IAssemblyProvider _assemblyProvider;
+        private readonly Func<Type, ConfigObjectCreator> _configCreatorFunc;
+        private readonly IAssemblyProvider _assemblyProvider;
+        private readonly IEnvironmentVariableProvider _envProvider;
 
-		/// <summary>
-		/// </summary>
-		public ConfigurationVerificator (Func<Type, ConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider)
-		{
-			_configCreatorFunc = configCreatorFunc;
-			_assemblyProvider = assemblyProvider;
-		}
+        /// <summary>
+        /// </summary>
+        public ConfigurationVerificator (Func<Type, ConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider, IEnvironmentVariableProvider envProvider)
+        {
+            _configCreatorFunc = configCreatorFunc;
+            _assemblyProvider = assemblyProvider;
+            _envProvider = envProvider;
+        }
 
-		/// <summary>
-		/// Run the discovery of IConfigObject descendants, instanciate them and grab validation or any other errors.
-		/// </summary>
-		/// <remarks>
-		/// Throwing, except <see cref="ConfigurationException"/>. On purpose to expose any exceptions except this one.
-		/// </remarks>
-		public Results Verify()
-		{
-			var result = new Results();
-			var watch = Stopwatch.StartNew();
-			
-			// Get ConfigObject types in related binaries
-			var configObjectTypes = _assemblyProvider.GetAllTypes()
-				.Where(t => t.IsClass && !t.IsAbstract && typeof(IConfigObject).IsAssignableFrom(t))
-				.AsEnumerable();
+        /// <summary>
+        /// Run the discovery of IConfigObject descendants, instanciate them and grab validation or any other errors.
+        /// </summary>
+        /// <remarks>
+        /// Throwing, except <see cref="ConfigurationException"/>. On purpose to expose any exceptions except this one.
+        /// </remarks>
+        public Results Verify()
+        {
+            var environment = $"{_envProvider.DataCenter}-{_envProvider.DeploymentEnvironment}";
+            var result = new Results(environment);
+            var watch = Stopwatch.StartNew();
 
-			// Instanciate and grab validation issues
-			foreach (var configType in configObjectTypes)
-			{
-				try
-				{
-					var creator = _configCreatorFunc(configType);
-					creator.Init();
+            // Get ConfigObject types in related binaries
+            var configObjectTypes = _assemblyProvider.GetAllTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && typeof(IConfigObject).IsAssignableFrom(t))
+                .AsEnumerable();
 
-					// ReSharper disable once UnusedVariable
-					// Only for review in debugging  session
-					var objConfig = creator.GetLatest();
+            // Instanciate and grab validation issues
+            foreach (var configType in configObjectTypes)
+            {
+                try
+                {
+                    var creator = _configCreatorFunc(configType);
+                    creator.Init();
 
-					result.AddSuccess(configType);
-				}
-				catch (ConfigurationException ex)
-				{
-					var path = ex.UnencryptedTags?["ConfigObjectPath"] ?? ex.Message;
-					var error = ex.UnencryptedTags?["ValidationErrors"] ?? ex.InnerException?.Message;
-					result.AddFailure(configType, path, error);
-				}
-			}
+                    // ReSharper disable once UnusedVariable
+                    // Only to review in debugging session
+                    var objConfig = creator.GetLatest();
 
-			result.ElapsedMs = watch.ElapsedMilliseconds;
-			return result;
-		}
-	}
+                    result.AddSuccess(configType);
+                }
+                catch (ConfigurationException ex)
+                {
+                    var path = ex.UnencryptedTags?["ConfigObjectPath"] ?? ex.Message;
+                    var error = ex.UnencryptedTags?["ValidationErrors"] ?? ex.InnerException?.Message;
+                    result.AddFailure(configType, path, error);
+                }
+            }
+
+            result.ElapsedMs = watch.ElapsedMilliseconds;
+            return result;
+        }
+    }
 }
