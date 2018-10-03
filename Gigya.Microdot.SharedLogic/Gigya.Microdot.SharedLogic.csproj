@@ -53,6 +53,7 @@
     <Compile Include="Exceptions\StackTraceEnhancer.cs" />
     <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />
     <Compile Include="Logging\LogBase.cs" />
+    <Compile Include="Measurement\ServicesCallsDictionary.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />

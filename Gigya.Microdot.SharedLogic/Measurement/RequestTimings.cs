@@ -30,9 +30,11 @@ namespace Gigya.Microdot.SharedLogic.Measurement
     /// various data sources (mysql, mongo, etc), the time it took to perform calls to providers, and the total time spent
     /// processing the current request.</summary>
     [Serializable]
-    public class RequestTimings:MarshalByRefObject
+    public class RequestTimings : MarshalByRefObject
     {
         internal readonly ConcurrentDictionary<string, Aggregator> UserStats = new ConcurrentDictionary<string, Aggregator>();
+
+        public ServicesCallsDictionary ServicesCallsDictionary = new ServicesCallsDictionary();
 
         /// <summary>Time of the ongoing request.</summary>
         public ConcurrentStopwatch Request = new ConcurrentStopwatch();
@@ -67,7 +69,5 @@ namespace Gigya.Microdot.SharedLogic.Measurement
         /// <summary>Starts measuring the top-level processing of the current request. Handy when it's inconvenient for you
         /// to call Request.Measure()</summary>
         public void MarkRequestStartTime() { Request.Start(); }
-
-
     }
 }
