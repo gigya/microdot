@@ -23,7 +23,7 @@
 using System;
 using System.Collections.Generic;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Interfaces.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
