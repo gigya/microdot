@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -18,10 +19,10 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironmentsVariableProvider(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration());
-        EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironmentsVariableProvider(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironmentsVariableProvider()), () => new EventConfiguration());
+        EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment()), () => new EventConfiguration());
+        EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironment(),
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment()), () => new EventConfiguration());
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -205,11 +206,16 @@ namespace Gigya.Microdot.UnitTests.Events
 
     }
 
-    internal class NullEnvironmentsVariableProvider : IEnvironmentVariableProvider
+    internal class NullEnvironment : IEnvironment
     {
-        public string DataCenter => nameof(DataCenter);
+        public string Zone => nameof(Zone);
+        public string Region => nameof(Region);
         public string DeploymentEnvironment => nameof(DeploymentEnvironment);
         public string ConsulAddress => nameof(ConsulAddress);
+
+        [Obsolete("To be deleted on version 2.0")]
         public string GetEnvironmentVariable(string name) => name;
+        [Obsolete("To be deleted on version 2.0")]
+        public void SetEnvironmentVariableForProcess(string name, string value) {}
     }
 }

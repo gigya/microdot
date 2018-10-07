@@ -21,18 +21,20 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Gigya.Microdot.SharedLogic.Events;
 using Newtonsoft.Json;
 
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.SharedLogic.HttpService
 {
 	public class HttpServiceRequest
     {
-        public const string Version = "1";
+        public const string ProtocolVersion = "1";
         
         [JsonProperty(Order = 0)]
 		public OrderedDictionary Arguments { get; set; }
@@ -46,60 +48,52 @@ namespace Gigya.Microdot.Interfaces.HttpService
         [JsonProperty(Order = 3)]
 		public InvocationTarget Target { get; set; }
 
+        /// <summary>
+        /// Constructor for deserialization. Should not set any property values.
+        /// </summary>
+        public HttpServiceRequest() { }
 
-		public HttpServiceRequest() { }
-
-        public HttpServiceRequest(string targetMethod, string typeName, Dictionary<string,object> arguments)
+        private HttpServiceRequest(ICollection arguments)
         {
-            if (targetMethod == null)
-                throw new ArgumentNullException(nameof(targetMethod));
-
             if (arguments == null)
                 throw new ArgumentNullException(nameof(arguments));
 
+			Arguments = new OrderedDictionary(arguments.Count);
+        }
+
+        /// <summary>
+        /// Used for weakly-typed requests. Arguments sent in this way are matched by name only, the order isn't used.
+        /// </summary>
+        /// <param name="targetMethod">The name of the method to be called.</param>
+        /// <param name="typeName">The type on which to call the method.</param>
+        /// <param name="arguments">A dictionary of arguments to be supplied to the method, where the key is the name of the argument.</param>
+        public HttpServiceRequest(string targetMethod, string typeName, Dictionary<string, object> arguments) : this(arguments)
+        {
+            if (targetMethod == null)
+                throw new ArgumentNullException(nameof(targetMethod));
 
             Target = new InvocationTarget(targetMethod, typeName);
-            Arguments = new OrderedDictionary();
 
             foreach(var argument in arguments)
-            {
                 Arguments.Add(argument.Key, argument.Value);
-            }
         }
 
-        public HttpServiceRequest(string targetMethod, Dictionary<string, object> arguments)
-        {
-            if (targetMethod == null)
-                throw new ArgumentNullException(nameof(targetMethod));
-
-            if (arguments == null)
-                throw new ArgumentNullException(nameof(arguments));
-
-
-            Target = new InvocationTarget(targetMethod);
-            Arguments = new OrderedDictionary();
-
-            foreach (var argument in arguments)
-            {
-                Arguments.Add(argument.Key, argument.Value);
-            }
-        }
-
-        public HttpServiceRequest(MethodInfo targetMethod, object[] arguments)
+        /// <summary>
+        /// Used for strongly-typed requests. Arguments sent in this way are matched by order only, the name isn't used.
+        /// </summary>
+        /// <param name="targetMethod">The <see cref="MethodInfo"/> of the method to be called.</param>
+        /// <param name="arguments">An array of arguments to be supplied to the method, where the position of the elements match the position of the arguments.</param>
+        public HttpServiceRequest(MethodInfo targetMethod, object[] arguments) : this(arguments)
 		{
 			if (targetMethod == null)
 				throw new ArgumentNullException(nameof(targetMethod));
 		    
-			if (arguments == null)
-				throw new ArgumentNullException(nameof(arguments));
-
 			var parameters = targetMethod.GetParameters();
 			
 			if (arguments.Length < parameters.Count(a => a.IsOptional == false))
 				throw new ArgumentException("An incorrect number of arguments was supplied for the specified target method.", nameof(arguments));
 
-			Target = new InvocationTarget(targetMethod);
-			Arguments = new OrderedDictionary(arguments.Length);
+			Target = new InvocationTarget(targetMethod, parameters);
 
             
             for (int i = 0; i < arguments.Length; i++)
@@ -124,22 +118,17 @@ namespace Gigya.Microdot.Interfaces.HttpService
 
 		public InvocationTarget() { }
 
-        public InvocationTarget(string methodName, string typeName=null)
+        public InvocationTarget(string methodName, string typeName = null)
 	    {
 	        MethodName = methodName;
             TypeName = typeName;
 	    }
 
-		public InvocationTarget(MethodInfo method):this(method,null)
-		{
-			
-		}
-
 		public InvocationTarget(MethodInfo method, ParameterInfo[] parameterTypes)
 		{
 			TypeName = method.DeclaringType.FullName;
 			MethodName = method.Name;
-			ParameterTypes = (parameterTypes ?? method.GetParameters()).Select(p => GetCleanTypeName(p.ParameterType)).ToArray();
+			ParameterTypes = parameterTypes.Select(p => GetCleanTypeName(p.ParameterType)).ToArray();
 		}
 
 

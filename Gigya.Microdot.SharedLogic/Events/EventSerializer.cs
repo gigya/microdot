@@ -9,6 +9,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
@@ -26,16 +27,16 @@ namespace Gigya.Microdot.SharedLogic.Events
 
 
         private Func<EventConfiguration> LoggingConfigFactory { get; }
-        private IEnvironmentVariableProvider EnvProvider { get; }
+        private IEnvironment Environment { get; }
         private IStackTraceEnhancer StackTraceEnhancer { get; }
         private Func<EventConfiguration> EventConfig { get; }
 
 
         public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
-            IEnvironmentVariableProvider envProvider, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig)
+            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig)
         {
             LoggingConfigFactory = loggingConfigFactory;
-            EnvProvider = envProvider;
+            Environment = environment;
             StackTraceEnhancer = stackTraceEnhancer;
             EventConfig = eventConfig;
         }
@@ -45,7 +46,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public IEnumerable<SerializedEventField> Serialize(IEvent evt, Func<EventFieldAttribute, bool> predicate = null)
         {
             evt.Configuration = LoggingConfigFactory();
-            evt.EnvironmentVariableProvider = EnvProvider;
+            evt.Environment = Environment;
             evt.StackTraceEnhancer = StackTraceEnhancer;
 
             foreach (var member in GetMembersToSerialize(evt.GetType()))

@@ -22,14 +22,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Fakes
 {
-    public class DateTimeFake: IDateTime
+    public class DateTimeFake : IDateTime
     {
-        public DateTime UtcNow { get; set; }
+        public DateTime UtcNow { get; set; } = DateTime.UtcNow;
 
         private TaskCompletionSource<bool> _delayTask = new TaskCompletionSource<bool>();
 
@@ -46,10 +47,28 @@ namespace Gigya.Microdot.Fakes
             _manualDelay = manualDelay;
         }
 
-        public Task Delay(TimeSpan delay)
+        public Task Delay(TimeSpan delay) => Delay(delay, default(CancellationToken));
+        public async Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken))
         {
             DelaysRequested.Add(delay);
-            return _manualDelay ? _delayTask.Task : Task.Delay(delay);
+            
+            if (_manualDelay)
+                await _delayTask.Task;
+            else
+                await Task.Delay(delay, cancellationToken);
+
+            UtcNow += delay;
+        }
+
+        public async Task DelayUntil(DateTime until, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            TimeSpan delayTime = until - UtcNow;
+
+            if (delayTime > TimeSpan.Zero)
+            {
+                await Delay(delayTime, cancellationToken).ConfigureAwait(false);
+                UtcNow += delayTime;
+            }
         }
 
         /// <summary>

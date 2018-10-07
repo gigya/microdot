@@ -21,27 +21,49 @@
 #endregion
 
 using System;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {
+    [ConfigurationRoot("dataCenters", RootStrategy.ReplaceClassNameWithPath)]
+    public class DataCentersConfig : IConfigObject
+    {
+        public string Current { get; set; }
+    }
+
     public class EnvironmentInstance : IEnvironment
     {
-        public EnvironmentInstance()
+        private readonly IEnvironmentVariableProvider _environmentVariableProvider;
+        private readonly string _region;
+        private Func<DataCentersConfig> GetDataCentersConfig { get; }
+
+        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider, Func<DataCentersConfig> getDataCentersConfig)
         {
-            PlatformID = Environment.OSVersion.Platform;
-            PlatformSpecificPathPrefix = PlatformID == PlatformID.Unix ? "/etc" : "D:";
+            _environmentVariableProvider = environmentVariableProvider;
+            GetDataCentersConfig = getDataCentersConfig;
+            Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE") ?? environmentVariableProvider.GetEnvironmentVariable("DC");
+            _region = environmentVariableProvider.GetEnvironmentVariable("REGION");
+            DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
+            ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
+
+            if (string.IsNullOrEmpty(Zone) || string.IsNullOrEmpty(DeploymentEnvironment))
+                throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %ZONE%, %ENV%");
         }
 
-        public PlatformID PlatformID { get; }
+        public string Zone { get; }
+        public string Region => _region ?? GetDataCentersConfig().Current; // if environmentVariable %REGION% does not exist, take the region from DataCenters configuration (the region was previously called "DataCenter")
+        public string DeploymentEnvironment { get; }        
+        public string ConsulAddress { get; }
 
-        public string PlatformSpecificPathPrefix { get; }
-
+        [Obsolete("To be deleted on version 2.0")]
         public void SetEnvironmentVariableForProcess(string name, string value)
         {
-            Environment.SetEnvironmentVariable(name, value.ToLower(), EnvironmentVariableTarget.Process);
+            _environmentVariableProvider.SetEnvironmentVariableForProcess(name, value);
         }
 
-        public string GetEnvironmentVariable(string name) { return Environment.GetEnvironmentVariable(name)?.ToLower(); }
+        [Obsolete("To be deleted on version 2.0")]
+        public string GetEnvironmentVariable(string name) => _environmentVariableProvider.GetEnvironmentVariable(name); 
     }
 }

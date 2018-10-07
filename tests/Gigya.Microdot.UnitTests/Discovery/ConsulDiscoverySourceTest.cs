@@ -44,16 +44,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private Dictionary<string, string> _configDic;
         private Func<Task> _consulClientInitTask;
         private DateTimeFake _dateTimeFake;
+        private IEnvironment _environmentMock;
 
         [SetUp]
         public void Setup()
         {
             _configDic = new Dictionary<string, string>();
-            _unitTestingKernel = new TestingKernel<ConsoleLog>(k=>k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>(), _configDic);
+            _unitTestingKernel = new TestingKernel<ConsoleLog>(k => {}, _configDic);
 
-            var environmentVarialbesMock = Substitute.For<IEnvironmentVariableProvider>();
-            environmentVarialbesMock.DeploymentEnvironment.Returns(ENV);
-            Kernel.Rebind<IEnvironmentVariableProvider>().ToConstant(environmentVarialbesMock);
+            _environmentMock = Substitute.For<IEnvironment>();
+            _environmentMock.DeploymentEnvironment.Returns(ENV);
+            Kernel.Rebind<IEnvironment>().ToConstant(_environmentMock);
 
             SetupDateTimeFake();
             SetupConsulClient();
@@ -118,9 +119,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public async Task ServiceInDataCenterScope()
+        public async Task ServiceInZoneScope()
         {
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "DataCenter";            
+            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "Zone";            
             await GetFirstResult().ConfigureAwait(false);
             Assert.AreEqual($"{SERVICE_NAME}", _requestedConsulServiceName);
         }
@@ -131,8 +132,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
             {
                 Scope = _serviceScope,
             };
-            var sourceFactory = Kernel.Get<Func<ServiceDeployment, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
-            var serviceContext = new ServiceDeployment(SERVICE_NAME, ENV);
+            var sourceFactory = Kernel.Get<Func<DeploymentIdentifier, ServiceDiscoveryConfig, ConsulDiscoverySource>>();
+            var serviceContext = new DeploymentIdentifier(SERVICE_NAME, ENV, _environmentMock);
             _consulDiscoverySource = sourceFactory(serviceContext, config);
             await _consulDiscoverySource.Init();
             await GetNewResult();

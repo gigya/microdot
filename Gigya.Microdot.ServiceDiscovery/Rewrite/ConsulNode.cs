@@ -19,10 +19,22 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.Interfaces.HttpService
+
+using Gigya.Microdot.SharedLogic.Rewrite;
+
+namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    public class ServiceReachabilityStatus
+
+    internal class ConsulNode: Node
     {
-        public bool IsReachable { get; set; }
+        public ConsulNode(string hostName, int? port = null, string version=null) : base(hostName, port)
+        {
+            Version = version;
+        }
+
+        /// <summary>
+        /// Version of this node (relevant only for Consul nodes)
+        /// </summary>
+        public string Version { get; }
     }
 }

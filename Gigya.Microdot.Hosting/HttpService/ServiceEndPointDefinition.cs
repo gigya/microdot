@@ -28,10 +28,10 @@ using System.Reflection;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
@@ -70,7 +70,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             ServiceNames = serviceInterfaces
                 .Where(i => i.GetCustomAttribute<HttpServiceAttribute>() != null)
-                .ToDictionary(x => x, x => x.GetCustomAttribute<HttpServiceAttribute>().Name ?? x.Name);
+                .ToDictionary(x => x, x => x.Name);
 
             var interfacePorts = serviceInterfaces.Select(i =>
             {
