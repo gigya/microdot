@@ -100,7 +100,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// <summary>The value of the %DC% environment variable. .</summary>
         [EventField(EventConsts.runtimeDC, OmitFromAudit = true)]
         [Obsolete("Deprecate after 2018; use region instead")]
-        public string RuntimeDC => Environment.Region;
+        public string RuntimeDC => Environment.Zone;
 
         /// <summary>The value of the %ENV% environment variable. </summary>
         [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]

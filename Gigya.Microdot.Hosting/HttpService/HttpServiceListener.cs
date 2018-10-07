@@ -430,7 +430,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.StatusCode = (int)httpStatus;
             context.Response.ContentLength64 = body.Length;
             context.Response.ContentType = contentType;
-            context.Response.Headers.Add(GigyaHttpHeaders.Zone, Environment.Zone);
+            context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
