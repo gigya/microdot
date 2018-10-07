@@ -19,14 +19,35 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
+
+using System;
+
 namespace Gigya.Microdot.Interfaces.SystemWrappers
 {
     public interface IEnvironment
     {
+        /// <summary>
+        /// The current Region this application runs in, e.g. "us1", "eu2".
+        /// Initialized from the environment variable "REGION".
+        /// </summary>
+        string Region { get; }
+
+        /// <summary>
+        /// The current Zone this application runs in, e.g. "us1a" or "eu2c". Initialized from the environment variable "ZONE".
+        /// </summary>
+        string Zone { get; }
+
+        /// <summary>
+        /// The current environment this application runs in, e.g. "prod", "st1" or "canary". Initialized from the environment variable "ENV".
+        /// </summary>        
+        string DeploymentEnvironment { get; }
+
+        string ConsulAddress { get; }
+   
+        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironmentVariableProvider.SetEnvironmentVariableForProcess instead")]
         void SetEnvironmentVariableForProcess(string name, string value);
 
+        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironmentVariableProvider.SetEnvironmentVariableForProcess instead")]
         string GetEnvironmentVariable(string name);
-
-        string PlatformSpecificPathPrefix { get; }
     }
 }

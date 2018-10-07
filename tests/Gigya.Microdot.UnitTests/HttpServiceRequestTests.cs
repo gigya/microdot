@@ -2,9 +2,7 @@
 using System.Reflection;
 
 using FluentAssertions;
-
-using Gigya.Microdot.Interfaces.HttpService;
-
+using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 
 using NUnit.Framework;

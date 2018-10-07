@@ -26,8 +26,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.SharedLogic.Security

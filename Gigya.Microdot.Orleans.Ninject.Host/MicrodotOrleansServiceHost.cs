@@ -89,7 +89,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             kernel.Get<ServiceValidator>().Validate();
-
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
@@ -112,7 +111,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <returns>The kernel to use.</returns>
         protected virtual IKernel CreateKernel()
         {
-            return new StandardKernel();
+            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
         }
 
 
@@ -129,9 +129,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
-
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
         }
 

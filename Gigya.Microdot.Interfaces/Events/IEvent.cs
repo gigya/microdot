@@ -23,6 +23,7 @@
 using System;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Interfaces.Events
 {
@@ -36,7 +37,7 @@ namespace Gigya.Microdot.Interfaces.Events
 
         EventConfiguration Configuration { get; set; }
 
-        IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
+        IEnvironment Environment { get; set; }
 
         IStackTraceEnhancer StackTraceEnhancer { get; set; }
     }

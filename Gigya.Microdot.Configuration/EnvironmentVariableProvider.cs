@@ -20,36 +20,89 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic.Exceptions;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration
 {
     public class EnvironmentVariableProvider : IEnvironmentVariableProvider
-    {        
-        private readonly IEnvironment _environment;
-        
-        public EnvironmentVariableProvider(IEnvironment environment, EnvironmentVariablesFileReader fileReader)
+    {
+        private const string GIGYA_ENV_VARS_FILE = "GIGYA_ENVVARS_FILE";
+        private const string ENV_FILEPATH = "{0}/gigya/environmentVariables.json";
+
+        private IFileSystem FileSystem { get; }
+
+        public EnvironmentVariableProvider(IFileSystem fileSystem)
         {
-            _environment = environment;
+            FileSystem = fileSystem;
+            PlatformSpecificPathPrefix = Environment.OSVersion.Platform == PlatformID.Unix ? "/etc" : "D:";
 
-            fileReader.ReadFromFile();
-            DataCenter = environment.GetEnvironmentVariable("DC");
-            DeploymentEnvironment = environment.GetEnvironmentVariable("ENV");
-            ConsulAddress = environment.GetEnvironmentVariable("CONSUL");
+            var locEnvFilePath = GetEnvironmentVariable(GIGYA_ENV_VARS_FILE);
 
-            if (string.IsNullOrEmpty(DataCenter) || string.IsNullOrEmpty(DeploymentEnvironment))
-                throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %DC%, %ENV%");
+            if (string.IsNullOrEmpty(locEnvFilePath))
+            {
+                locEnvFilePath = string.Format(ENV_FILEPATH, PlatformSpecificPathPrefix);
+            }
+
+            ReadFromFile(locEnvFilePath);
+
+            DataCenter = GetEnvironmentVariable("ZONE") ?? GetEnvironmentVariable("DC");
+            DeploymentEnvironment = GetEnvironmentVariable("ENV");
         }
 
-        public string ConsulAddress { get; }
+        public void SetEnvironmentVariableForProcess(string name, string value)
+        {
+            Environment.SetEnvironmentVariable(name, value.ToLower(), EnvironmentVariableTarget.Process);
+        }
 
+        public string GetEnvironmentVariable(string name) { return Environment.GetEnvironmentVariable(name)?.ToLower(); }
+
+        public string PlatformSpecificPathPrefix { get; }
+
+        [Obsolete("To be deleted on version 2.0")]
         public string DataCenter { get; }
 
+        [Obsolete("To be deleted on version 2.0")]
         public string DeploymentEnvironment { get; }
 
-        public string GetEnvironmentVariable(string name) { return _environment.GetEnvironmentVariable(name); }
+
+        /// <summary>
+        /// Reads each property in file and sets its environment variable.
+        /// </summary>
+        /// <returns>Names of environment variables read from file</returns>
+        public void ReadFromFile(string locEnvFilePath)
+        {
+            JObject envVarsObject;
+
+            try
+            {
+                var text = FileSystem.TryReadAllTextFromFile(locEnvFilePath);
+
+                if (string.IsNullOrEmpty(text))
+                    return;
+
+                envVarsObject = JObject.Parse(text);
+            }
+            catch (Exception ex)
+            {
+                throw new ConfigurationException($"Missing or invalid configuration file: {locEnvFilePath}", ex);
+            }
+
+            if (envVarsObject == null)
+                return;
+
+            var properties = envVarsObject.Properties().Where(a => a.HasValues).ToArray();
+
+            foreach (var property in properties)
+            {
+                SetEnvironmentVariableForProcess(property.Name, property.Value.Value<string>());
+            }
+        }
 
     }
 }
