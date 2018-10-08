@@ -147,8 +147,10 @@ namespace Gigya.Microdot.SharedLogic
                     case ServiceStartupMode.CommandLineInteractive:
                         ConsoleOutputMode = ConsoleOutputMode.Color;
                         break;
-                    case ServiceStartupMode.CommandLineNonInteractive:
                     case ServiceStartupMode.VerifyConfigurations:
+                        ConsoleOutputMode = Console.IsInputRedirected ? ConsoleOutputMode.Standard : ConsoleOutputMode.Color;
+                        break;
+                    case ServiceStartupMode.CommandLineNonInteractive:
                         ConsoleOutputMode = ConsoleOutputMode.Standard;
                         break;
                     case ServiceStartupMode.WindowsService:
