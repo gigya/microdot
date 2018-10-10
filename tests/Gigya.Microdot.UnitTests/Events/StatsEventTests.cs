@@ -41,7 +41,7 @@ namespace Gigya.Microdot.UnitTests.Events
 
             var expected = RequestTimings.Current.Request.ElapsedMS - RequestTimings.Current.ServicesCallsDictionary["Service1"].ElapsedMS - RequestTimings.Current.ServicesCallsDictionary["Service2"].ElapsedMS;
 
-            statsEvent.ProcessingTime.ShouldBe(expected);
+            statsEvent.ProcessingTime.Should().BeApproximately(expected.Value, 0.0001);
         }
     }
 
