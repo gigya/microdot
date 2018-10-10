@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
+
     public interface IServerRequestPublisher
     {
-        void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime, double? responseTime);
         void TryPublish(ServiceCallEvent callEvent, IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod);
         ServiceCallEvent GetNewCallEvent();
     }
@@ -35,24 +32,6 @@ namespace Gigya.Microdot.Hosting.HttpService
         public ServiceCallEvent GetNewCallEvent()
         {
             return _eventPublisher.CreateEvent();
-        }
-
-        public void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime, double? responseTime)
-        {
-            ServiceCallEvent callEvent = GetNewCallEvent();
-
-            callEvent.CalledServiceName = serviceMethod?.GrainInterfaceType.Name;
-            callEvent.ClientMetadata = requestData.TracingData;
-            callEvent.ServiceMethod = requestData.Target?.MethodName;
-
-            var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-
-            callEvent.Exception = ex;
-            callEvent.ActualTotalTime = requestTime;
-            callEvent.ErrCode = ex != null ? null : (int?)0;
-            callEvent.ResponseTime = responseTime;
-
-            TryPublish(callEvent, arguments, serviceMethod);
         }
 
         public void TryPublish(ServiceCallEvent callEvent, IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod)
