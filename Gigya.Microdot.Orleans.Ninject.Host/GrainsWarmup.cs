@@ -44,6 +44,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public void Warmup()
         {
+            // We cannot use Orleans to obtain grains (to warm them up); Orleans only provides lazy grain references, and we'd
+            // have to call a method on the grain to activate it, but there's no generic method we could call. So we instantiate
+            // grains through Ninject instead of Orleans to register their dependencies in Ninject. When Orleans will instantiate
+            // these grains, their non-transient dependencies will already be registered in Ninject, saving startup time.
             try
             {
                 foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)

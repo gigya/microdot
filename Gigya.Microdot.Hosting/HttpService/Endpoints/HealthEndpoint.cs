@@ -37,7 +37,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         private IActivator Activator { get; }
         private const int WebServerIsDown = 521;
 
-        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServiceDrainListener drainListener, IWarmup warmap)
+        public HealthEndpoint(IServiceEndPointDefinition serviceEndPointDefinition, IServiceInterfaceMapper serviceInterfaceMapper, IActivator activator,IServiceDrainListener drainListener)
         {
             _drainListener = drainListener;
             ServiceEndPointDefinition = serviceEndPointDefinition;
