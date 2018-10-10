@@ -57,7 +57,7 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField("stats.total.time", OmitFromAudit = true)]
         public virtual double? TotalTime => Timings.Value.Request.ElapsedMS;
 
-        [EventField("stats.processing.time", OmitFromAudit = true)]
+        [EventField("stats.netprocessing.time", OmitFromAudit = true)]
         public double? ProcessingTime => CalculateProcessingTime();
 
         [EventField("stats.mysql.time", OmitFromAudit = true)]
@@ -172,6 +172,9 @@ namespace Gigya.Microdot.Hosting.Events
                 if (serviceCall.ElapsedMS != null)
                     servicesTime += serviceCall.ElapsedMS.Value;
             }
+
+            if (servicesTime == 0)
+                return null;
 
             return TotalTime - servicesTime;
         }

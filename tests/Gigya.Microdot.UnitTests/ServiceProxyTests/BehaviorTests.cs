@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using FluentAssertions;
-
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
@@ -15,6 +14,7 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Newtonsoft.Json;
@@ -449,6 +449,23 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             actual.EncryptedTags["responseContent"].ShouldBe(badJson);
             actual.InnerException.ShouldBeAssignableTo<JsonException>();
+        }
+
+        [Test]
+        public async Task RequestTimings_ValidCall_ServicesCallsDictionaryContainsCall()
+        {
+            //To create it on current context
+            var timings = RequestTimings.Current;
+            
+            var messageHandler = new MockHttpMessageHandler();
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(content: $"''"));
+
+            RequestTimings.Current.ServicesCallsDictionary.Count.ShouldBe(0);
+
+            await CreateClient(messageHandler).ToUpper("aaaa");            
+
+            RequestTimings.Current.ServicesCallsDictionary.Count.ShouldBe(1);
+            RequestTimings.Current.ServicesCallsDictionary.ShouldContainKey(SERVICE_NAME);            
         }
     }
 }
