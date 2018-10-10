@@ -37,7 +37,5 @@ namespace CalculatorService
         {
             kernel.Bind<ICalculatorService>().To<CalculatorService>();
         }
-
-      
     }
 }

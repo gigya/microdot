@@ -21,20 +21,19 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.SharedLogic;
 using Ninject;
-using Ninject.Activation;
 using Ninject.Extensions.Factory;
-using Ninject.Infrastructure;
 using Ninject.Modules;
-using Ninject.Planning.Bindings;
-using Ninject.Planning.Bindings.Resolvers;
+using Ninject.Parameters;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -42,113 +41,35 @@ namespace Gigya.Microdot.Ninject
     {
         public override void Load()
         {
-            Kernel.Rebind<ConfigObjectCreator>().ToSelf().InTransientScope();
-            Kernel.Components.Add<IBindingResolver, ConfigObjectsBindingResolver>();
+            Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
+            Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
 
+            SearchAssembliesAndRebindIConfig(Kernel);
         }
-    }
 
-    public sealed class ConfigObjectsBindingResolver : IBindingResolver
-    {
-        private ConcurrentDictionary<Type, ConfigObjectProvider> ProviderPerType { get; } = new ConcurrentDictionary<Type, ConfigObjectProvider>();
-
-        public INinjectSettings Settings { get; set; }
-
-        public IEnumerable<IBinding> Resolve(Multimap<Type, IBinding> bindings, Type service)
+        private void SearchAssembliesAndRebindIConfig(IKernel kernel)
         {
-            Type configObjectType;
-            if (ConfigObjectProvider.IsConfigObject(service))
-                configObjectType = service;
-            else if (ConfigObjectProvider.IsSourceBlock(service))
-                configObjectType = service.GetGenericArguments().Single();
-            else
-                return Enumerable.Empty<IBinding>();         
-
-            var provider = ProviderPerType.GetOrAdd(configObjectType, x => new ConfigObjectProvider());
-
-            return new[]
+            IAssemblyProvider aProvider = kernel.Get<IAssemblyProvider>();
+            foreach (Assembly assembly in aProvider.GetAssemblies())
             {
-                new Binding(service)
+                foreach (Type configType in assembly.GetTypes().Where(ConfigObjectCreator.IsConfigObject))
                 {
-                    ProviderCallback = ctx => provider,
-                    ScopeCallback = StandardScopeCallbacks.Transient
-                }
-            };
-        }
+                    IConfigObjectCreatorWrapper cocWrapper = kernel.Get<IConfigObjectCreatorWrapper>(new ConstructorArgument("type", configType));
 
-        public void Dispose() {  }
-    }
+                    dynamic getLataestLambda = cocWrapper.GetLambdaOfGetLatest(configType);
+                    kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
 
+                    Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
+                    kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
 
-    public class ConfigObjectProvider : IProvider
-    {        
-        public Type Type => typeof(IConfigObject);
-        private ConfigObjectCreator Creator { get; set; }
+                    dynamic changeNotificationsLambda = cocWrapper.GetLambdaOfChangeNotifications(sourceBlockType);
+                    kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
 
-        private readonly object _creatorLock;
-
-        private Type _sourceBlockType;
-
-        public ConfigObjectProvider()
-        {
-            _creatorLock = new object();
-        }
-
-
-        public object Create(IContext context)
-        {
-            var service = context.Request.Service;
-            if (service == _sourceBlockType)
-                return GetSourceBlock(context);
-
-            if (_sourceBlockType==null && IsSourceBlock(service))
-            {
-                _sourceBlockType = service;
-                return GetSourceBlock(context);
-            }
-
-            return GetCreator(context).GetLatest();
-        }
-
-        private object GetSourceBlock(IContext context)
-        {
-            return GetCreator(context).ChangeNotifications;
-        }
-
-        private ConfigObjectCreator GetCreator(IContext context)
-        {
-            if (Creator == null)
-            {
-                var getCreator = context.Kernel.Get<Func<Type, ConfigObjectCreator>>();
-                var service = context.Request.Service;
-                var uninitializedCreator = getCreator(IsSourceBlock(service) ? service.GetGenericArguments().Single() : service);
-
-                lock (_creatorLock)
-                {
-                    if (Creator == null)
-                    {
-                        uninitializedCreator.Init();
-                        Creator = uninitializedCreator;
-                    }
+                    kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
                 }
             }
-            return Creator;
         }
-
-        internal static bool IsConfigObject(Type service)
-        {
-            return service.IsClass && service.IsAbstract == false && typeof(IConfigObject).IsAssignableFrom(service);
-        }
-
-        internal static bool IsSourceBlock(Type service)
-        {
-            return 
-                service.IsGenericType && 
-                service.GetGenericTypeDefinition() == typeof(ISourceBlock<>) &&
-                IsConfigObject(service.GetGenericArguments().Single());
-        }
-
     }
 }

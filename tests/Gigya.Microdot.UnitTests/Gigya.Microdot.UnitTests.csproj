@@ -50,8 +50,11 @@
     <Compile Include="Caching\AsyncMemoizerTests.cs" />
     <Compile Include="Caching\CachingProxyTests.cs" />
     <Compile Include="Caching\IThingFrobber.cs" />
+    <Compile Include="Configuration\Benchmark\ConfigBenchmarkTest.cs" />
+    <Compile Include="Configuration\Benchmark\ConfigCreator.cs" />
     <Compile Include="Configuration\BusSettings.cs" />
     <Compile Include="Configuration\EnvironmentVariableProviderTests.cs" />
+    <Compile Include="Configuration\IConfigObjectRebindTest.cs" />
     <Compile Include="Configuration\MasterConfigParserTests.cs" />
     <Compile Include="Configuration\TypedConfigTest.cs" />
     <Compile Include="Discovery\ConfigNodeSourceTests.cs" />
@@ -154,6 +157,10 @@
     <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
       <Project>{a90d7c71-ec7c-4328-9db1-d2c3a30727db}</Project>
       <Name>Gigya.Microdot.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj">
+      <Project>{06E45085-5A54-4BFE-BD24-E9C3983A2689}</Project>
+      <Name>Gigya.Microdot.Logging.NLog</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj">
       <Project>{4E6A024F-DDC9-4A27-A859-77EBC3241009}</Project>

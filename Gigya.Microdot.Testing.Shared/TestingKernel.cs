@@ -50,7 +50,6 @@ namespace Gigya.Microdot.Testing.Shared
             ServicePointManager.DefaultConnectionLimit = 200;
             CurrentApplicationInfo.Init(APPNAME);
 
-
             this.Load<MicrodotModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();

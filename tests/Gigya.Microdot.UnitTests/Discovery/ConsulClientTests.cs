@@ -50,8 +50,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<IEnvironment>().ToMethod(_ => _environment);
 
                 k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
-
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => ()=>_consulConfig);
             });
 
         }
@@ -69,7 +67,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _consulSimulator.Reset();
             _serviceName = ServiceName + "_" + Guid.NewGuid();
             _dateTimeFake = new DateTimeFake(false);
-            _consulConfig = new ConsulConfig();
+            _consulConfig = _testingKernel.Get<Func<ConsulConfig>>()();
         }
 
         private Task<EndPointsResult> Start(ConsulMethod consulMethod)

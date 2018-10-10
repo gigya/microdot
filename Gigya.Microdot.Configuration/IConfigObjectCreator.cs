@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -19,21 +19,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.SharedLogic
+
+namespace Gigya.Microdot.Configuration
 {
-    /// <summary>Describes what kinds of infrastructures should be initialized, and how to initialize them.</summary>
-    public class BaseCommonConfig
+    public interface IConfigObjectCreator
     {
-        /// <summary>
-        /// If specified, sets the working diretory to the specified path, otherwise sets the current working directory
-        /// to the location of the executable.
-        /// </summary>
-        public string ApplicationDirectoryOverride { get; set; }
-
-
-        /// <summary>
-        /// The assembly file names specified will not be automatically loaded from the working directory.
-        /// </summary>
-        public string[] AssemblyScanningBlacklist { get; set; }
+        object ChangeNotifications { get; }
+        object GetLatest();
     }
 }
