@@ -99,8 +99,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 Type = ConfigBuilder.SiloType
             };
             Silo.InitializeOrleansSilo();
-
-
+            
             bool siloStartedSuccessfully = Silo.StartOrleansSilo(false);
 
             if (siloStartedSuccessfully)
@@ -139,6 +138,10 @@ namespace Gigya.Microdot.Orleans.Hosting
                 }
             }
 
+
+            DelegatingBootstrapProvider.OnClose();
+            DelegatingBootstrapProvider.OnClose = null;
+            DelegatingBootstrapProvider.OnInit = null;
         }
 
         private async Task BootstrapInit(IProviderRuntime providerRuntime)

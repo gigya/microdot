@@ -1,19 +1,18 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Events;
-using Newtonsoft.Json;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
+
     public interface IServerRequestPublisher
     {
-        void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod, double requestTime);
+        void TryPublish(ServiceCallEvent callEvent, IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod);
+        ServiceCallEvent GetNewCallEvent();
     }
 
     public class ServerRequestPublisher : IServerRequestPublisher
@@ -31,26 +30,20 @@ namespace Gigya.Microdot.Hosting.HttpService
             _serviceEndPointDefinition = serviceEndPointDefinition;
         }
 
-        public void TryPublish(HttpServiceRequest requestData, Exception ex, ServiceMethod serviceMethod,
-            double requestTime)
+        public ServiceCallEvent GetNewCallEvent()
         {
-            var callEvent = _eventPublisher.CreateEvent();
+            return _eventPublisher.CreateEvent();
+        }
 
-            callEvent.CalledServiceName = serviceMethod?.GrainInterfaceType.Name;
-            callEvent.ClientMetadata = requestData.TracingData;
-            callEvent.ServiceMethod = requestData.Target?.MethodName;
-
-            var metaData = _serviceEndPointDefinition.GetMetaData(serviceMethod);
-            var arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-
-            callEvent.Params = arguments.SelectMany(_ => ExtractParamValues(_, metaData)).Select(_ => new Param{
+        public void TryPublish(ServiceCallEvent callEvent, IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod)
+        {
+            EndPointMetadata metaData = _serviceEndPointDefinition.GetMetaData(serviceMethod);
+            callEvent.Params = arguments.SelectMany(_ => ExtractParamValues(_, metaData)).Select(_ => new Param
+            {
                 Name = _.name,
                 Value = _.value,
                 Sensitivity = _.sensitivity,
             });
-            callEvent.Exception = ex;
-            callEvent.ActualTotalTime = requestTime;
-            callEvent.ErrCode = ex != null ? null : (int?)0;
 
             _eventPublisher.TryPublish(callEvent);
         }

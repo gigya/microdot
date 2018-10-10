@@ -358,11 +358,7 @@ namespace Gigya.Microdot.Hosting.Service
         }
 
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() => Dispose(false);
 
         protected void SafeDispose(IDisposable disposable)
         {

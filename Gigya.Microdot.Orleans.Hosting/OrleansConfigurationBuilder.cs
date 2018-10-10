@@ -123,7 +123,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             defaults.StatisticsLogWriteInterval = TimeSpan.Parse(orleansConfig.MetricsTableWriteInterval);
             defaults.StatisticsWriteLogStatisticsToTable = true;
 
-            if (commonConfig.ServiceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
+            if (serviceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
             {
                 defaults.HostNameOrIPAddress = "localhost";
                 globals.ReminderServiceType = commonConfig.UseReminders
@@ -132,7 +132,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
                 globals.LivenessType = GlobalConfiguration.LivenessProviderType.MembershipTableGrain;
 
-                if (commonConfig.ServiceArguments.SiloClusterMode == SiloClusterMode.PrimaryNode)
+                if (serviceArguments.SiloClusterMode == SiloClusterMode.PrimaryNode)
                 {
                     globals.SeedNodes.Add(new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloNetworkingPort));
                     SiloType = Silo.SiloType.Primary;

@@ -22,7 +22,6 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
@@ -126,7 +125,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <returns>The kernel to use.</returns>
         protected virtual IKernel CreateKernel()
         {
-            return new StandardKernel();
+            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
         }
 
 
@@ -162,11 +161,11 @@ namespace Gigya.Microdot.Ninject.Host
         /// method.
         /// </summary>        
         protected override void OnStop()
-        {            
+        {
             if (Arguments.ServiceDrainTimeSec.HasValue)
             {
                 Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000 );
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
             Dispose();
         }

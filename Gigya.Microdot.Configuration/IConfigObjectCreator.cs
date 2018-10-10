@@ -19,10 +19,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.Interfaces.HttpService
+
+namespace Gigya.Microdot.Configuration
 {
-    public class ServiceReachabilityStatus
+    public interface IConfigObjectCreator
     {
-        public bool IsReachable { get; set; }
+        object ChangeNotifications { get; }
+        object GetLatest();
     }
 }

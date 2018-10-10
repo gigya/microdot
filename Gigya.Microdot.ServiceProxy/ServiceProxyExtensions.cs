@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using Gigya.Common.Contracts.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -29,18 +28,28 @@ namespace Gigya.Microdot.ServiceProxy
     {
         public static string GetServiceName(this Type serviceInterfaceType)
         {
-            var attribute = (HttpServiceAttribute)Attribute.GetCustomAttribute(serviceInterfaceType, typeof(HttpServiceAttribute));
-            if (attribute?.Name != null)
-                return attribute.Name;
-
             var assemblyName = serviceInterfaceType.Assembly.GetName().Name;
             var endIndex = assemblyName.IndexOf(".Interface", StringComparison.OrdinalIgnoreCase);
             if (endIndex <= 0)
-                return serviceInterfaceType.FullName.Replace('+', '-');
+                return GetServiceNameFromTypeName(serviceInterfaceType.Name) ?? 
+                    serviceInterfaceType.FullName.Replace('+', '-'); 
 
             var startIndex = assemblyName.Substring(0, endIndex).LastIndexOf(".", StringComparison.OrdinalIgnoreCase) + 1;
             var length = endIndex - startIndex;
             return assemblyName.Substring(startIndex, length);
+        }
+
+        private static string GetServiceNameFromTypeName(string typeName)
+        {
+            // if typeName is starts with 'I' letter and the following letter is an upper-case letter, 
+            // then it represents an interface name, like 'IDemoService', and the 'I' letter should be ignored.
+            if (typeName.Length > 1 && typeName[0] == 'I' && typeName[1] >= 'A' && typeName[1] <= 'Z')
+                typeName = typeName.Substring(1);
+
+            if (typeName.EndsWith("Service"))
+                return typeName;
+            else            
+                return null;            
         }
     }
 }

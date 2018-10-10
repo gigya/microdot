@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.ServiceContract.Exceptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,7 +15,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
     public class StackTraceEnhancer : IStackTraceEnhancer
     {
         private Func<StackTraceEnhancerSettings> GetConfig { get; }
-        private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
+        private IEnvironment Environment { get; }
         private static readonly JsonSerializer Serializer = new JsonSerializer
         {
             TypeNameHandling = TypeNameHandling.All,
@@ -24,10 +25,10 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             Converters = { new StripHttpRequestExceptionConverter() }
         };
 
-        public StackTraceEnhancer(Func<StackTraceEnhancerSettings> getConfig, IEnvironmentVariableProvider environmentVariableProvider)
+        public StackTraceEnhancer(Func<StackTraceEnhancerSettings> getConfig, IEnvironment environment)
         {
             GetConfig = getConfig;
-            EnvironmentVariableProvider = environmentVariableProvider;
+            Environment = environment;
         }
 
         public JObject ToJObjectWithBreadcrumb(Exception exception)
@@ -51,8 +52,8 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 ServiceName = CurrentApplicationInfo.Name,
                 ServiceVersion = CurrentApplicationInfo.Version.ToString(),
                 HostName = CurrentApplicationInfo.HostName,
-                DataCenter = EnvironmentVariableProvider.DataCenter,
-                DeploymentEnvironment = EnvironmentVariableProvider.DeploymentEnvironment
+                DataCenter = Environment.Zone,
+                DeploymentEnvironment = Environment.DeploymentEnvironment
             };
 
             if (exception is SerializableException serEx)
