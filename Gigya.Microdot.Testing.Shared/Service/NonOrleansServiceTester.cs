@@ -23,6 +23,7 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic;
 using Ninject.Syntax;
 
 namespace Gigya.Microdot.Testing.Shared.Service
@@ -33,9 +34,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
         private readonly TServiceHost _host = new TServiceHost();
         private Task _stopTask;
 
-        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null)
+        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
         {
-            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime.HasValue?(int?)shutdownWaitTime.Value.TotalSeconds:null);
+            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime.HasValue?(int?)shutdownWaitTime.Value.TotalSeconds:null, startupMode);
 
             BasePort = basePortOverride;
             ResolutionRoot = resolutionRoot;
