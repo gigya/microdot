@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,12 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Security.Cryptography.X509Certificates;
-
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.Configuration
 {
-    public interface ICertificateLocator
+    public interface IConfigObjectCreator
     {
-        X509Certificate2 GetCertificate(string certName);
+        object ChangeNotifications { get; }
+        object GetLatest();
     }
 }

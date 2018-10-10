@@ -45,7 +45,8 @@ using NUnit.Framework;
             try
             {
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);
-                Environment.SetEnvironmentVariable("DC","_US", EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("REGION", "us1", EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("ZONE", "us1a", EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
 
                 kernel = new TestingKernel<ConsoleLog>((kernel) =>

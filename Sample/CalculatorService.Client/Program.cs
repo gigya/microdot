@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
@@ -16,7 +17,8 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
                 Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
-                Environment.SetEnvironmentVariable("DC", "global");
+                Environment.SetEnvironmentVariable("REGION", "us1");
+                Environment.SetEnvironmentVariable("ZONE", "us1a");
                 Environment.SetEnvironmentVariable("ENV", "dev");
 
                 CurrentApplicationInfo.Init("CalculatorService.Client");

@@ -49,6 +49,7 @@
     <Compile Include="Microservice\WarmupTestService\GigyaSiloHostFake.cs" />
     <Compile Include="Microservice\WarmupTestService\WarmupTestServiceGrain.cs" />
     <Compile Include="Microservice\WarmupTestService\WarmupTestServiceHostWithSiloHostFake.cs" />
+    <Compile Include="Validation\ConfigObjectTypeValidatorTest.cs" />
     <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainStubAgeLimit2MinuteService.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="Microservice\FakeRevokingManager.cs" />
     <Compile Include="Microservice\ProgrammableHealthGrain.cs" />
     <Compile Include="Properties\orleans.codegen.cs" />
+    <Compile Include="ServiceSchemaTests.cs" />
     <Compile Include="ReflectionMetaDataExtensionTests.cs" />
     <Compile Include="ServiceTesterTests.cs" />
     <Compile Include="SchemaEndpointTests.cs" />

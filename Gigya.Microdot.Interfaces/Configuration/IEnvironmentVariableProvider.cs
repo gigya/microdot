@@ -19,6 +19,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
+
+using System;
+
 namespace Gigya.Microdot.Interfaces.Configuration
 {
     public interface IEnvironmentVariableProvider
@@ -26,18 +29,19 @@ namespace Gigya.Microdot.Interfaces.Configuration
         /// <summary>
         /// Initialized with environment variable DC
         /// </summary>
+        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironment.Zone instead")]
         string DataCenter { get; }
 
         /// <summary>
         /// Initialized with environment variable ENV
         /// </summary>
+        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironment.DeploymentEnvironment instead")]
         string DeploymentEnvironment { get; }
 
-        /// <summary>
-        /// Initialized with environment variable CONSUL
-        /// </summary>
-        string ConsulAddress { get; }
-
         string GetEnvironmentVariable(string name);
+
+        void SetEnvironmentVariableForProcess(string name, string value);
+
+        string PlatformSpecificPathPrefix { get; }
     }
 }

@@ -79,6 +79,7 @@
     <Compile Include="Metrics\MetricsConfiguration.cs" />
     <Compile Include="Metrics\MetricsInitializer.cs" />
     <Compile Include="Service\ServiceWarmup.cs" />
+    <Compile Include="Validators\ConfigObjectTypeValidator.cs" />
     <Compile Include="Validators\SensitivityAttributesValidator.cs" />
     <Compile Include="Service\ServiceHostBase.cs" />
     <Compile Include="Service\HostExtensionMethods.cs" />
