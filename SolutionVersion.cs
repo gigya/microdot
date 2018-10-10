@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -28,8 +28,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("© 2018 Gigya Inc.")]
 [assembly: AssemblyDescription("Microdot Framework")]
 
-[assembly: AssemblyVersion("1.11.3.0")]
-[assembly: AssemblyFileVersion("1.11.3.0")] 
+[assembly: AssemblyVersion("1.11.3.1031")]
+[assembly: AssemblyFileVersion("1.11.3.1031")] 
 [assembly: AssemblyInformationalVersion("1.11.3.0")]
 
 

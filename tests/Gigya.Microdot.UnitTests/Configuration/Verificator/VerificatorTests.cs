@@ -85,19 +85,20 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			var v = setup.k.Get<ConfigurationVerificator>();
 
 			var s = v.Verify();
-			
-			s.IsSuccess.ShouldBeFalse();
+
+		    s.All(result => result.Success).ShouldBeFalse();
 
 			// --->>>> CONFIGURATION OBJECTS FAILED TO PASS THE VERIFICATION <<<<-----
 			// 	TYPE: Gigya.Microdot.UnitTests.Configuration.Verificator.VerifiedConfig1
 			// PATH :  Missing or invalid configuration file: VerifiedConfig1.config
 			// ERROR:  Root element is missing.
 
-			s.Failed.Any(failure => 
+			s.Any(failure => 
 				failure.Type.Name == typeof(VerifiedConfig2).Name &&
 				failure.Path.Contains("Missing or invalid configuration file")).ShouldBeTrue();
 
-			Console.WriteLine(s.Summarize());
+		    foreach (var result in s)
+		        Console.WriteLine(result);
 		}
 
 	    [Test]
@@ -149,15 +150,15 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			// 	The following 1 configuration objects passed the verification:
 			// Gigya.Microdot.UnitTests.Configuration.Verificator.VerifiedConfig1
 
-			s.IsSuccess.ShouldBeFalse();
+		    s.All(result => result.Success).ShouldBeFalse();
 
-			s.Failed.Any(failure =>
+			s.All(failure =>
 				failure.Type.Name == typeof(VerifiedConfig2).Name &&
 				failure.Details.Contains("The Required field is required"))
 			.ShouldBeTrue("Expected a failure! When no value is given for the property");
 
-            // Don't write to console in TC mode, else will cause to "false positive" failure of test
-		    Console.WriteLine(s.Summarize(ConfigurationVerificator.Results.SummaryFormat.Console)); 
+		    foreach (var result in s)
+		        Console.WriteLine(result);
 		}
 
 		[Test]
@@ -198,10 +199,10 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 
 			setup.k.Get<VerifiedConfig1>().ValueLoaded.ShouldBe("theValue");
 
-			s.Passed.Any(passed => passed == typeof(VerifiedConfig1)).ShouldBeTrue();
-			s.IsSuccess.ShouldBeTrue();
+			s.All(passed => passed.Type == typeof(VerifiedConfig1)).ShouldBeTrue();
 
-			Console.WriteLine(s.Summarize());
+		    foreach (var result in s)
+		        Console.WriteLine(result);
 		}
 
 		[Test]
@@ -249,14 +250,15 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 			// ERROR:  Failed to deserialize config object: Could not convert string to integer: theValue. Path 'TheInt'.
 
 
-			s.IsSuccess.ShouldBeFalse();
+		    s.All(result => result.Success).ShouldBeFalse();
 
-			s.Failed.Any(failure =>
+			s.All(failure =>
 					failure.Type.Name == typeof(VerifiedConfig3).Name &&
 					failure.Details.Contains("Failed to deserialize config object"))
 				.ShouldBeTrue("Test is expected to fail while string cannot be converted to an int.");
 
-			Console.WriteLine(s.Summarize());
+		    foreach (var result in s)
+		        Console.WriteLine(result);
 		}
 	}
 }

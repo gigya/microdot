@@ -215,22 +215,44 @@ namespace Gigya.Microdot.Hosting.Service
         {
             if (ConfigurationVerificator == null)
             {
-                Environment.ExitCode = 1;
-                Console.WriteLine("ERROR: The configuration verification is not properly implemented. " +
-                                  "To implement you need to override OnVerifyConfiguration base method and call to base.");
+                Environment.ExitCode = 2;
+                Console.Error.WriteLine("ERROR: The configuration verification is not properly implemented. " +
+                                        "To implement you need to override OnVerifyConfiguration base method and call to base.");
             }
             else
             {
-                var result = ConfigurationVerificator.Verify();
-                Environment.ExitCode = result.IsSuccess ? 0 : 1;
-                var restore = Console.ForegroundColor;
-                if (!result.IsSuccess)
-                    Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(result.Summarize());
-                Console.ForegroundColor = restore;
-                // Provide hint only for console
-                if(result.Format == ConfigurationVerificator.Results.SummaryFormat.Console)
-                    Console.WriteLine("   ***   Shutting down [configuration verification mode]. ***   ");
+                try
+                {
+                    var results = ConfigurationVerificator.Verify();
+                    Environment.ExitCode = results.All(r => r.Success) ? 0 : 1;
+
+                    if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Color)
+                    {
+                        var (restoreFore, restoreBack) = (Console.ForegroundColor, Console.BackgroundColor);
+                        foreach (var result in results)
+                        {
+                            Console.BackgroundColor = result.Success ? ConsoleColor.Black : ConsoleColor.White;
+                            Console.ForegroundColor = result.Success ? ConsoleColor.White : ConsoleColor.Red;
+                            Console.WriteLine(result);
+                        }
+                        Console.BackgroundColor = restoreBack;
+                        Console.ForegroundColor = restoreFore;
+                    }
+                    else if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Standard)
+                    {
+                        foreach (var result in results)
+                            Console.WriteLine(result);
+                    }
+                    // Avoid extra messages in machine to machine mode or when disabled
+                    if (!(Console.IsOutputRedirected || Arguments.ConsoleOutputMode == ConsoleOutputMode.Disabled))
+                        Console.WriteLine("   ***   Shutting down [configuration verification mode].   ***   ");
+                }
+                catch (Exception ex)
+                {
+                    Environment.ExitCode = 3;
+                    Console.Error.WriteLine(ex.Message);
+                    Console.Error.WriteLine(ex.StackTrace);
+                }
             }
         }
 
