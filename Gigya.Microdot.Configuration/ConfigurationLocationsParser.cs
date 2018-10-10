@@ -62,15 +62,15 @@ namespace Gigya.Microdot.Configuration
         public string ConfigRoot { get; }
         public string LoadPathsFilePath { get; }
 
-        public ConfigurationLocationsParser(IEnvironment environment, IFileSystem fileSystemInstance, IEnvironmentVariableProvider environmentVariableProvider)
+        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, IEnvironmentVariableProvider environmentVariableProvider)
         {
             AppName = CurrentApplicationInfo.Name;
-            environment.SetEnvironmentVariableForProcess("AppName", CurrentApplicationInfo.Name);
+            environmentVariableProvider.SetEnvironmentVariableForProcess("AppName", CurrentApplicationInfo.Name);
 
             ConfigRoot = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_ROOT);
 
             if (string.IsNullOrEmpty(ConfigRoot))
-                ConfigRoot = environment.PlatformSpecificPathPrefix + GIGYA_CONFIG_ROOT_DEFAULT;
+                ConfigRoot = environmentVariableProvider.PlatformSpecificPathPrefix + GIGYA_CONFIG_ROOT_DEFAULT;
 
             LoadPathsFilePath = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE);
             
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.Configuration
 
             var configPathDeclarations = ParseAndValidateConfigLines(LoadPathsFilePath, fileSystemInstance);
 
-            ConfigFileDeclarations = ExpandConfigPathDeclarations(environmentVariableProvider, configPathDeclarations, environment.PlatformSpecificPathPrefix).ToArray();
+            ConfigFileDeclarations = ExpandConfigPathDeclarations(environmentVariableProvider, configPathDeclarations, environmentVariableProvider.PlatformSpecificPathPrefix).ToArray();
         }
 
 

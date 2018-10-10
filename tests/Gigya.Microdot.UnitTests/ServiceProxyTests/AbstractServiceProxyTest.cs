@@ -20,8 +20,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
   
     [TestFixture]
     public abstract class AbstractServiceProxyTest
-    {     
-        internal const string SERVICE_NAME = "Demonstration";
+    {
         protected TestingKernel<ConsoleLog> unitTesting;
         protected Dictionary<string, string> MockConfig { get; } = new Dictionary<string, string>();
         protected JsonExceptionSerializer ExceptionSerializer { get; set; }

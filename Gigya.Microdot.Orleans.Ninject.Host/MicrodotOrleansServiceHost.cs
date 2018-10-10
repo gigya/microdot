@@ -111,7 +111,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <returns>The kernel to use.</returns>
         protected virtual IKernel CreateKernel()
         {
-            return new StandardKernel();
+            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
         }
 
 

@@ -27,7 +27,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    public interface IMemoizer
+    public interface IMemoizer : IDisposable
     {
         object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
     }

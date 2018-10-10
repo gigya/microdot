@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,29 +20,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    [Serializable]
-    public class RequestOverrides
-    {
-        [JsonProperty]
-        public List<HostOverride> Hosts { get; set; }
-    }
-
-    [Serializable]
-    public class HostOverride
-    {
-        [JsonProperty]
-        public string ServiceName { get; set; }
-
-        [JsonProperty]
-        public string Host { get; set; }
-
-        [JsonProperty]
-        public int? Port { get; set; }
-    }
+    /// <summary>
+    /// Check if the specified node is reachable. 
+    /// Task should finish successfully if service is reachable, or throw a descriptive exception if it is not
+    /// </summary>    
+    public delegate Task ReachabilityCheck(Node node, CancellationToken cancellationToken);
 }
