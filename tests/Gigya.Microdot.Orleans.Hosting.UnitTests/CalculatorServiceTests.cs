@@ -28,9 +28,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.ServiceContract.Attributes;
@@ -246,7 +246,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var dict = new Dictionary<string, object>();
             serviceProxy.DefaultPort = 6555;
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("Do", dict), typeof(JObject));
+            var res = await serviceProxy.Invoke(new HttpServiceRequest("Do", null, dict), typeof(JObject));
             var json = (JToken)res;
             json.ShouldBe(null);
         }

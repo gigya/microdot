@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
@@ -75,6 +76,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             PreInitialize(Kernel);
             OnInitilize(Kernel);
 
+            Warmup(Kernel);
+
             SiloHost = Kernel.Get<GigyaSiloHost>();
             SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
         }
@@ -104,6 +107,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         }
 
+        protected virtual void Warmup(IKernel kernel)
+        {
+            IWarmup warmup = kernel.Get<IWarmup>();
+            warmup.Warmup();
+        }
+
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
         /// can be overridden to customize which kernel is used (e.g. MockingKernel);
@@ -111,7 +120,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <returns>The kernel to use.</returns>
         protected virtual IKernel CreateKernel()
         {
-            return new StandardKernel();
+            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
         }
 
 

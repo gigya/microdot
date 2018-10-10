@@ -7,6 +7,9 @@ copy_content_to_output_dir: always
 
 nuget Gigya.ServiceContract ~> 2.0
 
+# .Net
+nuget System.ValueTuple
+
 # Misc
 nuget Metrics.NET ~> 0.0
 nuget Newtonsoft.Json >= 9 lowest_matching: true

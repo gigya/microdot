@@ -30,6 +30,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {
@@ -61,11 +62,11 @@ namespace Gigya.Microdot.ServiceDiscovery
         private bool _disposed;
         
 
-        public ConsulDiscoverySource(ServiceDeployment serviceDeployment,
+        public ConsulDiscoverySource(DeploymentIdentifier deploymentIdentifier,
             IDateTime dateTime,
             Func<DiscoveryConfig> getConfig,
             Func<string, IConsulClient> getConsulClient, ILog log)
-            : base(GetDeploymentName(serviceDeployment, getConfig().Services[serviceDeployment.ServiceName]))
+            : base(GetDeploymentName(deploymentIdentifier, getConfig().Services[deploymentIdentifier.ServiceName]))
 
         {
             DateTime = dateTime;
@@ -194,13 +195,14 @@ namespace Gigya.Microdot.ServiceDiscovery
             _disposed = true;
         }
 
-        public static string GetDeploymentName(ServiceDeployment serviceDeployment, ServiceDiscoveryConfig serviceDiscoverySettings)
+        public static string GetDeploymentName(DeploymentIdentifier deploymentIdentifier, ServiceDiscoveryConfig serviceDiscoverySettings)
         {
-            if (serviceDiscoverySettings.Scope == ServiceScope.DataCenter)
+            if (serviceDiscoverySettings.Scope == ServiceScope.Zone)
             {
-                return serviceDeployment.ServiceName;
+                return deploymentIdentifier.ServiceName;
             }
-            return $"{serviceDeployment.ServiceName}-{serviceDeployment.DeploymentEnvironment}";
+
+            return deploymentIdentifier.GetConsulServiceName();
         }
 
     }

@@ -36,6 +36,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         protected IEnumerable<Type> _serviceInterfaceTypes;
 
         public virtual IEnumerable<Type> ServiceInterfaceTypes => _serviceInterfaceTypes;
+        public virtual IEnumerable<Type> ServiceClassesTypes { get; protected set; }
 
         public Type HealthStatusServiceType { get; set; }
 

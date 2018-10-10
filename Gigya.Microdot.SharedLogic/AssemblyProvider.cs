@@ -38,7 +38,6 @@ namespace Gigya.Microdot.SharedLogic
     {
         private Assembly[] Assemblies { get; set; }
         private Type[] AllTypes { get; set; }
-        private ILog Log { get; }
 
 
         /// <summary>
@@ -46,9 +45,8 @@ namespace Gigya.Microdot.SharedLogic
         /// <see cref="BaseCommonConfig"/>.
         /// </summary>
         /// <param name="commonConfig"></param>
-        public AssemblyProvider(IApplicationDirectoryProvider directoryProvider, BaseCommonConfig commonConfig, ILog log)
+        public AssemblyProvider(IApplicationDirectoryProvider directoryProvider, BaseCommonConfig commonConfig)
         {
-            Log = log;
             var filesToScan = Directory.GetFiles(directoryProvider.GetApplicationDirectory(), "*.dll")
                                        .Where(p => (commonConfig.AssemblyScanningBlacklist ?? new string[0])
                                        .Contains(Path.GetFileName(p)) == false);
@@ -98,11 +96,10 @@ namespace Gigya.Microdot.SharedLogic
             {
                 if (ex is TypeLoadException || ex is FileNotFoundException)
                 {
-                    Log.Warn(_ => _("Failed to retrieve the exported types from a specific assembly, " +
-                        "probably due to a missing optional dependency. Skipping assembly. " +
-                        "See tags and exceptions for details.",
-                        exception: ex,
-                        unencryptedTags: new { assemblyName = assembly.GetName().Name }));
+                    //This should be refactored in the future. Need to create Microdot logger
+                    Console.WriteLine($"Failed to retrieve the exported types from a specific assembly, " +
+                                      "probably due to a missing optional dependency. Skipping assembly. " +
+                                      "See tags and exceptions for details.");
 
                     return Enumerable.Empty<Type>();
                 }

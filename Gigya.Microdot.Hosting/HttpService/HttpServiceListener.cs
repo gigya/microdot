@@ -34,16 +34,18 @@ using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
@@ -84,10 +86,11 @@ namespace Gigya.Microdot.Hosting.HttpService
         private ILog Log { get; }
         private IEventPublisher<ServiceCallEvent> EventPublisher { get; }
         private IEnumerable<ICustomEndpoint> CustomEndpoints { get; }
-        private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
+        private IEnvironment Environment { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
+        private ServiceSchema ServiceSchema { get; }
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -100,10 +103,14 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
-                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironmentVariableProvider environmentVariableProvider,
-                                   IServerRequestPublisher serverRequestPublisher,
-                                   JsonExceptionSerializer exceptionSerializer, Func<LoadShedding> loadSheddingConfig)
+                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
+                                   JsonExceptionSerializer exceptionSerializer, 
+                                   ServiceSchema serviceSchema,                                   
+                                   Func<LoadShedding> loadSheddingConfig,
+                                   IServerRequestPublisher serverRequestPublisher)
+
         {
+            ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
@@ -111,7 +118,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             Log = log;
             EventPublisher = eventPublisher;
             CustomEndpoints = customEndpoints.ToArray();
-            EnvironmentVariableProvider = environmentVariableProvider;
+            Environment = environment;
             ExceptionSerializer = exceptionSerializer;
             LoadSheddingConfig = loadSheddingConfig;
 
@@ -371,12 +378,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private void ValidateRequest(HttpListenerContext context)
         {
-            var clientVersion = context.Request.Headers[GigyaHttpHeaders.Version];
+            var clientVersion = context.Request.Headers[GigyaHttpHeaders.ProtocolVersion];
 
-            if (clientVersion != null && clientVersion != HttpServiceRequest.Version)
+            if (clientVersion != null && clientVersion != HttpServiceRequest.ProtocolVersion)
             {
                 _failureCounter.Increment("ProtocolVersionMismatch");
-                throw new RequestException($"Client protocol version {clientVersion} is not supported by the server protocol version {HttpServiceRequest.Version}.");
+                throw new RequestException($"Client protocol version {clientVersion} is not supported by the server protocol version {HttpServiceRequest.ProtocolVersion}.");
             }
 
             if (context.Request.HttpMethod != "POST")
@@ -439,17 +446,19 @@ namespace Gigya.Microdot.Hosting.HttpService
         /// <returns>double? - response time</returns>
         private async Task<bool> TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json", ServiceCallEvent serviceCallEvent = null)
         {
-            context.Response.Headers.Add(GigyaHttpHeaders.Version, HttpServiceRequest.Version);
+            context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
             var body = Encoding.UTF8.GetBytes(data ?? "");
 
             context.Response.StatusCode = (int)httpStatus;
             context.Response.ContentLength64 = body.Length;
             context.Response.ContentType = contentType;
-            context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, EnvironmentVariableProvider.DataCenter);
-            context.Response.Headers.Add(GigyaHttpHeaders.Environment, EnvironmentVariableProvider.DeploymentEnvironment);
+            context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
+            context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
+
             try
             {
                 await WriteResponseAndMeasureTime(context, body, serviceCallEvent);

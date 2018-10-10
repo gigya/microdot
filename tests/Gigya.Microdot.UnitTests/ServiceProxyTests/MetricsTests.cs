@@ -198,7 +198,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             return
                 Metric.Context(ServiceProxyProvider.METRICS_CONTEXT_NAME)
-                    .Context(SERVICE_NAME)
+                    .Context("DemoService")
                     .DataProvider.CurrentMetricsData;
         }
 

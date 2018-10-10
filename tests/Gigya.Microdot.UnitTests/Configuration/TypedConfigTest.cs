@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -249,8 +250,8 @@ namespace Gigya.Microdot.UnitTests.Configuration
             });
 
             var extractor = infraKernel.Get<Func<BusSettings>>();
-            var configItems = infraKernel.Get<OverridableConfigItems>();
-            var eventSource = infraKernel.Get<ManualConfigurationEvents>();
+            var configItems = infraKernel.Get<IConfigItemsSource>() as OverridableConfigItems;
+            var eventSource = infraKernel.Get<IConfigurationDataWatcher>() as ManualConfigurationEvents;
 
             //Make sure a good configuration have been parsed.
             var busSettings = extractor();

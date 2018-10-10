@@ -28,6 +28,7 @@ using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Ninject;
 using Ninject.Syntax;
@@ -81,6 +82,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
+            kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
         }
 
         public class MockServiceValidator : ServiceValidator

@@ -21,14 +21,28 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {
-    public class DateTimeImpl: IDateTime
+    public class DateTimeImpl : IDateTime
     {
         public DateTime UtcNow => DateTime.UtcNow;
-        public Task Delay(TimeSpan delay) { return Task.Delay(delay); }
+
+        public Task Delay(TimeSpan delay) => Delay(delay, default(CancellationToken));
+        public Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return Task.Delay(delay, cancellationToken);
+        }
+
+        public async Task DelayUntil(DateTime until, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            TimeSpan delayTime = until - UtcNow;
+
+            if (delayTime > TimeSpan.Zero)
+                await Delay(delayTime, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

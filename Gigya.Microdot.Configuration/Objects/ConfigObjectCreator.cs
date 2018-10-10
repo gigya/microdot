@@ -38,7 +38,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration.Objects
 {
-    public class ConfigObjectCreator
+    public class ConfigObjectCreator : IConfigObjectCreator
     {
 
         /// <summary>
@@ -69,9 +69,11 @@ namespace Gigya.Microdot.Configuration.Objects
             ConfigPath = GetConfigPath();
             healthStatus = getAggregatedHealthCheck("Configuration");
             Validator = new DataAnnotationsValidator.DataAnnotationsValidator();
+
+            Init();
         }
 
-        public void Init()
+        private void Init()
         {
             Create();
             ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Create()));
@@ -91,7 +93,6 @@ namespace Gigya.Microdot.Configuration.Objects
 
             return HealthCheckResult.Healthy();
         }
-
 
         /// <summary>
         /// Gets the latest version of the configuration. This value is cached for quick retrieval. If the config object
@@ -114,6 +115,11 @@ namespace Gigya.Microdot.Configuration.Objects
             return Latest;
         }
 
+        public static bool IsConfigObject(Type service)
+        {
+            return service.IsClass && !service.IsAbstract && typeof(IConfigObject).IsAssignableFrom(service);
+        }
+
         private string GetConfigPath()
         {
             var configPath = ObjectType.Name;
@@ -130,7 +136,6 @@ namespace Gigya.Microdot.Configuration.Objects
 
             return configPath;
         }
-
 
         private void InitializeBroadcast()
         {
