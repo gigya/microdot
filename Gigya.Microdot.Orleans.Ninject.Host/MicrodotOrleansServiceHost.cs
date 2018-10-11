@@ -195,7 +195,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     if (disposed)
                         return;
 
-                    if (!Kernel.IsDisposed)
+                    disposed = true;
+
+                    if (!Kernel.IsDisposed && !disposing)
                         SafeDispose(Kernel);
 
                     base.Dispose(disposing);
