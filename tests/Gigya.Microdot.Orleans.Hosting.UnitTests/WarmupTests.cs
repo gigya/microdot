@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
             host.Run();
-            await host.WaitForHostDisposed();
+            //await host.WaitForHostDisposed();
         }
     }
 }
