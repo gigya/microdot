@@ -38,7 +38,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
             await WaitForServiceStartedAsync();
             Stop();
             await WaitForServiceGracefullyStoppedAsync();
-            Dispose();
+            //Dispose();
 
             _hostDisposedEvent.SetResult(true);
         }
