@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 
         public async Task StopHost()
         {
-            await WaitForServiceStartedAsync();
+            //await WaitForServiceStartedAsync();
             //Stop();
             //await WaitForServiceGracefullyStoppedAsync();
             //Dispose();
