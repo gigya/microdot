@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Attributes;
@@ -11,6 +12,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Gigya.ServiceContract.HttpService;
@@ -42,9 +44,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         { 
             _configDic = new Dictionary<string,string>();
             _kernel = new TestingKernel<ConsoleLog>(mockConfig: _configDic);
-            _kernel.Rebind(typeof(CachingProxyProvider<>))
-                .ToSelf()      
-                .InTransientScope();
+            _kernel.Rebind<ICachingProxyProvider>().To<CachingProxyProvider>().InTransientScope();
             var fakeRevokingManager =new FakeRevokingManager();
             _kernel.Rebind<IRevokeListener>().ToConstant(fakeRevokingManager);
             _kernel.Rebind<ICacheRevoker>().ToConstant(fakeRevokingManager);
@@ -86,9 +86,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             });
         
             _serviceResult = FirstResult;
-            var serviceProxyMock = Substitute.For<IServiceProxyProvider<ICachingTestService>>();
-            serviceProxyMock.Client.Returns(_serviceMock);
-            _kernel.Rebind<IServiceProxyProvider<ICachingTestService>>().ToConstant(serviceProxyMock);
+            var serviceProxyMock = Substitute.For<ServiceProxy.IServiceProxyProvider>();
+            serviceProxyMock.Invoke(Arg.Any<MethodInfo>(), Arg.Any<object[]>())
+                .Returns(c=>c.Arg<MethodInfo>().Invoke(_serviceMock, c.Arg<object[]>()));
+            _kernel.Rebind<ServiceProxy.IServiceProxyProvider>().ToConstant(serviceProxyMock);
          
         }
 

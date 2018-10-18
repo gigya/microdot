@@ -27,6 +27,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -293,6 +294,15 @@ namespace Gigya.Microdot.ServiceProxy
             return endpoint.Port ?? DefaultPort ?? config.DefaultPort;
         }
 
+        public object Invoke(MethodInfo targetMethod, object[] args)
+        {
+            // TODO: Add caching to this step to prevent using reflection every call
+            var resultReturnType = targetMethod.ReturnType.GetGenericArguments().SingleOrDefault() ?? typeof(object);
+
+            var request = new HttpServiceRequest(targetMethod, args);
+
+            return TaskConverter.ToStronglyTypedTask(Invoke(request, resultReturnType), resultReturnType);
+        }
 
         public virtual Task<object> Invoke(HttpServiceRequest request, Type resultReturnType)
         {

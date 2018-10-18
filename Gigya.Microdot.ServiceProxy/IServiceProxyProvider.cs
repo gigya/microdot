@@ -24,6 +24,7 @@ using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.ServiceProxy.Rewrite;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 
@@ -35,7 +36,7 @@ namespace Gigya.Microdot.ServiceProxy
     }
 
 
-    public interface IServiceProxyProvider
+    public interface IServiceProxyProvider: IProxyable
     {
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType);
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings);

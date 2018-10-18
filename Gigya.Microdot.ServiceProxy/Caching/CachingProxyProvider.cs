@@ -30,21 +30,12 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    public class CachingProxyProvider<TInterface> : ICachingProxyProvider<TInterface>
+    public class CachingProxyProvider : ICachingProxyProvider
     {
-        /// <summary>
-        /// The instance of the transparent proxy used to access the data source with caching.
-        /// </summary>
-        /// <remarks>
-        /// This is a thread-safe instance.
-        /// </remarks>
-        public TInterface Proxy { get; }
-
         /// <summary>
         /// The instance of the actual data source, used when the data is not present in the cache.
         /// </summary>
-        public TInterface DataSource { get; }
-
+        public object DataSource { get; }
 
         private IMemoizer Memoizer { get; }
         private IMetadataProvider MetadataProvider { get; }
@@ -54,7 +45,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private string ServiceName { get; }
 
 
-        public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
+        public CachingProxyProvider(object dataSource, string serviceName, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime)
         {
             DataSource = dataSource;
             Memoizer = memoizer;
@@ -62,10 +53,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             GetDiscoveryConfig = getDiscoveryConfig;
             Log = log;
             DateTime = dateTime;
-
-            Proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
-            ((DelegatingDispatchProxy)(object)Proxy).InvokeDelegate = Invoke;
-            ServiceName = serviceName ?? typeof(TInterface).GetServiceName();
+            ServiceName = serviceName;
         }
 
 
@@ -87,7 +75,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        private object Invoke(MethodInfo targetMethod, object[] args)
+        public object Invoke(MethodInfo targetMethod, object[] args)
         {
             var config = GetConfig(GetMethodNameForCachingPolicy(targetMethod, args));
             bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);

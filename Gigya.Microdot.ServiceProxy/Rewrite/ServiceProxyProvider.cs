@@ -3,9 +3,13 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Reflection.DispatchProxy;
 using System.Text;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
@@ -14,11 +18,10 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-	/// <summary>
-	/// This is a beta version. Please do not use it until it's ready
-	/// </summary>
 	public class ServiceProxyProvider : IServiceProxyProvider
     {
+        public IProxyable ProxyProvider { get; set; }
+
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -36,18 +39,44 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
 
-        public ServiceProxyProvider(string serviceName)
+        private Func<string, ServiceProxy.IServiceProxyProvider> CreateServiceProxyProvider { get; }
+        private Func<object, string, ICachingProxyProvider> CreateCachingProxyProvider { get; }
+
+        public ServiceProxyProvider(Type serviceType, IMetadataProvider metadataProvider, Func<string, ServiceProxy.IServiceProxyProvider> createServiceProxyProvider, Func<object, string, ICachingProxyProvider> createCachingProxyProvider)
         {
-            ServiceName = serviceName;
+            ServiceName = serviceType.GetServiceName();
+            CreateServiceProxyProvider = createServiceProxyProvider;
+            CreateCachingProxyProvider = createCachingProxyProvider;
+
+            ProxyProvider = CreateInnerProvider(serviceType);
+
+            if (metadataProvider.HasCachedMethods(serviceType))
+            {
+                ProxyProvider = CreateCachingProxyProvider(ProxyProvider.ToProxy(serviceType), ServiceName);
+            }
         }
+
+        private IProxyable CreateInnerProvider(Type serviceType)
+        {
+            var attribute = (HttpServiceAttribute)Attribute.GetCustomAttribute(serviceType, typeof(HttpServiceAttribute));
+
+            if (attribute == null)
+                throw new ProgrammaticException("The specified service interface type is not decorated with HttpServiceAttribute.", unencrypted: new Tags { { "interfaceName", serviceType.Name } });
+
+            var innerProvider = CreateServiceProxyProvider(serviceType.GetServiceName());
+            innerProvider.UseHttpsDefault = attribute.UseHttps;
+
+            if (innerProvider.DefaultPort == null)
+            {
+                innerProvider.DefaultPort = attribute.BasePort + (int)PortOffsets.Http;
+            }
+
+            return innerProvider;
+        }        
 
         public object Invoke(MethodInfo targetMethod, object[] args)
         {
-            // TODO: Add caching to this step to prevent using reflection every call
-            var resultReturnType = targetMethod.ReturnType.GetGenericArguments().SingleOrDefault() ?? typeof(object);
-            var request = new HttpServiceRequest(targetMethod, args);
-
-            return TaskConverter.ToStronglyTypedTask(Invoke(request, resultReturnType), resultReturnType);
+            return ProxyProvider.Invoke(targetMethod, args);
         }
 
         public async Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null)
@@ -88,6 +117,6 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         public Task<ServiceSchema> GetSchema()
         {
             throw new NotImplementedException();
-        }
+        }        
     }
 }

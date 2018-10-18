@@ -30,6 +30,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -78,7 +79,11 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.BindPerKey<string, ReachabilityCheck, INewServiceDiscovery, NewServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
-            Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
+            Kernel.Rebind<IServiceProxyProvider>().To<ServiceProxyProvider>().InTransientScope();
+            Kernel.Rebind<ICachingProxyProvider>().To<CachingProxyProvider>().InTransientScope();
+            Kernel.Rebind<ServiceProxy.Rewrite.IServiceProxyProvider>()
+                .To<ServiceProxy.Rewrite.ServiceProxyProvider>().InTransientScope();
+
             Kernel.BindPerString<AggregatingHealthStatus>();
 
             Rebind<MetricsContext>()
