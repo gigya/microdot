@@ -37,7 +37,7 @@ using Metrics;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {    
     /// <summary>
-    /// Provides a reachable node for each call to <see cref="GetNode"/>
+    /// Provides a reachable node for each call to <see cref="TryGetNode"/>
     /// </summary>
     internal sealed class LoadBalancer: ILoadBalancer
     {
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        public async Task<Node> GetNode()
+        public async Task<Node> TryGetNode()
         {
             await LoadNodesFromSource().ConfigureAwait(false);
             if (_isUndeployed)

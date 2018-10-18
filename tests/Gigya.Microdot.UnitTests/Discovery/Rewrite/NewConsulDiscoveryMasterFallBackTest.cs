@@ -81,7 +81,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private ILoadBalancer CreateLoadBalancerMock(DeploymentIdentifier di)
         {
             var mock = Substitute.For<ILoadBalancer>();            
-            mock.GetNode().Returns(_ => _consulServiceList.Contains(di) ? _nodeResults[di]() : null);
+            mock.TryGetNode().Returns(_ => _consulServiceList.Contains(di) ? _nodeResults[di]() : null);
             return mock;
         }
 

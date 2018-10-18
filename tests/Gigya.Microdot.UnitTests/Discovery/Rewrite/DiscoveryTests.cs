@@ -143,14 +143,14 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             ConfigureServiceSource(Consul);
             var loadBalancer = CreateLoadBalancer();
-            (await loadBalancer.GetNode()).ShouldBe(_consulNode);            
+            (await loadBalancer.TryGetNode()).ShouldBe(_consulNode);            
         }
 
         [Test]
         public async Task CreateLoadBalancer_GetNodesFromConfigNodeSource()
         {
             ConfigureServiceSource(Config);
-            await CreateLoadBalancer().GetNode();
+            await CreateLoadBalancer().TryGetNode();
             _createdNodeSources.Single().ShouldBe(typeof(ConfigNodeSource));
         }
 
@@ -158,7 +158,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task CreateLoadBalancer_GetNodesFromLocalNodeSource()
         {
             ConfigureServiceSource(Local);
-            await CreateLoadBalancer().GetNode();
+            await CreateLoadBalancer().TryGetNode();
             _createdNodeSources.Single().ShouldBe(typeof(LocalNodeSource));
         }
 
@@ -168,7 +168,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             ConfigureServiceSource(Consul);
             _consulSourceWasUndeployed = true;
             var loadBalancer = CreateLoadBalancer();
-            (await loadBalancer.GetNode()).ShouldBeNull();
+            (await loadBalancer.TryGetNode()).ShouldBeNull();
         }
 
         [Test]

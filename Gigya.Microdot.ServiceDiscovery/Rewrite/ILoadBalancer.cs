@@ -36,7 +36,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// Retrieves a node which is considered to be reachable.
         /// Returns null if the service is not implemented in the requested environment
         /// </summary>
-        Task<Node> GetNode();
+        Task<Node> TryGetNode();
 
         /// <summary>
         /// Report that a node was not responsive
