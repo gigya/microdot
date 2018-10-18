@@ -8,6 +8,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
@@ -51,8 +52,6 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
             kernel.Rebind<IDiscovery>().To<AlwaysLocalhostDiscovery>().InSingletonScope();
             kernel.Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
-            
-            kernel.Bind<ISlowService>().To<SlowService>().InSingletonScope();
         }
 
         protected override void PreInitialize(IKernel kernel)
@@ -60,6 +59,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             base.PreInitialize(kernel);
 
             action?.Invoke(kernel);
+            kernel.Bind<ISlowService>().To<SlowService>().InSingletonScope();
         }
     }
 }

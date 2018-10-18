@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Ninject;
 using NSubstitute;
@@ -14,63 +18,67 @@ namespace Gigya.Microdot.UnitTests.Configuration
     public class IConfigObjectRebindTest
     {
         private StandardKernel _testingKernel;
-        private IConfigObjectCreator _configWrapperMock = Substitute.For<IConfigObjectCreator>();
+        private IConfigObjectCreator _configObjectCreatorMock = Substitute.For<IConfigObjectCreator>();
 
         [SetUp]
         public void SetUp()
         {
             _testingKernel = new StandardKernel();
-            _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configWrapperMock);
+            _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configObjectCreatorMock);
             _testingKernel.Load<MicrodotModule>();
+            _testingKernel.Rebind<SystemInitializerBase>().To<SystemInitializer>();
+            _testingKernel.Get<SystemInitializerBase>().Init();
         }
 
         [TearDown]
         public void TearDown()
         {
             _testingKernel.Dispose();
-            _configWrapperMock.ClearReceivedCalls();
+            _configObjectCreatorMock.ClearReceivedCalls();
         }
 
         [Test]
         public void ShouldCallGetLatestWhileResolvingObject()
         {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
+            _configObjectCreatorMock.GetLatest().Returns(new DiscoveryConfig());
             _testingKernel.Get<DiscoveryConfig>();
 
-            _configWrapperMock.Received(1).GetLatest();
-            object notes = _configWrapperMock.DidNotReceive().ChangeNotifications;
-        }
-
-        [Test]
-        public void ShouldCallGetLatestWhileResolvingFuncObject()
-        {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
-            _testingKernel.Get<Func<DiscoveryConfig>>()();
-
-            _configWrapperMock.Received(1).GetLatest();
-            object notes = _configWrapperMock.DidNotReceive().ChangeNotifications;
+            _configObjectCreatorMock.Received(1).GetLatest();
+            object notes = _configObjectCreatorMock.DidNotReceive().ChangeNotifications;
         }
 
         [Test]
         public void ShouldCallChangeNotificationsWhileResolvingISourceBlockObject()
         {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
-            _configWrapperMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
+            _configObjectCreatorMock.GetLatest().Returns(new DiscoveryConfig());
+            _configObjectCreatorMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
             _testingKernel.Get<ISourceBlock<DiscoveryConfig>>();
 
-            _configWrapperMock.DidNotReceive().GetLatest();
-            object notifications = _configWrapperMock.Received(1).ChangeNotifications;
+            _configObjectCreatorMock.DidNotReceive().GetLatest();
+            object notifications = _configObjectCreatorMock.Received(1).ChangeNotifications;
         }
 
-        [Test]
-        public void ShouldCallChangeNotificationsWhileResolvingFuncISourceBlockObject()
+        public dynamic GetLambdaOfGetLatest(Type configType)
         {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
-            _configWrapperMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
-            _testingKernel.Get<Func<ISourceBlock<DiscoveryConfig>>>()();
+            return GetGenericFuncCompiledLambda(configType, "GetTypedLatestFunc");
+        }
 
-            object notifications = _configWrapperMock.Received(1).ChangeNotifications;
-            _configWrapperMock.DidNotReceive().GetLatest();
+        public dynamic GetLambdaOfChangeNotifications(Type configType)
+        {
+            return GetGenericFuncCompiledLambda(configType, "GetChangeNotificationsFunc");
+        }
+
+        private dynamic GetGenericFuncCompiledLambda(Type configType, string functionName)
+        {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
+            MethodInfo func = typeof(ConfigObjectCreator).GetMethod(functionName).MakeGenericMethod(configType);
+            Expression instance = Expression.Constant(_configObjectCreatorMock);
+            Expression callMethod = Expression.Call(instance, func);
+            Type delegateType = typeof(Func<>).MakeGenericType(configType);
+            Type parentExpressionType = typeof(Func<>).MakeGenericType(delegateType);
+
+            dynamic lambda = Expression.Lambda(parentExpressionType, callMethod).Compile();
+
+            return lambda;
         }
     }
 }
