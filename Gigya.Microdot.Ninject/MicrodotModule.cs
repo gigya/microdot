@@ -26,6 +26,7 @@ using System.Linq;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -104,6 +105,8 @@ namespace Gigya.Microdot.Ninject
             // ServiceSchema is at ServiceContracts, and cannot be depended on IServiceInterfaceMapper, which belongs to Microdot
             Kernel.Rebind<ServiceSchema>()
                 .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
+
+            Kernel.Rebind<SystemInitializerBase>().To<SystemInitializer.SystemInitializer>().InSingletonScope();
         }
 
 

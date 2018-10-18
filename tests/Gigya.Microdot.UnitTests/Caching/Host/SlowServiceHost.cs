@@ -51,8 +51,15 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
             kernel.Rebind<IDiscovery>().To<AlwaysLocalhostDiscovery>().InSingletonScope();
             kernel.Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
-            action?.Invoke(kernel);
+            
             kernel.Bind<ISlowService>().To<SlowService>().InSingletonScope();
+        }
+
+        protected override void PreInitialize(IKernel kernel)
+        {
+            base.PreInitialize(kernel);
+
+            action?.Invoke(kernel);
         }
     }
 }

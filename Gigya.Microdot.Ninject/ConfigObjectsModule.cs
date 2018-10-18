@@ -29,6 +29,7 @@ using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Extensions.Factory;
@@ -42,11 +43,11 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
-            Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
+            //Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
 
-            SearchAssembliesAndRebindIConfig(Kernel);
+            //SearchAssembliesAndRebindIConfig(Kernel);
         }
 
         private void SearchAssembliesAndRebindIConfig(IKernel kernel)

@@ -25,6 +25,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Interfaces;
 using Ninject;
 #pragma warning disable 1591
 

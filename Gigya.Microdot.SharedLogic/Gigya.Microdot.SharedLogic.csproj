@@ -34,6 +34,7 @@
     <DocumentationFile>bin\Release\Gigya.Microdot.SharedLogic.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -170,5 +171,4 @@
       </ItemGroup>
     </When>
   </Choose>
-
 </Project>

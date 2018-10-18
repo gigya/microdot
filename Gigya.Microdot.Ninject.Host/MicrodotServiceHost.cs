@@ -29,6 +29,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Syntax;
@@ -94,8 +95,8 @@ namespace Gigya.Microdot.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            kernel.Get<ServiceValidator>().Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            Kernel.Get<SystemInitializerBase>().Init();
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
         }

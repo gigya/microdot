@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Ninject;

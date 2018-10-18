@@ -33,6 +33,7 @@ using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
@@ -75,6 +76,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
             PreInitialize(Kernel);
+
             OnInitilize(Kernel);
 
             Warmup(Kernel);
@@ -92,8 +94,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            kernel.Get<ServiceValidator>().Validate();
+            //kernel.Get<ServiceValidator>().Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            Kernel.Get<SystemInitializerBase>().Init();
+
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
         }
