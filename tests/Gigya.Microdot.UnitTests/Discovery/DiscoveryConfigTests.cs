@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
@@ -51,6 +52,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _configDic[$"Discovery.Services.{SERVICE_NAME}.Hosts"] = "localhost";
             _configDic["Discovery.Source"] = "Config";
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Source.ShouldBe("Config");
         }
@@ -59,6 +61,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void ServiceSourceIsConfig()
         {
             SetServiceSourceConfig();
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Source.ShouldBe("Config");
         }
@@ -78,6 +81,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const double expectedValue = 0.002;
             ChangeConfig("Discovery.FirstAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.FirstAttemptDelaySeconds.ShouldBe(expectedValue);
         }
@@ -87,6 +91,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const double expectedValue = 0.003;
             ChangeConfig($"Discovery.Services.{SERVICE_NAME}.FirstAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.FirstAttemptDelaySeconds.ShouldBe(expectedValue);
         }
@@ -105,6 +110,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const double expectedValue = 20;
             ChangeConfig("Discovery.MaxAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
 
             settings.MaxAttemptDelaySeconds.ShouldBe(expectedValue);
@@ -115,6 +121,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const double expectedValue = 30;
             ChangeConfig($"Discovery.Services.{SERVICE_NAME}.MaxAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.MaxAttemptDelaySeconds.ShouldBe(expectedValue);
         }
@@ -132,6 +139,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const double expectedValue = 3;
             ChangeConfig("Discovery.DelayMultiplier", expectedValue.ToString(CultureInfo.InvariantCulture));
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.DelayMultiplier.ShouldBe(expectedValue);
         }
@@ -141,6 +149,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const double expectedValue = 30;
             _configDic[$"Discovery.Services.{SERVICE_NAME}.DelayMultiplier"] = expectedValue.ToString(CultureInfo.InvariantCulture);
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.DelayMultiplier.ShouldBe(expectedValue);
         }
@@ -157,6 +166,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             string expectedValue = "00:00:15";
             ChangeConfig("Discovery.RequestTimeout", expectedValue);
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.RequestTimeout.ShouldBe(TimeSpan.Parse(expectedValue, CultureInfo.InvariantCulture));
         }
@@ -167,6 +177,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             string expectedValue = "00:00:10";
             _configDic["Discovery.RequestTimeout"] = "00:00:15";
             _configDic[$"Discovery.Services.{SERVICE_NAME}.RequestTimeout"] = expectedValue;
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.RequestTimeout.ShouldBe(TimeSpan.Parse(expectedValue, CultureInfo.InvariantCulture));
         }
@@ -183,6 +194,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             var expectedValue = ServiceScope.DataCenter;
             ChangeConfig("Discovery.Scope", expectedValue.ToString());
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Scope.ShouldBe(expectedValue);
         }
@@ -192,6 +204,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             var expectedValue = ServiceScope.DataCenter;
             ChangeConfig($"Discovery.Services.{SERVICE_NAME}.Scope", expectedValue.ToString());
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Scope.ShouldBe(expectedValue);
         }
@@ -201,6 +214,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             const int expectedValue = 89940;
             _configDic[$"Discovery.Services.{SERVICE_NAME}.DefaultPort"] = expectedValue.ToString();
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.DefaultPort.ShouldBe(expectedValue);
         }
@@ -209,6 +223,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void ServiceSourceChanged()
         {
             SetServiceSourceConfig();
+            RunSystemInit();
             var settings = _settingsFactory(SERVICE_NAME);
             Assert.AreEqual("Config", settings.Source);
         }
@@ -247,6 +262,11 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private void ChangeConfig(string configKey, string newValue)
         {
             _configDic[configKey] = newValue;
+        }
+
+        private void RunSystemInit()
+        {
+            _unitTestingKernel.Get<SystemInitializerBase>().Init();
         }
     }
 }

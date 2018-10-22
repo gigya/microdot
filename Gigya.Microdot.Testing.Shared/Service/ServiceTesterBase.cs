@@ -125,7 +125,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
                 return arguments;
 
             var commonConfig = new BaseCommonConfig();
-            var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig));
+            var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
             var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
 
             return new ServiceArguments(startupMode, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime);

@@ -168,6 +168,7 @@ namespace Gigya.Microdot.Ninject.Host
                 Kernel.Get<ServiceDrainController>().StartDrain();
                 Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
+            Kernel.Get<SystemInitializerBase>().Dispose();
             Dispose();
         }
 

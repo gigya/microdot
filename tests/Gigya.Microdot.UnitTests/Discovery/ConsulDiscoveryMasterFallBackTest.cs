@@ -8,6 +8,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
@@ -146,6 +147,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
             _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "Zone";
+            _unitTestingKernel.Get<SystemInitializerBase>().Init();
             SetMockToReturnHost(_serviceName);
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);

@@ -32,6 +32,7 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -107,6 +108,7 @@ namespace Gigya.Microdot.Ninject
                 .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
 
             Kernel.Rebind<SystemInitializerBase>().To<SystemInitializer.SystemInitializer>().InSingletonScope();
+            Kernel.Rebind<IWorkloadMetrics>().To<WorkloadMetrics>().InSingletonScope();
         }
 
 

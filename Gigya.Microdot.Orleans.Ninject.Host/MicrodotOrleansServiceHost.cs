@@ -192,8 +192,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             if (Arguments.ServiceDrainTimeSec.HasValue)
             {
                 Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);            }
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+            }
 
+            Kernel.Get<SystemInitializerBase>().Dispose();
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
             Dispose();
         }

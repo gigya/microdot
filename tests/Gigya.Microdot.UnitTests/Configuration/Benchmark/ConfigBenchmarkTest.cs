@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using NUnit.Framework;
@@ -25,6 +26,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
             _testingKernel.Bind<ConfigCreatorFuncObject>().ToSelf().InTransientScope();
             _testingKernel.Load<MicrodotModule>();
             _testingKernel.Load<NLogModule>();
+            _testingKernel.Get<SystemInitializerBase>().Init();
         }
 
         [TearDown]

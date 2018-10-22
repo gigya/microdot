@@ -61,7 +61,6 @@ namespace Gigya.Microdot.Testing.Shared
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
-            Rebind<SystemInitializerBase>().To<SystemInitializer>().InSingletonScope();
             
             Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
                 .To<ManualConfigurationEvents>()
