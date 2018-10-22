@@ -58,7 +58,13 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy with caching <see cref="TServiceInterface"/>.</returns>
         public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var innerProviderFactory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxy.IServiceProxyProvider>>();
+            Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxy.IServiceProxyProvider> innerProviderFactory =
+                (serviceName, getServiceDiscovery) =>
+                {
+                    var innerProvider = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxy.IServiceProxyProvider>>()(serviceName, getServiceDiscovery);
+                    innerProvider.DefaultPort = BasePort;
+                    return innerProvider;
+                };
             var providerFactory = ResolutionRoot.Get<Func<Type, Func<string, ServiceProxy.IServiceProxyProvider>, IServiceProxyProvider>>();
 
             var serviceProxy = providerFactory(typeof(TServiceInterface), serviceName => innerProviderFactory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));

@@ -1,19 +1,15 @@
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
-using System.Reflection.DispatchProxy;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
