@@ -106,6 +106,9 @@
     <Compile Include="ServiceSchemaTests.cs" />
     <Compile Include="SourceBlockShould.cs" />
     <Compile Include="StringExtensionsTest.cs" />
+    <Compile Include="SystemInitializer\ServiceHostFake.cs" />
+    <Compile Include="SystemInitializer\SysInitCalledFromHostTest.cs" />
+    <Compile Include="SystemInitializer\SystemInitializerTests.cs" />
     <Compile Include="TagsExtractorTests.cs" />
     <Compile Include="TestingHost.cs" />
   </ItemGroup>

@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -27,12 +23,12 @@ namespace Gigya.Microdot.UnitTests.Configuration
             _testingKernel = new StandardKernel();
             _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configObjectCreatorMock);
             _testingKernel.Load<MicrodotModule>();
-
-            SystemInitializerBase sysInitFake = Substitute.For<SystemInitializerBase>();
-            _testingKernel.Rebind<SystemInitializerBase>().ToConstant(sysInitFake);
+            _testingKernel.Rebind<SystemInitializerBase>().To<SystemInitializerFake>();
 
             ILog logFake = Substitute.For<ILog>();
             _testingKernel.Rebind<ILog>().ToConstant(logFake);
+
+            _testingKernel.Get<SystemInitializerBase>().Init();
         }
 
         [TearDown]
@@ -63,27 +59,22 @@ namespace Gigya.Microdot.UnitTests.Configuration
             object notifications = _configObjectCreatorMock.Received(1).ChangeNotifications;
         }
 
-        public dynamic GetLambdaOfGetLatest(Type configType)
+        class SystemInitializerFake : SystemInitializerBase
         {
-            return GetGenericFuncCompiledLambda(configType, "GetTypedLatestFunc");
-        }
+            public SystemInitializerFake(IKernel kernel) : base(kernel, null)
+            {
+            }
 
-        public dynamic GetLambdaOfChangeNotifications(Type configType)
-        {
-            return GetGenericFuncCompiledLambda(configType, "GetChangeNotificationsFunc");
-        }
+            protected override void SetDefaultTCPHTTPSettings()
+            { }
 
-        private dynamic GetGenericFuncCompiledLambda(Type configType, string functionName)
-        {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
-            MethodInfo func = typeof(ConfigObjectCreator).GetMethod(functionName).MakeGenericMethod(configType);
-            Expression instance = Expression.Constant(_configObjectCreatorMock);
-            Expression callMethod = Expression.Call(instance, func);
-            Type delegateType = typeof(Func<>).MakeGenericType(configType);
-            Type parentExpressionType = typeof(Func<>).MakeGenericType(delegateType);
+            protected override void InitWorkloadMetrics()
+            {
+            }
 
-            dynamic lambda = Expression.Lambda(parentExpressionType, callMethod).Compile();
-
-            return lambda;
+            public override void Dispose()
+            {
+            }
         }
     }
 }
