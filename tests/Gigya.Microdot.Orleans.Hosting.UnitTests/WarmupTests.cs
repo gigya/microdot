@@ -28,7 +28,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             tester.Dispose();
         }
 
-        [Test][Repeat(2)]
+        [Test]
         public async Task VerifyWarmupBeforeSiloStart()
         {
             WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
