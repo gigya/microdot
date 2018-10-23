@@ -108,7 +108,6 @@ namespace Gigya.Microdot.Ninject
                 .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
 
             Kernel.Rebind<SystemInitializerBase>().To<SystemInitializer.SystemInitializer>().InSingletonScope();
-            Kernel.Rebind<IWorkloadMetrics>().To<WorkloadMetrics>().InSingletonScope();
         }
 
 

@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Testing.Shared
     {
         public const string APPNAME = "InfraTests";
 
-        public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
+        public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null, bool runSystemInitializer = true)
         {
             ServicePointManager.DefaultConnectionLimit = 200;
             CurrentApplicationInfo.Init(APPNAME);
@@ -73,7 +73,10 @@ namespace Gigya.Microdot.Testing.Shared
             
             Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
 
-            this.Get<SystemInitializerBase>().Init();
+            if (runSystemInitializer)
+            {
+                this.Get<SystemInitializerBase>().Init();
+            }
 
             additionalBindings?.Invoke(this);
         }

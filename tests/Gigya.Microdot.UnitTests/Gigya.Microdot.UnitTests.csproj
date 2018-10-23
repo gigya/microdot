@@ -87,6 +87,7 @@
     <Compile Include="Caching\Host\ISlowService.cs" />
     <Compile Include="Caching\Host\SlowService.cs" />
     <Compile Include="Caching\Host\SlowServiceHost.cs" />
+    <Compile Include="Monitor\WorkloadMetricsTests.cs" />
     <Compile Include="NinjectExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Monitor\RequestTimings.cs" />
