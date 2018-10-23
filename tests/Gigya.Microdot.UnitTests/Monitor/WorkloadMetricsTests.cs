@@ -12,6 +12,7 @@ using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
+using Metrics.Core;
 using Metrics.MetricData;
 using Ninject;
 using NUnit.Framework;
@@ -49,8 +50,8 @@ namespace Gigya.Microdot.UnitTests.Monitor
         public void Setup()
         {
             Metric.ShutdownContext("Workload");
+            Metric.ShutdownContext("Silo");
             _serviceArguments = new ServiceArguments();
-            //_config = new WorkloadMetricsConfig { ReadPerformanceCounters = true, MinUnhealthyDuration = MinUnhealthyDuration };
             _dateTimeFake = new DateTimeFake { UtcNow = DateTime.UtcNow };
 
             _kernel = new TestingKernel<ConsoleLog>(k =>
@@ -245,7 +246,10 @@ namespace Gigya.Microdot.UnitTests.Monitor
 
         private HealthCheckResult GetHealthCheck()
         {
-            return HealthChecks.GetStatus().Results.First(r => r.Name == "Workload").Check;
+            HealthCheck.Result result = HealthChecks.GetStatus().Results.First(r => r.Name == "Workload");
+            Console.WriteLine(result.Check.IsHealthy);
+            Console.WriteLine(result.Check.Message);
+            return result.Check;
         }
 
 
