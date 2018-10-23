@@ -20,21 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Ninject.SystemInitializer;
-using Gigya.Microdot.SharedLogic;
-using Ninject;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
-using Ninject.Parameters;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -43,34 +34,8 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
-            //Kernel.Rebind<IConfigObjectCreatorWrapper>().To<ConfigObjectCreatorWrapper>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();
-
-            //SearchAssembliesAndRebindIConfig(Kernel);
-        }
-
-        private void SearchAssembliesAndRebindIConfig(IKernel kernel)
-        {
-            IAssemblyProvider aProvider = kernel.Get<IAssemblyProvider>();
-            foreach (Assembly assembly in aProvider.GetAssemblies())
-            {
-                foreach (Type configType in assembly.GetTypes().Where(ConfigObjectCreator.IsConfigObject))
-                {
-                    IConfigObjectCreatorWrapper cocWrapper = kernel.Get<IConfigObjectCreatorWrapper>(new ConstructorArgument("type", configType));
-
-                    dynamic getLataestLambda = cocWrapper.GetLambdaOfGetLatest(configType);
-                    kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLataestLambda());
-
-                    Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
-                    kernel.Rebind(sourceBlockType).ToMethod(m => cocWrapper.GetChangeNotifications());
-
-                    dynamic changeNotificationsLambda = cocWrapper.GetLambdaOfChangeNotifications(sourceBlockType);
-                    kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(i => changeNotificationsLambda());
-
-                    kernel.Rebind(configType).ToMethod(i => cocWrapper.GetLatest());
-                }
-            }
         }
     }
 }

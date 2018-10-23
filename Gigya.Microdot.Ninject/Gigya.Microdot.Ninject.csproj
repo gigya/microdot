@@ -44,9 +44,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ConfigEventFactory.cs" />
-    <Compile Include="ConfigObjectCreatorWrapper.cs" />
     <Compile Include="ConfigObjectsModule.cs" />
-    <Compile Include="IConfigObjectCreatorWrapper.cs" />
     <Compile Include="ConfigVerificationModule.cs" />
     <Compile Include="ILoggingModule.cs" />
     <Compile Include="MicrodotConventions.cs" />

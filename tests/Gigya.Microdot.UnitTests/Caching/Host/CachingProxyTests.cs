@@ -67,7 +67,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         [Theory]
         public async Task MultipleCalls_BehavesAsExpected(Cache cache, Parameters parameters, Execute execute, Calls calls, DataType dataType)
         {
-            const int callCount = 1;
+            const int callCount = 30;
             int delay = execute == Execute.Consecutively ? 10 : 100;
             bool shouldThrow = calls == Calls.Throw;
             Func<int, Task<int>> call;

@@ -22,13 +22,11 @@
 
 
 using System;
-using System.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -94,7 +92,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            //kernel.Get<ServiceValidator>().Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             Kernel.Get<SystemInitializerBase>().Init();
 
