@@ -169,7 +169,7 @@ namespace Gigya.Microdot.Ninject.Host
                 Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
             Kernel.Get<SystemInitializerBase>().Dispose();
-            Dispose();
+            Kernel.Dispose();
         }
 
         protected override void Dispose(bool disposing)
