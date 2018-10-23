@@ -32,7 +32,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task VerifyWarmupBeforeSiloStart()
         {
             WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
-            host.Run();
+            Task.Run(() => host.Run());
             await host.WaitForHostDisposed();
         }
     }
