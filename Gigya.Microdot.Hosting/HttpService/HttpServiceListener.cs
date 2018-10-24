@@ -229,9 +229,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                             await CheckSecureConnection(context);
 
                             requestData = await ParseRequest(context);
-                            callEvent.ClientMetadata = requestData.TracingData;
-                            callEvent.ServiceMethod = requestData.Target?.MethodName;
+                            SetCallEventRequestData(callEvent, requestData);
+
                             TracingContext.SetOverrides(requestData.Overrides);
+
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
@@ -277,6 +278,15 @@ namespace Gigya.Microdot.Hosting.HttpService
                     }
                 }
             }
+        }
+
+        private void SetCallEventRequestData(ServiceCallEvent callEvent, HttpServiceRequest requestData)
+        {
+            callEvent.ClientMetadata = requestData.TracingData;
+            callEvent.ServiceMethod = requestData.Target?.MethodName;
+            callEvent.RequestId = requestData.TracingData?.RequestID;
+            callEvent.SpanId = requestData.TracingData?.SpanID;
+            callEvent.ParentSpanId = requestData.TracingData?.ParentSpanID;
         }
 
         private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)
