@@ -45,8 +45,8 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
 
         public void Init()
         {
-            SearchAssembliesAndRebindIConfig();
             RunValidations();
+            SearchAssembliesAndRebindIConfig();
             SetDefaultTCPHTTPSettings();
             InitWorkloadMetrics();
         }
