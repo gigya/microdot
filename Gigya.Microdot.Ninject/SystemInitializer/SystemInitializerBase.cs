@@ -35,20 +35,18 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
     public abstract class SystemInitializerBase : IDisposable
     {
         protected IKernel _kernel;
-        protected IWorkloadMetrics _workloadMetrics;
 
         public SystemInitializerBase() { }
 
-        protected SystemInitializerBase(IKernel kernel, IWorkloadMetrics workloadMetrics)
+        protected SystemInitializerBase(IKernel kernel)
         {
             _kernel = kernel;
-            _workloadMetrics = workloadMetrics;
         }
 
         public void Init()
         {
-            RunValidations();
             SearchAssembliesAndRebindIConfig();
+            RunValidations();
             SetDefaultTCPHTTPSettings();
             InitWorkloadMetrics();
         }

@@ -32,8 +32,9 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
     public class SystemInitializer : SystemInitializerBase
     {
         private ISourceBlock<ServicePointManagerDefaultConfig> _configSource;
+        private IWorkloadMetrics _workloadMetrics;
 
-        public SystemInitializer(IKernel kernel, IWorkloadMetrics workloadMetrics) : base(kernel, workloadMetrics)
+        public SystemInitializer(IKernel kernel) : base(kernel)
         {
         }
 
@@ -48,6 +49,7 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
 
         protected override void InitWorkloadMetrics()
         {
+            _workloadMetrics = _kernel.Get<IWorkloadMetrics>();
             _workloadMetrics.Init();
         }
 
@@ -61,7 +63,7 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
         public override void Dispose()
         {
             _configSource.Complete();
-            _workloadMetrics.Dispose();
+            _workloadMetrics?.Dispose();
         }
     }
 }

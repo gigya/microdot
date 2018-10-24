@@ -61,7 +61,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
         class SystemInitializerFake : SystemInitializerBase
         {
-            public SystemInitializerFake(IKernel kernel) : base(kernel, null)
+            public SystemInitializerFake(IKernel kernel) : base(kernel)
             {
             }
 
