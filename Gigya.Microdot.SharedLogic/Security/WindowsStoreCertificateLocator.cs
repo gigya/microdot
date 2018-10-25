@@ -79,14 +79,30 @@ namespace Gigya.Microdot.SharedLogic.Security
 			var store = new X509Store(storeName, storeLocation);
 			store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
 			var certs = store.Certificates.Find(X509FindType.FindBySubjectName, parts[2], false);
-
-            var foundCert = certs.Cast<X509Certificate2>().FirstOrDefault(cer => cer.GetNameInfo(X509NameType.SimpleName, false) == parts[2]);
+		    var recentCert = GetRecentCertificate(certs, parts[2]);            
 
 			errorPrefix += " and process runs under user '" + CurrentApplicationInfo.OsUser + "'";
-			GAssert.IsTrue(foundCert != null, errorPrefix + ", but certificate was not found.");
-			GAssert.IsTrue(foundCert.HasPrivateKey, errorPrefix + ", but certificate does not contain a private key.");
-			return foundCert;
+			GAssert.IsTrue(recentCert != null, errorPrefix + ", but certificate was not found.");
+			GAssert.IsTrue(recentCert.HasPrivateKey, errorPrefix + ", but certificate does not contain a private key.");
+			return recentCert;
 		}
 
-	}
+	    private X509Certificate2 GetRecentCertificate(X509Certificate2Collection certificates, string certName)
+	    {
+	        X509Certificate2 recentCert = null;
+
+            foreach (var cert in certificates)
+	        {
+	            if (cert.GetNameInfo(X509NameType.SimpleName, false) != certName)
+	                continue;
+
+	            if (recentCert == null || DateTime.Parse(cert.GetEffectiveDateString()) > DateTime.Parse(recentCert.GetEffectiveDateString()))
+	                recentCert = cert;
+	        }
+
+	        return recentCert;
+	    }
+
+
+    }
 }
