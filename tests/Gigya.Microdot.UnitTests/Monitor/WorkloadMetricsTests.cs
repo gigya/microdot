@@ -59,9 +59,9 @@ namespace Gigya.Microdot.UnitTests.Monitor
                 k.Rebind<IHealthMonitor>().To<HealthMonitor>();
                 k.Rebind<ServiceArguments>().ToMethod(c => _serviceArguments);
                 k.Rebind<IDateTime>().ToMethod(c => _dateTimeFake);
-            }, runSystemInitializer: false);
+            });
 
-            _kernel.Get<SystemInitializerBase>().Init();
+            _kernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
             _config = _kernel.Get<Func<WorkloadMetricsConfig>>()();
             _config.ReadPerformanceCounters = true;
             _config.MinUnhealthyDuration = MinUnhealthyDuration;

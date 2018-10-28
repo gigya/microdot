@@ -46,7 +46,14 @@ namespace Gigya.Microdot.Testing.Shared
     {
         public const string APPNAME = "InfraTests";
 
-        public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null, bool runSystemInitializer = true)
+        /// <summary>
+        /// Construction of TestingKernel should always be ended by SystemInitializer.Init(), which performs IConfigObjects rebinding.
+        /// Don't pass any "IConfigObjects actions" in additionalBinfings parameter.
+        /// For mocking config objects values by mockConfig parameter, use UpdatableConfigTests base class
+        /// </summary>
+        /// <param name="additionalBindings"></param>
+        /// <param name="mockConfig"></param>
+        public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
         {
             ServicePointManager.DefaultConnectionLimit = 200;
             CurrentApplicationInfo.Init(APPNAME);
@@ -61,7 +68,11 @@ namespace Gigya.Microdot.Testing.Shared
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
-            
+
+            Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
+
+            additionalBindings?.Invoke(this);
+
             Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
                 .To<ManualConfigurationEvents>()
                 .InSingletonScope();
@@ -70,15 +81,8 @@ namespace Gigya.Microdot.Testing.Shared
                 .To<OverridableConfigItems>()
                 .InSingletonScope()
                 .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
-            
-            Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
 
-            if (runSystemInitializer)
-            {
-                this.Get<SystemInitializerBase>().Init();
-            }
-
-            additionalBindings?.Invoke(this);
+            this.Get<SystemInitializer>().Init();
         }
 
         public OverridableConfigItems GetConfigOverride()

@@ -147,7 +147,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
             _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "Zone";
-            _unitTestingKernel.Get<SystemInitializerBase>().Init();
+            _unitTestingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
             SetMockToReturnHost(_serviceName);
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);

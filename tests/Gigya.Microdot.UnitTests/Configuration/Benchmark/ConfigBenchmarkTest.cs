@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
             _testingKernel.Bind<ConfigCreatorFuncObject>().ToSelf().InTransientScope();
             _testingKernel.Load<MicrodotModule>();
             _testingKernel.Load<NLogModule>();
-            _testingKernel.Get<SystemInitializerBase>().Init();
+            _testingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
         }
 
         [TearDown]

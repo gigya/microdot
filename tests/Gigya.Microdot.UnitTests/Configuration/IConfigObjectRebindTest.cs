@@ -3,7 +3,6 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Ninject;
 using NSubstitute;
@@ -23,12 +22,12 @@ namespace Gigya.Microdot.UnitTests.Configuration
             _testingKernel = new StandardKernel();
             _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configObjectCreatorMock);
             _testingKernel.Load<MicrodotModule>();
-            _testingKernel.Rebind<SystemInitializerBase>().To<SystemInitializerFake>();
+            _testingKernel.Rebind<Ninject.SystemInitializer.SystemInitializer>().To<SystemInitializerFake>();
 
             ILog logFake = Substitute.For<ILog>();
             _testingKernel.Rebind<ILog>().ToConstant(logFake);
 
-            _testingKernel.Get<SystemInitializerBase>().Init();
+            _testingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
         }
 
         [TearDown]
@@ -59,7 +58,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             object notifications = _configObjectCreatorMock.Received(1).ChangeNotifications;
         }
 
-        class SystemInitializerFake : SystemInitializerBase
+        class SystemInitializerFake : Ninject.SystemInitializer.SystemInitializer
         {
             public SystemInitializerFake(IKernel kernel) : base(kernel)
             {
@@ -67,10 +66,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             protected override void SetDefaultTCPHTTPSettings()
             { }
-
-            protected override void InitWorkloadMetrics()
-            {
-            }
 
             public override void Dispose()
             {

@@ -112,6 +112,7 @@
     <Compile Include="SystemInitializer\SystemInitializerTests.cs" />
     <Compile Include="TagsExtractorTests.cs" />
     <Compile Include="TestingHost.cs" />
+    <Compile Include="UpdatableConfigTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

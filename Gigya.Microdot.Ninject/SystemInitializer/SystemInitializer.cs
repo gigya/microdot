@@ -21,36 +21,70 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.SharedLogic.Measurement.Workload;
+using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.Interfaces;
 using Ninject;
 
 namespace Gigya.Microdot.Ninject.SystemInitializer
 {
-    public class SystemInitializer : SystemInitializerBase
+    public class SystemInitializer : IDisposable
     {
+        private IKernel _kernel;
         private ISourceBlock<ServicePointManagerDefaultConfig> _configSource;
-        private IWorkloadMetrics _workloadMetrics;
 
-        public SystemInitializer(IKernel kernel) : base(kernel)
+        public SystemInitializer(IKernel kernel)
         {
+            _kernel = kernel;
         }
 
-        protected override void SetDefaultTCPHTTPSettings()
+        public void Init()
+        {
+            RunValidations();
+            SearchAssembliesAndRebindIConfig();
+            SetDefaultTCPHTTPSettings();
+        }
+
+        private void RunValidations()
+        {
+            _kernel.Get<ServiceValidator>().Validate();
+        }
+
+        private void SearchAssembliesAndRebindIConfig()
+        {
+            IAssemblyProvider aProvider = _kernel.Get<IAssemblyProvider>();
+            foreach (Assembly assembly in aProvider.GetAssemblies())
+            {
+                foreach (Type configType in assembly.GetTypes().Where(ConfigObjectCreator.IsConfigObject))
+                {
+                    IConfigObjectCreator configObjectCreator = _kernel.Get<Func<Type, IConfigObjectCreator>>()(configType);
+
+                    dynamic getLatestLambda = configObjectCreator.GetLambdaOfGetLatest(configType);
+                    _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
+
+                    Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
+                    _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+
+                    dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
+                    _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
+
+                    _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
+                }
+            }
+        }
+
+        protected virtual void SetDefaultTCPHTTPSettings()
         {
             _configSource = _kernel.Get<ISourceBlock<ServicePointManagerDefaultConfig>>();
             _configSource.LinkTo(new ActionBlock<ServicePointManagerDefaultConfig>(cnf => SetServicePointManagerDefaultValues(cnf)));
 
             ServicePointManagerDefaultConfig config = _kernel.Get<Func<ServicePointManagerDefaultConfig>>()();
             SetServicePointManagerDefaultValues(config);
-        }
-
-        protected override void InitWorkloadMetrics()
-        {
-            _workloadMetrics = _kernel.Get<IWorkloadMetrics>();
-            _workloadMetrics.Init();
         }
 
         private void SetServicePointManagerDefaultValues(ServicePointManagerDefaultConfig config)
@@ -60,10 +94,9 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
             ServicePointManager.Expect100Continue = config.Expect100Continue;
         }
 
-        public override void Dispose()
+        public virtual void Dispose()
         {
             _configSource.Complete();
-            _workloadMetrics?.Dispose();
         }
     }
 }

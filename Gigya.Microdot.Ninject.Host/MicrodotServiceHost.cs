@@ -31,6 +31,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
 
@@ -96,7 +97,11 @@ namespace Gigya.Microdot.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
-            Kernel.Get<SystemInitializerBase>().Init();
+            Kernel.Get<SystemInitializer.SystemInitializer>().Init();
+
+            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
+
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
         }
@@ -168,7 +173,8 @@ namespace Gigya.Microdot.Ninject.Host
                 Kernel.Get<ServiceDrainController>().StartDrain();
                 Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
-            Kernel.Get<SystemInitializerBase>().Dispose();
+            Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
             Dispose();
         }
 

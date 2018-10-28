@@ -34,6 +34,7 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
@@ -93,7 +94,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
-            Kernel.Get<SystemInitializerBase>().Init();
+            Kernel.Get<SystemInitializer>().Init();
+
+            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
 
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
@@ -192,7 +196,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
 
-            Kernel.Get<SystemInitializerBase>().Dispose();
+            Kernel.Get<SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
             Dispose();
         }

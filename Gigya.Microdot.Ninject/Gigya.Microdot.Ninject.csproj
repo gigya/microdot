@@ -44,7 +44,6 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="ConfigEventFactory.cs" />
-    <Compile Include="ConfigObjectsModule.cs" />
     <Compile Include="ConfigVerificationModule.cs" />
     <Compile Include="ILoggingModule.cs" />
     <Compile Include="MicrodotConventions.cs" />
@@ -55,7 +54,6 @@
     <Compile Include="RegexTimeoutInitializer.cs" />
     <Compile Include="ServiceProxyModule.cs" />
     <Compile Include="SystemInitializer\SystemInitializer.cs" />
-    <Compile Include="SystemInitializer\SystemInitializerBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />

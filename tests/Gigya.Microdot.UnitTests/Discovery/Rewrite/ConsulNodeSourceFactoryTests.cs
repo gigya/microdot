@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
@@ -19,7 +20,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class ConsulNodeSourceFactoryTests
+    public class ConsulNodeSourceFactoryTests : UpdatableConfigTests
     {
         private const string ServiceName = "MyService";
         private const string Env = "prod";
@@ -31,50 +32,44 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private DeploymentIdentifier _deploymentIdentifier;
 
-        private TestingKernel<ConsoleLog> _testingKernel;
-        private ConsulConfig _consulConfig;        
         private ConsulSimulator _consulSimulator;
         private IEnvironment _environment;
         private ConsulNodeSourceFactory _factory;
 
-        [OneTimeSetUp]
-        public void SetupConsulListener()
+        public override void OneTimeSetUp()
         {
             _consulSimulator = new ConsulSimulator(ConsulPort);
-            _testingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                _environment = Substitute.For<IEnvironment>();
-                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
-                _environment.Zone.Returns(Zone);
-                k.Rebind<IEnvironment>().ToMethod(_ => _environment);
-
-                k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
-            });
+            base.OneTimeSetUp();
         }
 
-        [OneTimeTearDown]
-        public void TearDownConsulListener()
+        public override void OneTimeTearDown()
         {
             _consulSimulator.Dispose();
-            _testingKernel.Dispose();
+            base.OneTimeTearDown();
         }
 
-        [SetUp]
-        public void Setup()
+        public override void Setup()
         {
             _consulSimulator.Reset();            
             _deploymentIdentifier = new DeploymentIdentifier(ServiceName + "_" + Guid.NewGuid(), Env, _environment);
-
-            _consulConfig = new ConsulConfig();
         }
 
 
-        [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             _factory?.Dispose();
         }
 
+        protected override Action<IKernel> AdditionalBindings()
+        {
+            return k =>
+                        {
+                            _environment = Substitute.For<IEnvironment>();
+                            _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                            _environment.Zone.Returns(Zone);
+                            k.Rebind<IEnvironment>().ToMethod(_ => _environment);
+                        };
+        }
 
         [Test]
         public async Task ServiceMissingOnStart()
@@ -138,7 +133,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task ConsulResponsiveAfterError()
         {
-            _consulConfig.ErrorRetryInterval = TimeSpan.FromMilliseconds(10);
+            await ChangeConfig<ConsulConfig>(new []{new KeyValuePair<string, string>("Consul.ErrorRetryInterval", TimeSpan.FromMilliseconds(10).ToString())});
+            
             SetError();
             await Start();
             _consulSimulator.Reset();
@@ -174,7 +170,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private async Task Start()
         {
-            _factory = _testingKernel.Get<ConsulNodeSourceFactory>();
+            _factory = _unitTestingKernel.Get<ConsulNodeSourceFactory>();
             // try get some NodeSource in order to start init
             try { await _factory.CreateNodeSource(null);} catch { }
         }
@@ -213,7 +209,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private HealthCheckResult GetHealthStatus()
         {
-            var healthMonitor = (FakeHealthMonitor)_testingKernel.Get<IHealthMonitor>();
+            var healthMonitor = (FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>();
             return healthMonitor.Monitors["ConsulServiceList"].Invoke();
         }
 
