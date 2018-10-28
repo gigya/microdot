@@ -14,7 +14,7 @@ namespace Gigya.Microdot.UnitTests
     /// Enables dynamic config updates
     /// Intended for tests only
     /// By default creates TestingKernel during OneTimeSetUp flow
-    /// To create TestingKernel during SetUp flow, override OneTimeSetUp method
+    /// To create TestingKernel during SetUp flow, override the OneTimeSetUp method
     /// </summary>
     [TestFixture]
     public abstract class UpdatableConfigTests
@@ -78,14 +78,14 @@ namespace Gigya.Microdot.UnitTests
 
         protected abstract Action<IKernel> AdditionalBindings();
 
-        protected async Task ChangeConfig<T>(IEnumerable<KeyValuePair<string, string>> keyValue) where T : IConfigObject
+        protected async Task<T> ChangeConfig<T>(IEnumerable<KeyValuePair<string, string>> keyValue) where T : IConfigObject
         {
             foreach (KeyValuePair<string, string> keyValuePair in keyValue)
             {
                 _configDic[keyValuePair.Key] = keyValuePair.Value;
             }
 
-            await _unitTestingKernel.Get<ManualConfigurationEvents>().ApplyChanges<T>();
+            return await _unitTestingKernel.Get<ManualConfigurationEvents>().ApplyChanges<T>();
         }
 
         protected async Task ClearChanges<T>() where T : IConfigObject

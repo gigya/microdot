@@ -49,7 +49,6 @@ namespace Gigya.Microdot.Testing.Shared
         /// <summary>
         /// Construction of TestingKernel should always be ended by SystemInitializer.Init(), which performs IConfigObjects rebinding.
         /// Don't pass any "IConfigObjects actions" in additionalBinfings parameter.
-        /// For mocking config objects values by mockConfig parameter, use UpdatableConfigTests base class
         /// </summary>
         /// <param name="additionalBindings"></param>
         /// <param name="mockConfig"></param>
