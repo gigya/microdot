@@ -69,10 +69,6 @@
       <Project>{2865F69B-D847-4901-8945-4941E463F94E}</Project>
       <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj">
-      <Project>{06E45085-5A54-4BFE-BD24-E9C3983A2689}</Project>
-      <Name>Gigya.Microdot.Logging.NLog</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
       <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
       <Name>Gigya.Microdot.ServiceDiscovery</Name>
