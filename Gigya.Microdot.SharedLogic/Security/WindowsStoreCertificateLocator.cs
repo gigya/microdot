@@ -26,6 +26,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Utils;
@@ -48,11 +49,13 @@ namespace Gigya.Microdot.SharedLogic.Security
 	public class WindowsStoreCertificateLocator : ICertificateLocator
 	{
 	    private Func<HttpsConfiguration> HttpsConfigurationFactory { get; }
+        private ILog Log { get;  }
 
 
-	    public WindowsStoreCertificateLocator(Func<HttpsConfiguration> httpsConfigurationFactory)
+	    public WindowsStoreCertificateLocator(Func<HttpsConfiguration> httpsConfigurationFactory, ILog log)
 		{
-		    HttpsConfigurationFactory = httpsConfigurationFactory;		   
+		    HttpsConfigurationFactory = httpsConfigurationFactory;
+		    Log = log;
 		}
 
 
@@ -78,13 +81,18 @@ namespace Gigya.Microdot.SharedLogic.Security
 
 			var store = new X509Store(storeName, storeLocation);
 			store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
-			var certs = store.Certificates.Find(X509FindType.FindBySubjectName, parts[2], false);
-		    var recentCert = GetRecentCertificate(certs, parts[2]);            
+		    var subjectName = parts[2];
+			var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subjectName, false);
+		    var recentCert = GetRecentCertificate(certs, subjectName);            
 
 			errorPrefix += " and process runs under user '" + CurrentApplicationInfo.OsUser + "'";
 			GAssert.IsTrue(recentCert != null, errorPrefix + ", but certificate was not found.");
 			GAssert.IsTrue(recentCert.HasPrivateKey, errorPrefix + ", but certificate does not contain a private key.");
-			return recentCert;
+
+		    var validFrom = recentCert.GetEffectiveDateString();
+            Log.Info(x => x("Certificate located", unencryptedTags: new { subjectName, validFrom }));
+
+            return recentCert;
 		}
 
 	    private X509Certificate2 GetRecentCertificate(X509Certificate2Collection certificates, string certName)
