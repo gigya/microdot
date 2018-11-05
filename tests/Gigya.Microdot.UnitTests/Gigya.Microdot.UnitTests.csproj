@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdditionalDataSerializationTests.cs" />
     <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="Caching\AsyncMemoizerRevokesTests.cs" />
     <Compile Include="Caching\AsyncMemoizerTests.cs" />

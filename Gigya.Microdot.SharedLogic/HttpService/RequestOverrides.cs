@@ -28,14 +28,14 @@ using Newtonsoft.Json;
 namespace Gigya.Microdot.SharedLogic.HttpService
 {
     [Serializable]
-    public class RequestOverrides
+    public class RequestOverrides : ExtendableJson
     {
         [JsonProperty]
         public List<HostOverride> Hosts { get; set; }
     }
 
     [Serializable]
-    public class HostOverride 
+    public class HostOverride : ExtendableJson
     {
         [JsonProperty]
         public string ServiceName { get; set; }
