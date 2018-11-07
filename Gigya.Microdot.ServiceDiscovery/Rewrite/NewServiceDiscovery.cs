@@ -86,8 +86,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             CreateMasterEnvironmentLoadBalancer();
 
             AggregatingHealthStatus = getAggregatingHealthStatus("Discovery");
-            _healthCheck = AggregatingHealthStatus.RegisterCheck(_serviceName, _getHealthStatus);
-            _getHealthStatus = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
+            _getHealthStatus = () => HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
+            _healthCheck = AggregatingHealthStatus.RegisterCheck(_serviceName, ()=>_getHealthStatus());            
         }
 
         public async Task<ReportableNode> GetNode()
