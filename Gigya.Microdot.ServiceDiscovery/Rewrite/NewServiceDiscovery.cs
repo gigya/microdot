@@ -90,13 +90,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _getHealthStatus = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
         }
 
-        public async Task<(Node, ILoadBalancer)> GetNode()
+        public async Task<ReportableNode> GetNode()
         {
             var node = await OriginatingEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
                 _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
-                return (node, OriginatingEnvironmentLoadBalancer);
+                return new ReportableNode{Node = node, LoadBalancer = OriginatingEnvironmentLoadBalancer};
             }
 
             if (!GetConfig().EnvironmentFallbackEnabled || _masterDeployment.Equals(_originatingEnvironmentDeployment))
@@ -110,7 +110,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 _getHealthStatus = () =>
                     HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
-                return (node, MasterEnvironmentLoadBalancer);
+                return new ReportableNode { Node = node, LoadBalancer = MasterEnvironmentLoadBalancer };
             }
 
             _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));

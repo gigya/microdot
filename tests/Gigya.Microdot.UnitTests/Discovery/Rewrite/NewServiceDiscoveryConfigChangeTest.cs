@@ -63,7 +63,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _discoveryConfig.Services[ServiceName].Source = "Config";
             _discoveryConfig.Services[ServiceName].Hosts = "host3";
 
-            var node = (await _serviceDiscovery.GetNode()).Item1;
+            var node = (await _serviceDiscovery.GetNode()).Node;
             Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
             Assert.AreEqual("host3", node.Hostname);
         }
@@ -73,7 +73,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task ServiceSourceIsLocal()
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
-            var node = (await _serviceDiscovery.GetNode()).Item1;
+            var node = (await _serviceDiscovery.GetNode()).Node;
             node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
         }
 

@@ -25,11 +25,17 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+    public class ReportableNode
+    {
+        public Node Node { get; set; }
+        public ILoadBalancer LoadBalancer { get; set; }
+    }
+
     public interface INewServiceDiscovery
     {
         /// <summary>
         /// Retrieves a reachable <see cref="Node"/>, or null if service is not deployed.
         /// </summary>
-        Task<(Node Node, ILoadBalancer LoadBalancer)> GetNode();
+        Task<ReportableNode> GetNode();
     }
 }
