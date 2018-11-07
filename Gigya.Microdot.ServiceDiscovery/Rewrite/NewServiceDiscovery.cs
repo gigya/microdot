@@ -59,9 +59,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
         private readonly ReachabilityCheck _reachabilityCheck;        
-        private readonly AsyncLock _asyncLocker = new AsyncLock();
-        private readonly IDisposable _configBlockLink;
-        private readonly Task _initTask;
 
         private Func<HealthCheckResult> _getHealthStatus;
         private readonly IDisposable _healthCheck;
@@ -84,26 +81,25 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             _reachabilityCheck = reachabilityCheck;
             GetConfig = discoveryConfigFactory;
-            // Must be run in Task.Run() because of incorrect Orleans scheduling
-            _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
-            _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
+
+            CreateOriginatingEnvironmentLoadBalancer();
+            CreateMasterEnvironmentLoadBalancer();
 
             AggregatingHealthStatus = getAggregatingHealthStatus("Discovery");
             _healthCheck = AggregatingHealthStatus.RegisterCheck(_serviceName, _getHealthStatus);
             _getHealthStatus = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
         }
 
-        public async Task<Node> GetNode()
+        public async Task<(Node, ILoadBalancer)> GetNode()
         {
-            await _initTask.ConfigureAwait(false);
             var node = await OriginatingEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
                 _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
-                return node;
+                return (node, OriginatingEnvironmentLoadBalancer);
             }
 
-            if (!GetConfig().EnvironmentFallbackEnabled)
+            if (!GetConfig().EnvironmentFallbackEnabled || _masterDeployment.Equals(_originatingEnvironmentDeployment))
             {
                 _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
                 throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags{{"serviceName",_serviceName}, {"environment", _originatingEnvironmentDeployment.DeploymentEnvironment}});
@@ -112,33 +108,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             node = await MasterEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
-                _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
-                return node;
+                _getHealthStatus = () =>
+                    HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
+                return (node, MasterEnvironmentLoadBalancer);
             }
 
             _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
+
             throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _originatingEnvironmentDeployment.DeploymentEnvironment }, {"masterEnvironment", _masterDeployment.DeploymentEnvironment}});
-        }
-
-        private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
-        {
-            using (await _asyncLocker.LockAsync().ConfigureAwait(false))
-            {
-                if (discoveryConfig == LastConfig)
-                    return;
-
-                var newServiceConfig = discoveryConfig.Services[_serviceName];
-
-                if (newServiceConfig.Equals(LastServiceConfig) &&
-                    discoveryConfig.EnvironmentFallbackEnabled == LastConfig.EnvironmentFallbackEnabled)
-                    return;
-
-                LastConfig = discoveryConfig;
-                LastServiceConfig = newServiceConfig;
-
-                CreateOriginatingEnvironmentLoadBalancer();
-                CreateMasterEnvironmentLoadBalancer();
-            }
         }
 
         private void CreateMasterEnvironmentLoadBalancer()
@@ -168,9 +145,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void Dispose()
         {
-            MasterEnvironmentLoadBalancer.Dispose();
+            MasterEnvironmentLoadBalancer?.Dispose();
             OriginatingEnvironmentLoadBalancer.Dispose();
-            _configBlockLink?.Dispose();
             _healthCheck.Dispose();
         }
     }

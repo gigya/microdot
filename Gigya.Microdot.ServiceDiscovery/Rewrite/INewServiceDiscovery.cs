@@ -30,6 +30,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <summary>
         /// Retrieves a reachable <see cref="Node"/>, or null if service is not deployed.
         /// </summary>
-        Task<Node> GetNode();
+        Task<(Node Node, ILoadBalancer LoadBalancer)> GetNode();
     }
 }

@@ -114,7 +114,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
-            var nextHost = await GetServiceDiscovery().GetNode();
+            var nextHost = (await GetServiceDiscovery().GetNode()).Node;
             nextHost.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
@@ -142,13 +142,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = await discovey.GetNode();
+            var node = (await discovey.GetNode()).Node;
             node.Hostname.ShouldBe(HostnameFor(OriginatingService));
 
             SetMockToReturnServiceNotDefined(OriginatingService);
 
 
-            node = await discovey.GetNode();
+            node = (await discovey.GetNode()).Node;
             node.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
@@ -164,12 +164,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             var discovey = GetServiceDiscovery();
 
-            var node = await discovey.GetNode();
+            var node = (await discovey.GetNode()).Node;
             node.Hostname.ShouldBe(HostnameFor(MasterService));
 
             SetMockToReturnHost(OriginatingService);
 
-            node = await discovey.GetNode();
+            node = (await discovey.GetNode()).Node;
             node.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
@@ -189,7 +189,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
 
-            var nextHost = await GetServiceDiscovery().GetNode();
+            var nextHost = (await GetServiceDiscovery().GetNode()).Node;
             nextHost.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 

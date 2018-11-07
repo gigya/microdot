@@ -30,6 +30,7 @@ using System.Net.Security;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Application.HttpService.Client;
@@ -39,13 +40,16 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Newtonsoft.Json;
+using Timer = Metrics.Timer;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -83,11 +87,11 @@ namespace Gigya.Microdot.ServiceProxy
         /// network.
         /// </summary>
         public Action<HttpServiceRequest> PrepareRequest { get; set; }
-        public ISourceBlock<string> EndPointsChanged => ServiceDiscovery.EndPointsChanged;
-        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => ServiceDiscovery.ReachabilityChanged;
+        public ISourceBlock<string> EndPointsChanged => throw new NotSupportedException("We are using new Discovery. Change SourceBlock is not supported any more.");
+        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => throw new NotSupportedException("We are using new Discovery. Change SourceBlock is not supported any more.");
         private TimeSpan? Timeout { get; set; }
 
-        internal IServiceDiscovery ServiceDiscovery { get; set; }
+        internal INewServiceDiscovery ServiceDiscovery { get; set; }
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -140,7 +144,7 @@ namespace Gigya.Microdot.ServiceProxy
         public ServiceProxyProvider(string serviceName, IEventPublisher<ClientCallEvent> eventPublisher,
             ICertificateLocator certificateLocator,
             ILog log,
-            Func<string, ReachabilityChecker, IServiceDiscovery> serviceDiscoveryFactory,
+            Func<string, ReachabilityCheck, INewServiceDiscovery> serviceDiscoveryFactory,
             Func<DiscoveryConfig> getConfig,
             JsonExceptionSerializer exceptionSerializer)
         {
@@ -261,7 +265,7 @@ namespace Gigya.Microdot.ServiceProxy
         }
 
 
-        private async Task<bool> IsReachable(IEndPointHandle endpoint)
+        private async Task<bool> IsReachable(Node endpoint, CancellationToken cancellationToken)
         {
             try
             {
@@ -269,8 +273,8 @@ namespace Gigya.Microdot.ServiceProxy
                 var port = GetEffectivePort(endpoint, config);
                 if (port == null)
                     return false;
-                var uri = BuildUri(endpoint.HostName, port.Value, config);
-                var response = await GetHttpClient(config).GetAsync(uri, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
+                var uri = BuildUri(endpoint.Hostname, port.Value, config);
+                var response = await GetHttpClient(config).GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
 
                 return response.Headers.Contains(GigyaHttpHeaders.ServerHostname);
             }
@@ -288,7 +292,7 @@ namespace Gigya.Microdot.ServiceProxy
             return string.Format(urlTemplate, hostName, port);
         }
 
-        private int? GetEffectivePort(IEndPointHandle endpoint, ServiceDiscoveryConfig config)
+        private int? GetEffectivePort(Node endpoint, ServiceDiscoveryConfig config)
         {
             return endpoint.Port ?? DefaultPort ?? config.DefaultPort;
         }
@@ -335,9 +339,9 @@ namespace Gigya.Microdot.ServiceProxy
 
                 string responseContent;
                 HttpResponseMessage response;
-                IEndPointHandle endPoint = await ServiceDiscovery.GetNextHost(clientCallEvent.RequestId).ConfigureAwait(false);
+                (Node Node, ILoadBalancer LoadBalancer) endPoint = await ServiceDiscovery.GetNode().ConfigureAwait(false);
 
-                int? effectivePort = GetEffectivePort(endPoint, config);
+                int? effectivePort = GetEffectivePort(endPoint.Node, config);
                 if (effectivePort == null)
                     throw new ConfigurationException("Cannot access service. Service Port not configured. See tags to find missing configuration", unencrypted: new Tags {
                         {"ServiceName", ServiceName },
@@ -345,7 +349,7 @@ namespace Gigya.Microdot.ServiceProxy
                     });
 
                 // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
-                var uri = BuildUri(endPoint.HostName, effectivePort.Value, config) + ServiceName;
+                var uri = BuildUri(endPoint.Node.Hostname, effectivePort.Value, config) + ServiceName;
                 if (request.Target.MethodName != null)
                     uri += $".{request.Target.MethodName}";
                 if (request.Target.Endpoint != null)
@@ -356,13 +360,13 @@ namespace Gigya.Microdot.ServiceProxy
                     Log.Debug(_ => _("ServiceProxy: Calling remote service. See tags for details.",
                                   unencryptedTags: new
                                   {
-                                      remoteEndpoint = endPoint.HostName,
+                                      remoteEndpoint = endPoint.Node.Hostname,
                                       remotePort = effectivePort,
                                       remoteServiceName = ServiceName,
                                       remoteMethodName = request.Target.MethodName
                                   }));
 
-                    clientCallEvent.TargetHostName = endPoint.HostName;
+                    clientCallEvent.TargetHostName = endPoint.Node.Hostname;
                     clientCallEvent.TargetPort = effectivePort.Value;
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
@@ -394,7 +398,7 @@ namespace Gigya.Microdot.ServiceProxy
                         exception: ex,
                         unencryptedTags: new { uri });
 
-                    endPoint.ReportFailure(ex);
+                    endPoint.LoadBalancer.ReportUnreachable(endPoint.Node, ex);
                     _hostFailureCounter.Increment("RequestFailure");
                     clientCallEvent.Exception = ex;
                     EventPublisher.TryPublish(clientCallEvent); // fire and forget!
@@ -424,9 +428,7 @@ namespace Gigya.Microdot.ServiceProxy
                 if (response.Headers.Contains(GigyaHttpHeaders.ServerHostname) || response.Headers.Contains(GigyaHttpHeaders.ProtocolVersion))
                 {
                     try
-                    {
-                        endPoint.ReportSuccess();
-
+                    {                       
                         if (response.IsSuccessStatusCode)
                         {
                             var returnObj = _deserializationTime.Time(() => JsonConvert.DeserializeObject(responseContent, resultReturnType, jsonSettings));
@@ -507,7 +509,7 @@ namespace Gigya.Microdot.ServiceProxy
                         new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}") :
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
 
-                    endPoint.ReportFailure(exception);
+                    endPoint.LoadBalancer.ReportUnreachable(endPoint.Node, exception);
                     _hostFailureCounter.Increment("NotGigyaHost");
 
                     if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
