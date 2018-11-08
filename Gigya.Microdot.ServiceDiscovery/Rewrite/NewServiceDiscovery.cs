@@ -21,6 +21,10 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
@@ -29,6 +33,8 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -46,11 +52,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         internal DiscoveryConfig LastConfig { get; private set; }
         internal ServiceDiscoveryConfig LastServiceConfig { get; private set; }
 
-        private readonly DeploymentIdentifier _masterDeployment;
-        private readonly DeploymentIdentifier _originatingEnvironmentDeployment;
-        private ILoadBalancer MasterEnvironmentLoadBalancer { get; set; }
-        private ILoadBalancer OriginatingEnvironmentLoadBalancer { get; set; }
-
         private ILog Log { get; }
         private readonly IDiscovery _discovery;
         private Func<DiscoveryConfig> GetConfig { get; }
@@ -58,18 +59,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private const string MASTER_ENVIRONMENT = "prod";
         private readonly string _serviceName;
-        private readonly ReachabilityCheck _reachabilityCheck;        
-        private readonly AsyncLock _asyncLocker = new AsyncLock();
-        private readonly IDisposable _configBlockLink;
-        private readonly Task _initTask;
+        private readonly ReachabilityCheck _reachabilityCheck; 
 
         private Func<HealthCheckResult> _getHealthStatus;
         private readonly IDisposable _healthCheck;
 
+        private readonly IEnvironment _environment;
+        private readonly ConcurrentDictionary<string, ILoadBalancer> _loadBalancersByEnvironment;
+
         public NewServiceDiscovery(string serviceName,
                                 ReachabilityCheck reachabilityCheck,
                                 IEnvironment environment,
-                                ISourceBlock<DiscoveryConfig> configListener,
                                 Func<DiscoveryConfig> discoveryConfigFactory,
                                 ILog log,
                                 IDiscovery discovery,
@@ -78,82 +78,108 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Log = log;
             _discovery = discovery;            
             _serviceName = serviceName;
-            
-            _originatingEnvironmentDeployment = new DeploymentIdentifier(serviceName, environment.DeploymentEnvironment, environment);
-            _masterDeployment = new DeploymentIdentifier(serviceName, MASTER_ENVIRONMENT, environment);
+            _environment = environment;
 
             _reachabilityCheck = reachabilityCheck;
             GetConfig = discoveryConfigFactory;
-            // Must be run in Task.Run() because of incorrect Orleans scheduling
-            _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
-            _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
 
+            _loadBalancersByEnvironment = new ConcurrentDictionary<string, ILoadBalancer>();
+            CreateLoadBalancer(environment.DeploymentEnvironment);
+            CreateLoadBalancer(MASTER_ENVIRONMENT);
+            
             AggregatingHealthStatus = getAggregatingHealthStatus("Discovery");
-            _healthCheck = AggregatingHealthStatus.RegisterCheck(_serviceName, _getHealthStatus);
-            _getHealthStatus = ()=>HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
+            _getHealthStatus = () => HealthCheckResult.Healthy("Initializing. Service was not discovered yet");
+            _healthCheck = AggregatingHealthStatus.RegisterCheck(_serviceName, ()=>_getHealthStatus());           
         }
 
-        public async Task<Node> GetNode()
+        public async Task<KeyValuePair<Node, ILoadBalancer>> GetNode()
         {
-            await _initTask.ConfigureAwait(false);
-            var node = await OriginatingEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
+            HostOverride hostOverride = TracingContext.GetHostOverride(_serviceName);
+            if (!string.IsNullOrEmpty(hostOverride?.Hostname))
+            {
+                return await GetNodeWithOverridenHost();
+            }
+
+            string preferedEnvironment = TracingContext.GetPreferredEnvironment();
+            if (!string.IsNullOrEmpty(preferedEnvironment))
+            {
+                return await GetNodeFromPreferedEnvironment(preferedEnvironment);
+            }
+
+            return await GetNodeFromOriginatingEnvironment();
+        }
+
+        private async Task<KeyValuePair<Node, ILoadBalancer>> GetNodeWithOverridenHost()
+        {
+            ILoadBalancer loadBalancer = new OverridenLoadBalancer(_serviceName);
+            Node node = await loadBalancer.TryGetNode();
+
+            return new KeyValuePair<Node, ILoadBalancer>(node, loadBalancer);
+        }
+
+        private async Task<KeyValuePair<Node, ILoadBalancer>> GetNodeFromPreferedEnvironment(string preferedEnvironment)
+        {
+            ILoadBalancer loadBalancer = _loadBalancersByEnvironment.GetOrAdd(preferedEnvironment, p =>
+                {
+                    DeploymentIdentifier preferedDeployment = new DeploymentIdentifier(_serviceName, preferedEnvironment, _environment);
+                    return _discovery.CreateLoadBalancer(preferedDeployment, _reachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
+                });
+
+            Node node = await loadBalancer.TryGetNode().ConfigureAwait(false);
+            if (node == null)
+            {
+                _loadBalancersByEnvironment.TryGetValue(MASTER_ENVIRONMENT, out loadBalancer);
+                node = await loadBalancer.TryGetNode().ConfigureAwait(false);
+            }
+
+            if (node == null)
+            {
+                _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{preferedEnvironment}' or '{MASTER_ENVIRONMENT}'"));
+                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", preferedEnvironment }, { "masterEnvironment", MASTER_ENVIRONMENT } });
+            }
+
+            _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{preferedEnvironment}'");
+            return new KeyValuePair<Node, ILoadBalancer>(node, loadBalancer);
+        }
+
+        private async Task<KeyValuePair<Node, ILoadBalancer>> GetNodeFromOriginatingEnvironment()
+        {
+            ILoadBalancer loadBalancer;
+            _loadBalancersByEnvironment.TryGetValue(_environment.DeploymentEnvironment, out loadBalancer);
+            Node node = await loadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
-                _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
-                return node;
+                _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_environment.DeploymentEnvironment}'");
+                return new KeyValuePair<Node, ILoadBalancer>(node, loadBalancer);
             }
 
             if (!GetConfig().EnvironmentFallbackEnabled)
             {
-                _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'. Deployement on '{_masterDeployment.DeploymentEnvironment}' is not used, because fallback is disabled by configuration"));
-                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags{{"serviceName",_serviceName}, {"environment", _originatingEnvironmentDeployment.DeploymentEnvironment}});
+                _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed on '{_environment.DeploymentEnvironment}'. Deployement on '{MASTER_ENVIRONMENT}' is not used, because fallback is disabled by configuration"));
+                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _environment.DeploymentEnvironment } });
             }
 
-            node = await MasterEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
+            _loadBalancersByEnvironment.TryGetValue(MASTER_ENVIRONMENT, out loadBalancer);
+            node = await loadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
-                _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
-                return node;
+                _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{MASTER_ENVIRONMENT}'");
+                return new KeyValuePair<Node, ILoadBalancer>(node, loadBalancer);
             }
 
-            _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_originatingEnvironmentDeployment.DeploymentEnvironment}' or '{_masterDeployment.DeploymentEnvironment}'"));
-            throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _originatingEnvironmentDeployment.DeploymentEnvironment }, {"masterEnvironment", _masterDeployment.DeploymentEnvironment}});
+            _getHealthStatus = BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_environment.DeploymentEnvironment}' or '{MASTER_ENVIRONMENT}'"));
+            throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _environment.DeploymentEnvironment }, { "masterEnvironment", MASTER_ENVIRONMENT } });
         }
 
-        private async Task ReloadRemoteHost(DiscoveryConfig discoveryConfig)
+        private ILoadBalancer CreateLoadBalancer(string environment)
         {
-            using (await _asyncLocker.LockAsync().ConfigureAwait(false))
+            return _loadBalancersByEnvironment.GetOrAdd(environment, p =>
             {
-                if (discoveryConfig == LastConfig)
-                    return;
-
-                var newServiceConfig = discoveryConfig.Services[_serviceName];
-
-                if (newServiceConfig.Equals(LastServiceConfig) &&
-                    discoveryConfig.EnvironmentFallbackEnabled == LastConfig.EnvironmentFallbackEnabled)
-                    return;
-
-                LastConfig = discoveryConfig;
-                LastServiceConfig = newServiceConfig;
-
-                CreateOriginatingEnvironmentLoadBalancer();
-                CreateMasterEnvironmentLoadBalancer();
-            }
+                DeploymentIdentifier preferedDeployment = new DeploymentIdentifier(_serviceName, environment, _environment);
+                return _discovery.CreateLoadBalancer(preferedDeployment, _reachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
+            });
         }
-
-        private void CreateMasterEnvironmentLoadBalancer()
-        {
-            if (_masterDeployment.Equals(_originatingEnvironmentDeployment))
-                return;
-
-            MasterEnvironmentLoadBalancer = _discovery.CreateLoadBalancer(_masterDeployment, _reachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
-        }
-
-        private void CreateOriginatingEnvironmentLoadBalancer()
-        {            
-            OriginatingEnvironmentLoadBalancer = _discovery.CreateLoadBalancer(_originatingEnvironmentDeployment, _reachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
-        }
-
+        
         private Func<HealthCheckResult> BadHealthForLimitedPeriod(HealthCheckResult unhealthy)
         {
             var lastBadStateTime = DateTime.UtcNow;
@@ -168,9 +194,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void Dispose()
         {
-            MasterEnvironmentLoadBalancer.Dispose();
-            OriginatingEnvironmentLoadBalancer.Dispose();
-            _configBlockLink?.Dispose();
+            foreach (KeyValuePair<string, ILoadBalancer> keyValuePair in _loadBalancersByEnvironment)
+            {
+                keyValuePair.Value.Dispose();
+            }
+
             _healthCheck.Dispose();
         }
     }

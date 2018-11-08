@@ -90,7 +90,7 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
             Bind<INodeSourceFactory>().To<ConsulNodeSourceFactory>().InTransientScope();
-            Bind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
+            Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
             Bind<IDiscovery>().To<Discovery>().InSingletonScope();
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient, ServiceDiscovery.Rewrite.IConsulClient>()

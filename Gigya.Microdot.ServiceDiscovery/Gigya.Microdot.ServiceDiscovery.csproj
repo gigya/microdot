@@ -89,6 +89,7 @@
     <Compile Include="Rewrite\LoadBalancer.cs" />
     <Compile Include="Rewrite\LocalNodeSource.cs" />
     <Compile Include="Rewrite\NodeMonitoringState.cs" />
+    <Compile Include="Rewrite\OverridenLoadBalancer.cs" />
     <Compile Include="Rewrite\ReachabilityCheck.cs" />
     <Compile Include="DeploymentIdentifier.cs" />
     <Compile Include="Rewrite\NewServiceDiscovery.cs" />
@@ -229,7 +230,7 @@
       </ItemGroup>
     </When>
   </Choose>
-    <Choose>
+  <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
         <Reference Include="System.Threading.Tasks.Dataflow">
