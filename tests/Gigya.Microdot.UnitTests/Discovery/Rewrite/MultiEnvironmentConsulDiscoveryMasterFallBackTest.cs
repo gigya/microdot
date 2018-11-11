@@ -18,7 +18,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class NewConsulDiscoveryMasterFallBackTest
+    public class MultiEnvironmentConsulDiscoveryMasterFallBackTest
     {
         private const string ServiceVersion = "1.2.30.1234";
         private string _serviceName;
@@ -115,7 +115,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
             var nextHost = await GetServiceDiscovery().GetNode();
-            nextHost.Key.Hostname.ShouldBe(HostnameFor(MasterService));
+            nextHost.Item1.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
         [Test]
@@ -143,13 +143,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var discovey = GetServiceDiscovery();
 
             var node = await discovey.GetNode();
-            node.Key.Hostname.ShouldBe(HostnameFor(OriginatingService));
+            node.Item1.Hostname.ShouldBe(HostnameFor(OriginatingService));
 
             SetMockToReturnServiceNotDefined(OriginatingService);
 
 
             node = await discovey.GetNode();
-            node.Key.Hostname.ShouldBe(HostnameFor(MasterService));
+            node.Item1.Hostname.ShouldBe(HostnameFor(MasterService));
         }
 
         [Test]
@@ -165,12 +165,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var discovey = GetServiceDiscovery();
 
             var node = await discovey.GetNode();
-            node.Key.Hostname.ShouldBe(HostnameFor(MasterService));
+            node.Item1.Hostname.ShouldBe(HostnameFor(MasterService));
 
             SetMockToReturnHost(OriginatingService);
 
             node = await discovey.GetNode();
-            node.Key.Hostname.ShouldBe(HostnameFor(OriginatingService));
+            node.Item1.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
         [Test]
@@ -190,7 +190,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetMockToReturnHost(OriginatingService);
 
             var nextHost = await GetServiceDiscovery().GetNode();
-            nextHost.Key.Hostname.ShouldBe(HostnameFor(OriginatingService));
+            nextHost.Item1.Hostname.ShouldBe(HostnameFor(OriginatingService));
         }
 
         [Test]
@@ -234,10 +234,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             Assert.AreEqual(GetServiceDiscovery(), GetServiceDiscovery());
         }
 
-        private INewServiceDiscovery GetServiceDiscovery()
+        private IMultiEnvironmentServiceDiscovery GetServiceDiscovery()
         {
             var discovery =
-                _unitTestingKernel.Get<Func<string, ReachabilityCheck, INewServiceDiscovery>>()(_serviceName,
+                _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(_serviceName,
                     (n, c) => Task.FromResult(true));
             return discovery;
         }

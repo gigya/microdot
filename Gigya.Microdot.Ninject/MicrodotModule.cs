@@ -76,7 +76,7 @@ namespace Gigya.Microdot.Ninject
             
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
-            Kernel.BindPerKey<string, ReachabilityCheck, INewServiceDiscovery, NewServiceDiscovery>();
+            Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();

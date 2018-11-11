@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared;
+using Metrics;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -17,10 +21,9 @@ using NUnit.Framework;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class NewServiceDiscoveryPreferredEnvironmentTests
+    public class MultiEnvironmentServiceDiscoveryPreferredEnvironmentTests
     {
         private const string ServiceName = "ServiceName";
-        private INewServiceDiscovery _serviceDiscovery;
         private Dictionary<string, string> _configDic;
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private DiscoveryConfig _discoveryConfig;
@@ -46,12 +49,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 .ReturnsForAnyArgs(c =>
                 {
                     return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                        ? (ILoadBalancer)new MasterLoadBalancer()
-                        : new PreferredEnvironmentLoadBalancer();
+                        ? new MasterLoadBalancer()
+                        : c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "staging" ? (ILoadBalancer)new StagingLoadBalancer() : new PreferredEnvironmentLoadBalancer();
                 });
 
             _discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, INewServiceDiscovery>>()("ServiceName", (x, y) => new Task(null));
         }
 
         [TearDown]
@@ -65,17 +67,50 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             TracingContext.SetPreferredEnvironment("canary");
 
-            KeyValuePair<Node, ILoadBalancer> node = await _serviceDiscovery.GetNode();
-            Assert.IsInstanceOf<PreferredEnvironmentLoadBalancer>(node.Value);
-            Assert.AreEqual(node.Key.Hostname, "preferred-host");
+            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()("ServiceName", (x, y) => new Task(null));
+            Tuple<Node, ILoadBalancer> node = await serviceDiscovery.GetNode();
+
+            HealthCheckResult hResult = ((FakeHealthMonitor) _unitTestingKernel.Get<IHealthMonitor>()).Monitors["Discovery"]();
+            Assert.IsTrue(hResult.IsHealthy);
+            Assert.IsTrue(hResult.Message.Contains($"{ServiceName}-canary"));
+
+            Assert.IsInstanceOf<PreferredEnvironmentLoadBalancer>(node.Item2);
+            Assert.AreEqual(node.Item1.Hostname, "preferred-host");
         }
 
         [Test]
         public async Task GotServiceFromMasterEnvironment()
         {
-            KeyValuePair<Node, ILoadBalancer> node = await _serviceDiscovery.GetNode();
-            Assert.IsInstanceOf<MasterLoadBalancer>(node.Value);
-            Assert.AreEqual(node.Key.Hostname, "prod-host");
+            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()("ServiceName", (x, y) => new Task(null));
+            Tuple<Node, ILoadBalancer> node = await serviceDiscovery.GetNode();
+
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors["Discovery"]();
+            Assert.IsTrue(hResult.IsHealthy);
+            Assert.IsTrue(hResult.Message.Contains($"{ServiceName}-prod"));
+
+            Assert.IsInstanceOf<MasterLoadBalancer>(node.Item2);
+            Assert.AreEqual(node.Item1.Hostname, "prod-host");
+        }
+
+        [Test]
+        public async Task GotServiceFromStagingEnvironment()
+        {
+            IEnvironmentVariableProvider environmentMock = Substitute.For<IEnvironmentVariableProvider>();
+            environmentMock.GetEnvironmentVariable("ENV").Returns("staging");
+            environmentMock.GetEnvironmentVariable("ZONE").Returns("ZONE");
+            environmentMock.GetEnvironmentVariable("REGION").Returns("REGION");
+            environmentMock.GetEnvironmentVariable("CONSUL").Returns("CONSUL");
+            _unitTestingKernel.Rebind<IEnvironmentVariableProvider>().ToConstant(environmentMock);
+
+            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()("ServiceName", (x, y) => new Task(null));
+            Tuple<Node, ILoadBalancer> node = await serviceDiscovery.GetNode();
+
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors["Discovery"]();
+            Assert.IsTrue(hResult.IsHealthy);
+            Assert.IsTrue(hResult.Message.Contains($"{ServiceName}-staging"));
+
+            Assert.IsInstanceOf<StagingLoadBalancer>(node.Item2);
+            Assert.AreEqual(node.Item1.Hostname, "staging-host");
         }
 
         [Test]
@@ -103,15 +138,20 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
                 });
 
             _discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, INewServiceDiscovery>>()("ServiceName", (x, y) => new Task(null));
+            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()("ServiceName", (x, y) => new Task(null));
 
-            _discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackEnabled = false;//In case of preferred envitonmet, the fallback shoulf be performed without any conditions
 
             TracingContext.SetPreferredEnvironment("canary");
 
-            KeyValuePair<Node, ILoadBalancer> node = await _serviceDiscovery.GetNode();
-            Assert.IsInstanceOf<MasterLoadBalancer>(node.Value);
-            Assert.AreEqual(node.Key.Hostname, "prod-host");
+            Tuple<Node, ILoadBalancer> node = await serviceDiscovery.GetNode();
+
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors["Discovery"]();
+            Assert.IsTrue(hResult.IsHealthy);
+            Assert.IsTrue(hResult.Message.Contains($"{ServiceName}-canary"));
+
+            Assert.IsInstanceOf<MasterLoadBalancer>(node.Item2);
+            Assert.AreEqual(node.Item1.Hostname, "prod-host");
         }
 
         private class MasterLoadBalancer : ILoadBalancer
@@ -122,6 +162,21 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             public async Task<Node> TryGetNode()
             {
                 return await Task.FromResult(new Node("prod-host"));
+            }
+
+            public void ReportUnreachable(Node node, Exception ex = null)
+            {
+            }
+        }
+
+        private class StagingLoadBalancer : ILoadBalancer
+        {
+            public void Dispose()
+            { }
+
+            public async Task<Node> TryGetNode()
+            {
+                return await Task.FromResult(new Node("staging-host"));
             }
 
             public void ReportUnreachable(Node node, Exception ex = null)
