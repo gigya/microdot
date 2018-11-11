@@ -55,15 +55,15 @@ namespace Gigya.Common.Application.UnitTests.Validation
             _serviceValidator = unitTesting.Get<SensitivityAttributesValidator>();
         }
 
-        //[TestCase(typeof(TwoAttributeOnTheSameMethod))]
-        //[TestCase(typeof(TwoAttributeOnTheeSameParameter))]
-        //[TestCase(typeof(IInvalid_WithoutLogFieldAndWithSensitivityOnProperty))]
-        //[TestCase(typeof(IInvalid_WithoutLogFieldAndWithinNestedSensitivity))]
-        //[TestCase(typeof(IInvalid_WithLogFieldAndWithSensitivityOnField))]
+        [TestCase(typeof(TwoAttributeOnTheSameMethod))]
+        [TestCase(typeof(TwoAttributeOnTheeSameParameter))]
+        [TestCase(typeof(IInvalid_WithoutLogFieldAndWithSensitivityOnProperty))]
+        [TestCase(typeof(IInvalid_WithoutLogFieldAndWithinNestedSensitivity))]
+        [TestCase(typeof(IInvalid_WithLogFieldAndWithSensitivityOnField))]
 
-        public void ValidationShouldFail()
+        public void ValidationShouldFail(Type typeToValidate)
         {
-            _typesToValidate = new[] { typeof(TwoAttributeOnTheSameMethod) };
+            _typesToValidate = new[] { typeToValidate };
             Assert.Throws<ProgrammaticException>(_serviceValidator.Validate);
         }
 
