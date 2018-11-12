@@ -16,6 +16,7 @@ using Gigya.Microdot.Testing.Shared;
 using Metrics;
 using Ninject;
 using NSubstitute;
+using NSubstitute.ClearExtensions;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
@@ -111,6 +112,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             Assert.IsInstanceOf<StagingLoadBalancer>(node.Item2);
             Assert.AreEqual(node.Item1.Hostname, "staging-host");
+
+            environmentMock.ClearSubstitute();
         }
 
         [Test]
