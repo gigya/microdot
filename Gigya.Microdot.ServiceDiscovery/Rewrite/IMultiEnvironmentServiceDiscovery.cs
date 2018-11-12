@@ -22,15 +22,27 @@
 
 using System;
 using System.Threading.Tasks;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
+
+    public class NodeAndLoadBalancer
+    {
+        public Node Node { get; set; }
+        public ILoadBalancer LoadBalancer { get; set; }
+    }
+
+
     public interface IMultiEnvironmentServiceDiscovery
     {
         /// <summary>
-        /// Retrieves a reachable <see cref="Node"/>, or null if service is not deployed.
+        /// Retrieves a reachable <see cref="Node"/>, or null if service is not deployed. Also optionally returns a <see cref="ILoadBalancer"/>. You should call
+        /// <see cref="ILoadBalancer.ReportUnreachable(Node, Exception)"/> in case you couldn't communicate with the <see cref="Node"/>
         /// </summary>
-        Task<Tuple<Node, ILoadBalancer>> GetNode();
+        /// <exception cref="ServiceUnreachableException">If the service is not deployed (in either the current, preferred, or prod environemnt), or
+        /// if all host of the service in the relevant environment are not reachable.</exception>
+        Task<NodeAndLoadBalancer> GetNode();
     }
 }

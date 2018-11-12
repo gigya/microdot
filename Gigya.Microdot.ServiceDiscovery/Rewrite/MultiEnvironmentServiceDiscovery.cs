@@ -22,14 +22,12 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -44,175 +42,103 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     [Obsolete("Delete this class after Discovery Rewrite is completed")]
     public sealed class MultiEnvironmentServiceDiscovery : IMultiEnvironmentServiceDiscovery, IDisposable
     {        
-        private readonly IDiscovery _discovery;
-        private Func<DiscoveryConfig> GetConfig { get; }
-
         private const string MASTER_ENVIRONMENT = "prod";
-        private readonly string _serviceName;
-        private readonly ReachabilityCheck _reachabilityCheck; 
 
-        private readonly IEnvironment _environment;
-        private AggregatingHealthStatus _aggregatingHealthStatus;
+        // Dependencies
+        private readonly string ServiceName;
+        private readonly IEnvironment Environment;
+        private readonly ReachabilityCheck ReachabilityCheck;
+        private readonly IDiscovery Discovery;
+        private readonly Func<DiscoveryConfig> GetDiscoveryConfig;
+        private ServiceDiscoveryConfig ServiceDiscoveryConfig => GetDiscoveryConfig().Services[ServiceName];
 
-        private readonly ConcurrentDictionary<string, ILoadBalancer> _loadBalancersByEnvironment;
-        private readonly ConcurrentDictionary<string, Func<HealthCheckResult>> _helthCheckByEnvironment;
-        private readonly ConcurrentDictionary<string, IDisposable> _disposableHelthChecksByEnvironment;
-        
-        public MultiEnvironmentServiceDiscovery(string serviceName,
-                                ReachabilityCheck reachabilityCheck,
-                                IEnvironment environment,
-                                Func<DiscoveryConfig> discoveryConfigFactory,
-                                IDiscovery discovery,
-                                Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
+        // State
+        private readonly ConcurrentDictionary<string, ILoadBalancer> _loadBalancers = new ConcurrentDictionary<string, ILoadBalancer>();
+        private readonly ComponentHealthMonitor _healthMonitor;
+        private HealthCheckResult _lastHealth = HealthCheckResult.Healthy();
+        private DateTimeOffset _lastUsageTime = DateTimeOffset.MinValue;
+
+
+
+        public MultiEnvironmentServiceDiscovery(string serviceName, IEnvironment environment, ReachabilityCheck reachabilityCheck,
+                IDiscovery discovery, Func<DiscoveryConfig> getDiscoveryConfig, IHealthMonitor healthMonitor)
         {
-            _discovery = discovery;            
-            _serviceName = serviceName;
-            _environment = environment;
+            ServiceName = serviceName;
+            Environment = environment;
+            ReachabilityCheck = reachabilityCheck;
+            Discovery = discovery;
+            GetDiscoveryConfig = getDiscoveryConfig;
 
-            _reachabilityCheck = reachabilityCheck;
-            GetConfig = discoveryConfigFactory;
-
-            _loadBalancersByEnvironment = new ConcurrentDictionary<string, ILoadBalancer>();
-            _helthCheckByEnvironment = new ConcurrentDictionary<string, Func<HealthCheckResult>>();
-            _disposableHelthChecksByEnvironment = new ConcurrentDictionary<string, IDisposable>();
-
-            _aggregatingHealthStatus = getAggregatingHealthStatus("Discovery");
+            _healthMonitor = healthMonitor.SetHealthFunction(serviceName, CheckHealth);
         }
+
+
 
         ///<inheritdoc />
-        public async Task<Tuple<Node, ILoadBalancer>> GetNode()
+        public async Task<NodeAndLoadBalancer> GetNode()
         {
-            HostOverride hostOverride = TracingContext.GetHostOverride(_serviceName);
-            if (!string.IsNullOrEmpty(hostOverride?.Hostname))
+            NodeAndLoadBalancer nodeAndLoadBalancer = null;
+
+            // 1. Use explicit host override if provided in request
+            var hostOverride = TracingContext.GetHostOverride(ServiceName);
+            if (hostOverride != null)
+                nodeAndLoadBalancer = new NodeAndLoadBalancer { Node = new Node(hostOverride.Hostname, hostOverride.Port), LoadBalancer = null };
+
+            // 2. Otherwise, use preferred environment if provided in request
+            string preferredEnvironment = TracingContext.GetPreferredEnvironment();
+            if (nodeAndLoadBalancer == null && preferredEnvironment != null)
+                nodeAndLoadBalancer = await GetNodeAndLoadBalancer(preferredEnvironment);
+
+            // 3. Otherwise, use current environment
+            if (nodeAndLoadBalancer == null)
+                nodeAndLoadBalancer = await GetNodeAndLoadBalancer(Environment.DeploymentEnvironment);
+
+            // 4. Otherwise, use production environment if configured and it's not our own environment
+            if (nodeAndLoadBalancer == null && GetDiscoveryConfig().EnvironmentFallbackEnabled && Environment.DeploymentEnvironment != MASTER_ENVIRONMENT)
+                nodeAndLoadBalancer = await GetNodeAndLoadBalancer(MASTER_ENVIRONMENT);
+
+            // 5. Otherwise, throw an error and indicate in the health check that the service is not deployed
+            if (nodeAndLoadBalancer == null)
             {
-                return await GetNodeWithOverridenHost();
+                _lastHealth = HealthCheckResult.Unhealthy("Service is not deployed");
+                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", ServiceName }, { "environment", Environment.DeploymentEnvironment } });
             }
 
-            string preferedEnvironment = TracingContext.GetPreferredEnvironment();
-            if (!string.IsNullOrEmpty(preferedEnvironment))
-            {
-                return await GetNodeFromPreferedEnvironment(preferedEnvironment);
-            }
-
-            return await GetNodeFromOriginatingEnvironment();
+            // All ok
+            _lastHealth = HealthCheckResult.Unhealthy("Service is reachable");
+            return nodeAndLoadBalancer;
         }
 
-        private async Task<Tuple<Node, ILoadBalancer>> GetNodeWithOverridenHost()
+
+
+        private async Task<NodeAndLoadBalancer> GetNodeAndLoadBalancer(string environment)
         {
-            ILoadBalancer loadBalancer = new OverridenLoadBalancer(_serviceName);
-            Node node = await loadBalancer.TryGetNode();
-
-            return new Tuple<Node, ILoadBalancer>(node, loadBalancer);
-        }
-
-        private async Task<Tuple<Node, ILoadBalancer>> GetNodeFromPreferedEnvironment(string preferedEnvironment)
-        {
-            ILoadBalancer loadBalancer = GetOrCreateLoadBalancer(preferedEnvironment);
-            RegisterHealthCheckIfNeeded(preferedEnvironment);
-
-            Node node = await loadBalancer.TryGetNode().ConfigureAwait(false);
-            if (node == null)
-            {
-                loadBalancer = GetOrCreateLoadBalancer(MASTER_ENVIRONMENT);
-                node = await loadBalancer.TryGetNode().ConfigureAwait(false);
-            }
-
-            if (node == null)
-            {
-                UpdateHealthCheck(preferedEnvironment, BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{preferedEnvironment}' or '{MASTER_ENVIRONMENT}'")));
-                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", preferedEnvironment }, { "masterEnvironment", MASTER_ENVIRONMENT } });
-            }
-
-            UpdateHealthCheck(preferedEnvironment, () => HealthCheckResult.Healthy($"Discovered on '{preferedEnvironment}'"));
-
-            return new Tuple<Node, ILoadBalancer>(node, loadBalancer);
-        }
-
-        private void UpdateHealthCheck(string environment, Func<HealthCheckResult> healthCheckResult)
-        {
-            Func<HealthCheckResult> hcResult;
-            _helthCheckByEnvironment.TryGetValue(environment, out hcResult);
-            _helthCheckByEnvironment.TryUpdate(environment, healthCheckResult, hcResult);
-        }
-
-        private void RegisterHealthCheckIfNeeded(string environment)
-        {
-            if (_helthCheckByEnvironment.TryAdd(environment,
-                () => HealthCheckResult.Healthy("Initializing. Service was not discovered yet")))
-            {
-                IDisposable healthCheck = _aggregatingHealthStatus.RegisterCheck($"{_serviceName}-{environment}", () =>
-                {
-                    _helthCheckByEnvironment.TryGetValue(environment, out var helthStatus);
-                    return helthStatus();
-                });
-
-                _disposableHelthChecksByEnvironment.TryAdd(environment, healthCheck);
-            }
-        }
-
-        private async Task<Tuple<Node, ILoadBalancer>> GetNodeFromOriginatingEnvironment()
-        {
-            ILoadBalancer loadBalancer = GetOrCreateLoadBalancer(_environment.DeploymentEnvironment);
-            RegisterHealthCheckIfNeeded(_environment.DeploymentEnvironment);
-            Node node = await loadBalancer.TryGetNode().ConfigureAwait(false);
-            if (node != null)
-            {
-                UpdateHealthCheck(_environment.DeploymentEnvironment, () => HealthCheckResult.Healthy($"Discovered on '{_environment.DeploymentEnvironment}'"));
-                return new Tuple<Node, ILoadBalancer>(node, loadBalancer);
-            }
-
-            if (!GetConfig().EnvironmentFallbackEnabled)
-            {
-                UpdateHealthCheck(_environment.DeploymentEnvironment,
-                    BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy(
-                        $"Not deployed on '{_environment.DeploymentEnvironment}'. Deployement on '{MASTER_ENVIRONMENT}' is not used, because fallback is disabled by configuration")));
-                throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _environment.DeploymentEnvironment } });
-            }
-
-            loadBalancer = GetOrCreateLoadBalancer(MASTER_ENVIRONMENT);
-            node = await loadBalancer.TryGetNode().ConfigureAwait(false);
-            if (node != null)
-            {
-                UpdateHealthCheck(MASTER_ENVIRONMENT, () => HealthCheckResult.Healthy($"Discovered on '{MASTER_ENVIRONMENT}'"));
-                return new Tuple<Node, ILoadBalancer>(node, loadBalancer);
-            }
-
-            UpdateHealthCheck(MASTER_ENVIRONMENT, BadHealthForLimitedPeriod(HealthCheckResult.Unhealthy($"Not deployed neither on '{_environment.DeploymentEnvironment}' or '{MASTER_ENVIRONMENT}'")));
-            throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", _serviceName }, { "environment", _environment.DeploymentEnvironment }, { "masterEnvironment", MASTER_ENVIRONMENT } });
-        }
-
-        private ILoadBalancer GetOrCreateLoadBalancer(string environment)
-        {
-            return _loadBalancersByEnvironment.GetOrAdd(environment, p =>
-            {
-                DeploymentIdentifier preferedDeployment = new DeploymentIdentifier(_serviceName, environment, _environment);
-                return _discovery.CreateLoadBalancer(preferedDeployment, _reachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
+            var loadBalancer = _loadBalancers.GetOrAdd(environment, p => {
+                var deploymentId = new DeploymentIdentifier(ServiceName, environment, Environment.Zone);
+                return Discovery.CreateLoadBalancer(deploymentId, ReachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
             });
+            Node node = await loadBalancer.TryGetNode().ConfigureAwait(false);
+            if (node == null)
+                return null;
+            else return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer };
         }
-        
-        private Func<HealthCheckResult> BadHealthForLimitedPeriod(HealthCheckResult unhealthy)
+
+
+
+        private HealthCheckResult CheckHealth()
         {
-            var lastBadStateTime = DateTime.UtcNow;
-            return () =>
-            {
-                if (DateTime.UtcNow > lastBadStateTime.AddMinutes(10))
-                    return HealthCheckResult.Healthy("Not requested for more than 10 minutes. " + unhealthy.Message);
-                else
-                    return unhealthy;
-            };
+            if (DateTimeOffset.UtcNow.Subtract(_lastUsageTime) > ServiceDiscoveryConfig.SuppressHealthCheckAfterServiceUnused)
+                return HealthCheckResult.Healthy($"Health check suppressed because service was not in use for more than {ServiceDiscoveryConfig.SuppressHealthCheckAfterServiceUnused.TotalSeconds} seconds.");
+            else return _lastHealth;
         }
+
+
 
         public void Dispose()
         {
-            foreach (KeyValuePair<string, ILoadBalancer> keyValuePair in _loadBalancersByEnvironment)
-            {
-                keyValuePair.Value.Dispose();
-            }
-
-            foreach (KeyValuePair<string, IDisposable> keyValue in _disposableHelthChecksByEnvironment)
-            {
-                keyValue.Value.Dispose();
-            }
+            foreach (var loadBalancer in _loadBalancers.Values)
+                loadBalancer.Dispose();
+            _healthMonitor.Dispose();
         }
     }
 

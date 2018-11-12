@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
@@ -31,6 +32,8 @@ namespace Gigya.Microdot.SharedLogic.HttpService
     {
         [JsonProperty]
         public List<HostOverride> Hosts { get; set; }
+
+        [MinLength(1)]
         [JsonProperty]
         public string PreferredEnvironment { get; set; }
     }
@@ -38,9 +41,11 @@ namespace Gigya.Microdot.SharedLogic.HttpService
     [Serializable]
     public class HostOverride : ExtendableJson
     {
+        [JsonRequired]
         [JsonProperty]
         public string ServiceName { get; set; }
 
+        [JsonRequired]
         [JsonProperty]
         public string Hostname { get; set; }
 

@@ -72,7 +72,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             CreateLocalNodeSource = createLocalNodeSource;
             CreateConfigNodeSource = createConfigNodeSource;
-            NodeSourceFactories = nodeSourceFactories.ToDictionary(factory => factory.Type);
+            NodeSourceFactories = nodeSourceFactories.ToDictionary(factory => factory.Type, StringComparer.OrdinalIgnoreCase);
             Task.Run(() => CleanupLoop()); // Use default task scheduler
         }
 
@@ -119,8 +119,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private async Task<bool> IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
         {
-            var sourceType = GetConfiguredSourceType(deploymentIdentifier);
-            switch (sourceType.ToLower())
+            var sourceType = GetConfiguredSourceType(deploymentIdentifier).ToLower();
+            switch (sourceType)
             {
                 case "config":
                 case "local":

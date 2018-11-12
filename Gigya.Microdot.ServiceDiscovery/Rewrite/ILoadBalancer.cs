@@ -22,6 +22,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
@@ -35,6 +36,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <summary>
         /// Retrieves a node which is considered to be reachable.
         /// Returns null if the service is not implemented in the requested environment
+        /// Throws <see cref="ServiceUnreachableException"/> if all nodes of the service are unreachable.
         /// </summary>
         Task<Node> TryGetNode();
 

@@ -339,11 +339,9 @@ namespace Gigya.Microdot.ServiceProxy
 
                 string responseContent;
                 HttpResponseMessage response;
-                //IEndPointHandle endPoint = await ServiceDiscovery.GetNextHost(clientCallEvent.RequestId).ConfigureAwait(false);
-                //IEndPointHandle endPoint = await ServiceDiscovery.GetNextHost(clientCallEvent.RequestId).ConfigureAwait(false);
-                Tuple<Node, ILoadBalancer> nodeAndLoadBalancer = await ServiceDiscovery.GetNode().ConfigureAwait(false);
+                var nodeAndLoadBalancer = await ServiceDiscovery.GetNode().ConfigureAwait(false); // can throw
 
-                int? effectivePort = GetEffectivePort(nodeAndLoadBalancer.Item1, config);
+                int? effectivePort = GetEffectivePort(nodeAndLoadBalancer.Node, config);
                 if (effectivePort == null)
                     throw new ConfigurationException("Cannot access service. Service Port not configured. See tags to find missing configuration", unencrypted: new Tags {
                         {"ServiceName", ServiceName },
@@ -351,7 +349,7 @@ namespace Gigya.Microdot.ServiceProxy
                     });
 
                 // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
-                var uri = BuildUri(nodeAndLoadBalancer.Item1.Hostname, effectivePort.Value, config) + ServiceName;
+                var uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, config) + ServiceName;
                 if (request.Target.MethodName != null)
                     uri += $".{request.Target.MethodName}";
                 if (request.Target.Endpoint != null)
@@ -362,13 +360,13 @@ namespace Gigya.Microdot.ServiceProxy
                     Log.Debug(_ => _("ServiceProxy: Calling remote service. See tags for details.",
                                   unencryptedTags: new
                                   {
-                                      remoteEndpoint = nodeAndLoadBalancer.Item1.Hostname,
+                                      remoteEndpoint = nodeAndLoadBalancer.Node.Hostname,
                                       remotePort = effectivePort,
                                       remoteServiceName = ServiceName,
                                       remoteMethodName = request.Target.MethodName
                                   }));
 
-                    clientCallEvent.TargetHostName = nodeAndLoadBalancer.Item1.Hostname;
+                    clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
                     clientCallEvent.TargetPort = effectivePort.Value;
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
@@ -399,12 +397,16 @@ namespace Gigya.Microdot.ServiceProxy
                               "host. See tags for URL and exception for details.",
                         exception: ex,
                         unencryptedTags: new { uri });
-
-                    nodeAndLoadBalancer.Item2.ReportUnreachable(nodeAndLoadBalancer.Item1, ex);
                     _hostFailureCounter.Increment("RequestFailure");
                     clientCallEvent.Exception = ex;
                     EventPublisher.TryPublish(clientCallEvent); // fire and forget!
-                    continue;
+
+                    if (nodeAndLoadBalancer.LoadBalancer != null)
+                    {
+                        nodeAndLoadBalancer.LoadBalancer.ReportUnreachable(nodeAndLoadBalancer.Node, ex);
+                        continue;
+                    }
+                    else throw;
                 }
                 catch (TaskCanceledException ex)
                 {
@@ -511,7 +513,7 @@ namespace Gigya.Microdot.ServiceProxy
                         new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}") :
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
 
-                    nodeAndLoadBalancer.Item2.ReportUnreachable(nodeAndLoadBalancer.Item1, exception);
+                    nodeAndLoadBalancer.LoadBalancer.ReportUnreachable(nodeAndLoadBalancer.Node, exception);
                     _hostFailureCounter.Increment("NotGigyaHost");
 
                     if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
