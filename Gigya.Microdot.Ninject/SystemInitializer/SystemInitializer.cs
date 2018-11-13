@@ -58,23 +58,20 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
         private void SearchAssembliesAndRebindIConfig()
         {
             IAssemblyProvider aProvider = _kernel.Get<IAssemblyProvider>();
-            foreach (Assembly assembly in aProvider.GetAssemblies())
+            foreach (Type configType in aProvider.GetAllTypes().Where(ConfigObjectCreator.IsConfigObject))
             {
-                foreach (Type configType in assembly.GetTypes().Where(ConfigObjectCreator.IsConfigObject))
-                {
-                    IConfigObjectCreator configObjectCreator = _kernel.Get<Func<Type, IConfigObjectCreator>>()(configType);
+                IConfigObjectCreator configObjectCreator = _kernel.Get<Func<Type, IConfigObjectCreator>>()(configType);
 
-                    dynamic getLatestLambda = configObjectCreator.GetLambdaOfGetLatest(configType);
-                    _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
+                dynamic getLatestLambda = configObjectCreator.GetLambdaOfGetLatest(configType);
+                _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
 
-                    Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
-                    _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+                Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
+                _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
 
-                    dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
-                    _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
+                dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
+                _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
 
-                    _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
-                }
+                _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
             }
         }
 
