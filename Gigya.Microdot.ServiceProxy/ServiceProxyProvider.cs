@@ -406,7 +406,8 @@ namespace Gigya.Microdot.ServiceProxy
                         nodeAndLoadBalancer.LoadBalancer.ReportUnreachable(nodeAndLoadBalancer.Node, ex);
                         continue;
                     }
-                    else throw;
+
+                    throw;
                 }
                 catch (TaskCanceledException ex)
                 {

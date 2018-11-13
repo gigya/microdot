@@ -307,7 +307,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {
                     Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
 
-                    await act.ShouldThrowAsync<ServiceUnreachableException>();
+                    await act.ShouldThrowAsync<HttpRequestException>();
                 }
                 counter.ShouldBe(3);
             }

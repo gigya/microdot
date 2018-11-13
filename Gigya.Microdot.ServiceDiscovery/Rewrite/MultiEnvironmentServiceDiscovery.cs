@@ -72,11 +72,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _healthMonitor = healthMonitor.SetHealthFunction(serviceName, CheckHealth);
         }
 
-
-
         ///<inheritdoc />
         public async Task<NodeAndLoadBalancer> GetNode()
         {
+            _lastUsageTime = DateTimeOffset.UtcNow;
             NodeAndLoadBalancer nodeAndLoadBalancer = null;
 
             // 1. Use explicit host override if provided in request
@@ -103,13 +102,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _lastHealth = HealthCheckResult.Unhealthy("Service is not deployed");
                 throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", ServiceName }, { "environment", Environment.DeploymentEnvironment } });
             }
-
-            // All ok
-            _lastHealth = HealthCheckResult.Unhealthy("Service is reachable");
+            
+            _lastHealth = HealthCheckResult.Healthy("Service is reachable");
             return nodeAndLoadBalancer;
         }
-
-
 
         private async Task<NodeAndLoadBalancer> GetNodeAndLoadBalancer(string environment)
         {
@@ -117,30 +113,28 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 var deploymentId = new DeploymentIdentifier(ServiceName, environment, Environment.Zone);
                 return Discovery.CreateLoadBalancer(deploymentId, ReachabilityCheck, TrafficRoutingStrategy.RandomByRequestID);
             });
+
             Node node = await loadBalancer.TryGetNode().ConfigureAwait(false);
             if (node == null)
                 return null;
-            else return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer };
+
+             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer };
         }
-
-
 
         private HealthCheckResult CheckHealth()
         {
             if (DateTimeOffset.UtcNow.Subtract(_lastUsageTime) > ServiceDiscoveryConfig.SuppressHealthCheckAfterServiceUnused)
                 return HealthCheckResult.Healthy($"Health check suppressed because service was not in use for more than {ServiceDiscoveryConfig.SuppressHealthCheckAfterServiceUnused.TotalSeconds} seconds.");
-            else return _lastHealth;
+
+            return _lastHealth;
         }
-
-
 
         public void Dispose()
         {
             foreach (var loadBalancer in _loadBalancers.Values)
                 loadBalancer.Dispose();
+
             _healthMonitor.Dispose();
         }
     }
-
-
 }

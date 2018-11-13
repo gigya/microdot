@@ -70,12 +70,12 @@ namespace Gigya.Microdot.UnitTests
             };
             RequestOverrides requestOverrides = new RequestOverrides
             {
-                Hosts = new[] { new HostOverride { Hostname = "HostNameOverride" } }.ToList()
+                Hosts = new[] { new HostOverride { ServiceName = "Service1", Hostname = "HostNameOverride" } }.ToList()
             };
             InvocationTarget invocationTarget = new InvocationTarget{MethodName = "MethodName1" };
 
             HttpServiceRequest serviceRequest = new HttpServiceRequest
-            {
+            { 
                 TracingData = tData,
                 Overrides = requestOverrides,
                 Target = invocationTarget
