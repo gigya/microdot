@@ -369,7 +369,14 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
                     clientCallEvent.TargetPort = effectivePort.Value;
 
-                    var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
+                    string context = requestContent;
+                    if (nodeAndLoadBalancer.PreferredEnvironment != null)
+                    {
+                        TracingContext.SetPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment);
+                        context = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
+                    }
+
+                    var httpContent = new StringContent(context, Encoding.UTF8, "application/json");
                     httpContent.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();

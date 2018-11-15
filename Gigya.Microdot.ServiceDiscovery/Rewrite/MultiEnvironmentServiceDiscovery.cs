@@ -94,7 +94,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             // 4. Otherwise, use production environment if configured and it's not our own environment
             if (nodeAndLoadBalancer == null && GetDiscoveryConfig().EnvironmentFallbackEnabled && Environment.DeploymentEnvironment != MASTER_ENVIRONMENT)
-                nodeAndLoadBalancer = await GetNodeAndLoadBalancer(MASTER_ENVIRONMENT);
+                nodeAndLoadBalancer = await GetNodeAndLoadBalancer(MASTER_ENVIRONMENT, preferredEnvironment ?? Environment.DeploymentEnvironment);
 
             // 5. Otherwise, throw an error and indicate in the health check that the service is not deployed
             if (nodeAndLoadBalancer == null)
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return nodeAndLoadBalancer;
         }
 
-        private async Task<NodeAndLoadBalancer> GetNodeAndLoadBalancer(string environment)
+        private async Task<NodeAndLoadBalancer> GetNodeAndLoadBalancer(string environment, string preferredEnvironment = null)
         {
             var loadBalancer = _loadBalancers.GetOrAdd(environment, p => {
                 var deploymentId = new DeploymentIdentifier(ServiceName, environment, Environment.Zone);
@@ -118,7 +118,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (node == null)
                 return null;
 
-             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer };
+             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer, PreferredEnvironment = preferredEnvironment};
         }
 
         private HealthCheckResult CheckHealth()

@@ -312,7 +312,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public async Task ServiceDiscoveryFlowNoNodes()
+        public void ServiceDiscoveryFlowNoNodes()
         {
             IDiscovery discovery = Substitute.For<IDiscovery>();
             DiscoveryConfig discoveryConfig = null;

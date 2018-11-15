@@ -32,6 +32,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     {
         public Node Node { get; set; }
         public ILoadBalancer LoadBalancer { get; set; }
+
+        public string PreferredEnvironment { get; set; }
     }
 
 
