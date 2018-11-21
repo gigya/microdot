@@ -6,16 +6,27 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.SharedLogic.Configurations;
 using NSubstitute;
+using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService
 {
     public class GigyaSiloHostFake : GigyaSiloHost
     {
-        public GigyaSiloHostFake(IDependantClassFake dependantClassFake, WarmupTestServiceHostWithSiloHostFake host,  ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener, IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig) : 
+        public GigyaSiloHostFake(WarmupTestServiceHostWithSiloHostFake host,  ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener, IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig) : 
             base(log, configBuilder, httpServiceListener, eventPublisher, loadSheddingConfig, orleansConfigSourceBlock, orleansConfig)
         {
-            dependantClassFake.Received(1).ThisClassIsWarmed();
-            host.StopHost(); //awaitable, but can't be awaited in ctor. There is await into the "StopHost" method
+            try
+            {
+                Assert.AreEqual(DependantClassFake.WarmedTimes, 1);
+            }
+            catch (Exception e)
+            {
+
+            }
+            finally
+            {
+                host.StopHost(); //awaitable, but can't be awaited in ctor. There is await into the "StopHost" method
+            }
         }
     }
 }

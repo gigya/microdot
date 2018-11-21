@@ -14,7 +14,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 {
     public class WarmupTestServiceHostWithSiloHostFake : CalculatorServiceHost
     {
-        private IDependantClassFake _dependantClassFake = Substitute.For<IDependantClassFake>();
         private TaskCompletionSource<bool> _hostDisposedEvent = new TaskCompletionSource<bool>();
 
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
@@ -23,7 +22,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
 
             kernel.Rebind<GigyaSiloHost>().To<GigyaSiloHostFake>();
-            kernel.Rebind<IDependantClassFake>().ToConstant(_dependantClassFake);
+            kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InTransientScope();
             kernel.Rebind<ILog>().To<NullLog>();
             kernel.Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>();
             kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();

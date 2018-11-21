@@ -27,20 +27,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 
         public async Task<int> TestWarmedTimes()
         {
-            return _dependantClassFake.WarmedTimes;
+            return DependantClassFake.WarmedTimes;
         }
     }
 
     public interface IDependantClassFake
     {
-        int WarmedTimes { get; }
         void IncreaseWarmedTimes();
         bool ThisClassIsWarmed();
     }
 
     public class DependantClassFake : IDependantClassFake
     {
-        public int WarmedTimes { get; private set; }
+        public static int WarmedTimes { get; private set; }
+
+        public static void ResetWarmedTimes()
+        {
+            WarmedTimes = 0;
+        }
 
         public DependantClassFake()
         {

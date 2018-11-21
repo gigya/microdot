@@ -21,10 +21,9 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
+using System.Linq;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Orleans.Hosting;
 using Ninject;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
@@ -54,7 +53,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 {
                     try
                     {
-                        _kernel.Get(serviceClass);
+                        foreach (Type parameterType in serviceClass.GetConstructors().SelectMany(ctor => ctor.GetParameters().Select(p => p.ParameterType)).Distinct())
+                        {
+                            _kernel.Get(parameterType);
+                        }
                     }
                     catch (Exception e)
                     {

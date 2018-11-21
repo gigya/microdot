@@ -12,6 +12,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class WarmupTests
     {
         private int mainPort = 9555;
+
+        [TearDown]
+        public void TearDown()
+        {
+            DependantClassFake.ResetWarmedTimes();
+        }
         
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
