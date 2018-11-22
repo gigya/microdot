@@ -61,6 +61,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500"), Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
 		}
 
+        /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
         internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
@@ -100,6 +101,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 		    return GetKey<T>(modifyIndex, folder, key, Zone, cancellationToken);
 	    }
 
+        /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
 		private async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken) where T: class
         {
 			if (folder==null)
@@ -160,6 +162,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
+        /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
         public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken=default(CancellationToken))
         {
             string urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";

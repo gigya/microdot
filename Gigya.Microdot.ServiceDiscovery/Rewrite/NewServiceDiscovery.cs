@@ -96,7 +96,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         public async Task<Node> GetNode()
         {
             await _initTask.ConfigureAwait(false);
-            var node = await OriginatingEnvironmentLoadBalancer.GetNode().ConfigureAwait(false);
+            var node = await OriginatingEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
                 _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_originatingEnvironmentDeployment.DeploymentEnvironment}'");
@@ -109,7 +109,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 throw new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags{{"serviceName",_serviceName}, {"environment", _originatingEnvironmentDeployment.DeploymentEnvironment}});
             }
 
-            node = await MasterEnvironmentLoadBalancer.GetNode().ConfigureAwait(false);
+            node = await MasterEnvironmentLoadBalancer.TryGetNode().ConfigureAwait(false);
             if (node != null)
             {
                 _getHealthStatus = () => HealthCheckResult.Healthy($"Discovered on '{_masterDeployment.DeploymentEnvironment}'");
