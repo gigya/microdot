@@ -50,6 +50,8 @@ namespace Gigya.Microdot.SharedLogic.Logging
 
         public void Write(TraceEventType level, Action<LogDelegate> log, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0, [CallerMemberName] string method = null)
         {
+            TryConfigureUpdatingOfLogLevel(log);
+
             if (MinimumTraceLevel < level)
                 return;
 
@@ -104,6 +106,7 @@ namespace Gigya.Microdot.SharedLogic.Logging
 
         public abstract TraceEventType? MinimumTraceLevel { get; set; }
 
+        protected virtual void TryConfigureUpdatingOfLogLevel(Action<LogDelegate> log) { }
 
         public void Debug(Action<LogDelegate> log, [CallerFilePath] string file = "", [CallerLineNumber] int line = 0, [CallerMemberName] string method = null)
         {

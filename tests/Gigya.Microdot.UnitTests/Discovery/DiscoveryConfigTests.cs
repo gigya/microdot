@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-
-using Gigya.Microdot.Fakes;
+using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Shared;
 using Ninject;
 
 using NUnit.Framework;
@@ -15,28 +12,23 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture]
-    public class DiscoveryConfigTests
+    public class DiscoveryConfigTests : UpdatableConfigTests
     {
         private const string SERVICE_NAME = "ServiceName";
+        protected Func<string, ServiceDiscoveryConfig> _settingsFactory;
 
-        private Dictionary<string, string> _configDic;
-        private TestingKernel<ConsoleLog> _unitTestingKernel;
-        private Func<string, ServiceDiscoveryConfig> _settingsFactory;
-
-        [SetUp]
-        public void Setup()
+        public override void Setup()
         {
-            _configDic = new Dictionary<string, string>();
-            _unitTestingKernel = new TestingKernel<ConsoleLog>(_ => { }, _configDic);
+            base.Setup();
 
             _settingsFactory = name => _unitTestingKernel.Get<Func<DiscoveryConfig>>()().Services[name];
         }
 
-        [TearDown]
-        public void TearDown()
+        public override void OneTimeSetUp() { }
+
+        protected override Action<IKernel> AdditionalBindings()
         {
-            _unitTestingKernel.Dispose();
+            return null;
         }
 
         [Test]
@@ -47,18 +39,21 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void DiscoverySourceIsConfig()
+        public async Task DiscoverySourceIsConfig()
         {
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Hosts"] = "localhost";
-            _configDic["Discovery.Source"] = "Config";
+            await ChangeConfig<DiscoveryConfig>(new[]
+                                    {
+                                        new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.Hosts", "localhost"),
+                                        new KeyValuePair<string, string>("Discovery.Source", "Config")
+                                    });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Source.ShouldBe("Config");
         }
 
         [Test]
-        public void ServiceSourceIsConfig()
+        public async Task ServiceSourceIsConfig()
         {
-            SetServiceSourceConfig();
+            await SetServiceSourceConfig();
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Source.ShouldBe("Config");
         }
@@ -74,19 +69,27 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void FirstAttemptDelaySeconds()
+        public async Task FirstAttemptDelaySeconds()
         {
             const double expectedValue = 0.002;
-            ChangeConfig("Discovery.FirstAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            await ChangeConfig<DiscoveryConfig>(new []
+                                {
+                                    new KeyValuePair<string, string>("Discovery.FirstAttemptDelaySeconds",
+                                        expectedValue.ToString(CultureInfo.InvariantCulture))
+                                });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.FirstAttemptDelaySeconds.ShouldBe(expectedValue);
         }
 
         [Test]
-        public void ServiceFirstAttemptDelaySeconds()
+        public async Task ServiceFirstAttemptDelaySeconds()
         {
             const double expectedValue = 0.003;
-            ChangeConfig($"Discovery.Services.{SERVICE_NAME}.FirstAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.FirstAttemptDelaySeconds",
+                                    expectedValue.ToString(CultureInfo.InvariantCulture))
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.FirstAttemptDelaySeconds.ShouldBe(expectedValue);
         }
@@ -101,20 +104,28 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void MaxAttemptDelaySeconds()
+        public async Task MaxAttemptDelaySeconds()
         {
             const double expectedValue = 20;
-            ChangeConfig("Discovery.MaxAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>("Discovery.MaxAttemptDelaySeconds",
+                                    expectedValue.ToString(CultureInfo.InvariantCulture))
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
 
             settings.MaxAttemptDelaySeconds.ShouldBe(expectedValue);
         }
 
         [Test]
-        public void ServiceMaxAttemptDelaySeconds()
+        public async Task ServiceMaxAttemptDelaySeconds()
         {
             const double expectedValue = 30;
-            ChangeConfig($"Discovery.Services.{SERVICE_NAME}.MaxAttemptDelaySeconds", expectedValue.ToString(CultureInfo.InvariantCulture));
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.MaxAttemptDelaySeconds",
+                                    expectedValue.ToString(CultureInfo.InvariantCulture))
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.MaxAttemptDelaySeconds.ShouldBe(expectedValue);
         }
@@ -128,19 +139,27 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void DelayMultiplier()
+        public async Task DelayMultiplier()
         {
             const double expectedValue = 3;
-            ChangeConfig("Discovery.DelayMultiplier", expectedValue.ToString(CultureInfo.InvariantCulture));
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>("Discovery.DelayMultiplier",
+                                    expectedValue.ToString(CultureInfo.InvariantCulture))
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.DelayMultiplier.ShouldBe(expectedValue);
         }
 
         [Test]
-        public void ServiceDelayMultiplier()
+        public async Task ServiceDelayMultiplier()
         {
             const double expectedValue = 30;
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.DelayMultiplier"] = expectedValue.ToString(CultureInfo.InvariantCulture);
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.DelayMultiplier",
+                                    expectedValue.ToString(CultureInfo.InvariantCulture))
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.DelayMultiplier.ShouldBe(expectedValue);
         }
@@ -153,20 +172,27 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void RequestTimeout()
+        public async Task RequestTimeout()
         {
             string expectedValue = "00:00:15";
-            ChangeConfig("Discovery.RequestTimeout", expectedValue);
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>("Discovery.RequestTimeout",
+                                    expectedValue.ToString(CultureInfo.InvariantCulture))
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.RequestTimeout.ShouldBe(TimeSpan.Parse(expectedValue, CultureInfo.InvariantCulture));
         }
 
         [Test]
-        public void ServiceRequestTimeout()
+        public async Task ServiceRequestTimeout()
         {
             string expectedValue = "00:00:10";
-            _configDic["Discovery.RequestTimeout"] = "00:00:15";
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.RequestTimeout"] = expectedValue;
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>("Discovery.RequestTimeout", "00:00:15"),
+                                new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.RequestTimeout", expectedValue)
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.RequestTimeout.ShouldBe(TimeSpan.Parse(expectedValue, CultureInfo.InvariantCulture));
         }
@@ -179,44 +205,56 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void Scope()
+        public async Task Scope()
         {
             var expectedValue = ServiceScope.DataCenter;
-            ChangeConfig("Discovery.Scope", expectedValue.ToString());
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>("Discovery.Scope", expectedValue.ToString())
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Scope.ShouldBe(expectedValue);
         }
 
         [Test]
-        public void ScopeOfService()
+        public async Task ScopeOfService()
         {
             var expectedValue = ServiceScope.DataCenter;
-            ChangeConfig($"Discovery.Services.{SERVICE_NAME}.Scope", expectedValue.ToString());
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.Scope", expectedValue.ToString())
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.Scope.ShouldBe(expectedValue);
         }
 
         [Test]
-        public void DefaultPort()
+        public async Task DefaultPort()
         {
             const int expectedValue = 89940;
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.DefaultPort"] = expectedValue.ToString();
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.DefaultPort", expectedValue.ToString())
+                            });
             var settings = _settingsFactory(SERVICE_NAME);
             settings.DefaultPort.ShouldBe(expectedValue);
         }
 
         [Test]
-        public void ServiceSourceChanged()
+        public async Task ServiceSourceChanged()
         {
-            SetServiceSourceConfig();
+            await SetServiceSourceConfig();
             var settings = _settingsFactory(SERVICE_NAME);
             Assert.AreEqual("Config", settings.Source);
         }
 
         [Test]
-        public void CaseInsensitiveOnServiceName()
+        public async Task CaseInsensitiveOnServiceName()
         {
-            SetServiceSourceLocal();
+            await ChangeConfig<DiscoveryConfig>(new[]
+                                    {
+                                        new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.Source", "Local")
+                                    });
             var lowerCaseServiceName = SERVICE_NAME.ToLower();
 
             var settings2 = _settingsFactory(SERVICE_NAME);
@@ -232,21 +270,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var settings = _settingsFactory("not exists");
             Assert.AreEqual(ConsulDiscoverySource.Name, settings.Source);
         }
-
-        private void SetServiceSourceLocal()
+        
+        private async Task SetServiceSourceConfig()
         {
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Source"] = "Local";
-        }
-
-        private void SetServiceSourceConfig()
-        {
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Source"] = "Config";
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Hosts"] = "localhost";
-        }
-
-        private void ChangeConfig(string configKey, string newValue)
-        {
-            _configDic[configKey] = newValue;
+            await ChangeConfig<DiscoveryConfig>(new []
+                                    {
+                                        new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.Source", "Config"),
+                                        new KeyValuePair<string, string>($"Discovery.Services.{SERVICE_NAME}.Hosts", "localhost"),
+                                    });
         }
     }
 }

@@ -17,7 +17,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class DiscoveryTests
+    public class DiscoveryTests : UpdatableConfigTests
     {
         private const string Consul = "Consul";
         private const string SlowSource = "SlowSource";
@@ -29,9 +29,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private IDiscovery _discovery;
 
-        private TestingKernel<ConsoleLog> _kernel;
         private bool _consulSourceWasUndeployed;
-        private DiscoveryConfig _discoveryConfig;
         private List<Type> _createdNodeSources;
         private DeploymentIdentifier _deploymentIdentifier;
 
@@ -45,26 +43,18 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private int _consulSourceDisposedCounter;
 
 
-        [OneTimeSetUp]
-        public void SetupKernel()
+        protected override Action<IKernel> AdditionalBindings()
         {
-            _kernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<LocalNodeSource>(k);
-                RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<ConfigNodeSource>(k);
+            return k =>
+                    {
+                        RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<LocalNodeSource>(k);
+                        RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<ConfigNodeSource>(k);
 
-                k.Rebind<INodeSourceFactory>().ToMethod(c => _consulNodeSourceFactory);
-                k.Bind<INodeSourceFactory>().ToMethod(c => _slowNodeSourceFactory);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(c => () => _discoveryConfig);                
-                k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InTransientScope(); // get a different instance for each test
-                k.Rebind<IDateTime>().ToMethod(_=>_dateTimeFake);
-            });
-        }
-
-        [OneTimeTearDown]
-        public void DisposeKernel()
-        {
-            _kernel.Dispose();
+                        k.Rebind<INodeSourceFactory>().ToMethod(c => _consulNodeSourceFactory);
+                        k.Bind<INodeSourceFactory>().ToMethod(c => _slowNodeSourceFactory);
+                        k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InTransientScope(); // get a different instance for each test
+                        k.Rebind<IDateTime>().ToMethod(_ => _dateTimeFake);
+                    };
         }
 
         private void RebindKernelToSetCreatedNodeSourceBeforeCreatingIt<TNodeSource>(IKernel kernel) where TNodeSource: INodeSource
@@ -77,20 +67,29 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             });
         }
 
-        [SetUp]
-        public void Setup()
+        public override void OneTimeSetUp()
         {
+            
+        }
+
+        public override void Setup()
+        {
+            base.Setup();
             _dateTimeFake = new DateTimeFake();
 
             _createdNodeSources = new List<Type>();
             SetupConsulNodeSource();
             SetupSlowNodeSource();
-
-            _discoveryConfig = new DiscoveryConfig();
-            _discoveryConfig.Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig());
-
-            _discovery = _kernel.Get<IDiscovery>();
+            
+            _discovery = _unitTestingKernel.Get<IDiscovery>();
             _deploymentIdentifier = new DeploymentIdentifier(ServiceName, Env, Substitute.For<IEnvironment>());            
+        }
+
+        public override void TearDown()
+        {
+            base.TearDown();
+
+            ClearChanges<DiscoveryConfig>();
         }
 
         private void SetupConsulNodeSource()
@@ -141,7 +140,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task CreateLoadBalancer_GetNodesFromConsulNodeSource()
         {
-            ConfigureServiceSource(Consul);
+            await ConfigureServiceSource(Consul);
             var loadBalancer = CreateLoadBalancer();
             (await loadBalancer.TryGetNode()).ShouldBe(_consulNode);            
         }
@@ -149,7 +148,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task CreateLoadBalancer_GetNodesFromConfigNodeSource()
         {
-            ConfigureServiceSource(Config);
+            await ConfigureServiceSource(Config);
             await CreateLoadBalancer().TryGetNode();
             _createdNodeSources.Single().ShouldBe(typeof(ConfigNodeSource));
         }
@@ -157,7 +156,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task CreateLoadBalancer_GetNodesFromLocalNodeSource()
         {
-            ConfigureServiceSource(Local);
+            await ConfigureServiceSource(Local);
             await CreateLoadBalancer().TryGetNode();
             _createdNodeSources.Single().ShouldBe(typeof(LocalNodeSource));
         }
@@ -165,7 +164,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task CreateLoadBalancer_ReturnNullIfServiceUndeployed()
         {
-            ConfigureServiceSource(Consul);
+            await ConfigureServiceSource(Consul);
             _consulSourceWasUndeployed = true;
             var loadBalancer = CreateLoadBalancer();
             (await loadBalancer.TryGetNode()).ShouldBeNull();
@@ -174,7 +173,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GetNodes_SourceWasUndeployed_ReturnNull()
         {
-            ConfigureServiceSource(Consul);
+            await ConfigureServiceSource(Consul);
             _consulSourceWasUndeployed = true;
             (await GetNodes()).ShouldBeNull();
         }
@@ -182,7 +181,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GetNodes_SourceWasRedeployed_ReturnNodes()
         {
-            ConfigureServiceSource(Consul);
+            await ConfigureServiceSource(Consul);
             _consulSourceWasUndeployed = true;
             await GetNodes();
             _consulSourceWasUndeployed = false;
@@ -192,10 +191,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GetNodes_ConfigurationChanged_ReturnNodesFromNewNodeSource()
         {
-            ConfigureServiceSource(Local);            
+            ClearChanges<DiscoveryConfig>();
+            await ConfigureServiceSource(Local);            
             (await GetNodes()).ShouldNotContain(_consulNode);
 
-            ConfigureServiceSource(Consul);
+            await ConfigureServiceSource(Consul);
             await WaitForCleanup();
             (await GetNodes()).ShouldContain(_consulNode);
         }
@@ -203,7 +203,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GetNodes_CalledMoreThanOnce_OnlyOneNodeSourceIsCreated()
         {
-            ConfigureServiceSource(SlowSource);
+            await ConfigureServiceSource(SlowSource);
             await GetNodesThreeTimesFromSlowSource();
             _createdNodeSources.Count.ShouldBe(1);
         }
@@ -211,11 +211,11 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GetNodes_CalledMoreThanOnceAfterConfigurationChanged_OnlyOneAdditionalNodeSourceIsCreated()
         {
-            ConfigureServiceSource(Local);
+            await ConfigureServiceSource(Local);
             await GetNodes();
             _createdNodeSources.Count.ShouldBe(1);
 
-            ConfigureServiceSource(SlowSource);
+            await ConfigureServiceSource(SlowSource);
             await WaitForCleanup();
             await GetNodesThreeTimesFromSlowSource();
             _createdNodeSources.Count.ShouldBe(2);
@@ -224,7 +224,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GetNodes_ServiceUndeployed_DontTryToCreateNewNodeSourceUntilServiceIsRedeployed()
         {
-            ConfigureServiceSource(Consul);
+            await ConfigureServiceSource(Consul);
             await GetNodes();
             _createdNodeSources.Count.ShouldBe(1);
 
@@ -242,8 +242,12 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task DisposeNodeSourceAfterLifetimeIsPassed()
         {
-            ConfigureServiceSource(Consul);
-            _discoveryConfig.MonitoringLifetime = TimeSpan.FromMinutes(2);
+            await ConfigureServiceSource(Consul);
+            await ChangeConfig<DiscoveryConfig>(new[]
+                            {
+                                new KeyValuePair<string, string>($"Discovery.MonitoringLifetime", TimeSpan.FromMinutes(2).ToString())
+                            });
+            
             await GetNodes();
             _createdNodeSources.Count.ShouldBe(1);
 
@@ -262,11 +266,17 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             await Task.Delay(100);
         }
 
-        private void ConfigureServiceSource(string sourceType)
+        private async Task ConfigureServiceSource(string sourceType)
         {
-            _discoveryConfig.Services[_deploymentIdentifier.ServiceName].Source = sourceType;
+            List<KeyValuePair<string, string>> configUpdates = new[]
+                                                                    {
+                                                                        new KeyValuePair<string, string>($"Discovery.Services.{_deploymentIdentifier.ServiceName}.Source",
+                                                                            sourceType)
+                                                                    }.ToList();
             if (sourceType == Config)
-                _discoveryConfig.Services[_deploymentIdentifier.ServiceName].Hosts = "myhost";
+                configUpdates.Add(new KeyValuePair<string, string>($"Discovery.Services.{_deploymentIdentifier.ServiceName}.Hosts", "myhost"));
+
+            await ChangeConfig<DiscoveryConfig>(configUpdates);
         }
 
         private async Task GetNodesThreeTimesFromSlowSource()

@@ -57,6 +57,7 @@
     <Compile Include="IApplicationDirectoryProvider.cs" />
     <Compile Include="IAssemblyProvider.cs" />
     <Compile Include="ICacheRevoker.cs" />
+    <Compile Include="IConfigObjectCreator.cs" />
     <Compile Include="IMetricsInitializer.cs" />
     <Compile Include="IMetricsSettings.cs" />
     <Compile Include="Logging\ILog.cs" />

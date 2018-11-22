@@ -6,6 +6,7 @@ using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
@@ -190,12 +191,12 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
                 return Task.FromResult(content);
             });
 
-
             var v = setup.k.Get<ConfigurationVerificator>();
 
             var s = v.Verify();
 
-            setup.k.Get<VerifiedConfig1>().ValueLoaded.ShouldBe("theValue");
+            var creator = setup.k.Get<Func<Type, IConfigObjectCreator>>()(typeof(VerifiedConfig1));
+            ((VerifiedConfig1) creator.GetLatest()).ValueLoaded.ShouldBe("theValue");
 
             s.All(passed => passed.Type == typeof(VerifiedConfig1)).ShouldBeTrue();
 

@@ -21,10 +21,9 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
+using System.Linq;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Orleans.Hosting;
 using Ninject;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
@@ -52,13 +51,22 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             {
                 foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)
                 {
-                    _kernel.Get(serviceClass);
+                    try
+                    {
+                        foreach (Type parameterType in serviceClass.GetConstructors().SelectMany(ctor => ctor.GetParameters().Select(p => p.ParameterType)).Distinct())
+                        {
+                            _kernel.Get(parameterType);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Error($"Failed to warmup grain {serviceClass}", e);
+                    }
                 }
             }
             catch(Exception ex)
             {
                 _log.Error("Failed to warmup grains", ex);
-                throw;
             }
         }
     }

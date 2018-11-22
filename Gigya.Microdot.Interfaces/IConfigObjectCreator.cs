@@ -20,11 +20,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-namespace Gigya.Microdot.Configuration
+using System;
+
+namespace Gigya.Microdot.Interfaces
 {
     public interface IConfigObjectCreator
     {
         object ChangeNotifications { get; }
         object GetLatest();
+        dynamic GetLambdaOfGetLatest(Type configType);
+        dynamic GetLambdaOfChangeNotifications(Type configType);
     }
 }

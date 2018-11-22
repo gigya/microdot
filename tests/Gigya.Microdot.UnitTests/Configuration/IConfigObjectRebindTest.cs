@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Ninject;
@@ -13,63 +14,62 @@ namespace Gigya.Microdot.UnitTests.Configuration
     public class IConfigObjectRebindTest
     {
         private StandardKernel _testingKernel;
-        private IConfigObjectCreator _configWrapperMock = Substitute.For<IConfigObjectCreator>();
+        private IConfigObjectCreator _configObjectCreatorMock = Substitute.For<IConfigObjectCreator>();
 
         [SetUp]
         public void SetUp()
         {
             _testingKernel = new StandardKernel();
-            _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configWrapperMock);
+            _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configObjectCreatorMock);
             _testingKernel.Load<MicrodotModule>();
+            _testingKernel.Rebind<Ninject.SystemInitializer.SystemInitializer>().To<SystemInitializerFake>();
+
+            ILog logFake = Substitute.For<ILog>();
+            _testingKernel.Rebind<ILog>().ToConstant(logFake);
+
+            _testingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
         }
 
         [TearDown]
         public void TearDown()
         {
             _testingKernel.Dispose();
-            _configWrapperMock.ClearReceivedCalls();
+            _configObjectCreatorMock.ClearReceivedCalls();
         }
 
         [Test]
         public void ShouldCallGetLatestWhileResolvingObject()
         {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
+            _configObjectCreatorMock.GetLatest().Returns(new DiscoveryConfig());
             _testingKernel.Get<DiscoveryConfig>();
 
-            _configWrapperMock.Received(1).GetLatest();
-            object notes = _configWrapperMock.DidNotReceive().ChangeNotifications;
-        }
-
-        [Test]
-        public void ShouldCallGetLatestWhileResolvingFuncObject()
-        {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
-            _testingKernel.Get<Func<DiscoveryConfig>>()();
-
-            _configWrapperMock.Received(1).GetLatest();
-            object notes = _configWrapperMock.DidNotReceive().ChangeNotifications;
+            _configObjectCreatorMock.Received(1).GetLatest();
+            object notes = _configObjectCreatorMock.DidNotReceive().ChangeNotifications;
         }
 
         [Test]
         public void ShouldCallChangeNotificationsWhileResolvingISourceBlockObject()
         {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
-            _configWrapperMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
+            _configObjectCreatorMock.GetLatest().Returns(new DiscoveryConfig());
+            _configObjectCreatorMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
             _testingKernel.Get<ISourceBlock<DiscoveryConfig>>();
 
-            _configWrapperMock.DidNotReceive().GetLatest();
-            object notifications = _configWrapperMock.Received(1).ChangeNotifications;
+            _configObjectCreatorMock.DidNotReceive().GetLatest();
+            object notifications = _configObjectCreatorMock.Received(1).ChangeNotifications;
         }
 
-        [Test]
-        public void ShouldCallChangeNotificationsWhileResolvingFuncISourceBlockObject()
+        class SystemInitializerFake : Ninject.SystemInitializer.SystemInitializer
         {
-            _configWrapperMock.GetLatest().Returns(new DiscoveryConfig());
-            _configWrapperMock.ChangeNotifications.Returns(Substitute.For<ISourceBlock<DiscoveryConfig>>());
-            _testingKernel.Get<Func<ISourceBlock<DiscoveryConfig>>>()();
+            public SystemInitializerFake(IKernel kernel) : base(kernel)
+            {
+            }
 
-            object notifications = _configWrapperMock.Received(1).ChangeNotifications;
-            _configWrapperMock.DidNotReceive().GetLatest();
+            protected override void SetDefaultTCPHTTPSettings()
+            { }
+
+            public override void Dispose()
+            {
+            }
         }
     }
 }

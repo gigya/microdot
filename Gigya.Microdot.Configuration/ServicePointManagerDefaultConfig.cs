@@ -21,16 +21,16 @@
 #endregion
 
 using System;
+using Gigya.Microdot.Interfaces.Configuration;
 
-namespace Gigya.Microdot.Ninject
+namespace Gigya.Microdot.Configuration
 {
-    public interface IConfigObjectCreatorWrapper
+    [Serializable]
+    [ConfigurationRoot("Networking.ServicePointManager", RootStrategy.ReplaceClassNameWithPath)]
+    public class ServicePointManagerDefaultConfig : IConfigObject
     {
-        object GetLatest();
-        Func<T> GetTypedLatestFunc<T>() where T : class;
-        Func<T> GetChangeNotificationsFunc<T>() where T : class;
-        object GetChangeNotifications();
-        dynamic GetLambdaOfGetLatest(Type configType);
-        dynamic GetLambdaOfChangeNotifications(Type configType);
+        public int DefaultConnectionLimit { get; set; } = 500;
+        public bool UseNagleAlgorithm { get; set; } = false;
+        public bool Expect100Continue { get; set; } = false;
     }
 }

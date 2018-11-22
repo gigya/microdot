@@ -12,6 +12,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class WarmupTests
     {
         private int mainPort = 9555;
+
+        [TearDown]
+        public void TearDown()
+        {
+            DependantClassFake.ResetWarmedTimes();
+        }
         
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
@@ -26,6 +32,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Assert.AreEqual(result, 1);
 
             tester.Dispose();
+        }
+
+        [Test][Repeat(2)]
+        public async Task VerifyWarmupBeforeSiloStart()
+        {
+            WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
+            Task.Run(() => host.Run());
+            await host.WaitForHostDisposed();
         }
     }
 }

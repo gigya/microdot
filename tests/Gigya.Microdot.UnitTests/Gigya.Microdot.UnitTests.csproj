@@ -87,6 +87,7 @@
     <Compile Include="Caching\Host\ISlowService.cs" />
     <Compile Include="Caching\Host\SlowService.cs" />
     <Compile Include="Caching\Host\SlowServiceHost.cs" />
+    <Compile Include="Monitor\WorkloadMetricsTests.cs" />
     <Compile Include="NinjectExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Monitor\RequestTimings.cs" />
@@ -106,8 +107,12 @@
     <Compile Include="ServiceSchemaTests.cs" />
     <Compile Include="SourceBlockShould.cs" />
     <Compile Include="StringExtensionsTest.cs" />
+    <Compile Include="SystemInitializer\ServiceHostFake.cs" />
+    <Compile Include="SystemInitializer\SysInitCalledFromHostTest.cs" />
+    <Compile Include="SystemInitializer\SystemInitializerTests.cs" />
     <Compile Include="TagsExtractorTests.cs" />
     <Compile Include="TestingHost.cs" />
+    <Compile Include="UpdatableConfigTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

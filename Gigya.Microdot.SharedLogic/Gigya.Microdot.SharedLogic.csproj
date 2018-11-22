@@ -34,6 +34,7 @@
     <DocumentationFile>bin\Release\Gigya.Microdot.SharedLogic.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -57,6 +58,13 @@
     <Compile Include="HttpService\RequestOverrides.cs" />
     <Compile Include="HttpService\ServiceReachabilityStatus.cs" />
     <Compile Include="Logging\LogBase.cs" />
+    <Compile Include="Measurement\Workload\CpuTotalAssignedCoresCounter.cs" />
+    <Compile Include="Measurement\Workload\CpuUsageCounterByProcess.cs" />
+    <Compile Include="Measurement\Workload\IWorkloadMetrics.cs" />
+    <Compile Include="Measurement\Workload\LowSensitivityHealthCheck.cs" />
+    <Compile Include="Measurement\Workload\PerformanceCounterByProcess.cs" />
+    <Compile Include="Measurement\Workload\WorkloadMetrics.cs" />
+    <Compile Include="Measurement\Workload\WorkloadMetricsConfig.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
@@ -151,8 +159,8 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="System.ValueTuple">
-          <HintPath>..\packages\System.ValueTuple\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+        <Reference Include="System.Threading.Tasks.Dataflow">
+          <HintPath>..\packages\System.Threading.Tasks.Dataflow\lib\netstandard1.1\System.Threading.Tasks.Dataflow.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -162,13 +170,12 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>
-        <Reference Include="System.Threading.Tasks.Dataflow">
-          <HintPath>..\packages\System.Threading.Tasks.Dataflow\lib\netstandard1.1\System.Threading.Tasks.Dataflow.dll</HintPath>
+        <Reference Include="System.ValueTuple">
+          <HintPath>..\packages\System.ValueTuple\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
     </When>
   </Choose>
-
 </Project>
