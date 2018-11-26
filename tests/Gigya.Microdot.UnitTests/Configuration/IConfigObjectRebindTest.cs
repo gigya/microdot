@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -60,7 +61,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
         class SystemInitializerFake : Ninject.SystemInitializer.SystemInitializer
         {
-            public SystemInitializerFake(IKernel kernel) : base(kernel)
+            public SystemInitializerFake(IKernel kernel, ConfigObjectsCache configObjectsCache) : base(kernel, configObjectsCache)
             {
             }
 

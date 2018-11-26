@@ -30,5 +30,7 @@ namespace Gigya.Microdot.Interfaces
         object GetLatest();
         dynamic GetLambdaOfGetLatest(Type configType);
         dynamic GetLambdaOfChangeNotifications(Type configType);
+
+        void Reload();
     }
 }

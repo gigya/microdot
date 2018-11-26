@@ -76,8 +76,8 @@ namespace Gigya.Microdot.Configuration.Objects
 
         private void Init()
         {
-            Create();
-            ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Create()));
+            Reload();
+            ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Reload()));
             InitializeBroadcast();
             healthStatus.RegisterCheck(ObjectType.Name, HealthCheck);
         }
@@ -184,7 +184,7 @@ namespace Gigya.Microdot.Configuration.Objects
             SendChangeNotification = lambda.Compile();
         }
 
-        private void Create()
+        public void Reload()
         {
             var errors = new List<ValidationResult>();
             JObject config = null;

@@ -53,6 +53,7 @@
     <Compile Include="Configuration\Benchmark\ConfigBenchmarkTest.cs" />
     <Compile Include="Configuration\Benchmark\ConfigCreator.cs" />
     <Compile Include="Configuration\BusSettings.cs" />
+    <Compile Include="Configuration\ConfigObjectsCacheTests.cs" />
     <Compile Include="Configuration\EnvironmentVariableProviderTests.cs" />
     <Compile Include="Configuration\IConfigObjectRebindTest.cs" />
     <Compile Include="Configuration\MasterConfigParserTests.cs" />
