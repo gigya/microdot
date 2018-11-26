@@ -11,9 +11,7 @@ namespace Gigya.Microdot.Configuration.Objects
         public void RegisterConfigObjectCreator(IConfigObjectCreator configObjectCreator)
         {
             if (_configObjectCreatorsList.Contains(configObjectCreator))
-            {
-                _configObjectCreatorsList.Remove(configObjectCreator);
-            }
+                throw new InvalidOperationException();
 
             _configObjectCreatorsList.Add(configObjectCreator);
         }
