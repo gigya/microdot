@@ -36,11 +36,13 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
     public class SystemInitializer : IDisposable
     {
         private IKernel _kernel;
+        private IConfigObjectsCache _configObjectsCache;
         private ISourceBlock<ServicePointManagerDefaultConfig> _configSource;
 
-        public SystemInitializer(IKernel kernel)
+        public SystemInitializer(IKernel kernel, IConfigObjectsCache configObjectsCache)
         {
             _kernel = kernel;
+            _configObjectsCache = configObjectsCache;
         }
 
         public void Init()
@@ -72,6 +74,8 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
                 _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
 
                 _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
+
+                _configObjectsCache.RegisterConfigObjectCreator(configObjectCreator);
             }
         }
 

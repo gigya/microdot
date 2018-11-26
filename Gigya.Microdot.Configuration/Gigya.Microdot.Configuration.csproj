@@ -63,6 +63,8 @@
     <Compile Include="IConfigurationDataWatcher.cs" />
     <Compile Include="IConfigurationLocationsParser.cs" />
     <Compile Include="Objects\ConfigObjectCreator.cs" />
+    <Compile Include="Objects\ConfigObjectsCache.cs" />
+    <Compile Include="Objects\IConfigObjectsCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServicePointManagerDefaultConfig.cs" />
     <Compile Include="UsageTracking.cs" />

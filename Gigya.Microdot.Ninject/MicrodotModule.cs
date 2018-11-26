@@ -102,6 +102,7 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
 
+            Kernel.Rebind<IConfigObjectsCache>().To<ConfigObjectsCache>().InSingletonScope();
             Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
             Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
             Kernel.Bind<IConfigFuncFactory>().ToFactory();

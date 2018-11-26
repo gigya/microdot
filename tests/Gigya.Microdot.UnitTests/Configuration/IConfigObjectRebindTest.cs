@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -23,6 +24,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             _testingKernel.Rebind<Func<Type, IConfigObjectCreator>>().ToMethod(t => tp => _configObjectCreatorMock);
             _testingKernel.Load<MicrodotModule>();
             _testingKernel.Rebind<Ninject.SystemInitializer.SystemInitializer>().To<SystemInitializerFake>();
+            _testingKernel.Rebind<IConfigObjectsCache>().ToConstant(Substitute.For<IConfigObjectsCache>());
 
             ILog logFake = Substitute.For<ILog>();
             _testingKernel.Rebind<ILog>().ToConstant(logFake);
@@ -60,7 +62,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
         class SystemInitializerFake : Ninject.SystemInitializer.SystemInitializer
         {
-            public SystemInitializerFake(IKernel kernel) : base(kernel)
+            public SystemInitializerFake(IKernel kernel, IConfigObjectsCache configObjectsCache) : base(kernel, configObjectsCache)
             {
             }
 
