@@ -60,11 +60,11 @@
     <Compile Include="FileBasedConfigItemsSource.cs" />
     <Compile Include="IConfigEventFactory.cs" />
     <Compile Include="IConfigItemsSource.cs" />
-    <Compile Include="IConfigObjectCreator.cs" />
     <Compile Include="IConfigurationDataWatcher.cs" />
     <Compile Include="IConfigurationLocationsParser.cs" />
     <Compile Include="Objects\ConfigObjectCreator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServicePointManagerDefaultConfig.cs" />
     <Compile Include="UsageTracking.cs" />
   </ItemGroup>
   <ItemGroup>

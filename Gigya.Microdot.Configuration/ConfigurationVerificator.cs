@@ -74,13 +74,13 @@ namespace Gigya.Microdot.Configuration
             }
         }
 
-        private readonly Func<Type, ConfigObjectCreator> _configCreatorFunc;
+        private readonly Func<Type, IConfigObjectCreator> _configCreatorFunc;
         private readonly IAssemblyProvider _assemblyProvider;
         private readonly IEnvironment _envProvider;
 
         /// <summary>
         /// </summary>
-        public ConfigurationVerificator (Func<Type, ConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider, IEnvironment envProvider)
+        public ConfigurationVerificator (Func<Type, IConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider, IEnvironment envProvider)
         {
             _configCreatorFunc = configCreatorFunc;
             _assemblyProvider = assemblyProvider;

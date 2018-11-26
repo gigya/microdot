@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization;
-using System.Xml.Linq;
-using System.Xml.XPath;
+using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
-using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;
 
@@ -21,28 +16,32 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
-    [TestFixture]
-    public class JsonExceptionSerializerTests
+    public class JsonExceptionSerializerTests : UpdatableConfigTests
     {
         private JsonExceptionSerializer ExceptionSerializer { get; set; }
 
-        [SetUp]
-        public void SetUp()
+        public override void Setup()
         {
-            var unitTesting = new TestingKernel<ConsoleLog>(k => 
-                k.Rebind<Func<StackTraceEnhancerSettings>>().ToConstant<Func<StackTraceEnhancerSettings>>(() => new StackTraceEnhancerSettings
-                {
-                    RegexReplacements = new Dictionary<string, RegexReplace>
-                    {
-                        ["TidyAsyncLocalFunctionNames"] = new RegexReplace
-                        {
-                            Pattern = @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\|?\d>d.MoveNext\(\)",
-                            Replacement = @".$1.$2(async)"
-                        }
-                    }
-                })
-            );
-            ExceptionSerializer = unitTesting.Get<JsonExceptionSerializer>();
+            
+        }
+
+        public override void OneTimeSetUp()
+        {
+            base.OneTimeSetUp();
+            ExceptionSerializer = _unitTestingKernel.Get<JsonExceptionSerializer>();
+            Task t = ChangeConfig<StackTraceEnhancerSettings>(new[]
+            {
+                new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Pattern",
+                    @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\|?\d>d.MoveNext\(\)"),
+                new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Replacement",
+                    @".$1.$2(async)")
+            });
+            t.Wait();
+        }
+
+        protected override Action<IKernel> AdditionalBindings()
+        {
+            return null;
         }
 
         [Test]
