@@ -44,12 +44,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _currentEnvironment = "prod";
             var environment = Substitute.For<IEnvironment>();
             environment.DeploymentEnvironment.Returns(_ => _currentEnvironment);
-            _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().ToConstant(environment);
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
-            }, configDic);
+            _unitTestingKernel = new TestingKernel<ConsoleLog>(mockConfig: configDic);
+            _unitTestingKernel.Rebind<IEnvironment>().ToConstant(environment);
+            _unitTestingKernel.Rebind<IDiscovery>().ToConstant(discovery);
+            _unitTestingKernel.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
 
             _loadBalancerByEnvironment = new Dictionary<string, ILoadBalancer>();
             _loadBalancerByEnvironment.Add("prod", new MasterLoadBalancer());
