@@ -25,14 +25,16 @@ using System.Collections.Concurrent;
 using System.Linq;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
@@ -76,7 +78,7 @@ namespace Gigya.Microdot.Ninject
             
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
-            Kernel.BindPerKey<string, ReachabilityCheck, INewServiceDiscovery, NewServiceDiscovery>();
+            Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
@@ -90,7 +92,7 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
             Bind<INodeSourceFactory>().To<ConsulNodeSourceFactory>().InTransientScope();
-            Bind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
+            Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
             Bind<IDiscovery>().To<Discovery>().InSingletonScope();
 
             Rebind<ServiceDiscovery.Rewrite.ConsulClient, ServiceDiscovery.Rewrite.IConsulClient>()
@@ -99,11 +101,17 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
-            Kernel.Load<ConfigObjectsModule>();
+
+            Kernel.Rebind<IConfigObjectsCache>().To<ConfigObjectsCache>().InSingletonScope();
+            Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
+            Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
+            Kernel.Bind<IConfigFuncFactory>().ToFactory();
 
             // ServiceSchema is at ServiceContracts, and cannot be depended on IServiceInterfaceMapper, which belongs to Microdot
             Kernel.Rebind<ServiceSchema>()
                 .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
+
+            Kernel.Rebind<SystemInitializer.SystemInitializer>().ToSelf().InSingletonScope();
         }
 
 

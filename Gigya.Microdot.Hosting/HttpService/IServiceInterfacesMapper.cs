@@ -36,6 +36,8 @@ namespace Gigya.Microdot.Hosting.HttpService
 		/// </summary>
 		IEnumerable<Type> ServiceInterfaceTypes { get; }
 
+        IEnumerable<Type> ServiceClassesTypes { get; }
+
         /// <summary>
         /// The service implementing IHealthStatus
         /// </summary>

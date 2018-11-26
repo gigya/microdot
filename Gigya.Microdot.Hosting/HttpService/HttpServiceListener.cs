@@ -24,11 +24,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
@@ -99,6 +101,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
+        private DataAnnotationsValidator.DataAnnotationsValidator _validator = new DataAnnotationsValidator.DataAnnotationsValidator();
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
@@ -206,24 +209,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 var sw = Stopwatch.StartNew();
 
                 // Special endpoints should not be logged/measured/traced like regular endpoints
-                try
-                {
-                    foreach (var customEndpoint in CustomEndpoints)
-                    {
-                        if (await customEndpoint.TryHandle(context, (data, status, type) => TryWriteResponse(context, data, status, type)))
-                        {
-                            if (RequestTimings.Current.Request.ElapsedMS != null)
-                                _metaEndpointsRoundtripTime.Record((long)RequestTimings.Current.Request.ElapsedMS, TimeUnit.Milliseconds);
-                            return;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    var ex = GetRelevantException(e);
-                    await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
-                    return;
-                }
+                if (await TryHandleSpecialEndpoints(context)) return;
 
                 // Regular endpoint handling
                 using (_activeRequestsCounter.NewContext("Request"))
@@ -231,13 +217,12 @@ namespace Gigya.Microdot.Hosting.HttpService
                     TracingContext.SetUpStorage();
                     RequestTimings.GetOrCreate(); // initialize request timing context
 
-                    Exception ex;
-                    Exception actualException = null;
                     string methodName = null;
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
                     ServiceMethod serviceMethod = null;
+                    ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                     try
                     {
                         try
@@ -246,15 +231,17 @@ namespace Gigya.Microdot.Hosting.HttpService
                             await CheckSecureConnection(context);
 
                             requestData = await ParseRequest(context);
+                            SetCallEventRequestData(callEvent, requestData);
 
                             TracingContext.SetOverrides(requestData.Overrides);
 
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
+                            callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
                         }
                         catch (Exception e)
                         {
-                            actualException = e;
+                            callEvent.Exception = e;
                             if (e is RequestException)
                                 throw;
 
@@ -264,30 +251,70 @@ namespace Gigya.Microdot.Hosting.HttpService
                         RejectRequestIfLateOrOverloaded();
 
                         var responseJson = await GetResponse(context, serviceMethod, requestData);
-                        await TryWriteResponse(context, responseJson);
-
-                        _successCounter.Increment();
+                        if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
+                        {
+                            callEvent.ErrCode = 0;
+                            _successCounter.Increment();
+                        }
+                        else _failureCounter.Increment();
                     }
                     catch (Exception e)
                     {
-                        actualException = actualException ?? e;
+                        callEvent.Exception = callEvent.Exception ?? e;
                         _failureCounter.Increment();
-                        ex = GetRelevantException(e);
-
+                        Exception ex = GetRelevantException(e);
                         string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
-                        await TryWriteResponse(context, json, GetExceptionStatusCode(ex));
+                        await TryWriteResponse(context, json, GetExceptionStatusCode(ex), serviceCallEvent: callEvent);
                     }
                     finally
                     {
                         sw.Stop();
+                        callEvent.ActualTotalTime = sw.Elapsed.TotalMilliseconds;
+
                         _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        _serverRequestPublisher.TryPublish(requestData, actualException, serviceMethod, sw.Elapsed.TotalMilliseconds);
+                        IEnumerable<DictionaryEntry> arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
+                        _serverRequestPublisher.TryPublish(callEvent, arguments, serviceMethod);
                     }
                 }
             }
+        }
+
+        private void SetCallEventRequestData(ServiceCallEvent callEvent, HttpServiceRequest requestData)
+        {
+            callEvent.ClientMetadata = requestData.TracingData;
+            callEvent.ServiceMethod = requestData.Target?.MethodName;
+            callEvent.RequestId = requestData.TracingData?.RequestID;
+            callEvent.SpanId = requestData.TracingData?.SpanID;
+            callEvent.ParentSpanId = requestData.TracingData?.ParentSpanID;
+        }
+
+        private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)
+        {
+            try
+            {
+                foreach (var customEndpoint in CustomEndpoints)
+                {
+                    if (await customEndpoint.TryHandle(context,
+                        (data, status, type) => TryWriteResponse(context, data, status, type)))
+                    {
+                        if (RequestTimings.Current.Request.ElapsedMS != null)
+                            _metaEndpointsRoundtripTime.Record((long) RequestTimings.Current.Request.ElapsedMS,
+                                TimeUnit.Milliseconds);
+                        return true;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                var ex = GetRelevantException(e);
+                await TryWriteResponse(context, ExceptionSerializer.Serialize(ex), GetExceptionStatusCode(ex));
+                return true;
+            }
+
+            return false;
         }
 
 
@@ -390,6 +417,13 @@ namespace Gigya.Microdot.Hosting.HttpService
                 _failureCounter.Increment("EmptyRequest");
                 throw new RequestException("Only requests with content are supported.");
             }
+
+            var errors = new List<ValidationResult>();
+            if (!_validator.TryValidateObjectRecursive(context.Request, errors))
+            {
+                _failureCounter.Increment("InvalidRequestFormat");
+                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
+            }
         }
 
 
@@ -421,7 +455,15 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
         }
 
-        private async Task TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json")
+        /// <summary>
+        /// Writes to response output stream and returns response time
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="data"></param>
+        /// <param name="httpStatus"></param>
+        /// <param name="contentType"></param>
+        /// <returns>double? - response time</returns>
+        private async Task<bool> TryWriteResponse(HttpListenerContext context, string data, HttpStatusCode httpStatus = HttpStatusCode.OK, string contentType = "application/json", ServiceCallEvent serviceCallEvent = null)
         {
             context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
@@ -438,10 +480,13 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             try
             {
-                await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
+                await WriteResponseAndMeasureTime(context, body, serviceCallEvent);
+                return true;
             }
             catch (HttpListenerException writeEx)
             {
+                if (serviceCallEvent != null)
+                    serviceCallEvent.Exception = writeEx;
                 // For some reason, HttpListener.IgnoreWriteExceptions doesn't work here.
                 Log.Warn(_ => _("HttpServiceListener: Failed to write the response of a service call. See exception and tags for details.",
                     exception: writeEx,
@@ -452,7 +497,19 @@ namespace Gigya.Microdot.Hosting.HttpService
                         status = httpStatus
                     },
                     encryptedTags: new { response = data }));
+                return false;
             }
+        }
+
+        private async Task WriteResponseAndMeasureTime(HttpListenerContext context, byte[] body, ServiceCallEvent serviceCallEvent = null)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            await context.Response.OutputStream.WriteAsync(body, 0, body.Length);
+            sw.Stop();
+
+            if (serviceCallEvent != null)
+                serviceCallEvent.ClientResponseTime = sw.Elapsed.TotalMilliseconds;
         }
 
 

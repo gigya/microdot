@@ -20,10 +20,10 @@ using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
     [TestFixture]
-    public class NewServiceDiscoveryConfigChangeTest
+    public class MultiEnvironmentServiceDiscoveryConfigChangeTest
     {
         private const string ServiceName = "ServiceName";
-        private NewServiceDiscovery _serviceDiscovery;
+        private MultiEnvironmentServiceDiscovery _serviceDiscovery;
         private Dictionary<string, string> _configDic;        
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         private ConsulClientMock _consulClientMock;
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             }, _configDic);
 
             _discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityChecker, NewServiceDiscovery>>()("ServiceName", x => Task.FromResult(true));
+            _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityChecker, MultiEnvironmentServiceDiscovery>>()("ServiceName", x => Task.FromResult(true));
            }
 
         [TearDown]
@@ -64,8 +64,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _discoveryConfig.Services[ServiceName].Hosts = "host3";
 
             var node = await _serviceDiscovery.GetNode();
-            Assert.AreEqual("Config", _serviceDiscovery.LastServiceConfig.Source);
-            Assert.AreEqual("host3", node.Hostname);
+            Assert.AreEqual("host3", node.Node.Hostname);
         }
 
         [Repeat(Repeat)]
@@ -74,7 +73,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
             var node = await _serviceDiscovery.GetNode();
-            node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
+            node.Node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
         }
 
     }

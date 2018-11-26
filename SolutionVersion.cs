@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -28,10 +28,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("© 2018 Gigya Inc.")]
 [assembly: AssemblyDescription("Microdot Framework")]
 
-[assembly: AssemblyVersion("1.12.0.0")]
-[assembly: AssemblyFileVersion("1.12.0.0")] 
-[assembly: AssemblyInformationalVersion("1.12.0.0")]
-
+[assembly: AssemblyVersion("1.13.0.0")]
+[assembly: AssemblyFileVersion("1.13.0.0")] 
+[assembly: AssemblyInformationalVersion("1.13.0.0")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 

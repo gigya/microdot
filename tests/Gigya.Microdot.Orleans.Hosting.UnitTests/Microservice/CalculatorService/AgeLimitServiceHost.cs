@@ -20,8 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Fakes;
 using Ninject;
 using Shouldly;
 
@@ -79,8 +82,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                 }
             };
 
-            base.Configure(kernel, commonConfig);
 
+            kernel. Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
+                .To<ManualConfigurationEvents>()
+                .InSingletonScope();
+
+            kernel.Rebind<IConfigItemsSource, OverridableConfigItems>()
+                .To<OverridableConfigItems>()
+                .InSingletonScope()
+                .WithConstructorArgument("data", new Dictionary<string, string>());
+
+            OverridableConfigItems configItems = kernel.Get<IConfigItemsSource>() as OverridableConfigItems;
+            configItems.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainType", "Fake - Should throw an exception.");
+            configItems.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "10");
+            
+            base.Configure(kernel, commonConfig);
         }
     }
 

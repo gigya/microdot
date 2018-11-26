@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// </summary>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
         /// <typeparam name="TServiceInterface"></typeparam>
-        /// <returns>An ServiceProxy with caching <see cref="TServiceInterface"/>.</returns>
+        /// <returns>An ServiceProxy with caching.</returns>
         public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
         {
             var factory = ResolutionRoot
@@ -81,7 +81,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// </summary>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
         /// <typeparam name="TServiceInterface"></typeparam>
-        /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
+        /// <returns>An ServiceProxy instance/>.</returns>
         public virtual TServiceInterface GetServiceProxy<TServiceInterface>(TimeSpan? timeout = null)
         {
             var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
@@ -100,7 +100,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// </summary>
         /// <param name="serviceName">Name of service </param>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <returns>An ServiceProxy instance of <see cref="TServiceInterface"/>.</returns>
+        /// <returns>An ServiceProxy instance"/>.</returns>
         public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
             var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxyProvider>>();
@@ -113,23 +113,22 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider;
         }
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, int? shutdownWaitTime)
+        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, int? shutdownWaitTime, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
         {
             if (isSecondary && basePortOverride == null)
                 throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
 
             var siloClusterMode = isSecondary ? SiloClusterMode.SecondaryNode : SiloClusterMode.PrimaryNode;
-            ServiceArguments arguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime);
+            ServiceArguments arguments = new ServiceArguments(startupMode, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime);
 
             if (basePortOverride != null)
                 return arguments;
 
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime);
-            var commonConfig = new BaseCommonConfig(serviceArguments);
+            var commonConfig = new BaseCommonConfig();
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
             var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
 
-            return new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime);
+            return new ServiceArguments(startupMode, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime);
         }
 
         public abstract void Dispose();

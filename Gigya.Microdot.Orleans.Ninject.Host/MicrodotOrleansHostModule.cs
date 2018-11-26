@@ -44,6 +44,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
             Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
+            Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
 
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();                                    
         }

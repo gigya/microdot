@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,15 +21,11 @@
 #endregion
 
 using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.ServiceDiscovery.Rewrite
+namespace Gigya.Microdot.Hosting.HttpService
 {
-    public interface INewServiceDiscovery
+    public interface IWarmup
     {
-        /// <summary>
-        /// Retrieves a reachable <see cref="Node"/>, or null if service is not deployed.
-        /// </summary>
-        Task<Node> GetNode();
+        void Warmup();
     }
 }

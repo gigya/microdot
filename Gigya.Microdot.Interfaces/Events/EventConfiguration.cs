@@ -21,6 +21,8 @@ namespace Gigya.Microdot.Interfaces.Events
         public bool ExcludeParams { get; set; } = false;
 
         public int ParamTruncateLength { get; set; } = 16 * 1024;
+
+        public int MinResponseTimeForLog { get; set; } = 500;
     }
 
 }

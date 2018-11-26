@@ -7,6 +7,7 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
@@ -121,7 +122,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public async Task ServiceInZoneScope()
         {
-            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "Zone";            
+            _configDic[$"Discovery.Services.{SERVICE_NAME}.Scope"] = "Zone";
+            _unitTestingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
             await GetFirstResult().ConfigureAwait(false);
             Assert.AreEqual($"{SERVICE_NAME}", _requestedConsulServiceName);
         }

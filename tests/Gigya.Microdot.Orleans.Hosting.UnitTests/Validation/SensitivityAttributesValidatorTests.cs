@@ -45,14 +45,21 @@ namespace Gigya.Common.Application.UnitTests.Validation
         private IValidator _serviceValidator;
         private IServiceInterfaceMapper _serviceInterfaceMapper;
         private Type[] _typesToValidate;
+        private TestingKernel<ConsoleLog> _unitTesting;
 
         [SetUp]
         public void Setup()
         {
             _serviceInterfaceMapper = Substitute.For<IServiceInterfaceMapper>();
             _serviceInterfaceMapper.ServiceInterfaceTypes.Returns(_ => _typesToValidate);
-            var unitTesting = new TestingKernel<ConsoleLog>(kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
-            _serviceValidator = unitTesting.Get<SensitivityAttributesValidator>();
+            _unitTesting = new TestingKernel<ConsoleLog>(kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
+            _serviceValidator = _unitTesting.Get<SensitivityAttributesValidator>();
+        }
+
+        [TearDown]
+        public void Teardown()
+        {
+            _unitTesting.Dispose();
         }
 
         [TestCase(typeof(TwoAttributeOnTheSameMethod))]

@@ -135,7 +135,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             CreateLoadBalancer();
             SetupDefaultNodes();
 
-            _loadBalancer.GetNode();
+            _loadBalancer.TryGetNode();
             var healthStatus = GetHealthStatus();
 
             healthStatus.IsHealthy.ShouldBeTrue();            
@@ -160,7 +160,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             CreateLoadBalancer();
             SetupNoNodes();
-            Should.Throw<EnvironmentException>(() =>_loadBalancer.GetNode());
+            Should.Throw<EnvironmentException>(() =>_loadBalancer.TryGetNode());
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupDefaultNodes();
             Get20Nodes();
             SetupNoNodes();
-            Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode());
+            Should.Throw<EnvironmentException>(() => _loadBalancer.TryGetNode());
             var healthStatus = GetHealthStatus();
             healthStatus.IsHealthy.ShouldBeFalse();            
         }
@@ -184,7 +184,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             var allNodes = new[] {Node1, Node2, Node3};
             SetupSourceNodes(allNodes);
 
-            var unreachableNode = await _loadBalancer.GetNode();
+            var unreachableNode = await _loadBalancer.TryGetNode();
             _loadBalancer.ReportUnreachable(unreachableNode);
 
             var nodes = await Get20Nodes();
@@ -204,7 +204,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             CreateLoadBalancer();
             SetupDefaultNodes();
 
-            var selectedNode = await _loadBalancer.GetNode();
+            var selectedNode = await _loadBalancer.TryGetNode();
             _loadBalancer.ReportUnreachable(selectedNode);            
 
             (await Get20Nodes()).ShouldNotContain(selectedNode);
@@ -240,7 +240,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             {
                 try
                 {
-                    var node = await _loadBalancer.GetNode();
+                    var node = await _loadBalancer.TryGetNode();
                     act(node);
                 }
                 catch
@@ -257,7 +257,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupDefaultNodes();
             _reachabilityCheck = (_,__) => throw new EnvironmentException("node is unreachable");
 
-            var selectedNode = await _loadBalancer.GetNode();
+            var selectedNode = await _loadBalancer.TryGetNode();
             _loadBalancer.ReportUnreachable(selectedNode);            
 
             (await Get20Nodes()).ShouldNotContain(selectedNode);
@@ -283,7 +283,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             await Run20times(node =>_loadBalancer.ReportUnreachable(node));
 
-            Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode());
+            Should.Throw<EnvironmentException>(() => _loadBalancer.TryGetNode());
             var healthStatus = GetHealthStatus();
             healthStatus.IsHealthy.ShouldBeFalse(healthStatus.Message);
             healthStatus.Message.ShouldContain("All 3 Nodes are unreachable");
@@ -300,7 +300,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             SetupSourceNodes(Node1,Node2,Node3);
             await Run20times(node => _loadBalancer.ReportUnreachable(node));
             
-            Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode());
+            Should.Throw<EnvironmentException>(() => _loadBalancer.TryGetNode());
 
             _reachabilityCheck = (_,__) => Task.FromResult(true);
 
@@ -335,7 +335,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             CreateLoadBalancer();
             var expectedException = new EnvironmentException("Error getting nodes");
             SetupErrorGettingNodes(expectedException);
-            var actualException = Should.Throw<EnvironmentException>(() => _loadBalancer.GetNode(), "No nodes were discovered for service");
+            var actualException = Should.Throw<EnvironmentException>(() => _loadBalancer.TryGetNode(), "No nodes were discovered for service");
             actualException.InnerException.ShouldBe(expectedException);
         }
 
@@ -361,7 +361,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         async Task<Node[]> GetNodes(int times)
         {
-            var tasks = Enumerable.Repeat(1, times).Select(_ => _loadBalancer.GetNode());
+            var tasks = Enumerable.Repeat(1, times).Select(_ => _loadBalancer.TryGetNode());
             await Task.WhenAll(tasks);
             return tasks.Select(t => t.Result).ToArray();
         }
@@ -374,7 +374,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private HealthCheckResult GetHealthStatus()
         {
             var healthMonitor = (FakeHealthMonitor)_kernel.Get<IHealthMonitor>();
-            return healthMonitor.Monitors[new DeploymentIdentifier(ServiceName,Env, _environment).ToString()].Invoke();
+            return healthMonitor.Monitors[ServiceName].Invoke();
         }
     }
 

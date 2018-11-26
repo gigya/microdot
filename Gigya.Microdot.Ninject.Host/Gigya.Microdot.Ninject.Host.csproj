@@ -57,6 +57,10 @@
     <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
+      <Project>{0e3a2422-dd99-4d75-a18c-96329a842742}</Project>
+      <Name>Gigya.Microdot.Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>

@@ -59,6 +59,7 @@
     <Compile Include="HttpService\Endpoints\HealthEndpoint.cs" />
     <Compile Include="HttpService\Endpoints\ICustomEndpoint.cs" />
     <Compile Include="Events\ServiceCallEvent.cs" />
+    <Compile Include="HttpService\IWarmup.cs" />
     <Compile Include="HttpService\ServerRequestPublisher.cs" />
     <Compile Include="HttpService\IdentityServiceInterfaceMapper.cs" />
     <Compile Include="HttpService\Endpoints\IHealthStatus.cs" />
@@ -77,6 +78,8 @@
     <Compile Include="HttpService\ServiceMethodResolver.cs" />
     <Compile Include="Metrics\MetricsConfiguration.cs" />
     <Compile Include="Metrics\MetricsInitializer.cs" />
+    <Compile Include="Service\ServiceWarmup.cs" />
+    <Compile Include="Validators\ConfigObjectTypeValidator.cs" />
     <Compile Include="Validators\SensitivityAttributesValidator.cs" />
     <Compile Include="Service\ServiceHostBase.cs" />
     <Compile Include="Service\HostExtensionMethods.cs" />
@@ -111,6 +114,9 @@
       <Name>Gigya.Microdot.Interfaces</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DataAnnotationsValidator\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -119,6 +125,32 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
+      <ItemGroup>
+        <Reference Include="Microsoft.CSharp">
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="System.Data">
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="System.Data.DataSetExtensions">
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="System.Xml">
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="System.Xml.Linq">
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="DataAnnotationsValidator">
+          <HintPath>..\packages\DataAnnotationsValidator\lib\net40\DataAnnotationsValidator.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
       <ItemGroup>

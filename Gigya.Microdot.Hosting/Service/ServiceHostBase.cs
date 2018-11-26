@@ -27,6 +27,7 @@ using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.SharedLogic;
 
 
@@ -53,11 +54,12 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         protected virtual string ServiceName => _serviceName;
 
+        protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
+
         /// <summary>
         /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
         /// </summary>
         protected virtual Version InfraVersion => null;
-
 
         protected ServiceHostBase()
         {
@@ -95,6 +97,10 @@ namespace Gigya.Microdot.Hosting.Service
                     Arguments = null; // Ensures OnWindowsServiceStart reloads parameters passed from Windows Service Manager.
 
                 ServiceBase.Run(WindowsService); // This calls OnWindowsServiceStart() on a different thread and blocks until the service stops.
+            }
+            else if (Arguments.ServiceStartupMode == ServiceStartupMode.VerifyConfigurations)
+            {
+                OnVerifyConfiguration();
             }
             else
             {
@@ -203,6 +209,54 @@ namespace Gigya.Microdot.Hosting.Service
         }
 
         /// <summary>
+        /// An extensibility point - this method is called in process of configuration objects verification.
+        /// </summary>
+        protected virtual void OnVerifyConfiguration()
+        {
+            if (ConfigurationVerificator == null)
+            {
+                Environment.ExitCode = 2;
+                Console.Error.WriteLine("ERROR: The configuration verification is not properly implemented. " +
+                                        "To implement you need to override OnVerifyConfiguration base method and call to base.");
+            }
+            else
+            {
+                try
+                {
+                    var results = ConfigurationVerificator.Verify();
+                    Environment.ExitCode = results.All(r => r.Success) ? 0 : 1;
+
+                    if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Color)
+                    {
+                        var (restoreFore, restoreBack) = (Console.ForegroundColor, Console.BackgroundColor);
+                        foreach (var result in results)
+                        {
+                            Console.BackgroundColor = result.Success ? ConsoleColor.Black : ConsoleColor.White;
+                            Console.ForegroundColor = result.Success ? ConsoleColor.White : ConsoleColor.Red;
+                            Console.WriteLine(result);
+                        }
+                        Console.BackgroundColor = restoreBack;
+                        Console.ForegroundColor = restoreFore;
+                    }
+                    else if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Standard)
+                    {
+                        foreach (var result in results)
+                            Console.WriteLine(result);
+                    }
+                    // Avoid extra messages in machine to machine mode or when disabled
+                    if (!(Console.IsOutputRedirected || Arguments.ConsoleOutputMode == ConsoleOutputMode.Disabled))
+                        Console.WriteLine("   ***   Shutting down [configuration verification mode].   ***   ");
+                }
+                catch (Exception ex)
+                {
+                    Environment.ExitCode = 3;
+                    Console.Error.WriteLine(ex.Message);
+                    Console.Error.WriteLine(ex.StackTrace);
+                }
+            }
+        }
+
+        /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
         /// </summary>
         public Task WaitForServiceStartedAsync()
@@ -296,19 +350,15 @@ namespace Gigya.Microdot.Hosting.Service
             if (disposed)
                 return;
 
+            disposed = true;
+
             SafeDispose(StopEvent);
             SafeDispose(WindowsService);
             SafeDispose(MonitoredShutdownProcess);
-
-            disposed = true;
         }
 
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() => Dispose(false);
 
         protected void SafeDispose(IDisposable disposable)
         {

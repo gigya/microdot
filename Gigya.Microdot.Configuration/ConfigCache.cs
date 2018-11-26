@@ -44,12 +44,11 @@ namespace Gigya.Microdot.Configuration
             Source = source;
             Log = log;
             ConfigChangedBroadcastBlock = new BroadcastBlock<ConfigItemsCollection>(null);
-
+            
             watcher.DataChanges.LinkTo(new ActionBlock<bool>(nothing => Refresh()));
 
             Refresh(false).GetAwaiter().GetResult();
         }
-
 
         private async Task Refresh(bool catchExceptions=true)
         {

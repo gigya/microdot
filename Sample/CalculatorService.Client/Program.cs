@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
@@ -26,7 +27,6 @@ namespace CalculatorService.Client
                 var kernel = new StandardKernel();
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
-
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;
                 Console.WriteLine($"Sum: {sum}");
