@@ -29,30 +29,36 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private TestingKernel<ConsoleLog> _unitTestingKernel;
         public const int Repeat = 1;
         private const string ServiceVersion = "1.0.0.0";
+        private Dictionary<string, ILoadBalancer> _loadBalancerByEnvironment;
+        private object _currentEnvironment;
+        private DiscoveryConfig _discoveryConfig;
+        private IMultiEnvironmentServiceDiscovery _serviceDiscovery;
 
         [SetUp]
         public async Task Setup()
         {
             IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
+            _discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
 
             Dictionary<string, string> configDic = new Dictionary<string, string>();
+            _currentEnvironment = "prod";
+            var environment = Substitute.For<IEnvironment>();
+            environment.DeploymentEnvironment.Returns(_ => _currentEnvironment);
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
+                k.Rebind<IEnvironment>().ToConstant(environment);
                 k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
+                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
             }, configDic);
 
+            _loadBalancerByEnvironment = new Dictionary<string, ILoadBalancer>();
+            _loadBalancerByEnvironment.Add("prod", new MasterLoadBalancer());
+            _loadBalancerByEnvironment.Add("staging", new StagingLoadBalancer());
+            _loadBalancerByEnvironment.Add("canary", new PreferredEnvironmentLoadBalancer());
             discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID)
-                .ReturnsForAnyArgs(c =>
-                {
-                    return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                        ? new MasterLoadBalancer()
-                        : c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "staging" ? (ILoadBalancer)new StagingLoadBalancer() : new PreferredEnvironmentLoadBalancer();
-                });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
+                .ReturnsForAnyArgs(c => _loadBalancerByEnvironment[c.Arg<DeploymentIdentifier>().DeploymentEnvironment]);
+            _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
+            TracingContext.SetUpStorage();
         }
 
         [TearDown]
@@ -66,8 +72,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             TracingContext.SetPreferredEnvironment("canary");
 
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-            var node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
             HealthCheckResult hResult = ((FakeHealthMonitor) _unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
@@ -77,10 +82,13 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public async Task GotServiceFromMasterEnvironment()
+        public async Task FallbackFromCurrentToMasterEnvironment()
         {
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-            var node = await serviceDiscovery.GetNode();
+            _currentEnvironment = "staging";
+            _loadBalancerByEnvironment["staging"] = ServiceUndeployedLoadBalancer();
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
+
+            var node = await _serviceDiscovery.GetNode();
 
             HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
@@ -92,52 +100,27 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GotServiceFromStagingEnvironment()
         {
-            IEnvironmentVariableProvider environmentMock = GetStagingEnvironmentMock(_unitTestingKernel);
+            _currentEnvironment = "staging";            
 
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-            var node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
             HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
 
             Assert.IsInstanceOf<StagingLoadBalancer>(node.LoadBalancer);
             Assert.AreEqual(node.Node.Hostname, "staging-host");
-
-            environmentMock.ClearSubstitute();
         }
 
         [Test]
-        public async Task FallbackToMasterEnvironment()
+        public async Task FallbackFromPreferredToMasterEnvironment()
         {
-            ILoadBalancer preferredEnvironmentLoadBalancerWithNoNodes = GetLoadBalancerMockWithoutNodes();
+            _loadBalancerByEnvironment["canary"] = ServiceUndeployedLoadBalancer();
 
-            IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
-            Dictionary<string, string> configDic = new Dictionary<string, string>();
-
-            _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
-            }, configDic);
-
-            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID)
-                .ReturnsForAnyArgs(c =>
-                {
-                    return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                        ? new MasterLoadBalancer()
-                        : preferredEnvironmentLoadBalancerWithNoNodes;
-                });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            discoveryConfig.EnvironmentFallbackEnabled = false;//In case of preferred envitonmet, the fallback shoulf be performed without any conditions
+            _discoveryConfig.EnvironmentFallbackEnabled = true; // Even for preferred environmet, fallback is performed only if fallback is enabled
 
             TracingContext.SetPreferredEnvironment("canary");
 
-            NodeAndLoadBalancer node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
             HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
@@ -147,217 +130,101 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         }
 
         [Test]
-        public async Task ServiceDiscoveryFlowOnlyMasterHasNode()
+        public async Task ServiceDiscoveryFlowOnlyMasterIsDeployed()
         {
-            IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
-            Dictionary<string, string> configDic = new Dictionary<string, string>();
-
-            TestingKernel<ConsoleLog> unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
-            }, configDic);
-
-            IEnvironmentVariableProvider environmentMock = GetStagingEnvironmentMock(unitTestingKernel);
-
-            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).ReturnsForAnyArgs(c =>
-            {
-                return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                    ? new MasterLoadBalancer()
-                    : GetLoadBalancerMockWithoutNodes();
-            });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            discoveryConfig.EnvironmentFallbackEnabled = true;
+            _currentEnvironment = "staging";
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
 
             TracingContext.SetPreferredEnvironment("canary");
+            _loadBalancerByEnvironment["staging"] = ServiceUndeployedLoadBalancer();
+            _loadBalancerByEnvironment["canary"] = ServiceUndeployedLoadBalancer();
 
-            NodeAndLoadBalancer node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
-            HealthCheckResult hResult = ((FakeHealthMonitor)unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
 
             Assert.IsInstanceOf<MasterLoadBalancer>(node.LoadBalancer);
-            Assert.AreEqual(node.Node.Hostname, "prod-host");
-
-            environmentMock.ClearSubstitute();
+            Assert.AreEqual(node.Node.Hostname, "prod-host");            
         }
 
         [Test]
-        public async Task ServiceDiscoveryFlowOriginatingAndMasterHaveNode()
+        public async Task ServiceDiscoveryFlowOriginatingAndMasterDeployed()
         {
-            IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
-            Dictionary<string, string> configDic = new Dictionary<string, string>();
+            _currentEnvironment = "staging";
+            _loadBalancerByEnvironment["canary"] = ServiceUndeployedLoadBalancer();
 
-            TestingKernel<ConsoleLog> unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
-            }, configDic);
-
-            IEnvironmentVariableProvider environmentMock = GetStagingEnvironmentMock(unitTestingKernel);
-
-            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).ReturnsForAnyArgs(c =>
-            {
-                return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                    ? new MasterLoadBalancer()
-                    : c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "staging" ? new StagingLoadBalancer() : GetLoadBalancerMockWithoutNodes();
-            });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
 
             TracingContext.SetPreferredEnvironment("canary");
 
-            NodeAndLoadBalancer node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
-            HealthCheckResult hResult = ((FakeHealthMonitor)unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
 
             Assert.IsInstanceOf<StagingLoadBalancer>(node.LoadBalancer);
             Assert.AreEqual(node.Node.Hostname, "staging-host");
-
-            environmentMock.ClearSubstitute();
         }
 
         [Test]
-        public async Task ServiceDiscoveryFlowAllHaveNodewithoutOverrides()
+        public async Task ServiceDiscoveryFlowAllDeployedwithoutOverrides()
         {
-            IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
-            Dictionary<string, string> configDic = new Dictionary<string, string>();
+            _currentEnvironment = "staging";
 
-            TestingKernel<ConsoleLog> unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
-            }, configDic);
-
-            IEnvironmentVariableProvider environmentMock = GetStagingEnvironmentMock(unitTestingKernel);
-
-            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).ReturnsForAnyArgs(c =>
-            {
-                return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                    ? new MasterLoadBalancer()
-                    : c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "staging" ? (ILoadBalancer)new StagingLoadBalancer() : new PreferredEnvironmentLoadBalancer();
-            });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
 
             TracingContext.SetPreferredEnvironment("canary");
 
-            NodeAndLoadBalancer node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
-            HealthCheckResult hResult = ((FakeHealthMonitor)unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
 
             Assert.IsInstanceOf<PreferredEnvironmentLoadBalancer>(node.LoadBalancer);
             Assert.AreEqual(node.Node.Hostname, "preferred-host");
-
-            environmentMock.ClearSubstitute();
         }
 
         [Test]
-        public async Task ServiceDiscoveryFlowAllHaveNodewithOverrides()
+        public async Task ServiceDiscoveryFlowAllDeployedwithOverrides()
         {
-            IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
-            Dictionary<string, string> configDic = new Dictionary<string, string>();
+            _currentEnvironment = "staging";
 
-            TestingKernel<ConsoleLog> unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
-            }, configDic);
-
-            IEnvironmentVariableProvider environmentMock = GetStagingEnvironmentMock(unitTestingKernel);
-
-            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).ReturnsForAnyArgs(c =>
-            {
-                return c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "prod"
-                    ? new MasterLoadBalancer()
-                    : c.Arg<DeploymentIdentifier>().DeploymentEnvironment == "staging" ? (ILoadBalancer)new StagingLoadBalancer() : new PreferredEnvironmentLoadBalancer();
-            });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
 
             TracingContext.SetPreferredEnvironment("canary");
             TracingContext.SetHostOverride(ServiceName, "override-host");
 
-            NodeAndLoadBalancer node = await serviceDiscovery.GetNode();
+            var node = await _serviceDiscovery.GetNode();
 
-            HealthCheckResult hResult = ((FakeHealthMonitor)unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
+
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsTrue(hResult.IsHealthy);
 
             Assert.IsNull(node.LoadBalancer);
             Assert.AreEqual(node.Node.Hostname, "override-host");
-
-            environmentMock.ClearSubstitute();
         }
 
         [Test]
-        public void ServiceDiscoveryFlowNoNodes()
+        public void ServiceDiscoveryFlowNoServiceDeployed()
         {
-            IDiscovery discovery = Substitute.For<IDiscovery>();
-            DiscoveryConfig discoveryConfig = null;
-            Dictionary<string, string> configDic = new Dictionary<string, string>();
+            _currentEnvironment = "staging";
 
-            TestingKernel<ConsoleLog> unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
-            {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
-                k.Rebind<IDiscovery>().ToConstant(discovery);
-                k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => discoveryConfig);
-            }, configDic);
+            _loadBalancerByEnvironment["prod"] = ServiceUndeployedLoadBalancer();
+            _loadBalancerByEnvironment["staging"] = ServiceUndeployedLoadBalancer();
+            _loadBalancerByEnvironment["canary"] = ServiceUndeployedLoadBalancer();
 
-            IEnvironmentVariableProvider environmentMock = GetStagingEnvironmentMock(unitTestingKernel);
-
-            discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID).ReturnsForAnyArgs(c =>
-                {
-                    return GetLoadBalancerMockWithoutNodes();
-                });
-
-            discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
-            IMultiEnvironmentServiceDiscovery serviceDiscovery = unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
 
             TracingContext.SetPreferredEnvironment("canary");
 
-            serviceDiscovery.GetNode().ShouldThrow<ServiceUnreachableException>();
+            _serviceDiscovery.GetNode().ShouldThrow<ServiceUnreachableException>();
 
-            HealthCheckResult hResult = ((FakeHealthMonitor)unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
+            HealthCheckResult hResult = ((FakeHealthMonitor)_unitTestingKernel.Get<IHealthMonitor>()).Monitors[ServiceName]();
             Assert.IsFalse(hResult.IsHealthy);
         }
 
-        private IEnvironmentVariableProvider GetStagingEnvironmentMock(TestingKernel<ConsoleLog> kernel)
-        {
-            IEnvironmentVariableProvider environmentMock = Substitute.For<IEnvironmentVariableProvider>();
-            environmentMock.GetEnvironmentVariable("ENV").Returns("staging");
-            environmentMock.GetEnvironmentVariable("ZONE").Returns("ZONE");
-            environmentMock.GetEnvironmentVariable("REGION").Returns("REGION");
-            environmentMock.GetEnvironmentVariable("CONSUL").Returns("CONSUL");
-
-            kernel.Rebind<IEnvironmentVariableProvider>().ToConstant(environmentMock);
-            return environmentMock;
-        }
-
-        private static ILoadBalancer GetLoadBalancerMockWithoutNodes()
+        private static ILoadBalancer ServiceUndeployedLoadBalancer()
         {
             ILoadBalancer environmentLoadBalancerWithNoNodes = Substitute.For<ILoadBalancer>();
             environmentLoadBalancerWithNoNodes.TryGetNode().Returns(Task.FromResult<Node>(null));
