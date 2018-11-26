@@ -31,6 +31,7 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {
+    [Serializable]
     public abstract class ExtendableJson
     {
         /// <summary>
