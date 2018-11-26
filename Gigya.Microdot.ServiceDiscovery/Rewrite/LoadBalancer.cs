@@ -74,7 +74,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<string,AggregatingHealthStatus> getAggregatingHealthStatus,
             Func<DiscoveryConfig> getConfig,
             IDateTime dateTime, 
-            ILog log)
+            ILog log,
+            IEnvironment environment)
         {
             DeploymentIdentifier = deploymentIdentifier;
             Discovery = discovery;
@@ -86,7 +87,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _lastUsageTime = DateTime.UtcNow;
             Log = log;
             var aggregatingHealthStatus = getAggregatingHealthStatus(deploymentIdentifier.ServiceName);
-            _healthCheck = aggregatingHealthStatus.Register(deploymentIdentifier.DeploymentEnvironment, CheckHealth);            
+            string healthCheckEntryName = (deploymentIdentifier.DeploymentEnvironment ?? "prod") + deploymentIdentifier.Zone == environment.Zone ? "" : $" ({deploymentIdentifier.Zone})";
+            _healthCheck = aggregatingHealthStatus.Register(healthCheckEntryName, CheckHealth);
         }
 
 
@@ -202,7 +204,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private HealthMessage GetHealthStatus()
         {
             if (_isUndeployed)
-                return new HealthMessage(Health.Healthy, "Service is not deployed", suppressMessage: true);
+                return new HealthMessage(Health.Healthy, message: null, suppressMessage: true); // We don't want a message to show up since the service is not deployed
 
             if (_nodesMonitoringState.Length == 0)
                 return new HealthMessage(Health.Unhealthy, $"No nodes were discovered");
@@ -223,7 +225,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var supressDuration = GetConfig().Services[DeploymentIdentifier.ServiceName].SuppressHealthCheckAfterServiceUnused;
             if (DateTimeOffset.UtcNow.Subtract(_lastUsageTime) > supressDuration)
-                return new HealthMessage(Health.Info, $"Service not in use for more than {supressDuration.TotalSeconds} seconds");
+                return new HealthMessage(Health.Info, message: null, suppressMessage: true); // We don't want a message to show up since the service is not in use
 
             return _healthStatus;
         }

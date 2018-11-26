@@ -313,7 +313,6 @@ namespace Gigya.Microdot.ServiceProxy
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
-            request.Overrides = TracingContext.TryGetOverrides();
             request.TracingData = new TracingData
             {
                 HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
@@ -325,7 +324,6 @@ namespace Gigya.Microdot.ServiceProxy
                 AbandonRequestBy = TracingContext.AbandonRequestBy
             };
             PrepareRequest?.Invoke(request);
-            var requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
             while (true)
             {
@@ -369,14 +367,11 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
                     clientCallEvent.TargetPort = effectivePort.Value;
 
-                    string context = requestContent;
-                    if (nodeAndLoadBalancer.PreferredEnvironment != null)
-                    {
-                        TracingContext.SetPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment);
-                        context = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
-                    }
+                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
+                        ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
+                    string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
-                    var httpContent = new StringContent(context, Encoding.UTF8, "application/json");
+                    var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
                     httpContent.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();

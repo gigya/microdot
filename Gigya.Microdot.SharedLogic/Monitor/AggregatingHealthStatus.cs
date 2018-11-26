@@ -58,10 +58,10 @@ namespace Gigya.Microdot.SharedLogic.Monitor
                 results
                 .Where(r => r.Result.SuppressMessage==false)
                 .Select(r => 
-                          (r.Result.Health == Health.Healthy ? "[OK]" : 
-                          r.Result.Health==Health.Unhealthy ? "[Unhealthy]" 
+                          (r.Result.Health == Health.Healthy ? "[OK] " : 
+                          r.Result.Health==Health.Unhealthy ? "[Unhealthy] " 
                           : "") 
-                          + $" {r.Name}: {r.Result.Message}"));
+                          + $"{r.Name}: {r.Result.Message}"));
 
             return allHealthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
         }

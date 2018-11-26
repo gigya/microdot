@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 		/// an exception describing a Consul issue. Updated atomically. Copy reference before using!</summary>
 		private (Node[] Nodes, EnvironmentException LastError) _nodesOrError = (null, null);
 
-		private HealthMessage _healthStatus = new HealthMessage(Health.Info, "Initializing...", suppressMessage: true);
+		private HealthMessage _healthStatus = new HealthMessage(Health.Info, message: null, suppressMessage: true);
         private readonly IDisposable _healthCheck;
 
 		public ConsulNodeSource(

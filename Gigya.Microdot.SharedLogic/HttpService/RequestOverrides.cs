@@ -36,6 +36,11 @@ namespace Gigya.Microdot.SharedLogic.HttpService
         [MinLength(1)]
         [JsonProperty]
         public string PreferredEnvironment { get; set; }
+
+        public RequestOverrides ShallowCloneWithDifferentPreferredEnvironment(string newPreferredEnvironment)
+        {
+            return new RequestOverrides { AdditionalProperties = AdditionalProperties, Hosts = Hosts, PreferredEnvironment = newPreferredEnvironment };
+        }
     }
 
     [Serializable]

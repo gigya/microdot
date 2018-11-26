@@ -63,7 +63,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 IDiscovery discovery, Func<DiscoveryConfig> getDiscoveryConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus,
                 IDateTime dateTime)
         {
-            _healthStatus = new HealthMessage(Health.Info, "Initializing...", suppressMessage: true);
+            _healthStatus = new HealthMessage(Health.Info, message: null, suppressMessage: true);
             ServiceName = serviceName;
             Environment = environment;
             ReachabilityCheck = reachabilityCheck;
@@ -80,39 +80,44 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             _lastUsageTime = DateTime.UtcNow;
             NodeAndLoadBalancer nodeAndLoadBalancer = null;
+            string preferredEnvironment = TracingContext.GetPreferredEnvironment();
 
             // 1. Use explicit host override if provided in request
+            //    TBD: Theoretically if we only ever call a service through host overrides we might not have a health check for the service at all (though it is in use)
             var hostOverride = TracingContext.GetHostOverride(ServiceName);
             if (hostOverride != null)
-                return new NodeAndLoadBalancer { Node = new Node(hostOverride.Hostname, hostOverride.Port), LoadBalancer = null };
+                return new NodeAndLoadBalancer {
+                    Node = new Node(hostOverride.Hostname, hostOverride.Port),
+                    LoadBalancer = null,
+                    PreferredEnvironment = preferredEnvironment ?? Environment.DeploymentEnvironment,
+                };
 
             // 2. Otherwise, use preferred environment if provided in request
-            string preferredEnvironment = TracingContext.GetPreferredEnvironment();
-            if (preferredEnvironment != null)
-                if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(preferredEnvironment))!=null)
-                    return nodeAndLoadBalancer;
+            if (preferredEnvironment != null && (nodeAndLoadBalancer = await GetNodeAndLoadBalancer(preferredEnvironment, preferredEnvironment)) != null)
+                return nodeAndLoadBalancer;
 
             // 3. Otherwise, try use current environment
-            if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(Environment.DeploymentEnvironment))!=null)
+            if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(Environment.DeploymentEnvironment, preferredEnvironment)) != null)
             {
-                _healthStatus = new HealthMessage(Health.Healthy, "Service is deployed on current environment", suppressMessage: true);
+                _healthStatus = new HealthMessage(Health.Healthy, message: null, suppressMessage: true); // No need for a health message since the load balancer we're returning already provides one
                 return nodeAndLoadBalancer;
             }
 
-            // 4. Service not deployed, fail if should not fallback to prod
+            // 4. We're in prod env and service is not deployed, no fallback possible
             if (Environment.DeploymentEnvironment == MASTER_ENVIRONMENT)
             {
                 _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed");
                 throw ServiceNotDeployedException();
             }
 
+            // 5. We're not in prod, but fallback to prod is disabled
             if (GetDiscoveryConfig().EnvironmentFallbackEnabled == false)
             {
-                _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed, fallback to prod enabled but service not deployed in prod either");
+                _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed (and fallback to prod disabled)");
                 throw ServiceNotDeployedException();
             }
 
-            // 4. Otherwise, try fallback to prod
+            // 6. Otherwise, try fallback to prod
             if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(MASTER_ENVIRONMENT, preferredEnvironment ?? Environment.DeploymentEnvironment)) != null)
             {
                 _healthStatus = new HealthMessage(Health.Healthy, "Service not deployed, falling back to prod");
@@ -128,7 +133,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return new ServiceUnreachableException("Service is not deployed", unencrypted: new Tags { { "serviceName", ServiceName }, { "environment", Environment.DeploymentEnvironment } });
         }
 
-        private async Task<NodeAndLoadBalancer> GetNodeAndLoadBalancer(string environment, string preferredEnvironment = null)
+        private async Task<NodeAndLoadBalancer> GetNodeAndLoadBalancer(string environment, string preferredEnvironment)
         {
             var loadBalancer = _loadBalancers.GetOrAdd(environment, p => {
                 var deploymentId = new DeploymentIdentifier(ServiceName, environment, Environment.Zone);
@@ -146,7 +151,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             var supressDuration = GetDiscoveryConfig().Services[ServiceName].SuppressHealthCheckAfterServiceUnused;
             if (DateTime.UtcNow.Subtract(_lastUsageTime) > supressDuration)
-                return new HealthMessage(Health.Info, "Service not in use recently", suppressMessage: true);
+                return new HealthMessage(Health.Info, $"Service not in use for more than {supressDuration.TotalSeconds} seconds");
 
             return _healthStatus;
         }
