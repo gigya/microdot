@@ -22,24 +22,35 @@
 
 using System;
 using System.Collections.Generic;
-using Gigya.Microdot.SharedLogic.Rewrite;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {
     [Serializable]
-    public class RequestOverrides
+    public class RequestOverrides : ExtendableJson
     {
         [JsonProperty]
         public List<HostOverride> Hosts { get; set; }
+
+        [MinLength(1)]
+        [JsonProperty]
+        public string PreferredEnvironment { get; set; }
+
+        public RequestOverrides ShallowCloneWithDifferentPreferredEnvironment(string newPreferredEnvironment)
+        {
+            return new RequestOverrides { AdditionalProperties = AdditionalProperties, Hosts = Hosts, PreferredEnvironment = newPreferredEnvironment };
+        }
     }
 
     [Serializable]
-    public class HostOverride 
+    public class HostOverride : ExtendableJson
     {
+        [JsonRequired]
         [JsonProperty]
         public string ServiceName { get; set; }
 
+        [JsonRequired]
         [JsonProperty]
         public string Hostname { get; set; }
 

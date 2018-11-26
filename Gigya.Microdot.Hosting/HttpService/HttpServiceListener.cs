@@ -24,6 +24,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -100,6 +101,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
+        private DataAnnotationsValidator.DataAnnotationsValidator _validator = new DataAnnotationsValidator.DataAnnotationsValidator();
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
@@ -414,6 +416,13 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 _failureCounter.Increment("EmptyRequest");
                 throw new RequestException("Only requests with content are supported.");
+            }
+
+            var errors = new List<ValidationResult>();
+            if (!_validator.TryValidateObjectRecursive(context.Request, errors))
+            {
+                _failureCounter.Increment("InvalidRequestFormat");
+                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
             }
         }
 

@@ -62,8 +62,27 @@ namespace Gigya.Microdot.SharedLogic.Events
                 ?.SingleOrDefault(o => o.ServiceName == serviceName);
         }
 
+        public static string GetPreferredEnvironment()
+        {
+            return TryGetValue<RequestOverrides>(OVERRIDES_KEY)?.PreferredEnvironment;
+        }
 
-        public static void SetHostOverride(string serviceName, string host,int? port=null)
+        public static void SetPreferredEnvironment(string preferredEnvironment)
+        {
+            SetUpStorage();
+
+            RequestOverrides overrides = TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+
+            if (overrides == null)
+            {
+                overrides = new RequestOverrides();
+                SetValue(OVERRIDES_KEY, overrides);
+            }
+
+            overrides.PreferredEnvironment = preferredEnvironment;
+        }
+
+        public static void SetHostOverride(string serviceName, string host, int? port=null)
         {
             SetUpStorage();
 
@@ -88,7 +107,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             hostOverride.Hostname = host;
             hostOverride.Port = port;
-
         }
 
 

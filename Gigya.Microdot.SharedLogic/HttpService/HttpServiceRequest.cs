@@ -27,12 +27,23 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Gigya.Microdot.SharedLogic.Events;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {
-	public class HttpServiceRequest
+    /// <remarks>If you add anything here, note that derived classes are sometimes cloned; new fields should be cloned too.</remarks>
+    [Serializable]
+    public abstract class ExtendableJson
+    {
+        /// <summary>
+        /// This property de/serializes automatically
+        /// See <see cref="https://www.newtonsoft.com/json/help/html/T_Newtonsoft_Json_JsonExtensionDataAttribute.htm"/>
+        /// </summary>
+        [JsonExtensionData]
+        public Dictionary<string, object> AdditionalProperties;
+    }
+
+	public class HttpServiceRequest : ExtendableJson
     {
         public const string ProtocolVersion = "1";
         
@@ -47,7 +58,7 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 
         [JsonProperty(Order = 3)]
 		public InvocationTarget Target { get; set; }
-
+        
         /// <summary>
         /// Constructor for deserialization. Should not set any property values.
         /// </summary>
@@ -101,8 +112,8 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 		}
 	}
 
-    public class InvocationTarget
-	{
+    public class InvocationTarget : ExtendableJson
+    {
 		public string TypeName { get; set; }
 		public string MethodName { get; set; }
         
@@ -183,7 +194,7 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 
 	}
 
-    public class TracingData
+    public class TracingData : ExtendableJson
     {
         /// <summary>This is the root request ID that's passed to all grains and services in the request lifetime. It is
         /// used to tie together all events and log messages issued during the processing of a request, across all

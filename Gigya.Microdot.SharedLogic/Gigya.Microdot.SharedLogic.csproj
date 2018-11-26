@@ -66,6 +66,7 @@
     <Compile Include="Measurement\Workload\WorkloadMetrics.cs" />
     <Compile Include="Measurement\Workload\WorkloadMetricsConfig.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
+    <Compile Include="Monitor\HealthCheckMessage.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
     <Compile Include="ServcieShutdownSource.cs" />

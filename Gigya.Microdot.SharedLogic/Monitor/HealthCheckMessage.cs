@@ -20,29 +20,46 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
-using Gigya.Microdot.ServiceDiscovery.HostManagement;
-using Gigya.Microdot.SharedLogic.Rewrite;
-
-namespace Gigya.Microdot.ServiceDiscovery.Rewrite
+namespace Gigya.Microdot.SharedLogic.Monitor
 {
+    /// <summary>Represents the health state of a <see cref="HealthMessage"/></summary>
+    public enum Health
+    {
+        // the order of this enum affects the order messages will appear (unhealthy first)
+
+        /// <summary>Message is not healthy</summary>
+        Unhealthy = 0, 
+        /// <summary>Message is healthy</summary>
+        Healthy = 1,
+        /// <summary>Message is only an informative message, and does not indicate whether it is healthy or not</summary>
+        Info = 3
+    };
+
     /// <summary>
-    /// Returns a one healthy-known node each time it is called. 
-    /// Executes balancing between a list of nodes it gets from a <see cref="INodeSource"/>.
+    /// Contains a message about the healthiness of a component
     /// </summary>
-    public interface ILoadBalancer: IDisposable
+    public class HealthMessage
     {
         /// <summary>
-        /// Retrieves a node which is considered to be reachable.
-        /// Returns null if the service is not implemented in the requested environment
-        /// Throws <see cref="ServiceUnreachableException"/> if all nodes of the service are unreachable.
+        /// Healthiness of this message: Is it healthy or not?
         /// </summary>
-        Task<Node> TryGetNode();
+        public Health Health { get; }
+        
+        /// <summary>
+        /// Message for display
+        /// </summary>
+        public string Message { get; }
 
         /// <summary>
-        /// Report that a node was not responsive
+        /// Whether message should be suppressed and not displayed with all other messages
         /// </summary>
-        void ReportUnreachable(Node node, Exception ex = null);
+        public bool SuppressMessage { get; }
+
+        public HealthMessage(Health health, string message, bool suppressMessage = false)
+        {
+            Health = health;
+            Message = message;
+            SuppressMessage = suppressMessage;
+        }
     }
 }

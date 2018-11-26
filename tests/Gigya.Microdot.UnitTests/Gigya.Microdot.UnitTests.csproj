@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdditionalDataSerializationTests.cs" />
     <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="Caching\AsyncMemoizerRevokesTests.cs" />
     <Compile Include="Caching\AsyncMemoizerTests.cs" />
@@ -73,8 +74,9 @@
     <Compile Include="Discovery\Rewrite\ConsulNodeSourceTests.cs" />
     <Compile Include="Discovery\Rewrite\ConsulNodeSourceFactoryTests.cs" />
     <Compile Include="Discovery\Rewrite\LoadBalancerTests.cs" />
-    <Compile Include="Discovery\Rewrite\NewServiceDiscoveryConfigChangeTest.cs" />
-    <Compile Include="Discovery\Rewrite\NewConsulDiscoveryMasterFallBackTest.cs" />
+    <Compile Include="Discovery\Rewrite\MultiEnvironmentServiceDiscoveryConfigChangeTest.cs" />
+    <Compile Include="Discovery\Rewrite\MultiEnvironmentConsulDiscoveryMasterFallBackTest.cs" />
+    <Compile Include="Discovery\Rewrite\MultiEnvironmentServiceDiscoveryPreferredEnvironmentTests.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
     <Compile Include="Events\EventSerializationTests.cs" />
     <Compile Include="Monitor\HealthStatusTests.cs" />
