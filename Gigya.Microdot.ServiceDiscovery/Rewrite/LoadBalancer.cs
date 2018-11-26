@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
@@ -49,12 +50,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ILog Log { get; }
         private DeploymentIdentifier DeploymentIdentifier { get; }
         private Exception LastException { get; set; }
+        private Func<DiscoveryConfig> GetConfig { get; }
 
         private Node[] _lastDiscoveredNodes = new Node[0];
         private Node[] _reachableNodes;
         private NodeMonitoringState[] _nodesMonitoringState = new NodeMonitoringState[0];
-        private readonly ComponentHealthMonitor _healthMonitor;
-        private HealthCheckResult _healthStatus = HealthCheckResult.Healthy("Initializing...");
+        private readonly IDisposable _healthCheck;
+        private HealthMessage _healthStatus = new HealthMessage(Health.Info, "Initializing...", suppressMessage: true);
+        private DateTime _lastUsageTime;
 
         int _disposed = 0;
         private readonly object _lock = new object();
@@ -68,7 +71,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ReachabilityCheck reachabilityCheck,
             TrafficRoutingStrategy trafficRoutingStrategy,
             Func<Node, DeploymentIdentifier, ReachabilityCheck, Action, NodeMonitoringState> createNodeMonitoringState,
-            IHealthMonitor healthMonitor,
+            Func<string,AggregatingHealthStatus> getAggregatingHealthStatus,
+            Func<DiscoveryConfig> getConfig,
             IDateTime dateTime, 
             ILog log)
         {
@@ -77,15 +81,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             ReachabilityCheck = reachabilityCheck;
             TrafficRoutingStrategy = trafficRoutingStrategy;
             CreateNodeMonitoringState = createNodeMonitoringState;
+            GetConfig = getConfig;
             DateTime = dateTime;
-            Log = log;            
-            _healthMonitor = healthMonitor.SetHealthFunction(DeploymentIdentifier.ToString(), ()=>_healthStatus);
+            _lastUsageTime = DateTime.UtcNow;
+            Log = log;
+            var aggregatingHealthStatus = getAggregatingHealthStatus(deploymentIdentifier.ServiceName);
+            _healthCheck = aggregatingHealthStatus.Register(deploymentIdentifier.DeploymentEnvironment, CheckHealth);            
         }
 
 
 
         public async Task<Node> TryGetNode()
         {
+            _lastUsageTime = System.DateTime.UtcNow;
             await LoadNodesFromSource().ConfigureAwait(false);
             if (_isUndeployed)
                 return null;
@@ -191,26 +199,34 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        private HealthCheckResult GetHealthStatus()
+        private HealthMessage GetHealthStatus()
         {
             if (_isUndeployed)
-                return HealthCheckResult.Healthy("Service is not deployed");
+                return new HealthMessage(Health.Healthy, "Service is not deployed", suppressMessage: true);
 
             if (_nodesMonitoringState.Length == 0)
-                return HealthCheckResult.Unhealthy($"No nodes were discovered");
+                return new HealthMessage(Health.Unhealthy, $"No nodes were discovered");
 
             if (_reachableNodes.Length==_nodesMonitoringState.Length)
-                return HealthCheckResult.Healthy($"All {_nodesMonitoringState.Length} nodes are reachable");
+                return new HealthMessage(Health.Healthy, $"All {_nodesMonitoringState.Length} nodes are reachable");
 
             var unreachableNodes = _nodesMonitoringState.Where(n => !_reachableNodes.Contains(n.Node));
             string message = string.Join("\r\n", unreachableNodes.Select(n=> $"    {n.Node.ToString()} - {n.LastException?.Message}"));
             
             if (_reachableNodes.Length==0)
-                return HealthCheckResult.Unhealthy($"All {_nodesMonitoringState.Length} nodes are unreachable\r\n{message}");
+                return new HealthMessage(Health.Unhealthy, $"All {_nodesMonitoringState.Length} nodes are unreachable\r\n{message}");
             else     
-                return HealthCheckResult.Healthy($"{_reachableNodes.Length} nodes out of {_nodesMonitoringState.Length} are reachable. Unreachable nodes:\r\n{message}");
+                return new HealthMessage(Health.Healthy, $"{_reachableNodes.Length}/{_nodesMonitoringState.Length} nodes are reachable. Unreachable nodes:\r\n{message}");
         }
 
+        private HealthMessage CheckHealth()
+        {
+            var supressDuration = GetConfig().Services[DeploymentIdentifier.ServiceName].SuppressHealthCheckAfterServiceUnused;
+            if (DateTimeOffset.UtcNow.Subtract(_lastUsageTime) > supressDuration)
+                return new HealthMessage(Health.Info, $"Service not in use for more than {supressDuration.TotalSeconds} seconds");
+
+            return _healthStatus;
+        }
 
 
         private void StopMonitoringNodes(IEnumerable<NodeMonitoringState> monitoredNodes)
@@ -237,7 +253,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             StopMonitoringNodes(_nodesMonitoringState);
             
-            _healthMonitor.Dispose();            
+            _healthCheck.Dispose();            
         }
 
 

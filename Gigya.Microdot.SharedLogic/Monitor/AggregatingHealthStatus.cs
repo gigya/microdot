@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Metrics;
@@ -50,17 +49,39 @@ namespace Gigya.Microdot.SharedLogic.Monitor
             // and in the worse case it may cause a dead-lock, if the function is locking something else that we depend on 
             var results = checks                
                 .Select(c => new { c.Name, Result = c.CheckFunc() })
-                .OrderBy(c => c.Result.IsHealthy)
+                .OrderBy(c => c.Result.Health)
                 .ThenBy(c => c.Name)
                 .ToArray();
 
-            bool healthy = results.All(r => r.Result.IsHealthy);
-            string message = string.Join(Environment.NewLine, results.Select(r => $"{(r.Result.IsHealthy ? "[OK]" : "[Unhealthy]")} {r.Name} - {r.Result.Message}"));
+            bool allHealthy = results.All(r => r.Result.Health != Health.Unhealthy);
+            string message = string.Join(Environment.NewLine, 
+                results
+                .Where(r => r.Result.SuppressMessage==false)
+                .Select(r => 
+                          (r.Result.Health == Health.Healthy ? "[OK]" : 
+                          r.Result.Health==Health.Unhealthy ? "[Unhealthy]" 
+                          : "") 
+                          + $" {r.Name}: {r.Result.Message}"));
 
-            return healthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
+            return allHealthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
         }
 
+        [Obsolete("Please use method Register(string,Func<HealthMessage>) instead")]
         public IDisposable RegisterCheck(string name, Func<HealthCheckResult> checkFunc)
+        {
+            lock (_locker)
+            {
+                var healthCheck = new DisposableHealthCheck(name, ()=>
+                {
+                    var result = checkFunc();
+                    return new HealthMessage(result.IsHealthy? Health.Healthy:Health.Unhealthy, result.Message);
+                }, RemoveCheck);
+                _checks.Add(healthCheck);
+                return healthCheck;
+            }
+        }
+
+        public IDisposable Register(string name, Func<HealthMessage> checkFunc)
         {
             lock (_locker)
             {
@@ -82,9 +103,9 @@ namespace Gigya.Microdot.SharedLogic.Monitor
         {
             private readonly Action<DisposableHealthCheck> _disposed;
             public string Name { get; }
-            public Func<HealthCheckResult> CheckFunc { get; private set; }
+            public Func<HealthMessage> CheckFunc { get; private set; }
 
-            public DisposableHealthCheck(string name, Func<HealthCheckResult> checkFunc, Action<DisposableHealthCheck> whenDisposed)
+            public DisposableHealthCheck(string name, Func<HealthMessage> checkFunc, Action<DisposableHealthCheck> whenDisposed)
             {
                 _disposed = whenDisposed;
                 Name = name;

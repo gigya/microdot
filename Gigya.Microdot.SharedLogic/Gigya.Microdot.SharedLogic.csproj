@@ -58,6 +58,7 @@
     <Compile Include="HttpService\ServiceReachabilityStatus.cs" />
     <Compile Include="Logging\LogBase.cs" />
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
+    <Compile Include="Monitor\HealthCheckMessage.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
     <Compile Include="PortOffsets.cs" />
     <Compile Include="ServcieShutdownSource.cs" />
