@@ -22,6 +22,7 @@
 
 using System;
 using System.Linq;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -42,23 +43,22 @@ namespace Gigya.Microdot.Configuration
         private const string ENV_FILEPATH = "{0}/gigya/environmentVariables.json";
         private readonly string locEnvFilePath;
 
-        private IEnvironment Environment { get; }
+        private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
         private IFileSystem FileSystem { get; }
-
 
         /// <summary>
         /// Parses the content of environment variables file content.
         /// </summary>        
-        public EnvironmentVariablesFileReader(IFileSystem fileSystem, IEnvironment environment)
+        public EnvironmentVariablesFileReader(IFileSystem fileSystem, IEnvironmentVariableProvider environmentVariableProvider)
         {
-            locEnvFilePath = environment.GetEnvironmentVariable(GIGYA_ENV_VARS_FILE);
+            locEnvFilePath = environmentVariableProvider.GetEnvironmentVariable(GIGYA_ENV_VARS_FILE);
 
             if (string.IsNullOrEmpty(locEnvFilePath))
             {
-                locEnvFilePath = string.Format(ENV_FILEPATH, environment.PlatformSpecificPathPrefix);
+                locEnvFilePath = string.Format(ENV_FILEPATH, environmentVariableProvider.PlatformSpecificPathPrefix);
             }
-           
-            Environment = environment;
+
+            EnvironmentVariableProvider = environmentVariableProvider;
             FileSystem = fileSystem;
         }
 
@@ -92,7 +92,7 @@ namespace Gigya.Microdot.Configuration
 
             foreach (var property in properties)
             {
-                 Environment.SetEnvironmentVariableForProcess(property.Name, property.Value.Value<string>());
+                 EnvironmentVariableProvider.SetEnvironmentVariableForProcess(property.Name, property.Value.Value<string>());
             }
         }
     }

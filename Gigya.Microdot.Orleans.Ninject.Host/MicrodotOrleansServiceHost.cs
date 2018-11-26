@@ -22,18 +22,19 @@
 
 
 using System;
-using System.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
@@ -74,7 +75,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
             PreInitialize(Kernel);
+
             OnInitilize(Kernel);
+
+            Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
             SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
@@ -89,9 +93,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            kernel.Get<ServiceValidator>().Validate();
-
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            Kernel.Get<SystemInitializer>().Init();
+
+            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
+
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
         }
@@ -104,6 +111,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
         {
 
+        }
+
+        protected virtual void Warmup(IKernel kernel)
+        {
+            IWarmup warmup = kernel.Get<IWarmup>();
+            warmup.Warmup();
         }
 
 	    protected override void OnVerifyConfiguration()
@@ -121,7 +134,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <returns>The kernel to use.</returns>
         protected virtual IKernel CreateKernel()
         {
-            return new StandardKernel();
+            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
         }
 
 
@@ -138,9 +152,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
-
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
         }
 
@@ -181,8 +193,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             if (Arguments.ServiceDrainTimeSec.HasValue)
             {
                 Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);            }
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+            }
 
+            Kernel.Get<SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
             Dispose();
         }
@@ -197,7 +212,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     if (disposed)
                         return;
 
-                    if (!Kernel.IsDisposed)
+                    disposed = true;
+
+                    if (!Kernel.IsDisposed && !disposing)
                         SafeDispose(Kernel);
 
                     base.Dispose(disposing);

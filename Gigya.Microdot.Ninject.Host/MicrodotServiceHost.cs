@@ -22,7 +22,6 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
@@ -30,7 +29,9 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
 
@@ -95,8 +96,12 @@ namespace Gigya.Microdot.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            kernel.Get<ServiceValidator>().Validate();
             CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            Kernel.Get<SystemInitializer.SystemInitializer>().Init();
+
+            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
+
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
         }
@@ -126,7 +131,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <returns>The kernel to use.</returns>
         protected virtual IKernel CreateKernel()
         {
-            return new StandardKernel();
+            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
         }
 
 
@@ -162,12 +167,14 @@ namespace Gigya.Microdot.Ninject.Host
         /// method.
         /// </summary>        
         protected override void OnStop()
-        {            
+        {
             if (Arguments.ServiceDrainTimeSec.HasValue)
             {
                 Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000 );
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
+            Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
             Dispose();
         }
 

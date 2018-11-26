@@ -28,6 +28,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -38,7 +39,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration.Objects
 {
-    public class ConfigObjectCreator
+    public class ConfigObjectCreator : IConfigObjectCreator
     {
 
         /// <summary>
@@ -69,9 +70,11 @@ namespace Gigya.Microdot.Configuration.Objects
             ConfigPath = GetConfigPath();
             healthStatus = getAggregatedHealthCheck("Configuration");
             Validator = new DataAnnotationsValidator.DataAnnotationsValidator();
+
+            Init();
         }
 
-        public void Init()
+        private void Init()
         {
             Create();
             ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Create()));
@@ -91,7 +94,6 @@ namespace Gigya.Microdot.Configuration.Objects
 
             return HealthCheckResult.Healthy();
         }
-
 
         /// <summary>
         /// Gets the latest version of the configuration. This value is cached for quick retrieval. If the config object
@@ -115,6 +117,37 @@ namespace Gigya.Microdot.Configuration.Objects
             return Latest;
         }
 
+        public Func<T> GetTypedLatestFunc<T>() where T : class => () => GetLatest() as T;
+        public Func<T> GetChangeNotificationsFunc<T>() where T : class => () => ChangeNotifications as T;
+
+        public static bool IsConfigObject(Type service)
+        {
+            return service.IsClass && !service.IsAbstract && typeof(IConfigObject).IsAssignableFrom(service);
+        }
+        
+        public dynamic GetLambdaOfGetLatest(Type configType)
+        {
+            return GetGenericFuncCompiledLambda(configType, nameof(GetTypedLatestFunc));
+        }
+
+        public dynamic GetLambdaOfChangeNotifications(Type configType)
+        {
+            return GetGenericFuncCompiledLambda(configType, nameof(GetChangeNotificationsFunc));
+        }
+
+        private dynamic GetGenericFuncCompiledLambda(Type configType, string functionName)
+        {//happens only once while loading, but can be optimized by creating Method info before sending to this function, if needed
+            MethodInfo func = typeof(ConfigObjectCreator).GetMethod(functionName).MakeGenericMethod(configType);
+            Expression instance = Expression.Constant(this);
+            Expression callMethod = Expression.Call(instance, func);
+            Type delegateType = typeof(Func<>).MakeGenericType(configType);
+            Type parentExpressionType = typeof(Func<>).MakeGenericType(delegateType);
+
+            dynamic lambda = Expression.Lambda(parentExpressionType, callMethod).Compile();
+
+            return lambda;
+        }
+
         private string GetConfigPath()
         {
             var configPath = ObjectType.Name;
@@ -131,7 +164,6 @@ namespace Gigya.Microdot.Configuration.Objects
 
             return configPath;
         }
-
 
         private void InitializeBroadcast()
         {

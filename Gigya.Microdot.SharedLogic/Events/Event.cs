@@ -28,6 +28,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Logging;
 using Gigya.Microdot.SharedLogic.Utils;
 
@@ -46,7 +47,7 @@ namespace Gigya.Microdot.SharedLogic.Events
     /// </remarks>
     public class Event : IEvent
     {
-        public IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; }
+        public IEnvironment Environment { get; set; }
         public IStackTraceEnhancer StackTraceEnhancer { get; set; }
 
         public EventConfiguration Configuration { get; set; }
@@ -88,13 +89,22 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.infrVersion, OmitFromAudit = true)]
         public string InfraVersion => CurrentApplicationInfo.InfraVersion.ToString(4);
 
-        /// <summary>The value of the %ENV% environment variable. </summary>
-        [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
-        public string RuntimeENV => EnvironmentVariableProvider.DeploymentEnvironment;
+        /// <summary>The value of the %REGION% environment variable. .</summary>
+        [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]
+        public string RuntimeRegion => Environment.Region;
+
+        /// <summary>The value of the %REGION% environment variable. .</summary>
+        [EventField(EventConsts.runtimeZONE, OmitFromAudit = true)]
+        public string RuntimeZone => Environment.Zone;
 
         /// <summary>The value of the %DC% environment variable. .</summary>
         [EventField(EventConsts.runtimeDC, OmitFromAudit = true)]
-        public string RuntimeDC => EnvironmentVariableProvider.DataCenter;
+        [Obsolete("Deprecate after 2018; use region instead")]
+        public string RuntimeDC => Environment.Zone;
+
+        /// <summary>The value of the %ENV% environment variable. </summary>
+        [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
+        public string RuntimeENV => Environment.DeploymentEnvironment;
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
@@ -106,8 +116,9 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// <summary>Returns the explicitly-set <see cref="ErrCode"/>, or an error code deduced from the
         /// <see cref="Exception"/>, or null if neither was set.</summary>
         [EventField(EventConsts.errCode)]
-        public int? ErrCode_ => ErrCode
-                                ?? ((Exception as RequestException)?.ErrorCode ?? (Exception != null ? 500001 //General Server Error
+        public int? ErrCode_ =>    ErrCode
+                                ?? ((Exception as RequestException)?.ErrorCode
+                                ?? (Exception != null ? 500001 //General Server Error
                                         : (int?)null));
 
         /// <summary>A short summary of the log event</summary>

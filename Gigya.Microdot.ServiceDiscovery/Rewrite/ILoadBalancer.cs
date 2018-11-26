@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -21,28 +21,26 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
-namespace Gigya.Microdot.Interfaces.HttpService
+namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
-    [Serializable]
-    public class RequestOverrides
+    /// <summary>
+    /// Returns a one healthy-known node each time it is called. 
+    /// Executes balancing between a list of nodes it gets from a <see cref="INodeSource"/>.
+    /// </summary>
+    public interface ILoadBalancer: IDisposable
     {
-        [JsonProperty]
-        public List<HostOverride> Hosts { get; set; }
-    }
+        /// <summary>
+        /// Retrieves a node which is considered to be reachable.
+        /// Returns null if the service is not implemented in the requested environment
+        /// </summary>
+        Task<Node> TryGetNode();
 
-    [Serializable]
-    public class HostOverride
-    {
-        [JsonProperty]
-        public string ServiceName { get; set; }
-
-        [JsonProperty]
-        public string Host { get; set; }
-
-        [JsonProperty]
-        public int? Port { get; set; }
+        /// <summary>
+        /// Report that a node was not responsive
+        /// </summary>
+        void ReportUnreachable(Node node, Exception ex = null);
     }
 }

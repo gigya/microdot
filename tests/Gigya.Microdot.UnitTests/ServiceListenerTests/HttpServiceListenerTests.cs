@@ -41,14 +41,25 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         private TestingHost<IDemoService> _testinghost;
         private Task _stopTask;
         private JsonExceptionSerializer _exceptionSerializer;
+        private TestingKernel<ConsoleLog> _kernel;
 
+        [OneTimeSetUp]
+        public void OneTimeSetup()
+        {
+            _kernel = new TestingKernel<ConsoleLog>();
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            _kernel?.Dispose();
+        }
 
         [SetUp]
         public virtual void SetUp()
         {
-            var kernel = new TestingKernel<ConsoleLog>();
-            _insecureClient = kernel.Get<IDemoService>();
-            _exceptionSerializer = kernel.Get<JsonExceptionSerializer>();
+            _insecureClient = _kernel.Get<IDemoService>();
+            _exceptionSerializer = _kernel.Get<JsonExceptionSerializer>();
 
             Metric.ShutdownContext("Service");
             TracingContext.SetUpStorage();

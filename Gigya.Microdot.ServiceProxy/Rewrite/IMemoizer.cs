@@ -19,10 +19,17 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
-namespace Gigya.Microdot.Interfaces.HttpService
+
+using System;
+using System.Reflection;
+using System.Threading.Tasks;
+using Gigya.Microdot.ServiceProxy.Caching;
+
+namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-    public class ServiceReachabilityStatus
+    interface IMemoizer : IProxyable, IDisposable
     {
-        public bool IsReachable { get; set; }
+        object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy);
+        object GetOrAdd(string key, Func<Task> factory, CacheItemPolicyEx policy);
     }
 }

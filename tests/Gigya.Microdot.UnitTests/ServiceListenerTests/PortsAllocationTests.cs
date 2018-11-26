@@ -7,11 +7,11 @@ using FluentAssertions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
@@ -43,7 +43,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             });
 
             serviceProxy.HttpMessageHandler = handlerMock;
-            await serviceProxy.Invoke(new HttpServiceRequest("myMethod", new Dictionary<string, object>()), typeof(int?));
+            await serviceProxy.Invoke(new HttpServiceRequest("myMethod", null, new Dictionary<string, object>()), typeof(int?));
         }
 
         

@@ -22,9 +22,16 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
@@ -33,6 +40,8 @@ using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
+using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
+using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -42,15 +51,20 @@ namespace Gigya.Microdot.Ninject
     /// </summary>
     public class MicrodotModule : NinjectModule
     {
+    
         private readonly Type[] NonSingletonBaseTypes =
         {
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
+            typeof(LoadBalancer),
             typeof(ConfigDiscoverySource)
         };
 
         public override void Load()
         {
+            //Need to be initialized before using any regex!
+            new RegexTimeoutInitializer().Init();
+
             Kernel
                 .Bind(typeof(ConcurrentDictionary<,>))
                 .To(typeof(DisposableConcurrentDictionary<,>))
@@ -60,10 +74,11 @@ namespace Gigya.Microdot.Ninject
                 Kernel.Load<FuncModule>();
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly),typeof(ServiceDiscoveryAssembly));
-
+            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
+            
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
+            Kernel.BindPerKey<string, ReachabilityCheck, INewServiceDiscovery, NewServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
@@ -76,9 +91,26 @@ namespace Gigya.Microdot.Ninject
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
 
+            Bind<INodeSourceFactory>().To<ConsulNodeSourceFactory>().InTransientScope();
+            Bind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
+            Bind<IDiscovery>().To<Discovery>().InSingletonScope();
+
+            Rebind<ServiceDiscovery.Rewrite.ConsulClient, ServiceDiscovery.Rewrite.IConsulClient>()
+                .To<ServiceDiscovery.Rewrite.ConsulClient>().InSingletonScope();            
+            
+
             Kernel.Rebind<IConsulClient>().To<ConsulClient>().InTransientScope();
             Kernel.Load<ServiceProxyModule>();
-            Kernel.Load<ConfigObjectsModule>();
+
+            Kernel.Rebind<IConfigObjectCreator>().To<ConfigObjectCreator>().InTransientScope();
+            Kernel.Bind<IConfigEventFactory>().To<ConfigEventFactory>();
+            Kernel.Bind<IConfigFuncFactory>().ToFactory();
+
+            // ServiceSchema is at ServiceContracts, and cannot be depended on IServiceInterfaceMapper, which belongs to Microdot
+            Kernel.Rebind<ServiceSchema>()
+                .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
+
+            Kernel.Rebind<SystemInitializer.SystemInitializer>().ToSelf().InSingletonScope();
         }
 
 

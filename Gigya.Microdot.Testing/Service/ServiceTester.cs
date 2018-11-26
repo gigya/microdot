@@ -228,7 +228,7 @@ namespace Gigya.Microdot.Testing.Service
                 return arguments;
 
             var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
-            var commonConfig = new BaseCommonConfig(serviceArguments);
+            var commonConfig = new BaseCommonConfig();
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
             var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
 

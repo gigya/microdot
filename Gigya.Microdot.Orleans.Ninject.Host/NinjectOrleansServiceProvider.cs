@@ -100,7 +100,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     {
         public static ClusterConfiguration WithNinject(this ClusterConfiguration clusterConfiguration, IKernel kernel)
         {
-            if (NinjectOrleansServiceProvider.Kernel != null)
+            if (NinjectOrleansServiceProvider.Kernel != null && !NinjectOrleansServiceProvider.Kernel.IsDisposed)
                 throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
             
             NinjectOrleansServiceProvider.Kernel = kernel;

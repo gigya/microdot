@@ -25,8 +25,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.Events
 {
@@ -68,6 +68,12 @@ namespace Gigya.Microdot.Hosting.Events
 
         [EventField("params", Encrypt = false, TruncateIfLong = true)]
         public IEnumerable<KeyValuePair<string, object>> UnencryptedServiceMethodArguments => LazyUnencryptedRequestParams.GetValue(this);
+
+        public double? ClientResponseTime { get; set; }
+
+        /// <summary> The time, measured on response to client </summary>
+        [EventField("stats.client.response.time")]
+        public virtual double? ClientResponseTimeIfNeeded => ClientResponseTime >= Configuration.MinResponseTimeForLog ? ClientResponseTime : null;
 
 
         private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Sensitive).ToList());

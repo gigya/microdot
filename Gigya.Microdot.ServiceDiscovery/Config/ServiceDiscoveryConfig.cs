@@ -46,17 +46,20 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// <summary>
         /// When we lose connection to some endpoint, we wait this delay till we start trying to reconnect.
         /// </summary>
+        [Obsolete("To be deleted after discovery refactoring")]
         public double? FirstAttemptDelaySeconds { get; set; }
 
         /// <summary>
         /// When retrying to reconnect to an endpoint, we use exponential backoff (e.g. 1,2,4,8ms, etc). Once that
         /// backoff reaches this value, it won't increase any more.
         /// </summary>
+        [Obsolete("To be deleted after discovery refactoring")]
         public double? MaxAttemptDelaySeconds { get; set; }
 
         /// <summary>
         /// The factor of the exponential backoff when retrying connections to endpoints.
         /// </summary>
+        [Obsolete("To be deleted after discovery refactoring")]
         public double? DelayMultiplier { get; set; }
 
         /// <summary>

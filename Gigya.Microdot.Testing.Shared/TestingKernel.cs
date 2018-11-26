@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
@@ -30,7 +31,9 @@ using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Ninject;
@@ -43,20 +46,29 @@ namespace Gigya.Microdot.Testing.Shared
     {
         public const string APPNAME = "InfraTests";
 
+        /// <summary>
+        /// Construction of TestingKernel should always be ended by SystemInitializer.Init(), which performs IConfigObjects rebinding.
+        /// Don't pass any "IConfigObjects actions" in additionalBinfings parameter.
+        /// </summary>
+        /// <param name="additionalBindings"></param>
+        /// <param name="mockConfig"></param>
         public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
         {
+            ServicePointManager.DefaultConnectionLimit = 200;
             CurrentApplicationInfo.Init(APPNAME);
-
 
             this.Load<MicrodotModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();
+            Rebind<IDiscovery>().To<AlwaysLocalhostDiscovery>().InSingletonScope();
             Rebind<IDiscoverySourceLoader>().To<AlwaysLocalHost>().InSingletonScope();
             var locationsParserMock = Substitute.For<IConfigurationLocationsParser>();
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
+
+            Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
 
             additionalBindings?.Invoke(this);
 
@@ -69,9 +81,7 @@ namespace Gigya.Microdot.Testing.Shared
                 .InSingletonScope()
                 .WithConstructorArgument("data", mockConfig ?? new Dictionary<string, string>());
 
-
-
-            Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
+            this.Get<SystemInitializer>().Init();
         }
 
         public OverridableConfigItems GetConfigOverride()

@@ -350,19 +350,15 @@ namespace Gigya.Microdot.Hosting.Service
             if (disposed)
                 return;
 
+            disposed = true;
+
             SafeDispose(StopEvent);
             SafeDispose(WindowsService);
             SafeDispose(MonitoredShutdownProcess);
-
-            disposed = true;
         }
 
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() => Dispose(false);
 
         protected void SafeDispose(IDisposable disposable)
         {

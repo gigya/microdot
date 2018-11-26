@@ -20,11 +20,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Interfaces.HttpService;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {
@@ -47,4 +51,5 @@ namespace Gigya.Microdot.Fakes.Discovery
 
         public Task<EndPoint[]> GetAllEndPoints() => allHosts;
     }
+
 }

@@ -25,10 +25,11 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
 
+// ReSharper disable RedundantDefaultMemberInitializer
 #pragma warning disable 1591 // XML docs for public members
 
 namespace Gigya.Microdot.Configuration
@@ -59,7 +60,7 @@ namespace Gigya.Microdot.Configuration
             /// <summary>
             /// Indicates the type passed the verification
             /// </summary>
-            public bool Success = false;
+            public bool Success;
             /// <summary>
             /// Contextual metadata
             /// </summary>
@@ -73,13 +74,13 @@ namespace Gigya.Microdot.Configuration
             }
         }
 
-        private readonly Func<Type, ConfigObjectCreator> _configCreatorFunc;
+        private readonly Func<Type, IConfigObjectCreator> _configCreatorFunc;
         private readonly IAssemblyProvider _assemblyProvider;
-        private readonly IEnvironmentVariableProvider _envProvider;
+        private readonly IEnvironment _envProvider;
 
         /// <summary>
         /// </summary>
-        public ConfigurationVerificator (Func<Type, ConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider, IEnvironmentVariableProvider envProvider)
+        public ConfigurationVerificator (Func<Type, IConfigObjectCreator> configCreatorFunc, IAssemblyProvider assemblyProvider, IEnvironment envProvider)
         {
             _configCreatorFunc = configCreatorFunc;
             _assemblyProvider = assemblyProvider;
@@ -87,28 +88,25 @@ namespace Gigya.Microdot.Configuration
         }
 
         /// <summary>
-        /// Run the discovery of IConfigObject descendants, instanciate them and grab validation or any other errors.
+        /// Run the discovery of IConfigObject descendants, instantiate them and grab validation or any other errors.
         /// </summary>
         /// <remarks>
         /// Throwing, except <see cref="ConfigurationException"/>. On purpose to expose any exceptions except this one.
         /// </remarks>
         public ICollection<ResultPerType> Verify()
         {
-            var metadata = $"{_envProvider.DataCenter}-{_envProvider.DeploymentEnvironment}";
+            var metadata = $"{_envProvider.Zone}-{_envProvider.DeploymentEnvironment}";
             var results = new List<ResultPerType>();
 
             // Get ConfigObject types in related binaries
-            var configObjectTypes = _assemblyProvider.GetAllTypes()
-                .Where(t => t.IsClass && !t.IsAbstract && typeof(IConfigObject).IsAssignableFrom(t))
-                .AsEnumerable();
+            var configObjectTypes = _assemblyProvider.GetAllTypes().Where(ConfigObjectCreator.IsConfigObject).AsEnumerable();
 
-            // Instanciate and grab validation issues
+            // Instantiate and grab validation issues
             foreach (var configType in configObjectTypes)
             {
                 try
                 {
                     var creator = _configCreatorFunc(configType);
-                    creator.Init();
 
                     // ReSharper disable once UnusedVariable
                     // Only to review in debugging session
