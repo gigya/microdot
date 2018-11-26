@@ -66,7 +66,7 @@ namespace Gigya.Microdot.Ninject
 			}
 		}
 
-		private readonly ILoggingModule _loggingModule;
+		private readonly ILoggingModule _loggingModule = null;
 		private readonly ServiceArguments _arguments;
 
 		/// <summary>
@@ -81,10 +81,10 @@ namespace Gigya.Microdot.Ninject
 		{
 			Kernel.Load<MicrodotModule>();
 
-			// Required to allow assembly provider been instanciated
+			// Required to allow assembly provider been instantiated
 			Kernel.Rebind<ServiceArguments>().ToConstant(_arguments);
-			
-			_loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+
+			_loggingModule?.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
 
 			// Be ready that no ILog bound
 			if (Kernel.TryGet<ILog>() == null)
