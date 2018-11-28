@@ -26,7 +26,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -200,7 +200,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken)
         {
             if (_disposed)
-                throw new ObjectDisposedException(nameof(ConsulClient));
+                return new ConsulResponse<T>{Error = new EnvironmentException("ConsulClient already disposed")};
 
             var timeout = GetConfig().HttpTaskTimeout;
 

@@ -20,36 +20,24 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {
 
-    public class LocalhostServiceDiscovery : IServiceDiscovery
+    public class LocalhostServiceDiscovery : IMultiEnvironmentServiceDiscovery
     {
-        private static readonly IEndPointHandle handle = new LocalhostEndPointHandle();
-
-        private readonly Task<IEndPointHandle> _source = Task.FromResult(handle);
-
-        private readonly Task<EndPoint[]> allHosts = Task.FromResult(new[] { new EndPoint { HostName = handle.HostName, Port = handle.Port } });
-
-        public Task<IEndPointHandle> GetNextHost(string affinityToken = null) => _source;
-
-        public Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken) => _source;
-
-        public ISourceBlock<string> EndPointsChanged => new BroadcastBlock<string>(null);
-
-        public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => new BroadcastBlock<ServiceReachabilityStatus>(null);
-
-        public Task<EndPoint[]> GetAllEndPoints() => allHosts;
+        public async Task<NodeAndLoadBalancer> GetNode()
+        {
+            return new NodeAndLoadBalancer
+            {
+                Node = new Node(CurrentApplicationInfo.HostName),
+                LoadBalancer = null
+            };
+        }
     }
 
 }
