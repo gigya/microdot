@@ -93,8 +93,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
             Kernel.Get<SystemInitializer>().Init();
+            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
 
             IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
