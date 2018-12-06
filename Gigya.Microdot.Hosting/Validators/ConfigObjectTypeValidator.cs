@@ -42,7 +42,7 @@ namespace Gigya.Microdot.Hosting.Validators
         public void Validate()
         {
             List<Type> invalidConfigObjectTypes = _assemblyProvider.GetAllTypes()
-                .Where(t => t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject)) && !ConfigObjectCreator.IsConfigObject(t)).ToList();
+                .Where(t => t.GetTypeInfo().ImplementedInterfaces.Any(i => i == typeof(IConfigObject)) && t.IsValueType).ToList();
 
             if (invalidConfigObjectTypes.Count == 0)
             {
