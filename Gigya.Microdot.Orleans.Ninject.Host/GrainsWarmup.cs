@@ -21,10 +21,14 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Ninject;
+using Orleans;
+using Orleans.Core;
+using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -33,12 +37,18 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         private IServiceInterfaceMapper _orleansMapper;
         private IKernel _kernel;
         private ILog _log;
+        private List<Type> _orleansInternalTypes = new List<Type>();
 
         public GrainsWarmup(IServiceInterfaceMapper orleansMapper, IKernel kernel, ILog log)
         {
             _orleansMapper = orleansMapper;
             _kernel = kernel;
             _log = log;
+
+            _orleansInternalTypes.Add(typeof(IGrainFactory));
+            _orleansInternalTypes.Add(typeof(IGrainState));
+            _orleansInternalTypes.Add(typeof(IGrainIdentity));
+            _orleansInternalTypes.Add(typeof(IGrainRuntime));
         }
 
         public void Warmup()
@@ -49,24 +59,49 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             // these grains, their non-transient dependencies will already be registered in Ninject, saving startup time.
             try
             {
+                List<string> failedWarmupWarn = new List<string>();
+                List<string> failedWarmupInfo = new List<string>();
                 foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)
                 {
                     try
                     {
                         foreach (Type parameterType in serviceClass.GetConstructors().SelectMany(ctor => ctor.GetParameters().Select(p => p.ParameterType)).Distinct())
                         {
-                            _kernel.Get(parameterType);
+                            if (_kernel.CanResolve(parameterType))
+                            {
+                                _kernel.Get(parameterType);
+                                continue;
+                            }
+
+                            if (_orleansInternalTypes.Contains(parameterType))
+                            {
+                                failedWarmupInfo.Add($"Type {parameterType} of grain {serviceClass}");
+                            }
+                            else
+                            {
+                                failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
+                            }
                         }
                     }
                     catch (Exception e)
                     {
-                        _log.Error($"Failed to warmup grain {serviceClass}", e);
+                        _log.Warn($"Failed to warmup grain {serviceClass}", e);
                     }
+                }
+
+                if (failedWarmupInfo.Count > 0)
+                {
+                    _log.Info(l => l($"Can't warmup the following types:\n{string.Join("\n", failedWarmupInfo)}"));
+                }
+
+                if (failedWarmupWarn.Count > 0)
+                {
+                    _log.Warn($"Fail to warmup the following types:\n{string.Join("\n", failedWarmupWarn)}");
                 }
             }
             catch(Exception ex)
             {
-                _log.Error("Failed to warmup grains", ex);
+                _log.Warn("Failed to warmup grains", ex);
             }
         }
     }

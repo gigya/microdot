@@ -28,6 +28,7 @@ using System.Reflection;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -58,8 +59,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
         {
             var factory = ResolutionRoot
-                .Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
-            var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));
+                .Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
+            var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
+                (serName, checker) => new LocalhostServiceDiscovery()));
 
             provider.DefaultPort = BasePort;
             if (timeout != null)
@@ -84,9 +86,10 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance/>.</returns>
         public virtual TServiceInterface GetServiceProxy<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, IServiceProxyProvider>>();
+            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
 
-            var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName, (serName, checker) => new LocalhostServiceDiscovery()));
+            var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
+                (serName, checker) => new LocalhostServiceDiscovery()));
             provider.DefaultPort = BasePort;
             if (timeout != null)
                 provider.InnerProvider.SetHttpTimeout(timeout.Value);
@@ -103,7 +106,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance"/>.</returns>
         public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityChecker, IServiceDiscovery>, ServiceProxyProvider>>();
+            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, ServiceProxyProvider>>();
 
             var provider = factory(serviceName, (srName, r) => new LocalhostServiceDiscovery());
             provider.DefaultPort = BasePort;

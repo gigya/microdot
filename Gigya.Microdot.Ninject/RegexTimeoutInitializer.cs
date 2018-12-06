@@ -14,7 +14,10 @@ namespace Gigya.Microdot.Ninject
             int regexDefaultMachTimeOutMs =(int) TimeSpan.FromSeconds(10).TotalMilliseconds;
             try
             {
-                regexDefaultMachTimeOutMs = int.Parse(ConfigurationManager.AppSettings["regexDefaultMachTimeOutMs"]);
+                if (ConfigurationManager.AppSettings["regexDefaultMachTimeOutMs"] != null)
+                {
+                    regexDefaultMachTimeOutMs = int.Parse(ConfigurationManager.AppSettings["regexDefaultMachTimeOutMs"]);
+                }
             }
             catch (Exception e)
             {

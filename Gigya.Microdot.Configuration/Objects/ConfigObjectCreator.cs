@@ -122,7 +122,7 @@ namespace Gigya.Microdot.Configuration.Objects
 
         public static bool IsConfigObject(Type service)
         {
-            return service.IsClass && !service.IsAbstract && typeof(IConfigObject).IsAssignableFrom(service);
+            return service.IsClass && !service.IsAbstract && !service.IsInterface && typeof(IConfigObject).IsAssignableFrom(service);
         }
         
         public dynamic GetLambdaOfGetLatest(Type configType)
