@@ -46,6 +46,7 @@
     </Compile>
     <Compile Include="ApplicationDirectoryProvider.cs" />
     <Compile Include="AssemblyProvider.cs" />
+    <Compile Include="Collections\TimeBoundConcurrentQueue.cs" />
     <Compile Include="Configurations\LoadShedding.cs" />
     <Compile Include="Events\MetadataPropertiesCache.cs" />
     <Compile Include="Events\EventSerializer.cs" />

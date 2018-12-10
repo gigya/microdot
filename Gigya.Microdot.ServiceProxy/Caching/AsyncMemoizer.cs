@@ -72,8 +72,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private string GetArgumentHash(object[] args)
         {
-            var stream = new MemoryStream();
             using (ComputeArgumentHash.NewContext())
+            using (var stream = new MemoryStream())
             using (var writer = new StreamWriter(stream) { AutoFlush = true })
             using (SHA1 sha = new SHA1CryptoServiceProvider())
             {

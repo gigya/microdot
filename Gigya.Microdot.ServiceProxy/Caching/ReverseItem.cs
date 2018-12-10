@@ -21,36 +21,13 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Gigya.Microdot.SharedLogic.Monitor;
-using Metrics;
 
-namespace Gigya.Microdot.Fakes
+namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    public class FakeHealthMonitor : IHealthMonitor
+    public class ReverseItem
     {
-        public ConcurrentDictionary<string, Func<HealthCheckResult>> Monitors = new ConcurrentDictionary<string, Func<HealthCheckResult>>();
-
-        public void Dispose()
-        {
-
-        }
-
-        public ComponentHealthMonitor Get(string component)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Dictionary<string, string> GetData(string component)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ComponentHealthMonitor SetHealthFunction(string component, Func<HealthCheckResult> check, Func<Dictionary<string, string>> healthData = null)
-        {
-            Monitors.AddOrUpdate(component, k => check, (k, v) => check);
-            return new ComponentHealthMonitor(component, check);
-        }
+        public HashSet<string> CacheKeysSet = new HashSet<string>();
+        public DateTime WhenRevoked = DateTime.MinValue;
     }
 }

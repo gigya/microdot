@@ -8,6 +8,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     public class CacheConfig: IConfigObject
     {
         public bool LogRevokes { get; set; } = false;
+
+        /// <summary>
+        /// Configure the interval in ms to clean revokes without associated cache keys (call ahead revokes)
+        /// </summary>
+        public int RevokesCleanupMs { get; set; } = 600_000;
+
         public Dictionary<string, CacheGroupConfig> Groups { get; } = new Dictionary<string, CacheGroupConfig>(StringComparer.InvariantCultureIgnoreCase);
     }
 
