@@ -10,6 +10,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
@@ -76,6 +77,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic = null;
             _configRefresh = null;
             _consulClient?.Clear();
+            _consulClient = null;
         }
 
         private void SetupConsulClientMocks()
@@ -156,8 +158,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
-            _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "Zone";
-            _configRefresh.RaiseChangeEvent();
+           _unitTestingKernel.Get<Func<DiscoveryConfig>>()().Services[_serviceName].Scope = ServiceScope.Zone;
             SetMockToReturnHost(_serviceName);
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);
@@ -290,7 +291,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
 
             Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
-            _configRefresh.RaiseChangeEvent();
+            await _configRefresh.ApplyChanges<DiscoveryConfig>();
             await waitForChangeEvent;
             var host = await discovey.GetNextHost();
             host.HostName.ShouldBe("localhost");
