@@ -42,7 +42,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [SetUp]
         public void SetUp()
         {
-            _unitTestingKernel?.Dispose();
+            
             _serviceName = $"ServiceName{++id}";
 
             _environment = Substitute.For<IEnvironment>();
@@ -66,6 +66,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             var environment = _unitTestingKernel.Get<IEnvironment>();
             Assert.AreEqual(_environment, environment);
+        }
+
+        [TearDown]
+        public void Teardown()
+        {
+            _unitTestingKernel?.Dispose();
+            _configDic?.Clear();
+            _configDic = null;
+            _configRefresh = null;
+            _consulClient?.Clear();
         }
 
         private void SetupConsulClientMocks()
@@ -147,7 +157,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
             _configDic[$"Discovery.Services.{_serviceName}.Scope"] = "Zone";
-            _unitTestingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
+            _configRefresh.RaiseChangeEvent();
             SetMockToReturnHost(_serviceName);
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);
