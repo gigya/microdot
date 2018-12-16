@@ -73,16 +73,16 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
                     _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
                 }
 
+                Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                 if (!_kernel.IsBinded(typeof(ISourceBlock<>).MakeGenericType(configType)))
                 {
-                    Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                     _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+                }
 
-                    if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(sourceBlockType)))
-                    {
-                        dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
-                        _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
-                    }
+                if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(sourceBlockType)))
+                {
+                    dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
+                    _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
                 }
 
                 if (!_kernel.IsBinded(configType))
