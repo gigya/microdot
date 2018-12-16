@@ -112,6 +112,10 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
 
         public virtual void Dispose()
         {
+            if (_configSource == null)
+            {
+                return;
+            }
             _configSource.Complete();
         }
     }
