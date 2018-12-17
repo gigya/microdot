@@ -261,7 +261,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Hostname, hostOverride.Port?? GetConfig().DefaultPort);
+                return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Host, hostOverride.Port?? GetConfig().DefaultPort);
 
             lock (_lock)
             {
@@ -288,7 +288,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
-                return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Hostname, hostOverride.Port ?? GetConfig().DefaultPort);
+                return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);
 
             if (ReachableHosts.Count > 0)
                 return GetNextHost();

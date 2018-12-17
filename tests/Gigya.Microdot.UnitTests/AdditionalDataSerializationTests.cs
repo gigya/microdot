@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests
             };
             RequestOverrides requestOverrides = new RequestOverrides
             {
-                Hosts = new[] { new HostOverride { ServiceName = "Service1", Hostname = "HostNameOverride" } }.ToList()
+                Hosts = new[] { new HostOverride { ServiceName = "Service1", Host = "HostNameOverride" } }.ToList()
             };
             InvocationTarget invocationTarget = new InvocationTarget{MethodName = "MethodName1" };
 
@@ -102,7 +102,7 @@ namespace Gigya.Microdot.UnitTests
             serviceRequestResult.TracingData.SpanID.ShouldBe("SpanID1");
             serviceRequestResult.TracingData.AdditionalProperties.ShouldBeNull();
 
-            serviceRequestResult.Overrides.Hosts[0].Hostname.ShouldBe("HostNameOverride");
+            serviceRequestResult.Overrides.Hosts[0].Host.ShouldBe("HostNameOverride");
             serviceRequestResult.Overrides.Hosts[0].AdditionalProperties.ShouldBeNull();
             serviceRequestResult.Overrides.AdditionalProperties.ShouldBeNull();
 
@@ -119,7 +119,7 @@ namespace Gigya.Microdot.UnitTests
             serviceRequestResult.TracingData.AdditionalProperties.Count.ShouldBe(1);
             serviceRequestResult.TracingData.AdditionalProperties.ShouldContainKeyAndValue("TracingData", "TracingData1");
 
-            serviceRequestResult.Overrides.Hosts[0].Hostname.ShouldBe("HostNameOverride");
+            serviceRequestResult.Overrides.Hosts[0].Host.ShouldBe("HostNameOverride");
             serviceRequestResult.Overrides.Hosts[0].AdditionalProperties.Count.ShouldBe(1);
             serviceRequestResult.Overrides.Hosts[0].AdditionalProperties.ShouldContainKeyAndValue("HostOverrideData", "HostOverrideData1");
             serviceRequestResult.Overrides.AdditionalProperties.Count.ShouldBe(1);

@@ -73,7 +73,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private HttpRequestMessage CreateHttpRequest(HttpServiceRequest request, JsonSerializerSettings jsonSettings, HostOverride node)
         {
-            string uri = $"{(HttpSettings.UseHttps ? "https" : "http")}://{node.Hostname}:{node.Port ?? HttpSettings.BasePort}/{ServiceName}.{request.Target.MethodName}";
+            string uri = $"{(HttpSettings.UseHttps ? "https" : "http")}://{node.Host}:{node.Port ?? HttpSettings.BasePort}/{ServiceName}.{request.Target.MethodName}";
             
             return new HttpRequestMessage(HttpMethod.Post, uri)
             {
