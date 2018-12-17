@@ -87,7 +87,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var hostOverride = TracingContext.GetHostOverride(ServiceName);
             if (hostOverride != null)
                 return new NodeAndLoadBalancer {
-                    Node = new Node(hostOverride.Hostname, hostOverride.Port),
+                    Node = new Node(hostOverride.Host, hostOverride.Port),
                     LoadBalancer = null,
                     PreferredEnvironment = preferredEnvironment ?? Environment.DeploymentEnvironment,
                 };

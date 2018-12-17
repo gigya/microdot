@@ -52,7 +52,7 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 
         [JsonRequired]
         [JsonProperty]
-        public string Hostname { get; set; }
+        public string Host { get; set; }
 
         [JsonProperty]
         public int? Port { get; set; }
