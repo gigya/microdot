@@ -49,6 +49,7 @@ using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
+using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
 
@@ -554,8 +555,21 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             return serviceMethod.ServiceInterfaceMethod
                 .GetParameters()
-                .Select(p => JsonHelper.ConvertWeaklyTypedValue(args[p.Name], p.ParameterType))
-                .ToArray();
+                .Select(p =>
+                    {
+                        try
+                        {
+                            return JsonHelper.ConvertWeaklyTypedValue(args[p.Name], p.ParameterType);
+                        }
+                        catch (InvalidParameterValueException ex)
+                        {
+                            if (ex.ParameterName != null)
+                                throw;
+
+                            throw new InvalidParameterValueException(p.Name, null, ex.Message, ex);
+                        }
+                    }).
+                    ToArray();
         }
 
         internal static HttpStatusCode GetExceptionStatusCode(Exception exception)
