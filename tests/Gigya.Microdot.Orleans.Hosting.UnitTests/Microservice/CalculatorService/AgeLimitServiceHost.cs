@@ -26,6 +26,7 @@ using System.Linq;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Ninject;
+using Ninject.Syntax;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
@@ -70,9 +71,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
     public class WithInvalidAgeLimitServiceHost : CalculatorServiceHost
     {
-        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
+        protected override void OnInitilize(IResolutionRoot resolutionRoot)
         {
-            var originConfig = kernel.Get<OrleansConfig>();
+            base.OnInitilize(resolutionRoot);
+
+            var originConfig = resolutionRoot.Get<OrleansConfig>();
             originConfig.GrainAgeLimits = new Dictionary<string, GrainAgeLimitConfig>
             {
                 [ServiceName] = new GrainAgeLimitConfig
@@ -81,22 +84,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
                     GrainAgeLimitInMins = 10
                 }
             };
-
-
-            kernel. Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
-                .To<ManualConfigurationEvents>()
-                .InSingletonScope();
-
-            kernel.Rebind<IConfigItemsSource, OverridableConfigItems>()
-                .To<OverridableConfigItems>()
-                .InSingletonScope()
-                .WithConstructorArgument("data", new Dictionary<string, string>());
-
-            OverridableConfigItems configItems = kernel.Get<IConfigItemsSource>() as OverridableConfigItems;
-            configItems.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainType", "Fake - Should throw an exception.");
-            configItems.SetValue("OrleansConfig.GrainAgeLimits.SiteService.grainAgeLimitInMins", "10");
-            
-            base.Configure(kernel, commonConfig);
         }
     }
 
