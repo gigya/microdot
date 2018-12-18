@@ -46,7 +46,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public override void Dispose()
         {
             _host.Stop();
-            _host.Dispose();
             var completed = _stopTask.Wait(60000);
 
             if (!completed)
