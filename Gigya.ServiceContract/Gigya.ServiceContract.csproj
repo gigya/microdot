@@ -46,6 +46,7 @@
     <Compile Include="Attributes\PublicEndpointAttribute.cs" />
     <Compile Include="Exceptions\Breadcrumb.cs" />
     <Compile Include="Exceptions\EnvironmentException.cs" />
+    <Compile Include="Exceptions\InvalidParameterValueException.cs" />
     <Compile Include="Exceptions\ProgrammaticException.cs" />
     <Compile Include="Exceptions\RemoteServiceException.cs" />
     <Compile Include="Exceptions\RequestException.cs" />

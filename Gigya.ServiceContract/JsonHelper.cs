@@ -21,6 +21,8 @@
 #endregion
 
 using System;
+using System.Linq;
+using Gigya.ServiceContract.Exceptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -61,10 +63,25 @@ namespace Gigya.Common.Contracts
                     return dto.LocalDateTime;
             }
 
-            if (value is string && Type.GetTypeCode(paramType) == TypeCode.Object && paramType != typeof(DateTimeOffset) && paramType != typeof(TimeSpan) && paramType != typeof(Guid) && paramType != typeof(byte[])) 
-                return JsonConvert.DeserializeObject((string)value, paramType);
+            try
+            {
+                if (value is string && Type.GetTypeCode(paramType) == TypeCode.Object && paramType != typeof(DateTimeOffset) && paramType != typeof(TimeSpan) && paramType != typeof(Guid) && paramType != typeof(byte[]))
+                    return JsonConvert.DeserializeObject((string) value, paramType);
 
-            return JToken.FromObject(value).ToObject(targetType, Serializer);
+                return JToken.FromObject(value).ToObject(targetType, Serializer);
+            }
+            catch (JsonReaderException jsException)
+            {
+                var parameterPath = string.IsNullOrEmpty(jsException.Path) ? null : jsException.Path;
+                var parameterName = parameterPath?.Split('.').LastOrDefault();
+
+                var messageWithoutPath = jsException.Message;
+                if (messageWithoutPath.Contains(". Path '"))
+                    messageWithoutPath = messageWithoutPath.Substring(0, messageWithoutPath.IndexOf(". Path '"));
+                
+                throw new InvalidParameterValueException(parameterName, parameterPath, messageWithoutPath, innerException: jsException);
+            }
+
         }
     }
 }
