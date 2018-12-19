@@ -24,7 +24,6 @@ namespace Gigya.Microdot.Ninject
             }
 
             AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT",TimeSpan.FromMilliseconds(regexDefaultMachTimeOutMs));
-            Console.WriteLine($"REGEX_DEFAULT_MATCH_TIMEOUT is set to {regexDefaultMachTimeOutMs} ms");
         }
     }
 }
