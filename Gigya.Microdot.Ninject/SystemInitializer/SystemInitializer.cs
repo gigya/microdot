@@ -18,18 +18,21 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#endregion
+#endregion 
 
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Ninject;
+using Ninject.Planning.Bindings;
 
 namespace Gigya.Microdot.Ninject.SystemInitializer
 {
@@ -64,17 +67,29 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
             {
                 IConfigObjectCreator configObjectCreator = _kernel.Get<Func<Type, IConfigObjectCreator>>()(configType);
 
-                dynamic getLatestLambda = configObjectCreator.GetLambdaOfGetLatest(configType);
-                _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
+                if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(configType)))
+                {
+                    dynamic getLatestLambda = configObjectCreator.GetLambdaOfGetLatest(configType);
+                    _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
+                }
 
                 Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
-                _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+                if (!_kernel.IsBinded(typeof(ISourceBlock<>).MakeGenericType(configType)))
+                {
+                    _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+                }
 
-                dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
-                _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
+                if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(sourceBlockType)))
+                {
+                    dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
+                    _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
+                }
 
-                _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
-
+                if (!_kernel.IsBinded(configType))
+                {
+                    _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
+                }
+                
                 _configObjectsCache.RegisterConfigObjectCreator(configObjectCreator);
             }
         }
@@ -97,6 +112,10 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
 
         public virtual void Dispose()
         {
+            if (_configSource == null)
+            {
+                return;
+            }
             _configSource.Complete();
         }
     }

@@ -63,7 +63,8 @@ namespace Gigya.Microdot.SharedLogic.Monitor
                           : "") 
                           + $"{r.Name}: {r.Result.Message}"));
 
-            return allHealthy ? HealthCheckResult.Healthy(message) : HealthCheckResult.Unhealthy(message);
+            var formattableMessage = message.Replace("{", "{{").Replace("}", "}}"); // HealthCheckResult is formatting the message string using "string.Format"
+            return allHealthy ? HealthCheckResult.Healthy(formattableMessage) : HealthCheckResult.Unhealthy(formattableMessage);
         }
 
         [Obsolete("Please use method Register(string,Func<HealthMessage>) instead")]

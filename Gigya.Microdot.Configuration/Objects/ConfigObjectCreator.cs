@@ -79,20 +79,20 @@ namespace Gigya.Microdot.Configuration.Objects
             Reload();
             ConfigCache.ConfigChanged.LinkTo(new ActionBlock<ConfigItemsCollection>(c => Reload()));
             InitializeBroadcast();
-            healthStatus.RegisterCheck(ObjectType.Name, HealthCheck);
+            healthStatus.Register(ObjectType.Name, HealthCheck);
         }
 
-        private HealthCheckResult HealthCheck()
+        private HealthMessage HealthCheck()
         {
             if (ValidationErrors != null)
             {
-                return HealthCheckResult.Unhealthy("The config object failed validation.\r\n" +
+                return new HealthMessage(Health.Unhealthy, "The config object failed validation.\r\n" +
                                                    $"ConfigObjectType={ObjectType.FullName}\r\n" +
                                                    $"ConfigObjectPath={ConfigPath}\r\n" +
                                                    $"ValidationErrors={ValidationErrors}");
             }
 
-            return HealthCheckResult.Healthy();
+            return new HealthMessage(Health.Healthy, "OK");
         }
 
         /// <summary>

@@ -88,38 +88,103 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
             };
 
-            using (var kernel =
-                new TestingKernel<ConsoleLog>(
-                    k => k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope(), dict))
+            using (var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope(), dict))
             {
-
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory(serviceName);
-
-
-
+                Uri uri = null;
+                string requestMessage = null;
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
-                    .When("*")
-                    .Respond(req => HttpResponseFactory.GetResponse(
-                        content: $"'{req.RequestUri.Host}:{req.RequestUri.Port}'"));
+                    .When("*").Respond(async req =>
+                    {
+                        requestMessage = await req.Content.ReadAsStringAsync();
+                        uri = req.RequestUri;
+                        return HttpResponseFactory.GetResponse(HttpStatusCode.Accepted);
+                    });
 
                 serviceProxy.HttpMessageHandler = messageHandler;
-                string overrideHost = "override-host";
-                int overridePort = 5318;
+                string expectedHost = "override-host";
+                int expectedPort = 5318;
 
-                TracingContext.SetHostOverride(serviceName, overrideHost, overridePort);
+                TracingContext.SetHostOverride(serviceName, expectedHost, expectedPort);
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
-                for (int i = 0; i < 50; i++)
-                {
-                    var host = (string)await serviceProxy.Invoke(request, typeof(string));
-                    host.ShouldBe($"{overrideHost}:{overridePort}");
-                }
-
+                await serviceProxy.Invoke(request, typeof(string));
+                var body = requestMessage;
+                JsonConvert.DeserializeObject<GigyaRequestProtocol>(body, new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Error });
+                uri.Host.ShouldBe(expectedHost);
+                uri.Port.ShouldBe(expectedPort);
             }
+
+
         }
+
+        public class Arguments
+        {
+        }
+
+        public class TracingData
+        {
+            [JsonRequired]
+            public string RequestID { get; set; }
+           
+            [JsonRequired]
+            public string HostName { get; set; }
+            
+            [JsonRequired]
+            public string ServiceName { get; set; }
+          
+            [JsonRequired]
+            public string SpanID { get; set; }
+            
+            [JsonRequired]
+            public DateTime SpanStartTime { get; set; }
+        }
+
+        public class Host1
+        {
+            [JsonRequired]
+            public string ServiceName { get; set; }
+           
+            [JsonRequired]
+            public string Host { get; set; }
+           
+            [JsonRequired]
+            public int Port { get; set; }
+        }
+
+        public class Overrides
+        {
+            [JsonRequired]
+            public List<Host1> Hosts { get; set; }
+           
+            [JsonRequired]
+            public string PreferredEnvironment { get; set; }
+        }
+
+        public class Target
+        {
+            [JsonRequired]
+            public string MethodName { get; set; }
+        }
+
+        public class GigyaRequestProtocol
+        {
+            [JsonRequired]
+            public Arguments Arguments { get; set; }
+           
+            [JsonRequired]
+            public TracingData TracingData { get; set; }
+           
+            [JsonRequired]
+            public Overrides Overrides { get; set; }
+           
+            [JsonRequired]
+            public Target Target { get; set; }
+        }
+
 
         [Test]
         public async Task RequestContextShouldOverrideHostOnly()
@@ -255,7 +320,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     var server = await serviceProxy.Invoke(request, typeof(string));
                     server.ShouldBe("host2");
                 }
-                
+
                 counter.ShouldBe(4);
             }
         }
@@ -297,7 +362,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
 
                 string overrideHost = "override-host";
-                int overridePort = 5318;    
+                int overridePort = 5318;
                 TracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
                 serviceProxy.HttpMessageHandler = messageHandler;
 
