@@ -33,6 +33,18 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 
         public JObject ToJObjectWithBreadcrumb(Exception exception)
         {
+            var breadcrumb = new Breadcrumb
+            {
+                ServiceName = CurrentApplicationInfo.Name,
+                ServiceVersion = CurrentApplicationInfo.Version.ToString(),
+                HostName = CurrentApplicationInfo.HostName,
+                DataCenter = Environment.Zone,
+                DeploymentEnvironment = Environment.DeploymentEnvironment
+            };
+
+            if (exception is SerializableException serEx)
+                serEx.AddBreadcrumb(breadcrumb);
+
             var jobject = JObject.FromObject(exception, Serializer);
 
             if (GetConfig().Enabled == false)
@@ -46,18 +58,6 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 jobject.Add("StackTraceString", null);
                 breadcrumbTarget = jobject.Property("StackTraceString");
             }
-
-            var breadcrumb = new Breadcrumb
-            {
-                ServiceName = CurrentApplicationInfo.Name,
-                ServiceVersion = CurrentApplicationInfo.Version.ToString(),
-                HostName = CurrentApplicationInfo.HostName,
-                DataCenter = Environment.Zone,
-                DeploymentEnvironment = Environment.DeploymentEnvironment
-            };
-
-            if (exception is SerializableException serEx)
-                serEx.AddBreadcrumb(breadcrumb);
 
             breadcrumbTarget.Value = $"\r\n--- End of stack trace from {breadcrumb} ---\r\n{breadcrumbTarget.Value}";
 
