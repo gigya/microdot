@@ -20,7 +20,7 @@ namespace Gigya.ServiceContract.Exceptions
         /// <summary>
         /// Path to the parameter (e.g. on Json object)
         /// </summary>
-        public string ParameterPath { get; }
+        public string[] ParameterPath { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InvalidParameterValueException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.
@@ -29,7 +29,7 @@ namespace Gigya.ServiceContract.Exceptions
         /// <param name="encrypted">Optional. A collection of type <see cref="Tags"/> that contains additional data about the exception, which must be encrypted when stored.</param>
         /// <param name="unencrypted">Optional. A collection of type <see cref="Tags"/> that contains additional data about the exception, which needn't be encrypted when stored.</param>
         /// <param name="innerException">Optional. The exception that is the cause of the current exception.</param>
-        public InvalidParameterValueException(string parameterName, string parameterPath, string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException, encrypted, unencrypted)
+        public InvalidParameterValueException(string parameterName, string[] parameterPath, string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException, encrypted, unencrypted)
         {
             ParameterName = parameterName;
             ParameterPath = parameterPath;

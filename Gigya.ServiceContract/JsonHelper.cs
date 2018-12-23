@@ -78,33 +78,19 @@ namespace Gigya.Common.Contracts
             }
             catch (JsonReaderException jsException)
             {
-                var parameterPath = string.IsNullOrEmpty(jsException.Path) ? null : jsException.Path;
-                throw InvalidParameterValueException(parameterPath, jsException);
+                var parameterPath = string.IsNullOrEmpty(jsException.Path) ? new string[0] : jsException.Path.Split('.');
+                throw new InvalidParameterValueException(null, parameterPath, jsException.Message, innerException: jsException);
             }
             catch (JsonSerializationException serException)
             {
-                string parameterPath = null;
+                string parameterPathStr = null;
                 var match = ParamRegex.Match(serException.Message);
                 if (match.Success)
-                    parameterPath = match.Groups[ParamCaptureName]?.Value;
+                    parameterPathStr = match.Groups[ParamCaptureName]?.Value;
 
-                throw InvalidParameterValueException(parameterPath, serException);
+                throw new InvalidParameterValueException(null, parameterPathStr?.Split(',') ?? new string[0], serException.Message, innerException: serException);
             }
 
-        }
-
-        private static InvalidParameterValueException InvalidParameterValueException(string parameterPath, JsonException jsException)
-        {
-            if (string.IsNullOrEmpty(parameterPath))
-                parameterPath = null;
-
-            var parameterName = parameterPath?.Split('.').LastOrDefault();
-
-            var messageWithoutPath = jsException.Message;
-            if (messageWithoutPath.Contains(". Path '"))
-                messageWithoutPath = messageWithoutPath.Substring(0, messageWithoutPath.IndexOf(". Path '"));
-
-            throw new InvalidParameterValueException(parameterName, parameterPath, messageWithoutPath, innerException: jsException);
         }
     }
 }
