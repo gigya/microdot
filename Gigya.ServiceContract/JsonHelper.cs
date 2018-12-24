@@ -88,7 +88,7 @@ namespace Gigya.Common.Contracts
                 if (match.Success)
                     parameterPathStr = match.Groups[ParamCaptureName]?.Value;
 
-                throw new InvalidParameterValueException(null, parameterPathStr?.Split(',') ?? new string[0], serException.Message, innerException: serException);
+                throw new InvalidParameterValueException(null, parameterPathStr?.Split('.') ?? new string[0], serException.Message, innerException: serException);
             }
 
         }

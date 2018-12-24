@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using Gigya.Common.Contracts.Exceptions;
+using Newtonsoft.Json;
 
 namespace Gigya.ServiceContract.Exceptions
 {
     /// <summary>
     /// This excpetion is thrown if a parameter contains an invalid value
     /// </summary>
+    [Serializable]
     public class InvalidParameterValueException: RequestException
     {
         ///<summary>ErrorCode of Invalid_parameter_value</summary>
@@ -15,27 +17,28 @@ namespace Gigya.ServiceContract.Exceptions
         /// <summary>
         /// Name of the parameter which has an invalid value
         /// </summary>
-        public string ParameterName { get; set; }
+        [JsonProperty]
+        public string parameterName { get; set; }
 
         /// <summary>
         /// For parameters that contain data structures, the path inside the data structure pointing to the field/property that
         /// caused the deserialization or validation error.
         /// </summary>
-        public string[] ErrorPath { get; }
+        public string[] ErrorPath { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InvalidParameterValueException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.
         /// </summary>
-        /// <param name="parameterName">Name of the parameter which has an invalid value</param>
+        /// <param name="paramName">Name of the parameter which has an invalid value</param>
         /// <param name="errorPath">For parameters that contain data structures, the path inside the data structure pointing to the field/property that
         /// caused the deserialization or validation error.</param>
         /// <param name="message">The error message that explains the reason for the exception.</param>
         /// <param name="encrypted">Optional. A collection of type <see cref="Tags"/> that contains additional data about the exception, which must be encrypted when stored.</param>
         /// <param name="unencrypted">Optional. A collection of type <see cref="Tags"/> that contains additional data about the exception, which needn't be encrypted when stored.</param>
         /// <param name="innerException">Optional. The exception that is the cause of the current exception.</param>
-        public InvalidParameterValueException(string parameterName, string[] errorPath, string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException, encrypted, unencrypted)
+        public InvalidParameterValueException(string paramName, string[] errorPath, string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException, encrypted, unencrypted)
         {
-            ParameterName = parameterName;
+            parameterName = paramName;
             ErrorPath = errorPath;
         }
 
