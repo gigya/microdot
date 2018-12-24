@@ -18,21 +18,25 @@ namespace Gigya.ServiceContract.Exceptions
         public string ParameterName { get; set; }
 
         /// <summary>
-        /// Path to the parameter (e.g. on Json object)
+        /// For parameters that contain data structures, the path inside the data structure pointing to the field/property that
+        /// caused the deserialization or validation error.
         /// </summary>
-        public string[] ParameterPath { get; set; }
+        public string[] ErrorPath { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InvalidParameterValueException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.
         /// </summary>
+        /// <param name="parameterName">Name of the parameter which has an invalid value</param>
+        /// <param name="errorPath">For parameters that contain data structures, the path inside the data structure pointing to the field/property that
+        /// caused the deserialization or validation error.</param>
         /// <param name="message">The error message that explains the reason for the exception.</param>
         /// <param name="encrypted">Optional. A collection of type <see cref="Tags"/> that contains additional data about the exception, which must be encrypted when stored.</param>
         /// <param name="unencrypted">Optional. A collection of type <see cref="Tags"/> that contains additional data about the exception, which needn't be encrypted when stored.</param>
         /// <param name="innerException">Optional. The exception that is the cause of the current exception.</param>
-        public InvalidParameterValueException(string parameterName, string[] parameterPath, string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException, encrypted, unencrypted)
+        public InvalidParameterValueException(string parameterName, string[] errorPath, string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException, encrypted, unencrypted)
         {
             ParameterName = parameterName;
-            ParameterPath = parameterPath;
+            ErrorPath = errorPath;
         }
 
         /// <summary>Initializes a new instance of the <see cref="InvalidParameterValueException"/> class with serialized data.</summary>
