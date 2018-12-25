@@ -105,7 +105,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 overrides.Hosts.Add(hostOverride);
             }
 
-            hostOverride.Hostname = host;
+            hostOverride.Host = host;
             hostOverride.Port = port;
         }
 

@@ -22,8 +22,10 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Ninject;
 using Ninject.Activation;
+using Ninject.Planning.Bindings;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -167,6 +169,12 @@ namespace Gigya.Microdot.Ninject
             kernel.BindPerString<TImplementation, TImplementation>();
         }
 
+        public static bool IsBinded(this IKernel kernel, Type serviceType)
+        {
+            IBinding binding = kernel.GetBindings(serviceType).FirstOrDefault();
+
+            return binding != null && binding.Target != BindingTarget.Provider;
+        }
     }
 
     public class DisposableConcurrentDictionary<TKey, TValue> : ConcurrentDictionary<TKey, TValue>, IDisposable
