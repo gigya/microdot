@@ -22,6 +22,7 @@
 
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Gigya.ServiceContract.Exceptions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -34,6 +35,9 @@ namespace Gigya.Common.Contracts
     public static class JsonHelper
     {
         private static JsonSerializer Serializer { get; } = new JsonSerializer { DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind };
+
+        private const string ParamCaptureName = "param";
+        private static readonly Regex ParamRegex = new Regex(@"Path\s'(?<" + ParamCaptureName + ">.*)'.$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 
         /// <summary>
@@ -65,21 +69,26 @@ namespace Gigya.Common.Contracts
 
             try
             {
-                if (value is string && Type.GetTypeCode(paramType) == TypeCode.Object && paramType != typeof(DateTimeOffset) && paramType != typeof(TimeSpan) && paramType != typeof(Guid) && paramType != typeof(byte[]))
+                if (value is string && Type.GetTypeCode(paramType) == TypeCode.Object &&
+                    paramType != typeof(DateTimeOffset) && paramType != typeof(TimeSpan) && paramType != typeof(Guid) &&
+                    paramType != typeof(byte[]))
                     return JsonConvert.DeserializeObject((string) value, paramType);
 
                 return JToken.FromObject(value).ToObject(targetType, Serializer);
             }
             catch (JsonReaderException jsException)
             {
-                var parameterPath = string.IsNullOrEmpty(jsException.Path) ? null : jsException.Path;
-                var parameterName = parameterPath?.Split('.').LastOrDefault();
+                var parameterPath = string.IsNullOrEmpty(jsException.Path) ? new string[0] : jsException.Path.Split('.');
+                throw new InvalidParameterValueException(null, parameterPath, jsException.Message, innerException: jsException);
+            }
+            catch (JsonSerializationException serException)
+            {
+                string parameterPathStr = null;
+                var match = ParamRegex.Match(serException.Message);
+                if (match.Success)
+                    parameterPathStr = match.Groups[ParamCaptureName]?.Value;
 
-                var messageWithoutPath = jsException.Message;
-                if (messageWithoutPath.Contains(". Path '"))
-                    messageWithoutPath = messageWithoutPath.Substring(0, messageWithoutPath.IndexOf(". Path '"));
-                
-                throw new InvalidParameterValueException(parameterName, parameterPath, messageWithoutPath, innerException: jsException);
+                throw new InvalidParameterValueException(null, parameterPathStr?.Split('.') ?? new string[0], serException.Message, innerException: serException);
             }
 
         }
