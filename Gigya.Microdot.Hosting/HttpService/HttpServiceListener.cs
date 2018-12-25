@@ -563,10 +563,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                         }
                         catch (InvalidParameterValueException ex)
                         {
-                            if (ex.ParameterName != null)
+                            if (ex.parameterName != null)
                                 throw;
 
-                            throw new InvalidParameterValueException(p.Name, ex.ParameterPath, ex.Message, ex);
+                            throw new InvalidParameterValueException(p.Name, ex.ErrorPath, ex.Message, ex);
                         }
                     }).
                     ToArray();

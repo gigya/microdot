@@ -23,16 +23,21 @@ namespace Gigya.Microdot.UnitTests
         public T Instance { get; private set; }
 
         private readonly Action<IKernel> optionalConfigs;
+        private readonly Action<IKernel> overrideBindings;
 
-        public TestingHost(Action<IKernel> optionalConfigs = null)
+        private IKernel _kernel;
+
+        public TestingHost(Action<IKernel> optionalConfigs = null, Action<IKernel> overrideBindings = null)
         {
             this.optionalConfigs = optionalConfigs;
+            this.overrideBindings = overrideBindings;
         }
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(false); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
+            _kernel = kernel;
             kernel.Rebind<ILog>().ToConstant(new ConsoleLog());
 
             kernel.Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
@@ -50,7 +55,12 @@ namespace Gigya.Microdot.UnitTests
 
             Instance = kernel.Get<T>();
         }
-        
+
+        protected override void OnInitilize(IResolutionRoot resolutionRoot)
+        {
+            base.OnInitilize(resolutionRoot);
+            overrideBindings?.Invoke(_kernel);
+        }
 
         private class WaitingWorker : IWorker
         {
