@@ -308,7 +308,7 @@ namespace Gigya.Common.Contracts.UnitTests
                 actual.ShouldBeOfType(Nullable.GetUnderlyingType(targetType) ?? targetType);
                 actual.ShouldBe(value);
             }
-            catch (InvalidParameterValueException ex) when (ex.InnerException is OverflowException) { }
+            catch (InvalidParameterValueException) { }
         }
 
 
@@ -328,7 +328,7 @@ namespace Gigya.Common.Contracts.UnitTests
 
                 actual.ShouldBe(value);
             }
-            catch (InvalidParameterValueException ex) when (ex.InnerException is OverflowException) { }
+            catch (InvalidParameterValueException) { }
         }
 
         [Test]

@@ -62,6 +62,10 @@
       <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
       <Name>Gigya.ServiceContract</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj">
+      <Project>{db6d3561-835e-40d5-b9d4-83951cf426df}</Project>
+      <Name>Gigya.ServiceContract</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -72,15 +76,7 @@
   </Target>
   -->
   <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
-      <ItemGroup>
-        <Reference Include="Gigya.ServiceContract">
-          <HintPath>..\..\packages\Gigya.ServiceContract\lib\net451\Gigya.ServiceContract.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'" />
   </Choose>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5.1'">
