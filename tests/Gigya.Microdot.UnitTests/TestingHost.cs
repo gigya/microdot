@@ -22,15 +22,15 @@ namespace Gigya.Microdot.UnitTests
     {
         public T Instance { get; private set; }
 
-        private readonly Action<IKernel> optionalConfigs;
-        private readonly Action<IKernel> overrideBindings;
+        private readonly Action<IKernel> _configure;
+        private readonly Action<IKernel> _onInitialize;
 
         private IKernel _kernel;
 
-        public TestingHost(Action<IKernel> optionalConfigs = null, Action<IKernel> overrideBindings = null)
+        public TestingHost(Action<IKernel> configure = null, Action<IKernel> onInitialize = null)
         {
-            this.optionalConfigs = optionalConfigs;
-            this.overrideBindings = overrideBindings;
+            this._configure = configure;
+            this._onInitialize = onInitialize;
         }
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(false); }
@@ -51,7 +51,7 @@ namespace Gigya.Microdot.UnitTests
 
             kernel.Bind<T>().ToConstant(Substitute.For<T>());
 
-            optionalConfigs?.Invoke(kernel);
+            _configure?.Invoke(kernel);
 
             Instance = kernel.Get<T>();
         }
@@ -59,7 +59,7 @@ namespace Gigya.Microdot.UnitTests
         protected override void OnInitilize(IResolutionRoot resolutionRoot)
         {
             base.OnInitilize(resolutionRoot);
-            overrideBindings?.Invoke(_kernel);
+            _onInitialize?.Invoke(_kernel);
         }
 
         private class WaitingWorker : IWorker

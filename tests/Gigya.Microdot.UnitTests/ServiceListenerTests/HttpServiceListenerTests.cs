@@ -26,7 +26,6 @@ using Ninject;
 using Ninject.Parameters;
 
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 using RichardSzalay.MockHttp;
@@ -69,7 +68,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             TracingContext.SetUpStorage();
             TracingContext.SetRequestID("1");
 
-            _testinghost = new TestingHost<IDemoService>(overrideBindings: kernel =>
+            _testinghost = new TestingHost<IDemoService>(onInitialize: kernel =>
                 {
                     OverrideServiceEndpointDefinition(kernel);
                 }
