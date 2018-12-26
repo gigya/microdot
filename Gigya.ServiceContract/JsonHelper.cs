@@ -76,10 +76,6 @@ namespace Gigya.Common.Contracts
 
                 return JToken.FromObject(value).ToObject(targetType, Serializer);
             }
-            catch (OverflowException overflowException)
-            {
-                throw new InvalidParameterValueException(null, null, overflowException.Message, innerException: overflowException);
-            }
             catch (JsonReaderException jsException)
             {
                 var parameterPath = string.IsNullOrEmpty(jsException.Path) ? new string[0] : jsException.Path.Split('.');
@@ -93,6 +89,10 @@ namespace Gigya.Common.Contracts
                     parameterPathStr = match.Groups[ParamCaptureName]?.Value;
 
                 throw new InvalidParameterValueException(null, parameterPathStr?.Split('.') ?? new string[0], serException.Message, innerException: serException);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidParameterValueException(null, null, ex.Message, innerException: ex);
             }
 
         }
