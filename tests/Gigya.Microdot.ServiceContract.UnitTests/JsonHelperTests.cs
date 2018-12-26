@@ -23,14 +23,16 @@
 using System;
 using System.Linq;
 using System.Numerics;
+using Gigya.ServiceContract.Exceptions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Shouldly;
 
 namespace Gigya.Common.Contracts.UnitTests
 {
     public enum MyEnum { Zero, One, Two }
-    public class SomeClass { public int A; public long B; public ushort? C; }
+    public class SomeClass { public int A; public long B; public ushort? C; [JsonProperty] SomeClass Inner; }
     public struct SomeStruct { public int A; public long B; public ushort? C; }
 
     [TestFixture]
@@ -232,7 +234,7 @@ namespace Gigya.Common.Contracts.UnitTests
         [Test]
         public void ConvertWeaklyTypedValue_TimeSpanAsInvalidString_ShouldConvert()
         {
-            Should.Throw<Exception>(() => JsonHelper.ConvertWeaklyTypedValue("INVALID", typeof(TimeSpan)));
+            Should.Throw<InvalidParameterValueException>(() => JsonHelper.ConvertWeaklyTypedValue("INVALID", typeof(TimeSpan)));
         }
 
 
@@ -306,7 +308,7 @@ namespace Gigya.Common.Contracts.UnitTests
                 actual.ShouldBeOfType(Nullable.GetUnderlyingType(targetType) ?? targetType);
                 actual.ShouldBe(value);
             }
-            catch (Exception ex) when (ex is OverflowException || ex.InnerException is OverflowException) { }
+            catch (InvalidParameterValueException) { }
         }
 
 
@@ -326,7 +328,72 @@ namespace Gigya.Common.Contracts.UnitTests
 
                 actual.ShouldBe(value);
             }
-            catch (Exception ex) when (ex is OverflowException || ex.InnerException is OverflowException) { }
+            catch (InvalidParameterValueException) { }
         }
+
+        [Test]
+        public void ComplexObjectWithNullValue_ThrowException()
+        {
+            var json = JObject.Parse(@"{A:null}"); 
+            try
+            {
+                JsonHelper.ConvertWeaklyTypedValue(json, typeof(SomeClass));
+                Assert.Fail("Should throw exception because field 'A' is null");
+            }
+            catch (InvalidParameterValueException ex)
+            {
+                ex.parameterName.ShouldBeNull();
+                ex.ErrorPath.SequenceEqual(new[] {"A"});
+            }
+        }
+
+        [Test]
+        public void ComplexObjectWithWrongValue_ThrowException()
+        {
+            var json = JObject.Parse(@"{A:""abcd""}");
+            try
+            {
+                JsonHelper.ConvertWeaklyTypedValue(json, typeof(SomeClass));
+                Assert.Fail("Should throw exception because field 'A' has invalid value");
+            }
+            catch (InvalidParameterValueException ex)
+            {
+                ex.parameterName.ShouldBeNull();
+                ex.ErrorPath.SequenceEqual(new[] { "A" });
+            }
+        }
+
+        [Test]
+        public void ComplexObjectWithComplexObjectWithNullValue_ThrowException()
+        {
+            var json = JObject.Parse(@"{Inner: {A:null}}");
+            try
+            {
+                JsonHelper.ConvertWeaklyTypedValue(json, typeof(SomeClass));
+                Assert.Fail("Should throw exception because field 'Inner.A' is null");
+            }
+            catch (InvalidParameterValueException ex)
+            {
+                ex.parameterName.ShouldBeNull();
+                ex.ErrorPath.SequenceEqual(new[] { "Inner", "A" });
+            }
+        }
+
+        [Test]
+        public void ComplexObjectWithComplexObjectWithWrongValue_ThrowException()
+        {
+            var json = JObject.Parse(@"{Inner: {A:""abcd""}}");
+            try
+            {
+                JsonHelper.ConvertWeaklyTypedValue(json, typeof(SomeClass));
+                Assert.Fail("Should throw exception because field 'Inner.A' has invalid value");
+            }
+            catch (InvalidParameterValueException ex)
+            {
+                ex.parameterName.ShouldBeNull();
+                ex.ErrorPath.SequenceEqual(new[] { "Inner","A" });
+            }
+        }
+
     }
 }
