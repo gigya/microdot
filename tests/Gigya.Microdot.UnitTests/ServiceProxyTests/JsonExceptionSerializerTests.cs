@@ -58,6 +58,31 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
 
         [Test]
+        public void RequestException_Serialization_AddBreadcrumbs()
+        {                        
+            var json = ExceptionSerializer.Serialize(new RequestException("message").ThrowAndCatch());
+            var actual = ExceptionSerializer.Deserialize(json);
+
+            var breadcrumbs = ((RequestException)actual).Breadcrumbs;
+            breadcrumbs.ShouldNotBeEmpty();
+            breadcrumbs.First().ServiceName.ShouldBe("InfraTests");            
+        }
+
+        [Test]
+        public void RequestException_SerializedTwice_AddAnotherBreadcrumb()
+        {
+            var json1 = ExceptionSerializer.Serialize(new RequestException("message").ThrowAndCatch());
+            var actual1 = ExceptionSerializer.Deserialize(json1);
+            var json2 = ExceptionSerializer.Serialize(actual1);
+            var actual2 = ExceptionSerializer.Deserialize(json2); 
+
+            var breadcrumbs = ((RequestException)actual2).Breadcrumbs;
+            breadcrumbs.Count.ShouldBe(2);
+            breadcrumbs[0].ServiceName.ShouldBe("InfraTests");
+            breadcrumbs[1].ServiceName.ShouldBe("InfraTests");
+        }
+
+        [Test]
         public void CustomerFacingException_RoundTrip_IsIdentical()
         {
             var expected = new RequestException("message", 30000).ThrowAndCatch();
