@@ -218,6 +218,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _loadBalancer.ReportUnreachable(nodeToBeReachable);
             _loadBalancer.ReportUnreachable(nodeToBeUnreachable);
 
+            await Task.Delay(1000);
+
             var nodes = await Get20Nodes();
             foreach (var node in allNodes)
             {
