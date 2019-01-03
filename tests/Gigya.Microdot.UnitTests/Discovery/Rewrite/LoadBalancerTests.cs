@@ -199,6 +199,46 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         [Test]
         [Repeat(Repeat)]
+        public async Task GetNode_TwoNodesUnreachable_OneBecomesReachable_ReturnOnlyReachableNodes()
+        {
+            Node nodeToBeUnreachable = null;
+
+            _reachabilityCheck = async (n, c) =>
+            {
+                if (n == nodeToBeUnreachable) throw new Exception("This node is still unreachable");
+            };
+            CreateLoadBalancer();
+
+            var allNodes = new[] { Node1, Node2, Node3 };
+            SetupSourceNodes(allNodes);
+
+            nodeToBeUnreachable = await _loadBalancer.TryGetNode();
+            var nodeToBeReachable = await GetDifferentNode(nodeToBeUnreachable);
+
+            _loadBalancer.ReportUnreachable(nodeToBeReachable);
+            _loadBalancer.ReportUnreachable(nodeToBeUnreachable);
+
+            var nodes = await Get20Nodes();
+            foreach (var node in allNodes)
+            {
+                if (node.Equals(nodeToBeUnreachable))
+                    nodes.ShouldNotContain(node);
+                else
+                    nodes.ShouldContain(node);
+            }
+        }
+
+        private async Task<Node> GetDifferentNode(Node nodeToCompare)
+        {
+            var differentNode = nodeToCompare;
+            while (differentNode == nodeToCompare)
+                differentNode = await _loadBalancer.TryGetNode();
+
+            return differentNode;
+        }
+
+        [Test]
+        [Repeat(Repeat)]
         public async Task GetNode_NodeIsReachableAgain_NodeWillBeReturned()
         {            
             CreateLoadBalancer();
