@@ -60,7 +60,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             try
             {
                 List<string> failedWarmupWarn = new List<string>();
-                List<string> failedWarmupInfo = new List<string>();
                 foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)
                 {
                     try
@@ -69,15 +68,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         {
                             if (_kernel.CanResolve(parameterType))
                             {
-                                _kernel.Get(parameterType);
-                                continue;
+                                try
+                                {
+                                    _kernel.Get(parameterType);
+                                    continue;
+                                }
+                                catch //No exception handling needed. We try to warmup all constructor types. In case of failure, write the warning for non orleans types and go to the next type
+                                {
+                                }
                             }
 
-                            if (_orleansInternalTypes.Contains(parameterType))
-                            {
-                                failedWarmupInfo.Add($"Type {parameterType} of grain {serviceClass}");
-                            }
-                            else
+                            if (!_orleansInternalTypes.Contains(parameterType))
                             {
                                 failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
                             }
@@ -88,12 +89,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         _log.Warn($"Failed to warmup grain {serviceClass}", e);
                     }
                 }
-
-                if (failedWarmupInfo.Count > 0)
-                {
-                    _log.Info(l => l($"Can't warmup the following types:\n{string.Join("\n", failedWarmupInfo)}"));
-                }
-
+                
                 if (failedWarmupWarn.Count > 0)
                 {
                     _log.Warn($"Fail to warmup the following types:\n{string.Join("\n", failedWarmupWarn)}");
