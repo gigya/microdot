@@ -21,11 +21,14 @@
 #endregion
 
 using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Orleans.Hosting;
 using Ninject;
+using Orleans;
+using Orleans.Core;
+using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -34,12 +37,18 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         private IServiceInterfaceMapper _orleansMapper;
         private IKernel _kernel;
         private ILog _log;
+        private List<Type> _orleansInternalTypes = new List<Type>();
 
         public GrainsWarmup(IServiceInterfaceMapper orleansMapper, IKernel kernel, ILog log)
         {
             _orleansMapper = orleansMapper;
             _kernel = kernel;
             _log = log;
+
+            _orleansInternalTypes.Add(typeof(IGrainFactory));
+            _orleansInternalTypes.Add(typeof(IGrainState));
+            _orleansInternalTypes.Add(typeof(IGrainIdentity));
+            _orleansInternalTypes.Add(typeof(IGrainRuntime));
         }
 
         public void Warmup()
@@ -50,15 +59,45 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             // these grains, their non-transient dependencies will already be registered in Ninject, saving startup time.
             try
             {
+                List<string> failedWarmupWarn = new List<string>();
                 foreach (Type serviceClass in _orleansMapper.ServiceClassesTypes)
                 {
-                    _kernel.Get(serviceClass);
+                    try
+                    {
+                        foreach (Type parameterType in serviceClass.GetConstructors().SelectMany(ctor => ctor.GetParameters().Select(p => p.ParameterType)).Distinct())
+                        {
+                            if (_kernel.CanResolve(parameterType))
+                            {
+                                try
+                                {
+                                    _kernel.Get(parameterType);
+                                    continue;
+                                }
+                                catch //No exception handling needed. We try to warmup all constructor types. In case of failure, write the warning for non orleans types and go to the next type
+                                {
+                                }
+                            }
+
+                            if (!_orleansInternalTypes.Contains(parameterType))
+                            {
+                                failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Warn($"Failed to warmup grain {serviceClass}", e);
+                    }
+                }
+                
+                if (failedWarmupWarn.Count > 0)
+                {
+                    _log.Warn($"Fail to warmup the following types:\n{string.Join("\n", failedWarmupWarn)}");
                 }
             }
             catch(Exception ex)
             {
-                _log.Error("Failed to warmup grains", ex);
-                throw;
+                _log.Warn("Failed to warmup grains", ex);
             }
         }
     }
