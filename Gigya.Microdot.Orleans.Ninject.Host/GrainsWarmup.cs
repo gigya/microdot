@@ -66,21 +66,16 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     {
                         foreach (Type parameterType in serviceClass.GetConstructors().SelectMany(ctor => ctor.GetParameters().Select(p => p.ParameterType)).Distinct())
                         {
-                            if (_kernel.CanResolve(parameterType))
+                            try
                             {
-                                try
-                                {
-                                    _kernel.Get(parameterType);
-                                    continue;
-                                }
-                                catch //No exception handling needed. We try to warmup all constructor types. In case of failure, write the warning for non orleans types and go to the next type
-                                {
-                                }
+                                _kernel.Get(parameterType);
                             }
-
-                            if (!_orleansInternalTypes.Contains(parameterType))
+                            catch //No exception handling needed. We try to warmup all constructor types. In case of failure, write the warning for non orleans types and go to the next type
                             {
-                                failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
+                                if (!_orleansInternalTypes.Contains(parameterType))
+                                {
+                                    failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
+                                }
                             }
                         }
                     }
