@@ -81,10 +81,9 @@ namespace Gigya.Microdot.Testing.Shared.Utils
 
                 var cancel = new CancellationTokenSource(timeout.Value);
                 var wait = new TaskCompletionSource<List<T>>();
-                cancel.Token.Register(
-                    () => wait.TrySetException(
-                        new Exception(
-                            $"Expected events: {expectedNumberOfEvents}. Received events: {_events.Count}. Timeout after {timeout.Value.TotalMilliseconds} ms")));
+                cancel.Token.Register(() => wait.TrySetException( new Exception( $"Expected events: {expectedNumberOfEvents}. " +
+                                                                                 $"Received events: {_events.Count}. " +
+                                                                                 $"Timeout after {timeout.Value.TotalMilliseconds} ms")));
                 wait.Task.ContinueWith(x => cancel.Dispose(), TaskContinuationOptions.OnlyOnRanToCompletion);
 
                 _waiting.Add(new KeyValuePair<int, TaskCompletionSource<List<T>>>(expectedNumberOfEvents.Value, wait));
