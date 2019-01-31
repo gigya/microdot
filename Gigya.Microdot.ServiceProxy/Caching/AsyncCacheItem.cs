@@ -42,5 +42,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         /// Extra data for log purposes (e.g. arguments list)
         /// </summary>
         public string LogData { get; set; }
+
+        /// <summary>
+        /// Should not be cached, as was revoked while calling to factory
+        /// </summary>
+        public volatile bool AlreadyRevoked;
     }
 }

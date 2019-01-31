@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -48,9 +49,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             if(revokeSource != null)
                 revokeListener.RevokeSource = revokeSource;
 
-            return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, revokeListener, () => new CacheConfig());
+            var consoleLog = new ConsoleLog();
+            return new AsyncCache(consoleLog, Metric.Context("AsyncCache"), TimeFake, revokeListener, () => new CacheConfig());
         }
-        
+
         private IMemoizer CreateMemoizer(AsyncCache cache)
         {
             var metadataProvider = new MetadataProvider();
@@ -276,7 +278,9 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(5, 7, 9);
             var args = new object[] { "someString" };
 
-            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig()), new MetadataProvider(), Metric.Context("Tests"));
+            var consoleLog = new ConsoleLog();
+            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(consoleLog, Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig()), 
+                                                   new MetadataProvider(), Metric.Context("Tests"));
 
             // T = 0s. No data in cache, should retrieve value from source (5).
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(5);
@@ -311,7 +315,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             refreshTask.SetException(new MissingFieldException("Boo!!"));
             var dataSource = CreateDataSource(870, refreshTask, 1002);
 
-            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig()), new MetadataProvider(), Metric.Context("Tests"));
+            var consoleLog = new ConsoleLog();
+            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(consoleLog, Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig()), 
+                new MetadataProvider(), Metric.Context("Tests"));
+
 
             // T = 0s. No data in cache, should retrieve value from source (870).
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(870);
