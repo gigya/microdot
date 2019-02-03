@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Hosting.Validators
                         }
 
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
-                        VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>());
+                        VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>(), false);
                     }
                 }
             }
@@ -73,13 +73,17 @@ namespace Gigya.Microdot.Hosting.Validators
             return false;
         }
 
-        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path)
+        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path, bool isGenericPayload)
         {
             if (type.IsClass == false || IsIrrelevantTypes(type))
                 return;
 
             if (path.Count == 100)
                 throw new StackOverflowException($"In Method {methodName} {paramName} cuased for 'StackOverflowException' - Probably due to circular references.");
+
+            Type[] typeArguments = null;
+            if (type.IsGenericType)            
+                typeArguments = type.GetGenericArguments();            
 
             foreach (var memberInfo in type.FindMembers(MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance, null, null)
                                            .Where(x => x is FieldInfo || (x is PropertyInfo propertyInfo) && propertyInfo.CanRead))
@@ -89,11 +93,12 @@ namespace Gigya.Microdot.Hosting.Validators
                 if (memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
                     if (!logFieldExists)
                         throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
-                    else if (path.Count > 1)
+                    else if (!isGenericPayload && path.Count > 1)
                         throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but only root-level members can be marked as such.");
 
                 Type memberType = memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
-                VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path);
+                var isGeneric = typeArguments != null && typeArguments.Contains(memberType);
+                VerifyMisplacedSensitiveAttribute(logFieldExists, methodName, paramName, memberType, path, isGeneric);
 
                 path.Pop();
             }

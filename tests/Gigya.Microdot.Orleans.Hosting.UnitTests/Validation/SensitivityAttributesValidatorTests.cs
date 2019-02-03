@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
@@ -76,7 +77,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         [TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
-
+        [TestCase(typeof(IValidGeneric))]
         public void ValidationShouldSucceed(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -270,12 +271,36 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Task Verification([NonSensitive]OuterStub stub);
         }
 
+        private interface IValidGeneric
+        {
+            Task Verification([LogFields]GenericWrapper<GenericPayload> stub);
+        }
+
         public class OuterStub
         {
             public string Name { get; set; }
             public string FamilyName { get; set; }
 
             public OuterStub InnerStub { get; set; }
+        }
+
+        public class GenericWrapper<T>
+        {
+            public GenericWrapper(T genericType)
+            {
+                GenericType = genericType;
+            }
+
+            [NonSensitive]
+            public string Name { get; set; }
+
+            public T GenericType { get; set; }
+        }
+
+        public class GenericPayload
+        {
+            [Sensitive]
+            public string FamilyName { get; set; }
         }
     }
 }
