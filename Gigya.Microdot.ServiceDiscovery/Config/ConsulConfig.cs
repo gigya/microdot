@@ -39,7 +39,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// due to network latency or the process being overloaded.
         /// </summary>
         public TimeSpan HttpTaskTimeout => HttpTimeout
-            .Add(TimeSpan.FromSeconds((int) (HttpTimeout.TotalSeconds / 16.0)))
+            .Add(TimeSpan.FromMilliseconds((HttpTimeout.TotalMilliseconds / 16)))
             .Add(HttpTimeoutAdditionalDelay);
 
         /// <summary>
