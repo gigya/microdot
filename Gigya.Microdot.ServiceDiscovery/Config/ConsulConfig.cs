@@ -26,6 +26,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
         /// <summary>
+        /// Absout timeout to be added to HttpTaskTimeout
+        /// </summary>
+        public TimeSpan HttpTimeoutAdditionalDelay { get; set; } = TimeSpan.FromSeconds(6);
+
+        /// <summary>
         /// Time to wait for http response from Consul.
         /// When LongPolling=true,  defines the maximum time to wait on long-polling.
         /// When LongPolling=false, defines the timeout for Consul http requests.
@@ -33,7 +38,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// risk of getting task cancelled exceptions before Consul gracefully timed out,
         /// due to network latency or the process being overloaded.
         /// </summary>
-        public TimeSpan HttpTaskTimeout => HttpTimeout.Add(TimeSpan.FromSeconds(5));
+        public TimeSpan HttpTaskTimeout => HttpTimeout
+            .Add(TimeSpan.FromSeconds((int) (HttpTimeout.TotalSeconds / 16.0)))
+            .Add(HttpTimeoutAdditionalDelay);
 
         /// <summary>
         /// Interval for retrying access to Consul after an error has occured
