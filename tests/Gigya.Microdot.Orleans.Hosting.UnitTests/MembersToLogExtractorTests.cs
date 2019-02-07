@@ -210,9 +210,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var depthDegree3Generic = new GenericMockData<GenericMockData<MockData>>(new GenericMockData<MockData>(new MockData()));
 
             var extractedMembers = _extractor.ExtractMembersToLog(depthDegree3Generic);
+            extractedMembers.Count().ShouldBe(3);
 
-            extractedMembers.ShouldContain(x => x.Name == "GenericType_GenericType_GenericPropertySensitive");
-            extractedMembers.ShouldContain(x => x.Name == "GenericType_GenericType_GenericFieldSecretive");
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_GenericType");
             extractedMembers.ShouldContain(x => x.Name == "GenericType_FieldNonSensitive");
             extractedMembers.ShouldContain(x => x.Name == "FieldNonSensitive");            
         }

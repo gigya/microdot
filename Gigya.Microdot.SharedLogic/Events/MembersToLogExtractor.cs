@@ -114,7 +114,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                     BindingFlags.Public | BindingFlags.Instance, null, null)
                 .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead));
 
-            var typeArguments = recursionDepth <= MaxRecursionDepth && type.IsGenericType
+            var typeArguments = recursionDepth < MaxRecursionDepth && type.IsGenericType
                 ? type.GetGenericArguments()
                 : null;                     
 
