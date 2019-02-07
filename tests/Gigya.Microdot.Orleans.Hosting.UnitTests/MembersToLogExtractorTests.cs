@@ -36,14 +36,16 @@ using Shouldly;
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     [TestFixture]
-    public class ReflectionMetaDataExtensionTests
+    public class MembersToLogExtractorTests
     {
         private ILog _logMocked;
+        private MembersToLogExtractor _extractor;
 
         [SetUp]
         public void OneTimeSetup()
         {
             _logMocked = Substitute.For<ILog>();
+            _extractor = new MembersToLogExtractor(_logMocked);
         }
 
 
@@ -52,32 +54,32 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [TestCase(nameof(PersonMockData.Cryptic), Sensitivity.Secretive)]
         [TestCase(nameof(PersonMockData.Name), Sensitivity.NonSensitive)]
         [TestCase(nameof(PersonMockData.ID), null)]
-        public void ExtracPropertiesSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity? expected)
+        public void ExtractPropertiesSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity? expected)
         {
             var expectedSensitiveProperty = typeof(PersonMockData).GetProperty(actualValue);
 
-            MembersMetadataCache.ExtractSensitivity(expectedSensitiveProperty).ShouldBe(expected);
+            _extractor.ExtractSensitivity(expectedSensitiveProperty).ShouldBe(expected);
         }
 
         [Test]
         [TestCase(nameof(PersonMockData.FieldNonSensitive), Sensitivity.NonSensitive)]
         [TestCase(nameof(PersonMockData.FieldSensitive), Sensitivity.Sensitive)]
         [TestCase(nameof(PersonMockData.FieldCryptic), Sensitivity.Secretive)]
-        public void ExtracFieldsSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity? expected)
+        public void ExtractFieldsSensitivity_ExtractSensitivity_ShouldBeEquivilent(string actualValue, Sensitivity? expected)
         {
             var field = typeof(PersonMockData).GetField(actualValue);
 
-            MembersMetadataCache.ExtractSensitivity(field).ShouldBe(expected);
+            _extractor.ExtractSensitivity(field).ShouldBe(expected);
         }
 
 
         [Test]
-        public void ExtracMembersValues_ExtractDataFromObject_ShouldBeEquivilent()
+        public void ExtractMembersValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             const int numberOfPrivatePropertiesAndFields = 8;
 
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = MembersMetadataCache.ExtracMemberMetadata(mock.GetType()).ToDictionary(x => x.Name);
+            var reflectionMetadataInfos = _extractor.ExtractMemberMetadata(mock.GetType()).ToDictionary(x => x.Name);
 
             reflectionMetadataInfos[nameof(PersonMockData.FieldNonSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldNonSensitive);
             reflectionMetadataInfos[nameof(PersonMockData.FieldSensitive)].ValueExtractor(mock).ShouldBe(mock.FieldSensitive);
@@ -93,12 +95,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtracPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
+        public void ExtractPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
             const int numberOfPrivatePropertiesAndFields = 8;
 
             var mock = new PersonMockData();
-            var reflectionMetadataInfos = MembersMetadataCache.ExtracMemberMetadata(mock.GetType()).ToDictionary(x => x.Name);
+            var reflectionMetadataInfos = _extractor.ExtractMemberMetadata(mock.GetType()).ToDictionary(x => x.Name);
             var dissectParams = DissectPropertyInfoMetadata.GetMembers(mock);
             var numberProperties = dissectParams.Count();
 
@@ -118,13 +120,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtracPropertiesValues_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
+        public void ExtractMembersToLog_ExtractSensitiveAndCryptic_ShouldBeEquivilent()
         {
             var mock = new PersonMockData();
-            var cache = new MembersMetadataCache(_logMocked);
 
-
-            var metadataCacheParams = cache.ParseIntoParams(mock);
+            var metadataCacheParams = _extractor.ExtractMembersToLog(mock);
             var dissectedParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(mock).ToDictionary(x => x.Name);
 
             int count = AssertBetweenCacheParamAndDissectParams(metadataCacheParams, dissectedParams);
@@ -135,16 +135,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtracPropertiesValues_ExtractSensitiveAndCrypticWithInheritenceAndException_ShouldBeEquivilent()
+        public void ExtractMembersToLog_ExtractSensitiveAndCrypticWithInheritenceAndException_ShouldBeEquivilent()
         {
             var mock = new TeacherWithExceptionMock();
-            var cache = new MembersMetadataCache(_logMocked);
-
 
             var dissectedParams = DissectPropertyInfoMetadata.GetMemberWithSensitivity(mock).ToDictionary(x => x.Name);
 
-
-            var parseParams = cache.ParseIntoParams(mock);
+            var parseParams = _extractor.ExtractMembersToLog(mock);
             int count = AssertBetweenCacheParamAndDissectParams(parseParams, dissectedParams);
 
             parseParams.Count().ShouldBe(dissectedParams.Count - 1);
@@ -154,14 +151,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtracPropertiesValues_SendTwoPeople_ShouldBeEquivilent()
-        {
-            var cache = new MembersMetadataCache(_logMocked);
+        public void ExtractMembersToLog_SendTwoPeople_ShouldBeEquivilent()
+        {            
             var person = new PersonMockData();
             var teacher = new TeacherWithExceptionMock();
 
-            var teacherArguments = cache.ParseIntoParams(teacher);
-            var personArguments = cache.ParseIntoParams(person);
+            var teacherArguments = _extractor.ExtractMembersToLog(teacher);
+            var personArguments = _extractor.ExtractMembersToLog(person);
 
             var personDissect = DissectPropertyInfoMetadata.GetMemberWithSensitivity(person).ToDictionary(x => x.Name);
 
@@ -180,12 +176,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtractPropertiesValues_TypeWithGeneric_MembersExtractedCorrectly()
+        public void ExtractMembersToLog_TypeWithGeneric_MembersExtractedCorrectly()
         {
-            var cache = new MembersMetadataCache(_logMocked);
             var genericMockData = new GenericMockData<MockData>(new MockData());
 
-            var genericArguments = cache.ParseIntoParams(genericMockData);
+            var genericArguments = _extractor.ExtractMembersToLog(genericMockData);
 
             _logMocked.DidNotReceive().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
             genericArguments.Count().ShouldBe(3);
@@ -195,12 +190,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
         [Test]
-        public void ExtractPropertiesValues_GenericWithInheritance_MembersExtractedCorrectly()
+        public void ExtractMembersToLog_GenericWithInheritance_MembersExtractedCorrectly()
         {
-            var cache = new MembersMetadataCache(_logMocked);
             var genericWithInheritance = new GenericWithInheritance<DerivedMockData>(new DerivedMockData());
 
-            var genericWithInheritanceArguments = cache.ParseIntoParams(genericWithInheritance);
+            var genericWithInheritanceArguments = _extractor.ExtractMembersToLog(genericWithInheritance);
 
             _logMocked.DidNotReceive().Warn(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<bool>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<string>());
             genericWithInheritanceArguments.Count().ShouldBe(4);
@@ -210,10 +204,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             genericWithInheritanceArguments.ShouldContain(x => x.Name == "GenericWithInheritancePropertySensitive" && x.Value.ToString() == "GenericWithInheritancePropertySensitiveValue" && x.Sensitivity == Sensitivity.Sensitive);
         }
 
+       [Test]
+        public void ExtractMembersToLog_CheckMemberNameWithDepth_ShouldExtractNameCorrectly()
+        {
+            var depthDegree3Generic = new GenericMockData<GenericMockData<MockData>>(new GenericMockData<MockData>(new MockData()));
+
+            var extractedMembers = _extractor.ExtractMembersToLog(depthDegree3Generic);
+
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_GenericType_GenericPropertySensitive");
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_GenericType_GenericFieldSecretive");
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_FieldNonSensitive");
+            extractedMembers.ShouldContain(x => x.Name == "FieldNonSensitive");            
+        }
+
         [Test]
         public void LoadTest()
         {
-            var cache = new MembersMetadataCache(_logMocked);
             var people = GeneratePeople(10000).ToList();
             var numOfProperties = DissectPropertyInfoMetadata.GetMemberWithSensitivity(new PersonMockData());
             var stopWatch = new Stopwatch();
@@ -222,11 +228,55 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             foreach (var person in people)
             {
-                var tmpParams = cache.ParseIntoParams(person);
+                var tmpParams = _extractor.ExtractMembersToLog(person);
                 tmpParams.Count().ShouldBe(numOfProperties.Count());
             }
             stopWatch.Stop();
         }
+
+        #region Non/Sensitive attribute Hierarchy Tests
+
+        [Test]
+        public void ExtractMembersToLog_SensitiveGenericNonSensitivePayload_NonSensitive()
+        {
+            var genericWithInheritance = new SensitiveGeneric<NonSensitivePayload>(new NonSensitivePayload());
+
+            var extractedMembers = _extractor.ExtractMembersToLog(genericWithInheritance);
+
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_NonSensitiveField" && x.Value.ToString() == "NonSensitiveFieldValue" && x.Sensitivity == Sensitivity.NonSensitive);
+        }
+
+        [Test]
+        public void ExtractMembersToLog_SensitiveGenericSensitivePayload_Sensitive()
+        {
+            var genericWithInheritance = new SensitiveGeneric<SensitivePayload>(new SensitivePayload());
+
+            var extractedMembers = _extractor.ExtractMembersToLog(genericWithInheritance);
+
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_SensitiveField" && x.Value.ToString() == "SensitiveFieldValue" && x.Sensitivity == Sensitivity.Sensitive);
+        }
+
+        [Test]
+        public void ExtractMembersToLog_NonSensitiveGenericSensitivePayload_Sensitive()
+        {
+            var genericWithInheritance = new NonSensitiveGeneric<SensitivePayload>(new SensitivePayload());
+
+            var extractedMembers = _extractor.ExtractMembersToLog(genericWithInheritance);
+
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_SensitiveField" && x.Value.ToString() == "SensitiveFieldValue" && x.Sensitivity == Sensitivity.Sensitive);
+        }
+
+        [Test]
+        public void ExtractMembersToLog_NonSensitiveGenericNonSensitivePayload_NonSensitive()
+        {
+            var genericWithInheritance = new NonSensitiveGeneric<NonSensitivePayload>(new NonSensitivePayload());
+
+            var extractedMembers = _extractor.ExtractMembersToLog(genericWithInheritance);
+
+            extractedMembers.ShouldContain(x => x.Name == "GenericType_NonSensitiveField" && x.Value.ToString() == "NonSensitiveFieldValue" && x.Sensitivity == Sensitivity.NonSensitive);
+        }
+
+        #endregion
 
         private static int AssertBetweenCacheParamAndDissectParams(IEnumerable<MetadataCacheParam> @params, Dictionary<string, (object Value, MemberTypes MemberType, string Name, Sensitivity? Sensitivity, bool WithException, MemberInfo Member)> actual)
         {
@@ -365,13 +415,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public int Years { get; set; }
         }
 
+        
         private class GenericWithInheritance<T> where T : MockData
         {
             public GenericWithInheritance(T generic)
             {
                 GenericType = generic;
             }
-
+            
             public T GenericType;
 
             [Sensitive]
@@ -384,7 +435,39 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             public string DerivedPropertySensitive { get; set; } = "DerivedPropertySensitiveValue";
         }
 
-    #endregion
+        private class SensitiveGeneric<T> 
+        {
+            public SensitiveGeneric(T generic)
+            {
+                GenericType = generic;
+            }
+
+            [Sensitive]
+            public T GenericType;
+        }
+
+        private class NonSensitiveGeneric<T>
+        {
+            public NonSensitiveGeneric(T generic)
+            {
+                GenericType = generic;
+            }
+
+            [NonSensitive]
+            public T GenericType;
+        }
+
+        private class SensitivePayload
+        {
+            [Sensitive] public string SensitiveField = "SensitiveFieldValue";
+        }
+
+        private class NonSensitivePayload
+        {
+            [NonSensitive] public string NonSensitiveField = "NonSensitiveFieldValue";
+        }
+
+        #endregion
     }
 }
 

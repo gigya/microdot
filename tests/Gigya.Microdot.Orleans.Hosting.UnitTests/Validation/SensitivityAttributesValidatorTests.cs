@@ -68,7 +68,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
         [TestCase(typeof(IInvalid_WithoutLogFieldAndWithSensitivityOnProperty))]
         [TestCase(typeof(IInvalid_WithoutLogFieldAndWithinNestedSensitivity))]
         [TestCase(typeof(IInvalid_WithLogFieldAndWithSensitivityOnField))]
-
+        [TestCase(typeof(IInvalidGeneric))]
         public void ValidationShouldFail(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -77,7 +77,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         [TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
-        [TestCase(typeof(IValidGeneric))]
+        [TestCase(typeof(IValidGeneric))]        
         public void ValidationShouldSucceed(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -273,7 +273,12 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         private interface IValidGeneric
         {
-            Task Verification([LogFields]GenericWrapper<GenericPayload> stub);
+            Task Verification([LogFields]GenericWrapper<Payload> stub);
+        }
+
+        private interface IInvalidGeneric
+        {
+            Task Verification([LogFields]GenericWrapper<GenericPayload<Payload>> stub);
         }
 
         public class OuterStub
@@ -297,10 +302,23 @@ namespace Gigya.Common.Application.UnitTests.Validation
             public T GenericType { get; set; }
         }
 
-        public class GenericPayload
+        public class Payload
         {
             [Sensitive]
             public string FamilyName { get; set; }
+        }
+
+        public class GenericPayload<T>
+        {
+            public GenericPayload(T genericType)
+            {
+                GenericType = genericType;
+            }
+
+            [Sensitive]
+            public string FamilyName { get; set; }
+
+            public T GenericType { get; set; }
         }
     }
 }

@@ -32,18 +32,17 @@ using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
-
     public class ReflectionMetadataInfo
     {
         public string Name { get; set; }
         public Func<object, object> ValueExtractor { get; set; }
         public Sensitivity? Sensitivity { get; set; }
-        public ReflectionMetadataInfo[] InnerFields { get; set; }
+        public ReflectionMetadataInfo[] InnerMembers { get; set; }
     }
 
-    public interface IMembersMetadataCache
+    public interface IMembersToLogExtractor
     {
-        IEnumerable<MetadataCacheParam> ParseIntoParams(object instance);
+        IEnumerable<MetadataCacheParam> ExtractMembersToLog(object instance);
     }
 
     public class MetadataCacheParam
@@ -54,28 +53,26 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     }
 
-
-    public class MembersMetadataCache : IMembersMetadataCache
+    public class MembersToLogExtractor : IMembersToLogExtractor
     {
         private readonly ILog _log;
         private readonly ConcurrentDictionary<Type, ReflectionMetadataInfo[]> _membersMetadataCache;
 
-        public MembersMetadataCache(ILog log)
+        public MembersToLogExtractor(ILog log)
         {
             _log = log;
             _membersMetadataCache = new ConcurrentDictionary<Type, ReflectionMetadataInfo[]>();
-
         }
 
-        public IEnumerable<MetadataCacheParam> ParseIntoParams(object instance)
+        public IEnumerable<MetadataCacheParam> ExtractMembersToLog(object instance)
         {
             var type = instance.GetType();
-            var propertiesMetadata = _membersMetadataCache.GetOrAdd(type, x => ExtracMemberMetadata(type).ToArray());
+            var propertiesMetadata = _membersMetadataCache.GetOrAdd(type, x => ExtractMemberMetadata(type).ToArray());
 
-            return ExtractParams(instance, propertiesMetadata);
+            return ExtractMembers(instance, propertiesMetadata);
         }
 
-        private IEnumerable<MetadataCacheParam> ExtractParams(object instance, IEnumerable<ReflectionMetadataInfo> membersMetadata, string containingName = null)
+        private IEnumerable<MetadataCacheParam> ExtractMembers(object instance, IEnumerable<ReflectionMetadataInfo> membersMetadata, string containingName = null)
         {
             foreach (var memberMetadata in membersMetadata)
             {
@@ -91,15 +88,16 @@ namespace Gigya.Microdot.SharedLogic.Events
                     continue;
                 }
 
-                if (memberMetadata.InnerFields != null && memberMetadata.InnerFields.Length > 0)
-                {
-                    foreach (var metadataCacheParam in ExtractParams(value, memberMetadata.InnerFields, memberMetadata.Name)) yield return metadataCacheParam;
-                }
-                else
+                var memberName = containingName == null ? memberMetadata.Name : $"{containingName}_{memberMetadata.Name}";
+
+                if (memberMetadata.InnerMembers != null && memberMetadata.InnerMembers.Length > 0)                
+                    foreach (var metadataCacheParam in ExtractMembers(value, memberMetadata.InnerMembers, memberName)) yield return metadataCacheParam;                
+                else //In case the if flow was executed, we don't want to return the current item
+                     //because it's a generic payload (class) and not a member
                 {
                     yield return new MetadataCacheParam
                     {
-                        Name = containingName == null ? memberMetadata.Name : $"{containingName}_{memberMetadata.Name}",
+                        Name = memberName,
                         Value = value,
                         Sensitivity = memberMetadata.Sensitivity
                     };
@@ -108,51 +106,51 @@ namespace Gigya.Microdot.SharedLogic.Events
         }
 
         private const int MaxRecursionDepth = 1;
-        internal static IEnumerable<ReflectionMetadataInfo> ExtracMemberMetadata(Type type, int recursionDepth = 0)
+
+        internal IEnumerable<ReflectionMetadataInfo> ExtractMemberMetadata(Type type, int recursionDepth = 0,
+            Sensitivity? parentSensitivity = null)
         {            
-            var list = new List<ReflectionMetadataInfo>();
             var members = type.FindMembers(MemberTypes.Property | MemberTypes.Field,
                     BindingFlags.Public | BindingFlags.Instance, null, null)
                 .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead));
 
-            Type[] typeArguments = null;
-            if (recursionDepth <= MaxRecursionDepth && type.IsGenericType)
-            {
-                typeArguments = type.GetGenericArguments();
-            }
+            var typeArguments = recursionDepth <= MaxRecursionDepth && type.IsGenericType
+                ? type.GetGenericArguments()
+                : null;                     
 
-          foreach (var member in members)
-          {
+            foreach (var member in members)
+            {
                 var instanceParameter = Expression.Parameter(typeof(object), "target");
                 MemberExpression memberExpression = null;
 
                 if (member.MemberType == MemberTypes.Property)
-                    memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType), (PropertyInfo)member);
+                    memberExpression = Expression.Property(Expression.Convert(instanceParameter, member.DeclaringType),
+                        (PropertyInfo) member);
                 else if (member.MemberType == MemberTypes.Field)
-                    memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType), (FieldInfo)member);
+                    memberExpression = Expression.Field(Expression.Convert(instanceParameter, member.DeclaringType),
+                        (FieldInfo) member);
 
                 var converter = Expression.Convert(memberExpression, typeof(object));
                 var lambda = Expression.Lambda<Func<object, object>>(converter, instanceParameter);
 
-              var memberType = GetMemberUnderlyingType(member);
-              ReflectionMetadataInfo[] innerFields = null;
-              if (typeArguments != null && typeArguments.Contains(memberType))
-              {
-                  innerFields = ExtracMemberMetadata(memberType, recursionDepth + 1).ToArray();
-              }
+                var memberSensitivity = ExtractSensitivity(member) ?? parentSensitivity;
 
-                list.Add(new ReflectionMetadataInfo
+                var memberType = GetMemberUnderlyingType(member);
+                var hasInnerMembers = typeArguments != null && typeArguments.Contains(memberType);                
+
+                yield return new ReflectionMetadataInfo
                 {
                     Name = member.Name,
                     ValueExtractor = lambda.Compile(),
-                    Sensitivity = ExtractSensitivity(member),
-                    InnerFields = innerFields
-                });              
+                    Sensitivity = memberSensitivity,
+                    InnerMembers = hasInnerMembers
+                        ? ExtractMemberMetadata(memberType, recursionDepth + 1, memberSensitivity).ToArray()
+                        : null
+                };
             }
-            return list;
         }        
 
-        private static Type GetMemberUnderlyingType(MemberInfo member)
+        private Type GetMemberUnderlyingType(MemberInfo member)
         {
             switch (member.MemberType)
             {
@@ -165,7 +163,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
-        internal static Sensitivity? ExtractSensitivity(MemberInfo memberInfo)
+        internal Sensitivity? ExtractSensitivity(MemberInfo memberInfo)
         {
             var attribute = memberInfo.GetCustomAttributes()
                 .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);

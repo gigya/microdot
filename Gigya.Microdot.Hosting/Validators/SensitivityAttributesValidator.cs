@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Hosting.Validators
                         }
 
                         var logFieldExists = Attribute.IsDefined(parameter, typeof(LogFieldsAttribute));
-                        VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>(), false);
+                        VerifyMisplacedSensitiveAttribute(logFieldExists, method.Name, parameter.Name, parameter.ParameterType, new Stack<string>());
                     }
                 }
             }
@@ -73,7 +73,7 @@ namespace Gigya.Microdot.Hosting.Validators
             return false;
         }
 
-        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path, bool isGenericPayload)
+        private void VerifyMisplacedSensitiveAttribute(bool logFieldExists, string methodName, string paramName, Type type, Stack<string> path, bool isGenericPayload = false)
         {
             if (type.IsClass == false || IsIrrelevantTypes(type))
                 return;
@@ -93,7 +93,7 @@ namespace Gigya.Microdot.Hosting.Validators
                 if (memberInfo.GetCustomAttribute(typeof(SensitiveAttribute)) != null || memberInfo.GetCustomAttribute(typeof(NonSensitiveAttribute)) != null)
                     if (!logFieldExists)
                         throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but the method parameter is not marked with [LogFields]");
-                    else if (!isGenericPayload && path.Count > 1)
+                    else if (IsInvalidAttributeLevelPlacement(isGenericPayload, path.Count))
                         throw new ProgrammaticException($"The method '{methodName}' parameter '{paramName}' has a member '{string.Join(" --> ", path.Reverse())}' that is marked as [Sensitive] or [NonSensitive], but only root-level members can be marked as such.");
 
                 Type memberType = memberInfo is PropertyInfo propertyInfo ? propertyInfo.PropertyType : ((FieldInfo)memberInfo).FieldType;
@@ -102,6 +102,14 @@ namespace Gigya.Microdot.Hosting.Validators
 
                 path.Pop();
             }
+        }
+
+        private bool IsInvalidAttributeLevelPlacement(bool isGenericPayload, int pathCount)
+        {
+            if (isGenericPayload)
+                return pathCount > 2; //Allow only attributes on one level of generic payload 
+            else
+                return pathCount > 1; //Allow only attributes on root level
         }
     }
 }
