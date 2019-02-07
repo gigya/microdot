@@ -163,27 +163,19 @@ namespace Gigya.Microdot.SharedLogic.Events
             }
         }
 
+
         internal Sensitivity? ExtractSensitivity(MemberInfo memberInfo)
         {
-            var attribute = memberInfo.GetCustomAttributes()
-                .FirstOrDefault(x => x is SensitiveAttribute || x is NonSensitiveAttribute);
+            if (memberInfo.GetCustomAttribute<SensitiveAttribute>()?.Secretive == true)
+                return Sensitivity.Secretive;
 
-            if (attribute != null)
-            {
-                if (attribute is SensitiveAttribute sensitiveAttibute)
-                {
-                    if (sensitiveAttibute.Secretive)
-                    {
-                        return Sensitivity.Secretive;
-                    }
+            else if (memberInfo.GetCustomAttribute<SensitiveAttribute>()?.Secretive == false)
+                return Sensitivity.Sensitive;
 
-                    return Sensitivity.Sensitive;
-
-                }
+            else if (memberInfo.GetCustomAttribute<NonSensitiveAttribute>() != null)
                 return Sensitivity.NonSensitive;
-            }
 
-            return null;
+            else return null;
         }
     }
 }
