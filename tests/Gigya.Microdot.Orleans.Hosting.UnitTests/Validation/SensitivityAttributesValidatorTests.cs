@@ -69,6 +69,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
         [TestCase(typeof(IInvalid_WithoutLogFieldAndWithinNestedSensitivity))]
         [TestCase(typeof(IInvalid_WithLogFieldAndWithSensitivityOnField))]
         [TestCase(typeof(IInvalidGeneric))]
+        [TestCase(typeof(IInvalidCircularGeneric))]
         public void ValidationShouldFail(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -281,6 +282,11 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Task Verification([LogFields]GenericWrapper<GenericPayload<Payload>> stub);
         }
 
+        private interface IInvalidCircularGeneric
+        {
+            Task Verification([LogFields]GenericWrapper<CircularPayload> stub);
+        }
+
         public class OuterStub
         {
             public string Name { get; set; }
@@ -306,6 +312,15 @@ namespace Gigya.Common.Application.UnitTests.Validation
         {
             [Sensitive]
             public string FamilyName { get; set; }
+        }
+
+        public class CircularPayload
+        {
+            [Sensitive]
+            public string FamilyName { get; set; }
+
+            [Sensitive]
+            public CircularPayload Circular { get; set; }
         }
 
         public class GenericPayload<T>
