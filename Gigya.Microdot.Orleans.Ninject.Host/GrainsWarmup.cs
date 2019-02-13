@@ -23,9 +23,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Ninject;
+using Ninject.Extensions.Factory;
 using Orleans;
 using Orleans.Core;
 using Orleans.Runtime;
@@ -64,17 +66,27 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 {
                     try
                     {
-                        foreach (Type parameterType in serviceClass.GetConstructors().SelectMany(ctor => ctor.GetParameters().Select(p => p.ParameterType)).Distinct())
+                        foreach (ConstructorInfo ctorInfo in serviceClass.GetConstructors())
                         {
-                            try
+                            //IGrainIdentity and IGrainRuntime are used in the constructor intended for tests
+                            //We don't need to warm up it
+                            if (ctorInfo.GetParameters().Any(p => p.ParameterType == typeof(IGrainIdentity) || p.ParameterType == typeof(IGrainRuntime)))
                             {
-                                _kernel.Get(parameterType);
+                                continue;
                             }
-                            catch //No exception handling needed. We try to warmup all constructor types. In case of failure, write the warning for non orleans types and go to the next type
+
+                            foreach (Type parameterType in ctorInfo.GetParameters().Select(p => p.ParameterType).Distinct())
                             {
-                                if (!_orleansInternalTypes.Contains(parameterType))
+                                try
                                 {
-                                    failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
+                                    _kernel.Get(parameterType);
+                                }
+                                catch //No exception handling needed. We try to warmup all constructor types. In case of failure, write the warning for non orleans types and go to the next type
+                                {
+                                    if (!_orleansInternalTypes.Contains(parameterType))
+                                    {
+                                        failedWarmupWarn.Add($"Type {parameterType} of grain {serviceClass}");
+                                    }
                                 }
                             }
                         }
