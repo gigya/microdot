@@ -104,7 +104,7 @@ namespace Gigya.Microdot.ServiceProxy
         private readonly Counter _hostFailureCounter;
         private readonly Counter _applicationExceptionCounter;
 
-        private HttpMessageHandler _httpMessageHandler = new WebRequestHandler();
+        private HttpMessageHandler _httpMessageHandler = new HttpClientHandler();
 
         protected internal HttpMessageHandler HttpMessageHandler
         {
@@ -210,9 +210,9 @@ namespace Gigya.Microdot.ServiceProxy
         private void InitHttps(string securityRole)
         {
             if (HttpMessageHandler == null)
-                HttpMessageHandler = new WebRequestHandler();
+                HttpMessageHandler = new HttpClientHandler();
 
-            var wrh = HttpMessageHandler as WebRequestHandler;
+            var wrh = HttpMessageHandler as HttpClientHandler;
 
             if (wrh == null)
                 throw new ProgrammaticException("When using HTTPS in ServiceProxy, only WebRequestHandler is supported.", unencrypted: new Tags { { "HandlerType", HttpMessageHandler.GetType().FullName } });
@@ -222,7 +222,7 @@ namespace Gigya.Microdot.ServiceProxy
 
             wrh.ClientCertificates.Add(clientCert);
 
-            wrh.ServerCertificateValidationCallback = (sender, serverCertificate, serverChain, errors) =>
+            wrh.ServerCertificateCustomValidationCallback = (sender, serverCertificate, serverChain, errors) =>
             {
                 switch (errors)
                 {
