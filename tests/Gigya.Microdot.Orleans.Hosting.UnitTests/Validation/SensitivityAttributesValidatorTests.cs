@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
@@ -67,7 +68,8 @@ namespace Gigya.Common.Application.UnitTests.Validation
         [TestCase(typeof(IInvalid_WithoutLogFieldAndWithSensitivityOnProperty))]
         [TestCase(typeof(IInvalid_WithoutLogFieldAndWithinNestedSensitivity))]
         [TestCase(typeof(IInvalid_WithLogFieldAndWithSensitivityOnField))]
-
+        [TestCase(typeof(IInvalidGeneric))]
+        [TestCase(typeof(IInvalidCircularGeneric))]
         public void ValidationShouldFail(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -76,7 +78,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
 
         [TestCase(typeof(IValidMock))]
         [TestCase(typeof(IComplexParameterValidation))]
-
+        [TestCase(typeof(IValidGeneric))]        
         public void ValidationShouldSucceed(Type typeToValidate)
         {
             _typesToValidate = new[] { typeToValidate };
@@ -270,12 +272,68 @@ namespace Gigya.Common.Application.UnitTests.Validation
             Task Verification([NonSensitive]OuterStub stub);
         }
 
+        private interface IValidGeneric
+        {
+            Task Verification([LogFields]GenericWrapper<Payload> stub);
+        }
+
+        private interface IInvalidGeneric
+        {
+            Task Verification([LogFields]GenericWrapper<GenericPayload<Payload>> stub);
+        }
+
+        private interface IInvalidCircularGeneric
+        {
+            Task Verification([LogFields]GenericWrapper<CircularPayload> stub);
+        }
+
         public class OuterStub
         {
             public string Name { get; set; }
             public string FamilyName { get; set; }
 
             public OuterStub InnerStub { get; set; }
+        }
+
+        public class GenericWrapper<T>
+        {
+            public GenericWrapper(T genericType)
+            {
+                GenericType = genericType;
+            }
+
+            [NonSensitive]
+            public string Name { get; set; }
+
+            public T GenericType { get; set; }
+        }
+
+        public class Payload
+        {
+            [Sensitive]
+            public string FamilyName { get; set; }
+        }
+
+        public class CircularPayload
+        {
+            [Sensitive]
+            public string FamilyName { get; set; }
+
+            [Sensitive]
+            public CircularPayload Circular { get; set; }
+        }
+
+        public class GenericPayload<T>
+        {
+            public GenericPayload(T genericType)
+            {
+                GenericType = genericType;
+            }
+
+            [Sensitive]
+            public string FamilyName { get; set; }
+
+            public T GenericType { get; set; }
         }
     }
 }

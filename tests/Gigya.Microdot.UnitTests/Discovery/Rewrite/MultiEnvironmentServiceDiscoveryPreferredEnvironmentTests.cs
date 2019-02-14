@@ -71,6 +71,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void TearDown()
         {
             _unitTestingKernel.Dispose();
+            _loadBalancerByEnvironment.Clear();
+            _serviceDiscovery = null;
         }
 
         [Test]

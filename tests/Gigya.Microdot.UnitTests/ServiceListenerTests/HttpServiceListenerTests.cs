@@ -4,26 +4,28 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-
+using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
-
+using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Ninject;
 using Ninject.Parameters;
 
 using NSubstitute;
-
 using NUnit.Framework;
 
 using RichardSzalay.MockHttp;
@@ -42,6 +44,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         private Task _stopTask;
         private JsonExceptionSerializer _exceptionSerializer;
         private TestingKernel<ConsoleLog> _kernel;
+        private Func<InvocationTarget, ServiceMethod> _overrideServiceMethod;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
@@ -65,8 +68,27 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             TracingContext.SetUpStorage();
             TracingContext.SetRequestID("1");
 
-            _testinghost = new TestingHost<IDemoService>();
+            _testinghost = new TestingHost<IDemoService>(onInitialize: kernel =>
+                {
+                    OverrideServiceEndpointDefinition(kernel);
+                }
+            );
             _stopTask = _testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
+        }
+
+        private void OverrideServiceEndpointDefinition(IKernel kernel)
+        {
+            _overrideServiceMethod = null;
+
+            var orig = kernel.Get<IServiceEndPointDefinition>();
+            var mock = Substitute.For<IServiceEndPointDefinition>();
+            mock.Resolve(Arg.Any<InvocationTarget>()).Returns(c =>
+            {
+                var invocationTarget = c.Arg<InvocationTarget>();
+                return _overrideServiceMethod != null ? _overrideServiceMethod(invocationTarget) : orig.Resolve(invocationTarget);
+            });
+            mock.HttpPort.Returns(orig.HttpPort);
+            kernel.Rebind<IServiceEndPointDefinition>().ToConstant(mock);
         }
 
 
@@ -159,6 +181,33 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             await _testinghost.Instance.Received().ToUpper(null);
         }
 
+        [Test]
+        public async Task SendRequestWithInvalidParameterValue()
+        {
+            var methodName = nameof(IDemoService.ToUpper);
+            var expectedParamName = typeof(IDemoService).GetMethod(methodName).GetParameters().First().Name;
+
+            _overrideServiceMethod = invocationTarget =>
+            {
+                // Cause HttpServiceListener to think it is a weakly-typed request,
+                // and get the parameters list from the mocked ServiceMethod, and not from the original invocation target
+                invocationTarget.ParameterTypes = null; 
+                
+                // return a ServiceMethod which expects only int values
+                return new ServiceMethod(typeof(IDemoServiceSupportOnlyIntValues),
+                    typeof(IDemoServiceSupportOnlyIntValues).GetMethod(methodName));
+            };
+
+            try
+            {
+                await _insecureClient.ToUpper("Non-Int value");
+                Assert.Fail("Host was expected to throw an exception");
+            }
+            catch (InvalidParameterValueException ex)
+            {
+                ex.parameterName.ShouldBe(expectedParamName);
+            }
+        }
 
         [Test]
         public async Task SendRequestWithNoParameters()
@@ -204,6 +253,14 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             return new HttpRequestMessage(request.Method, request.RequestUri) { Content = contentClone };
         }
 
+        /// <summary>
+        /// this class simulates a version of IDemoService, which defines an incorrect parameter type for ToUpper method
+        /// </summary>
+        [HttpService(5555)]
+        interface IDemoServiceSupportOnlyIntValues
+        {
+            Task<string> ToUpper(int str); // the real IDemoService accepts any string value, not only int types            
+        }
     }
 
 
