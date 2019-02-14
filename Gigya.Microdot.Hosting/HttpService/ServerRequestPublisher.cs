@@ -18,15 +18,15 @@ namespace Gigya.Microdot.Hosting.HttpService
     public class ServerRequestPublisher : IServerRequestPublisher
     {
         private readonly IEventPublisher<ServiceCallEvent> _eventPublisher;
-        private readonly IPropertiesMetadataPropertiesCache _metadataPropertiesCache;
+        private readonly IMembersToLogExtractor _membersToLogExtractor;
         private readonly IServiceEndPointDefinition _serviceEndPointDefinition;
 
         public ServerRequestPublisher(IEventPublisher<ServiceCallEvent> eventPublisher,
-                                      IPropertiesMetadataPropertiesCache metadataPropertiesCache,
+                                      IMembersToLogExtractor membersToLogExtractor,
                                       IServiceEndPointDefinition serviceEndPointDefinition)
         {
             _eventPublisher = eventPublisher;
-            _metadataPropertiesCache = metadataPropertiesCache;
+            _membersToLogExtractor = membersToLogExtractor;
             _serviceEndPointDefinition = serviceEndPointDefinition;
         }
 
@@ -58,7 +58,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 var type = pair.Value?.GetType();
                 if (type?.IsClass==true)
                 {
-                    var metaParams = _metadataPropertiesCache.ParseIntoParams(pair.Value);
+                    var metaParams = _membersToLogExtractor.ExtractMembersToLog(pair.Value);
 
                     foreach (var metaParam in metaParams)
                     {

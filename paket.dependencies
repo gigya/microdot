@@ -1,6 +1,6 @@
 source https://api.nuget.org/v3/index.json
 
-framework: net451
+framework: net472
 redirects: on
 content: once
 copy_content_to_output_dir: always
@@ -15,9 +15,8 @@ nuget Metrics.NET ~> 0.0
 nuget Newtonsoft.Json >= 9 lowest_matching: true
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
-nuget ZooKeeperNetEx ~> 3.4 >= 3.4.7.1
+nuget ZooKeeperNetEx 3.4.12.0 # We have an issue with 3.4.12.1
 nuget System.ComponentModel.Annotations ~> 4.0
-nuget System.Collections.Immutable ~> 1.0
 nuget DataAnnotationsValidator ~> 2.1.0
 
 # Orleans
@@ -43,9 +42,22 @@ nuget Castle.Core ~> 4.0
 #Tests only dependencies
 nuget NUnit ~> 3.0
 nuget RichardSzalay.MockHttp 
-nuget NSubstitute  
+nuget NSubstitute
 nuget FluentAssertions 
 nuget Nuget.CommandLine 
 nuget Shouldly
-
 nuget NLog ~> 4.0
+
+#To support .NET framework 4.7.2 (Please don't modify)
+nuget System.IO redirects: off
+nuget System.IO.Compression redirects: off
+nuget System.IO.FileSystem redirects: off
+nuget System.Linq redirects: off
+nuget System.Linq.Expressions redirects: off
+nuget System.Reflection redirects: off
+nuget System.Runtime redirects: off
+nuget System.Runtime.Extensions redirects: off
+nuget System.Runtime.InteropServices redirects: off
+nuget System.Runtime.InteropServices.RuntimeInformation redirects: off
+nuget System.Xml.ReaderWriter redirects: off
+#End of fragment

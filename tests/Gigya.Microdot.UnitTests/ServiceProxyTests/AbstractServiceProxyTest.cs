@@ -49,7 +49,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         protected IDemoService CreateClient(HttpMessageHandler mockHttpMessageHandler = null)
         {
             return unitTesting
-                .Get<ServiceProxyProviderSpy<IDemoService>>(new ConstructorArgument("httpMessageHandler", mockHttpMessageHandler ?? new WebRequestHandler()))
+                .Get<ServiceProxyProviderSpy<IDemoService>>(new ConstructorArgument("httpMessageHandler", mockHttpMessageHandler ?? new HttpClientHandler()))
                 .Client;
         }
     }
