@@ -42,7 +42,7 @@ nuget Castle.Core ~> 4.0
 #Tests only dependencies
 nuget NUnit ~> 3.0
 nuget RichardSzalay.MockHttp 
-nuget NSubstitute
+nuget NSubstitute >= 3.1
 nuget FluentAssertions 
 nuget Nuget.CommandLine 
 nuget Shouldly
