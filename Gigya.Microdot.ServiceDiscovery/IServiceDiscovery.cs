@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -30,6 +31,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 {
     public delegate Task<bool> ReachabilityChecker(IEndPointHandle remoteHost);
 
+    [Obsolete("Use IDiscovery instead")]
     public interface IServiceDiscovery
     {
         /// <summary>

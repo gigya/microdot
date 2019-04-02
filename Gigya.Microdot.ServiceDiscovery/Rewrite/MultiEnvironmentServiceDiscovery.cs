@@ -41,8 +41,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     [Obsolete("Delete this class after Discovery Rewrite is completed")]
     public sealed class MultiEnvironmentServiceDiscovery : IMultiEnvironmentServiceDiscovery, IDisposable
-    {        
-        private const string MASTER_ENVIRONMENT = "prod";
+    {
+        private const string DefaultEnvironmentFallbackTarget = "prod";
 
         // Dependencies
         private readonly string ServiceName;
@@ -103,28 +103,31 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return nodeAndLoadBalancer;
             }
 
-            // 4. We're in prod env and service is not deployed, no fallback possible
-            if (Environment.DeploymentEnvironment == MASTER_ENVIRONMENT)
+            var discoveryConfig = GetDiscoveryConfig();
+            var fallbackTarget = discoveryConfig.EnvironmentFallbackTarget ?? DefaultEnvironmentFallbackTarget;
+
+            // 4. We're in fallback env and service is not deployed, no fallback possible
+            if (Environment.DeploymentEnvironment == fallbackTarget)
             {
                 _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed");
                 throw ServiceNotDeployedException();
             }
 
-            // 5. We're not in prod, but fallback to prod is disabled
-            if (GetDiscoveryConfig().EnvironmentFallbackEnabled == false)
+            // 5. We're not in fallback env, but fallback is disabled
+            if (discoveryConfig.EnvironmentFallbackEnabled == false)
             {
-                _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed (and fallback to prod disabled)");
+                _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed (and fallback disabled)");
                 throw ServiceNotDeployedException();
             }
 
-            // 6. Otherwise, try fallback to prod
-            if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(MASTER_ENVIRONMENT, preferredEnvironment ?? Environment.DeploymentEnvironment)) != null)
+            // 6. Otherwise, try fallback to fallback env
+            if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(fallbackTarget, preferredEnvironment ?? Environment.DeploymentEnvironment)) != null)
             {
-                _healthStatus = new HealthMessage(Health.Healthy, "Service not deployed, falling back to prod");
+                _healthStatus = new HealthMessage(Health.Healthy, $"Service not deployed, falling back to {fallbackTarget}");
                 return nodeAndLoadBalancer;
             }
             
-            _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed, fallback to prod enabled but service not deployed in prod either");
+            _healthStatus = new HealthMessage(Health.Unhealthy, $"Service not deployed, fallback enabled but service not deployed in {fallbackTarget} either");
             throw ServiceNotDeployedException();
         }
 
