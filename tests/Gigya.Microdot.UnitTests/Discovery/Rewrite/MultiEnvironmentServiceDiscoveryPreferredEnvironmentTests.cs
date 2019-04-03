@@ -134,7 +134,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             HealthCheckResult hResult = GetHealthResult();
             Assert.IsTrue(hResult.IsHealthy);
-            Assert.IsTrue(hResult.Message.Contains($"falling back to {Prod}"));
+            Assert.IsTrue(hResult.Message.Contains($"falling back to '{Prod}' environment"));
         }
 
         [Test]
@@ -151,7 +151,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             HealthCheckResult hResult = GetHealthResult();
             Assert.IsTrue(hResult.IsHealthy);
-            Assert.IsTrue(hResult.Message.Contains($"falling back to {Canary}"));
+            Assert.IsTrue(hResult.Message.Contains($"falling back to '{Canary}' environment"));
         }
 
         [Test]
@@ -254,7 +254,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             HealthCheckResult hResult = GetHealthResult();
             Assert.IsFalse(hResult.IsHealthy);
-            Assert.IsTrue(hResult.Message.Contains($"Service not deployed, fallback enabled but service not deployed in prod either"));
+            Assert.IsTrue(hResult.Message.Contains($"Service not deployed to '{Staging}' environment, fallback enabled but service not deployed to '{Prod}' environment either"));            
         }
 
         private static ILoadBalancer ServiceUndeployedLoadBalancer()

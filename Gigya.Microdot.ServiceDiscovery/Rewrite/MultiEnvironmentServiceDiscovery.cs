@@ -84,23 +84,24 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             // 1. Use explicit host override if provided in request
             //    TBD: Theoretically if we only ever call a service through host overrides we might not have a health check for the service at all (though it is in use)
-            var hostOverride = TracingContext.GetHostOverride(ServiceName);
+            var hostOverride = TracingContext.GetHostOverride(ServiceName); //hostOverride.Host, hostOverride.Port
             if (hostOverride != null)
                 return new NodeAndLoadBalancer {
                     Node = new Node(hostOverride.Host, hostOverride.Port),
                     LoadBalancer = null,
                     PreferredEnvironment = preferredEnvironment ?? Environment.DeploymentEnvironment,
+                    TargetEnvironment = $"{hostOverride.Host}:{hostOverride.Port}"
                 };
 
             // 2. Otherwise, use preferred environment if provided in request
             if (preferredEnvironment != null && (nodeAndLoadBalancer = await GetNodeAndLoadBalancer(preferredEnvironment, preferredEnvironment)) != null)
-                return nodeAndLoadBalancer;
+                return nodeAndLoadBalancer; //preferredEnvironment
 
             // 3. Otherwise, try use current environment
             if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(Environment.DeploymentEnvironment, preferredEnvironment)) != null)
             {
                 _healthStatus = new HealthMessage(Health.Healthy, message: null, suppressMessage: true); // No need for a health message since the load balancer we're returning already provides one
-                return nodeAndLoadBalancer;
+                return nodeAndLoadBalancer; 
             }
 
             var discoveryConfig = GetDiscoveryConfig();
@@ -123,11 +124,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // 6. Otherwise, try fallback to fallback env
             if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(fallbackTarget, preferredEnvironment ?? Environment.DeploymentEnvironment)) != null)
             {
-                _healthStatus = new HealthMessage(Health.Healthy, $"Service not deployed, falling back to {fallbackTarget}");
-                return nodeAndLoadBalancer;
+                _healthStatus = new HealthMessage(Health.Healthy, $"Service not deployed to '{Environment.DeploymentEnvironment}' environment, falling back to '{fallbackTarget}' environment");
+                return nodeAndLoadBalancer; //fallbackTarget
             }
             
-            _healthStatus = new HealthMessage(Health.Unhealthy, $"Service not deployed, fallback enabled but service not deployed in {fallbackTarget} either");
+            _healthStatus = new HealthMessage(Health.Unhealthy, $"Service not deployed to '{Environment.DeploymentEnvironment}' environment, fallback enabled but service not deployed to '{fallbackTarget}' environment either");
             throw ServiceNotDeployedException();
         }
 
@@ -147,7 +148,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (node == null)
                 return null;
 
-             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer, PreferredEnvironment = preferredEnvironment};
+             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer, PreferredEnvironment = preferredEnvironment, TargetEnvironment = environment};
         }
 
         private HealthMessage CheckHealth()
