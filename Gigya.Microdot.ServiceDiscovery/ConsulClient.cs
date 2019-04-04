@@ -23,10 +23,8 @@
 #endregion
 
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
