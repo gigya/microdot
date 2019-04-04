@@ -54,18 +54,20 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             DateTime = dateTime;
             GetConfig = getConfig;
 
-            if (environment.ConsulAddress != null)
-                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{environment.ConsulAddress}"), Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
-			else
-				// we assume a Consul agent is installed locally on the machine.
-                _httpClient = new HttpClient { BaseAddress = new Uri($"http://{CurrentApplicationInfo.HostName}:8500"), Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
-		}
+            // timeout will be implemented using cancellationToken when calling httpClient
+            // we assume a Consul agent is installed locally on the machine.
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri($"http://{environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500"}"),
+                Timeout = TimeSpan.FromMinutes(100)
+            };
+        }
 
         /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
         internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            string urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var response = await Call<ConsulNode[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            var urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}";
+            var response = await Call<ConsulNode[]>(urlCommand, cancellationToken, true).ConfigureAwait(false);
 	        if (response.StatusCode != HttpStatusCode.OK)
 	        {
 		        if (response.Error == null)
@@ -112,8 +114,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 		        throw new ArgumentNullException(nameof(zone));
 
 			T result = null;
-            string urlCommand = $"v1/kv/{folder}/{key}?dc={zone}&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            var urlCommand = $"v1/kv/{folder}/{key}?dc={zone}&index={modifyIndex}";
+            var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken, true).ConfigureAwait(false);
 
 	        if (response.StatusCode == HttpStatusCode.NotFound)
 		        response.IsUndeployed = true;
@@ -165,8 +167,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
         public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken=default(CancellationToken))
         {
-            string urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}&wait={GetConfig().HttpTimeout.TotalSeconds}s";
-            var response = await Call<string[]>(urlCommand, cancellationToken).ConfigureAwait(false);
+            var urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}";
+            var response = await Call<string[]>(urlCommand, cancellationToken, true).ConfigureAwait(false);
 	        if (response.StatusCode != HttpStatusCode.OK)
 	        {
 		        if (response.Error == null)
@@ -197,22 +199,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken)
+        private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken, bool longPolling = false)
         {
             if (_disposed)
                 return new ConsulResponse<T>{Error = new EnvironmentException("ConsulClient already disposed")};
 
-            var timeout = GetConfig().HttpTaskTimeout;
+            var httpTaskTimeout = GetConfig().HttpTaskTimeout;
+            var urlTimeout = GetConfig().HttpTimeout;
 
-            string responseContent = null;
+            if (longPolling)
+                commandPath += $"&wait={urlTimeout.TotalSeconds}s";
+
+            string responseContent;
             var consulResult = new ConsulResponse<T> { ConsulAddress = ConsulAddress.ToString(), CommandPath = commandPath };
 
             try
             {
-	            using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
+	            using (var timeoutcancellationToken = new CancellationTokenSource(httpTaskTimeout))
 	            using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
 	            {
-		            HttpResponseMessage response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
+		            var response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
 		            using (response)
 		            {
 			            responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);

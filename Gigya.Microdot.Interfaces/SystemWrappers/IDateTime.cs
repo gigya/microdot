@@ -30,7 +30,7 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
     {
         DateTime UtcNow { get; }
 
-        [Obsolete("This method will be removed on Microdot version 2.0. Please use Delay(delay, cancellationToken = default(CancellationToke)) instead.")]
+        [Obsolete("This method will be removed on Microdot version 2.0. Please use Delay(delay, cancellationToken = default(CancellationToken)) instead.")]
         Task Delay(TimeSpan delay);
         Task Delay(TimeSpan delay, CancellationToken cancellationToken = default(CancellationToken));
 

@@ -23,16 +23,15 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Web;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -51,9 +50,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private readonly IDateTime _dateTime;
         private ILog Log { get; }
-        private HttpClient _httpClient;
-
-        private readonly AggregatingHealthStatus _aggregatedHealthStatus;
+        private readonly HttpClient _httpClient;
 
         private readonly object _setResultLocker = new object();
 
@@ -96,15 +93,14 @@ namespace Gigya.Microdot.ServiceDiscovery
             _waitForConfigChange = new TaskCompletionSource<bool>();
             configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
 
-            var address = environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500";
-            ConsulAddress = new Uri($"http://{address}");
+            ConsulAddress = new Uri($"http://{environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500"}");
             _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
-            _aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
+            var aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 
             _resultChanged = new BufferBlock<EndPointsResult>();
             _initializedVersion = new TaskCompletionSource<bool>();
             ShutdownToken = new CancellationTokenSource();
-            _healthCheck = _aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, ()=>_getHealthStatus());
+            _healthCheck = aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, ()=>_getHealthStatus());
         }
 
         public Task Init()
@@ -124,12 +120,11 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             while (ShutdownToken.IsCancellationRequested == false)
             {
-                ConsulResponse response = null;
                 var config = GetConfig();
 
                 if (config.LongPolling)
                 {
-                    response = await LoadServiceVersion().ConfigureAwait(false);
+                    var response = await LoadServiceVersion().ConfigureAwait(false);
                     var delay = TimeSpan.FromMilliseconds(0);
 
                     if (response.Success)
@@ -200,9 +195,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task<ConsulResponse> LoadServiceVersion()
         {
-            var config = GetConfig();
-            var urlCommand = $"v1/kv/service/{_serviceName}?dc={Zone}&index={_versionModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
-            var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
+            var urlCommand = $"v1/kv/service/{_serviceName}?dc={Zone}&index={_versionModifyIndex}";
+            var response = await CallConsul(urlCommand, ShutdownToken.Token, true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
                 _versionModifyIndex = response.ModifyIndex.Value;
@@ -243,9 +237,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
-            var config = GetConfig();
-            var urlCommand = $"v1/kv/service?dc={Zone}&keys&index={_allKeysModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
-            var response = await CallConsul(urlCommand, ShutdownToken.Token).ConfigureAwait(false);
+            var urlCommand = $"v1/kv/service?dc={Zone}&keys&index={_allKeysModifyIndex}";
+            var response = await CallConsul(urlCommand, ShutdownToken.Token, true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
                 _allKeysModifyIndex = response.ModifyIndex.Value;
@@ -286,9 +279,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             if (!_isDeploymentDefined)
                 return new ConsulResponse { IsDeploymentDefined = false };
 
-            var config = GetConfig();
-            var urlCommand = $"v1/health/service/{_serviceName}?dc={Zone}&passing&index={_endpointsModifyIndex}&wait={config.HttpTimeout.TotalSeconds}s";
-            var response = await CallConsul(urlCommand, _loadEndpointsByHealthCancellationTokenSource.Token).ConfigureAwait(false);
+            var urlCommand = $"v1/health/service/{_serviceName}?dc={Zone}&passing&index={_endpointsModifyIndex}";
+            var response = await CallConsul(urlCommand, _loadEndpointsByHealthCancellationTokenSource.Token, true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
                 _endpointsModifyIndex = response.ModifyIndex.Value;
@@ -352,18 +344,23 @@ namespace Gigya.Microdot.ServiceDiscovery
             return response;
         }
 
-        private async Task<ConsulResponse> CallConsul(string urlCommand, CancellationToken cancellationToken)
+        private async Task<ConsulResponse> CallConsul(string urlCommand, CancellationToken cancellationToken, bool longPolling = false)
         {            
-            var timeout = GetConfig().HttpTimeout;
-            ulong? modifyIndex = 0;
-            string requestLog = string.Empty;
+            var requestLog = string.Empty;
+            var httpTaskTimeout = GetConfig().HttpTaskTimeout;
+            var urlTimeout = GetConfig().HttpTimeout;
             string responseContent = null;
             HttpStatusCode? statusCode = null;
+
+            if (longPolling)
+                urlCommand += $"&wait={urlTimeout.TotalSeconds}s";
 
             try
             {
                 requestLog = _httpClient.BaseAddress + urlCommand;
-                using (var timeoutcancellationToken = new CancellationTokenSource(timeout))
+
+                ulong? modifyIndex;
+                using (var timeoutcancellationToken = new CancellationTokenSource(httpTaskTimeout))
                 using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
                 using (var response = await _httpClient.GetAsync(urlCommand, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false))
                 {
