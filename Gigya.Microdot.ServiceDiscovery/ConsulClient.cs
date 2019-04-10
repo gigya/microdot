@@ -65,14 +65,14 @@ namespace Gigya.Microdot.ServiceDiscovery
         private readonly TaskCompletionSource<bool> _initializedVersion;
         private TaskCompletionSource<bool> _waitForConfigChange;
 
-        private ulong _endpointsModifyIndex = 0;
-        private ulong _versionModifyIndex = 0;
-        private ulong _allKeysModifyIndex = 0;
+        private ulong _endpointsModifyIndex;
+        private ulong _versionModifyIndex;
+        private ulong _allKeysModifyIndex;
         private string _activeVersion;
         private bool _isDeploymentDefined = true;
 
         private bool _disposed;
-        private int _initialized = 0;
+        private int _initialized;
         private readonly IDisposable _healthCheck;
         private Func<HealthCheckResult> _getHealthStatus;
 
@@ -98,7 +98,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             _resultChanged = new BufferBlock<EndPointsResult>();
             _initializedVersion = new TaskCompletionSource<bool>();
             ShutdownToken = new CancellationTokenSource();
-            _healthCheck = aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, ()=>_getHealthStatus());
+            _healthCheck = aggregatedHealthStatus.RegisterCheck(_serviceNameOrigin, () => _getHealthStatus());
         }
 
         public Task Init()
@@ -143,7 +143,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         {
             while (ShutdownToken.IsCancellationRequested == false)
             {
-                ConsulResponse consulResponse = null;
+                ConsulResponse consulResponse;
                 var config = GetConfig();
 
                 var delay = TimeSpan.FromMilliseconds(0);
@@ -194,7 +194,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> LoadServiceVersion()
         {
             var urlCommand = $"v1/kv/service/{_serviceName}?dc={Zone}&index={_versionModifyIndex}";
-            var response = await CallConsul(urlCommand, ShutdownToken.Token, true).ConfigureAwait(false);
+            var response = await CallConsul(urlCommand, ShutdownToken.Token, longPolling: true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
                 _versionModifyIndex = response.ModifyIndex.Value;
@@ -236,7 +236,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
             var urlCommand = $"v1/kv/service?dc={Zone}&keys&index={_allKeysModifyIndex}";
-            var response = await CallConsul(urlCommand, ShutdownToken.Token, true).ConfigureAwait(false);
+            var response = await CallConsul(urlCommand, ShutdownToken.Token, longPolling: true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
                 _allKeysModifyIndex = response.ModifyIndex.Value;
@@ -278,7 +278,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 return new ConsulResponse { IsDeploymentDefined = false };
 
             var urlCommand = $"v1/health/service/{_serviceName}?dc={Zone}&passing&index={_endpointsModifyIndex}";
-            var response = await CallConsul(urlCommand, _loadEndpointsByHealthCancellationTokenSource.Token, true).ConfigureAwait(false);
+            var response = await CallConsul(urlCommand, _loadEndpointsByHealthCancellationTokenSource.Token, longPolling: true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)
                 _endpointsModifyIndex = response.ModifyIndex.Value;
@@ -318,7 +318,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         private async Task<ConsulResponse> LoadEndpointsByQuery()
         {
             var consulQuery = $"v1/query/{_serviceName}/execute?dc={Zone}";
-            var response = await CallConsul(consulQuery, ShutdownToken.Token).ConfigureAwait(false);
+            var response = await CallConsul(consulQuery, ShutdownToken.Token, longPolling: false).ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -342,7 +342,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             return response;
         }
 
-        private async Task<ConsulResponse> CallConsul(string urlCommand, CancellationToken cancellationToken, bool longPolling = false)
+        private async Task<ConsulResponse> CallConsul(string urlCommand, CancellationToken cancellationToken, bool longPolling )
         {            
             var requestLog = string.Empty;
             var httpTaskTimeout = GetConfig().HttpTaskTimeout;
@@ -438,7 +438,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 Content = responseContent
             });
 
-            _getHealthStatus =  ()=>HealthCheckResult.Unhealthy($"Consul error: " + ex.Message);
+            _getHealthStatus = () => HealthCheckResult.Unhealthy($"Consul error: {ex.Message}");
 
             if (Result != null && Result.Error == null)
                 return;
@@ -472,7 +472,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     IsQueryDefined = false
                 };
 
-                _getHealthStatus = ()=>HealthCheckResult.Healthy($"Service doesn't exist on Consul");
+                _getHealthStatus = () => HealthCheckResult.Healthy("Service doesn't exist on Consul");
             }
         }
 
@@ -491,7 +491,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 }).OrderBy(x => x.HostName).ThenBy(x => x.Port).ToArray();
 
                 ConsulEndPoint[] activeVersionEndpoints;
-                string healthMessage = null;
+                string healthMessage;
                 if (activeVersion == null)
                 {
                     activeVersionEndpoints = endpoints;
@@ -502,18 +502,12 @@ namespace Gigya.Microdot.ServiceDiscovery
                     activeVersionEndpoints = endpoints.Where(ep => ep.Version == activeVersion).ToArray();
                     healthMessage = $"{activeVersionEndpoints.Length} endpoints";
                     if (activeVersionEndpoints.Length != endpoints.Length)
-                        healthMessage +=
-                            $" matching to version {activeVersion} from total of {endpoints.Length} endpoints";
+                        healthMessage += $" matching to version {activeVersion} from total of {endpoints.Length} endpoints";
                 }
 
-
-                _getHealthStatus = () =>
-                    {
-                        if (_serviceName == _serviceNameOrigin)
-                            return HealthCheckResult.Healthy(healthMessage);
-                        else
-                            return HealthCheckResult.Healthy($"Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
-                    };
+                _getHealthStatus = () => HealthCheckResult.Healthy(_serviceName == _serviceNameOrigin
+                    ? healthMessage
+                    : $"Service exists on Consul, but with different casing: '{_serviceName}'. {healthMessage}");
 
                 Result = new EndPointsResult
                 {

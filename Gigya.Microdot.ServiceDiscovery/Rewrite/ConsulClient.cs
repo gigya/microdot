@@ -43,7 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Uri ConsulAddress => _httpClient.BaseAddress;        
         private string Zone { get; }
         private readonly HttpClient _httpClient;
-        private bool _disposed = false;
+        private bool _disposed;
 
 
 
@@ -67,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             var urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}";
-            var response = await Call<ConsulNode[]>(urlCommand, cancellationToken, true).ConfigureAwait(false);
+            var response = await Call<ConsulNode[]>(urlCommand, cancellationToken, longPolling: true).ConfigureAwait(false);
 	        if (response.StatusCode != HttpStatusCode.OK)
 	        {
 		        if (response.Error == null)
@@ -115,7 +115,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 			T result = null;
             var urlCommand = $"v1/kv/{folder}/{key}?dc={zone}&index={modifyIndex}";
-            var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken, true).ConfigureAwait(false);
+            var response = await Call<KeyValueResponse[]>(urlCommand, cancellationToken, longPolling: true).ConfigureAwait(false);
 
 	        if (response.StatusCode == HttpStatusCode.NotFound)
 		        response.IsUndeployed = true;
@@ -164,11 +164,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
+        /// <inheritdoc />
         /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
         public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken=default(CancellationToken))
         {
             var urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}";
-            var response = await Call<string[]>(urlCommand, cancellationToken, true).ConfigureAwait(false);
+            var response = await Call<string[]>(urlCommand, cancellationToken, longPolling: true).ConfigureAwait(false);
 	        if (response.StatusCode != HttpStatusCode.OK)
 	        {
 		        if (response.Error == null)
@@ -199,7 +200,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken, bool longPolling = false)
+        private async Task<ConsulResponse<T>> Call<T>(string commandPath, CancellationToken cancellationToken, bool longPolling)
         {
             if (_disposed)
                 return new ConsulResponse<T>{Error = new EnvironmentException("ConsulClient already disposed")};
@@ -250,8 +251,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private ConsulNode ToNode(ServiceEntry serviceEntry)
         {
             const string versionPrefix = "version:";
-            string versionTag = serviceEntry.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
-            string version = versionTag?.Substring(versionPrefix.Length);
+            var versionTag = serviceEntry.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
+            var version = versionTag?.Substring(versionPrefix.Length);
 
             return new ConsulNode(serviceEntry.Node.Name, serviceEntry.Service?.Port, version);
         }
@@ -260,10 +261,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private static ulong? TryGetConsulIndex(HttpResponseMessage response)
         {
-            response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders);
-            if (consulIndexHeaders != null && ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out ulong consulIndexValue))
+            if (response.Headers.TryGetValues("x-consul-index", out var consulIndexHeaders))
+            {
+                ulong.TryParse(consulIndexHeaders.FirstOrDefault(), out var consulIndexValue);
                 return consulIndexValue;
-            else return null;
+            }
+
+            return null;
         }
 
 
