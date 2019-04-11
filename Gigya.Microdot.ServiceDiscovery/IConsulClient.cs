@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         /// <summary>
         /// Result of endpoints which returned by Consul
         /// </summary>
-        public EndPoint[] EndPoints { get; set; }=new EndPoint[0];
+        public EndPoint[] EndPoints { get; set; } = new EndPoint[0];
 
         /// <summary>
         /// Log of Request sent to Consul
