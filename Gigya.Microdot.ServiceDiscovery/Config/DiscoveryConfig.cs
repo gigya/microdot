@@ -35,7 +35,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     [Serializable]
     [ConfigurationRoot("Discovery", RootStrategy.ReplaceClassNameWithPath)]
     public class DiscoveryConfig : IConfigObject
-    {
+    {        
         internal ServiceDiscoveryConfig DefaultItem { get; private set; }
 
         /// <summary>
@@ -89,7 +89,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         public bool EnvironmentFallbackEnabled { get; set; } = false;
 
-
+        public string EnvironmentFallbackTarget { get; set; } 
+        
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {

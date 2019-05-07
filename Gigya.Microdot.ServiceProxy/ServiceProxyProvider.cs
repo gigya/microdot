@@ -366,6 +366,7 @@ namespace Gigya.Microdot.ServiceProxy
 
                     clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
                     clientCallEvent.TargetPort = effectivePort.Value;
+                    clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
 
                     request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
                         ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };

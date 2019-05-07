@@ -51,6 +51,9 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.targetMethod)]
         public string TargetMethod { get; set; }
 
+        [EventField(EventConsts.targetEnvironment)]
+        public string TargetEnvironment { get; set; }
+
         /// <summary>Stopwatch timestamp when request was sent.</summary>
         [EventField(EventConsts.clnSendTimestamp)]
         public long? RequestStartTimestamp { get; set; }
