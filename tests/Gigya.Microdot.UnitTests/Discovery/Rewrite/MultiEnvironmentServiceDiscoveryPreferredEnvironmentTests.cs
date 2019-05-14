@@ -45,7 +45,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public async Task Setup()
         {
             IDiscovery discovery = Substitute.For<IDiscovery>();
-            _discoveryConfig = new DiscoveryConfig { Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()) };
+            _discoveryConfig = new DiscoveryConfig
+            {
+                Services = new ServiceDiscoveryCollection(new Dictionary<string, ServiceDiscoveryConfig>(), new ServiceDiscoveryConfig(), new PortAllocationConfig()),               
+            };
 
             Dictionary<string, string> configDic = new Dictionary<string, string>();
             _currentEnvironment = Prod;
@@ -104,9 +107,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task FallbackFromPreferredToMasterEnvironment()
         {
-            _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();
-
-            _discoveryConfig.EnvironmentFallbackEnabled = true; // Even for preferred environmet, fallback is performed only if fallback is enabled
+            _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();            
 
             TracingContext.SetPreferredEnvironment(Canary);
 
@@ -125,6 +126,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _currentEnvironment = Staging;
             _loadBalancerByEnvironment[Staging] = ServiceUndeployedLoadBalancer();
             _discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackTarget = null; //when null, default of prod will be used
 
             var node = await _serviceDiscovery.GetNode();
             Assert.IsInstanceOf<MasterLoadBalancer>(node.LoadBalancer);
@@ -132,7 +134,24 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             HealthCheckResult hResult = GetHealthResult();
             Assert.IsTrue(hResult.IsHealthy);
-            Assert.IsTrue(hResult.Message.Contains("falling back to prod"));
+            Assert.IsTrue(hResult.Message.Contains($"falling back to '{Prod}' environment"));
+        }
+
+        [Test]
+        public async Task FallbackFromStagingToCanaryConfigurableEnvironment()
+        {
+            _currentEnvironment = Staging;
+            _loadBalancerByEnvironment[Staging] = ServiceUndeployedLoadBalancer();            
+            _discoveryConfig.EnvironmentFallbackEnabled = true;
+            _discoveryConfig.EnvironmentFallbackTarget = Canary;
+
+            var node = await _serviceDiscovery.GetNode();
+            Assert.IsInstanceOf<PreferredEnvironmentLoadBalancer>(node.LoadBalancer);
+            Assert.AreEqual(node.Node.Hostname, CanaryHost);
+
+            HealthCheckResult hResult = GetHealthResult();
+            Assert.IsTrue(hResult.IsHealthy);
+            Assert.IsTrue(hResult.Message.Contains($"falling back to '{Canary}' environment"));
         }
 
         [Test]
@@ -215,7 +234,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             HealthCheckResult hResult = GetHealthResult();
             Assert.IsFalse(hResult.IsHealthy);
-            Assert.IsTrue(hResult.Message.Contains("Service not deployed (and fallback to prod disabled)"));
+            Assert.IsTrue(hResult.Message.Contains("Service not deployed (and fallback disabled)"));
         }
 
         [Test]
@@ -235,7 +254,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             HealthCheckResult hResult = GetHealthResult();
             Assert.IsFalse(hResult.IsHealthy);
-            Assert.IsTrue(hResult.Message.Contains("Service not deployed, fallback to prod enabled but service not deployed in prod either"));
+            Assert.IsTrue(hResult.Message.Contains($"Service not deployed to '{Staging}' environment, fallback enabled but service not deployed to '{Prod}' environment either"));            
         }
 
         private static ILoadBalancer ServiceUndeployedLoadBalancer()
@@ -294,6 +313,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             public void ReportUnreachable(Node node, Exception ex = null)
             {
             }
-        }
+        }        
     }
 }

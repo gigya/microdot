@@ -11,7 +11,7 @@ Some of its main features:
 * **Client-side load balancing** and service discovery
 * **Detailed health Checks** for easy service monitoring
 * **Hierarchical configuration system** with online change detection
-* **Dependency injection** as first-classs citizen
+* **Dependency injection** as first-class citizen
 * **Orleans integration** for creating Orleans based services and enjoying the benefits of virtual actors
 
 Read on for an overview of the framework, and check the [wiki](https://github.com/gigya/microdot/wiki) for more details and a tutorial for building your first service.

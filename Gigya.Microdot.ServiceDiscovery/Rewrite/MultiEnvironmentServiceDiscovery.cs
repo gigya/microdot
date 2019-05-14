@@ -41,8 +41,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     [Obsolete("Delete this class after Discovery Rewrite is completed")]
     public sealed class MultiEnvironmentServiceDiscovery : IMultiEnvironmentServiceDiscovery, IDisposable
-    {        
-        private const string MASTER_ENVIRONMENT = "prod";
+    {
+        private const string DefaultEnvironmentFallbackTarget = "prod";
 
         // Dependencies
         private readonly string ServiceName;
@@ -84,47 +84,51 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
             // 1. Use explicit host override if provided in request
             //    TBD: Theoretically if we only ever call a service through host overrides we might not have a health check for the service at all (though it is in use)
-            var hostOverride = TracingContext.GetHostOverride(ServiceName);
+            var hostOverride = TracingContext.GetHostOverride(ServiceName); 
             if (hostOverride != null)
                 return new NodeAndLoadBalancer {
                     Node = new Node(hostOverride.Host, hostOverride.Port),
                     LoadBalancer = null,
                     PreferredEnvironment = preferredEnvironment ?? Environment.DeploymentEnvironment,
+                    TargetEnvironment = $"{hostOverride.Host}:{hostOverride.Port}"
                 };
 
             // 2. Otherwise, use preferred environment if provided in request
             if (preferredEnvironment != null && (nodeAndLoadBalancer = await GetNodeAndLoadBalancer(preferredEnvironment, preferredEnvironment)) != null)
-                return nodeAndLoadBalancer;
+                return nodeAndLoadBalancer; 
 
             // 3. Otherwise, try use current environment
             if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(Environment.DeploymentEnvironment, preferredEnvironment)) != null)
             {
                 _healthStatus = new HealthMessage(Health.Healthy, message: null, suppressMessage: true); // No need for a health message since the load balancer we're returning already provides one
-                return nodeAndLoadBalancer;
+                return nodeAndLoadBalancer; 
             }
 
-            // 4. We're in prod env and service is not deployed, no fallback possible
-            if (Environment.DeploymentEnvironment == MASTER_ENVIRONMENT)
+            var discoveryConfig = GetDiscoveryConfig();
+            var fallbackTarget = discoveryConfig.EnvironmentFallbackTarget ?? DefaultEnvironmentFallbackTarget;
+
+            // 4. We're in fallback env and service is not deployed, no fallback possible
+            if (Environment.DeploymentEnvironment == fallbackTarget)
             {
                 _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed");
                 throw ServiceNotDeployedException();
             }
 
-            // 5. We're not in prod, but fallback to prod is disabled
-            if (GetDiscoveryConfig().EnvironmentFallbackEnabled == false)
+            // 5. We're not in fallback env, but fallback is disabled
+            if (discoveryConfig.EnvironmentFallbackEnabled == false)
             {
-                _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed (and fallback to prod disabled)");
+                _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed (and fallback disabled)");
                 throw ServiceNotDeployedException();
             }
 
-            // 6. Otherwise, try fallback to prod
-            if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(MASTER_ENVIRONMENT, preferredEnvironment ?? Environment.DeploymentEnvironment)) != null)
+            // 6. Otherwise, try fallback to fallback env
+            if ((nodeAndLoadBalancer = await GetNodeAndLoadBalancer(fallbackTarget, preferredEnvironment ?? Environment.DeploymentEnvironment)) != null)
             {
-                _healthStatus = new HealthMessage(Health.Healthy, "Service not deployed, falling back to prod");
-                return nodeAndLoadBalancer;
+                _healthStatus = new HealthMessage(Health.Healthy, $"Service not deployed to '{Environment.DeploymentEnvironment}' environment, falling back to '{fallbackTarget}' environment");
+                return nodeAndLoadBalancer; 
             }
             
-            _healthStatus = new HealthMessage(Health.Unhealthy, "Service not deployed, fallback to prod enabled but service not deployed in prod either");
+            _healthStatus = new HealthMessage(Health.Unhealthy, $"Service not deployed to '{Environment.DeploymentEnvironment}' environment, fallback enabled but service not deployed to '{fallbackTarget}' environment either");
             throw ServiceNotDeployedException();
         }
 
@@ -144,7 +148,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             if (node == null)
                 return null;
 
-             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer, PreferredEnvironment = preferredEnvironment};
+             return new NodeAndLoadBalancer { Node = node, LoadBalancer = loadBalancer, PreferredEnvironment = preferredEnvironment, TargetEnvironment = environment};
         }
 
         private HealthMessage CheckHealth()
