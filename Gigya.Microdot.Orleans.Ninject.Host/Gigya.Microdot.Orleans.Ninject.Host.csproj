@@ -293,6 +293,17 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
+        <Reference Include="Orleans.Core.Legacy">
+          <HintPath>..\packages\Microsoft.Orleans.Core.Legacy\lib\netstandard2.0\Orleans.Core.Legacy.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
         <Reference Include="OrleansProviders">
           <HintPath>..\packages\Microsoft.Orleans.OrleansProviders\lib\netstandard2.0\OrleansProviders.dll</HintPath>
           <Private>True</Private>

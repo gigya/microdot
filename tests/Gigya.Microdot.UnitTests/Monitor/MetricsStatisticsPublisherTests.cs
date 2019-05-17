@@ -17,6 +17,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests
 {
+    /* //#ORLEANS20
     [TestFixture]
     public class MetricsStatisticsPublisherTests
     {
@@ -177,5 +178,5 @@ namespace Gigya.Microdot.UnitTests
         }
 
     }
-
+    */
 }

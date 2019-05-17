@@ -38,6 +38,7 @@ using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Orleans;
 using Orleans.CodeGeneration;
+
 using Orleans.Providers;
 using Orleans.Runtime.Host;
 
@@ -98,9 +99,9 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 Type = ConfigBuilder.SiloType
             };
-            Silo.InitializeOrleansSilo();
+            Silo.InitializeSilo();
             
-            bool siloStartedSuccessfully = Silo.StartOrleansSilo(false);
+            bool siloStartedSuccessfully = Silo.StartSilo(false);
 
             if (siloStartedSuccessfully)
                 Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = Silo.Name, siloType = Silo.Type }));
@@ -120,7 +121,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             try
             {
                 if (Silo != null && Silo.IsStarted)
-                    Silo.StopOrleansSilo();
+                    Silo.StopSilo();
             }
             catch (System.Net.Sockets.SocketException)
             {
@@ -148,7 +149,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             GrainTaskScheduler = TaskScheduler.Current;
             GrainFactory = providerRuntime.GrainFactory;
-            providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor);
+            //providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor); //#ORLEANS20
             GrainClient.ClientInvokeCallback = OutgoingCallInterceptor;
 
             try

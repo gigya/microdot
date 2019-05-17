@@ -11,6 +11,8 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Serialization
 {
+    /*
+    // #ORLEANS20
 	[TestFixture]
 	public class ExceptionSerializationTests
 	{
@@ -96,4 +98,5 @@ namespace Gigya.Microdot.UnitTests.Serialization
 				AssertExceptionsAreEqual(expected.InnerException, actual.InnerException);
 		}
 	}
+    */
 }

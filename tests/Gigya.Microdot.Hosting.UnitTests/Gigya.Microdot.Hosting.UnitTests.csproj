@@ -49,7 +49,6 @@
     <Compile Include="NonOrleansMicroService\FakesLoggersModules.cs" />
     <Compile Include="NonOrleansMicroService\ICalculatorService.cs" />
     <Compile Include="NonOrleansMicroService\MicroServiceTests.cs" />
-    <Compile Include="Properties\orleans.codegen.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

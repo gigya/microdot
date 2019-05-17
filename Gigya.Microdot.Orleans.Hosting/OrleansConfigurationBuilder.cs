@@ -95,10 +95,10 @@ namespace Gigya.Microdot.Orleans.Hosting
             defaults.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
 
             // Orleans log redirection
-            defaults.TraceToConsole = false;
-            defaults.TraceFileName = null;
-            defaults.TraceFilePattern = null;
-            LogManager.LogConsumers.Add(orleansLogConsumer);
+            // defaults.TraceToConsole = false;                 // TODO: #ORLEANS20
+            // defaults.TraceFileName = null;                   // TODO: #ORLEANS20
+            // defaults.TraceFilePattern = null;                // TODO: #ORLEANS20
+            // LogManager.LogConsumers.Add(orleansLogConsumer); // TODO: #ORLEANS20
 
             // ZooKeeper log redirection
             ZooKeeper.LogToFile = false;
@@ -106,19 +106,21 @@ namespace Gigya.Microdot.Orleans.Hosting
             ZooKeeper.LogLevel = TraceLevel.Verbose;
             ZooKeeper.CustomLogConsumer = zooKeeperLogConsumer;
 
+            // TODO: #ORLEANS20
             //Setup Statistics
-            var metricsProviderType = typeof(MetricsStatisticsPublisher);
-            globals.ProviderConfigurations.Add("Statistics", new ProviderCategoryConfiguration("Statistics")
-            {
-                Providers = new Dictionary<string, IProviderConfiguration>
-                {
-                    {
-                        metricsProviderType.Name,
-                        new ProviderConfiguration(new Dictionary<string, string>(), metricsProviderType.FullName, metricsProviderType.Name)
-                    }
-                }
-            });
-            defaults.StatisticsProviderName = metricsProviderType.Name;
+            // var metricsProviderType = typeof(MetricsStatisticsPublisher);
+            // globals.ProviderConfigurations.Add("Statistics", new ProviderCategoryConfiguration("Statistics")
+            // {
+            //     Providers = new Dictionary<string, IProviderConfiguration>
+            //     {
+            //         {
+            //             metricsProviderType.Name,
+            //             new ProviderConfiguration(new Dictionary<string, string>(), metricsProviderType.FullName, metricsProviderType.Name)
+            //         }
+            //     }
+            // });
+            // defaults.StatisticsProviderName = metricsProviderType.Name;
+
             defaults.StatisticsCollectionLevel = StatisticsLevel.Info;
             defaults.StatisticsLogWriteInterval = TimeSpan.Parse(orleansConfig.MetricsTableWriteInterval);
             defaults.StatisticsWriteLogStatisticsToTable = true;
@@ -151,7 +153,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 if (commonConfig.UseReminders)
                 {
                     globals.ServiceId = clusterIdentity.ServiceId;
-                    globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.SqlServer;
+                    globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.AdoNet;
                     globals.DataConnectionStringForReminders = orleansConfig.MySql_v4_0.ConnectionString;
                     globals.AdoInvariantForReminders = "MySql.Data.MySqlClient";
                 }

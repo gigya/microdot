@@ -211,8 +211,9 @@ namespace Gigya.Microdot.Testing.Service
 
         protected virtual void InitializeInfrastructure()
         {
-            LogManager.Initialize(new TestTraceConfiguration());
-            LogManager.LogConsumers.Add(new OrleansLogConsumer(Log));
+            // #ORLEANS20
+            // LogManager.Initialize(new TestTraceConfiguration());
+            // LogManager.LogConsumers.Add(new OrleansLogConsumer(Log));
         }
 
 
@@ -312,7 +313,7 @@ namespace Gigya.Microdot.Testing.Service
         }
     }
 
-    public class TestTraceConfiguration : ITraceConfiguration
+    public class TestTraceConfiguration // : ITraceConfiguration // #ORLEANS20
     {
         public Severity DefaultTraceLevel { get; set; } = Severity.Warning;
         public string TraceFileName { get; set; } = null;
