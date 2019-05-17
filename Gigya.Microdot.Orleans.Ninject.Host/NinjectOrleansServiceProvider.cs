@@ -72,11 +72,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         break;
                     case ServiceLifetime.Scoped:
                         
-                        //binding.InScope((c)=>{ return new object();});
-                        //throw new NotImplementedException("We do not support Scoped binding of Orleans.");
+                // check        NOTE: InRequestScope is provided by an extension method. In order to use it you need to add the namespace Ninject.Web.Common to your usings.
 
                         // #ORLEANS20 We need to clearify what suitable scope to provide, scope meaning lock ninject performing
-                        binding.InSingletonScope();
+                        binding.InTransientScope();
+
                         break;
 
                     case ServiceLifetime.Transient:
