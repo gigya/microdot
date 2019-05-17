@@ -44,21 +44,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Tester?.Dispose();
         }
 
-        [Ignore("Run too much time.")]
-        [Test]
-        public async Task ChangeableAgeLimitTest()
-        {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<AgeLimitConfigUpdatesServiceHost>( writeLogToFile: true);
-            Tester = tester;
-            var service = tester.GetServiceProxy<IGrainConfigAgeTesterService>(timeout:TimeSpan.FromMinutes(20));
-
-
-            await service.SetDefaultAgeLimit();
-
-            await Task.Delay(TimeSpan.FromMinutes(3.5));
-
-            service.ValidateTimestamps().Result.ShouldBeTrue();
-        }
+        // #ORLEANS20
+        //[Ignore("Run too much time.")]
+        //[Test]
+        //public async Task ChangeableAgeLimitTest()
+        //{
+        //    var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<AgeLimitConfigUpdatesServiceHost>( writeLogToFile: true);
+        //    Tester = tester;
+        //    var service = tester.GetServiceProxy<IGrainConfigAgeTesterService>(timeout:TimeSpan.FromMinutes(20));
+        //
+        //
+        //    await service.SetDefaultAgeLimit();
+        //
+        //    await Task.Delay(TimeSpan.FromMinutes(3.5));
+        //
+        //    service.ValidateTimestamps().Result.ShouldBeTrue();
+        //}
 
         [Test]
         public async Task WithNoneAgeLimitTest()

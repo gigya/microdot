@@ -24,6 +24,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Syntax;
@@ -36,27 +38,31 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// </summary>
     public class NinjectOrleansServiceProvider : IServiceProvider
     {
+
         internal static IKernel Kernel { get; set; }
-        private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; }= new ConcurrentDictionary<Type, Type>();
+        private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
+
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
-        {            
-      
+        {          
+            var joined = string.Join("-:- ", services.Select(d => d.ServiceType.FullName));
+            Console.WriteLine("Reigstered types: ", joined);
+
             foreach (var descriptor in services)
             {
                 IBindingWhenInNamedWithOrOnSyntax<object> binding;
 
                 if (descriptor.ImplementationType != null)
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).To(descriptor.ImplementationType);
+                    binding = Kernel.Rebind(descriptor.ServiceType).To(descriptor.ImplementationType);
                 }
                 else if (descriptor.ImplementationFactory != null)
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
+                    binding = Kernel.Rebind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
                 }
                 else
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
+                    binding = Kernel.Rebind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
                 }
 
                 switch (descriptor.Lifetime)
@@ -65,13 +71,22 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        throw new NotImplementedException("We do not support Scoped binding of Orleans.");
+                        
+                        //binding.InScope((c)=>{ return new object();});
+                        //throw new NotImplementedException("We do not support Scoped binding of Orleans.");
+
+                        // #ORLEANS20 We need to clearify what suitable scope to provide, scope meaning lock ninject performing
+                        binding.InSingletonScope();
+                        break;
+
                     case ServiceLifetime.Transient:
                         binding.InTransientScope();
                         break;
                 }
             }
 
+            var globalConfiguration = Kernel.Get<GlobalConfiguration>();
+            globalConfiguration.SerializationProviders.Add(typeof(OrleansCustomSerialization).GetTypeInfo());
             return this;
         }
 
@@ -86,8 +101,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     return null;
             });
 
+
             if (elementType == null)
+            {
+                // #ORLEANS20
+                //if (Kernel.CanResolve(serviceType) == false) return null;
+                if (Kernel.CanResolve(serviceType) == false && serviceType.Namespace?.StartsWith("Orleans") == true)
+                    return null;
+
                 return Kernel.Get(serviceType);
+            }
+
 
             var results = Kernel.GetAll(elementType).ToArray();
             var typedResults = Array.CreateInstance(elementType, results.Length);
@@ -100,11 +124,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     {
         public static ClusterConfiguration WithNinject(this ClusterConfiguration clusterConfiguration, IKernel kernel)
         {
-            if (NinjectOrleansServiceProvider.Kernel != null && !NinjectOrleansServiceProvider.Kernel.IsDisposed)
+            if (NinjectOrleansServiceProvider.Kernel != null)
                 throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
             
             NinjectOrleansServiceProvider.Kernel = kernel;
-            clusterConfiguration.Defaults.StartupTypeName = typeof(NinjectOrleansServiceProvider).AssemblyQualifiedName;
+            clusterConfiguration.UseStartupType<NinjectOrleansServiceProvider>();
             return clusterConfiguration;
         }
 
