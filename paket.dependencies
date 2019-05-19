@@ -32,10 +32,7 @@ nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 nuget Microsoft.Extensions.DependencyInjection.Abstractions
 nuget Microsoft.Extensions.DependencyInjection
-
-nuget Microsoft.Orleans.Core.Legacy         # ILogConsumer
-nuget Microsoft.Orleans.Runtime.Legacy
-nuget Microsoft.Orleans.Logging.Legacy
+nuget Microsoft.Orleans.Server
 
 #Ninject
 nuget Ninject ~> 3.3

@@ -56,9 +56,9 @@ namespace Gigya.Microdot.Orleans.Hosting
             };
         }
 
-        public void Initialize(Logger logger)
-        {
-        }
+        //public void Initialize(Logger logger)
+        //{
+        //}
 
         public bool IsSupportedType(Type itemType)
         {

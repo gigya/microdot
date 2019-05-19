@@ -4,4 +4,3 @@ Microsoft.Orleans.Core
 NSubstitute
 System.Threading.Tasks.Dataflow
 
-Microsoft.Orleans.Core.Legacy

@@ -361,28 +361,6 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
-        <Reference Include="Orleans.Core.Legacy">
-          <HintPath>..\packages\Microsoft.Orleans.Core.Legacy\lib\netstandard2.0\Orleans.Core.Legacy.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="Orleans.Logging.Legacy">
-          <HintPath>..\packages\Microsoft.Orleans.Logging.Legacy\lib\netstandard2.0\Orleans.Logging.Legacy.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
         <Reference Include="Orleans.CodeGeneration">
           <HintPath>..\packages\Microsoft.Orleans.OrleansCodeGenerator\lib\netstandard2.0\Orleans.CodeGeneration.dll</HintPath>
           <Private>True</Private>
@@ -451,17 +429,6 @@
       <ItemGroup>
         <Reference Include="Orleans.Runtime.Abstractions">
           <HintPath>..\packages\Microsoft.Orleans.Runtime.Abstractions\lib\netstandard2.0\Orleans.Runtime.Abstractions.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="Orleans.Runtime.Legacy">
-          <HintPath>..\packages\Microsoft.Orleans.Runtime.Legacy\lib\netstandard2.0\Orleans.Runtime.Legacy.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

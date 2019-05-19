@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -36,79 +37,111 @@ using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.CodeGeneration;
-
+using Orleans.Configuration;
+using Orleans.Hosting;
 using Orleans.Providers;
 using Orleans.Runtime.Host;
+using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
+    public interface IServiceProviderInit
+    {
+        IServiceProvider ConfigureServices(IServiceCollection services);
+    }
     public class GigyaSiloHost
     {
         public static IGrainFactory GrainFactory { get; private set; }
-        private SiloHost Silo { get; set; }
+        //    private SiloHost Silo { get; set; }
         private Exception BootstrapException { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
         private Func<IGrainFactory, Task> BeforeOrleansShutdown { get; set; }
         private Counter EventsDiscarded { get; }
         private ILog Log { get; }
-        private OrleansConfigurationBuilder ConfigBuilder { get; }
+        //   private OrleansConfigurationBuilder ConfigBuilder { get; }
         private HttpServiceListener HttpServiceListener { get; }
         private IEventPublisher<GrainCallEvent> EventPublisher { get; }
-        private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
-        public static OrleansConfig PreviousOrleansConfig { get; private set; }
+        // private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
+        // public static OrleansConfig PreviousOrleansConfig { get; private set; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
 
 
-        public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
+        public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-            IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
-            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig)
+            IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig)
+
         {
             Log = log;
-            ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
 
 
-            OrleansConfigSourceBlock = orleansConfigSourceBlock;
-            PreviousOrleansConfig = orleansConfig;
-            OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config => UpdateOrleansAgeLimitChange(config)));
+            //OrleansConfigSourceBlock = orleansConfigSourceBlock;
+            //PreviousOrleansConfig = orleansConfig;
+            //OrleansConfigSourceBlock.LinkTo(new ActionBlock<OrleansConfig>(config => UpdateOrleansAgeLimitChange(config)));
 
-            if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
-                throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
+            //if (DelegatingBootstrapProvider.OnInit != null || DelegatingBootstrapProvider.OnClose != null)
+            //    throw new InvalidOperationException("DelegatingBootstrapProvider is already in use.");
 
-            DelegatingBootstrapProvider.OnInit = BootstrapInit;
-            DelegatingBootstrapProvider.OnClose = BootstrapClose;
+            //DelegatingBootstrapProvider.OnInit = BootstrapInit;
+            //DelegatingBootstrapProvider.OnClose = BootstrapClose;
 
             EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
 
         }
 
-        public void Start(Func<IGrainFactory, Task> afterOrleansStartup = null,
+        public void Start(IServiceProviderInit serviceProvider, Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
         {
             AfterOrleansStartup = afterOrleansStartup;
             BeforeOrleansShutdown = beforeOrleansShutdown;
 
             Log.Info(_ => _("Starting Orleans silo..."));
-
-            Silo = new SiloHost(CurrentApplicationInfo.HostName, ConfigBuilder.ClusterConfiguration)
-            {
-                Type = ConfigBuilder.SiloType
-            };
-            Silo.InitializeSilo();
             
-            bool siloStartedSuccessfully = Silo.StartSilo(false);
+            var silo = new SiloHostBuilder()
+                .UseServiceProviderFactory(services => serviceProvider.ConfigureServices(services))
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = "my-first-cluster";
+                    options.ServiceId = "AspNetSampleApp";
+                })
+                .UseLocalhostClustering()
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = "dev";
+                    options.ServiceId = "HelloWorldApp";
 
-            if (siloStartedSuccessfully)
-                Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = Silo.Name, siloType = Silo.Type }));
-            else if (BootstrapException != null)
-                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", Silo.Name }, { "siloType", Silo.Type.ToString() } }, innerException: BootstrapException);
-            else
-                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", Silo.Name }, { "siloType", Silo.Type.ToString() } });
+                })
+                .Configure<SiloOptions>(options => options.SiloName = "name")
+                .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
+
+                .Configure<SerializationProviderOptions>(options =>
+                {
+                    options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
+                    options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
+                })
+
+                .Build();
+
+            Console.WriteLine("StartAsync start");
+
+            silo.StartAsync().Wait();
+            Console.WriteLine("StartAsync done");
+
+            //
+
+
+
+            //if (siloStartedSuccessfully)
+            //    Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = Silo.Name, siloType = Silo.Type }));
+            //else if (BootstrapException != null)
+            //    throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", Silo.Name }, { "siloType", Silo.Type.ToString() } }, innerException: BootstrapException);
+            //else
+            //    throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", Silo.Name }, { "siloType", Silo.Type.ToString() } });
         }
 
 
@@ -118,64 +151,64 @@ namespace Gigya.Microdot.Orleans.Hosting
             HttpServiceListener.Dispose();
 
 
-            try
-            {
-                if (Silo != null && Silo.IsStarted)
-                    Silo.StopSilo();
-            }
-            catch (System.Net.Sockets.SocketException)
-            {
-                //Orleans 1.3.1 thorws this exception most of the time 
-            }
-            finally
-            {
-                try
-                {
-                    GrainClient.Uninitialize();
-                }
-                catch (Exception exc)
-                {
-                    Log.Warn("Exception Uninitializing grain client", exception: exc);
-                }
-            }
+            //      try
+            //{
+            //    if (Silo != null && Silo.IsStarted)
+            //        Silo.StopSilo();
+            //}
+            //catch (System.Net.Sockets.SocketException)
+            //{
+            //    //Orleans 1.3.1 thorws this exception most of the time 
+            //}
+            //finally
+            //{
+            //    try
+            //    {
+            //        GrainClient.Uninitialize();
+            //    }
+            //    catch (Exception exc)
+            //    {
+            //        Log.Warn("Exception Uninitializing grain client", exception: exc);
+            //    }
+            //}
 
 
-            DelegatingBootstrapProvider.OnClose();
-            DelegatingBootstrapProvider.OnClose = null;
-            DelegatingBootstrapProvider.OnInit = null;
+            //DelegatingBootstrapProvider.OnClose();
+            //DelegatingBootstrapProvider.OnClose = null;
+            //DelegatingBootstrapProvider.OnInit = null;
         }
 
-        private async Task BootstrapInit(IProviderRuntime providerRuntime)
-        {
-            GrainTaskScheduler = TaskScheduler.Current;
-            GrainFactory = providerRuntime.GrainFactory;
-            
-            //providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor); //#ORLEANS20
+        //private async Task BootstrapInit(IProviderRuntime providerRuntime)
+        //{
+        //GrainTaskScheduler = TaskScheduler.Current;
+        //GrainFactory = providerRuntime.GrainFactory;
 
-            //GrainClient.ClientInvokeCallback = OutgoingCallInterceptor; //#ORLEANS20
+        //providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor); //#ORLEANS20
 
-            try
-            {
-                if (AfterOrleansStartup != null)
-                    await AfterOrleansStartup(GrainFactory);
-            }
-            catch (Exception ex)
-            {
-                BootstrapException = ex;
-                throw;
-            }
+        //GrainClient.ClientInvokeCallback = OutgoingCallInterceptor; //#ORLEANS20
 
-            try
-            {
-                HttpServiceListener.Start();
-            }
-            catch (Exception ex)
-            {
-                BootstrapException = ex;
-                Log.Error("Failed to start HttpServiceListener", exception: ex);
-                throw;
-            }
-        }
+        //    try
+        //    {
+        //        if (AfterOrleansStartup != null)
+        //            await AfterOrleansStartup(GrainFactory);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        BootstrapException = ex;
+        //        throw;
+        //    }
+
+        //    try
+        //    {
+        //        HttpServiceListener.Start();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        BootstrapException = ex;
+        //        Log.Error("Failed to start HttpServiceListener", exception: ex);
+        //        throw;
+        //    }
+        //}
 
 
         public TaskScheduler GrainTaskScheduler { get; set; }
@@ -222,42 +255,42 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        public void UpdateOrleansAgeLimitChange(OrleansConfig orleanConfig)
-        {
-            try
-            {
-                var previousAgeLimits = PreviousOrleansConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
-                var newAgeLimits = orleanConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
+        //public void UpdateOrleansAgeLimitChange(OrleansConfig orleanConfig)
+        //{
+        //    try
+        //    {
+        //        var previousAgeLimits = PreviousOrleansConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
+        //        var newAgeLimits = orleanConfig.GrainAgeLimits ?? new Dictionary<string, GrainAgeLimitConfig>();
 
 
-                foreach (var newGrainAgeLimitConfig in newAgeLimits.Values)
-                {
-                    var grainAgeLimit = previousAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(newGrainAgeLimitConfig.GrainType)) ?? new GrainAgeLimitConfig
-                    {
-                        GrainType = newGrainAgeLimitConfig.GrainType,
-                        GrainAgeLimitInMins = -1
-                    };
+        //        foreach (var newGrainAgeLimitConfig in newAgeLimits.Values)
+        //        {
+        //            var grainAgeLimit = previousAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(newGrainAgeLimitConfig.GrainType)) ?? new GrainAgeLimitConfig
+        //            {
+        //                GrainType = newGrainAgeLimitConfig.GrainType,
+        //                GrainAgeLimitInMins = -1
+        //            };
 
 
-                    if (grainAgeLimit.GrainAgeLimitInMins != newGrainAgeLimitConfig.GrainAgeLimitInMins)
-                        ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(newGrainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(newGrainAgeLimitConfig.GrainAgeLimitInMins));
-                }
+        //            if (grainAgeLimit.GrainAgeLimitInMins != newGrainAgeLimitConfig.GrainAgeLimitInMins)
+        //                ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(newGrainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(newGrainAgeLimitConfig.GrainAgeLimitInMins));
+        //        }
 
-                foreach (var item in previousAgeLimits.Values)
-                {
-                    var grainAgeLimit = newAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(item.GrainType));
+        //        foreach (var item in previousAgeLimits.Values)
+        //        {
+        //            var grainAgeLimit = newAgeLimits.Values.FirstOrDefault(x => x.GrainType.Equals(item.GrainType));
 
-                    if (grainAgeLimit == null) //in case that an configuration was removed! - Restoring to default Age Limit
-                        ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(item.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
-                }
+        //            if (grainAgeLimit == null) //in case that an configuration was removed! - Restoring to default Age Limit
+        //                ConfigBuilder.ClusterConfiguration.Globals.Application.SetCollectionAgeLimit(item.GrainType, TimeSpan.FromMinutes(orleanConfig.DefaultGrainAgeLimitInMins));
+        //        }
 
-                PreviousOrleansConfig = orleanConfig;
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Failed to reload configuration", exception: ex);
-            }
-        }
+        //        PreviousOrleansConfig = orleanConfig;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.Error("Failed to reload configuration", exception: ex);
+        //    }
+        //}
 
         private void RejectRequestIfLateOrOverloaded()
         {
@@ -338,7 +371,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
             }
 
-            grainEvent.SiloDeploymentId = ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
+            //     grainEvent.SiloDeploymentId = ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
 
 
             grainEvent.TargetType = targetMethod.DeclaringType?.FullName;

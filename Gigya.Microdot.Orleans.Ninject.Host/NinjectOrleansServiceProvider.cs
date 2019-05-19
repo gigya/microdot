@@ -30,6 +30,7 @@ using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Syntax;
+using Orleans;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
 
@@ -53,13 +54,21 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             return services.GetService<IEnumerable<IKeyedService<TKey, TService>>>();
         }
     }
+
+
+
     /// <summary>
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
-    public class NinjectOrleansServiceProvider : IServiceProvider
+    public class NinjectOrleansServiceProvider : IServiceProvider, IServiceProviderInit
     {
 
-        internal static IKernel Kernel { get; set; }
+        public NinjectOrleansServiceProvider(IKernel kernel)
+        {
+            Kernel = kernel;
+        }
+
+        internal IKernel Kernel { get; set; }
         private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
 
 
@@ -74,37 +83,16 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
                 if (descriptor.ImplementationType != null)
                 {
-
-                    if ( IsAssignableToGenericType(descriptor.ServiceType,typeof(IKeyedService<,>)))
-                    {
-                        binding = Kernel.Bind(descriptor.ServiceType).To(descriptor.ImplementationType);
-                    }
-                    else
-                    {
-                        binding = Kernel.Rebind(descriptor.ServiceType).To(descriptor.ImplementationType);
-                    }
+                    binding = Kernel.Bind(descriptor.ServiceType).To(descriptor.ImplementationType);
                 }
+
                 else if (descriptor.ImplementationFactory != null)
                 {
-                    if ( IsAssignableToGenericType(descriptor.ServiceType,typeof(IKeyedService<,>)))
-                    {
-                        binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
-                    }
-                    else
-                    {
-                        binding = Kernel.Rebind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
-                    }
+                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
                 }
                 else
                 {
-                    if ( IsAssignableToGenericType(descriptor.ServiceType,typeof(IKeyedService<,>)))
-                    {
-                        binding = Kernel.Bind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
-                    }
-                    else
-                    {
-                        binding = Kernel.Rebind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
-                    }
+                    binding = Kernel.Bind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
                 }
 
                 switch (descriptor.Lifetime)
@@ -124,8 +112,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 }
             }
 
-            var globalConfiguration = Kernel.Get<GlobalConfiguration>();
-            globalConfiguration.SerializationProviders.Add(typeof(OrleansCustomSerialization).GetTypeInfo());
+            //    var globalConfiguration = Kernel.Get<GlobalConfiguration>();
+            //    globalConfiguration.SerializationProviders.Add(typeof(OrleansCustomSerialization).GetTypeInfo());
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
             return this;
         }
@@ -178,17 +166,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
     }
 
-    public static class OrleansNinjectExtensions
-    {
-        public static ClusterConfiguration WithNinject(this ClusterConfiguration clusterConfiguration, IKernel kernel)
-        {
-            if (NinjectOrleansServiceProvider.Kernel != null)
-                throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
+    //public static class OrleansNinjectExtensions
+    //{
+    //    public static ClusterConfiguration WithNinject(this ClusterConfiguration clusterConfiguration, IKernel kernel)
+    //    {
+    //        if (NinjectOrleansServiceProvider.Kernel != null)
+    //            throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
 
-            NinjectOrleansServiceProvider.Kernel = kernel;
-            clusterConfiguration.UseStartupType<NinjectOrleansServiceProvider>();
-            return clusterConfiguration;
-        }
+    //        NinjectOrleansServiceProvider.Kernel = kernel;
+    //        clusterConfiguration.UseStartupType<NinjectOrleansServiceProvider>();
+    //        return clusterConfiguration;
+    //    }
 
-    }
+    //}
 }

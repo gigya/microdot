@@ -72,7 +72,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
 
-            Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
+          //  Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
             PreInitialize(Kernel);
 
@@ -81,7 +81,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
+            SiloHost.Start(Kernel.Get<IServiceProviderInit>(),AfterOrleansStartup, BeforeOrleansShutdown);
+
         }
 
         /// <summary>

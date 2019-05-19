@@ -28,6 +28,7 @@ using Ninject.Modules;
 using Orleans;
 using Orleans.Runtime.Configuration;
 using System;
+using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -44,13 +45,15 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IActivator>().To<GrainActivator>().InSingletonScope();
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
-            Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
+         //   Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
             Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
 
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
 
-            Kernel.Rebind<NinjectOrleansServiceProvider, IServiceProvider>().To<NinjectOrleansServiceProvider>()
-                .InSingletonScope();
+
+            Rebind<NinjectOrleansServiceProvider, IServiceProvider,IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
+
+            Rebind<IExternalSerializer,OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
         }
     }
 }
