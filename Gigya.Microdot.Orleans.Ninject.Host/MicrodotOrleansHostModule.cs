@@ -28,6 +28,7 @@ using Ninject.Modules;
 using Orleans;
 using Orleans.Runtime.Configuration;
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
@@ -40,20 +41,59 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         public override void Load()
         {
             this.BindClassesAsSingleton(new[] { typeof(Grain) }, typeof(OrleansHostingAssembly));
-            this.BindInterfacesAsSingleton(new[] {typeof(Grain)}, typeof(OrleansHostingAssembly));
-            
+            this.BindInterfacesAsSingleton(new[] { typeof(Grain) }, typeof(OrleansHostingAssembly));
+
             Rebind<IActivator>().To<GrainActivator>().InSingletonScope();
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
-         //   Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
+            //   Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
             Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
 
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
 
 
-            Rebind<NinjectOrleansServiceProvider, IServiceProvider,IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
+            Rebind<NinjectOrleansServiceProvider, IServiceProvider, IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
 
-            Rebind<IExternalSerializer,OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
+            Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
+            Rebind<IServiceScope, SingelScppe>().To<SingelScppe>().InSingletonScope();
+
+            Rebind<IServiceScopeFactory, SingelServiceScopeFactory>().To<SingelServiceScopeFactory>().InSingletonScope();
+
+
+        }
+    }
+
+
+    public class SingelScppe : IServiceScope
+    {
+        private readonly IServiceProvider _serviceProvider;
+
+        public SingelScppe(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public IServiceProvider ServiceProvider => _serviceProvider;
+
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
+    }
+
+    class SingelServiceScopeFactory : IServiceScopeFactory
+    {
+        private readonly SingelScppe _scppe;
+
+        public SingelServiceScopeFactory(SingelScppe scppe)
+        {
+            _scppe = scppe;
+        }
+
+
+        public IServiceScope CreateScope()
+        {
+            return _scppe;
         }
     }
 }
