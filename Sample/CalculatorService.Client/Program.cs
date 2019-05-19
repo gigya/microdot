@@ -3,6 +3,7 @@ using System.Configuration;
 using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Ninject;
@@ -15,18 +16,21 @@ namespace CalculatorService.Client
         {
             try
             {
-                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
-                Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
-                Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
-                Environment.SetEnvironmentVariable("REGION", "us1");
-                Environment.SetEnvironmentVariable("ZONE", "us1a");
-                Environment.SetEnvironmentVariable("ENV", "dev");
+                //Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
+                //Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
+                //Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
+                //Environment.SetEnvironmentVariable("REGION", "us1");
+                //Environment.SetEnvironmentVariable("ZONE", "us1a");
+                //Environment.SetEnvironmentVariable("ENV", "dev");
 
                 CurrentApplicationInfo.Init("CalculatorService.Client");
 
                 var kernel = new StandardKernel();
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
+
+                kernel.Get<SystemInitializer>().Init();
+
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;
                 Console.WriteLine($"Sum: {sum}");

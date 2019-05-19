@@ -77,18 +77,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
                     if ( IsAssignableToGenericType(descriptor.ServiceType,typeof(IKeyedService<,>)))
                     {
-
-
-
                         binding = Kernel.Bind(descriptor.ServiceType).To(descriptor.ImplementationType);
-
                     }
                     else
                     {
-
-
                         binding = Kernel.Rebind(descriptor.ServiceType).To(descriptor.ImplementationType);
-
                     }
                 }
                 else if (descriptor.ImplementationFactory != null)
@@ -96,13 +89,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     if ( IsAssignableToGenericType(descriptor.ServiceType,typeof(IKeyedService<,>)))
                     {
                         binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
-
                     }
                     else
                     {
-                  
                         binding = Kernel.Rebind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
-
                     }
                 }
                 else
@@ -110,12 +100,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                     if ( IsAssignableToGenericType(descriptor.ServiceType,typeof(IKeyedService<,>)))
                     {
                         binding = Kernel.Bind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
-
                     }
                     else
                     {
                         binding = Kernel.Rebind(descriptor.ServiceType).ToConstant(descriptor.ImplementationInstance);
-
                     }
                 }
 
@@ -125,11 +113,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        // check        NOTE: InRequestScope is provided by an extension method. In order to use it you need to add the namespace Ninject.Web.Common to your usings.
-
                         // #ORLEANS20 We need to clearify what suitable scope to provide, scope meaning lock ninject performing
+                        // InRequestScope is provided by an extension method. In order to use it you need to add the namespace Ninject.Web.Common to your usings.
                         binding.InTransientScope();
-
                         break;
 
                     case ServiceLifetime.Transient:
@@ -143,6 +129,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
             return this;
         }
+
         public static bool IsAssignableToGenericType(Type givenType, Type genericType)
         {
             var interfaceTypes = givenType.GetInterfaces();

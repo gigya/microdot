@@ -149,8 +149,10 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             GrainTaskScheduler = TaskScheduler.Current;
             GrainFactory = providerRuntime.GrainFactory;
+            
             //providerRuntime.SetInvokeInterceptor(IncomingCallInterceptor); //#ORLEANS20
-            GrainClient.ClientInvokeCallback = OutgoingCallInterceptor;
+
+            //GrainClient.ClientInvokeCallback = OutgoingCallInterceptor; //#ORLEANS20
 
             try
             {
