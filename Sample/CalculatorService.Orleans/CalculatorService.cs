@@ -9,8 +9,7 @@ namespace CalculatorService.Orleans
     public interface ICalculatorServiceGrain : ICalculatorService, IGrainWithIntegerKey { }
 
 
-    [Reentrant]
-    [StatelessWorker]
+    [StatelessWorker,Reentrant]
     public class CalculatorService: Grain, ICalculatorServiceGrain
     {
 

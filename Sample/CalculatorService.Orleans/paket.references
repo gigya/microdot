@@ -1,2 +1,3 @@
 Ninject
-Microsoft.Orleans.OrleansCodeGenerator
+Microsoft.Orleans.OrleansCodeGenerator.Build
+Microsoft.Orleans.Core
