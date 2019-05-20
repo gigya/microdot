@@ -32,12 +32,8 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
 
     public class SlowServiceHost : MicrodotServiceHost<ISlowService>
     {
-        private readonly Action<IKernel> action;
-
-        public SlowServiceHost(Action<IKernel> action = null)
-        {
-            this.action = action;
-        }
+        public IKernel Kernel; 
+     
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
@@ -49,9 +45,9 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
 
         protected override void PreInitialize(IKernel kernel)
         {
+            Kernel = kernel;
             base.PreInitialize(kernel);
 
-            action?.Invoke(kernel);
             kernel.Bind<ISlowService>().To<SlowService>().InSingletonScope();
         }
     }

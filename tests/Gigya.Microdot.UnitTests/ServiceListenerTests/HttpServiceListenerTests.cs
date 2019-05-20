@@ -41,7 +41,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         private IDemoService _insecureClient;
 
         private TestingHost<IDemoService> _testinghost;
-        private Task _stopTask;
         private JsonExceptionSerializer _exceptionSerializer;
         private TestingKernel<ConsoleLog> _kernel;
         private Func<InvocationTarget, ServiceMethod> _overrideServiceMethod;
@@ -73,7 +72,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     OverrideServiceEndpointDefinition(kernel);
                 }
             );
-            _stopTask = _testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
+          Task.Run(()=>_testinghost.Run(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive)));
+          _testinghost.WaitForServiceStartedAsync().Wait(10000);
         }
 
         private void OverrideServiceEndpointDefinition(IKernel kernel)
@@ -96,7 +96,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public virtual void TearDown()
         {
             _testinghost.Stop();
-            _stopTask.Wait();
             Metric.ShutdownContext("Service");
         }
 

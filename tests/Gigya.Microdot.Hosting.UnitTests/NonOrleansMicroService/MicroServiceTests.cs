@@ -33,8 +33,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             try
             {
                 serviceTester =
-                    testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(1111,
-                        TimeSpan.FromSeconds(10));
+                    testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(1111);
                 (await serviceTester.GetServiceProxy<ICalculatorService>().Add(1, 2)).ShouldBe(3);
             }
             finally
@@ -47,7 +46,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         [Test]
         public async Task RunInConfigurationVerification_ShouldWriteResults()
         {
-            
+
             NonOrleansServiceTester<CalculatorServiceHost> serviceTester = null;
             var testingKernel = new TestingKernel<ConsoleLog>();
 
@@ -56,16 +55,17 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
                 var buffer = new StringBuilder();
                 var prOut = Console.Out;
                 Console.SetOut(new StringWriter(buffer));
+                ///ServiceStartupMode.VerifyConfigurations: 0 
+                var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Disabled,
+                    SiloClusterMode.PrimaryNode, 8555);
 
-                serviceTester = testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(
-                    1112, 
-                    TimeSpan.FromSeconds(10),
-                    ServiceStartupMode.VerifyConfigurations);
+                serviceTester =
+                    testingKernel.GetServiceTesterForNonOrleansService<CalculatorServiceHost>(serviceArguments);
 
                 var canaryType = typeof(MetricsConfiguration);
 
                 Console.SetOut(prOut);
-                
+
                 Regex.IsMatch(buffer.ToString(), $"(OK|ERROR).*{canaryType.FullName}")
                     .ShouldBeTrue("Output should contain a row with validation of the type");
 

@@ -24,22 +24,26 @@ using System;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
-using Ninject.Parameters;
 using Ninject.Syntax;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
     public static class ServiceTesterExtensions
     {
-        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, TimeSpan? shutdownWaitTime = null, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
+        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot,  ServiceArguments serviceArguments)
             where TServiceHost : ServiceHostBase, new()
         {
-            var tester = kernel.Get<NonOrleansServiceTester<TServiceHost>>(
-                new ConstructorArgument(nameof(basePortOverride), basePortOverride),
-                new ConstructorArgument(nameof(shutdownWaitTime),shutdownWaitTime),
-                new ConstructorArgument(nameof(startupMode), startupMode));
+            return resolutionRoot.Get<Func<ServiceArguments, NonOrleansServiceTester<TServiceHost>>>()(serviceArguments);
+
          
-            return tester;
+        }
+
+        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot,  int port)
+            where TServiceHost : ServiceHostBase, new()
+        {
+            return resolutionRoot.Get<Func<ServiceArguments, NonOrleansServiceTester<TServiceHost>>>()(new ServiceArguments(ServiceStartupMode.CommandLineInteractive,ConsoleOutputMode.Disabled,SiloClusterMode.PrimaryNode,port));
+
+         
         }
     }
 }

@@ -7,10 +7,13 @@ using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Logging.NLog;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Metrics.MetricData;
 
@@ -36,14 +39,14 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             TracingContext.SetUpStorage();
             TracingContext.SetRequestID("1");
 
-           
+
             var kernel = new TestingKernel<ConsoleLog>();
             _proxyInstance = kernel.Get<IDemoService>();
         }
 
 
         [TearDown]
-        public  void TearDown()
+        public void TearDown()
         {
             Metric.ShutdownContext("Service");
         }
@@ -52,46 +55,49 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public void TestMetricsOnSuccess()
         {
-            TestingHost<IDemoService> testinghost = new TestingHost<IDemoService>();
-            var task = testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
-            testinghost.Instance.Increment(0).Returns((ulong)1);
-        
-         
-            var res = _proxyInstance.Increment(0).Result;
-            res.Should().Be(1);
+            var  ServiceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive);
+            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest",new NLogModule()))
 
-            testinghost.Instance.Received().Increment(0);
+            {
+                using (var testinghost =microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(ServiceArguments))
+                {
+                    testinghost.Host.Instance.Increment(0).Returns((ulong)1);
+                    var res = _proxyInstance.Increment(0).Result;
+                    res.Should().Be(1);
 
-        
-            testinghost.Stop();
-            task.Wait();
-            Thread.Sleep(100);
-            GetMetricsData().AssertEquals(DefaultExpected());
-
+                    testinghost.Host.Instance.Received().Increment(0);
+                    Thread.Sleep(100);
+                    GetMetricsData().AssertEquals(DefaultExpected());
+                }
+            }
         }
 
- 
+
         [Test]
         public void TestMetricsOnFailure()
         {
-            TestingHost<IDemoService> testinghost = new TestingHost<IDemoService>();
-            var task = testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
+            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest",new NLogModule()))
 
-            testinghost.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
-
-            Assert.Throws<RemoteServiceException>(() => _proxyInstance.DoSomething().GetAwaiter().GetResult());
-
-            var metricsExpected = DefaultExpected();
-
-            metricsExpected.Counters = new List<MetricDataEquatable>
             {
-                new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
-            };
+                using (var testinghost =
+                    microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive)))
+                {
+                    testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
 
-            testinghost.Stop();
-            task.Wait();
+                    Assert.Throws<RemoteServiceException>(() => _proxyInstance.DoSomething().GetAwaiter().GetResult());
 
-            GetMetricsData().AssertEquals(metricsExpected);
+                    var metricsExpected = DefaultExpected();
+
+                    metricsExpected.Counters = new List<MetricDataEquatable>
+                    {
+                        new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
+                    };
+
+
+                    GetMetricsData().AssertEquals(metricsExpected);
+                }
+            }
         }
 
 

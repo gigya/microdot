@@ -278,9 +278,7 @@ namespace Gigya.Microdot.Hosting.Service
         public void Stop()
         {
             if (StopEvent.WaitOne(0))
-                throw new InvalidOperationException("Service is already stopped, or is running in an unsupported mode.");
-
-            StopEvent.Set();
+                StopEvent.Set();
         }
 
         protected virtual void OnCrash()

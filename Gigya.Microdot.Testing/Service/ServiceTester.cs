@@ -21,302 +21,128 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
+using Microsoft.Extensions.Logging;
 using Ninject;
-using Ninject.Parameters;
 using Ninject.Syntax;
 using Orleans;
 using Orleans.Configuration;
-using Orleans.Runtime;
 
 namespace Gigya.Microdot.Testing.Service
 {
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
-        private ILog Log { get; }
+        public TServiceHost Host { get; }
+        public Task SiloStopped { get; }
 
+        public IClusterClient _clusterClient;
 
-        public static TServiceHost Host { get; private set; }
-        private static Task StopTask;
-
-        private HttpListener LogListener { get; set; }
-
-        public ServiceTester(int? basePortOverride, bool isSecondary, ILog log, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false, int? serviceDrainTimeSec = null)
+        public object _locker = new object();
+        public IClusterClient GrainClient
         {
-            Log = log;
+            get
+            {
+                InitGrainClient(timeout: TimeSpan.FromSeconds(10));
+                return _clusterClient;
+            }
+        }
+
+        public ServiceTester(IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
+        {
             ResolutionRoot = resolutionRoot;
-            // ReSharper disable VirtualMemberCallInContructor
-            InitializeInfrastructure();
+            BasePort = serviceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            var serviceArguments = GetServiceArguments(basePortOverride, isSecondary, shutdownWaitTime.HasValue ? (int?)shutdownWaitTime.Value.TotalSeconds : null, serviceDrainTimeSec);
-
-            BasePort = serviceArguments.BasePortOverride.Value;
-            StartLogListener(BasePort, writeLogToFile);
-
-
-            Host?.Stop();
-            Host?.Dispose();
             Host = new TServiceHost();
-            StopTask = Host.RunAsync(serviceArguments);
+            SiloStopped = Task.Run(() => Host.Run(serviceArguments));
 
+            //Silo is ready or failed to start
+            Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
         }
-
-
-
-        /// <summary>
-        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
-        /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TGrainInterface"></typeparam>
-        /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>
-        public virtual TGrainInterface GetGrainClient<TGrainInterface>(long primaryKey, TimeSpan? timeout = null) where TGrainInterface : IGrainWithIntegerKey
+        protected int GetBasePortFromHttpServiceAttribute()
         {
-            InitGrainClient(timeout);
-            return _clusterClient.GetGrain<TGrainInterface>(primaryKey);
+            var commonConfig = new BaseCommonConfig();
+            var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, new ConsoleLog()));
+            var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
+
+            return basePort;
         }
-
-
-        /// <summary>
-        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
-        /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TGrainInterface"></typeparam>
-        /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>
-        public virtual TGrainInterface GetGrainClient<TGrainInterface>(string primaryKey, TimeSpan? timeout = null) where TGrainInterface : IGrainWithStringKey
-        {
-            InitGrainClient(timeout);
-            return _clusterClient.GetGrain<TGrainInterface>(primaryKey);
-        }
-
-
-        /// <summary>
-        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
-        /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TGrainInterface"></typeparam>
-        /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>
-        public virtual TGrainInterface GetGrainClient<TGrainInterface>(Guid primaryKey, TimeSpan? timeout = null) where TGrainInterface : IGrainWithGuidKey
-        {
-            InitGrainClient(timeout);
-            return _clusterClient.GetGrain<TGrainInterface>(primaryKey);
-        }
-
-        /// <summary>
-        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
-        /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
-        /// <param name="keyExtension">String part of a primary key</param>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TGrainInterface"></typeparam>
-        /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>
-        public virtual TGrainInterface GetGrainClient<TGrainInterface>(int primaryKey, string keyExtension, TimeSpan? timeout = null) where TGrainInterface : IGrainWithIntegerCompoundKey
-        {
-            InitGrainClient(timeout);
-            return _clusterClient.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
-        }
-
-        /// <summary>
-        /// GetObject a GrainClient that is configured to call the service under test. Both the port and the hostname of
-        /// the provided GrainClient is changed to match those of the service which was started by the ServiceTester.
-        /// </summary>
-        /// <param name="primaryKey">The primary key of the grain that you want to call.</param>
-        /// <param name="keyExtension">String part of a primary key</param>
-        /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
-        /// <typeparam name="TGrainInterface"></typeparam>
-        /// <returns>An GrainClient instance of <see cref="TGrainInterface"/>.</returns>
-        public virtual TGrainInterface GetGrainClient<TGrainInterface>(Guid primaryKey, string keyExtension, TimeSpan? timeout = null) where TGrainInterface : IGrainWithGuidCompoundKey
-        {
-            InitGrainClient(timeout);
-            return _clusterClient.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
-        }
-
-
-        /// <summary>
-        /// Immediately unloads the service's AppDomain without graceful shutdown. You should still call
-        /// <see cref="Dispose"/> afterwards.
-        /// </summary>
-
 
         public override void Dispose()
         {
             _clusterClient?.Dispose();
 
+            Host.Stop(); //don't use host.dispose, host.stop should do all the work
 
-            try
-            {
+            var completed = SiloStopped.Wait(60000);
 
-                Host.Stop(); //don't use host.dispose, host.stop should do all the work
+            if (!completed)
+                throw new TimeoutException(
+                    "ServiceTester: The service failed to shutdown within the 60 second limit.");
 
-                var completed = StopTask.Wait(60000);
-
-                if (!completed)
-                    throw new TimeoutException(
-                        "ServiceTester: The service failed to shutdown within the 60 second limit.");
-
-                if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
-                    Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
-                    throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
-            }
-
-            finally
-            {
-                LogListener.Close();
-            }
+            if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
+                Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
+                throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
         }
 
-
-        protected virtual void InitializeInfrastructure()
-        {
-            // #ORLEANS20
-            // LogManager.Initialize(new TestTraceConfiguration());
-            // LogManager.LogConsumers.Add(new OrleansLogConsumer(Log));
-        }
-
-
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, int? shutdownWaitTime, int? serviceDrainTime)
-        {
-            if (isSecondary && basePortOverride == null)
-                throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
-
-            var siloClusterMode = isSecondary ? SiloClusterMode.SecondaryNode : SiloClusterMode.PrimaryNode;
-            ServiceArguments arguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
-
-            if (basePortOverride != null)
-                return arguments;
-
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
-            var commonConfig = new BaseCommonConfig();
-            var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
-            var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
-
-            return new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime, serviceDrainTimeSec: serviceDrainTime);
-        }
-
-
-        protected virtual void StartLogListener(int basePort, bool writeLogToFile)
-        {
-            //Start Listen to http log
-            var httpLogListenPort = basePort - 1;
-            LogListener = new HttpListener { Prefixes = { $"http://localhost:{httpLogListenPort}/" } };
-            LogListener.Start();
-            LogListenerLoop(writeLogToFile);
-        }
-
-
-        private async void LogListenerLoop(bool writeLogToFile)
-        {
-            if (writeLogToFile)
-            {
-                File.WriteAllText("TestLog.txt", "");
-            }
-            while (true)
-            {
-                try
-                {
-                    var context = await LogListener.GetContextAsync().ConfigureAwait(false);
-
-                    using (context.Response)
-                    {
-                        if (context.Request.RawUrl != "/log")
-                        {
-                            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                            continue;
-                        }
-
-                        string log = await new StreamReader(context.Request.InputStream).ReadToEndAsync().ConfigureAwait(false);
-                        Console.WriteLine(log);
-                        //write to file, nunit has problem that if it crath we don't have any log
-                        if (writeLogToFile)
-                            File.AppendAllLines("TestLog.txt", new[] { log });
-
-                        context.Response.StatusCode = 200;
-                    }
-                }
-                catch (HttpListenerException ex) when (ex.ErrorCode == 995)
-                {
-                    break; // "The I/O operation has been aborted because of either a thread exit or an application request" (no idea what it means)
-                }
-                catch (ObjectDisposedException)
-                {
-                    break; // Listener has been stopped, GetContextAsync() is aborted.
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("LogListener: An error has occured during HttpListener.GetContextAsync(): " + ex);
-                }
-            }
-        }
-
-        private IClusterClient _clusterClient;
         protected virtual IClusterClient InitGrainClient(TimeSpan? timeout)
         {
             if (_clusterClient == null)
             {
-                ClientBuilder grainClientBuilder = new ClientBuilder();
-                grainClientBuilder.Configure<EndpointOptions>(options =>
+                lock (_locker)
                 {
-                    options.AdvertisedIPAddress = IPAddress.Loopback;
-                    options.GatewayPort = BasePort + (int)PortOffsets.SiloGateway;
-                });
-                var GrainClient = grainClientBuilder.Build();
-                GrainClient.Connect();
-                _clusterClient = GrainClient;
+                    if (_clusterClient != null) return _clusterClient;
 
 
+                    ClientBuilder grainClientBuilder = new ClientBuilder();
+                    grainClientBuilder.Configure<EndpointOptions>(options =>
+                    {
+                        options.AdvertisedIPAddress = IPAddress.Loopback;
+                        options.GatewayPort = BasePort + (int)PortOffsets.SiloGateway;
+                    });
+
+                    IServiceProviderInit serviceProvider = ResolutionRoot.Get<IServiceProviderInit>();
+                    OrleansLogProvider logProvider = ResolutionRoot.Get<OrleansLogProvider>();
+
+                    grainClientBuilder.UseServiceProviderFactory(serviceProvider.ConfigureServices)
+                        .ConfigureLogging(op => op.AddProvider(logProvider));
+
+                    var grainClient = grainClientBuilder.Build();
+                    grainClient.Connect();
+                    _clusterClient = grainClient;
+
+                }
             }
             return _clusterClient;
 
         }
     }
 
-    public class TestTraceConfiguration // : ITraceConfiguration // #ORLEANS20
-    {
-        public Severity DefaultTraceLevel { get; set; } = Severity.Warning;
-        public string TraceFileName { get; set; } = null;
-        public string TraceFilePattern { get; set; } = null;
-        public IList<Tuple<string, Severity>> TraceLevelOverrides { get; } = new List<Tuple<string, Severity>>();
-        public bool TraceToConsole { get; set; } = false;
-        public bool WriteMessagingTraces { get; set; }
-        public int LargeMessageWarningThreshold { get; set; }
-        public bool PropagateActivityId { get; set; }
-        public int BulkMessageLimit { get; set; }
-    }
-
-
-
     public static class ServiceTesterExtensions
     {
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot kernel, int? basePortOverride = null, bool isSecondary = false, TimeSpan? shutdownWaitTime = null, bool writeLogToFile = false, int? serviceDrainTimeSec = null)
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
-            ServiceTester<TServiceHost> tester = kernel.Get<ServiceTester<TServiceHost>>(
-                new ConstructorArgument(nameof(basePortOverride), basePortOverride),
-                new ConstructorArgument(nameof(isSecondary), isSecondary),
-                new ConstructorArgument(nameof(shutdownWaitTime), shutdownWaitTime),
-                new ConstructorArgument(nameof(writeLogToFile), writeLogToFile),
-                new ConstructorArgument(nameof(serviceDrainTimeSec), serviceDrainTimeSec)
-                );
+            return resolutionRoot.Get<Func<ServiceArguments, ServiceTester<TServiceHost>>>()(serviceArguments);
 
-            return tester;
+        }
+
+
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
+            where TServiceHost : MicrodotOrleansServiceHost, new()
+        {
+            return resolutionRoot.Get<Func<ServiceArguments, ServiceTester<TServiceHost>>>()(new ServiceArguments(ServiceStartupMode.CommandLineInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port));
+
         }
     }
 }

@@ -24,7 +24,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             ServiceTester<CalculatorServiceHost> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(mainPort);
             
-            IWarmupTestServiceGrain grain = tester.GetGrainClient<IWarmupTestServiceGrain>(0);
+            IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);
             int result = await grain.TestWarmedTimes();
             result = await grain.TestWarmedTimes();
             result = await grain.TestWarmedTimes();

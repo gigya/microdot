@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Logging.NLog;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 using NUnit.Framework;
 using Shouldly;
@@ -31,14 +33,17 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         private SlowServiceHost Host { get; set; }
         private Task StopTask { get; set; }
         private ISlowService Service { get; set; }
-
+        private MicrodotInitializer _microdotInitializer;
         [OneTimeSetUp]
         public void SetUp()
         {
             try
             {
-                Host = new SlowServiceHost(k => { Service = k.Get<ISlowService>(); });
-                StopTask = Host.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
+                _microdotInitializer = new MicrodotInitializer("",new NLogModule());
+                Service=_microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<SlowServiceHost>(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive)).Host.Kernel.Get<ISlowService>();
+                
+
+                
             }
             catch (Exception ex)
             {
@@ -50,9 +55,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         [OneTimeTearDown]
         public void TearDown()
         {
-            Host.Stop();
-            StopTask.Wait();
-            Host.Dispose();
+            _microdotInitializer.Dispose();
         }
 
 
@@ -81,7 +84,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             {
                 var method = cache == Cache.Enabled ? new ComplexDelegate(Service.ComplexSlowMethod) : Service.ComplexSlowMethodUncached;
                 var datas = Enumerable.Range(0, 10).Select(i => new SlowData());
-                call = async i => (await method(delay, new [] { new SlowData { SerialNumber = parameters == Parameters.Identical ? 0 : i } }, shouldThrow)).First().SerialNumber;
+                call = async i => (await method(delay, new[] { new SlowData { SerialNumber = parameters == Parameters.Identical ? 0 : i } }, shouldThrow)).First().SerialNumber;
             }
 
             List<Task<int>> tasks;

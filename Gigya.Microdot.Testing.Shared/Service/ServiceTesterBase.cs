@@ -26,11 +26,9 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Orleans.Hosting;
-using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
@@ -43,8 +41,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {
-        protected ILog Log { get; }
-
         protected IResolutionRoot ResolutionRoot { get; set; }
 
         protected int BasePort { get; set; }
@@ -89,7 +85,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
 
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
-                (serName, checker) => new LocalhostServiceDiscovery(ResolutionRoot.Get<CurrentApplicationInfo>() )));
+                (serName, checker) => new LocalhostServiceDiscovery(ResolutionRoot.Get<CurrentApplicationInfo>())));
             provider.DefaultPort = BasePort;
             if (timeout != null)
                 provider.InnerProvider.SetHttpTimeout(timeout.Value);
@@ -116,24 +112,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider;
         }
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, int? shutdownWaitTime, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
-        {
-            if (isSecondary && basePortOverride == null)
-                throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
-
-            var siloClusterMode = isSecondary ? SiloClusterMode.SecondaryNode : SiloClusterMode.PrimaryNode;
-            ServiceArguments arguments = new ServiceArguments(startupMode, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime);
-
-            if (basePortOverride != null)
-                return arguments;
-
-            var commonConfig = new BaseCommonConfig();
-            var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
-            var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
-
-            return new ServiceArguments(startupMode, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime);
-        }
-
+  
+   
+        
         public abstract void Dispose();
     }
 }

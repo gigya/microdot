@@ -18,9 +18,8 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
         {
 
  
-            MicrodotInitializer microdotInitializer = new MicrodotInitializer("CalculatorService.Client", kernel =>
+            MicrodotInitializer microdotInitializer = new MicrodotInitializer("CalculatorService.Client",new NLogModule(), kernel =>
             {
-                kernel.Load<NLogModule>();
             });
             _testingKernel = microdotInitializer.Kernel;
         }

@@ -27,11 +27,16 @@ namespace Gigya.Microdot.UnitTests
 
         private IKernel _kernel;
 
-        public TestingHost(Action<IKernel> configure = null, Action<IKernel> onInitialize = null)
+        public TestingHost()
         {
-            this._configure = configure;
-            this._onInitialize = onInitialize;
         }
+
+        public TestingHost(Action<IKernel> onInitialize)
+        {
+            _onInitialize = onInitialize;
+
+        }
+
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(false); }
 
@@ -88,9 +93,7 @@ namespace Gigya.Microdot.UnitTests
 
             public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
             {
-                if (_useHttpLog)
-                    logBinding.To<ConsoleLog>();
-                else
+        
                     logBinding.To<ConsoleLog>();
 
                 logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());

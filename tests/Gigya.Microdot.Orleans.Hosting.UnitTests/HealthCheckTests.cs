@@ -55,7 +55,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task HealthCheck_ServcieDrain_StatueShouldBe521()
         {
             int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: port, serviceDrainTimeSec: 10);
+            ///serviceDrainTimeSec:
+            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineInteractive, ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:10);
+            
+            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
             await  Task.Delay(200);
@@ -68,7 +72,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void HealthCheck_NotHealthy_ShouldReturn500()
         {
-            tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
+            tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(false);
             var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{Dns.GetHostName()}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
@@ -76,7 +80,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void HealthCheck_Healthy_ShouldReturn200()
         {
-            tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(true);
+            tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(true);
             var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{Dns.GetHostName()}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }

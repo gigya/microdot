@@ -31,22 +31,25 @@ namespace Gigya.Microdot.Testing.Shared.Service
     public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
 
-        private readonly TServiceHost _host = new TServiceHost();
-        private Task _stopTask;
+        public readonly TServiceHost Host = new TServiceHost();
+        private Task _siloStopped;
 
-        public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
+        public NonOrleansServiceTester(IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
         {
-            var serviceArguments = GetServiceArguments(basePortOverride, false, shutdownWaitTime.HasValue?(int?)shutdownWaitTime.Value.TotalSeconds:null, startupMode);
-
-            BasePort = basePortOverride;
             ResolutionRoot = resolutionRoot;
-            _stopTask = _host.RunAsync(serviceArguments);
+            BasePort = serviceArguments.BasePortOverride??8987;
+
+            Host = new TServiceHost();
+            _siloStopped = Task.Run(() => Host.Run(serviceArguments));
+
+            //Silo is ready or failed to start
+            Task.WaitAny(_siloStopped, Host.WaitForServiceStartedAsync());
         }
 
         public override void Dispose()
         {
-            _host.Stop();
-            var completed = _stopTask.Wait(60000);
+            Host.Stop();
+            var completed = _siloStopped.Wait(60000);
 
             if (!completed)
                 throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");

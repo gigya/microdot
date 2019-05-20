@@ -22,12 +22,8 @@
 
 using System;
 using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.AgeLimitService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Testing.Service;
-using Gigya.Microdot.Testing.Shared;
-using Ninject;
 using NUnit.Framework;
 using Shouldly;
 
@@ -64,7 +60,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task WithNoneAgeLimitTest()
         {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WithNoneAgeLimitServiceHost>(basePortOverride: 6454, writeLogToFile: true);
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WithNoneAgeLimitServiceHost>(6454);
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
@@ -74,7 +70,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task WithAgeLimitTest()
         {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WithAgeLimitServiceHost>(basePortOverride: 6354, writeLogToFile: true);
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WithAgeLimitServiceHost>( 6354);
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 
@@ -84,7 +80,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task WithInvalidAgeLimitTest_ThrowArgumentException()
         {
-            Should.Throw<ArgumentException>(() => AssemblyInitialize.ResolutionRoot.GetServiceTester<WithInvalidAgeLimitServiceHost>(basePortOverride: 6254, writeLogToFile: true));
+            Should.Throw<ArgumentException>(() => AssemblyInitialize.ResolutionRoot.GetServiceTester<WithInvalidAgeLimitServiceHost>( 6254));
         }
 
         [Description("Loading real configuration from GrainTestService")]
@@ -92,7 +88,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task GrainTestServiceTest()
         {
-            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<ReadingRealConfigurationServiceHost>(basePortOverride: 6154, writeLogToFile: true);
+            var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<ReadingRealConfigurationServiceHost>( 6154);
             Tester = tester;
             var service = tester.GetServiceProxy<IGarinAgeLimitService>();
 

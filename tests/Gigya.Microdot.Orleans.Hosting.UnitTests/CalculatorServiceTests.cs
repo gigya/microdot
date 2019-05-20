@@ -75,7 +75,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(writeLogToFile: true);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(1234);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
 
@@ -297,14 +297,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             threadValue.ShouldNotBe(secondValue);
         }
 
-        [Test]
-        public async Task LogTest()
-        {
-            var logMessage = $"log-{Guid.NewGuid()}";
-            await Service.LogData(logMessage);
-            await Task.Delay(100);
-            File.ReadAllText("TestLog.txt").ShouldContain(logMessage);
-        }
 
         [Test]
         public async Task ShouldPublishEventWithCallParametersDefault()
