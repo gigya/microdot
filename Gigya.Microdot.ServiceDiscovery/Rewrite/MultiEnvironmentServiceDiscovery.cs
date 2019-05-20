@@ -28,6 +28,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -51,6 +52,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private readonly IDiscovery Discovery;
         private readonly Func<DiscoveryConfig> GetDiscoveryConfig;
         private readonly IDateTime DateTime;
+        private readonly ITracingContext _tracingContext;
 
         // State
         private readonly ConcurrentDictionary<string, ILoadBalancer> _loadBalancers = new ConcurrentDictionary<string, ILoadBalancer>();
@@ -61,7 +63,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public MultiEnvironmentServiceDiscovery(string serviceName, IEnvironment environment, ReachabilityCheck reachabilityCheck,
                 IDiscovery discovery, Func<DiscoveryConfig> getDiscoveryConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus,
-                IDateTime dateTime)
+                IDateTime dateTime,ITracingContext tracingContext)
         {
             _healthStatus = new HealthMessage(Health.Info, message: null, suppressMessage: true);
             ServiceName = serviceName;
@@ -70,6 +72,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Discovery = discovery;
             GetDiscoveryConfig = getDiscoveryConfig;
             DateTime = dateTime;
+            _tracingContext = tracingContext;
             _lastUsageTime = DateTime.UtcNow;
             var aggregatingHealthStatus = getAggregatingHealthStatus(serviceName);
             _healthCheck = aggregatingHealthStatus.Register(Environment.DeploymentEnvironment, CheckHealth);
@@ -80,11 +83,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             _lastUsageTime = DateTime.UtcNow;
             NodeAndLoadBalancer nodeAndLoadBalancer = null;
-            string preferredEnvironment = TracingContext.GetPreferredEnvironment();
+            string preferredEnvironment = _tracingContext.PreferredEnvironment;
 
             // 1. Use explicit host override if provided in request
             //    TBD: Theoretically if we only ever call a service through host overrides we might not have a health check for the service at all (though it is in use)
-            var hostOverride = TracingContext.GetHostOverride(ServiceName); 
+            var hostOverride = _tracingContext.GetHostOverride(ServiceName); 
             if (hostOverride != null)
                 return new NodeAndLoadBalancer {
                     Node = new Node(hostOverride.Host, hostOverride.Port),

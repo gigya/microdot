@@ -21,27 +21,43 @@
 #endregion
 
 
-using System;
-using Microsoft.Extensions.Logging;
+ using System.Collections.Generic;
+using System.Threading;
 
-namespace Gigya.Microdot.Orleans.Hosting.Logging
+ namespace Gigya.Microdot.SharedLogic.Events
 {
-    public class OrleansLogProvider :ILoggerProvider
+    public class ServiceTracingContext : TracingContextBase
     {
-        private readonly Func<string, OrleansLogAdapter> _logFactory;
-        public OrleansLogProvider(Func<string, OrleansLogAdapter> logFactory)
+        private AsyncLocal<Dictionary<string, object>> Context { get; } = new AsyncLocal<Dictionary<string, object>>();
+
+         public override IDictionary<string, object> Export()
         {
-            _logFactory = logFactory;
+            return Context.Value;
         }
 
-        public void Dispose()
+         protected override void Add(string key, object value)
         {
-         //   throw new NotImplementedException();
+            Dictionary<string, object> cloneDictionary = null;
+
+             if (Context.Value == null)
+                cloneDictionary= new Dictionary<string, object>();
+            else
+                cloneDictionary = new Dictionary<string, object>(Context.Value);
+
+             cloneDictionary[key] = value;
+
+             Context.Value = cloneDictionary;
         }
 
-        public ILogger CreateLogger(string categoryName)
+         protected override T TryGetValue<T>(string key)
         {
-           return   _logFactory(categoryName);
+            if (Context.Value == null)
+            {
+                return null;
+            }
+
+             Context.Value.TryGetValue(key, out var result);
+            return result as T;
         }
     }
-}
+} 

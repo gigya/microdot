@@ -45,6 +45,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="OrleansTracingContext.cs" />
     <Compile Include="OrleansConfig.cs" />
     <Compile Include="ClusterIdentity.cs" />
     <Compile Include="ExcludeGrainFromStatisticsAttribute.cs" />

@@ -40,5 +40,11 @@ namespace Gigya.Microdot.Interfaces.Events
         IEnvironment Environment { get; set; }
 
         IStackTraceEnhancer StackTraceEnhancer { get; set; }
+        
+        string RequestId { get; set; } 
+
+        string SpanId { get; set; } 
+
+        string ParentSpanId { get; set; }
     }
 }

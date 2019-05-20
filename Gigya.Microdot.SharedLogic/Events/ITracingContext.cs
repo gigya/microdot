@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -22,36 +22,26 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json;
+using Gigya.Microdot.SharedLogic.HttpService;
 
-namespace Gigya.Microdot.SharedLogic.HttpService
+namespace Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events
 {
-    [Serializable]
-    public class RequestOverrides : ExtendableJson
+    public interface ITracingContext 
     {
-        [JsonProperty]
-        public List<HostOverride> Hosts { get; set; }
+        string RequestID { get; set; }
+        string SpanID { get; }
+        string ParentSpnaID { get; }
 
-        [MinLength(1)]
-        [JsonProperty]
-        public string PreferredEnvironment { get; set; }
+        DateTimeOffset? SpanStartTime { get; set; }
+        DateTimeOffset? AbandonRequestBy { get; set; }
+        IList<HostOverride> Overrides { get; set; }
+        string PreferredEnvironment{ get; set; }
 
-     
-    }
+        void SetSpan(string spanId, string parentSpanId); 
+        void SetHostOverride(string serviceName, string host, int? port = null);
+        HostOverride GetHostOverride(string serviceName);
 
-    [Serializable]
-    public class HostOverride : ExtendableJson
-    {
-        [JsonRequired]
-        [JsonProperty]
-        public string ServiceName { get; set; }
+        IDictionary<string, object> Export();
 
-        [JsonRequired]
-        [JsonProperty]
-        public string Host { get; set; }
-
-        [JsonProperty]
-        public int? Port { get; set; }
     }
 }

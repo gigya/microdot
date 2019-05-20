@@ -35,6 +35,7 @@ using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
@@ -84,7 +85,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             SiloHost = Kernel.Get<GigyaSiloHost>();
             SiloHost.Start(Kernel.Get<IServiceProviderInit>(),
                 Kernel.Get<OrleansLogProvider>(),
-                Kernel.Get<OrleansConfigurationBuilder>(),
+                Kernel.Get<OrleansConfigurationBuilder>(),Kernel.Get<ITracingContext>(),
                 AfterOrleansStartup, BeforeOrleansShutdown);
 
         }

@@ -36,75 +36,13 @@
 //using Orleans.Runtime.Configuration;
 //using Orleans.Storage;
 
-//namespace Gigya.Microdot.Orleans.Hosting
-//{
-//    public class ZooKeeperConfig
-//    {
-//        public string ConnectionString { get; set; }
-//    }
 
-//    public class MySqlConfig
-//    {
-//        public string ConnectionString { get; set; }
-//    }
-
-
-//    public class GrainAgeLimitConfig
-//    {
-//        public double GrainAgeLimitInMins { get; set; }
-//        public string GrainType { get; set; }
-
-//    }
-
-//    public class OrleansConfig : IConfigObject
-//    {
-//        public string MetricsTableWriteInterval { get; set; } = "00:00:01";
-//        public double DefaultGrainAgeLimitInMins { get; set; } = 30;
-//        public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
-
-//        public ZooKeeperConfig ZooKeeper { get; set; }
-
-//        public MySqlConfig MySql_v4_0 { get; set; }
-
-//    }
-
-//    public class OrleansConfigurationBuilder
-//    {
-//       // public ClusterConfiguration ClusterConfiguration { get; }
-//        public Silo.SiloType SiloType { get; private set; }
-
-
-//        public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig, OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
-//                                           ClusterConfiguration clusterConfiguration, ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
-//                                           OrleansLogConsumer orleansLogConsumer, ZooKeeperLogConsumer zooKeeperLogConsumer, ServiceArguments serviceArguments)
-//        {
-//         //   ClusterConfiguration = clusterConfiguration;
-
-//            SiloType = Silo.SiloType.Secondary;
-//          //  var globals = ClusterConfiguration.Globals;
-//          //  var defaults = ClusterConfiguration.Defaults;
-
-//          //  SetAgeLimits(globals, orleansConfig, orleansServiceInterfaceMapper);
-
-//            globals.ExpectedClusterSize = 1; // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds).
 //            globals.RegisterBootstrapProvider<DelegatingBootstrapProvider>(nameof(DelegatingBootstrapProvider));
-//            defaults.ProxyGatewayEndpoint = new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloGatewayPort);
-//            defaults.Port = endPointDefinition.SiloNetworkingPort;
-//            defaults.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
 
-//            defaults.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
 
-//            // Orleans log redirection
-//            // defaults.TraceToConsole = false;                 // TODO: #ORLEANS20
-//            // defaults.TraceFileName = null;                   // TODO: #ORLEANS20
-//            // defaults.TraceFilePattern = null;                // TODO: #ORLEANS20
-//            // LogManager.LogConsumers.Add(orleansLogConsumer); // TODO: #ORLEANS20
+//       
 
-//            // ZooKeeper log redirection
-//            ZooKeeper.LogToFile = false;
-//            ZooKeeper.LogToTrace = false;
-//            ZooKeeper.LogLevel = TraceLevel.Verbose;
-//            ZooKeeper.CustomLogConsumer = zooKeeperLogConsumer;
+//     
 
 //            // TODO: #ORLEANS20
 //            //Setup Statistics
@@ -125,12 +63,6 @@
 //            defaults.StatisticsLogWriteInterval = TimeSpan.Parse(orleansConfig.MetricsTableWriteInterval);
 //            defaults.StatisticsWriteLogStatisticsToTable = true;
 
-//            if (serviceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
-//            {
-//                defaults.HostNameOrIPAddress = "localhost";
-//                //globals.ReminderServiceType = commonConfig.UseReminders
-//                //    ? GlobalConfiguration.ReminderServiceProviderType.ReminderTableGrain
-//                //    : GlobalConfiguration.ReminderServiceProviderType.Disabled;
 
 //           //     globals.LivenessType = GlobalConfiguration.LivenessProviderType.MembershipTableGrain;
 
@@ -143,23 +75,11 @@
 //                {
 //                    globals.SeedNodes.Add(new IPEndPoint(IPAddress.Loopback, endPointDefinition.SiloNetworkingPortOfPrimaryNode));
 //                }
-//            }
-//            else
-//            {
-//                globals.DeploymentId = clusterIdentity.DeploymentId;
-//             //   globals.LivenessType = GlobalConfiguration.LivenessProviderType.ZooKeeper;
-//                globals.DataConnectionString = orleansConfig.ZooKeeper.ConnectionString;
 
-//                if (commonConfig.UseReminders)
-//                {
-//                    globals.ServiceId = clusterIdentity.ServiceId;
-//                  //  globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.AdoNet;
-//                    globals.DataConnectionStringForReminders = orleansConfig.MySql_v4_0.ConnectionString;
-//                    globals.AdoInvariantForReminders = "MySql.Data.MySqlClient";
-//                }
-//                else
-//                //    globals.ReminderServiceType = GlobalConfiguration.ReminderServiceProviderType.Disabled;
 //            }
+//            
+//          
+//       
 
 //            if (string.IsNullOrEmpty(commonConfig.StorageProviderTypeFullName) == false)
 //            {
@@ -169,25 +89,4 @@
 //            }
 //        }
 
-//        //private void SetAgeLimits(GlobalConfiguration globals, OrleansConfig orleansConfig, OrleansServiceInterfaceMapper orleansServiceInterfaceMapper)
-//        //{
-//        //    globals.Application.SetDefaultCollectionAgeLimit(TimeSpan.FromMinutes(orleansConfig.DefaultGrainAgeLimitInMins));
-
-//        //    if (orleansConfig.GrainAgeLimits != null)
-//        //    {
-//        //        foreach (var grainAgeLimitConfig in orleansConfig.GrainAgeLimits.Values)
-//        //        {
-//        //            try
-//        //            {
-//        //                orleansServiceInterfaceMapper.ServiceClassesTypes.Single(x => x.FullName.Equals(grainAgeLimitConfig.GrainType));
-//        //            }
-//        //            catch (Exception e)
-//        //            {
-//        //                throw new ArgumentException($"Assigning Age Limit on {grainAgeLimitConfig.GrainType} has failed, because {grainAgeLimitConfig.GrainType} is an invalid type\n{e.Message}");
-//        //            }
-//        //            globals.Application.SetCollectionAgeLimit(grainAgeLimitConfig.GrainType, TimeSpan.FromMinutes(grainAgeLimitConfig.GrainAgeLimitInMins));
-//        //        }
-//        //    }
-//        //}
-//    }
 //}

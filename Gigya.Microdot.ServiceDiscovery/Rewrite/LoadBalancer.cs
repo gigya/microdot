@@ -31,6 +31,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Metrics;
@@ -42,6 +43,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
     /// </summary>
     internal sealed class LoadBalancer: ILoadBalancer
     {
+        private readonly ITracingContext _tracingContext;
         private IDiscovery Discovery { get; }
         private ReachabilityCheck ReachabilityCheck { get; }
         private TrafficRoutingStrategy TrafficRoutingStrategy { get; }
@@ -75,8 +77,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<DiscoveryConfig> getConfig,
             IDateTime dateTime, 
             ILog log,
-            IEnvironment environment)
+            IEnvironment environment,ITracingContext tracingContext)
         {
+            _tracingContext = tracingContext;
             DeploymentIdentifier = deploymentIdentifier;
             Discovery = discovery;
             ReachabilityCheck = reachabilityCheck;
@@ -134,7 +137,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 case TrafficRoutingStrategy.RoundRobin:                    
                     return (uint)Interlocked.Increment(ref _roundRobinIndex);
                 case TrafficRoutingStrategy.RandomByRequestID:
-                    return (uint?)TracingContext.TryGetRequestID()?.GetHashCode() ?? (uint)Interlocked.Increment(ref _roundRobinIndex);
+                    return (uint?)_tracingContext.RequestID?.GetHashCode() ?? (uint)Interlocked.Increment(ref _roundRobinIndex);
                 default:
                     throw new ProgrammaticException($"The {nameof(TrafficRoutingStrategy)} '{TrafficRoutingStrategy}' is not supported by LoadBalancer.");
             }

@@ -10,6 +10,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
@@ -25,20 +26,24 @@ namespace Gigya.Microdot.SharedLogic.Events
             public EventFieldAttribute Attribute;
         }
 
+        private readonly ITracingContext _tracingContext;
 
         private Func<EventConfiguration> LoggingConfigFactory { get; }
         private IEnvironment Environment { get; }
         private IStackTraceEnhancer StackTraceEnhancer { get; }
         private Func<EventConfiguration> EventConfig { get; }
+        public ITracingContext TracingContext { get; }
 
 
         public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
-            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig)
+            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, 
+            Func<EventConfiguration> eventConfig, ITracingContext tracingContext)
         {
             LoggingConfigFactory = loggingConfigFactory;
             Environment = environment;
             StackTraceEnhancer = stackTraceEnhancer;
             EventConfig = eventConfig;
+            TracingContext = tracingContext;
         }
 
 
@@ -48,6 +53,9 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.Configuration = LoggingConfigFactory();
             evt.Environment = Environment;
             evt.StackTraceEnhancer = StackTraceEnhancer;
+            evt.RequestId = evt.RequestId ?? _tracingContext.RequestID;
+            evt.SpanId = evt.SpanId ?? _tracingContext.SpanID;
+            evt.ParentSpanId = evt.ParentSpanId ??_tracingContext.ParentSpnaID;
 
             foreach (var member in GetMembersToSerialize(evt.GetType()))
                 if (predicate == null || predicate(member.Attribute) == true)

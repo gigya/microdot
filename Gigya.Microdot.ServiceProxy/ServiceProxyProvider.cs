@@ -42,6 +42,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -54,6 +55,8 @@ namespace Gigya.Microdot.ServiceProxy
 {
     public class ServiceProxyProvider : IDisposable, IServiceProxyProvider
     {
+        private readonly ITracingContext _tracingContext;
+
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -147,8 +150,9 @@ namespace Gigya.Microdot.ServiceProxy
             ILog log,
             Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery> serviceDiscoveryFactory,
             Func<DiscoveryConfig> getConfig,
-            JsonExceptionSerializer exceptionSerializer)
+            JsonExceptionSerializer exceptionSerializer,ITracingContext tracingContext)
         {
+            _tracingContext = tracingContext;
             EventPublisher = eventPublisher;
             CertificateLocator = certificateLocator;
 
@@ -317,11 +321,11 @@ namespace Gigya.Microdot.ServiceProxy
             {
                 HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
                 ServiceName = CurrentApplicationInfo.Name,
-                RequestID = TracingContext.TryGetRequestID(),
+                RequestID = _tracingContext.RequestID,
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID(),
+                ParentSpanID = _tracingContext.SpanID,
                 SpanStartTime = DateTimeOffset.UtcNow,
-                AbandonRequestBy = TracingContext.AbandonRequestBy
+                AbandonRequestBy = _tracingContext.AbandonRequestBy
             };
             PrepareRequest?.Invoke(request);
 
@@ -368,8 +372,12 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.TargetPort = effectivePort.Value;
                     clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
 
-                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
-                        ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
+                    request.Overrides = new RequestOverrides
+                    {
+                        Hosts = _tracingContext.Overrides.ToList(),
+                        PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment
+                    };
+                       
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");

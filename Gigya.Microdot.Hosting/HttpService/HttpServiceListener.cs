@@ -45,6 +45,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement;
@@ -61,6 +62,7 @@ namespace Gigya.Microdot.Hosting.HttpService
     public sealed class HttpServiceListener : IDisposable
     {
         private readonly IServerRequestPublisher _serverRequestPublisher;
+        private readonly ITracingContext _tracingContext;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -107,14 +109,16 @@ namespace Gigya.Microdot.Hosting.HttpService
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
-                                   JsonExceptionSerializer exceptionSerializer, 
-                                   ServiceSchema serviceSchema,                                   
+                                   JsonExceptionSerializer exceptionSerializer,
+                                   ServiceSchema serviceSchema,
                                    Func<LoadShedding> loadSheddingConfig,
-                                   IServerRequestPublisher serverRequestPublisher)
+                                   IServerRequestPublisher serverRequestPublisher,
+                                   ITracingContext tracingContext)
 
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
+            _tracingContext = tracingContext;
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -215,7 +219,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 // Regular endpoint handling
                 using (_activeRequestsCounter.NewContext("Request"))
                 {
-                    TracingContext.SetUpStorage();
+
                     RequestTimings.GetOrCreate(); // initialize request timing context
 
                     string methodName = null;
@@ -234,7 +238,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                             requestData = await ParseRequest(context);
                             SetCallEventRequestData(callEvent, requestData);
 
-                            TracingContext.SetOverrides(requestData.Overrides);
+                            _tracingContext.Overrides = requestData.Overrides.Hosts;
 
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
@@ -302,7 +306,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         (data, status, type) => TryWriteResponse(context, data, status, type)))
                     {
                         if (RequestTimings.Current.Request.ElapsedMS != null)
-                            _metaEndpointsRoundtripTime.Record((long) RequestTimings.Current.Request.ElapsedMS,
+                            _metaEndpointsRoundtripTime.Record((long)RequestTimings.Current.Request.ElapsedMS,
                                 TimeUnit.Milliseconds);
                         return true;
                     }
@@ -325,46 +329,50 @@ namespace Gigya.Microdot.Hosting.HttpService
             var now = DateTimeOffset.UtcNow;
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
-            if (   config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.Disabled
-                && TracingContext.SpanStartTime != null
-                && TracingContext.SpanStartTime.Value + config.DropMicrodotRequestsOlderThanSpanTimeBy < now)
+            if (config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.Disabled
+                && _tracingContext.SpanStartTime != null
+                && _tracingContext.SpanStartTime.Value + config.DropMicrodotRequestsOlderThanSpanTimeBy < now)
             {
 
                 if (config.DropMicrodotRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
-                    Log.Warn(_ => _("Accepted Microdot request despite that too much time passed since the client sent it to us.", unencryptedTags: new {
-                        clientSendTime    = TracingContext.SpanStartTime,
-                        currentTime       = now,
-                        maxDelayInSecs    = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds,
-                        actualDelayInSecs = (now -TracingContext.SpanStartTime.Value).TotalSeconds,
+                    Log.Warn(_ => _("Accepted Microdot request despite that too much time passed since the client sent it to us.", unencryptedTags: new
+                    {
+                        clientSendTime = _tracingContext.SpanStartTime,
+                        currentTime = now,
+                        maxDelayInSecs = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds,
+                        actualDelayInSecs = (now - _tracingContext.SpanStartTime.Value).TotalSeconds,
                     }));
 
                 else if (config.DropMicrodotRequestsBySpanTime == LoadShedding.Toggle.Drop)
-                    throw new EnvironmentException("Dropping Microdot request since too much time passed since the client sent it to us.", unencrypted: new Tags {
-                        ["clientSendTime"]    = TracingContext.SpanStartTime.ToString(),
-                        ["currentTime"]       = now.ToString(),
-                        ["maxDelayInSecs"]    = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
-                        ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
+                    throw new EnvironmentException("Dropping Microdot request since too much time passed since the client sent it to us.", unencrypted: new Tags
+                    {
+                        ["clientSendTime"] = _tracingContext.SpanStartTime.ToString(),
+                        ["currentTime"] = now.ToString(),
+                        ["maxDelayInSecs"] = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
+                        ["actualDelayInSecs"] = (now - _tracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
                     });
             }
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
-            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
-                && TracingContext.AbandonRequestBy != null
-                && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
+            if (config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
+                && _tracingContext.AbandonRequestBy != null
+                && now > _tracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
-                    Log.Warn(_ => _("Accepted Microdot request despite exceeding the API gateway timeout.", unencryptedTags: new {
-                        requestDeathTime = TracingContext.AbandonRequestBy,
-                        currentTime      = now,
-                        overTimeInSecs   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
+                    Log.Warn(_ => _("Accepted Microdot request despite exceeding the API gateway timeout.", unencryptedTags: new
+                    {
+                        requestDeathTime = _tracingContext.AbandonRequestBy,
+                        currentTime = now,
+                        overTimeInSecs = (now - _tracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
 
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
-                    throw new EnvironmentException("Dropping Microdot request since the API gateway timeout passed.", unencrypted: new Tags {
-                        ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
-                        ["currentTime"]      = now.ToString(),
-                        ["overTimeInSecs"]   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                    throw new EnvironmentException("Dropping Microdot request since the API gateway timeout passed.", unencrypted: new Tags
+                    {
+                        ["requestDeathTime"] = _tracingContext.AbandonRequestBy.ToString(),
+                        ["currentTime"] = now.ToString(),
+                        ["overTimeInSecs"] = (now - _tracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
                     });
             }
         }
@@ -528,10 +536,10 @@ namespace Gigya.Microdot.Hosting.HttpService
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
 
-            TracingContext.SetRequestID(request.TracingData.RequestID);
-            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
-            TracingContext.SpanStartTime    = request.TracingData.SpanStartTime;
-            TracingContext.AbandonRequestBy = request.TracingData.AbandonRequestBy;
+            _tracingContext.RequestID =request.TracingData.RequestID;
+            _tracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
+            _tracingContext.SpanStartTime = request.TracingData.SpanStartTime;
+            _tracingContext.AbandonRequestBy = request.TracingData.AbandonRequestBy;
 
             return request;
         }

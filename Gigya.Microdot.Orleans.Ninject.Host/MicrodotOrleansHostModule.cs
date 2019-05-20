@@ -29,6 +29,7 @@ using Orleans;
 using Orleans.Runtime.Configuration;
 using System;
 using Gigya.Microdot.Orleans.Hosting.Logging;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
 
@@ -57,6 +58,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
             Rebind<IServiceScope, SingleScope>().To<SingleScope>().InSingletonScope();
+            Rebind<ITracingContext>().To<OrleansTracingContext>().InSingletonScope();
 
             Rebind<IServiceScopeFactory, SingleServiceScopeFactory>().To<SingleServiceScopeFactory>().InSingletonScope();
             Rebind<OrleansLogAdapter>().ToSelf();

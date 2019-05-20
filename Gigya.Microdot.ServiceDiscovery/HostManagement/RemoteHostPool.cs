@@ -30,6 +30,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
@@ -41,6 +42,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
     /// </summary>
     public sealed class RemoteHostPool : IDisposable
     {
+        private readonly ITracingContext _tracingContext;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilitySource => ReachabilityBroadcaster;
         public  bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
         private readonly BroadcastBlock<EndPointsResult> _endPointsChanged = new BroadcastBlock<EndPointsResult>(null);
@@ -86,8 +88,10 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             , ILog log
             , HealthMonitor healthMonitor
             , MetricsContext metrics
+            ,ITracingContext tracingContext
         )
         {
+            _tracingContext = tracingContext;
             DiscoverySource = discovery;
             DeploymentIdentifier = deploymentIdentifier;
             ReachabilityChecker = reachabilityChecker;
@@ -258,7 +262,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         {
             LastEndpointRequest = DateTime.UtcNow;
 
-            var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
                 return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Host, hostOverride.Port?? GetConfig().DefaultPort);
@@ -285,7 +289,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
         public async Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken)
         {
-            var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
                 return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);

@@ -33,6 +33,7 @@ using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,7 +65,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         // private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
         // public static OrleansConfig PreviousOrleansConfig { get; private set; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
-
+        private ITracingContext _tracingContext;
 
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
@@ -91,9 +92,10 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         }
 
-        public void Start(IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, Func<IGrainFactory, Task> afterOrleansStartup = null,
+        public void Start(IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder ,ITracingContext tracingContext,Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
         {
+            _tracingContext = tracingContext;
             AfterOrleansStartup = afterOrleansStartup;
             BeforeOrleansShutdown = beforeOrleansShutdown;
 
@@ -188,8 +190,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private void OutgoingCallInterceptor(InvokeMethodRequest request, IGrain target)
         {
-            TracingContext.SetUpStorage();
-            TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
+        
+            _tracingContext.SpanStartTime = DateTimeOffset.UtcNow;
         }
 
 
@@ -271,49 +273,49 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
             if (config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
-                && TracingContext.SpanStartTime != null
-                && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
+                && _tracingContext.SpanStartTime != null
+                && _tracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
 
                 if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
                     Log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new
                     {
-                        clientSendTime = TracingContext.SpanStartTime,
+                        clientSendTime = _tracingContext.SpanStartTime,
                         currentTime = now,
                         maxDelayInSecs = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
-                        actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
+                        actualDelayInSecs = (now - _tracingContext.SpanStartTime.Value).TotalSeconds,
                     }));
 
                 else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Orleans request since too much time passed since the client sent it to us.", unencrypted: new Tags
                     {
-                        ["clientSendTime"] = TracingContext.SpanStartTime.ToString(),
+                        ["clientSendTime"] = _tracingContext.SpanStartTime.ToString(),
                         ["currentTime"] = now.ToString(),
                         ["maxDelayInSecs"] = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
-                        ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
+                        ["actualDelayInSecs"] = (now - _tracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
                     });
             }
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
             if (config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
-                && TracingContext.AbandonRequestBy != null
-                && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
+                && _tracingContext.AbandonRequestBy != null
+                && now > _tracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
                     Log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new
                     {
-                        requestDeathTime = TracingContext.AbandonRequestBy,
+                        requestDeathTime = _tracingContext.AbandonRequestBy,
                         currentTime = now,
-                        overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
+                        overTimeInSecs = (now - _tracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
 
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags
                     {
-                        ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
+                        ["requestDeathTime"] = _tracingContext.AbandonRequestBy.ToString(),
                         ["currentTime"] = now.ToString(),
-                        ["overTimeInSecs"] = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                        ["overTimeInSecs"] = (now - _tracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
                     });
             }
         }

@@ -34,6 +34,8 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Events.Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Ninject;
@@ -90,6 +92,7 @@ namespace Gigya.Microdot.Ninject
             Rebind<IServiceDiscoverySource>().To<ConsulDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<LocalDiscoverySource>().InTransientScope();
             Bind<IServiceDiscoverySource>().To<ConfigDiscoverySource>().InTransientScope();
+            Rebind<ITracingContext>().To<ServiceTracingContext >().InSingletonScope();
 
             Bind<INodeSourceFactory>().To<ConsulNodeSourceFactory>().InTransientScope();
             Rebind<ILoadBalancer>().To<LoadBalancer>().InTransientScope();
