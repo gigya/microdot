@@ -11,6 +11,7 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -50,10 +51,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Helpers\DissectPropertyInfoMetadata.cs" />
-    <Compile Include="Service\ServiceTesterExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service\NonOrleansServiceTester.cs" />
-    <Compile Include="Service\ServiceTesterBase.cs" />
     <Compile Include="TestingKernel.cs" />
     <Compile Include="Utils\EventWaiter.cs" />
   </ItemGroup>

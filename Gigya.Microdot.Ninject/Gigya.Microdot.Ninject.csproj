@@ -49,6 +49,7 @@
     <Compile Include="ILoggingModule.cs" />
     <Compile Include="MicrodotConventions.cs" />
     <Compile Include="MicrodotHostingModule.cs" />
+    <Compile Include="MicrodotInitializer.cs" />
     <Compile Include="MicrodotModule.cs" />
     <Compile Include="NinjectExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
