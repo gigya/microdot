@@ -6,24 +6,21 @@ using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
-    public class OrleansLogAdapter:ILogger,ILog
+    public class OrleansLogAdapter : ILogger, ILog
     {
         private readonly ILog _logImplementation;
-        private readonly string _category;
 
-        public OrleansLogAdapter(string category,Func<string,ILog> logImplementation)
+        public OrleansLogAdapter(string category, Func<string, ILog> logImplementation)
         {
-            _category = category;
-    
             _logImplementation = logImplementation(category);
         }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-     
-            var logMessage =  formatter(state, exception);
 
-            Action<LogDelegate> action = _ => _(logMessage, exception: exception,unencryptedTags: new { eventId.Id, eventId.Name });
+            var logMessage = formatter(state, exception);
+
+            Action<LogDelegate> action = _ => _(logMessage, exception: exception, unencryptedTags: new { eventId.Id, eventId.Name, IsOrleansLog = true });
             var level = TraceEventType.Critical;
             switch (logLevel)
             {
@@ -46,11 +43,11 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
                     level = TraceEventType.Warning;
                     break;
                 case LogLevel.None:
-                return;
+                    return;
             }
-            _logImplementation. Write(level,action);                  
-            
-            }
+            _logImplementation.Write(level, action);
+
+        }
 
         public bool IsEnabled(LogLevel logLevel)
         {
