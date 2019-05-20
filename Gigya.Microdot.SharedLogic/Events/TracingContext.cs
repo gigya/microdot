@@ -24,24 +24,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
+using System.Threading;
 using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
     public static class TracingContext
     {
-        private const string SPAN_ID_KEY = "SpanID";
-        private const string PARENT_SPAN_ID_KEY = "ParentSpanID";
-        private const string ORLEANS_REQUEST_CONTEXT_KEY = "#ORL_RC";
-        private const string REQUEST_ID_KEY = "ServiceTraceRequestID";
-        private const string OVERRIDES_KEY = "Overrides";
-        private const string SPAN_START_TIME = "SpanStartTime";
-        private const string REQUEST_DEATH_TIME = "RequestDeathTime";
+        private const string SPAN_ID_KEY = "MD_SpanID";
+        private const string PARENT_SPAN_ID_KEY = "MD_SParentSpanID";
+        private const string REQUEST_ID_KEY = "MD_SServiceTraceRequestID";
+        private const string OVERRIDES_KEY = "MD_SOverrides";
+        private const string SPAN_START_TIME = "MD_SSpanStartTime";
+        private const string REQUEST_DEATH_TIME = "MD_SRequestDeathTime";
+        private static readonly AsyncLocal<Dictionary<string, object>> CallContextData = new AsyncLocal<Dictionary<string, object>>();
 
 
         internal static void SetOverrides(RequestOverrides overrides)
         {
-            SetValue(OVERRIDES_KEY, overrides);
+            Set(OVERRIDES_KEY, overrides);
         }
 
 
@@ -71,27 +72,27 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             SetUpStorage();
 
-            RequestOverrides overrides = TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+            RequestOverrides overrides = (RequestOverrides)Get(OVERRIDES_KEY);
 
             if (overrides == null)
             {
                 overrides = new RequestOverrides();
-                SetValue(OVERRIDES_KEY, overrides);
+                Set(OVERRIDES_KEY, overrides);
             }
 
             overrides.PreferredEnvironment = preferredEnvironment;
         }
 
-        public static void SetHostOverride(string serviceName, string host, int? port=null)
+        public static void SetHostOverride(string serviceName, string host, int? port = null)
         {
             SetUpStorage();
 
-            var overrides = TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+            var overrides = (RequestOverrides)Get(OVERRIDES_KEY);
 
             if (overrides == null)
             {
                 overrides = new RequestOverrides();
-                SetValue(OVERRIDES_KEY, overrides);
+                Set(OVERRIDES_KEY, overrides);
             }
 
             if (overrides.Hosts == null)
@@ -111,7 +112,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
 
         public static string TryGetRequestID()
-        {            
+        {
             return TryGetValue<string>(REQUEST_ID_KEY);
         }
 
@@ -131,7 +132,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public static DateTimeOffset? SpanStartTime
         {
             get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
-            set => CloneAndSetValue(SPAN_START_TIME, value);
+            set => Set(SPAN_START_TIME, value);
         }
 
         /// <summary>
@@ -141,7 +142,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public static DateTimeOffset? AbandonRequestBy
         {
             get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
-            set => SetValue(REQUEST_DEATH_TIME, value);
+            set => Set(REQUEST_DEATH_TIME, value);
         }
 
         /// <summary>
@@ -150,66 +151,79 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>        
         public static void SetRequestID(string requestID)
         {
-            SetValue(REQUEST_ID_KEY, requestID);
+            Set(REQUEST_ID_KEY, requestID);
         }
 
         public static void SetSpan(string spanId, string parentSpanId)
         {
-            SetValue(SPAN_ID_KEY, spanId);
-            SetValue(PARENT_SPAN_ID_KEY, parentSpanId);
+            Set(SPAN_ID_KEY, spanId);
+            Set(PARENT_SPAN_ID_KEY, parentSpanId);
         }
 
-        private static void SetValue(string key, object value)
-        {
-            var context = GetContextData();
 
-            if(context == null)
-                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
 
-            context[key] = value;
-        }
-
-        // Implemented better in next Micrdot using Orleans 1.5
-        private static void CloneAndSetValue(string key, object value)
-        {
-            var context = GetContextData();
-
-            if(context == null)
-                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
-
-            var cloned = new Dictionary<string, object>(context);
-            cloned[key] = value;
-            CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, cloned);
-        }
-
-        private static T TryGetValue<T>(string key) where T : class
-        {
-            object value = null;
-            GetContextData()?.TryGetValue(key, out value);
-            return value as T;
-        }
-
-        private static T? TryGetNullableValue<T>(string key) where T : struct
-        {
-            object value = null;
-            GetContextData()?.TryGetValue(key, out value);
-            return value as T?;
-        }
 
         /// Must setup localstorage in upper most task (one that opens other tasks)
         /// https://stackoverflow.com/questions/31953846/if-i-cant-use-tls-in-c-sharp-async-programming-what-can-i-use
         public static void SetUpStorage()
         {
-            if (GetContextData() == null)
+            if (CallContextData.Value == null)
             {
-                CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, new Dictionary<string, object>());
+                CallContextData.Value = new Dictionary<string, object>(1);
             }
         }
-
-
-        private static Dictionary<string, object> GetContextData()
+        private static T? TryGetNullableValue<T>(string key) where T : struct
         {
-            return (Dictionary<string, object>)CallContext.LogicalGetData(ORLEANS_REQUEST_CONTEXT_KEY);
+            object value = Get(key); 
+            return value as T?;
+        }
+
+        private static T TryGetValue<T>(string key) where  T :class  
+        {
+            object value = Get(key); ;
+            return value as T;
+        }
+
+        private static object Get(string key)
+        {
+            var values = CallContextData.Value;
+            object result;
+            if ((values != null) && values.TryGetValue(key, out result))
+            {
+                return result;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Sets a value into the RequestContext key-value bag.
+        /// </summary>
+        /// <param name="key">The key for the value to be updated / added.</param>
+        /// <param name="value">The value to be stored into RequestContext.</param>
+        public static void Set(string key, object value)
+        {
+            var values = CallContextData.Value;
+
+            if (values == null)
+            {
+                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
+            }
+            else
+            {
+                // Have to copy the actual Dictionary value, mutate it and set it back.
+                // This is since AsyncLocal copies link to dictionary, not create a new one.
+                // So we need to make sure that modifying the value, we doesn't affect other threads.
+                var hadPreviousValue = values.ContainsKey(key);
+                var newValues = new Dictionary<string, object>(values.Count + (hadPreviousValue ? 0 : 1));
+                foreach (var pair in values)
+                {
+                    newValues.Add(pair.Key, pair.Value);
+                }
+
+                values = newValues;
+            }
+            values[key] = value;
+            CallContextData.Value = values;
         }
     }
 }
