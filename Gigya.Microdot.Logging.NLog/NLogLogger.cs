@@ -33,6 +33,11 @@ namespace Gigya.Microdot.Logging.NLog
             };
         }
 
+        public NLogLogger(string caller)
+        {
+            Logger = LogManager.GetLogger(caller);
+        }
+
         protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo,
             string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags,
             Exception exception = null, string stackTrace = null)

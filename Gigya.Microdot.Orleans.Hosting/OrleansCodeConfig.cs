@@ -30,7 +30,13 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// Whether to initialize the persistent reminders backend. Setting this to false and trying to register a
         /// reminder throws an exception.
         /// </summary>
-        public bool UseReminders { get; set; }
+        public Reminders RemindersSource  { get; set; }
+
+        public enum Reminders
+        {
+            None = 0, Sql = 1, InMemory = 2
+
+        }
 
         public string StorageProviderTypeFullName { get; set; }
 

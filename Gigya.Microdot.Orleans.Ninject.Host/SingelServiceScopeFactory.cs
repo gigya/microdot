@@ -20,15 +20,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
-using Ninject.Syntax;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Gigya.Microdot.Ninject
+namespace Gigya.Microdot.Orleans.Ninject.Host
 {
-   public interface ILoggingModule
-   {
-      void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string,ILog>> funLog);
-   }
+    class SingleServiceScopeFactory : IServiceScopeFactory
+    {
+        private readonly SingleScope _scope;
+
+        public SingleServiceScopeFactory(SingleScope scope)
+        {
+            _scope = scope;
+        }
+
+        public IServiceScope CreateScope()
+        {
+            return _scope;
+        }
+    }
 }

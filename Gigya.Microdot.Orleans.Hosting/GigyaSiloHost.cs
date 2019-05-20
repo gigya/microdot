@@ -21,33 +21,26 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Orleans;
-using Orleans.ApplicationParts;
 using Orleans.CodeGeneration;
-using Orleans.Configuration;
 using Orleans.Hosting;
-using Orleans.Providers;
-using Orleans.Runtime.Configuration;
-using Orleans.Runtime.Host;
-using Orleans.Serialization;
+using Metric = Metrics.Metric;
 
 
 namespace Gigya.Microdot.Orleans.Hosting
@@ -98,7 +91,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         }
 
-        public void Start(IServiceProviderInit serviceProvider, Func<IGrainFactory, Task> afterOrleansStartup = null,
+        public void Start(IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
         {
             AfterOrleansStartup = afterOrleansStartup;
@@ -106,53 +99,28 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             Log.Info(_ => _("Starting Orleans silo..."));
 
-            var silo = new SiloHostBuilder()
+            var silo = orleansConfigurationBuilder.GetBuilder()
                 .UseServiceProviderFactory(services => serviceProvider.ConfigureServices(services))
-                .Configure<ClusterOptions>(options =>
-                {
-                    options.ClusterId = "my-first-cluster";
-                    options.ServiceId = "AspNetSampleApp";
-                })
-                .UseLocalhostClustering()
-                .Configure<ClusterOptions>(options =>
-                {
-                    options.ClusterId = "dev";
-                    options.ServiceId = "HelloWorldApp";
-
-                })
-                .Configure<SiloOptions>(options => options.SiloName = "name")
-                .Configure<EndpointOptions>(options => options.AdvertisedIPAddress = IPAddress.Loopback)
-
-                .Configure<SerializationProviderOptions>(options =>
-                {
-                    options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
-                    options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
-                })
-                .ConfigureApplicationParts(parts =>
-                {
-                    parts.AddApplicationPart(Assembly.GetEntryAssembly()).WithReferences();
-                })
-                .AddStartupTask( StartupTask)
+                .ConfigureLogging(op => op.AddProvider(logProvider))
+                .AddStartupTask(StartupTask)
                 .Build();
-            Console.WriteLine("StartAsync start");
 
-            silo.StartAsync().Wait();
-            Console.WriteLine("StartAsync done");
+            try
+            {
+                silo.StartAsync().Wait();
+            }
+            catch (Exception e)
+            {
+                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: e);
+            }
 
-    
-        //
+            if (_startupTaskExceptions != null)
+                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: _startupTaskExceptions);
+
+            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+        }
 
 
-
-        //if (siloStartedSuccessfully)
-        //    Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = Silo.Name, siloType = Silo.Type }));
-        //else if (BootstrapException != null)
-        //    throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", Silo.Name }, { "siloType", Silo.Type.ToString() } }, innerException: BootstrapException);
-        //else
-        //    throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", Silo.Name }, { "siloType", Silo.Type.ToString() } });
-    }
-
-   
 
         public void Stop()
         {
@@ -190,7 +158,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             GrainTaskScheduler = TaskScheduler.Current;
             GrainFactory = serviceProvider.GetService<IGrainFactory>();
-            
+
             try
             {
                 if (AfterOrleansStartup != null)

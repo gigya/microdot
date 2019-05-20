@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Ninject;
 using Ninject.Activation;
 using Ninject.Modules;
+using Ninject.Parameters;
 using Ninject.Syntax;
 
 namespace Gigya.Microdot.Logging.NLog
@@ -19,7 +22,8 @@ namespace Gigya.Microdot.Logging.NLog
         /// </summary>
         public override void Load()
         {
-            Bind(Bind<ILog>(), Bind<IEventPublisher>());
+            Bind(Bind<ILog>(), Bind<IEventPublisher>(),Rebind<Func<string, ILog>>());
+      
         }
 
         /// <summary>
@@ -27,16 +31,26 @@ namespace Gigya.Microdot.Logging.NLog
         /// </summary>
         /// <param name="logBinding"></param>
         /// <param name="eventPublisherBinding"></param>
-        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> funcLog)
         {
             logBinding
                 .To<NLogLogger>()
                 .InScope(GetTypeOfTarget)
                 .WithConstructorArgument("receivingType", (context, target) => GetTypeOfTarget(context));
-
+            
             eventPublisherBinding
                 .To<LogEventPublisher>()
                 .InSingletonScope();
+            
+            funcLog.ToMethod(c =>
+                {
+                    return x =>
+                    {
+                        var caller = new ConstructorArgument("caller", x);
+                        return c.Kernel.Get<NLogLogger>(caller);
+                    };
+                })
+             .InScope(GetTypeOfTarget);
         }
 
         /// <summary>

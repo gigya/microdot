@@ -45,21 +45,24 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="OrleansConfig.cs" />
     <Compile Include="ClusterIdentity.cs" />
     <Compile Include="ExcludeGrainFromStatisticsAttribute.cs" />
+    <Compile Include="OrleansConfigurationBuilder.cs" />
     <Compile Include="OrleansCustomSerialization.cs" />
     <Compile Include="DelegatingBootstrapProvider.cs" />
     <Compile Include="Events\GrainCallEvent.cs" />
     <Compile Include="GigyaSiloHost.cs" />
     <Compile Include="GrainActivator.cs" />
+    <Compile Include="Logging\OrleansLogAdapter.cs" />
+    <Compile Include="Logging\OrleansLogProvider.cs" />
     <Compile Include="OrleansServiceInterfaceMapper.cs" />
     <Compile Include="ProcessingGrainWorker.cs" />
     <Compile Include="InfraProcessingGrain.cs" />
-    <Compile Include="Logging\OrleansLogConsumer.cs" />
     <Compile Include="Logging\ZooKeeperLogConsumer.cs" />
     <Compile Include="MetricsStatisticsPublisher.cs" />
     <Compile Include="OrleansCodeConfig.cs" />
-    <Compile Include="OrleansConfigurationBuilder.cs" />
+    <Compile Include="OrleansConfigurationBuilder_Old.cs" />
     <Compile Include="OrleansHostingAssembly.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

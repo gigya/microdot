@@ -28,6 +28,7 @@ using Ninject.Modules;
 using Orleans;
 using Orleans.Runtime.Configuration;
 using System;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
 
@@ -55,45 +56,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<NinjectOrleansServiceProvider, IServiceProvider, IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
 
             Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
-            Rebind<IServiceScope, SingelScppe>().To<SingelScppe>().InSingletonScope();
+            Rebind<IServiceScope, SingleScope>().To<SingleScope>().InSingletonScope();
 
-            Rebind<IServiceScopeFactory, SingelServiceScopeFactory>().To<SingelServiceScopeFactory>().InSingletonScope();
-
-
-        }
-    }
-
-
-    public class SingelScppe : IServiceScope
-    {
-        private readonly IServiceProvider _serviceProvider;
-
-        public SingelScppe(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
-        public IServiceProvider ServiceProvider => _serviceProvider;
-
-        public void Dispose()
-        {
-            //throw new NotImplementedException();
-        }
-    }
-
-    class SingelServiceScopeFactory : IServiceScopeFactory
-    {
-        private readonly SingelScppe _scppe;
-
-        public SingelServiceScopeFactory(SingelScppe scppe)
-        {
-            _scppe = scppe;
-        }
-
-
-        public IServiceScope CreateScope()
-        {
-            return _scppe;
+            Rebind<IServiceScopeFactory, SingleServiceScopeFactory>().To<SingleServiceScopeFactory>().InSingletonScope();
+            Rebind<OrleansLogAdapter>().ToSelf();
         }
     }
 }

@@ -33,6 +33,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
@@ -72,7 +73,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
 
-          //  Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
+            //  Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
             PreInitialize(Kernel);
 
@@ -81,7 +82,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(Kernel.Get<IServiceProviderInit>(),AfterOrleansStartup, BeforeOrleansShutdown);
+            SiloHost.Start(Kernel.Get<IServiceProviderInit>(),
+                Kernel.Get<OrleansLogProvider>(),
+                Kernel.Get<OrleansConfigurationBuilder>(),
+                AfterOrleansStartup, BeforeOrleansShutdown);
 
         }
 
@@ -120,13 +124,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             warmup.Warmup();
         }
 
-	    protected override void OnVerifyConfiguration()
-	    {
-		    Kernel = CreateKernel();
-		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
-		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-		    base.OnVerifyConfiguration();
-	    }
+        protected override void OnVerifyConfiguration()
+        {
+            Kernel = CreateKernel();
+            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
+            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+            base.OnVerifyConfiguration();
+        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
@@ -154,7 +158,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(),kernel.Rebind<Func<string, ILog>>());
         }
 
 

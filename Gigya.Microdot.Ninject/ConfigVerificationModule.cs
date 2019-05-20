@@ -84,7 +84,7 @@ namespace Gigya.Microdot.Ninject
 			// Required to allow assembly provider been instantiated
 			Kernel.Rebind<ServiceArguments>().ToConstant(_arguments);
 
-			_loggingModule?.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+			_loggingModule?.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(),Rebind<Func<string, ILog>>());
 
 			// Be ready that no ILog bound
 			if (Kernel.TryGet<ILog>() == null)

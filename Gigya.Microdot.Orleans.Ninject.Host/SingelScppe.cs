@@ -21,14 +21,26 @@
 #endregion
 
 using System;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
-using Ninject.Syntax;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Gigya.Microdot.Ninject
+namespace Gigya.Microdot.Orleans.Ninject.Host
 {
-   public interface ILoggingModule
-   {
-      void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string,ILog>> funLog);
-   }
+    public class SingleScope : IServiceScope
+    {
+
+        private readonly IServiceProvider _serviceProvider;
+
+        public SingleScope(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        // ReSharper disable once ConvertToAutoProperty
+        public IServiceProvider ServiceProvider => _serviceProvider;
+
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
+    }
 }
