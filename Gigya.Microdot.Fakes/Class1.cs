@@ -25,15 +25,9 @@ public static class KernelTestingExtensions
 
     public static IKernel WithLogForTests(this IKernel kernel, TraceEventType eventType = TraceEventType.Warning)
     {
-        var useServiceTester = AppDomain.CurrentDomain.GetData("HttpLogListenPort");
-        if (useServiceTester is int)
-        {
-            kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
-        }
-        else
-        {
+        
             kernel.Rebind<ILog>().ToConstant(new ConsoleLog { MinimumTraceLevel = eventType });
-        }
+        
         return kernel;
     }
 }

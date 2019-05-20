@@ -31,7 +31,6 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting;
-using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
@@ -39,8 +38,8 @@ using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
 using Orleans;
+using Orleans.Configuration;
 using Orleans.Runtime;
-using Orleans.Runtime.Configuration;
 
 namespace Gigya.Microdot.Testing.Service
 {
@@ -48,7 +47,6 @@ namespace Gigya.Microdot.Testing.Service
     {
         private ILog Log { get; }
 
-        public AppDomain ServiceAppDomain { get; private set; }
 
         public static TServiceHost Host { get; private set; }
         private static Task StopTask;
@@ -65,16 +63,14 @@ namespace Gigya.Microdot.Testing.Service
             var serviceArguments = GetServiceArguments(basePortOverride, isSecondary, shutdownWaitTime.HasValue ? (int?)shutdownWaitTime.Value.TotalSeconds : null, serviceDrainTimeSec);
 
             BasePort = serviceArguments.BasePortOverride.Value;
-            ServiceAppDomain = Common.CreateDomain(typeof(TServiceHost).Name + BasePort);
-            StartLogListener(BasePort, ServiceAppDomain, writeLogToFile);
+            StartLogListener(BasePort, writeLogToFile);
 
-            ServiceAppDomain.RunOnContext(serviceArguments, args =>
-            {
-                Host?.Stop();
-                Host?.Dispose();
-                Host = new TServiceHost();
-                StopTask = Host.RunAsync(args);
-            });
+
+            Host?.Stop();
+            Host?.Dispose();
+            Host = new TServiceHost();
+            StopTask = Host.RunAsync(serviceArguments);
+
         }
 
 
@@ -90,7 +86,7 @@ namespace Gigya.Microdot.Testing.Service
         public virtual TGrainInterface GetGrainClient<TGrainInterface>(long primaryKey, TimeSpan? timeout = null) where TGrainInterface : IGrainWithIntegerKey
         {
             InitGrainClient(timeout);
-            return GrainClient.GrainFactory.GetGrain<TGrainInterface>(primaryKey);
+            return _clusterClient.GetGrain<TGrainInterface>(primaryKey);
         }
 
 
@@ -105,7 +101,7 @@ namespace Gigya.Microdot.Testing.Service
         public virtual TGrainInterface GetGrainClient<TGrainInterface>(string primaryKey, TimeSpan? timeout = null) where TGrainInterface : IGrainWithStringKey
         {
             InitGrainClient(timeout);
-            return GrainClient.GrainFactory.GetGrain<TGrainInterface>(primaryKey);
+            return _clusterClient.GetGrain<TGrainInterface>(primaryKey);
         }
 
 
@@ -120,7 +116,7 @@ namespace Gigya.Microdot.Testing.Service
         public virtual TGrainInterface GetGrainClient<TGrainInterface>(Guid primaryKey, TimeSpan? timeout = null) where TGrainInterface : IGrainWithGuidKey
         {
             InitGrainClient(timeout);
-            return GrainClient.GrainFactory.GetGrain<TGrainInterface>(primaryKey);
+            return _clusterClient.GetGrain<TGrainInterface>(primaryKey);
         }
 
         /// <summary>
@@ -135,7 +131,7 @@ namespace Gigya.Microdot.Testing.Service
         public virtual TGrainInterface GetGrainClient<TGrainInterface>(int primaryKey, string keyExtension, TimeSpan? timeout = null) where TGrainInterface : IGrainWithIntegerCompoundKey
         {
             InitGrainClient(timeout);
-            return GrainClient.GrainFactory.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
+            return _clusterClient.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
         }
 
         /// <summary>
@@ -150,7 +146,7 @@ namespace Gigya.Microdot.Testing.Service
         public virtual TGrainInterface GetGrainClient<TGrainInterface>(Guid primaryKey, string keyExtension, TimeSpan? timeout = null) where TGrainInterface : IGrainWithGuidCompoundKey
         {
             InitGrainClient(timeout);
-            return GrainClient.GrainFactory.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
+            return _clusterClient.GetGrain<TGrainInterface>(primaryKey, keyExtension, null);
         }
 
 
@@ -158,54 +154,33 @@ namespace Gigya.Microdot.Testing.Service
         /// Immediately unloads the service's AppDomain without graceful shutdown. You should still call
         /// <see cref="Dispose"/> afterwards.
         /// </summary>
-        public virtual void Kill()
-        {
-            try
-            {
-                AppDomain.Unload(ServiceAppDomain);
-                ServiceAppDomain = null;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to unload AppDomain of service. Please make sure you've binded a fake IMetricsInitializer.", ex);
-            }
-        }
+
 
         public override void Dispose()
         {
+            _clusterClient?.Dispose();
 
-            if (GrainClient.IsInitialized)
-                  GrainClient.Uninitialize();
-       
+
             try
             {
-                if (ServiceAppDomain != null)
-                {
-                    ServiceAppDomain.RunOnContext(() =>
-                    {
-                        Host.Stop(); //don't use host.dispose, host.stop should do all the work
 
-                        var completed = StopTask.Wait(60000);
+                Host.Stop(); //don't use host.dispose, host.stop should do all the work
 
-                        if (!completed)
-                            throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
+                var completed = StopTask.Wait(60000);
 
-                        if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
-                            Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
-                            throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
+                if (!completed)
+                    throw new TimeoutException(
+                        "ServiceTester: The service failed to shutdown within the 60 second limit.");
 
-                    });
-                     
-                    Kill();
-                }
+                if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
+                    Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
+                    throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
             }
+
             finally
             {
                 LogListener.Close();
             }
-          
-
-            
         }
 
 
@@ -237,11 +212,10 @@ namespace Gigya.Microdot.Testing.Service
         }
 
 
-        protected virtual void StartLogListener(int basePort, AppDomain appDomain, bool writeLogToFile)
+        protected virtual void StartLogListener(int basePort, bool writeLogToFile)
         {
             //Start Listen to http log
             var httpLogListenPort = basePort - 1;
-            appDomain.SetData("HttpLogListenPort", httpLogListenPort);
             LogListener = new HttpListener { Prefixes = { $"http://localhost:{httpLogListenPort}/" } };
             LogListener.Start();
             LogListenerLoop(writeLogToFile);
@@ -292,24 +266,25 @@ namespace Gigya.Microdot.Testing.Service
             }
         }
 
-        protected virtual void InitGrainClient(TimeSpan? timeout)
+        private IClusterClient _clusterClient;
+        protected virtual IClusterClient InitGrainClient(TimeSpan? timeout)
         {
-            if (GrainClient.IsInitialized == false)
+            if (_clusterClient == null)
             {
-                var clientConfiguration = new ClientConfiguration
+                ClientBuilder grainClientBuilder = new ClientBuilder();
+                grainClientBuilder.Configure<EndpointOptions>(options =>
                 {
-                    Gateways =
-                    {
-                        new IPEndPoint(IPAddress.Loopback, BasePort + (int)PortOffsets.SiloGateway)
-                    },
-                    StatisticsWriteLogStatisticsToTable = false
-                };
+                    options.AdvertisedIPAddress = IPAddress.Loopback;
+                    options.GatewayPort = BasePort + (int)PortOffsets.SiloGateway;
+                });
+                var GrainClient = grainClientBuilder.Build();
+                GrainClient.Connect();
+                _clusterClient = GrainClient;
 
-                if (timeout != null)
-                    clientConfiguration.ResponseTimeout = timeout.Value;
 
-                GrainClient.Initialize(clientConfiguration);
             }
+            return _clusterClient;
+
         }
     }
 

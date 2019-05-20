@@ -48,11 +48,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
             if (_useHttpLog)
-                logBinding.To<HttpLog>();
+                logBinding.To<ConsoleLog>();
             else
                 logBinding.To<ConsoleLog>();
 
-            logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
+            logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
             eventPublisherBinding.To<NullEventPublisher>();
         }
     }
@@ -83,7 +83,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
-            kernel.Rebind<ILog>().ToConstant(new HttpLog(TraceEventType.Warning));
+            kernel.Rebind<ILog>().ToConstant(new ConsoleLog());
             kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
         }
 

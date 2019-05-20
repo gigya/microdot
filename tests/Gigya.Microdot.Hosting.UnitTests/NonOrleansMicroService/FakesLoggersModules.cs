@@ -19,12 +19,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
-            if (_useHttpLog)
-                logBinding.To<HttpLog>();
-            else
+        
                 logBinding.To<ConsoleLog>();
 
-            logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
+            logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
             eventPublisherBinding.To<NullEventPublisher>();
         }
     }

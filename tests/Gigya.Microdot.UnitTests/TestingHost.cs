@@ -89,11 +89,11 @@ namespace Gigya.Microdot.UnitTests
             public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
             {
                 if (_useHttpLog)
-                    logBinding.To<HttpLog>();
+                    logBinding.To<ConsoleLog>();
                 else
                     logBinding.To<ConsoleLog>();
 
-                logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
+                logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
                 eventPublisherBinding.To<NullEventPublisher>();
             }
         }

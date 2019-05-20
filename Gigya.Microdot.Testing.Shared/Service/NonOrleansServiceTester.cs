@@ -32,7 +32,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
     {
 
         private readonly TServiceHost _host = new TServiceHost();
-        private readonly CurrentApplicationInfo CurrentApplicationInfo;
         private Task _stopTask;
 
         public NonOrleansServiceTester(int basePortOverride, IResolutionRoot resolutionRoot, TimeSpan? shutdownWaitTime = null, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
