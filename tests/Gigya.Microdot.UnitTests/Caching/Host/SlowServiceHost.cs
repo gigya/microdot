@@ -19,14 +19,11 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
 {
     public class FakesLoggersModules : ILoggingModule
     {
-
-
-
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
-           
-            
-                logBinding.To<ConsoleLog>();
+
+
+            logBinding.To<ConsoleLog>();
 
             logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
             eventPublisherBinding.To<NullEventPublisher>();
