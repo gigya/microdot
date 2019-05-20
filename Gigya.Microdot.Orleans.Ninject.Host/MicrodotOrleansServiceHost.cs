@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +38,6 @@ using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
-using Orleans.Runtime.Configuration;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -66,14 +64,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
-
             Kernel = CreateKernel();
 
             PreConfigure(Kernel);
 
             Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
-
-            //  Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
             PreInitialize(Kernel);
 
@@ -86,7 +81,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 Kernel.Get<OrleansLogProvider>(),
                 Kernel.Get<OrleansConfigurationBuilder>(),
                 AfterOrleansStartup, BeforeOrleansShutdown);
-
         }
 
         /// <summary>
@@ -158,7 +152,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(),kernel.Rebind<Func<string, ILog>>());
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
+            InitializeAppInfo(ServiceName, Arguments.InstanceName, InfraVersion);
         }
 
 
@@ -171,6 +166,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         ///     infrastructure features you'd like to enable.</param>
         protected virtual void Configure(IKernel kernel, OrleansCodeConfig commonConfig) { }
 
+        protected override void InitializeAppInfo(string name, string instanceName = null, Version version = null)
+        {
+            var appInfo = Kernel.Get<CurrentApplicationInfo>();
+            appInfo.Init(name, instanceName, version);
+        }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 

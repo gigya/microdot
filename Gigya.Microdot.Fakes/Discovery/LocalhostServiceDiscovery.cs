@@ -30,11 +30,18 @@ namespace Gigya.Microdot.Fakes.Discovery
 
     public class LocalhostServiceDiscovery : IMultiEnvironmentServiceDiscovery
     {
+        private readonly CurrentApplicationInfo _appInfo;
+
+        public LocalhostServiceDiscovery(CurrentApplicationInfo appInfo)
+        {
+            _appInfo = appInfo;
+        }
+
         public async Task<NodeAndLoadBalancer> GetNode()
         {
             return new NodeAndLoadBalancer
             {
-                Node = new Node(CurrentApplicationInfo.HostName),
+                Node = new Node(_appInfo.HostName),
                 LoadBalancer = null
             };
         }

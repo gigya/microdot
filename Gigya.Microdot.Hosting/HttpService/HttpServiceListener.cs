@@ -91,6 +91,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IEnvironment Environment { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
+        private CurrentApplicationInfo AppInfo { get; }
 
         private ServiceSchema ServiceSchema { get; }
 
@@ -110,8 +111,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                                    JsonExceptionSerializer exceptionSerializer, 
                                    ServiceSchema serviceSchema,                                   
                                    Func<LoadShedding> loadSheddingConfig,
-                                   IServerRequestPublisher serverRequestPublisher)
-
+                                   IServerRequestPublisher serverRequestPublisher,
+                                   CurrentApplicationInfo appInfo)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -124,6 +125,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             Environment = environment;
             ExceptionSerializer = exceptionSerializer;
             LoadSheddingConfig = loadSheddingConfig;
+            AppInfo = appInfo;
 
             if (serviceEndPointDefinition.UseSecureChannel)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -137,7 +139,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 Prefixes = { Prefix }
             };
 
-            var context = Metric.Context("Service").Context(CurrentApplicationInfo.Name);
+            var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
             _deserializationTime = context.Timer("Deserialization", Unit.Calls);
             _roundtripTime = context.Timer("Roundtrip", Unit.Calls);
@@ -164,7 +166,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new Exception(
                     "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +
                     "To configure them, run the following commands in an elevated (administrator) command prompt:\n" +
-                    $"netsh http add urlacl url={Prefix} user={CurrentApplicationInfo.OsUser}");
+                    $"netsh http add urlacl url={Prefix} user={AppInfo.OsUser}");
             }
 
             StartListening();
@@ -475,8 +477,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.ContentType = contentType;
             context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
-            context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
-            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, AppInfo.Version.ToString());
+            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, AppInfo.HostName);
             context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
 
             try

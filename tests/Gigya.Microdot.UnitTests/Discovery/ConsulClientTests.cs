@@ -26,6 +26,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
         private const string Version = "1.0.0.1";
+        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         public enum ConsulMethod { LongPolling, Queries}
 
@@ -45,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 _environment = Substitute.For<IEnvironment>();
-                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                _environment.ConsulAddress.Returns($"{AppInfo.HostName}:{ConsulPort}");
                 _environment.Zone.Returns(Zone);
                 k.Rebind<IEnvironment>().ToMethod(_ => _environment);
 

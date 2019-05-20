@@ -19,13 +19,13 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
         [OneTimeSetUp]
         public void SetUp()
         {
-            CurrentApplicationInfo.Init("CalculatorService.Client");
 
             _testingKernel = new StandardKernel();
             _testingKernel.Bind<ConfigCreatorObject>().ToSelf().InTransientScope();
             _testingKernel.Bind<ConfigCreatorFuncObject>().ToSelf().InTransientScope();
             _testingKernel.Load<MicrodotModule>();
             _testingKernel.Load<NLogModule>();
+            _testingKernel.Get<CurrentApplicationInfo>().Init("CalculatorService.Client");
             _testingKernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
         }
 

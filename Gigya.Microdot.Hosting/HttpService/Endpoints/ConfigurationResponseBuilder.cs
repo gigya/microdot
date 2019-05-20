@@ -44,19 +44,21 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
         private UsageTracking UsageTracking { get; }
         private ServiceArguments ServiceArguments { get; }
+        public CurrentApplicationInfo AppInfo { get; }
         private ConfigCache ConfigCache { get; }
         private IEnvironmentVariableProvider Envs { get; }
         private IAssemblyProvider AssemblyProvider { get; }
-
 
         public ConfigurationResponseBuilder(ConfigCache configCache,
                                             IEnvironmentVariableProvider envs,
                                             IAssemblyProvider assemblyProvider,
                                             UsageTracking usageTracking,
-                                            ServiceArguments serviceArguments)
+                                            ServiceArguments serviceArguments,
+                                            CurrentApplicationInfo appInfo)
         {
             UsageTracking = usageTracking;
             ServiceArguments = serviceArguments;
+            AppInfo = appInfo;
             ConfigCache = configCache;
             Envs = envs;
             AssemblyProvider = assemblyProvider;
@@ -205,10 +207,10 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         {
             return new Dictionary<string, string>
             {
-                { "ApplicationName", CurrentApplicationInfo.Name },
-                { "HostName", CurrentApplicationInfo.HostName },
-                { "InstanceName", CurrentApplicationInfo.InstanceName },
-                { "OSUser", CurrentApplicationInfo.OsUser },
+                { "ApplicationName", AppInfo.Name },
+                { "HostName", AppInfo.HostName },
+                { "InstanceName", AppInfo.InstanceName },
+                { "OSUser", AppInfo.OsUser },
                 { "OSVersion", Environment.OSVersion.ToString() },
                 { "CommandLine", Environment.CommandLine },
                 { "CurrentDirectory", Environment.CurrentDirectory },

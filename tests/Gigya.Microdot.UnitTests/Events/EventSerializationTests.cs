@@ -19,18 +19,20 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
+        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
+
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment()), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration());
+
         EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironment(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment()), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration());
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            if (CurrentApplicationInfo.Name == null)
-                CurrentApplicationInfo.Init("Tests");
+            if(AppInfo.Name == null)
+                AppInfo.Init("Tests");
         }
-
 
         [Test]
         public async Task PublishExceptionEvent_WhileShouldExcludeStackTraceForFlume()
@@ -184,18 +186,18 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent[EventConsts.details].ShouldBe(EventConsts.details);
                                         
             serializedEvent.ShouldContainKey(EventConsts.srvSystem);
-            serializedEvent[EventConsts.srvSystem].ShouldBe(CurrentApplicationInfo.Name);
+            serializedEvent[EventConsts.srvSystem].ShouldBe(AppInfo.Name);
 
             serializedEvent.ShouldContainKey(EventConsts.srvVersion);
-            serializedEvent[EventConsts.srvVersion].ShouldBe(CurrentApplicationInfo.Version.ToString(4));
+            serializedEvent[EventConsts.srvVersion].ShouldBe(AppInfo.Version.ToString(4));
 
             serializedEvent.ShouldContainKey(EventConsts.infrVersion);
-            serializedEvent[EventConsts.infrVersion].ShouldBe(CurrentApplicationInfo.Version.ToString(4));
+            serializedEvent[EventConsts.infrVersion].ShouldBe(AppInfo.Version.ToString(4));
 
             serializedEvent.ShouldNotContainKey(EventConsts.srvSystemInstance);
                     
             serializedEvent.ShouldContainKey(EventConsts.runtimeHost);
-            serializedEvent[EventConsts.runtimeHost].ShouldBe(CurrentApplicationInfo.HostName);
+            serializedEvent[EventConsts.runtimeHost].ShouldBe(AppInfo.HostName);
 
             serializedEvent.ShouldContainKey(EventConsts.tags + ".UnencryptedTag");
             serializedEvent[EventConsts.tags + ".UnencryptedTag"].ShouldBe("UnencryptedTagValue");

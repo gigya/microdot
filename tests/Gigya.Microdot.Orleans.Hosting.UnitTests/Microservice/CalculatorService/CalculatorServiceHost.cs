@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Gigya.Microdot.Fakes;
@@ -44,14 +45,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             _useHttpLog = useHttpLog;
         }
 
-        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
             if (_useHttpLog)
                 logBinding.To<HttpLog>();
             else
                 logBinding.To<ConsoleLog>();
 
-            eventPublisherBinding.To<SpyEventPublisher>().InSingletonScope();
+            logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
+            eventPublisherBinding.To<NullEventPublisher>();
         }
     }
 

@@ -1,7 +1,9 @@
+using System;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Ninject;
 using Ninject.Syntax;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
@@ -15,13 +17,14 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             _useHttpLog = useHttpLog;
         }
 
-        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
             if (_useHttpLog)
                 logBinding.To<HttpLog>();
             else
                 logBinding.To<ConsoleLog>();
 
+            logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
             eventPublisherBinding.To<NullEventPublisher>();
         }
     }

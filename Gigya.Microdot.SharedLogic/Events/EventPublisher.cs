@@ -29,13 +29,14 @@ namespace Gigya.Microdot.SharedLogic.Events
     {
         private IEventPublisher Publisher { get; }
         private Func<T> EventFactory { get; }
+        private CurrentApplicationInfo AppInfo { get; }
 
 
-        public EventPublisher(IEventPublisher publisher, Func<T> eventFactory)
+        public EventPublisher(IEventPublisher publisher, Func<T> eventFactory, CurrentApplicationInfo appInfo)
         {
             Publisher = publisher;
             EventFactory = eventFactory;
-
+            AppInfo = appInfo;
         }
 
 
@@ -47,7 +48,13 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public T CreateEvent()
         {
-            return EventFactory();
+            var result = EventFactory();
+            result.ServiceName = AppInfo.Name;
+            result.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
+            result.ServiceVersion = AppInfo.Version.ToString(4);
+            result.InfraVersion = AppInfo.InfraVersion.ToString(4);
+            result.HostName = AppInfo.HostName;
+            return result;
         }
     }
 }

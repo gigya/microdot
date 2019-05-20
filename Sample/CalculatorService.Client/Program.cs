@@ -23,13 +23,11 @@ namespace CalculatorService.Client
                 //Environment.SetEnvironmentVariable("ZONE", "us1a");
                 //Environment.SetEnvironmentVariable("ENV", "dev");
 
-                CurrentApplicationInfo.Init("CalculatorService.Client");
-
                 var kernel = new StandardKernel();
                 kernel.Load<MicrodotModule>();
                 kernel.Load<NLogModule>();
-
                 kernel.Get<SystemInitializer>().Init();
+                kernel.Get<CurrentApplicationInfo>().Init("CalculatorService.Client");
 
                 ICalculatorService calculatorService = kernel.Get<ICalculatorService>();
                 int sum = calculatorService.Add(2, 3).Result;

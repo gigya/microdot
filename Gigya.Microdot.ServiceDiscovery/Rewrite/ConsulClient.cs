@@ -47,7 +47,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig, CurrentApplicationInfo appInfo)
         {
             Zone = environment.Zone;
             Log = log;
@@ -58,7 +58,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             // we assume a Consul agent is installed locally on the machine.
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri($"http://{environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500"}"),
+                BaseAddress = new Uri($"http://{environment.ConsulAddress ?? $"{appInfo.HostName}:8500"}"),
                 Timeout = TimeSpan.FromMinutes(100)
             };
         }

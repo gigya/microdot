@@ -30,6 +30,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private DiscoveryConfig _discoveryConfig;
         public const int Repeat = 1;
         private const string ServiceVersion = "1.0.0.0";
+        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [SetUp]
         public async Task Setup()
@@ -73,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
             var node = await _serviceDiscovery.GetNode();
-            node.Node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
+            node.Node.Hostname.ShouldContain(AppInfo.HostName);
         }
 
     }

@@ -74,9 +74,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            var joined = string.Join("-:- ", services.Select(d => d.ServiceType.FullName));
-            Console.WriteLine("Reigstered types: ", joined);
-
             foreach (var descriptor in services)
             {
                 IBindingWhenInNamedWithOrOnSyntax<object> binding;
@@ -112,9 +109,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 }
             }
 
-            //    var globalConfiguration = Kernel.Get<GlobalConfiguration>();
-            //    globalConfiguration.SerializationProviders.Add(typeof(OrleansCustomSerialization).GetTypeInfo());
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
+            
             return this;
         }
 

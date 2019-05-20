@@ -4,6 +4,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Configurations;
 using NSubstitute;
 using NUnit.Framework;
@@ -12,8 +13,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 {
     public class GigyaSiloHostFake : GigyaSiloHost
     {
-        public GigyaSiloHostFake(WarmupTestServiceHostWithSiloHostFake host,  ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener, IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig) : 
-            base(log, configBuilder, httpServiceListener, eventPublisher, loadSheddingConfig, orleansConfigSourceBlock, orleansConfig)
+        public GigyaSiloHostFake(WarmupTestServiceHostWithSiloHostFake host,  ILog log, HttpServiceListener httpServiceListener, IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, CurrentApplicationInfo appInfo) : 
+            base(log, httpServiceListener, eventPublisher, loadSheddingConfig, appInfo)
         {
             try
             {

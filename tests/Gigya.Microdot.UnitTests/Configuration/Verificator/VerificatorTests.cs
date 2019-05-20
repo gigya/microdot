@@ -28,8 +28,9 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         [OneTimeSetUp]
         public void Load()
         {
-            string APPNAME = "InfraTests";
-            CurrentApplicationInfo.Init(APPNAME);
+            // //#ORLEANS20, probably we need to initialize it.
+            // string APPNAME = "InfraTests";
+            // CurrentApplicationInfo.Init(APPNAME);
         }
 
         /// <summary>

@@ -60,7 +60,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
 
         public ServiceEndPointDefinition(IServiceInterfaceMapper mapper,
-            ServiceArguments serviceArguments, Func<DiscoveryConfig> getConfig)
+            ServiceArguments serviceArguments, Func<DiscoveryConfig> getConfig, CurrentApplicationInfo appInfo)
         {
             _serviceMethodResolver = new ServiceMethodResolver(mapper);
             var serviceInterfaces = mapper.ServiceInterfaceTypes.ToArray();
@@ -92,7 +92,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
 
             var config = getConfig();
-            var serviceConfig = config.Services[CurrentApplicationInfo.Name];
+            var serviceConfig = config.Services[appInfo.Name];
 
             UseSecureChannel = serviceConfig.UseHttpsOverride ?? interfacePorts.First().UseHttps;
 
@@ -119,7 +119,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     throw new ConfigurationException("Service is configured to run in slot based port but " +
                                                      "DefaultSlotNumber is not set in configuration. " +
                                                      "Either disable this mode via Service.IsSlotMode config value or set it via " +
-                                                     $"Discovery.{CurrentApplicationInfo.Name}.DefaultSlotNumber.");                
+                                                     $"Discovery.{appInfo.Name}.DefaultSlotNumber.");                
 
                 int? slotNumber = serviceArguments.SlotNumber ?? serviceConfig.DefaultSlotNumber;
 
@@ -127,7 +127,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     throw new ConfigurationException("Service is configured to run in slot based port but SlotNumber " +
                                                      "command-line argument was not specified and DefaultSlotNumber is not set in configuration. " +
                                                      "Either disable this mode via Service.IsSlotMode config value or set it via " +
-                                                     $"Discovery.{CurrentApplicationInfo.Name}.DefaultSlotNumber.");
+                                                     $"Discovery.{appInfo.Name}.DefaultSlotNumber.");
 
                 HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
                 MetricsPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Metrics).Value;

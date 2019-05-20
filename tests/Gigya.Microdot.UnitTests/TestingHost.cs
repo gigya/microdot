@@ -16,9 +16,9 @@ using NSubstitute;
 
 namespace Gigya.Microdot.UnitTests
 {
-   
 
-    public class TestingHost<T> : MicrodotServiceHost<T> where T : class 
+
+    public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
         public T Instance { get; private set; }
 
@@ -86,13 +86,14 @@ namespace Gigya.Microdot.UnitTests
                 _useHttpLog = useHttpLog;
             }
 
-            public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+            public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
             {
                 if (_useHttpLog)
                     logBinding.To<HttpLog>();
                 else
                     logBinding.To<ConsoleLog>();
 
+                logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
                 eventPublisherBinding.To<NullEventPublisher>();
             }
         }

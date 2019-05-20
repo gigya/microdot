@@ -33,6 +33,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private ConsulClientMock _consulClientMock;
         public const int Repeat = 1;
         private const string ServiceVersion = "1.0.0.0";
+        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [SetUp]
         public async Task Setup()
@@ -112,7 +113,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.{serviceName}.Source"] = "Local"
             );
             var remoteHostPull = _serviceDiscovery.GetNextHost();
-            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.HostName);
+            remoteHostPull.Result.HostName.ShouldContain(AppInfo.HostName);
         }
 
 

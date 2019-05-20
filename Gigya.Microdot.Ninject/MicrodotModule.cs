@@ -77,7 +77,7 @@ namespace Gigya.Microdot.Ninject
             this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
             
             Bind<IRemoteHostPoolFactory>().ToFactory();
-
+            Bind<CurrentApplicationInfo>().ToSelf().InSingletonScope();
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();

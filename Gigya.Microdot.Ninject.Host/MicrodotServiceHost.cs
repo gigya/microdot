@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <summary>
         /// Creates a new instance of <see cref="MicrodotServiceHost{TInterface}"/>
         /// </summary>
-        /// <exception cref="ArgumentException">Thrown when the provided type provided for the <see cref="TInterface"/>
+        /// <exception cref="ArgumentException">Thrown when the provided type provided for the <typeparamref name="TInterface" />
         /// generic argument is not an interface.</exception>
         protected MicrodotServiceHost()
         {
@@ -116,7 +116,7 @@ namespace Gigya.Microdot.Ninject.Host
 
         }
 
-	    protected override void OnVerifyConfiguration()
+        protected override void OnVerifyConfiguration()
 	    {
 		    Kernel = CreateKernel();
 		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
@@ -149,18 +149,24 @@ namespace Gigya.Microdot.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(),kernel.Rebind<Func<string, ILog>>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            InitializeAppInfo(ServiceName, Arguments.InstanceName, InfraVersion);
         }
 
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started. You must bind an implementation to the
-        /// interface defined by <see cref="TInterface"/>.
+        /// interface defined by <typeparamref name="TInterface" />.
         /// </summary>
         /// <param name="kernel">A <see cref="IKernel"/> already configured with infrastructure bindings.</param>
         /// <param name="commonConfig">An <see cref="BaseCommonConfig"/> that allows you to select which
         /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
 
+        protected override void InitializeAppInfo(string name, string instanceName = null, Version version = null)
+        {
+            var appInfo = Kernel.Get<CurrentApplicationInfo>();
+            appInfo.Init(name, instanceName, version);
+        }
 
         /// <summary>
         /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this

@@ -22,17 +22,13 @@
 
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
-using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
-using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Ninject;
-using Ninject.Planning.Bindings;
 
 namespace Gigya.Microdot.Ninject.SystemInitializer
 {

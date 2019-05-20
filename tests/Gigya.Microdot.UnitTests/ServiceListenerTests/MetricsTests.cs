@@ -26,6 +26,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
     public class MetricsTests
     {
         private IDemoService _proxyInstance;
+        private static CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
+
         [SetUp]
         public void SetUp()
         {
@@ -97,7 +99,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             return
                 Metric.Context("Service")
-                      .Context(CurrentApplicationInfo.Name)
+                      .Context(AppInfo.Name)
                       .DataProvider.CurrentMetricsData;
         }
 

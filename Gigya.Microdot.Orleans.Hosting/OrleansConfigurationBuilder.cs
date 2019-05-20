@@ -20,12 +20,15 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly ClusterIdentity _clusterIdentity;
         private IServiceEndPointDefinition _endPointDefinition;
         private readonly ServiceArguments _serviceArguments;
+        private readonly CurrentApplicationInfo _appInfo;
 
         private readonly ISiloHostBuilder _siloHostBuilder;
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
             OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
             ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
-             ServiceArguments serviceArguments)
+            ServiceArguments serviceArguments,
+            CurrentApplicationInfo appInfo
+            )
         {
             _orleansConfig = orleansConfig;
             _commonConfig = commonConfig;
@@ -33,6 +36,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             _clusterIdentity = clusterIdentity;
             _endPointDefinition = endPointDefinition;
             _serviceArguments = serviceArguments;
+            _appInfo = appInfo;
             _siloHostBuilder = InitBuilder();
         }
 
@@ -81,10 +85,9 @@ namespace Gigya.Microdot.Orleans.Hosting
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
-
                 .ConfigureApplicationParts(parts => parts.AddApplicationPart(Assembly.GetEntryAssembly()).WithReferences())
 
-                .Configure<SiloOptions>(options => options.SiloName = CurrentApplicationInfo.Name)//TODO should be not static !!
+                .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name)
 
                 .Configure<EndpointOptions>(options =>
             {

@@ -64,17 +64,19 @@ namespace Gigya.Microdot.Orleans.Hosting
         // private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
         // public static OrleansConfig PreviousOrleansConfig { get; private set; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
+        private CurrentApplicationInfo AppInfo { get; }
 
 
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-            IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig)
+            IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, CurrentApplicationInfo appInfo)
 
         {
             Log = log;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
+            AppInfo = appInfo;
 
 
             //OrleansConfigSourceBlock = orleansConfigSourceBlock;
@@ -100,7 +102,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             Log.Info(_ => _("Starting Orleans silo..."));
 
             var silo = orleansConfigurationBuilder.GetBuilder()
-                .UseServiceProviderFactory(services => serviceProvider.ConfigureServices(services))
+                .UseServiceProviderFactory(serviceProvider.ConfigureServices)
                 .ConfigureLogging(op => op.AddProvider(logProvider))
                 .AddStartupTask(StartupTask)
                 .Build();
@@ -111,13 +113,13 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             catch (Exception e)
             {
-                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: e);
+                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", AppInfo.HostName } }, innerException: e);
             }
 
             if (_startupTaskExceptions != null)
-                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: _startupTaskExceptions);
+                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", AppInfo.HostName } }, innerException: _startupTaskExceptions);
 
-            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = AppInfo.HostName }));
         }
 
 

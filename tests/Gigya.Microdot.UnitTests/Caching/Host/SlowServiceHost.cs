@@ -26,13 +26,14 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             _useHttpLog = useHttpLog;
         }
 
-        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
             if (_useHttpLog)
                 logBinding.To<HttpLog>();
             else
                 logBinding.To<ConsoleLog>();
 
+            logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
             eventPublisherBinding.To<NullEventPublisher>();
         }
     }

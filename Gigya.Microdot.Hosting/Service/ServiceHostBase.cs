@@ -46,13 +46,13 @@ namespace Gigya.Microdot.Hosting.Service
         private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
         private TaskCompletionSource<StopResult> ServiceGracefullyStopped { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
-        private readonly string _serviceName;
         protected CrashHandler CrashHandler { get; set; }
 
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
         protected virtual string ServiceName => _serviceName;
+        private readonly string _serviceName;
 
         protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
 
@@ -73,20 +73,22 @@ namespace Gigya.Microdot.Hosting.Service
             ServiceGracefullyStopped.SetResult(StopResult.None);
 
             _serviceName = GetType().Name;
-
          
             if (_serviceName.EndsWith("Host") && _serviceName.Length > 4)
                 _serviceName = _serviceName.Substring(0, _serviceName.Length - 4);
         }
 
+        protected internal abstract void InitializeAppInfo(string name, string instanceName = null, Version version = null);
+
         /// <summary>
-        /// Start the service, autodetecting between Windows service and command line. Always blocks until service is stopped.
+        /// Start the service, auto detecting between Windows service and command line. Always blocks until service is stopped.
         /// </summary>
         public void Run(ServiceArguments argumentsOverride = null)
         {
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
-            CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
+            
+            
 
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
@@ -294,7 +296,6 @@ namespace Gigya.Microdot.Hosting.Service
             if (Arguments == null)
             {
                 Arguments = new ServiceArguments(args);
-                CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
             }
 
             try
