@@ -25,14 +25,6 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
     {
         private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";
 
-        [OneTimeSetUp]
-        public void Load()
-        {
-            // //#ORLEANS20, probably we need to initialize it.
-            // string APPNAME = "InfraTests";
-            // CurrentApplicationInfo.Init(APPNAME);
-        }
-
         /// <summary>
         /// Initial common kernel setup for mocks
         /// </summary>
@@ -40,6 +32,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         {
             var k = new StandardKernel();
             k.Load(new ConfigVerificationModule(new FakesLoggersModules(false), new ServiceArguments()));
+            k.Get<CurrentApplicationInfo>().Init("InfraTests");
 
             IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
             providerMock.GetAssemblies().Returns(info => new[] {GetType().Assembly} );

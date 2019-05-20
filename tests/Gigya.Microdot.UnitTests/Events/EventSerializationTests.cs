@@ -22,10 +22,10 @@ namespace Gigya.Microdot.UnitTests.Events
         private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration(), AppInfo);
 
         EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironment(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration(), AppInfo);
 
         [OneTimeSetUp]
         public void OneTimeSetUp()

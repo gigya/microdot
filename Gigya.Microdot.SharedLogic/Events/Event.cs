@@ -25,7 +25,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -77,21 +76,21 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>The name of the reporting system (comments/socialize/hades/mongo etc)</summary>
         [EventField(EventConsts.srvSystem, OmitFromAudit = true)]
-        public string ServiceName { get; set;} // Publisher by publisher from CurrentApplicationInfo;
+        public string ServiceName { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         /// <summary>The name of the instance of the reporting system</summary>
         [EventField(EventConsts.srvSystemInstance, OmitFromAudit = true)]
-        public string ServiceInstanceName { get; set;} // Publisher by publisher from CurrentApplicationInfo;
+        public string ServiceInstanceName { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         [EventField(EventConsts.srvVersion, OmitFromAudit = true)]
-        public string ServiceVersion  { get; set;} // Publisher by publisher from CurrentApplicationInfo;
+        public string ServiceVersion  { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         [EventField(EventConsts.infrVersion, OmitFromAudit = true)]
-        public string InfraVersion  { get; set;} // Publisher by publisher from CurrentApplicationInfo;
+        public string InfraVersion  { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
-        public string HostName  { get; set;} // Publisher by publisher from CurrentApplicationInfo;
+        public string HostName  { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         /// <summary>The value of the %REGION% environment variable. .</summary>
         [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]
