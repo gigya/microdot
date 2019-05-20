@@ -55,7 +55,6 @@
     <Compile Include="Discovery\LocalhostEndPointHandle.cs" />
     <Compile Include="FakeHealthMonitor.cs" />
     <Compile Include="FakeLog.cs" />
-    <Compile Include="HttpLog.cs" />
     <Compile Include="ManualConfigurationEvents.cs" />
     <Compile Include="MockConfigItemsCollection.cs" />
     <Compile Include="NullEventPublisher.cs" />

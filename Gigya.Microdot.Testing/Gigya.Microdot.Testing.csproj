@@ -50,7 +50,6 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Service\AppDomainExtentions.cs" />
     <Compile Include="Service\Common.cs" />
     <Compile Include="Service\MarshalByRefObjectNeverDie.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -302,6 +301,28 @@
       <ItemGroup>
         <Reference Include="Orleans.Core.Abstractions">
           <HintPath>..\packages\Microsoft.Orleans.Core.Abstractions\lib\netstandard2.0\Orleans.Core.Abstractions.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="Orleans.Runtime">
+          <HintPath>..\packages\Microsoft.Orleans.OrleansRuntime\lib\netstandard2.0\Orleans.Runtime.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="Orleans.Runtime.Abstractions">
+          <HintPath>..\packages\Microsoft.Orleans.Runtime.Abstractions\lib\netstandard2.0\Orleans.Runtime.Abstractions.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

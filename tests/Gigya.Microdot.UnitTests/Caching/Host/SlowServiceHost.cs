@@ -19,21 +19,16 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
 {
     public class FakesLoggersModules : ILoggingModule
     {
-        private readonly bool _useHttpLog;
 
-        public FakesLoggersModules(bool useHttpLog)
-        {
-            _useHttpLog = useHttpLog;
-        }
+
 
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
-            if (_useHttpLog)
-                logBinding.To<HttpLog>();
-            else
+           
+            
                 logBinding.To<ConsoleLog>();
 
-            logFactory.ToMethod(c => caller => c.Kernel.Get<HttpLog>());
+            logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
             eventPublisherBinding.To<NullEventPublisher>();
         }
     }
@@ -47,7 +42,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             this.action = action;
         }
 
-        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(false); }
+        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();

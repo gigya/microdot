@@ -39,7 +39,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         public (StandardKernel k, IAssemblyProvider providerMock, IFileSystem fileSystemMock) Setup()
         {
             var k = new StandardKernel();
-            k.Load(new ConfigVerificationModule(new FakesLoggersModules(false), new ServiceArguments()));
+            k.Load(new ConfigVerificationModule(new FakesLoggersModules(), new ServiceArguments()));
 
             IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
             providerMock.GetAssemblies().Returns(info => new[] {GetType().Assembly} );

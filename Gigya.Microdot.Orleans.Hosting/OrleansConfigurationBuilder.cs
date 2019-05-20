@@ -107,7 +107,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
-                .ConfigureApplicationParts(parts => parts.AddApplicationPart(Assembly.GetEntryAssembly()).WithReferences())
+              ///  .ConfigureApplicationParts(parts => parts.AddApplicationPart(Assembly.GetEntryAssembly()).WithReferences())
 
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name)
 

@@ -84,14 +84,6 @@ namespace Gigya.Microdot.Testing.Shared
             this.Get<SystemInitializer>().Init();
         }
 
-        public OverridableConfigItems GetConfigOverride()
-        {
-            return this.Get<OverridableConfigItems>();
-        }
 
-        public void RaiseConfigChangeEvent()
-        {
-            this.Get<ManualConfigurationEvents>().RaiseChangeEvent();
-        }
     }
 }
