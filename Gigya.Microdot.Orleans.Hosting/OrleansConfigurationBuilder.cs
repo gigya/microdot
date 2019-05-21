@@ -111,7 +111,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
-                //.UsePerfCounterEnvironmentStatistics()
+                .UsePerfCounterEnvironmentStatistics()
 
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name)
 
