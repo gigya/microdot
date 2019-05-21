@@ -277,7 +277,6 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         public void Stop()
         {
-            if (StopEvent.WaitOne(0))
                 StopEvent.Set();
         }
 

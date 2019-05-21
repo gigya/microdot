@@ -18,7 +18,6 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
 
             await srvHost.WaitForServiceStartedAsync();
             srvHost.Dispose();
-            await srvHost.WaitForServiceGracefullyStoppedAsync();
 
             validatorFake.Received(1).Validate();
         }
@@ -31,7 +30,6 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             Task.Run(() => srvHost.Run());
             await srvHost.WaitForServiceStartedAsync();
             srvHost.Dispose();
-            await srvHost.WaitForServiceGracefullyStoppedAsync();
 
             workloadMetricsFake.Received(1).Init();
             workloadMetricsFake.Received().Dispose();
