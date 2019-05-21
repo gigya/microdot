@@ -26,7 +26,6 @@ using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Ninject.Syntax;
 using NUnit.Framework;

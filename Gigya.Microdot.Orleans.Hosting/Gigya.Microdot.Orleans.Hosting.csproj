@@ -45,6 +45,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="MicrodotIncomingGrainCallFilter.cs" />
     <Compile Include="OrleansConfig.cs" />
     <Compile Include="ClusterIdentity.cs" />
     <Compile Include="ExcludeGrainFromStatisticsAttribute.cs" />
@@ -298,6 +299,28 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
+        <Reference Include="Microsoft.Extensions.Logging.Configuration">
+          <HintPath>..\packages\Microsoft.Extensions.Logging.Configuration\lib\netstandard2.0\Microsoft.Extensions.Logging.Configuration.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="Microsoft.Extensions.Logging.Console">
+          <HintPath>..\packages\Microsoft.Extensions.Logging.Console\lib\netstandard2.0\Microsoft.Extensions.Logging.Console.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
         <Reference Include="Microsoft.Extensions.Options">
           <HintPath>..\packages\Microsoft.Extensions.Options\lib\netstandard2.0\Microsoft.Extensions.Options.dll</HintPath>
           <Private>True</Private>
@@ -388,6 +411,17 @@
       <ItemGroup>
         <Reference Include="Orleans.Runtime">
           <HintPath>..\packages\Microsoft.Orleans.OrleansRuntime\lib\netstandard2.0\Orleans.Runtime.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="Orleans.TelemetryConsumers.Counters">
+          <HintPath>..\packages\Microsoft.Orleans.OrleansTelemetryConsumers.Counters\lib\netstandard2.0\Orleans.TelemetryConsumers.Counters.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -546,6 +580,17 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
+        <Reference Include="System.Diagnostics.PerformanceCounter">
+          <HintPath>..\packages\System.Diagnostics.PerformanceCounter\lib\net461\System.Diagnostics.PerformanceCounter.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
         <Reference Include="System.Diagnostics.Process">
           <HintPath>..\packages\System.Diagnostics.Process\lib\net461\System.Diagnostics.Process.dll</HintPath>
           <Private>True</Private>
@@ -582,6 +627,15 @@
         <Reference Include="System.Linq.Expressions">
           <HintPath>..\packages\System.Linq.Expressions\lib\net463\System.Linq.Expressions.dll</HintPath>
           <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="System.Management">
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>

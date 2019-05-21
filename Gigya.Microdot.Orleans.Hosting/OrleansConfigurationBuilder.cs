@@ -1,12 +1,13 @@
-﻿#region Copyright 
+﻿#region Copyright
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License"); 
-// you may not use this file except in compliance with the License.  
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -18,18 +19,22 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#endregion
 
+#endregion Copyright
+
+using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.SharedLogic;
+using Orleans.Configuration;
+using Orleans.Hosting;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using System.Reflection;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.SharedLogic;
 using Orleans;
-using Orleans.Configuration;
-using Orleans.Hosting;
+using Orleans.Configuration.Overrides;
+using Orleans.Runtime.Configuration;
+using Orleans.Statistics;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -45,6 +50,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly CurrentApplicationInfo _appInfo;
 
         private readonly ISiloHostBuilder _siloHostBuilder;
+
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
             OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
             ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
@@ -91,7 +97,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// </summary>
         /// <returns></returns>
 
-
         public ISiloHostBuilder GetBuilder()
         {
             return _siloHostBuilder;
@@ -99,7 +104,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private ISiloHostBuilder InitBuilder()
         {
-
             var silo = new SiloHostBuilder()
 
                 .Configure<SerializationProviderOptions>(options =>
@@ -107,7 +111,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
-              ///  .ConfigureApplicationParts(parts => parts.AddApplicationPart(Assembly.GetEntryAssembly()).WithReferences())
+                .
+                UsePerfCounterEnvironmentStatistics()
 
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name)
 
@@ -129,9 +134,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 options.PerformDeadlockDetection = true;
                 options.AllowCallChainReentrancy = true;
                 options.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
-
             });
-
 
             silo.Configure<ClusterMembershipOptions>(options =>
             {
@@ -144,13 +147,32 @@ namespace Gigya.Microdot.Orleans.Hosting
                 options.ServiceId = _clusterIdentity.ServiceId.ToString();
             });
 
+            SetRiminder(silo);
+            SetSiloSource(silo);
 
+            silo.Configure<StatisticsOptions>(o =>
+            {
+                o.CollectionLevel = StatisticsLevel.Info;
+                o.LogWriteInterval = TimeSpan.FromMinutes(1);
+                o.PerfCountersWriteInterval= TimeSpan.FromMinutes(1);
+            });
+
+            
+
+            return silo;
+        }
+
+        private void SetRiminder(ISiloHostBuilder silo)
+        {
             //TODO in notificationsService change "UseReminder=ture" to RemindersSource sql and in the test inMemory
-
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.Sql)
                 silo.UseAdoNetReminderService(options => options.ConnectionString = _orleansConfig.MySql_v4_0.ConnectionString);
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.InMemory)
                 silo.UseInMemoryReminderService();
+        }
+
+        private void SetSiloSource(ISiloHostBuilder silo)
+        {
 
 
             switch (_serviceArguments.SiloClusterMode)
@@ -161,21 +183,22 @@ namespace Gigya.Microdot.Orleans.Hosting
                         options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
                     });
                     break;
+
                 case SiloClusterMode.Unspecified:
                     silo.UseLocalhostClustering();
                     //TODO:  Support MembershipTableGrain
                     break;
+
                 case SiloClusterMode.PrimaryNode:
                     silo.UseLocalhostClustering();
 
                     break;
+
                 case SiloClusterMode.SecondaryNode:
                     silo.UseLocalhostClustering();
 
                     break;
             }
-
-            return silo;
         }
 
         private void SetGrainCollectionOptions(ISiloHostBuilder silo)
@@ -204,4 +227,5 @@ namespace Gigya.Microdot.Orleans.Hosting
             });
         }
     }
+
 }

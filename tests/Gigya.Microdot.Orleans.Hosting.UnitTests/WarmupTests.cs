@@ -13,8 +13,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     {
         private int mainPort = 9555;
 
-        [TearDown]
-        public void TearDown()
+        [SetUp]
+        public void SetUp()
         {
             DependantClassFake.ResetWarmedTimes();
         }
@@ -23,13 +23,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
             ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>(mainPort);
-
             IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);
+          
             int result = await grain.TestWarmedTimes();
-            result = await grain.TestWarmedTimes();
-            result = await grain.TestWarmedTimes();
 
-            Assert.AreEqual(result, 1);
+            Assert.AreEqual(result, 2);
 
             tester.Dispose();
         }

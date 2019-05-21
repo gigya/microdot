@@ -28,7 +28,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
     [TestFixture]
     public class MetricsTests
     {
-        private IDemoService _proxyInstance;
         private static CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [SetUp]
@@ -41,7 +40,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
 
             var kernel = new TestingKernel<ConsoleLog>();
-            _proxyInstance = kernel.Get<IDemoService>();
         }
 
 
@@ -55,14 +53,14 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public void TestMetricsOnSuccess()
         {
-            var  ServiceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive);
-            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest",new NLogModule()))
+            var ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: 9589);
+            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest", new NLogModule()))
 
             {
-                using (var testinghost =microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(ServiceArguments))
+                using (var testinghost = microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(ServiceArguments))
                 {
                     testinghost.Host.Instance.Increment(0).Returns((ulong)1);
-                    var res = _proxyInstance.Increment(0).Result;
+                    var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
                     res.Should().Be(1);
 
                     testinghost.Host.Instance.Received().Increment(0);
@@ -76,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public void TestMetricsOnFailure()
         {
-            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest",new NLogModule()))
+            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest", new NLogModule()))
 
             {
                 using (var testinghost =
@@ -84,7 +82,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 {
                     testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
 
-                    Assert.Throws<RemoteServiceException>(() => _proxyInstance.DoSomething().GetAwaiter().GetResult());
+                    Assert.Throws<RemoteServiceException>(() =>  testinghost.GetServiceProxy<IDemoService>().DoSomething().GetAwaiter().GetResult());
 
                     var metricsExpected = DefaultExpected();
 

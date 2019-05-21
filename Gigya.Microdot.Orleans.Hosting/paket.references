@@ -12,3 +12,4 @@ Microsoft.Orleans.OrleansSqlUtils
 Microsoft.Orleans.OrleansZooKeeperUtils
 System.Threading.Tasks.Dataflow
 Microsoft.Orleans.Server
+Microsoft.Orleans.OrleansTelemetryConsumers.Counters
