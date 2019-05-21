@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Gigya.Microdot.Logging.NLog;
+﻿using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
-using Ninject;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Caching.Host
 {
@@ -34,16 +33,16 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         private Task StopTask { get; set; }
         private ISlowService Service { get; set; }
         private MicrodotInitializer _microdotInitializer;
+
         [OneTimeSetUp]
         public void SetUp()
         {
             try
             {
-                _microdotInitializer = new MicrodotInitializer("",new NLogModule());
-                Service=_microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<SlowServiceHost>(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive)).Host.Kernel.Get<ISlowService>();
-                
-
-                
+                _microdotInitializer = new MicrodotInitializer("", new NLogModule());
+                Service = _microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<SlowServiceHost>(
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: 8861))
+                    .GetServiceProxyWithCaching<ISlowService>();
             }
             catch (Exception ex)
             {
@@ -58,14 +57,17 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             _microdotInitializer.Dispose();
         }
 
-
         public enum Parameters { Identical, Different }
-        public enum Execute { Consecutively, InParallel }
-        public enum Cache { Enabled, Disabled }
-        public enum Calls { Succeed, Throw }
-        public enum DataType { Simple, Complex }
-        public enum ResultsShouldBe { Identical, Different }
 
+        public enum Execute { Consecutively, InParallel }
+
+        public enum Cache { Enabled, Disabled }
+
+        public enum Calls { Succeed, Throw }
+
+        public enum DataType { Simple, Complex }
+
+        public enum ResultsShouldBe { Identical, Different }
 
         [Theory]
         public async Task MultipleCalls_BehavesAsExpected(Cache cache, Parameters parameters, Execute execute, Calls calls, DataType dataType)

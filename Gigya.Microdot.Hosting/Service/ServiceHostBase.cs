@@ -51,9 +51,10 @@ namespace Gigya.Microdot.Hosting.Service
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
-        protected virtual string ServiceName => _serviceName;
+        public virtual string ServiceName => _serviceName;
         private readonly string _serviceName;
 
+         
         protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
 
         /// <summary>

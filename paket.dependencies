@@ -27,9 +27,11 @@ nuget Microsoft.Orleans.OrleansSqlUtils 2.3.2
 nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.3.2
 nuget Microsoft.Orleans.OrleansCodeGenerator 2.3.2
 nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.3.2
-nuget Microsoft.Orleans.TestingHost 2.3.2
+nuget Microsoft.Orleans.Client 2.3.2
+
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
+
 nuget Microsoft.Extensions.DependencyInjection.Abstractions
 nuget Microsoft.Extensions.DependencyInjection
 nuget Microsoft.Orleans.Server

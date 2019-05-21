@@ -517,6 +517,8 @@ namespace Gigya.Microdot.ServiceProxy
                     var exception = response.StatusCode == HttpStatusCode.ServiceUnavailable ?
                         new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}") :
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
+                    if (nodeAndLoadBalancer.LoadBalancer == null)
+                        throw exception;
 
                     nodeAndLoadBalancer.LoadBalancer.ReportUnreachable(nodeAndLoadBalancer.Node, exception);
                     _hostFailureCounter.Increment("NotGigyaHost");

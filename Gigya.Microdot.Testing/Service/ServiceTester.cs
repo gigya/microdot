@@ -24,16 +24,16 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Orleans.Hosting;
-using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
-using Microsoft.Extensions.Logging;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
@@ -47,29 +47,23 @@ namespace Gigya.Microdot.Testing.Service
         public Task SiloStopped { get; }
 
         public IClusterClient _clusterClient;
-
         public object _locker = new object();
-        public IClusterClient GrainClient
-        {
-            get
-            {
-                InitGrainClient(timeout: TimeSpan.FromSeconds(10));
-                return _clusterClient;
-            }
-        }
+
 
         public ServiceTester(IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
         {
+            Host = new TServiceHost();
+
             ResolutionRoot = resolutionRoot;
             BasePort = serviceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            Host = new TServiceHost();
+
             SiloStopped = Task.Run(() => Host.Run(serviceArguments));
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
-            if(SiloStopped.IsCompleted)
-                throw  new Exception("Silo Failed to start");
+            if (SiloStopped.IsCompleted)
+                throw new Exception("Silo Failed to start");
         }
         protected int GetBasePortFromHttpServiceAttribute()
         {
@@ -97,6 +91,14 @@ namespace Gigya.Microdot.Testing.Service
                 Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
                 throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
         }
+        public IClusterClient GrainClient
+        {
+            get
+            {
+                InitGrainClient(timeout: TimeSpan.FromSeconds(10));
+                return _clusterClient;
+            }
+        }
 
         protected virtual IClusterClient InitGrainClient(TimeSpan? timeout)
         {
@@ -105,23 +107,30 @@ namespace Gigya.Microdot.Testing.Service
                 lock (_locker)
                 {
                     if (_clusterClient != null) return _clusterClient;
-
+                    var applicationInfo = new CurrentApplicationInfo();
+                    applicationInfo.Init(Host.ServiceName);
+                    var clusterIdentity = new ClusterIdentity(Host.Arguments, new ConsoleLog(), ResolutionRoot.Get<IEnvironment>(), applicationInfo);
+                    var gateways = new IPEndPoint[]
+                    {
+                        new IPEndPoint( IPAddress.Loopback,  BasePort + (int) PortOffsets.SiloNetworking),
+                    };
 
                     ClientBuilder grainClientBuilder = new ClientBuilder();
-                    grainClientBuilder.Configure<EndpointOptions>(options =>
+                    grainClientBuilder.UseStaticClustering(gateways);
+
+                    grainClientBuilder.Configure<ClusterOptions>(options =>
                     {
-                        options.AdvertisedIPAddress = IPAddress.Loopback;
-                        options.GatewayPort = BasePort + (int)PortOffsets.SiloGateway;
+                        options.ClusterId = clusterIdentity.DeploymentId;
+                        options.ServiceId = clusterIdentity.ServiceId.ToString();
                     });
 
-                    IServiceProviderInit serviceProvider = ResolutionRoot.Get<IServiceProviderInit>();
-                    OrleansLogProvider logProvider = ResolutionRoot.Get<OrleansLogProvider>();
-
-                    grainClientBuilder.UseServiceProviderFactory(serviceProvider.ConfigureServices)
-                        .ConfigureLogging(op => op.AddProvider(logProvider));
+                    
+                    //  grainClientBuilder.UseLocalhostClustering();
+                    //  .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TServiceHost).Assembly));
 
                     var grainClient = grainClientBuilder.Build();
-                    grainClient.Connect();
+                    grainClient.Connect().GetAwaiter().GetResult();
+                  
                     _clusterClient = grainClient;
 
                 }
@@ -139,7 +148,6 @@ namespace Gigya.Microdot.Testing.Service
             return resolutionRoot.Get<Func<ServiceArguments, ServiceTester<TServiceHost>>>()(serviceArguments);
 
         }
-
 
         public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
             where TServiceHost : MicrodotOrleansServiceHost, new()

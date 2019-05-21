@@ -10,7 +10,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
     public class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        protected override string ServiceName { get; } = "ICalculatorService";
+        public override string ServiceName { get; } = "ICalculatorService";
 
         protected override ILoggingModule GetLoggingModule()
         {

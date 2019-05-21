@@ -36,7 +36,8 @@ using NSubstitute;
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
     [TestFixture]
-    public class LogFieldAttributeValidatorTest
+    public class 
+        LogFieldAttributeValidatorTest
     {
         private Type[] _typesToValidate;
         private IServiceInterfaceMapper _serviceInterfaceMapper;

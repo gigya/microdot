@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
 
 
-        protected override string ServiceName => "TestService";
+        public override string ServiceName => "TestService";
 
 
         public override ILoggingModule GetLoggingModule()

@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     public class ReadingRealConfigurationServiceHost : CalculatorServiceHost
     {
 
-        protected override string ServiceName => "GrainTestService";
+        public override string ServiceName => "GrainTestService";
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
             var originConfig = kernel.Get<OrleansConfig>();

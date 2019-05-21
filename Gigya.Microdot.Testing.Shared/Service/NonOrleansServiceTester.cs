@@ -38,7 +38,10 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public NonOrleansServiceTester(IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
         {
             ResolutionRoot = resolutionRoot;
-            BasePort = serviceArguments.BasePortOverride ?? 8987;
+            if(serviceArguments.BasePortOverride ==null ) 
+                throw  new  ArgumentException("ServiceArguments.BasePortOverride should not be null ");
+
+            BasePort = serviceArguments.BasePortOverride.Value;
 
             Host = new TServiceHost();
             _siloStopped = Task.Run(() => Host.Run(serviceArguments));

@@ -46,10 +46,14 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// <summary>
         /// Performs discovery of services in the silo and populates the class' static members with information about them.
         /// </summary>
-        public ClusterIdentity(ServiceArguments serviceArguments, ILog log, IEnvironment environment, CurrentApplicationInfo appInfo)
+        public ClusterIdentity(ServiceArguments serviceArguments, ILog log, IEnvironment environment,
+            CurrentApplicationInfo appInfo)
         {
             if (serviceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
+            {
+                DeploymentId = "LocalSilo";
                 return;
+            }
 
             string dc = environment.Zone;
             string env = environment.DeploymentEnvironment;

@@ -80,8 +80,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
             {
                 using (var testinghost =
-                    microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(
-                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive)))
+                    microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(8985))
                 {
                     testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
 
