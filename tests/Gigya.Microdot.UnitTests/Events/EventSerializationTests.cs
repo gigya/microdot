@@ -33,7 +33,7 @@ namespace Gigya.Microdot.UnitTests.Events
         {
             Environment.SetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME",null);
             if(AppInfo.Name == null)
-                AppInfo.Init("Tests");
+                AppInfo.Init(nameof(EventSerializationTests));
         }
 
         [Test]

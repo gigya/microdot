@@ -24,7 +24,6 @@ namespace Gigya.Microdot.SharedLogic.Events
             public EventFieldAttribute Attribute;
         }
 
-
         private Func<EventConfiguration> LoggingConfigFactory { get; }
         private IEnvironment Environment { get; }
         private IStackTraceEnhancer StackTraceEnhancer { get; }
@@ -32,7 +31,9 @@ namespace Gigya.Microdot.SharedLogic.Events
         private CurrentApplicationInfo AppInfo { get; }
 
         public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
-            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig, CurrentApplicationInfo appInfo)
+            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, 
+            Func<EventConfiguration> eventConfig, 
+            CurrentApplicationInfo appInfo)
         {
             LoggingConfigFactory = loggingConfigFactory;
             Environment = environment;
@@ -41,20 +42,29 @@ namespace Gigya.Microdot.SharedLogic.Events
             AppInfo = appInfo;
         }
 
-
         public IEnumerable<SerializedEventField> Serialize(IEvent evt, Func<EventFieldAttribute, bool> predicate = null)
         {
+            // Consider to move events fields population to IEventFactory
             evt.Configuration = LoggingConfigFactory();
             evt.Environment = Environment;
             evt.StackTraceEnhancer = StackTraceEnhancer;
 
-            // Application information
-            evt.ServiceName = AppInfo.Name;
-            evt.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
-            evt.ServiceVersion = AppInfo.Version.ToString(4);
-            evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
-            evt.HostName = AppInfo.HostName;
-
+            // If event wasn't created with factory these fields left unpopulated
+            if (evt.ServiceName == null) 
+                evt.ServiceName = AppInfo.Name;
+            
+            if (evt.ServiceInstanceName == null) 
+                evt.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
+            
+            if (evt.ServiceVersion == null) 
+                evt.ServiceVersion = AppInfo.Version.ToString(4);
+            
+            if (evt.InfraVersion == null) 
+                evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
+            
+            if (evt.HostName == null) 
+                evt.HostName = AppInfo.HostName;
+            
             foreach (var member in GetMembersToSerialize(evt.GetType()))
                 if (predicate == null || predicate(member.Attribute) == true)
                     foreach (var field in SerializeEventFieldAndSubfields(evt, member))

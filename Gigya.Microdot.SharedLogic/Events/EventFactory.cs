@@ -20,29 +20,34 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using Gigya.Microdot.Interfaces.Events;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
-    public class EventPublisher<T> : IEventPublisher<T> where T : IEvent
+    public class EventFactory<T> : IEventFactory<T>  where T : IEvent
     {
-        private IEventPublisher Publisher { get; }
-        private IEventFactory<T> EventFactory { get; }
+        private readonly CurrentApplicationInfo AppInfo;
+        private readonly Func<T> _eventFactory;
 
-        public EventPublisher(IEventPublisher publisher, IEventFactory<T> eventFactory)
+        public EventFactory(Func<T> eventFactory, CurrentApplicationInfo appInfo)
         {
-            Publisher = publisher;
-            EventFactory = eventFactory;
-        }
-
-        public PublishingTasks TryPublish(T evt)
-        {
-            return Publisher.TryPublish(evt);
+            AppInfo = appInfo;
+            _eventFactory = eventFactory;
         }
 
         public T CreateEvent()
         {
-            return EventFactory.CreateEvent();
+            var evt = _eventFactory();
+
+            // Add Application information
+            evt.ServiceName = AppInfo.Name;
+            evt.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
+            evt.ServiceVersion = AppInfo.Version.ToString(4);
+            evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
+            evt.HostName = AppInfo.HostName;
+
+            return  evt;
         }
     }
 }

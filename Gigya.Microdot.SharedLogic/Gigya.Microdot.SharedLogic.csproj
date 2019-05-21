@@ -48,6 +48,8 @@
     <Compile Include="ApplicationDirectoryProvider.cs" />
     <Compile Include="AssemblyProvider.cs" />
     <Compile Include="Configurations\LoadShedding.cs" />
+    <Compile Include="Events\EventFactory.cs" />
+    <Compile Include="Events\IEventFactory.cs" />
     <Compile Include="Events\MembersToLogExtractor.cs" />
     <Compile Include="Events\EventSerializer.cs" />
     <Compile Include="Events\Param.cs" />
