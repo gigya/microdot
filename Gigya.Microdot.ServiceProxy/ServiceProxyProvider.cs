@@ -316,7 +316,7 @@ namespace Gigya.Microdot.ServiceProxy
                 throw new ArgumentNullException(nameof(request));
             request.TracingData = new TracingData
             {
-                HostName = AppInfo.HostName?.ToUpperInvariant(),
+                HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
                 ServiceName = AppInfo.Name,
                 RequestID = TracingContext.TryGetRequestID(),
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                

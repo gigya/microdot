@@ -45,7 +45,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
             evt.ServiceVersion = AppInfo.Version.ToString(4);
             evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
-            evt.HostName = AppInfo.HostName;
+            evt.HostName = CurrentApplicationInfo.HostName;
 
             return  evt;
         }

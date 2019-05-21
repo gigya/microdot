@@ -66,7 +66,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             return k =>
                         {
                             _environment = Substitute.For<IEnvironment>();
-                            _environment.ConsulAddress.Returns($"{AppInfo.HostName}:{ConsulPort}");
+                            _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
                             _environment.Zone.Returns(Zone);
                             k.Rebind<IEnvironment>().ToMethod(_ => _environment);
                         };

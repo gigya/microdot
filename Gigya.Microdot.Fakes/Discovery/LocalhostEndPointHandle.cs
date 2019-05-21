@@ -28,14 +28,7 @@ namespace Gigya.Microdot.Fakes.Discovery
 {
     public class LocalhostEndPointHandle : IEndPointHandle
     {
-        private readonly CurrentApplicationInfo _appInfo;
-
-        public LocalhostEndPointHandle (CurrentApplicationInfo appInfo)
-        {
-            _appInfo = appInfo;
-        }
-
-        public string HostName => _appInfo.HostName;
+        public string HostName => CurrentApplicationInfo.HostName;
         public int? Port { get; set; }
         public bool? UseHttps { get; set; }
         public string SecurityRole { get; set; }

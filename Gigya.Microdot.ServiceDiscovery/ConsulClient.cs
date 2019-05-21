@@ -92,7 +92,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             _waitForConfigChange = new TaskCompletionSource<bool>();
             configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
 
-            ConsulAddress = new Uri($"http://{environment.ConsulAddress ?? $"{appInfo.HostName}:8500"}");
+            ConsulAddress = new Uri($"http://{environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500"}");
             _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
             var aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 

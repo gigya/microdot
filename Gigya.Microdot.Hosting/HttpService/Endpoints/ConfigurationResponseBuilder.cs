@@ -208,7 +208,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             return new Dictionary<string, string>
             {
                 { "ApplicationName", AppInfo.Name },
-                { "HostName", AppInfo.HostName },
+                { "HostName", CurrentApplicationInfo.HostName},
                 { "InstanceName", AppInfo.InstanceName },
                 { "OSUser", AppInfo.OsUser },
                 { "OSVersion", Environment.OSVersion.ToString() },

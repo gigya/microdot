@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Net;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
@@ -35,7 +34,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         static LocalNodeSource()
         {
-            _nodes = new []{new Node(Dns.GetHostName())};
+            _nodes = new []{new Node(CurrentApplicationInfo.HostName)};
         }
 
         public Node[] GetNodes() => _nodes;

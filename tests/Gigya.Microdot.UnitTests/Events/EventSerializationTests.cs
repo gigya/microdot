@@ -199,7 +199,7 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent.ShouldNotContainKey(EventConsts.srvSystemInstance);
                     
             serializedEvent.ShouldContainKey(EventConsts.runtimeHost);
-            serializedEvent[EventConsts.runtimeHost].ShouldBe(AppInfo.HostName);
+            serializedEvent[EventConsts.runtimeHost].ShouldBe(CurrentApplicationInfo.HostName);
 
             serializedEvent.ShouldContainKey(EventConsts.tags + ".UnencryptedTag");
             serializedEvent[EventConsts.tags + ".UnencryptedTag"].ShouldBe("UnencryptedTagValue");

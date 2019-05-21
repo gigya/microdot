@@ -104,13 +104,13 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             catch (Exception e)
             {
-                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", AppInfo.HostName } }, innerException: e);
+                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: e);
             }
 
             if (_startupTaskExceptions != null)
-                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", AppInfo.HostName } }, innerException: _startupTaskExceptions);
+                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: _startupTaskExceptions);
 
-            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = AppInfo.HostName }));
+            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
 
 

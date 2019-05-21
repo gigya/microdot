@@ -63,7 +63,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
             
             if (evt.HostName == null) 
-                evt.HostName = AppInfo.HostName;
+                evt.HostName = CurrentApplicationInfo.HostName;
             
             foreach (var member in GetMembersToSerialize(evt.GetType()))
                 if (predicate == null || predicate(member.Attribute) == true)

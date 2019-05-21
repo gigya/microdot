@@ -53,7 +53,7 @@ namespace Gigya.Microdot.SharedLogic {
 		/// <summary>
 		/// Name of host, the current process is running on.
 		/// </summary>
-		public string HostName { get; }
+		public static string HostName { get; } = Dns.GetHostName();
 
 		/// <summary>
 		/// Indicates if the current process is running as a Windows service.
@@ -67,7 +67,7 @@ namespace Gigya.Microdot.SharedLogic {
 			OsUser = WindowsIdentity.GetCurrent().Name;
 			InfraVersion = typeof(CurrentApplicationInfo).Assembly.GetName().Version;
 			Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
-			HostName = Dns.GetHostName();
+
 			// ReSharper disable once PossibleNullReferenceException
 			IsRunningAsWindowsService = Environment.OSVersion.Platform == PlatformID.Win32NT &&
 				WindowsIdentity.GetCurrent().Name == @"NT AUTHORITY\SYSTEM";
