@@ -68,6 +68,8 @@ namespace Gigya.Microdot.Testing.Service
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
+            if(SiloStopped.IsCompleted)
+                throw  new Exception("Silo Failed to start");
         }
         protected int GetBasePortFromHttpServiceAttribute()
         {
@@ -80,6 +82,7 @@ namespace Gigya.Microdot.Testing.Service
 
         public override void Dispose()
         {
+
             _clusterClient?.Dispose();
 
             Host.Stop(); //don't use host.dispose, host.stop should do all the work
@@ -141,7 +144,7 @@ namespace Gigya.Microdot.Testing.Service
         public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
-            return resolutionRoot.Get<Func<ServiceArguments, ServiceTester<TServiceHost>>>()(new ServiceArguments(ServiceStartupMode.CommandLineInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port));
+            return resolutionRoot.Get<Func<ServiceArguments, ServiceTester<TServiceHost>>>()(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port));
 
         }
     }

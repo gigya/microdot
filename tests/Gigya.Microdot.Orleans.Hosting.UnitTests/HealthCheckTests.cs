@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
             ///serviceDrainTimeSec:
-            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineInteractive, ConsoleOutputMode.Disabled,
+            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
                 SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:10);
             
             var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);

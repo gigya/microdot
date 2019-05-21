@@ -37,14 +37,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class ServiceTesterTests
     {
         private ServiceTester<CalculatorServiceHost> _tester;
-        
+
 
         [Test]
         public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
         {
             ///shutdownWaitTimeSec: 0 
-           var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineInteractive, ConsoleOutputMode.Disabled,
-                SiloClusterMode.PrimaryNode, 8555, shutdownWaitTimeSec: 0);
+            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
+                 SiloClusterMode.PrimaryNode, 8555, shutdownWaitTimeSec: 0);
             _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);
 
             Action act = () => _tester.Dispose();

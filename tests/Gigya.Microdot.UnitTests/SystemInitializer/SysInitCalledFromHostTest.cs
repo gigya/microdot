@@ -16,8 +16,9 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             ServiceHostFake<IValidator> srvHost = new ServiceHostFake<IValidator>(validatorFake);
             Task.Run(() => srvHost.Run());
 
-            await srvHost.WaitForHostInitialized();
-            await srvHost.StopHost();
+            await srvHost.WaitForServiceStartedAsync();
+            srvHost.Dispose();
+            await srvHost.WaitForServiceGracefullyStoppedAsync();
 
             validatorFake.Received(1).Validate();
         }
@@ -28,9 +29,9 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             IWorkloadMetrics workloadMetricsFake = Substitute.For<IWorkloadMetrics>();
             ServiceHostFake<IWorkloadMetrics> srvHost = new ServiceHostFake<IWorkloadMetrics>(workloadMetricsFake);
             Task.Run(() => srvHost.Run());
-
-            await srvHost.WaitForHostInitialized();
-            await srvHost.StopHost();
+            await srvHost.WaitForServiceStartedAsync();
+            srvHost.Dispose();
+            await srvHost.WaitForServiceGracefullyStoppedAsync();
 
             workloadMetricsFake.Received(1).Init();
             workloadMetricsFake.Received().Dispose();

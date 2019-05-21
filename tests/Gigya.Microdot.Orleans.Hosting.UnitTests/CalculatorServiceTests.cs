@@ -22,17 +22,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Service;
-using Gigya.Microdot.Testing.Shared;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -65,6 +61,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     public class CalculatorServiceTests
     {
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }
+        public IServiceProxyProvider ProxyProvider { get; private set; }
+
         private ICalculatorService Service { get; set; }
         private ICalculatorService ServiceWithCaching { get; set; }
 
@@ -75,10 +73,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
 
-                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(1234);
+                Tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(6558);
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
-
+                ProxyProvider   = Tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)
             {
@@ -171,35 +169,29 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             const string localDateString = "2016-07-31T10:00:00+03:00";
             var localDateTime = DateTime.Parse(localDateString);
             var localDateTimeOffset = DateTimeOffset.Parse(localDateString);
-            var ukernel = new TestingKernel<ConsoleLog>();
 
-            var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
-            var serviceProxy = providerFactory("CalculatorService");
             var dict = new Dictionary<string, object>
             {
                 {"localDateTime", localDateTime},
                 {"localDateTimeOffset", localDateTimeOffset}
             };
-            serviceProxy.DefaultPort = 6555;
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("ToUniversalTime", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("ToUniversalTime", typeof(ICalculatorService).FullName, dict), typeof(JObject));
             var json = (JToken)res;
             DateTimeOffset.Parse(json["Item1"].Value<string>()).ShouldBe(DateTime.Parse(localDateString).ToUniversalTime());
             DateTimeOffset.Parse(json["Item2"].Value<string>()).ShouldBe(localDateTimeOffset.DateTime);
         }
 
+
         [Test]
         public async Task CallWeakRequestWith_ComplexObject_ParamAndNoReturnType()
         {
-            var ukernel = new TestingKernel<ConsoleLog>();
+     
 
-            var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
-            var serviceProxy = providerFactory("CalculatorService");
             var wrapper = new Wrapper { INT = 100, STR = "100" };
             var dict = new Dictionary<string, object> { { "wrapper", JsonConvert.SerializeObject(wrapper) } };
-            serviceProxy.DefaultPort = 6555;
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("DoComplex", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoComplex", typeof(ICalculatorService).FullName, dict), typeof(JObject));
 
             ((JToken)res).ToObject<Wrapper>().INT.ShouldBe(wrapper.INT);
             ((JToken)res).ToObject<Wrapper>().STR.ShouldBe(wrapper.STR);
@@ -209,14 +201,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CallWeakRequestWith_Int_ParamAndNoReturnType()
         {
-            var ukernel = new TestingKernel<ConsoleLog>();
 
-            var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
-            var serviceProxy = providerFactory("CalculatorService");
+      
             var dict = new Dictionary<string, object> { { "a", "5" } };
-            serviceProxy.DefaultPort = 6555;
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JObject));
             ((JToken)res).Value<int>().ShouldBe(5);
         }
 
@@ -224,14 +213,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CallWeakRequestWith_NoParamsAndNoReturnType()
         {
-            var ukernel = new TestingKernel<ConsoleLog>();
-
-            var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
-            var serviceProxy = providerFactory("CalculatorService");
+;
             var dict = new Dictionary<string, object>();
-            serviceProxy.DefaultPort = 6555;
+           
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("Do", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", typeof(ICalculatorService).FullName, dict), typeof(JObject));
             var json = (JToken)res;
             json.ShouldBe(null);
         }
@@ -239,14 +225,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CallWeakRequestWith_NoParamsAndNoReturnTypeAndNoType()
         {
-            var ukernel = new TestingKernel<ConsoleLog>();
 
-            var providerFactory = ukernel.Get<Func<string, ServiceProxyProvider>>();
-            var serviceProxy = providerFactory("CalculatorService");
             var dict = new Dictionary<string, object>();
-            serviceProxy.DefaultPort = 6555;
 
-            var res = await serviceProxy.Invoke(new HttpServiceRequest("Do", null, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", null, dict), typeof(JObject));
             var json = (JToken)res;
             json.ShouldBe(null);
         }
@@ -377,7 +359,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task RegexTestWithTimeout()
         {
-            await Service.RegexTestWithDefaultTimeoutDefault( 10);
+            await Service.RegexTestWithDefaultTimeoutDefault(10);
         }
 
         #region MockData

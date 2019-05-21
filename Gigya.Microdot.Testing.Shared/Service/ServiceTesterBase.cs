@@ -23,12 +23,7 @@
 #endregion
 
 using System;
-using System.Linq;
-using System.Reflection;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
-using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
@@ -43,7 +38,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
     {
         protected IResolutionRoot ResolutionRoot { get; set; }
 
-        protected int BasePort { get; set; }
+        public int BasePort { get; protected set; }
 
         /// <summary>
         /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
@@ -93,6 +88,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider.Client;
         }
 
+        
+
+
         /// <summary>
         /// GetObject a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
@@ -100,7 +98,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <param name="serviceName">Name of service </param>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
         /// <returns>An ServiceProxy instance"/>.</returns>
-        public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
+        public virtual IServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
             var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, ServiceProxyProvider>>();
 
@@ -112,9 +110,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider;
         }
 
-  
-   
-        
+
+
+
         public abstract void Dispose();
     }
 }

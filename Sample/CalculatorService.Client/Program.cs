@@ -21,10 +21,8 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("GIGYA_BASE_PATH", Environment.CurrentDirectory);
 
 
-                MicrodotInitializer microdotInitializer = new MicrodotInitializer("CalculatorService.Client", kernel =>
-                   {
-                       kernel.Load<NLogModule>();
-                   });
+                MicrodotInitializer microdotInitializer =
+                    new MicrodotInitializer("CalculatorService.Client", new NLogModule());
 
 
                 ICalculatorService calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();

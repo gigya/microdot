@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     [TestFixture]
     public class SchemaEndpointTests
     {
-        private ServiceProxyProvider _serviceProxyProvider;
+        private IServiceProxyProvider _serviceProxyProvider;
         private ServiceTester<CalculatorServiceHost> _tester;
 
 

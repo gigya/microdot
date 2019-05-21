@@ -74,8 +74,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             }
             finally
             {
-                Should.Throw<InvalidOperationException>(() => serviceTester?.Dispose())
-                                                    .Message.ShouldContain("Service is already stopped");
+         
                 testingKernel.Dispose();
             }
         }

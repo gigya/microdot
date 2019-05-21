@@ -22,7 +22,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
@@ -38,17 +37,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class FakesLoggersModules : ILoggingModule
     {
-        private readonly bool _useHttpLog;
-
-        public FakesLoggersModules(bool useHttpLog)
-        {
-            _useHttpLog = useHttpLog;
-        }
-
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
             logBinding.To<ConsoleLog>();
-
             logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
             eventPublisherBinding.To<SpyEventPublisher>();
         }
@@ -56,16 +47,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        private ILoggingModule LoggingModule { get; }
 
-        public CalculatorServiceHost() : this(true)
+        public CalculatorServiceHost() 
         { }
 
 
-        public CalculatorServiceHost(bool useHttpLog)
-        {
-            LoggingModule = new FakesLoggersModules(useHttpLog);
-        }
 
 
         protected override string ServiceName => "TestService";
@@ -73,11 +59,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public override ILoggingModule GetLoggingModule()
         {
-            return LoggingModule;
+            return new FakesLoggersModules();
         }
 
-        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
+        protected override void PreConfigure(IKernel kernel)
         {
+            base.PreConfigure(kernel);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<ILog>().ToConstant(new ConsoleLog());
