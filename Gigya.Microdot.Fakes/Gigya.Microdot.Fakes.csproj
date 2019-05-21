@@ -45,6 +45,7 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Class1.cs" />
+    <Compile Include="ConsoleLogLoggersModules.cs" />
     <Compile Include="Discovery\AlwaysLocalHost.cs" />
     <Compile Include="Discovery\AlwaysLocalHostDiscovery.cs" />
     <Compile Include="KernelTestingExtensions.cs" />

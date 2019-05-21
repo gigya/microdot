@@ -1,12 +1,13 @@
-﻿#region Copyright 
+﻿#region Copyright
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License"); 
-// you may not use this file except in compliance with the License.  
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -18,32 +19,30 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#endregion
 
-using System;
+#endregion Copyright
+
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Syntax;
+using System;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
     public static class ServiceTesterExtensions
     {
-        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot,  ServiceArguments serviceArguments)
+        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
             where TServiceHost : ServiceHostBase, new()
         {
             return resolutionRoot.Get<Func<ServiceArguments, NonOrleansServiceTester<TServiceHost>>>()(serviceArguments);
-
-         
         }
 
-        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot,  int port)
+        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
             where TServiceHost : ServiceHostBase, new()
         {
-            return resolutionRoot.Get<Func<ServiceArguments, NonOrleansServiceTester<TServiceHost>>>()(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,ConsoleOutputMode.Disabled,SiloClusterMode.PrimaryNode,port));
-
-         
+            return GetServiceTesterForNonOrleansService<TServiceHost>(resolutionRoot
+                , new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port));
         }
     }
 }

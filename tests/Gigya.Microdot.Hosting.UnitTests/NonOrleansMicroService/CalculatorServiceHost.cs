@@ -3,6 +3,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.UnitTests.Caching.Host;
 using Ninject;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
@@ -13,7 +14,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 
         protected override ILoggingModule GetLoggingModule()
         {
-            return new FakesLoggersModules(false);
+            return new ConsoleLogLoggersModules();
         }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)

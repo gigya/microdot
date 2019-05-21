@@ -20,9 +20,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#endregion
+#endregion Copyright
 
-using System;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
@@ -31,6 +30,7 @@ using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
+using System;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
@@ -88,9 +88,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider.Client;
         }
 
-        
-
-
         /// <summary>
         /// GetObject a ServiceProxy that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
@@ -109,9 +106,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             return provider;
         }
-
-
-
 
         public abstract void Dispose();
     }

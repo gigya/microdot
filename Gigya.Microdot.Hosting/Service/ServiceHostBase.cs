@@ -240,7 +240,7 @@ namespace Gigya.Microdot.Hosting.Service
                         Console.BackgroundColor = restoreBack;
                         Console.ForegroundColor = restoreFore;
                     }
-                    else if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Standard)
+                    else  
                     {
                         foreach (var result in results)
                             Console.WriteLine(result);
