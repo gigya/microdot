@@ -28,7 +28,7 @@ using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
-    public class OrleansLogAdapter : ILogger, ILog
+    public class OrleansLogAdapter : ILogger
     {
         private readonly ILog _logImplementation;
 
