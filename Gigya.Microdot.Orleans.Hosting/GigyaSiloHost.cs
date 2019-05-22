@@ -1,12 +1,13 @@
-#region Copyright 
+#region Copyright
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License"); 
-// you may not use this file except in compliance with the License.  
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -18,28 +19,21 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#endregion
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+#endregion Copyright
+
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Events;
-using Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
-using Orleans.CodeGeneration;
 using Orleans.Hosting;
-using Metric = Metrics.Metric;
-
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -47,46 +41,41 @@ namespace Gigya.Microdot.Orleans.Hosting
     {
         IServiceProvider ConfigureServices(IServiceCollection services);
     }
+
     public class GigyaSiloHost
     {
+        private readonly IServiceProviderInit _serviceProvider;
+        private readonly OrleansLogProvider _logProvider;
+        private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
         public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
-        private Func<IGrainFactory, Task> BeforeOrleansShutdown { get; set; }
-        private Counter EventsDiscarded { get; }
         private ILog Log { get; }
         private HttpServiceListener HttpServiceListener { get; }
-        private IEventPublisher<GrainCallEvent> EventPublisher { get; }
-        private Func<LoadShedding> LoadSheddingConfig { get; }
-        private CurrentApplicationInfo AppInfo { get; }
-
 
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-            IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, CurrentApplicationInfo appInfo)
+         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder)
 
         {
+            _serviceProvider = serviceProvider;
+            _logProvider = logProvider;
+            _orleansConfigurationBuilder = orleansConfigurationBuilder;
             Log = log;
             HttpServiceListener = httpServiceListener;
-            EventPublisher = eventPublisher;
-            LoadSheddingConfig = loadSheddingConfig;
-            AppInfo = appInfo;
-
-            EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
-
         }
 
-        public void Start(IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, Func<IGrainFactory, Task> afterOrleansStartup = null,
+        private ISiloHost _siloHost;
+        public void Start(ServiceArguments serviceArguments, Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
         {
             AfterOrleansStartup = afterOrleansStartup;
-            BeforeOrleansShutdown = beforeOrleansShutdown;
 
             Log.Info(_ => _("Starting Orleans silo..."));
 
-            var silo = orleansConfigurationBuilder.GetBuilder()
-                .UseServiceProviderFactory(serviceProvider.ConfigureServices)
-                .ConfigureLogging(op => op.AddProvider(logProvider))
+            var silo = _orleansConfigurationBuilder.GetBuilder()
+                .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
+                .ConfigureLogging(op => op.AddProvider(_logProvider))
                 .AddStartupTask(StartupTask)
                 //.AddIncomingGrainCallFilter<MicrodotIncomingGrainCallFilter>()
                 //.AddOutgoingGrainCallFilter(async (o) =>
@@ -95,12 +84,16 @@ namespace Gigya.Microdot.Orleans.Hosting
                 //    TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
                 //    await o.Invoke();
                 //})
-                .Build();
 
+                .Build();
 
             try
             {
-                silo.StartAsync().Wait();
+                int cancelAfter = serviceArguments.InitTimeOutSec ?? 60;
+                var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(cancelAfter)).Token;
+                var forceCancel = new CancellationTokenSource(TimeSpan.FromSeconds(cancelAfter + 10)).Token;
+
+                _siloHost.StartAsync(cancel).Wait(forceCancel);
             }
             catch (Exception e)
             {
@@ -113,13 +106,25 @@ namespace Gigya.Microdot.Orleans.Hosting
             Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
 
-
-
-
-
         public void Stop()
         {
-            HttpServiceListener.Dispose();
+            try
+            {
+                HttpServiceListener.Dispose();
+            }
+            catch (Exception e)
+            {
+                Log.Warn((m) => m("Failed to close HttpServiceListener ", exception: e));
+            }
+
+            try
+            {
+                _siloHost?.StopAsync().Wait();
+            }
+            catch (Exception e)
+            {
+                Log.Error((m) => m("Failed to close Silo ", exception: e));
+            }
         }
 
         private async Task StartupTask(IServiceProvider serviceProvider, CancellationToken arg2)
@@ -150,13 +155,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-
         public TaskScheduler GrainTaskScheduler { get; set; }
-
-
-
-
-
-
     }
 }

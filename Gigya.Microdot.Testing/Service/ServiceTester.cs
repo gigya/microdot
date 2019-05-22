@@ -152,7 +152,7 @@ namespace Gigya.Microdot.Testing.Service
         public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
-            return resolutionRoot.GetServiceTester<TServiceHost>(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port));
+            return resolutionRoot.GetServiceTester<TServiceHost>(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port){InitTimeOutSec = 10});
 
         }
     }

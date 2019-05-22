@@ -80,6 +80,7 @@ namespace Gigya.Microdot.SharedLogic
         /// </summary>
         public int? OnStopWaitTimeSec { get; set; }
 
+        public int? InitTimeOutSec { get; set; } = 60;
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceArguments"/> class, explicitly specifying the arguments.
         /// Typically used in tests.

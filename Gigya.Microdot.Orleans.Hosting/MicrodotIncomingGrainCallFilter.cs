@@ -13,7 +13,7 @@ using Orleans;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public class MicrodotIncomingGrainCallFilter : IIncomingGrainCallFilter
+    public class MicrodotIncomingGrainCallFilter /*: IIncomingGrainCallFilter*/
     {
         private readonly ILog _log;
         private Counter EventsDiscarded { get; }

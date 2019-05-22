@@ -42,7 +42,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             where TServiceHost : ServiceHostBase, new()
         {
             return GetServiceTesterForNonOrleansService<TServiceHost>(resolutionRoot
-                , new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port));
+                , new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port){InitTimeOutSec = 10});
         }
     }
 }

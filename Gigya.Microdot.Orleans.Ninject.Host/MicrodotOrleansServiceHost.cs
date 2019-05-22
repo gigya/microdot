@@ -77,10 +77,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(Kernel.Get<IServiceProviderInit>(),
-                Kernel.Get<OrleansLogProvider>(),
-                Kernel.Get<OrleansConfigurationBuilder>(),
-                AfterOrleansStartup, BeforeOrleansShutdown);
+            SiloHost.Start(Arguments,AfterOrleansStartup, BeforeOrleansShutdown);
         }
 
         /// <summary>

@@ -84,13 +84,8 @@ namespace Gigya.Microdot.UnitTests
 
         private class FakesLoggersModules : ILoggingModule
         {
-            private readonly bool _useHttpLog;
 
-            public FakesLoggersModules(bool useHttpLog)
-            {
-                _useHttpLog = useHttpLog;
-            }
-
+      
             public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
             {
         
