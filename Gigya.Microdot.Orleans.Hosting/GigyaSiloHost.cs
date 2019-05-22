@@ -52,7 +52,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
         private ILog Log { get; }
         private HttpServiceListener HttpServiceListener { get; }
-
+        private ServiceArguments _serviceArguments = new ServiceArguments();
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
          IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder)
@@ -66,30 +66,32 @@ namespace Gigya.Microdot.Orleans.Hosting
         }
 
         private ISiloHost _siloHost;
+
         public void Start(ServiceArguments serviceArguments, Func<IGrainFactory, Task> afterOrleansStartup = null,
             Func<IGrainFactory, Task> beforeOrleansShutdown = null)
         {
             AfterOrleansStartup = afterOrleansStartup;
+            _serviceArguments = serviceArguments;
 
             Log.Info(_ => _("Starting Orleans silo..."));
 
-            var silo = _orleansConfigurationBuilder.GetBuilder()
-                .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
-                .ConfigureLogging(op => op.AddProvider(_logProvider))
-                .AddStartupTask(StartupTask)
-                //.AddIncomingGrainCallFilter<MicrodotIncomingGrainCallFilter>()
-                //.AddOutgoingGrainCallFilter(async (o) =>
-                //{
-                //    TracingContext.SetUpStorage();
-                //    TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
-                //    await o.Invoke();
-                //})
+            _siloHost = _orleansConfigurationBuilder.GetBuilder()
+               .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
+               .ConfigureLogging(op => op.AddProvider(_logProvider))
+               .AddStartupTask(StartupTask)
+               //.AddIncomingGrainCallFilter<MicrodotIncomingGrainCallFilter>()
+               //.AddOutgoingGrainCallFilter(async (o) =>
+               //{
+               //    TracingContext.SetUpStorage();
+               //    TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
+               //    await o.Invoke();
+               //})
 
-                .Build();
+               .Build();
 
             try
             {
-                int cancelAfter = serviceArguments.InitTimeOutSec ?? 60;
+                int cancelAfter = _serviceArguments.InitTimeOutSec ?? 60;
                 var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(cancelAfter)).Token;
                 var forceCancel = new CancellationTokenSource(TimeSpan.FromSeconds(cancelAfter + 10)).Token;
 
@@ -108,9 +110,14 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public void Stop()
         {
+            if (_serviceArguments == null)
+                return;
+
+            var cancelAfter = new CancellationTokenSource(TimeSpan.FromSeconds(_serviceArguments.OnStopWaitTimeSec.Value)).Token;
+
             try
             {
-                HttpServiceListener.Dispose();
+                HttpServiceListener?.Dispose();
             }
             catch (Exception e)
             {
@@ -119,11 +126,11 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             try
             {
-                _siloHost?.StopAsync().Wait();
+                _siloHost?.StopAsync(cancelAfter).Wait(cancelAfter);
             }
             catch (Exception e)
             {
-                Log.Error((m) => m("Failed to close Silo ", exception: e));
+                Log.Error((m) => m(" Silo failed to StopAsync", exception: e));
             }
         }
 

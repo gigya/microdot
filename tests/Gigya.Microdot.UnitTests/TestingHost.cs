@@ -38,7 +38,7 @@ namespace Gigya.Microdot.UnitTests
         }
 
 
-        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(false); }
+        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
