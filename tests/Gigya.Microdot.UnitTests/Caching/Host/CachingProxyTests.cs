@@ -41,7 +41,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             {
                 _microdotInitializer = new MicrodotInitializer("", new NLogModule());
                 Service = _microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<SlowServiceHost>(
-                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: 8861))
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: ServiceTesterBase.GetPort()))
                     .GetServiceProxyWithCaching<ISlowService>();
             }
             catch (Exception ex)

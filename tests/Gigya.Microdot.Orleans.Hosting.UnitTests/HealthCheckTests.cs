@@ -28,6 +28,7 @@ using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
 
@@ -38,11 +39,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     {
         private ServiceTester<CalculatorServiceHost> tester;
 
-        private int mainPort = 9555;
+
         [OneTimeSetUp]
         public void SetUp()
         {
-            tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(mainPort);
+            tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
         }
 
         [OneTimeTearDown]
@@ -54,10 +55,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task HealthCheck_ServcieDrain_StatueShouldBe521()
         {
-            int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
+            int port = ServiceTesterBase.GetPort();
             ///serviceDrainTimeSec:
-            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
-                SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:10);
+            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Standard,
+                SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:1){InitTimeOutSec =10};
             
             var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);
 
@@ -73,7 +74,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void HealthCheck_NotHealthy_ShouldReturn500()
         {
             tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(false);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{tester.Host.Arguments.BasePortOverride.Value}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
 
@@ -81,14 +82,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void HealthCheck_Healthy_ShouldReturn200()
         {
             tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(true);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{tester.Host.Arguments.BasePortOverride.Value}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Test]
         public void HealthCheck_NotImplemented_ShouldReturn200()
         {
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{tester.Host.Arguments.BasePortOverride.Value}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
             httpResponseMessage.Content.ShouldNotBeNull();
         }

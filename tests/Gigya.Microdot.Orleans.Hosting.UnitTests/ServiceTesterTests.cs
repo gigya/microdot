@@ -28,6 +28,7 @@ using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
 
@@ -44,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             ///shutdownWaitTimeSec: 0 
             var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
-                 SiloClusterMode.PrimaryNode, 8555, shutdownWaitTimeSec: 0);
+                 SiloClusterMode.PrimaryNode, ServiceTesterBase.GetPort(), shutdownWaitTimeSec: 0);
             _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);
 
             Action act = () => _tester.Dispose();

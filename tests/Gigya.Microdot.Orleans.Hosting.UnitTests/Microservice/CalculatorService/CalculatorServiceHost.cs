@@ -39,9 +39,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
     {
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
         {
-            logBinding.To<ConsoleLog>();
-            logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
-            eventPublisherBinding.To<SpyEventPublisher>();
+            logBinding.To<ConsoleLog>().InSingletonScope();
+            logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>()).InSingletonScope();
+            eventPublisherBinding.To<SpyEventPublisher>().InSingletonScope();
         }
     }
 
@@ -67,7 +67,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             base.PreConfigure(kernel);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
-            kernel.Rebind<ILog>().ToConstant(new ConsoleLog());
             kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
         }
 

@@ -38,11 +38,17 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return resolutionRoot.Get<Func<ServiceArguments, NonOrleansServiceTester<TServiceHost>>>()(serviceArguments);
         }
 
-        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
+        private static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
             where TServiceHost : ServiceHostBase, new()
         {
             return GetServiceTesterForNonOrleansService<TServiceHost>(resolutionRoot
-                , new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port){InitTimeOutSec = 10});
+                , new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port) { InitTimeOutSec = 10 });
+        }
+
+        public static NonOrleansServiceTester<TServiceHost> GetServiceTesterForNonOrleansService<TServiceHost>(this IResolutionRoot resolutionRoot)
+            where TServiceHost : ServiceHostBase, new()
+        {
+            return resolutionRoot.GetServiceTesterForNonOrleansService<TServiceHost>(ServiceTesterBase.GetPort());
         }
     }
 }

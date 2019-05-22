@@ -1,9 +1,7 @@
-﻿using System.Diagnostics;
+﻿
 using System.Threading.Tasks;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
-using Ninject;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
@@ -11,7 +9,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     [TestFixture]
     public class WarmupTests
     {
-        private int mainPort = 9555;
 
         [SetUp]
         public void SetUp()
@@ -22,7 +19,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
-            ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>(mainPort);
+            ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>();
             IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);
           
             int result = await grain.TestWarmedTimes();
@@ -36,7 +33,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Repeat(1)]
         public async Task VerifyWarmupBeforeSiloStart()
         {
-           using ( var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>(mainPort))
+           using ( var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>())
            
             Assert.AreEqual(DependantClassFake.WarmedTimes, 1);
    

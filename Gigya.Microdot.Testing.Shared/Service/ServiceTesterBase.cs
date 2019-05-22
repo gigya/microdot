@@ -31,6 +31,9 @@ using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
 using System;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
@@ -108,5 +111,34 @@ namespace Gigya.Microdot.Testing.Shared.Service
         }
 
         public abstract void Dispose();
+
+        public static int GetPort()
+        {
+            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            TcpConnectionInformation[] tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
+            var occupiedPorts = tcpConnInfoArray.Select(p => p.LocalEndPoint.Port).Distinct().ToHashSet();
+
+            for (int retry = 0; retry < 100; retry++)
+            {
+                var randomPort = new Random(Guid.NewGuid().GetHashCode()).Next(40000, 60000);
+                bool freeRangePort = true;
+                int range = Enum.GetValues(typeof(PortOffsets)).Cast<int>().Max();
+
+                for (int port = randomPort; port <= randomPort + range; port++)
+                {
+                    freeRangePort = freeRangePort && (occupiedPorts.Contains(port) == false);
+                    if (!freeRangePort)
+                        break;
+                }
+
+                if (freeRangePort)
+                {
+                    Console.WriteLine($"Service Tester found a free port: {randomPort}");
+                    return randomPort;
+                }
+            }
+
+            throw new Exception("can't find free port ");
+        }
     }
 }

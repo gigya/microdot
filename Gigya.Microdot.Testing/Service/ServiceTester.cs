@@ -1,12 +1,13 @@
-﻿#region Copyright 
+﻿#region Copyright
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License"); 
-// you may not use this file except in compliance with the License.  
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -18,14 +19,9 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#endregion
 
-using System;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+#endregion Copyright
+
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
@@ -38,6 +34,12 @@ using Ninject;
 using Ninject.Syntax;
 using Orleans;
 using Orleans.Configuration;
+using System;
+using System.Linq;
+using System.Net;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Testing.Service
 {
@@ -49,14 +51,12 @@ namespace Gigya.Microdot.Testing.Service
         public IClusterClient _clusterClient;
         public object _locker = new object();
 
-
         public ServiceTester(IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
         {
             Host = new TServiceHost();
 
             ResolutionRoot = resolutionRoot;
             BasePort = serviceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
-
 
             SiloStopped = Task.Run(() => Host.Run(serviceArguments));
 
@@ -65,6 +65,7 @@ namespace Gigya.Microdot.Testing.Service
             if (SiloStopped.IsCompleted)
                 throw new Exception("Silo Failed to start");
         }
+
         protected int GetBasePortFromHttpServiceAttribute()
         {
             var commonConfig = new BaseCommonConfig();
@@ -76,7 +77,6 @@ namespace Gigya.Microdot.Testing.Service
 
         public override void Dispose()
         {
-
             _clusterClient?.Dispose();
 
             Host.Stop(); //don't use host.dispose, host.stop should do all the work
@@ -91,6 +91,7 @@ namespace Gigya.Microdot.Testing.Service
                 Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
                 throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
         }
+
         public IClusterClient GrainClient
         {
             get
@@ -124,19 +125,16 @@ namespace Gigya.Microdot.Testing.Service
                         options.ServiceId = clusterIdentity.ServiceId.ToString();
                     });
 
-                    
                     //  grainClientBuilder.UseLocalhostClustering();
                     //  .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TServiceHost).Assembly));
 
                     var grainClient = grainClientBuilder.Build();
                     grainClient.Connect().GetAwaiter().GetResult();
-                  
-                    _clusterClient = grainClient;
 
+                    _clusterClient = grainClient;
                 }
             }
             return _clusterClient;
-
         }
     }
 
@@ -146,14 +144,18 @@ namespace Gigya.Microdot.Testing.Service
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
             return resolutionRoot.Get<Func<ServiceArguments, ServiceTester<TServiceHost>>>()(serviceArguments);
-
         }
 
-        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
+        private static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot, int port)
             where TServiceHost : MicrodotOrleansServiceHost, new()
         {
-            return resolutionRoot.GetServiceTester<TServiceHost>(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port){InitTimeOutSec = 10});
+            return resolutionRoot.GetServiceTester<TServiceHost>(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, port) { InitTimeOutSec = 10 });
+        }
 
+        public static ServiceTester<TServiceHost> GetServiceTester<TServiceHost>(this IResolutionRoot resolutionRoot)
+            where TServiceHost : MicrodotOrleansServiceHost, new()
+        {
+            return resolutionRoot.GetServiceTester<TServiceHost>(ServiceTesterBase.GetPort());
         }
     }
 }

@@ -53,7 +53,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public void TestMetricsOnSuccess()
         {
-            var ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: 9589);
+            var ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: ServiceTesterBase.GetPort());
             using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest", new NLogModule()))
 
             {
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
             {
                 using (var testinghost =
-                    microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(8985))
+                    microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>())
                 {
                     testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
 
