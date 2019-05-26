@@ -32,7 +32,8 @@ namespace Gigya.Microdot.SharedLogic.Logging
 {
     public class LogCallSiteInfo
     {
-        public Type ReflectedType;
+        public string LoggerName;
+        public string Namespace;
         public string ClassName;
         public string AssemblyName;
         public string AssemblyVersion;
@@ -57,7 +58,8 @@ namespace Gigya.Microdot.SharedLogic.Logging
 
             var logCallSiteInfo = new LogCallSiteInfo
             {
-                ReflectedType = CallSiteInfoTemplate?.ReflectedType,
+                LoggerName = CallSiteInfoTemplate?.LoggerName,
+                Namespace =  CallSiteInfoTemplate?.Namespace,
                 ClassName = CallSiteInfoTemplate?.ClassName,
                 AssemblyName = CallSiteInfoTemplate?.AssemblyName,
                 AssemblyVersion = CallSiteInfoTemplate?.AssemblyVersion,
