@@ -44,6 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void SetUp()
         {
             tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
+
         }
 
         [OneTimeTearDown]
@@ -57,8 +58,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             int port = ServiceTesterBase.GetPort();
             ///serviceDrainTimeSec:
-            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Standard,
-                SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:1){InitTimeOutSec =10};
+            var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode, port){InitTimeOutSec =10};
             
             var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);
 

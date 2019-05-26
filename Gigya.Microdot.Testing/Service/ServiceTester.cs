@@ -113,7 +113,7 @@ namespace Gigya.Microdot.Testing.Service
                     var clusterIdentity = new ClusterIdentity(Host.Arguments, new ConsoleLog(), ResolutionRoot.Get<IEnvironment>(), applicationInfo);
                     var gateways = new IPEndPoint[]
                     {
-                        new IPEndPoint( IPAddress.Loopback,  BasePort + (int) PortOffsets.SiloNetworking),
+                        new IPEndPoint( IPAddress.Loopback,  BasePort + (int) PortOffsets.SiloGateway ),
                     };
 
                     ClientBuilder grainClientBuilder = new ClientBuilder();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Remoting.Messaging;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 
@@ -294,16 +295,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var serviceProxy = providerFactory("DemoService");
 
                 //Disable  TracingContext.SetRequestID("1");
-                CallContext.FreeNamedDataSlot("#ORL_RC");
 
-                int counter = 0;
+        int counter = 0;
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
                     .When("*")
                     .Respond(req =>
                     {
-                        bool disableReachabilityChecker = req.Content == null;
-                        if (disableReachabilityChecker) throw new HttpRequestException();
 
                         counter++;
 
@@ -321,7 +319,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     server.ShouldBe("host2");
                 }
 
-                counter.ShouldBe(4);
+                counter.ShouldBe(3);
             }
         }
 

@@ -30,15 +30,12 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using Orleans;
-using Orleans.Configuration.Overrides;
 using Orleans.Runtime.Configuration;
 using Orleans.Statistics;
-using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    //TODO:  Support MembershipTableGrain, StorageProvider, interceptor, UseSiloUnobservedExceptionsHandler??, StatisticsOptions
+    //TODO:  Support  StorageProvider, interceptor, UseSiloUnobservedExceptionsHandler??, StatisticsOptions
     public class OrleansConfigurationBuilder
     {
         private readonly OrleansConfig _orleansConfig;
@@ -119,6 +116,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 options.AdvertisedIPAddress = IPAddress.Loopback;
                 options.GatewayPort = _endPointDefinition.SiloNetworkingPort;
+
             });
 
             SetGrainCollectionOptions(silo);
@@ -153,10 +151,10 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 o.CollectionLevel = StatisticsLevel.Info;
                 o.LogWriteInterval = TimeSpan.FromMinutes(1);
-                o.PerfCountersWriteInterval= TimeSpan.FromMinutes(1);
+                o.PerfCountersWriteInterval = TimeSpan.FromMinutes(1);
             });
 
-            
+
 
             return silo;
         }
@@ -183,18 +181,14 @@ namespace Gigya.Microdot.Orleans.Hosting
                     });
                     break;
 
-                case SiloClusterMode.Unspecified:
-                    silo.UseLocalhostClustering();
-                    //TODO:  Support MembershipTableGrain
-                    break;
-
+                case
+                    SiloClusterMode.Unspecified:
                 case SiloClusterMode.PrimaryNode:
-                    silo.UseLocalhostClustering();
-
+                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloGatewayPort);
                     break;
 
                 case SiloClusterMode.SecondaryNode:
-                    silo.UseLocalhostClustering();
+                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloNetworkingPortOfPrimaryNode);
 
                     break;
             }
