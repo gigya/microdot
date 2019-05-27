@@ -34,6 +34,7 @@ using Orleans.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -47,6 +48,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly IServiceProviderInit _serviceProvider;
         private readonly OrleansLogProvider _logProvider;
         private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
+        private readonly MicrodotIncomingGrainCallFilter _callFilter;
         public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
@@ -55,12 +57,13 @@ namespace Gigya.Microdot.Orleans.Hosting
         private ServiceArguments _serviceArguments = new ServiceArguments();
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder)
+         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, MicrodotIncomingGrainCallFilter callFilter)
 
         {
             _serviceProvider = serviceProvider;
             _logProvider = logProvider;
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
+            _callFilter = callFilter;
             Log = log;
             HttpServiceListener = httpServiceListener;
         }
@@ -79,13 +82,13 @@ namespace Gigya.Microdot.Orleans.Hosting
                .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
                .ConfigureLogging(op => op.AddProvider(_logProvider))
                .AddStartupTask(StartupTask)
-               //.AddIncomingGrainCallFilter<MicrodotIncomingGrainCallFilter>()
-               //.AddOutgoingGrainCallFilter(async (o) =>
-               //{
-               //    TracingContext.SetUpStorage();
-               //    TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
-               //    await o.Invoke();
-               //})
+               .AddIncomingGrainCallFilter(async (o) => { await _callFilter.Invoke(o); })
+               .AddOutgoingGrainCallFilter(async (o) =>
+               {
+                   TracingContext.SetUpStorage();
+                   TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
+                   await o.Invoke();
+               })
 
                .Build();
 

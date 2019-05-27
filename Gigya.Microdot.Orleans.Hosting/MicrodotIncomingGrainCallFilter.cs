@@ -13,7 +13,7 @@ using Orleans;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public class MicrodotIncomingGrainCallFilter /*: IIncomingGrainCallFilter*/
+    public class MicrodotIncomingGrainCallFilter 
     {
         private readonly ILog _log;
         private Counter EventsDiscarded { get; }
@@ -40,8 +40,12 @@ namespace Gigya.Microdot.Orleans.Hosting
             var declaringNameSpace = context.InterfaceMethod.DeclaringType?.Namespace;
 
             // Do not intercept Orleans grains or other grains which should not be included in statistics.
-            if (context.InterfaceMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null || declaringNameSpace?.StartsWith("Orleans") == true)
+            if (context.InterfaceMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() !=
+                null || declaringNameSpace?.StartsWith("Orleans") == true)
+            {
                 await context.Invoke();
+                return;
+            }
 
             RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
 
