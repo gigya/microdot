@@ -27,6 +27,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -34,36 +35,34 @@ using Orleans.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public interface IServiceProviderInit
-    {
-        IServiceProvider ConfigureServices(IServiceCollection services);
-    }
-
+    //TODO beforeOrleansShutdown delete #ORLEANS20
     public class GigyaSiloHost
     {
         private readonly IServiceProviderInit _serviceProvider;
         private readonly OrleansLogProvider _logProvider;
         private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
         private readonly MicrodotIncomingGrainCallFilter _callFilter;
+        private readonly OrleansConfig _orleansConfig;
         public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
         private ILog Log { get; }
         private HttpServiceListener HttpServiceListener { get; }
         private ServiceArguments _serviceArguments = new ServiceArguments();
+
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, MicrodotIncomingGrainCallFilter callFilter)
+         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, MicrodotIncomingGrainCallFilter callFilter, OrleansConfig orleansConfig)
 
         {
             _serviceProvider = serviceProvider;
             _logProvider = logProvider;
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
             _callFilter = callFilter;
+            _orleansConfig = orleansConfig;
             Log = log;
             HttpServiceListener = httpServiceListener;
         }
@@ -78,19 +77,21 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             Log.Info(_ => _("Starting Orleans silo..."));
 
-            _siloHost = _orleansConfigurationBuilder.GetBuilder()
-               .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
-               .ConfigureLogging(op => op.AddProvider(_logProvider))
-               .AddStartupTask(StartupTask)
-               .AddIncomingGrainCallFilter(async (o) => { await _callFilter.Invoke(o); })
-               .AddOutgoingGrainCallFilter(async (o) =>
-               {
-                   TracingContext.SetUpStorage();
-                   TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
-                   await o.Invoke();
-               })
+            var builder = _orleansConfigurationBuilder.GetBuilder()
+              .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
+              .ConfigureLogging(op => op.AddProvider(_logProvider))
+              .AddStartupTask(StartupTask);
 
-               .Build();
+            if (_orleansConfig.EnableInterceptor)
+                builder.AddIncomingGrainCallFilter(async (o) => { await _callFilter.Invoke(o); })
+                    .AddOutgoingGrainCallFilter(async (o) =>
+                    {
+                        TracingContext.SetUpStorage();
+                        TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
+                        await o.Invoke();
+                    });
+
+            _siloHost = builder.Build();
 
             try
             {
@@ -109,6 +110,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                 throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: _startupTaskExceptions);
 
             Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+
+            afterOrleansStartup?.Invoke(_siloHost.Services.GetService<IGrainFactory>());
         }
 
         public void Stop()

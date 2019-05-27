@@ -1,6 +1,3 @@
-using System;
-using System.Reflection;
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -10,10 +7,14 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Orleans;
+using System;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public class MicrodotIncomingGrainCallFilter 
+    //TODO create two separate filters for
+    public class MicrodotIncomingGrainCallFilter
     {
         private readonly ILog _log;
         private Counter EventsDiscarded { get; }
@@ -29,7 +30,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             _eventPublisher = eventPublisher;
             _loadSheddingConfig = loadSheddingConfig;
             EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
-
         }
 
         public async Task Invoke(IIncomingGrainCallContext context)
@@ -68,6 +68,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 PublishEvent(context, ex);
             }
         }
+
         private void PublishEvent(IGrainCallContext target, Exception ex)
         {
             var grainEvent = _eventPublisher.CreateEvent();
@@ -94,7 +95,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             //     grainEvent.SiloDeploymentId = ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
 
-
             grainEvent.TargetType = target.InterfaceMethod.DeclaringType?.FullName;
             grainEvent.TargetMethod = target.InterfaceMethod.Name;
             grainEvent.Exception = ex;
@@ -120,7 +120,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
-
                 if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
                     _log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new
                     {
@@ -129,7 +128,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                         maxDelayInSecs = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
                         actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
                     }));
-
                 else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Orleans request since too much time passed since the client sent it to us.", unencrypted: new Tags
                     {
@@ -153,7 +151,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                         currentTime = now,
                         overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
-
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags
                     {

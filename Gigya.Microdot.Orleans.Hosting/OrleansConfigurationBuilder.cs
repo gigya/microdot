@@ -35,25 +35,23 @@ using System.Net;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    //TODO:  Support  interceptor, UseSiloUnobservedExceptionsHandler??, StatisticsOptions
+    //TODO:  Support   UseSiloUnobservedExceptionsHandler??, StatisticsOptions
     public class OrleansConfigurationBuilder
     {
         private readonly OrleansConfig _orleansConfig;
         private readonly OrleansCodeConfig _commonConfig;
-        private OrleansServiceInterfaceMapper _orleansServiceInterfaceMapper;
+        private readonly OrleansServiceInterfaceMapper _orleansServiceInterfaceMapper;
         private readonly ClusterIdentity _clusterIdentity;
-        private IServiceEndPointDefinition _endPointDefinition;
+        private readonly IServiceEndPointDefinition _endPointDefinition;
         private readonly ServiceArguments _serviceArguments;
         private readonly CurrentApplicationInfo _appInfo;
-
         private readonly ISiloHostBuilder _siloHostBuilder;
 
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
             OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
             ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
             ServiceArguments serviceArguments,
-            CurrentApplicationInfo appInfo
-            )
+            CurrentApplicationInfo appInfo)
         {
             _orleansConfig = orleansConfig;
             _commonConfig = commonConfig;
@@ -137,8 +135,8 @@ namespace Gigya.Microdot.Orleans.Hosting
             hostBuilder.Configure<StatisticsOptions>(o =>
             {
                 o.CollectionLevel = StatisticsLevel.Info;
-                o.LogWriteInterval = TimeSpan.FromMinutes(1);
-                o.PerfCountersWriteInterval = TimeSpan.FromMinutes(1);
+                o.LogWriteInterval = TimeSpan.Parse(_orleansConfig.MetricsTableWriteInterval);
+                o.PerfCountersWriteInterval = TimeSpan.Parse(_orleansConfig.MetricsTableWriteInterval);
             });
 
             return hostBuilder;
