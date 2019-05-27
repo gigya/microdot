@@ -26,7 +26,8 @@ namespace Gigya.Microdot.Logging.NLog
             AssemblyName reflectedAssembly = receivingType.Assembly.GetName();
             CallSiteInfoTemplate = new LogCallSiteInfo
             {
-                ReflectedType = receivingType,
+                LoggerName = receivingType.Name,
+                Namespace = receivingType.Namespace,
                 ClassName = receivingType.Name,
                 AssemblyName = reflectedAssembly.Name,
                 AssemblyVersion = reflectedAssembly.Version.ToString(),
