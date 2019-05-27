@@ -26,16 +26,16 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Runtime.Configuration;
+using Orleans.Statistics;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using Orleans.Runtime.Configuration;
-using Orleans.Statistics;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    //TODO:  Support  StorageProvider, interceptor, UseSiloUnobservedExceptionsHandler??, StatisticsOptions
+    //TODO:  Support  interceptor, UseSiloUnobservedExceptionsHandler??, StatisticsOptions
     public class OrleansConfigurationBuilder
     {
         private readonly OrleansConfig _orleansConfig;
@@ -101,67 +101,51 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private ISiloHostBuilder InitBuilder()
         {
-            var silo = new SiloHostBuilder()
+            var hostBuilder = new SiloHostBuilder();
 
-                .Configure<SerializationProviderOptions>(options =>
+            hostBuilder.Configure<SerializationProviderOptions>(options =>
                 {
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
                 .UsePerfCounterEnvironmentStatistics()
+                .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
 
-                .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name)
+            SetGrainCollectionOptions(hostBuilder);
 
-                .Configure<EndpointOptions>(options =>
-            {
-                options.AdvertisedIPAddress = IPAddress.Loopback;
-                options.GatewayPort = _endPointDefinition.SiloNetworkingPort;
-
-            });
-
-            SetGrainCollectionOptions(silo);
-
-            silo.Configure<PerformanceTuningOptions>(options =>
+            hostBuilder.Configure<PerformanceTuningOptions>(options =>
             {
                 options.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
             });
 
-            silo.Configure<SchedulingOptions>(options =>
+            hostBuilder.Configure<SchedulingOptions>(options =>
             {
                 options.PerformDeadlockDetection = true;
                 options.AllowCallChainReentrancy = true;
                 options.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
             });
 
-            silo.Configure<ClusterMembershipOptions>(options =>
+            hostBuilder.Configure<ClusterMembershipOptions>(options =>
             {
-                options.ExpectedClusterSize = 1; // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds)
+                // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds)
+                options.ExpectedClusterSize = 1;
             });
 
-            silo.Configure<ClusterOptions>(options =>
-            {
-                options.ClusterId = _clusterIdentity.DeploymentId;
-                options.ServiceId = _clusterIdentity.ServiceId.ToString();
-            });
+            SetReminder(hostBuilder);
+            SetSiloSource(hostBuilder);
 
-            SetRiminder(silo);
-            SetSiloSource(silo);
-
-            silo.Configure<StatisticsOptions>(o =>
+            hostBuilder.Configure<StatisticsOptions>(o =>
             {
                 o.CollectionLevel = StatisticsLevel.Info;
                 o.LogWriteInterval = TimeSpan.FromMinutes(1);
                 o.PerfCountersWriteInterval = TimeSpan.FromMinutes(1);
             });
 
-
-
-            return silo;
+            return hostBuilder;
         }
 
-        private void SetRiminder(ISiloHostBuilder silo)
+        private void SetReminder(ISiloHostBuilder silo)
         {
-            //TODO in notificationsService change "UseReminder=ture" to RemindersSource sql and in the test inMemory
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.Sql)
                 silo.UseAdoNetReminderService(options => options.ConnectionString = _orleansConfig.MySql_v4_0.ConnectionString);
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.InMemory)
@@ -170,14 +154,23 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private void SetSiloSource(ISiloHostBuilder silo)
         {
-
-
             switch (_serviceArguments.SiloClusterMode)
             {
                 case SiloClusterMode.ZooKeeper:
                     silo.UseZooKeeperClustering(options =>
                     {
                         options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
+                    })
+                    .Configure<EndpointOptions>(options =>
+                     {
+                         options.AdvertisedIPAddress = IPAddress.Loopback;
+                         options.GatewayPort = _endPointDefinition.SiloGatewayPort;
+                         options.SiloPort = _endPointDefinition.SiloNetworkingPort;
+                     })
+                   .Configure<ClusterOptions>(options =>
+                    {
+                        options.ClusterId = _clusterIdentity.DeploymentId;
+                        options.ServiceId = _clusterIdentity.ServiceId.ToString();
                     });
                     break;
 
@@ -220,5 +213,4 @@ namespace Gigya.Microdot.Orleans.Hosting
             });
         }
     }
-
 }
