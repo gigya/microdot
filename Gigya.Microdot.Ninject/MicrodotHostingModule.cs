@@ -24,9 +24,7 @@ using System;
 using System.Collections.Generic;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
-using Ninject;
 using Ninject.Modules;
 
 namespace Gigya.Microdot.Ninject

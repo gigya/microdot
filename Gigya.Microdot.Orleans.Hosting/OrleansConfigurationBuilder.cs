@@ -35,7 +35,7 @@ using System.Net;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    //TODO:  Support   UseSiloUnobservedExceptionsHandler??, StatisticsOptions
+    //TODO:  Support   UseSiloUnobservedExceptionsHandler??
     public class OrleansConfigurationBuilder
     {
         private readonly OrleansConfig _orleansConfig;
@@ -116,6 +116,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 options.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
             });
 
+            hostBuilder.Configure<TelemetryOptions>(o=>o.AddConsumer<MetricsStatisticsConsumer>());
             hostBuilder.Configure<SchedulingOptions>(options =>
             {
                 options.PerformDeadlockDetection = true;

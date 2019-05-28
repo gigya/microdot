@@ -26,10 +26,10 @@ using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
 using Ninject.Modules;
 using Orleans;
-using Orleans.Runtime.Configuration;
 using System;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans.Runtime;
 using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
@@ -60,6 +60,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Rebind<IServiceScopeFactory, SingleServiceScopeFactory>().To<SingleServiceScopeFactory>().InSingletonScope();
             Rebind<OrleansLogAdapter>().ToSelf();
+            Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();
         }
     }
 }
