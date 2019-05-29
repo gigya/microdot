@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
@@ -102,25 +103,33 @@ namespace Gigya.Microdot.SharedLogic.Monitor
                 sb.Append(isHealthy ? "[OK]" : "[ERROR]").Append(' ');
 
             sb.AppendLine(node.Details ?? "");
-
-            foreach (var child in node.Children)
-                if (child.Value.Expiry <= now)
-                    node.Children.TryRemove(child.Key, out var removed);
-                else
+            
+            if (node.Children != null)
+            {
+                var childrenIsHealthyList = new List<bool>();
+                foreach (var child in node.Children)
                 {
-                    var isChildHealthy = GetHealthStatusAndCleanup(sb, now, child.Key, child.Value, depth + 1);                    
+                    if (child.Value.Expiry <= now)
+                        node.Children.TryRemove(child.Key, out var removed);
+                    else
+                        childrenIsHealthyList.Add(GetHealthStatusAndCleanup(sb, now, child.Key, child.Value, depth + 1));
+                }
+
+                if (childrenIsHealthyList.Any())
+                {
                     switch (_reportingStrategy)
                     {
                         case ReportingStrategy.UnhealthyOnAtLeastOneChild:
-                            isHealthy &= isChildHealthy;
+                            isHealthy &= childrenIsHealthyList.TrueForAll(isChildHealthy => isChildHealthy);
                             break;
                         case ReportingStrategy.UnhealthyOnAllChilds:
-                            isHealthy |= isChildHealthy;
+                            isHealthy &= childrenIsHealthyList.Any(isChildHealthy => isChildHealthy);
                             break;
                         default:
-                            throw new InvalidEnumArgumentException(nameof(_reportingStrategy), (int) _reportingStrategy, typeof(ReportingStrategy));
-                    }                    
+                            throw new InvalidEnumArgumentException(nameof(_reportingStrategy), (int)_reportingStrategy, typeof(ReportingStrategy));
+                    }
                 }
+            }            
 
             return isHealthy;
         }
