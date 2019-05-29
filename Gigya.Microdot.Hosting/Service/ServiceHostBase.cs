@@ -43,7 +43,7 @@ namespace Gigya.Microdot.Hosting.Service
 
         private DelegatingServiceBase WindowsService { get; set; }
         private ManualResetEvent StopEvent { get; }
-        private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
+        protected TaskCompletionSource<object> ServiceStartedEvent { get; set; }
         private TaskCompletionSource<StopResult> ServiceGracefullyStopped { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
         protected CrashHandler CrashHandler { get; set; }
@@ -131,7 +131,16 @@ namespace Gigya.Microdot.Hosting.Service
                     MonitoredShutdownProcess.EnableRaisingEvents = true;
                 }
 
-                OnStart();
+                try
+                {
+                    OnStart();
+                }
+                catch (Exception e)
+                {
+                    ServiceStartedEvent.TrySetException(e);
+                    throw;
+                }
+
                 if (Arguments.ServiceStartupMode == ServiceStartupMode.CommandLineInteractive)
                 {
                     Thread.Sleep(10); // Allow any startup log messages to flush to Console.

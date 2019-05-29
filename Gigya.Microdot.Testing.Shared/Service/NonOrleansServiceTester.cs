@@ -48,6 +48,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             //Silo is ready or failed to start
             Task.WaitAny(_siloStopped, Host.WaitForServiceStartedAsync());
+            if(_siloStopped.IsFaulted)
+                throw new Exception("Silo Failed to start",_siloStopped.Exception);
             if (_siloStopped.IsCompleted)
                 throw new Exception("Silo Failed to start");
         }

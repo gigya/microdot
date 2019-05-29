@@ -61,7 +61,9 @@ namespace Gigya.Microdot.Testing.Service
             SiloStopped = Task.Run(() => Host.Run(serviceArguments));
 
             //Silo is ready or failed to start
-            Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
+          Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
+            if(SiloStopped.IsFaulted)
+                throw new Exception("Silo Failed to start",SiloStopped.Exception);
             if (SiloStopped.IsCompleted)
                 throw new Exception("Silo Failed to start");
         }
