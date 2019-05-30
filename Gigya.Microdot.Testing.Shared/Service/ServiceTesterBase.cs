@@ -34,12 +34,21 @@ using System;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography.X509Certificates;
+using Gigya.Microdot.Ninject;
+using Gigya.Microdot.UnitTests.Caching.Host;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {
-        protected IResolutionRoot ResolutionRoot { get; set; }
+        public ServiceTesterBase()
+        {
+           k= new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
+           ResolutionRoot = k;
+        }
+
+        private IKernel k;
+        protected IResolutionRoot ResolutionRoot ;
 
         public int BasePort { get; protected set; }
 
@@ -110,7 +119,11 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider;
         }
 
-        public abstract void Dispose();
+        public virtual  void Dispose()
+        {
+            k.Dispose();
+        }
+
 
         public static int GetPort()
         {
@@ -120,7 +133,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             for (int retry = 0; retry < 100; retry++)
             {
-                var randomPort = new Random(Guid.NewGuid().GetHashCode()).Next(40000, 60000);
+                var randomPort = new Random(Guid.NewGuid().GetHashCode()).Next(50000, 60000);
                 bool freeRangePort = true;
                 int range = Enum.GetValues(typeof(PortOffsets)).Cast<int>().Max();
 

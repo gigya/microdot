@@ -32,13 +32,23 @@ namespace Gigya.Microdot.Testing.Shared.Service
 {
     public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
-        public readonly TServiceHost Host = new TServiceHost();
+        public  TServiceHost Host = new TServiceHost();
         private Task _siloStopped;
 
-        public NonOrleansServiceTester(IResolutionRoot resolutionRoot, ServiceArguments serviceArguments)
+        public NonOrleansServiceTester()
         {
-            ResolutionRoot = resolutionRoot;
-            if(serviceArguments.BasePortOverride ==null ) 
+            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort()) { InitTimeOutSec = 10 };
+            init(args);
+        }
+
+        public NonOrleansServiceTester(ServiceArguments serviceArguments)
+        {
+            init(serviceArguments);
+        }
+
+        private void init( ServiceArguments serviceArguments)
+        {
+            if (serviceArguments.BasePortOverride == null )
                 throw  new  ArgumentException("ServiceArguments.BasePortOverride should not be null ");
 
             BasePort = serviceArguments.BasePortOverride.Value;
@@ -48,14 +58,27 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             //Silo is ready or failed to start
             Task.WaitAny(_siloStopped, Host.WaitForServiceStartedAsync());
-            if(_siloStopped.IsFaulted)
-                throw new Exception("Silo Failed to start",_siloStopped.Exception);
+            if (_siloStopped.IsFaulted)
+            {
+                try
+                {
+                    // Flatten Aggregated exception
+                    _siloStopped.GetAwaiter().GetResult();
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Silo Failed to start", e);
+
+                }
+            }
             if (_siloStopped.IsCompleted)
                 throw new Exception("Silo Failed to start");
         }
 
         public override void Dispose()
         {
+            base.Dispose();
+
             Host.Stop();
             var completed = _siloStopped.Wait(60000);
 
