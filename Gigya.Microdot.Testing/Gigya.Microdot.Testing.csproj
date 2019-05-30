@@ -58,13 +58,13 @@
     <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj">
+      <Project>{2865f69b-d847-4901-8945-4941e463f94e}</Project>
+      <Name>Gigya.Microdot.Fakes</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj">
-      <Project>{2865F69B-D847-4901-8945-4941E463F94E}</Project>
-      <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
       <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
@@ -103,21 +103,10 @@
       <Name>Gigya.Microdot.Testing.Shared</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="README.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="System.Configuration">
-          <Paket>True</Paket>
-        </Reference>
-        <Reference Include="Castle.Core">
-          <HintPath>..\packages\Castle.Core\lib\net45\Castle.Core.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
@@ -343,17 +332,6 @@
       <ItemGroup>
         <Reference Include="Ninject">
           <HintPath>..\packages\Ninject\lib\net45\Ninject.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="NSubstitute">
-          <HintPath>..\packages\NSubstitute\lib\net46\NSubstitute.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -645,28 +623,6 @@
         <Reference Include="System.Security.Cryptography.Primitives">
           <HintPath>..\packages\System.Security.Cryptography.Primitives\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
           <Private>False</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="System.Threading.Tasks.Dataflow">
-          <HintPath>..\packages\System.Threading.Tasks.Dataflow\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="System.Threading.Tasks.Extensions">
-          <HintPath>..\packages\System.Threading.Tasks.Extensions\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
-          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>

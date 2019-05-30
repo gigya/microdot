@@ -57,7 +57,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest", new NLogModule()))
 
             {
-                using (var testinghost = microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>(ServiceArguments))
+                using (var testinghost =new NonOrleansServiceTester<TestingHost<IDemoService>>(ServiceArguments))
                 {
                     testinghost.Host.Instance.Increment(0).Returns((ulong)1);
                     var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
             {
                 using (var testinghost =
-                    microdotInitializer.Kernel.GetServiceTesterForNonOrleansService<TestingHost<IDemoService>>())
+                    new NonOrleansServiceTester<TestingHost<IDemoService>>())
                 {
                     testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
 

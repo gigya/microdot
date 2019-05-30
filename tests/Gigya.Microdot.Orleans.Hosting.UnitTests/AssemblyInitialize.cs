@@ -24,9 +24,11 @@ using System;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.UnitTests.Caching.Host;
 using Ninject.Syntax;
 using NUnit.Framework;
 
@@ -36,7 +38,7 @@ using NUnit.Framework;
 
         public static IResolutionRoot ResolutionRoot { get; private set; }
 
-        private TestingKernel<ConsoleLog> kernel;
+        private MicrodotInitializer _initializer;
 
         [OneTimeSetUp]
         public void SetUp()
@@ -48,7 +50,7 @@ using NUnit.Framework;
                 Environment.SetEnvironmentVariable("ZONE", "us1a", EnvironmentVariableTarget.Process);
                 Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
 
-                kernel = new TestingKernel<ConsoleLog>((kernel) =>
+                _initializer = new MicrodotInitializer("",new ConsoleLogLoggersModules(), (kernel) =>
                 {
                     var revokingManager = new FakeRevokingManager();
                     kernel.Rebind<IRevokeListener>().ToConstant(revokingManager);
@@ -57,7 +59,7 @@ using NUnit.Framework;
                     kernel.Rebind<IEventPublisher>().To<SpyEventPublisher>().InSingletonScope();
 
                 });            
-                ResolutionRoot = kernel;
+                ResolutionRoot = _initializer.Kernel;
             }
             catch(Exception ex)
             {
@@ -70,6 +72,6 @@ using NUnit.Framework;
         [OneTimeTearDown]
         public void TearDown()
         {
-            kernel.Dispose();
+            _initializer.Dispose();
         }
     }

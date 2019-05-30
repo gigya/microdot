@@ -43,7 +43,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [OneTimeSetUp]
         public void SetUp()
         {
-            tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
+            tester =new ServiceTester<CalculatorServiceHost>();
 
         }
 
@@ -61,7 +61,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
                 SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:1){InitTimeOutSec =10};
             
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(serviceArguments);
+            var customServiceTester =new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
             await  Task.Delay(200);

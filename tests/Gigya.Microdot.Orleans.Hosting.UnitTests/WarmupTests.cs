@@ -19,9 +19,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
-            ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>();
+            ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>();
             IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);
-          
+
             int result = await grain.TestWarmedTimes();
 
             Assert.AreEqual(result, 2);
@@ -33,10 +33,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Repeat(1)]
         public async Task VerifyWarmupBeforeSiloStart()
         {
-           using ( var tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<WarmupTestServiceHostWithSiloHostFake>())
-           
-            Assert.AreEqual(DependantClassFake.WarmedTimes, 1);
-   
+            using (var tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>())
+
+                Assert.AreEqual(DependantClassFake.WarmedTimes, 1);
+
         }
     }
 }

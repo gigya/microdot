@@ -43,7 +43,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>();
+                _tester = new ServiceTester<CalculatorServiceHost>();
                 _serviceProxyProvider = _tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)
