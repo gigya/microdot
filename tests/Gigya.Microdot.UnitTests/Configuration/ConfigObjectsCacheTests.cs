@@ -10,7 +10,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class ConfigObjectsCacheTests
     {
         [Test]

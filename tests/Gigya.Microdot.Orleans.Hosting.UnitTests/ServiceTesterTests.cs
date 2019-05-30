@@ -34,7 +34,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class ServiceTesterTests
     {
         private ServiceTester<CalculatorServiceHost> _tester;

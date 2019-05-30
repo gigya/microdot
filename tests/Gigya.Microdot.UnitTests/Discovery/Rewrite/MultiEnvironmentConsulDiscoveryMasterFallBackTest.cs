@@ -17,7 +17,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class MultiEnvironmentConsulDiscoveryMasterFallBackTest
     {
         private const string ServiceVersion = "1.2.30.1234";

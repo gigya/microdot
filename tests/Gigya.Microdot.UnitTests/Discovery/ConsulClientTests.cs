@@ -16,7 +16,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class ConsulClientTests
     {
         private const string ServiceName = "MyService-prod";

@@ -18,7 +18,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests
 {
     /* //#ORLEANS20
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class MetricsStatisticsPublisherTests
     {
         MetricsStatisticsPublisher publisher;

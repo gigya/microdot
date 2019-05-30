@@ -22,7 +22,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class ConsulDiscoverySourceTest
     {
         private const string SERVICE_NAME = "ServiceName";

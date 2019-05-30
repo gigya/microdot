@@ -16,7 +16,7 @@ namespace Gigya.Microdot.UnitTests
     /// By default creates TestingKernel during OneTimeSetUp flow
     /// To create TestingKernel during SetUp flow, override the OneTimeSetUp method
     /// </summary>
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public abstract class UpdatableConfigTests
     {
         protected Dictionary<string, string> _configDic;

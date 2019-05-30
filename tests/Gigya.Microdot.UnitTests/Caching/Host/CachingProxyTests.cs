@@ -27,6 +27,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
     }
 
     [TestFixture]
+    // Stuck if: [Parallelizable(ParallelScope.Fixtures)]
     public class CachingProxyTests
     {
         private SlowServiceHost Host { get; set; }

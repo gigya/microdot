@@ -11,7 +11,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class NinjectTest
     {
         [Test]

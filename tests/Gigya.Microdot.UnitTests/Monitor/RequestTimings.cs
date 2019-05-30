@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace Gigya.Microdot.UnitTests
 {
 
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
 
     public class RequestTimingsTests
     {

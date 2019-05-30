@@ -23,7 +23,7 @@ using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class ConsulDiscoveryMasterFallBackTest
     {
         private const string ServiceVersion = "1.2.30.1234";

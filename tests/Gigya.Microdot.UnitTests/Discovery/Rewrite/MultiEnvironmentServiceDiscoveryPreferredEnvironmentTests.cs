@@ -22,7 +22,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class MultiEnvironmentServiceDiscoveryPreferredEnvironmentTests
     {
         private const string ServiceName = "ServiceName";

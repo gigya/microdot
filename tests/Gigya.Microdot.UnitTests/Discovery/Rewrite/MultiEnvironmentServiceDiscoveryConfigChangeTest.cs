@@ -19,7 +19,7 @@ using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class MultiEnvironmentServiceDiscoveryConfigChangeTest
     {
         private const string ServiceName = "ServiceName";

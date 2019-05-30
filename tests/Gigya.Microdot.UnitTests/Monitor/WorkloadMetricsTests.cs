@@ -20,7 +20,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class WorkloadMetricsTests
     {
         private const string Cpu = "CPU";

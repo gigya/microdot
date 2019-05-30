@@ -16,7 +16,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture]
+    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class DiscoveryTests : UpdatableConfigTests
     {
         private const string Consul = "Consul";
