@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentAssertions;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using NSubstitute;
@@ -18,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             IConfigObjectCreator config1 = Substitute.For<IConfigObjectCreator>();
             IConfigObjectCreator config2 = Substitute.For<IConfigObjectCreator>();
 
-            ConfigObjectsCache cache = new ConfigObjectsCache();
+            ConfigObjectsCache cache = new ConfigObjectsCache(new ConfigDecryptor());
             cache.RegisterConfigObjectCreator(config1);
             cache.RegisterConfigObjectCreator(config2);
 

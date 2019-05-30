@@ -38,11 +38,16 @@ namespace Gigya.Microdot.Configuration
         private string DecryptedValue { get; set; }
         public string Key { get; set; }
         public uint Priority { get; set; }
+
+        public  ConfigItem(ConfigDecryptor configDecryptor)
+        {
+            ConfigDecryptor = configDecryptor;
+        }
+
         /// <summary>
         /// Public for Legacy do not change to internal
         /// </summary>
-        public static Func<string, string> ConfigDecryptor = null;
-        public static Func<string, bool>   IsValidEncryptedStringFormat = null;
+        private  ConfigDecryptor ConfigDecryptor  { get; set; }
 
         private List<ConfigItemInfo> _overrides;
 
@@ -65,7 +70,7 @@ namespace Gigya.Microdot.Configuration
             get
             {
                 if(DecryptedValue == null && RawValue != null 
-                   && IsValidEncryptedStringFormat != null 
+                   && ConfigDecryptor.IsValidEncryptedStringFormat != null 
                    && ConfigDecryptor != null) {
                     DecryptedValue = DecryptRawValue(RawValue);
                 }
@@ -87,24 +92,24 @@ namespace Gigya.Microdot.Configuration
         private string DecryptRawValue(string rawValue)
         {
             return MATCH_ENCRYPTED_CONFIG_STRING.Replace(rawValue, m =>
-                                                                   {
-                                                                       var inner = m.Groups[1].Value;
-                                                                       if (IsValidEncryptedStringFormat(inner))
-                                                                       {
-                                                                           try
-                                                                           {
-                                                                               return ConfigDecryptor(inner);
-                                                                           }
-                                                                           catch(Exception e)
-                                                                           {
-                                                                               throw new ConfigurationException($"Cannot decrypt configuration Key: {Key}", e);
-                                                                           }                    
-                                                                       }
-                                                                       else
-                                                                       {
-                                                                           throw new ConfigurationException("String is decorated with encryption prefix but it not in valid format and cannot be decrypted", unencrypted: new Tags {{"key", Key}});
-                                                                       }
-                                                                   });
+               {
+                   var inner = m.Groups[1].Value;
+                   if (ConfigDecryptor. IsValidEncryptedStringFormat(inner))
+                   {
+                       try
+                       {
+                           return ConfigDecryptor.ConfigDecryptorFunc(inner);
+                       }
+                       catch(Exception e)
+                       {
+                           throw new ConfigurationException($"Cannot decrypt configuration Key: {Key}", e);
+                       }                    
+                   }
+                   else
+                   {
+                       throw new ConfigurationException("String is decorated with encryption prefix but it not in valid format and cannot be decrypted", unencrypted: new Tags {{"key", Key}});
+                   }
+               });
         }
 
     }

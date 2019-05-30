@@ -64,7 +64,7 @@ namespace Gigya.Microdot.Fakes
             var items = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in Data)
             {
-                items.Add(item.Key, new ConfigItem
+                items.Add(item.Key, new ConfigItem(new ConfigDecryptor())
                 {
                     Key = item.Key,
                     Value = item.Value,
