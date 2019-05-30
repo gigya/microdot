@@ -57,7 +57,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
 
 
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class CalculatorServiceTests
     {
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }

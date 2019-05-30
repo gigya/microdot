@@ -20,7 +20,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class CachingProxyTests
     {
         const string FirstResult  = "First Result";

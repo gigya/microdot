@@ -39,7 +39,7 @@ using NUnit.Framework;
 
 namespace Gigya.Common.Application.UnitTests.Validation
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
 
     public class SensitivityAttributesValidatorTests
     {

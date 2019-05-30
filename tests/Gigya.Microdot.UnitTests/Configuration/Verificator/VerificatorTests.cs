@@ -20,7 +20,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
     /// <summary>
     /// The tests to ensure Verificator recognizing the configuration failures in major cases we expect
     /// </summary>
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class VerificatorTests
     {
         private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";

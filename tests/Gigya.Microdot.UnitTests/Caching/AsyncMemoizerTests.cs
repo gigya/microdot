@@ -21,7 +21,7 @@ namespace Gigya.Microdot.UnitTests.Caching
     // Calls to NSubstitute's .Received() method on async methods generate this warning.
 
 
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class AsyncMemoizerTests
     {
         private MethodInfo ThingifyInt { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyInt));

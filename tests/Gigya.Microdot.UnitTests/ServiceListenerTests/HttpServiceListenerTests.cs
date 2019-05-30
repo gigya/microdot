@@ -35,7 +35,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
 
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class HttpServiceListenerTests
     {
         private IDemoService _insecureClient;

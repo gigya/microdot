@@ -35,7 +35,7 @@ using NSubstitute;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class 
         LogFieldAttributeValidatorTest
     {

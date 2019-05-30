@@ -14,7 +14,6 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class EnvironmentVariableProviderTests
     {
         private const string DEFAULT_REGION = "default_region";

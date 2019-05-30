@@ -20,7 +20,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class ConsulNodeSourceTests
     {
         private const int ConsulPort = 8506;

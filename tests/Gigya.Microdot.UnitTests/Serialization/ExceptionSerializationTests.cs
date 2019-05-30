@@ -13,7 +13,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
 {
     /*
     // #ORLEANS20
-	[TestFixture][Parallelizable(ParallelScope.Fixtures)]
+	[TestFixture]
 	public class ExceptionSerializationTests
 	{
 		private MyServiceException MyServiceException { get; set; }

@@ -25,7 +25,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class MetricsTests
     {
         private static CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();

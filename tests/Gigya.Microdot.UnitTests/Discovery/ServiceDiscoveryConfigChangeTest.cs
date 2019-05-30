@@ -23,7 +23,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class ServiceDiscoveryConfigChangeTest
     {
         private ServiceDiscovery.ServiceDiscovery _serviceDiscovery;

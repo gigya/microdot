@@ -11,7 +11,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class IConfigObjectRebindTest
     {
         private StandardKernel _testingKernel;

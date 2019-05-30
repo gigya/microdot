@@ -6,7 +6,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class StringExtensionsTest
     {
         [TestCase(@"c:\foo", @"c:", true)]

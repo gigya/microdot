@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.SystemInitializer
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture]
     public class SysInitCalledFromHostTest
     {
         [Test]

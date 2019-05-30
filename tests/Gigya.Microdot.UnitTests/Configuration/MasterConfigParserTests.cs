@@ -16,7 +16,6 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class MasterConfigParserTests
     {
         private IFileSystem _fileSystem;

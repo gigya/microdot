@@ -43,7 +43,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
     }
 
-    [TestFixture][Parallelizable(ParallelScope.Fixtures)]
     public class TypedConfigTest
     {
         private DateTime dateTime = new DateTime(2016, 11, 8, 15, 57, 20);
