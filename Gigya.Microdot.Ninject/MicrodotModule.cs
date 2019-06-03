@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
@@ -29,6 +30,7 @@ using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -74,8 +76,12 @@ namespace Gigya.Microdot.Ninject
                 Kernel.Load<FuncModule>();
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
-            
+            this.BindInterfacesAsSingleton(NonSingletonBaseTypes,new List<Type>{typeof(ILog)}, 
+                                                                typeof(ConfigurationAssembly), 
+                                                                typeof(ServiceProxyAssembly), 
+                                                                typeof(SharedLogicAssembly), 
+                                                                typeof(ServiceDiscoveryAssembly));
+
             Bind<IRemoteHostPoolFactory>().ToFactory();
             Bind<CurrentApplicationInfo>().ToSelf().InSingletonScope();
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();

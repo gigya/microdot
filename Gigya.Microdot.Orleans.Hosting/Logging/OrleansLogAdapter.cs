@@ -67,7 +67,7 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
                 case LogLevel.None:
                     return;
             }
-            _logImplementation.Write(level, action);
+           _logImplementation.Write(level, action);
 
         }
 
@@ -81,49 +81,8 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
             return NullScope.Instance;
         }
 
-        public void Debug(Action<LogDelegate> log, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Debug(log, file, line, method);
-        }
-
-        public void Info(Action<LogDelegate> log, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Info(log, file, line, method);
-        }
-
-        public void Warn(Action<LogDelegate> log, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Warn(log, file, line, method);
-        }
-
-        public void Warn(string message, object encryptedTags = null, object unencryptedTags = null, Exception exception = null,
-            bool includeStack = false, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Warn(message, encryptedTags, unencryptedTags, exception, includeStack, file, line, method);
-        }
-
-        public void Error(Action<LogDelegate> log, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Error(log, file, line, method);
-        }
-
-        public void Error(string message, object encryptedTags = null, object unencryptedTags = null, Exception exception = null,
-            bool includeStack = false, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Error(message, encryptedTags, unencryptedTags, exception, includeStack, file, line, method);
-        }
-
-        public void Critical(Action<LogDelegate> log, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Critical(log, file, line, method);
-        }
-
-        public void Critical(string message, object encryptedTags = null, object unencryptedTags = null, Exception exception = null,
-            bool includeStack = false, string file = "", int line = 0, string method = null)
-        {
-            _logImplementation.Critical(message, encryptedTags, unencryptedTags, exception, includeStack, file, line, method);
-        }
-
+   
+              
         public void Write(TraceEventType level, Action<LogDelegate> log, string file = "", int line = 0, string method = null)
         {
             _logImplementation.Write(level, log, file, line, method);

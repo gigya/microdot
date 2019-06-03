@@ -135,8 +135,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             hostBuilder.Configure<StatisticsOptions>(o =>
             {
-                o.CollectionLevel = StatisticsLevel.Info;
-                o.LogWriteInterval = TimeSpan.Parse(_orleansConfig.MetricsTableWriteInterval);
+                o.LogWriteInterval = TimeSpan.FromDays(1);
                 o.PerfCountersWriteInterval = TimeSpan.Parse(_orleansConfig.MetricsTableWriteInterval);
             });
 

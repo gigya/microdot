@@ -27,8 +27,11 @@ using Gigya.Microdot.SharedLogic;
 using Ninject.Modules;
 using Orleans;
 using System;
+using System.Collections.Generic;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Orleans.Runtime;
 using Orleans.Serialization;
 
@@ -42,16 +45,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         public override void Load()
         {
             this.BindClassesAsSingleton(new[] { typeof(Grain) }, typeof(OrleansHostingAssembly));
-            this.BindInterfacesAsSingleton(new[] { typeof(Grain) }, typeof(OrleansHostingAssembly));
+            this.BindInterfacesAsSingleton(new[] { typeof(Grain) },new List<Type>{typeof(ILog)}, typeof(OrleansHostingAssembly));
 
             Rebind<IActivator>().To<GrainActivator>().InSingletonScope();
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
-            //   Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
+
             Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
-
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
-
 
             Rebind<NinjectOrleansServiceProvider, IServiceProvider, IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
 
@@ -59,7 +60,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IServiceScope, SingleScope>().To<SingleScope>().InSingletonScope();
 
             Rebind<IServiceScopeFactory, SingleServiceScopeFactory>().To<SingleServiceScopeFactory>().InSingletonScope();
-            Rebind<OrleansLogAdapter>().ToSelf();
+
+            // Register logger per category
+            Kernel.BindPerString<OrleansLogAdapter>();
             Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();
         }
     }
