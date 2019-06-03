@@ -30,14 +30,18 @@ namespace Gigya.Microdot.Hosting
 {
     public class CrashHandler
     {
-        public Action StopServiceAction { get; set; }
+        /// <summary>
+        /// Only in Orleans host we need to signal to the other cluster that this silo is down,
+        /// so it will no longer receive messages and can be close with no traffic lost
+        /// </summary>
+        public Action SignalClusterThatThisNodeIsGoingDown { get; set; }
         private IEventPublisher<CrashEvent> Publisher { get; }
         private bool WasTriggered { get; set; }
         private object SyncLock { get; }
 
-        public CrashHandler(Action stopServiceAction, IEventPublisher<CrashEvent> publisher)
+        public CrashHandler(Action signalClusterThatThisNodeIsGoingDown, IEventPublisher<CrashEvent> publisher)
         {
-            StopServiceAction = stopServiceAction;
+            SignalClusterThatThisNodeIsGoingDown = signalClusterThatThisNodeIsGoingDown;
             Publisher = publisher;
             SyncLock = new object();
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -56,24 +60,31 @@ namespace Gigya.Microdot.Hosting
 
                 try
                 {
+                    var exception = args.ExceptionObject as Exception;
+                    var requestId = Guid.NewGuid().ToString("N");
+
+                    Console.WriteLine($"***  CrashHandler: Publishing crash event with callID: {requestId} [{exception?.GetType().Name}] {exception?.Message}");
+                    
                     var evt = Publisher.CreateEvent();
-                    evt.Exception = args.ExceptionObject as Exception;
-                    evt.RequestId = Guid.NewGuid().ToString("N");
-                    Console.WriteLine($"***  CrashHandler: Publishing crash event with callID:{evt.RequestId}");
+                    evt.Exception = exception;
+                    evt.RequestId = requestId;
+                    
                     if (Publisher.TryPublish(evt).PublishEvent.Wait(10000) == false)
                         throw new TimeoutException("Event failed to publish within 10 second timeout.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"***  CrashHandler: Failed to publish event - [{ex.GetType().Name}] {ex.Message}");
+                    Console.WriteLine($"***  CrashHandler: Failed to publish event. Exception thrown while attempting to write the event: [{ex.GetType().Name}] {ex.Message}");
                 }
 
                 try
                 {
                     Console.WriteLine("***  CrashHandler: Attempting to gracefully shut down service...");
+                    
                     var sw = Stopwatch.StartNew();
-                    Task.Run(StopServiceAction).Wait(TimeSpan.FromSeconds(10));
-                    Console.WriteLine($"***  CrashHandler: Service sucessfully shut down after {sw.Elapsed}.");
+                    Task.Run(SignalClusterThatThisNodeIsGoingDown).Wait(TimeSpan.FromSeconds(10));
+                    
+                    Console.WriteLine($"***  CrashHandler: Service successfully shut down after {sw.Elapsed}.");
                 }
                 catch (Exception ex)
                 {
