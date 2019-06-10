@@ -65,6 +65,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
+            
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
 
             PreConfigure(Kernel);
 
@@ -132,6 +134,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
+
         }
 
 
@@ -150,8 +153,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
-            Kernel.Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
+       
         }
 
 
