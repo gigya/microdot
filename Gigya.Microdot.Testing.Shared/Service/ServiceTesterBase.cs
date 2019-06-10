@@ -33,7 +33,6 @@ using Ninject.Syntax;
 using System;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Security.Cryptography.X509Certificates;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
@@ -43,12 +42,12 @@ namespace Gigya.Microdot.Testing.Shared.Service
     {
         public ServiceTesterBase()
         {
-           k= new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
-           ResolutionRoot = k;
+            _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
+            ResolutionRoot = _kernel;
         }
 
-        private IKernel k;
-        protected IResolutionRoot ResolutionRoot ;
+        private readonly IKernel _kernel;
+        protected IResolutionRoot ResolutionRoot;
 
         public int BasePort { get; protected set; }
 
@@ -119,9 +118,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider;
         }
 
-        public virtual  void Dispose()
+        public virtual void Dispose()
         {
-            k.Dispose();
+            _kernel.Dispose();
         }
 
 

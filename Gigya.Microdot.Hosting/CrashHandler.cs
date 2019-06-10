@@ -82,9 +82,16 @@ namespace Gigya.Microdot.Hosting
                     Console.WriteLine("***  CrashHandler: Attempting to gracefully shut down service...");
                     
                     var sw = Stopwatch.StartNew();
-                    Task.Run(SignalClusterThatThisNodeIsGoingDown).Wait(TimeSpan.FromSeconds(10));
-                    
-                    Console.WriteLine($"***  CrashHandler: Service successfully shut down after {sw.Elapsed}.");
+                    var fromSeconds = TimeSpan.FromSeconds(10);
+                    try
+                    {
+                        Task.Run(SignalClusterThatThisNodeIsGoingDown).Wait(fromSeconds);
+                        Console.WriteLine($"***  CrashHandler: Service successfully shut down after {sw.Elapsed}.");
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        Console.WriteLine($"Can't shutdown service gracefully in {fromSeconds} seconds, forcibly closing the service.");
+                    }
                 }
                 catch (Exception ex)
                 {

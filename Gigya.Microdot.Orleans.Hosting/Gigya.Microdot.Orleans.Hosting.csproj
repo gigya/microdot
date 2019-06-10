@@ -64,7 +64,6 @@
     <Compile Include="Logging\ZooKeeperLogConsumer.cs" />
     <Compile Include="MetricsStatisticsConsumer.cs" />
     <Compile Include="OrleansCodeConfig.cs" />
-    <Compile Include="OrleansConfigurationBuilder_Old.cs" />
     <Compile Include="OrleansHostingAssembly.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

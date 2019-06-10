@@ -21,18 +21,14 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Syntax;
-using Orleans;
 using Orleans.Runtime;
-using Orleans.Runtime.Configuration;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -45,7 +41,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     {
         public TService GetService(IServiceProvider services, TKey key)
         {
-            return this.GetServices(services).FirstOrDefault(s => s.Equals(key))?.GetService(services);
+            return GetServices(services).FirstOrDefault(s => s.Equals(key))?.GetService(services);
         }
 
         public IEnumerable<IKeyedService<TKey, TService>> GetServices(IServiceProvider services)
@@ -70,7 +66,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         internal IKernel Kernel { get; set; }
         private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
-
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
@@ -114,24 +109,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             return this;
         }
 
-        public static bool IsAssignableToGenericType(Type givenType, Type genericType)
-        {
-            var interfaceTypes = givenType.GetInterfaces();
-
-            foreach (var it in interfaceTypes)
-            {
-                if (it.IsGenericType && it.GetGenericTypeDefinition() == genericType)
-                    return true;
-            }
-
-            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
-                return true;
-
-            Type baseType = givenType.BaseType;
-            if (baseType == null) return false;
-
-            return IsAssignableToGenericType(baseType, genericType);
-        }
 
         public object GetService(Type serviceType)
         {
@@ -162,17 +139,4 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
     }
 
-    //public static class OrleansNinjectExtensions
-    //{
-    //    public static ClusterConfiguration WithNinject(this ClusterConfiguration clusterConfiguration, IKernel kernel)
-    //    {
-    //        if (NinjectOrleansServiceProvider.Kernel != null)
-    //            throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
-
-    //        NinjectOrleansServiceProvider.Kernel = kernel;
-    //        clusterConfiguration.UseStartupType<NinjectOrleansServiceProvider>();
-    //        return clusterConfiguration;
-    //    }
-
-    //}
 }

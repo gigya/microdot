@@ -33,6 +33,7 @@ namespace Gigya.Microdot.Logging.NLog
         /// <param name="eventPublisherBinding"></param>
         public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> funcLog)
         {
+            // Bind microdot log that takes the caller name from class asking for the log
             logBinding
                 .To<NLogLogger>()
                 .InScope(GetTypeOfTarget)
@@ -42,6 +43,7 @@ namespace Gigya.Microdot.Logging.NLog
                 .To<LogEventPublisher>()
                 .InSingletonScope();
             
+            // Bind Orleans log with string context
             funcLog.ToMethod(c =>
                 {
                     return x =>
