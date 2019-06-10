@@ -28,7 +28,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
     [TestFixture]
     public class MetricsTests
     {
-        private static CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [SetUp]
         public void SetUp()
@@ -39,7 +38,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             TracingContext.SetRequestID("1");
 
 
-            var kernel = new TestingKernel<ConsoleLog>();
         }
 
 
@@ -102,7 +100,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             return
                 Metric.Context("Service")
-                      .Context(AppInfo.Name)
+                      .Context("test")
                       .DataProvider.CurrentMetricsData;
         }
 

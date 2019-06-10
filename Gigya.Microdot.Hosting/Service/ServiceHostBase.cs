@@ -79,7 +79,6 @@ namespace Gigya.Microdot.Hosting.Service
                 _serviceName = _serviceName.Substring(0, _serviceName.Length - 4);
         }
 
-        protected internal abstract void InitializeAppInfo(string name, string instanceName = null, Version version = null);
 
         /// <summary>
         /// Start the service, auto detecting between Windows service and command line. Always blocks until service is stopped.

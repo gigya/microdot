@@ -30,7 +30,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private DiscoveryConfig _discoveryConfig;
         public const int Repeat = 1;
         private const string ServiceVersion = "1.0.0.0";
-        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [SetUp]
         public async Task Setup()

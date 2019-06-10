@@ -55,7 +55,7 @@ namespace Gigya.Microdot.Testing.Shared
         public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
         {
             ServicePointManager.DefaultConnectionLimit = 200;
-
+               Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME)).InTransientScope();
             this.Load<MicrodotModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();
@@ -66,7 +66,6 @@ namespace Gigya.Microdot.Testing.Shared
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
-            this.Get<CurrentApplicationInfo>().Init(APPNAME);
 
             Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
 

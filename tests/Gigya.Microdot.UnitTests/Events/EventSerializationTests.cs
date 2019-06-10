@@ -19,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
+        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests));
 
 
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
@@ -32,8 +32,6 @@ namespace Gigya.Microdot.UnitTests.Events
         public void OneTimeSetUp()
         {
             Environment.SetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME",null);
-            if(AppInfo.Name == null)
-                AppInfo.Init(nameof(EventSerializationTests));
         }
 
         [Test]

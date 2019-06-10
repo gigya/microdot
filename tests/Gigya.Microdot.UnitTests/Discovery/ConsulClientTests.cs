@@ -26,7 +26,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
         private const string Version = "1.0.0.1";
-        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         public enum ConsulMethod { LongPolling, Queries}
 

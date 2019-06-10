@@ -118,7 +118,9 @@ namespace Gigya.Microdot.Ninject.Host
 	    {
 		    Kernel = CreateKernel();
 		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
-            InitializeAppInfo(ServiceName, Arguments.InstanceName, InfraVersion);
+
+            Kernel.Bind<CurrentApplicationInfo>()
+                .ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
 		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
 		    base.OnVerifyConfiguration();
 	    }
@@ -147,8 +149,9 @@ namespace Gigya.Microdot.Ninject.Host
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(),kernel.Rebind<Func<string, ILog>>());
-            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            InitializeAppInfo(ServiceName, Arguments.InstanceName, InfraVersion);
+            kernel.Rebind<ServiceArguments>().ToConstant(Arguments).InSingletonScope();
+            kernel.Bind<CurrentApplicationInfo>()
+                .ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
         }
 
         /// <summary>
@@ -161,11 +164,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
 
-        protected override void InitializeAppInfo(string name, string instanceName = null, Version version = null)
-        {
-            var appInfo = Kernel.Get<CurrentApplicationInfo>();
-            appInfo.Init(name, instanceName, version);
-        }
+   
 
         /// <summary>
         /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this

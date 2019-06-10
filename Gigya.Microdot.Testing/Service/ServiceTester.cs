@@ -132,8 +132,6 @@ namespace Gigya.Microdot.Testing.Service
                 lock (_locker)
                 {
                     if (_clusterClient != null) return _clusterClient;
-                    var applicationInfo = new CurrentApplicationInfo();
-                    applicationInfo.Init(Host.ServiceName);
                     var gateways = new[]
                     {
                         new IPEndPoint( IPAddress.Loopback,  BasePort + (int) PortOffsets.SiloGateway ),

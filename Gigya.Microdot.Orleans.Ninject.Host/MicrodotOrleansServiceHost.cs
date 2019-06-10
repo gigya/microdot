@@ -150,7 +150,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
-            InitializeAppInfo(ServiceName, Arguments.InstanceName, InfraVersion);
+            Kernel.Bind<CurrentApplicationInfo>()
+                .ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
         }
 
 
@@ -163,11 +164,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         ///     infrastructure features you'd like to enable.</param>
         protected virtual void Configure(IKernel kernel, OrleansCodeConfig commonConfig) { }
 
-        protected override void InitializeAppInfo(string name, string instanceName = null, Version version = null)
-        {
-            var appInfo = Kernel.Get<CurrentApplicationInfo>();
-            appInfo.Init(name, instanceName, version);
-        }
+ 
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 

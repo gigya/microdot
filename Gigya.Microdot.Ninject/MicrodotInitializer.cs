@@ -9,15 +9,16 @@ namespace Gigya.Microdot.Ninject
 {
     public class MicrodotInitializer : IDisposable
     {
-        public MicrodotInitializer(string appName,ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
+        public MicrodotInitializer(string appName, ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
         {
             Kernel = new StandardKernel();
+            var app = new CurrentApplicationInfo(appName);
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(app).InSingletonScope();
             Kernel.Load<MicrodotModule>();
-            loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(),Kernel.Rebind<Func<string, ILog>>());
+            loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
             // Set custom Binding 
             additionalBindings?.Invoke(Kernel);
-            
-            Kernel.Get<CurrentApplicationInfo>().Init(appName);
+
             Kernel.Get<SystemInitializer.SystemInitializer>().Init();
         }
 
@@ -27,6 +28,6 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel?.Dispose();
         }
-        
+
     }
 }

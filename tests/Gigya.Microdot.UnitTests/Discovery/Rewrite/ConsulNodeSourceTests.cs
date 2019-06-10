@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
 using Ninject;
@@ -43,7 +40,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
         private string _serviceName;
         private ConsulNodeSourceFactory _consulNodeSourceFactory;
-        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [OneTimeSetUp]
         public void OneTimeSetup()

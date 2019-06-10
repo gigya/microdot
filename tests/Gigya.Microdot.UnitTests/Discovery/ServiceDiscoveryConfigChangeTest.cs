@@ -1,21 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 
-using NSubstitute;
 
 using NUnit.Framework;
 
@@ -33,7 +27,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private ConsulClientMock _consulClientMock;
         public const int Repeat = 1;
         private const string ServiceVersion = "1.0.0.0";
-        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         [SetUp]
         public async Task Setup()

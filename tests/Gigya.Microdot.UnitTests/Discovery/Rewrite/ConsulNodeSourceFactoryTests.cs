@@ -35,7 +35,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private ConsulSimulator _consulSimulator;
         private IEnvironment _environment;
         private ConsulNodeSourceFactory _factory;
-        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo();
 
         public override void OneTimeSetUp()
         {
