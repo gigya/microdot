@@ -1,5 +1,4 @@
 ﻿using System;
-using Castle.Core.Logging;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
@@ -12,9 +11,9 @@ namespace Gigya.Microdot.Ninject
         public MicrodotInitializer(string appName, ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
         {
             Kernel = new StandardKernel();
-            var app = new CurrentApplicationInfo(appName);
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(app).InSingletonScope();
             Kernel.Load<MicrodotModule>();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(appName)).InTransientScope();
+
             loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
             // Set custom Binding 
             additionalBindings?.Invoke(Kernel);

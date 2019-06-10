@@ -72,6 +72,8 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
+
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -150,9 +152,7 @@ namespace Gigya.Microdot.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(),kernel.Rebind<Func<string, ILog>>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments).InSingletonScope();
-            kernel.Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
-        }
+       }
 
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
