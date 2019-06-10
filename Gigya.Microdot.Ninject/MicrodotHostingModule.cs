@@ -41,7 +41,7 @@ namespace Gigya.Microdot.Ninject
 
             this.BindInterfacesAsSingleton(
                 nonSingletonBaseTypes: new List<Type> { typeof(IServiceInterfaceMapper) },
-                buildToInterfaceInAssembly: new List<Type>{typeof(ILog)},
+                bindInterfacesInAssemblies: new List<Type>{typeof(ILog)},
                 assemblies: new[] { typeof(HostingAssembly) });
 
             Bind<IServiceDrainListener,ServiceDrainController>().To<ServiceDrainController>().InSingletonScope();

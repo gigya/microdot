@@ -44,7 +44,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly IServiceProviderInit _serviceProvider;
         private readonly OrleansLogProvider _logProvider;
         private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
-        private readonly MicrodotIncomingGrainCallFilter _callFilter;
         private readonly OrleansConfig _orleansConfig;
         public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
@@ -55,13 +54,12 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, MicrodotIncomingGrainCallFilter callFilter, OrleansConfig orleansConfig)
+         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, OrleansConfig orleansConfig)
 
         {
             _serviceProvider = serviceProvider;
             _logProvider = logProvider;
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
-            _callFilter = callFilter;
             _orleansConfig = orleansConfig;
             Log = log;
             HttpServiceListener = httpServiceListener;
@@ -83,7 +81,7 @@ namespace Gigya.Microdot.Orleans.Hosting
               .AddStartupTask(StartupTask);
 
             if (_orleansConfig.EnableInterceptor)
-                builder.AddIncomingGrainCallFilter(async (o) => { await _callFilter.Invoke(o); })
+                builder.AddIncomingGrainCallFilter<MicrodotIncomingGrainCallFilter>()
                     .AddOutgoingGrainCallFilter(async (o) =>
                     {
                         TracingContext.SetUpStorage();

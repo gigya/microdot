@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Gigya.Microdot.Orleans.Hosting
 {
     //TODO create two separate filters for
-    public class MicrodotIncomingGrainCallFilter
+    public class MicrodotIncomingGrainCallFilter : IIncomingGrainCallFilter
     {
         private readonly ILog _log;
         private Counter EventsDiscarded { get; }

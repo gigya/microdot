@@ -106,7 +106,7 @@ namespace Gigya.Microdot.SharedLogic.Logging
         private IDictionary<string, string> RemoveDuplicatesTag(IEnumerable<KeyValuePair<string, string>> formatTagsWithTypeSuffix)
         {
             int i = 0;
-            Dictionary<string, string> tags = new Dictionary<string, string>(formatTagsWithTypeSuffix?.Count() ?? 0);
+            var tags = new Dictionary<string, string>(formatTagsWithTypeSuffix?.Count() ?? 0);
             foreach (var tag in formatTagsWithTypeSuffix)
             {
                 try
@@ -116,10 +116,8 @@ namespace Gigya.Microdot.SharedLogic.Logging
                 catch (ArgumentException)
                 {
                     i++;
-                    tags.Add($"{tag.Key}_{i}", tag.Value);
-
+                    tags.Add($"{tag.Key}_Duplicate_{i}", tag.Value);
                 }
-
             }
             if (i > 0)
                 tags.Add("DuplicateTags", i.ToString());

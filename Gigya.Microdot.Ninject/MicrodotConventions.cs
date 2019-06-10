@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Ninject
         }
 
 
-        public static void BindInterfacesAsSingleton(this IBindingRoot bindingRoot, IList<Type> nonSingletonBaseTypes, IList<Type> buildToInterfaceInAssembly, params Type[] assemblies)
+        public static void BindInterfacesAsSingleton(this IBindingRoot bindingRoot, IList<Type> nonSingletonBaseTypes, IList<Type> bindInterfacesInAssemblies, params Type[] assemblies)
         {
             var list = new List<Type>
             {
@@ -79,7 +79,7 @@ namespace Gigya.Microdot.Ninject
                     // The last is to avoid bind types arbitrary and isolate it to same assembly or abstraction assembly.
                     .BindSelection((type, types) => 
                         types.Where(i => assemblies.Select(a => a.Assembly).Contains(i.Assembly) || 
-                                         buildToInterfaceInAssembly?.Select(a => a.Assembly).Contains(i.Assembly) == true))
+                                         bindInterfacesInAssemblies?.Select(a => a.Assembly).Contains(i.Assembly) == true))
                     .Configure(c => c.InSingletonScope());
                 });
         }
