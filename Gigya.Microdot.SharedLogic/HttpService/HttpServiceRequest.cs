@@ -110,7 +110,18 @@ namespace Gigya.Microdot.SharedLogic.HttpService
             for (int i = 0; i < arguments.Length; i++)
 				Arguments.Add(parameters[i].Name, arguments[i]);
 		}
-	}
+        
+        public HttpServiceRequest(string targetMethod, string typeName, Dictionary<string, object> arguments, IEnumerable<Type> types) : this(arguments)
+        {
+            if (targetMethod == null)
+            throw new ArgumentNullException(nameof(targetMethod));
+
+            Target = new InvocationTarget(targetMethod, typeName, types);
+
+                foreach (var argument in arguments)
+            Arguments.Add(argument.Key, argument.Value);
+        }
+    }
 
     public class InvocationTarget : ExtendableJson
     {
@@ -141,9 +152,14 @@ namespace Gigya.Microdot.SharedLogic.HttpService
 			MethodName = method.Name;
 			ParameterTypes = parameterTypes.Select(p => GetCleanTypeName(p.ParameterType)).ToArray();
 		}
+        public InvocationTarget(string methodName, string typeName, IEnumerable<Type> parameterTypes)
+        {
+            TypeName = typeName;
+            MethodName = methodName;
+            ParameterTypes = parameterTypes.Select(GetCleanTypeName).ToArray();
+        }
 
-
-		private static string GetCleanTypeName(Type type)
+        private static string GetCleanTypeName(Type type)
 		{            
 			return Regex.Replace(type.ToString(), @"`\d", "")
 				.Replace("System.Byte", "byte")
