@@ -4,28 +4,25 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4E6A024F-DDC9-4A27-A859-77EBC3241009}</ProjectGuid>
+    <ProjectGuid>{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Gigya.Microdot.Ninject.Host</RootNamespace>
-    <AssemblyName>Gigya.Microdot.Ninject.Host</AssemblyName>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Gigya.Microdot.Common.Tests</RootNamespace>
+    <AssemblyName>Gigya.Microdot.Common.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Gigya.Microdot.Ninject.Host.xml</DocumentationFile>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -33,52 +30,35 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SolutionVersion.cs">
-      <Link>Properties\SolutionVersion.cs</Link>
-    </Compile>
-    <Compile Include="MicrodotServiceHost.cs" />
+    <Compile Include="KernelTestingExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="paket.references" />
-    <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
-      <Project>{0e3a2422-dd99-4d75-a18c-96329a842742}</Project>
-      <Name>Gigya.Microdot.Configuration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
-      <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
-      <Name>Gigya.Microdot.Hosting</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
-      <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
-      <Name>Gigya.Microdot.SharedLogic</Name>
+    <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj">
+      <Project>{2865f69b-d847-4901-8945-4941e463f94e}</Project>
+      <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
-      <Project>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</Project>
+      <Project>{a90d7c71-ec7c-4328-9db1-d2c3a30727db}</Project>
       <Name>Gigya.Microdot.Interfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
-      <Project>{63e40f38-df99-4df5-9b45-addb0c2fc9ff}</Project>
-      <Name>Gigya.Microdot.Ninject</Name>
+    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
+      <Project>{c88db2a8-a1d2-46f8-8b65-06b9ee3f1662}</Project>
+      <Name>Gigya.Microdot.SharedLogic</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -110,8 +90,8 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
-        <Reference Include="Ninject.Extensions.Conventions">
-          <HintPath>..\packages\ninject.extensions.conventions\lib\net45\Ninject.Extensions.Conventions.dll</HintPath>
+        <Reference Include="NSubstitute">
+          <HintPath>..\packages\NSubstitute\lib\net46\NSubstitute.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -121,8 +101,8 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
-        <Reference Include="Ninject.Extensions.Factory">
-          <HintPath>..\packages\Ninject.Extensions.Factory\lib\net45\Ninject.Extensions.Factory.dll</HintPath>
+        <Reference Include="System.Runtime.CompilerServices.Unsafe">
+          <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -134,6 +114,17 @@
       <ItemGroup>
         <Reference Include="System.Threading.Tasks.Dataflow">
           <HintPath>..\packages\System.Threading.Tasks.Dataflow\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="System.Threading.Tasks.Extensions">
+          <HintPath>..\packages\System.Threading.Tasks.Extensions\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

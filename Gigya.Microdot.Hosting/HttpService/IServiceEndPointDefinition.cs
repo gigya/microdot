@@ -56,7 +56,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         /// </summary>
         Dictionary<Type, string> ServiceNames { get; }
 
-		/// <summary>
+        int SiloDashboardPort { get; }
+
+        /// <summary>
 		/// Determines which service method should be called for the specified <see cref="InvocationTarget"/>.
 		/// </summary>
 		/// <param name="target">The invocation target specified by the remote client.</param>

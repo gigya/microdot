@@ -11,3 +11,6 @@ Castle.Core
 ZooKeeperNetEx
 System.Threading.Tasks.Dataflow
 System.ValueTuple
+# Solve binding redirect issue, related to project vs nuget references. OrleansDashboard depends on.
+Microsoft.AspNetCore.Hosting
+Microsoft.AspNetCore.Server.Kestrel

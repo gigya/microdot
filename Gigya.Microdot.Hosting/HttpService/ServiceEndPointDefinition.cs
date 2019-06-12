@@ -58,6 +58,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         public int? SiloNetworkingPortOfPrimaryNode { get; }
 
         public Dictionary<Type, string> ServiceNames { get; }
+        public int SiloDashboardPort { get; }
 
         private ConcurrentDictionary<ServiceMethod,  EndPointMetadata> _metadata= new ConcurrentDictionary<ServiceMethod, EndPointMetadata>();
 
@@ -116,10 +117,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
                 SiloNetworkingPort = basePort + (int)PortOffsets.SiloNetworking;
                 SiloNetworkingPortOfPrimaryNode = (serviceArguments.SiloNetworkingPortOfPrimaryNode ?? 0) + (int)PortOffsets.SiloNetworking;
+                SiloDashboardPort = basePort + (int)PortOffsets.SiloDashboard;
             }
             else
             {
-
                 if (serviceConfig.DefaultSlotNumber == null)
                     throw new ConfigurationException("Service is configured to run in slot based port but " +
                                                      "DefaultSlotNumber is not set in configuration. " +
@@ -139,6 +140,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 SiloGatewayPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloGateway).Value;
                 SiloNetworkingPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloNetworking).Value;
                 SiloNetworkingPortOfPrimaryNode = config.PortAllocation.GetPort(serviceConfig.DefaultSlotNumber, PortOffsets.SiloNetworking).Value;
+                SiloDashboardPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloDashboard).Value;
             }
 
             foreach (var method in _serviceMethodResolver.GrainMethods)

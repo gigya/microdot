@@ -32,6 +32,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using Orleans;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -107,6 +108,13 @@ namespace Gigya.Microdot.Orleans.Hosting
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
                 .UsePerfCounterEnvironmentStatistics()
+                .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
+                .UseDashboard(o =>
+                {
+                    o.Port = _endPointDefinition.SiloDashboardPort;
+                    o.CounterUpdateIntervalMs = (int) TimeSpan.Parse(_orleansConfig.DashboardConfig.WriteInterval).TotalMilliseconds;
+                    o.HideTrace = _orleansConfig.DashboardConfig.HideTrace;
+                })
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
 
             SetGrainCollectionOptions(hostBuilder);
