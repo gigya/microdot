@@ -166,14 +166,16 @@ namespace Gigya.Microdot.Orleans.Hosting
                     });
                     break;
 
-                case
-                    SiloClusterMode.Unspecified:
+                case SiloClusterMode.Unspecified:
                 case SiloClusterMode.PrimaryNode:
                     silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloGatewayPort);
                     break;
 
                 case SiloClusterMode.SecondaryNode:
-                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloNetworkingPortOfPrimaryNode);
+                    if(_endPointDefinition.SiloNetworkingPortOfPrimaryNode == null)
+                        throw new ArgumentException($"missing {nameof(_endPointDefinition.SiloNetworkingPortOfPrimaryNode)}");
+
+                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloNetworkingPortOfPrimaryNode.Value);
 
                     break;
             }

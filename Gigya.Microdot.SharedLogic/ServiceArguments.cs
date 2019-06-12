@@ -81,6 +81,15 @@ namespace Gigya.Microdot.SharedLogic
         public int? OnStopWaitTimeSec { get; set; }
 
         public int? InitTimeOutSec { get; set; } = 60;
+
+        /// <summary>
+        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
+        /// localhost and the original base port are always assumed (since the secondary nodes must use a
+        /// base port override to avoid port conflicts).
+        ///</summary> 
+        public int? SiloNetworkingPortOfPrimaryNode{ get ; set ; }
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceArguments"/> class, explicitly specifying the arguments.
         /// Typically used in tests.

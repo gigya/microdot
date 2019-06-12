@@ -50,7 +50,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public int SiloNetworkingPort { get; }
 
-        public int SiloNetworkingPortOfPrimaryNode { get; }
+        /// <summary>
+        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
+        /// localhost and the original base port are always assumed (since the secondary nodes must use a
+        /// base port override to avoid port conflicts).
+        ///</summary> 
+        public int? SiloNetworkingPortOfPrimaryNode { get; }
 
         public Dictionary<Type, string> ServiceNames { get; }
 
@@ -110,7 +115,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
                 SiloNetworkingPort = basePort + (int)PortOffsets.SiloNetworking;
-                SiloNetworkingPortOfPrimaryNode = interfacePorts.First().BasePortWithoutOverrides + (int)PortOffsets.SiloNetworking;
+                SiloNetworkingPortOfPrimaryNode = (serviceArguments.SiloNetworkingPortOfPrimaryNode ?? 0) + (int)PortOffsets.SiloNetworking;
             }
             else
             {
