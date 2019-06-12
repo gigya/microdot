@@ -25,31 +25,27 @@
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
-using Ninject;
-using Ninject.Syntax;
 using Orleans;
 using Orleans.Configuration;
 using System;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Testing.Service
 {
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
-        public TServiceHost Host { get; set; }
-        public Task SiloStopped { get; set; }
+        public TServiceHost Host { get; private set; }
+        public Task SiloStopped { get; private set; }
 
-        public IClusterClient _clusterClient;
-        public object _locker = new object();
+        private IClusterClient _clusterClient;
+        private readonly object _locker = new object();
 
         public ServiceTester()
         {
