@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Ninject;
@@ -20,16 +21,28 @@ namespace Gigya.Microdot.Fakes.KernelUtils
         //#ORLEANS20, we need to rebind CrashHandler to fake one, else we have unexpected shutdown 
         public static IKernel RebindForTests(this IKernel kernel)
         {
-            return kernel.WithNoMetrics().WithLogForTests();
+            return kernel.WithNoMetrics().WithLogForTests().WithNoCrashHandler();
+        }
+        public class NoCrashHandler : ICrashHandler
+        {
+            public void Init(Action signalClusterThatThisNodeIsGoingDown)
+            {
+                //  throw new NotImplementedException();
+            }
+        }
+        public static IKernel WithNoCrashHandler(this IKernel kernel)
+        {
+            kernel.Rebind<ICrashHandler>().To<NoCrashHandler>().InSingletonScope();
+            return kernel;
         }
 
         public static IKernel WithLogForTests(this IKernel kernel, TraceEventType eventType = TraceEventType.Warning)
         {
 
-        
-   
-                kernel.Rebind<ILog>().ToConstant(new ConsoleLog {MinimumTraceLevel = eventType});
-            
+
+
+            kernel.Rebind<ILog>().ToConstant(new ConsoleLog { MinimumTraceLevel = eventType });
+
 
             return kernel;
         }

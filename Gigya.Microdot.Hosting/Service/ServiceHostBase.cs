@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Hosting.Service
         protected TaskCompletionSource<object> ServiceStartedEvent { get; set; }
         private TaskCompletionSource<StopResult> ServiceGracefullyStopped { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
-        protected CrashHandler CrashHandler { get; set; }
+        protected ICrashHandler CrashHandler { get; set; }
 
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.

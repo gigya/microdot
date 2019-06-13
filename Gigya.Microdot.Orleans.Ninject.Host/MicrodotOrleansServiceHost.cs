@@ -65,7 +65,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
-            
+
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
 
             PreConfigure(Kernel);
@@ -79,7 +79,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(Arguments,AfterOrleansStartup, BeforeOrleansShutdown);
+            SiloHost.Start(Arguments, AfterOrleansStartup, BeforeOrleansShutdown);
         }
 
         /// <summary>
@@ -92,7 +92,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             Kernel.Get<SystemInitializer>().Init();
-            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            CrashHandler = kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
 
             IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
@@ -153,7 +154,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
-       
+
         }
 
 
@@ -166,7 +167,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         ///     infrastructure features you'd like to enable.</param>
         protected virtual void Configure(IKernel kernel, OrleansCodeConfig commonConfig) { }
 
- 
+
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 

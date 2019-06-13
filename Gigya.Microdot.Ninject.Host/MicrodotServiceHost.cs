@@ -97,7 +97,8 @@ namespace Gigya.Microdot.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             Kernel.Get<SystemInitializer.SystemInitializer>().Init();
-            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            CrashHandler = kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
 
             IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
@@ -117,17 +118,17 @@ namespace Gigya.Microdot.Ninject.Host
         }
 
         protected override void OnVerifyConfiguration()
-	    {
-		    Kernel = CreateKernel();
-		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
+        {
+            Kernel = CreateKernel();
+            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
 
             Kernel.Bind<CurrentApplicationInfo>()
                 .ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InTransientScope();
-		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-		    base.OnVerifyConfiguration();
-	    }
+            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+            base.OnVerifyConfiguration();
+        }
 
-	    /// <summary>
+        /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
         /// can be overridden to customize which kernel is used (e.g. MockingKernel);
         /// </summary>
@@ -150,9 +151,9 @@ namespace Gigya.Microdot.Ninject.Host
         {
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(),kernel.Rebind<Func<string, ILog>>());
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments).InSingletonScope();
-       }
+        }
 
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
@@ -164,7 +165,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
 
-   
+
 
         /// <summary>
         /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this

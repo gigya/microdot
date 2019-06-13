@@ -52,6 +52,10 @@
       <Project>{2865f69b-d847-4901-8945-4941e463f94e}</Project>
       <Name>Gigya.Microdot.Fakes</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
+      <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
+      <Name>Gigya.Microdot.Hosting</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
       <Project>{a90d7c71-ec7c-4328-9db1-d2c3a30727db}</Project>
       <Name>Gigya.Microdot.Interfaces</Name>
