@@ -46,7 +46,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public IEnumerable<IKeyedService<TKey, TService>> GetServices(IServiceProvider services)
         {
-
             return services.GetService<IEnumerable<IKeyedService<TKey, TService>>>();
         }
     }
@@ -65,7 +64,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
 
         internal IKernel Kernel { get; set; }
-        private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; } = new ConcurrentDictionary<Type, Type>();
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
@@ -93,6 +91,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
+                    //    descriptor.
+
                         // #ORLEANS20 We need to clearify what suitable scope to provide, scope meaning lock ninject performing
                         // InRequestScope is provided by an extension method. In order to use it you need to add the namespace Ninject.Web.Common to your usings.
                         binding.InTransientScope();
@@ -105,37 +105,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
 
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
-            
+
             return this;
         }
 
 
         public object GetService(Type serviceType)
         {
-            var elementType = TypeToElementTypeInterface.GetOrAdd(serviceType, t =>
-            {
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                    return t.GetGenericArguments().FirstOrDefault();
-                else
-                    return null;
-            });
-
-
-            if (elementType == null)
-            {
-                // #ORLEANS20
-                //if (Kernel.CanResolve(serviceType) == false) return null;
-                if (Kernel.CanResolve(serviceType) == false && serviceType.Namespace?.StartsWith("Orleans") == true)
-                    return null;
-
-                return Kernel.Get(serviceType);
-            }
-
-
-            var results = Kernel.GetAll(elementType).ToArray();
-            var typedResults = Array.CreateInstance(elementType, results.Length);
-            Array.Copy(results, typedResults, results.Length);
-            return typedResults;
+            return Kernel.Get(serviceType);
         }
     }
 

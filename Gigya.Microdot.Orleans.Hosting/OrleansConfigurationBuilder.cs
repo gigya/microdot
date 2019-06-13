@@ -32,6 +32,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using Orleans.Providers;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -115,7 +116,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 options.DefaultConnectionLimit = ServicePointManager.DefaultConnectionLimit;
             });
-
+            hostBuilder.AddMemoryGrainStorage(ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME, options => options.NumStorageGrains = 10);
             hostBuilder.Configure<TelemetryOptions>(o=>o.AddConsumer<MetricsStatisticsConsumer>());
             hostBuilder.Configure<SchedulingOptions>(options =>
             {
