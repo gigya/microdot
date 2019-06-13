@@ -1,24 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-
-using Gigya.Microdot.Orleans.Hosting;
-
-using Metrics;
-using Metrics.MetricData;
-
-using NSubstitute;
-
-using NUnit.Framework;
-
-using Orleans.Providers;
-using Orleans.Runtime;
-using Shouldly;
-
-namespace Gigya.Microdot.UnitTests
+﻿namespace Gigya.Microdot.UnitTests
 {
     /* //#ORLEANS20
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class MetricsStatisticsPublisherTests
     {
         MetricsStatisticsPublisher publisher;

@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Net;
 using NUnit.Framework;
 
 [SetUpFixture]

@@ -26,7 +26,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class GrainAgeLimitServiceTests
     {
      

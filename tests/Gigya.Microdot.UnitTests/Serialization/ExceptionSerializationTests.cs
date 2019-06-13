@@ -1,19 +1,8 @@
-﻿using System;
-using System.Net.Http;
-
-
-using Gigya.Common.Contracts.Exceptions;
-
-using NUnit.Framework;
-
-using Orleans.Serialization;
-using Shouldly;
-
-namespace Gigya.Microdot.UnitTests.Serialization
+﻿namespace Gigya.Microdot.UnitTests.Serialization
 {
     /*
     // #ORLEANS20
-	[TestFixture]
+	[TestFixture,Parallelizable(ParallelScope.Fixtures)]
 	public class ExceptionSerializationTests
 	{
 		private MyServiceException MyServiceException { get; set; }

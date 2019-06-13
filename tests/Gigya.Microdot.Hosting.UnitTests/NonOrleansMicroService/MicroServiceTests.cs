@@ -1,8 +1,5 @@
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing.Shared;
-using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
 using System;
@@ -13,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class MicroServiceTests
     {
         [SetUp]

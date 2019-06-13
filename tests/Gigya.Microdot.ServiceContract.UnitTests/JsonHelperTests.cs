@@ -35,7 +35,7 @@ namespace Gigya.Common.Contracts.UnitTests
     public class SomeClass { public int A; public long B; public ushort? C; [JsonProperty] SomeClass Inner; }
     public struct SomeStruct { public int A; public long B; public ushort? C; }
 
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class JsonHelperTests
     {
         [Test]
@@ -266,7 +266,7 @@ namespace Gigya.Common.Contracts.UnitTests
 
 
 
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class JsonHelperNumericTests
     {
         [DatapointSource]

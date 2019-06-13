@@ -1,16 +1,12 @@
-﻿using System;
-using FluentAssertions;
-using Gigya.Microdot.Configuration;
+﻿using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ConfigObjectsCacheTests
     {
         [Test]

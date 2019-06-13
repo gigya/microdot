@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.UnitTests.ServiceProxyTests;
 
 namespace Gigya.Microdot.UnitTests
 {

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
 

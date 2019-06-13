@@ -6,7 +6,6 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
 
@@ -18,7 +17,7 @@ using NUnit.Framework;
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
   
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public abstract class AbstractServiceProxyTest
     {
         protected TestingKernel<ConsoleLog> unitTesting;

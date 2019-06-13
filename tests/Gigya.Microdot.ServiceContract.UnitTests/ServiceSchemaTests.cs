@@ -60,7 +60,7 @@ namespace Gigya.Common.Contracts.UnitTests
         Task<ResponseData> DoSomething(int i, double? nd, string s, [Sensitive] Data data);
     }
 
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ServiceSchemaTests
     {
 

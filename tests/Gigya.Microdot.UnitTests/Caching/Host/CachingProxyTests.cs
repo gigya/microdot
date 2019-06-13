@@ -26,11 +26,10 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         }
     }
 
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.All)]
     public class CachingProxyTests
     {
-        private SlowServiceHost Host { get; set; }
-        private Task StopTask { get; set; }
+     
         private ISlowService Service { get; set; }
         private MicrodotInitializer _microdotInitializer;
 

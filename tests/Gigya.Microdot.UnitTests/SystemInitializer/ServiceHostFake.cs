@@ -8,7 +8,6 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
-using Ninject.Syntax;
 using NSubstitute;
 
 namespace Gigya.Microdot.UnitTests.SystemInitializer

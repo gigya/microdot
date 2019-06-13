@@ -15,7 +15,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Validation
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ConfigObjectTypeValidatorTest
     {
         [Test]

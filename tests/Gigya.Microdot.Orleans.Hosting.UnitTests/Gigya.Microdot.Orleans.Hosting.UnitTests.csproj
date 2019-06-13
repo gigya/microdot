@@ -100,6 +100,10 @@
   </Target>
   -->
   <ItemGroup>
+    <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj">
+      <Project>{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}</Project>
+      <Name>Gigya.Microdot.Common.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
       <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
       <Name>Gigya.Microdot.Configuration</Name>

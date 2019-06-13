@@ -6,7 +6,6 @@ using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
@@ -20,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
     /// <summary>
     /// The tests to ensure Verificator recognizing the configuration failures in major cases we expect
     /// </summary>
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class VerificatorTests
     {
         private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";

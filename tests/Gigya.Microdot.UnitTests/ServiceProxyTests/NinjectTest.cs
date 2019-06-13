@@ -2,7 +2,6 @@
 using FluentAssertions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
@@ -11,7 +10,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class NinjectTest
     {
         [Test]

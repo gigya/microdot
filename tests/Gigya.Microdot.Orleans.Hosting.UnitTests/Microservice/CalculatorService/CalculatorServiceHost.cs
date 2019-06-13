@@ -23,8 +23,8 @@
 using System;
 using System.Collections.Generic;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -66,8 +66,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             base.PreConfigure(kernel);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
-            kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
             kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
+            kernel.RebindForTests();
+
         }
 
         public class MockServiceValidator : ServiceValidator

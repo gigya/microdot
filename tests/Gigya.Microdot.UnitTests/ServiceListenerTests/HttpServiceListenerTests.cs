@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
@@ -12,12 +11,10 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
 using Gigya.ServiceContract.Exceptions;
@@ -35,7 +32,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
 
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class HttpServiceListenerTests
     {
         private IDemoService _insecureClient;

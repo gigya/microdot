@@ -35,7 +35,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class MembersToLogExtractorTests
     {
         private ILog _logMocked;
