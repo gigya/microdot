@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,6 +29,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Events;
@@ -58,18 +60,29 @@ namespace Gigya.Microdot.Orleans.Hosting
         private ISourceBlock<OrleansConfig> OrleansConfigSourceBlock { get; }
         public static OrleansConfig PreviousOrleansConfig { get; private set; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
+        private Func<GrainLogging> GrainLoggingConfig { get; }
+
+        [ConfigurationRoot("Microdot.GrainLogging", RootStrategy.ReplaceClassNameWithPath)]
+        public class GrainLogging : IConfigObject
+        {
+            public bool LogServiceGrains;
+            public bool LogMicrodotGrains;
+            public bool LogOrleansGrains;
+        }
+
 
 
         public GigyaSiloHost(ILog log, OrleansConfigurationBuilder configBuilder,
             HttpServiceListener httpServiceListener,
             IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
-            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig)
+            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig, Func<GrainLogging> grainLoggingConfig)
         {
             Log = log;
             ConfigBuilder = configBuilder;
             HttpServiceListener = httpServiceListener;
             EventPublisher = eventPublisher;
             LoadSheddingConfig = loadSheddingConfig;
+            GrainLoggingConfig = grainLoggingConfig;
 
 
             OrleansConfigSourceBlock = orleansConfigSourceBlock;
@@ -178,47 +191,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         public TaskScheduler GrainTaskScheduler { get; set; }
 
 
-        private void OutgoingCallInterceptor(InvokeMethodRequest request, IGrain target)
-        {
-            TracingContext.SetUpStorage();
-            TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
-        }
-
-
-        private async Task<object> IncomingCallInterceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
-        {
-            if (targetMethod == null)
-                throw new ArgumentNullException(nameof(targetMethod));
-
-            var declaringNameSpace = targetMethod.DeclaringType?.Namespace;
-
-            // Do not intercept Orleans grains or other grains which should not be included in statistics.
-            if (targetMethod.DeclaringType.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null ||
-               declaringNameSpace?.StartsWith("Orleans") == true)
-                return await invoker.Invoke(target, request);
-
-            RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
-
-            RequestTimings.Current.Request.Start();
-            Exception ex = null;
-
-            try
-            {
-                RejectRequestIfLateOrOverloaded();
-                return await invoker.Invoke(target, request);
-            }
-            catch (Exception e)
-            {
-                ex = e;
-                throw;
-            }
-            finally
-            {
-                RequestTimings.Current.Request.Stop();
-                PublishEvent(targetMethod, target, ex);
-            }
-        }
-
         public void UpdateOrleansAgeLimitChange(OrleansConfig orleanConfig)
         {
             try
@@ -256,13 +228,68 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        private void RejectRequestIfLateOrOverloaded()
+
+        private void OutgoingCallInterceptor(InvokeMethodRequest request, IGrain target)
         {
-            var config = LoadSheddingConfig();
+            TracingContext.SetUpStorage();
+            TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
+        }
+
+
+        static ConcurrentDictionary<Type, bool> MICRODOT_GRAINS = new ConcurrentDictionary<Type, bool>();
+
+        private async Task<object> IncomingCallInterceptor(MethodInfo targetMethod, InvokeMethodRequest request, IGrain target, IGrainMethodInvoker invoker)
+        {
+            if (targetMethod == null)
+                throw new ArgumentNullException(nameof(targetMethod));
+
+            // Identify the grain type
+            bool isOrleansGrain  = targetMethod.DeclaringType?.Namespace?.StartsWith("Orleans") == true;
+            bool isMicrodotGrain = MICRODOT_GRAINS.GetOrAdd(targetMethod.DeclaringType, type => type.GetCustomAttribute<ExcludeGrainFromStatisticsAttribute>() != null);
+            bool isServiceGrain  = !isOrleansGrain && !isMicrodotGrain;
+
+            // Drop the request if we're overloaded
+            var loadSheddingConfig = LoadSheddingConfig();
+            if (   (loadSheddingConfig.ApplyToOrleansGrains  && isOrleansGrain)
+                || (loadSheddingConfig.ApplyToMicrodotGrains && isMicrodotGrain)
+                || (loadSheddingConfig.ApplyToServiceGrains  && isServiceGrain))
+            {
+                RejectRequestIfLateOrOverloaded(loadSheddingConfig);
+            }
+
+            RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
+            RequestTimings.Current.Request.Start();
+            Exception ex = null;
+
+            try
+            {
+                return await invoker.Invoke(target, request);
+            }
+            catch (Exception e)
+            {
+                ex = e;
+                throw;
+            }
+            finally
+            {
+                RequestTimings.Current.Request.Stop();
+                var loggingConfig = GrainLoggingConfig();
+                if (   (loggingConfig.LogOrleansGrains  && isOrleansGrain)
+                    || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
+                    || (loggingConfig.LogServiceGrains  && isServiceGrain))
+                {
+                    PublishEvent(targetMethod, target, ex);
+                }
+            }
+        }
+
+
+        private void RejectRequestIfLateOrOverloaded(LoadShedding config)
+        {
             var now = DateTimeOffset.UtcNow;
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
-            if (config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
+            if (   config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
