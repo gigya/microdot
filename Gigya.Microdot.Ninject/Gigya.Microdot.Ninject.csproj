@@ -150,7 +150,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
         <Reference Include="Ninject.Extensions.Conventions">
-          <HintPath>..\packages\Ninject.Extensions.Conventions\lib\net45\Ninject.Extensions.Conventions.dll</HintPath>
+          <HintPath>..\packages\ninject.extensions.conventions\lib\net45\Ninject.Extensions.Conventions.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

@@ -61,12 +61,16 @@ namespace Gigya.Microdot.Orleans.Hosting
         //properties?
         public void TrackMetric(string name, double value, IDictionary<string, string> properties = null)
         {
-            if (latestMetricValues.ContainsKey(name)) // new counter discovered
-            { //need lock?
-                context.Gauge(name, () => latestMetricValues[name], Unit.None);
-            }
+            bool exists = true;
+            
+            latestMetricValues.AddOrUpdate(name, key => {
+                exists = false;
+                return value;
+            }, (k, v) => v + value);
 
-            latestMetricValues.AddOrUpdate(name, key => value, (k, v) => v + value);
+            // New counter discovered
+            if (!exists)
+                context.Gauge(name, () => latestMetricValues[name], Unit.None);
         }
 
         public void TrackMetric(string name, TimeSpan value, IDictionary<string, string> properties = null)

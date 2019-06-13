@@ -12,6 +12,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         public bool EnableInterceptor { get; set; } = true;
 
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
+
+        public OrleansDashboardConfig DashboardConfig = new OrleansDashboardConfig();
         public double DefaultGrainAgeLimitInMins { get; set; } = 30;
         public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
 
@@ -34,5 +36,11 @@ namespace Gigya.Microdot.Orleans.Hosting
     {
         public double GrainAgeLimitInMins { get; set; }
         public string GrainType { get; set; }
+    }
+
+    public class OrleansDashboardConfig
+    {
+        public string WriteInterval { get; set; } = "00:00:30";
+        public bool HideTrace { get; set; } = true;
     }
 }

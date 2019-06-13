@@ -33,6 +33,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using Orleans.Providers;
+using Orleans;
+
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -108,6 +110,13 @@ namespace Gigya.Microdot.Orleans.Hosting
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
                 .UsePerfCounterEnvironmentStatistics()
+                .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
+                .UseDashboard(o =>
+                {
+                    o.Port = _endPointDefinition.SiloDashboardPort;
+                    o.CounterUpdateIntervalMs = (int) TimeSpan.Parse(_orleansConfig.DashboardConfig.WriteInterval).TotalMilliseconds;
+                    o.HideTrace = _orleansConfig.DashboardConfig.HideTrace;
+                })
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
 
             SetGrainCollectionOptions(hostBuilder);
@@ -167,14 +176,16 @@ namespace Gigya.Microdot.Orleans.Hosting
                     });
                     break;
 
-                case
-                    SiloClusterMode.Unspecified:
+                case SiloClusterMode.Unspecified:
                 case SiloClusterMode.PrimaryNode:
                     silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloGatewayPort);
                     break;
 
                 case SiloClusterMode.SecondaryNode:
-                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloNetworkingPortOfPrimaryNode);
+                    if(_endPointDefinition.SiloNetworkingPortOfPrimaryNode == null)
+                        throw new ArgumentException($"missing {nameof(_endPointDefinition.SiloNetworkingPortOfPrimaryNode)}");
+
+                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloNetworkingPortOfPrimaryNode.Value);
 
                     break;
             }
