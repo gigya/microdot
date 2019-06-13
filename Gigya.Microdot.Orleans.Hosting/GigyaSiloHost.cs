@@ -45,6 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly OrleansLogProvider _logProvider;
         private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
         private readonly OrleansConfig _orleansConfig;
+        private readonly Func<IServiceProvider> _factoryServiceProvider;
         public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
@@ -54,13 +55,14 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public GigyaSiloHost(ILog log,
             HttpServiceListener httpServiceListener,
-         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, OrleansConfig orleansConfig)
+         IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, OrleansConfigurationBuilder orleansConfigurationBuilder, OrleansConfig orleansConfig,Func<IServiceProvider> factoryServiceProvider)
 
         {
             _serviceProvider = serviceProvider;
             _logProvider = logProvider;
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
             _orleansConfig = orleansConfig;
+            _factoryServiceProvider = factoryServiceProvider;
             Log = log;
             HttpServiceListener = httpServiceListener;
         }
@@ -76,7 +78,12 @@ namespace Gigya.Microdot.Orleans.Hosting
             Log.Info(_ => _("Starting Orleans silo..."));
 
             var builder = _orleansConfigurationBuilder.GetBuilder()
-              .UseServiceProviderFactory(_serviceProvider.ConfigureServices)
+              .UseServiceProviderFactory((o)=>
+              {
+                   _serviceProvider.ConfigureServices(o);
+                 return  _factoryServiceProvider();
+
+              })
               .ConfigureLogging(op => op.AddProvider(_logProvider))
               .AddStartupTask(StartupTask);
 

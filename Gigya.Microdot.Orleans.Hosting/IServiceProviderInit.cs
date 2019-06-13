@@ -29,6 +29,6 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public interface IServiceProviderInit
     {
-        IServiceProvider ConfigureServices(IServiceCollection services);
+         void ConfigureServices(IServiceCollection services);
     }
 }

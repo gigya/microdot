@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Framework.DependencyInjection.Ninject;
 using Ninject;
 using Ninject.Syntax;
 using Orleans.Runtime;
@@ -55,7 +56,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// <summary>
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
-    public class NinjectOrleansServiceProvider : IServiceProvider, IServiceProviderInit
+    public class NinjectOrleansServiceProvider : IServiceProviderInit
     {
 
         public NinjectOrleansServiceProvider(IKernel kernel)
@@ -65,7 +66,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         internal IKernel Kernel { get; set; }
 
-        public IServiceProvider ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)
         {
             foreach (var descriptor in services)
             {
@@ -78,7 +79,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
                 else if (descriptor.ImplementationFactory != null)
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
+                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context =>
+                    {
+                        var serviceProvider = context.Kernel.Get<IServiceProvider>();
+                        return descriptor.ImplementationFactory(serviceProvider);
+                    });
                 }
                 else
                 {
@@ -91,11 +96,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                    //    descriptor.
-
-                        // #ORLEANS20 We need to clearify what suitable scope to provide, scope meaning lock ninject performing
-                        // InRequestScope is provided by an extension method. In order to use it you need to add the namespace Ninject.Web.Common to your usings.
-                        binding.InTransientScope();
+                        binding.InRequestScope();
                         break;
 
                     case ServiceLifetime.Transient:
@@ -105,15 +106,21 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
 
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
+            Kernel.Bind<IServiceProvider>().ToMethod(context =>
+            {
+                var resolver = context.Kernel.Get<IResolutionRoot>();
+                var inheritedParams = context.Parameters.Where(p => p.ShouldInherit);
 
-            return this;
+                var scopeParam = new ScopeParameter();
+                inheritedParams = inheritedParams.AddOrReplaceScopeParameter(scopeParam);
+
+                return new NinjectServiceProvider(resolver, inheritedParams.ToArray());
+            }).InRequestScope();
+
+            Kernel.Bind<IServiceScopeFactory>().ToMethod(context => { return new NinjectServiceScopeFactory(context); })
+                .InRequestScope();
         }
 
 
-        public object GetService(Type serviceType)
-        {
-            return Kernel.Get(serviceType);
-        }
     }
-
 }

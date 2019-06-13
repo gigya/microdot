@@ -54,13 +54,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
 
-            Rebind<NinjectOrleansServiceProvider, IServiceProvider, IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
-
+            Rebind<NinjectOrleansServiceProvider, IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
             Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
-            Rebind<IServiceScope, SingleScope>().To<SingleScope>().InSingletonScope();
-
-            Rebind<IServiceScopeFactory, SingleServiceScopeFactory>().To<SingleServiceScopeFactory>().InSingletonScope();
-
+       
             // Register logger per category
             Kernel.BindPerString<OrleansLogAdapter>();
             Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();
