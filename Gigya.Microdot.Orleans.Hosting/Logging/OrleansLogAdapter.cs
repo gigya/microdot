@@ -30,19 +30,28 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
     public class OrleansLogAdapter : ILogger
     {
+        private readonly OrleansLogEnrichment _logEnrichment;
         private readonly ILog _logImplementation;
 
-        public OrleansLogAdapter(string category, Func<string, ILog> logImplementation)
+        public OrleansLogAdapter(string category, Func<string, ILog> logImplementation, OrleansLogEnrichment logEnrichment)
         {
+            _logEnrichment = logEnrichment;
             _logImplementation = logImplementation(category);
         }
 
+
+
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
+            string eventHeuristicName = null;
+            if (eventId.Name == null)
+            {
+                _logEnrichment.HeuristicEventIdToName.TryGetValue(eventId.Id, out eventHeuristicName);
+            }
 
             var logMessage = formatter(state, exception);
 
-            Action<LogDelegate> action = _ => _(logMessage, exception: exception, unencryptedTags: new { eventId.Id, eventId.Name, IsOrleansLog = true });
+            Action<LogDelegate> action = _ => _(logMessage, exception: exception, unencryptedTags: new { eventId.Id, eventId.Name, IsOrleansLog = true, eventHeuristicName });
             var level = TraceEventType.Critical;
             switch (logLevel)
             {
@@ -67,7 +76,7 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
                 case LogLevel.None:
                     return;
             }
-           _logImplementation.Write(level, action);
+            _logImplementation.Write(level, action);
 
         }
 
@@ -81,8 +90,8 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
             return NullScope.Instance;
         }
 
-   
-              
+
+
         public void Write(TraceEventType level, Action<LogDelegate> log, string file = "", int line = 0, string method = null)
         {
             _logImplementation.Write(level, log, file, line, method);
