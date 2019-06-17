@@ -20,7 +20,8 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
 
     public class ServiceHostFake<TFake> : MicrodotServiceHost<IServiceFake> 
     {
-        
+        public override string ServiceName => nameof(IServiceFake).Substring(1);
+
         private TFake _fake;
         public ServiceHostFake(TFake fake)
         {

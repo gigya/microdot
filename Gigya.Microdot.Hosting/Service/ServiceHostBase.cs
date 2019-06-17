@@ -51,8 +51,7 @@ namespace Gigya.Microdot.Hosting.Service
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
-        public virtual string ServiceName => _serviceName;
-        private readonly string _serviceName;
+        public abstract string ServiceName { get; }
 
          
         protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
@@ -73,10 +72,7 @@ namespace Gigya.Microdot.Hosting.Service
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
 
-            _serviceName = GetType().Name;
          
-            if (_serviceName.EndsWith("Host") && _serviceName.Length > 4)
-                _serviceName = _serviceName.Substring(0, _serviceName.Length - 4);
         }
 
 

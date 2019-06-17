@@ -8,6 +8,8 @@ namespace CalculatorService.Orleans
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
+        public override string ServiceName => nameof(CalculatorService);
+
         static void Main(string[] args)
         {
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);

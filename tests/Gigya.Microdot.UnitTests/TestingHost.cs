@@ -16,11 +16,14 @@ using NSubstitute;
 
 namespace Gigya.Microdot.UnitTests
 {
-
-
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
+        // Last word is good enought for randomization, but easier to follow
+        private readonly string HostId = Guid.NewGuid().ToString().Substring(24);
+
         public T Instance { get; private set; }
+
+        public override string ServiceName => $"TestingHost-{HostId}";
 
         private readonly Action<IKernel> _configure;
         private readonly Action<IKernel> _onInitialize;
@@ -37,7 +40,6 @@ namespace Gigya.Microdot.UnitTests
 
         }
 
-
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
@@ -48,7 +50,6 @@ namespace Gigya.Microdot.UnitTests
             kernel.Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
                   .To<ManualConfigurationEvents>()
                   .InSingletonScope();
-
 
             kernel.Rebind<IEventPublisher>().To<NullEventPublisher>();
             kernel.Rebind<IWorker>().To<WaitingWorker>();
@@ -84,13 +85,9 @@ namespace Gigya.Microdot.UnitTests
 
         private class FakesLoggersModules : ILoggingModule
         {
-
-      
             public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
             {
-        
-                    logBinding.To<ConsoleLog>();
-
+                logBinding.To<ConsoleLog>();
                 logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
                 eventPublisherBinding.To<NullEventPublisher>();
             }

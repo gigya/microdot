@@ -9,7 +9,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
     public class SlowServiceHost : MicrodotServiceHost<ISlowService>
     {
      
-
+        public override string ServiceName => nameof(ISlowService).Substring(1);
         protected override ILoggingModule GetLoggingModule() { return new ConsoleLogLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)

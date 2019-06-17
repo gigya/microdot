@@ -11,6 +11,8 @@ namespace CalculatorService
 
     class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
+        public override string ServiceName => nameof(ICalculatorService).Substring(1);
+
         static void Main(string[] args)
         {
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
