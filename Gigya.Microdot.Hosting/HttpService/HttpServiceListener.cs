@@ -52,6 +52,7 @@ using Gigya.Microdot.SharedLogic.Security;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -225,6 +226,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
                     ServiceMethod serviceMethod = null;
+                    object[] argumentsWithDefaults = null;
                     ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                     try
                     {
@@ -234,12 +236,25 @@ namespace Gigya.Microdot.Hosting.HttpService
                             await CheckSecureConnection(context);
 
                             requestData = await ParseRequest(context);
+
                             SetCallEventRequestData(callEvent, requestData);
 
                             TracingContext.SetOverrides(requestData.Overrides);
 
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
-                            callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
+                            var arguments = requestData.Target.IsWeaklyTyped
+                                ? GetParametersByName(serviceMethod, requestData.Arguments)
+                                : requestData.Arguments.Values.Cast<object>().ToArray();
+
+                             argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
+
+                            
+                                
+
+                                
+                             
+
+                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
                         }
                         catch (Exception e)
@@ -253,7 +268,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                         RejectRequestIfLateOrOverloaded();
 
-                        var responseJson = await GetResponse(context, serviceMethod, requestData);
+                        var responseJson = await GetResponse(context, serviceMethod, requestData,argumentsWithDefaults);
                         if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
                         {
                             callEvent.ErrCode = 0;
@@ -278,8 +293,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        IEnumerable<DictionaryEntry> arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-                        _serverRequestPublisher.TryPublish(callEvent, arguments, serviceMethod);
+                        IEnumerable<DictionaryEntry> eventArguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
+                        _serverRequestPublisher.TryPublish(callEvent, eventArguments, serviceMethod);
                     }
                 }
             }
@@ -320,7 +335,52 @@ namespace Gigya.Microdot.Hosting.HttpService
             return false;
         }
 
+        internal  object[] GetConvertedAndDefaultArguments(MethodInfo method, object[] arguments)
+        {
+            var parameters = method.GetParameters();
 
+            object[] argumentsWithDefaults = new object[parameters.Length];
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                object argument = null;
+                var param = parameters[i];
+
+                if (i < arguments.Length)
+                {
+                    argument = JsonHelper.ConvertWeaklyTypedValue(arguments[i], param.ParameterType);
+                    if (param.ParameterType != typeof(JObject)&& param.ParameterType != typeof(JArray)&& param.ParameterType != typeof(JToken))
+                    {
+                        var errors = new List<ValidationResult>();
+                        if (!_validator.TryValidateObjectRecursive(argument, errors))
+                        {
+                            _failureCounter.Increment("InvalidRequestFormat");
+                            throw new RequestException("Invalid request format: " + string.Join("\n",
+                                                           errors.Select(a =>
+                                                               a.MemberNames + ": " + a.ErrorMessage)));
+                        }
+                    }
+                }
+                else
+                {
+                    if (param.IsOptional)
+                    {
+                        if (param.HasDefaultValue)
+                            argument = param.DefaultValue;
+                        else if (param.ParameterType.IsValueType)
+                            argument = System.Activator.CreateInstance(param.ParameterType);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Call to method {method.Name} is missing argument for {param.Name} and this paramater is not optional.");
+                    }
+                }
+
+                argumentsWithDefaults[i] = argument;
+            }
+
+            return argumentsWithDefaults;
+        }
         private void RejectRequestIfLateOrOverloaded()
         {
             var config = LoadSheddingConfig();
@@ -421,12 +481,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new RequestException("Only requests with content are supported.");
             }
 
-            var errors = new List<ValidationResult>();
-            if (!_validator.TryValidateObjectRecursive(context.Request, errors))
-            {
-                _failureCounter.Increment("InvalidRequestFormat");
-                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
-            }
+        
         }
 
 
@@ -539,11 +594,10 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
 
-        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData)
+        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData,object[] arguments)
         {
             var taskType = serviceMethod.ServiceInterfaceMethod.ReturnType;
             var resultType = taskType.IsGenericType ? taskType.GetGenericArguments().First() : null;
-            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
             var settings = requestData.Target.IsWeaklyTyped ? JsonSettingsWeak : JsonSettings;
 
             var invocationResult = await Activator.Invoke(serviceMethod, arguments);

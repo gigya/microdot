@@ -157,6 +157,7 @@ namespace Gigya.Microdot.Hosting.Service
                     else
                     {
                         Console.WriteLine("Service initialized in interactive mode (command line). Press [Alt+S] to stop the service gracefully.");
+
                     }
 
                     Task.Factory.StartNew(() =>
