@@ -40,16 +40,16 @@ namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {
+        private readonly IKernel _kernel;
+        protected IResolutionRoot ResolutionRoot;
+
+        public int BasePort { get; protected set; }
+
         public ServiceTesterBase()
         {
             _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
             ResolutionRoot = _kernel;
         }
-
-        private readonly IKernel _kernel;
-        protected IResolutionRoot ResolutionRoot;
-
-        public int BasePort { get; protected set; }
 
         /// <summary>
         /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of

@@ -55,9 +55,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
     }
 
-
-
-    [TestFixture,Parallelizable(ParallelScope.All)]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)] // We seeing there is some expectation to not run in parallel between the tests!
     public class CalculatorServiceTests
     {
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }
@@ -72,7 +70,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-
                 Tester = new ServiceTester<CalculatorServiceHost>();
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();

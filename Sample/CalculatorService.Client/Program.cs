@@ -20,13 +20,12 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("ENV", "dev");
                 Environment.SetEnvironmentVariable("GIGYA_BASE_PATH", Environment.CurrentDirectory);
 
-
-                MicrodotInitializer microdotInitializer = new MicrodotInitializer("CalculatorService.Client", new NLogModule());
-
-
-                ICalculatorService calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
-                int sum = calculatorService.Add(2, 3).Result;
-                Console.WriteLine($"Sum: {sum}");
+                using (var microdotInitializer = new MicrodotInitializer("CalculatorService.Client", new NLogModule()))
+                {
+                    var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
+                    int sum = calculatorService.Add(2, 3).Result;
+                    Console.WriteLine($"Sum: {sum}");
+                }
             }
             catch (Exception ex)
             {

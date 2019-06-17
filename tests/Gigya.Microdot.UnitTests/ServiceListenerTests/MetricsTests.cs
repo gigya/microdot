@@ -26,11 +26,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void SetUp()
         {
             Metric.ShutdownContext("Service");
-
             TracingContext.SetUpStorage();
             TracingContext.SetRequestID("1");
-
-
         }
 
 
@@ -39,61 +36,65 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             Metric.ShutdownContext("Service");
         }
+        
+        
+        /*
+            The test bringing test host with Calculator service and calling to a method 
+                1) without exception
+                2) with exception
+            And counting amount of Calls that Http Service Listener records.
 
+            Chaing of calls:
+            
+            Gigya.Microdot
+                .Hosting.HttpService.HttpServiceListener.HttpServiceListener.Ctor()
+                .Ninject.Host.MicrodotServiceHost.OnStart()
+                .Hosting.Service.ServiceHostBase.Run()
+                .Testing.Shared.Service.NonOrleansServiceTester<Gigya.Microdot.UnitTests.TestingHost<Gigya.Microdot.UnitTests.IDemoService>>
+        */
 
         [Test]
         public void TestMetricsOnSuccess()
         {
-            var ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: ServiceTesterBase.GetPort());
-            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest", new NLogModule()))
-
+            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
-                using (var testinghost =new NonOrleansServiceTester<TestingHost<IDemoService>>(ServiceArguments))
-                {
-                    testinghost.Host.Instance.Increment(0).Returns((ulong)1);
-                    var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
-                    res.Should().Be(1);
+                testinghost.Host.Instance.Increment(0).Returns((ulong)1);
 
-                    testinghost.Host.Instance.Received().Increment(0);
-                    Thread.Sleep(100);
-                    GetMetricsData().AssertEquals(DefaultExpected());
-                }
+                var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
+                res.Should().Be(1);
+
+                testinghost.Host.Instance.Received().Increment(0);
+                Thread.Sleep(100);
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected());
             }
         }
-
 
         [Test]
         public void TestMetricsOnFailure()
         {
-            using (MicrodotInitializer microdotInitializer = new MicrodotInitializer("gest", new NLogModule()))
-
+            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
-                using (var testinghost =
-                    new NonOrleansServiceTester<TestingHost<IDemoService>>())
+                testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
+
+                Assert.Throws<RemoteServiceException>(() => testinghost.GetServiceProxy<IDemoService>().DoSomething().GetAwaiter().GetResult());
+
+                var metricsExpected = DefaultExpected();
+
+                metricsExpected.Counters = new List<MetricDataEquatable>
                 {
-                    testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
+                    new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
+                };
 
-                    Assert.Throws<RemoteServiceException>(() =>  testinghost.GetServiceProxy<IDemoService>().DoSomething().GetAwaiter().GetResult());
-
-                    var metricsExpected = DefaultExpected();
-
-                    metricsExpected.Counters = new List<MetricDataEquatable>
-                    {
-                        new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
-                    };
-
-
-                    GetMetricsData().AssertEquals(metricsExpected);
-                }
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(metricsExpected);
             }
         }
 
 
-        private static MetricsData GetMetricsData()
+        private MetricsData GetMetricsData(string hostName)
         {
             return
                 Metric.Context("Service")
-                      .Context("test")
+                      .Context(hostName)
                       .DataProvider.CurrentMetricsData;
         }
 

@@ -32,58 +32,69 @@ namespace Gigya.Microdot.Testing.Shared.Service
 {
     public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
-        public  TServiceHost Host = new TServiceHost();
-        private Task _siloStopped;
+        public TServiceHost Host = new TServiceHost();
+        private Task _hostStopped;
 
         public NonOrleansServiceTester()
         {
-            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort()) { InitTimeOutSec = 10 };
-            init(args);
+            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
+                                            ConsoleOutputMode.Disabled,
+                                            SiloClusterMode.PrimaryNode,
+                                            GetPort())
+                                            {
+                                                InitTimeOutSec = 10
+                                            };
+            Initialize(args);
         }
 
         public NonOrleansServiceTester(ServiceArguments serviceArguments)
         {
-            init(serviceArguments);
+            Initialize(serviceArguments);
         }
 
-        private void init( ServiceArguments serviceArguments)
+        private void Initialize(ServiceArguments serviceArguments)
         {
-            if (serviceArguments.BasePortOverride == null )
-                throw  new  ArgumentException("ServiceArguments.BasePortOverride should not be null ");
+            if (serviceArguments.BasePortOverride == null)
+                throw new ArgumentException("ServiceArguments.BasePortOverride should not be null.");
 
             BasePort = serviceArguments.BasePortOverride.Value;
 
             Host = new TServiceHost();
-            _siloStopped = Task.Run(() => Host.Run(serviceArguments));
 
-            //Silo is ready or failed to start
-            Task.WaitAny(_siloStopped, Host.WaitForServiceStartedAsync());
-            if (_siloStopped.IsFaulted)
+            _hostStopped = Task.Run(() => Host.Run(serviceArguments));
+
+            Task.WaitAny(_hostStopped, Host.WaitForServiceStartedAsync());
+
+            // Host is ready or failed to start
+            if (_hostStopped.IsFaulted)
             {
                 try
                 {
-                    // Flatten Aggregated exception
-                    _siloStopped.GetAwaiter().GetResult();
+                    // Flatten aggregated exception
+                    _hostStopped.GetAwaiter().GetResult();
                 }
                 catch (Exception e)
                 {
-                    throw new Exception("Silo Failed to start", e);
-
+                    throw new Exception("Host failed to start.", e);
                 }
             }
-            if (_siloStopped.IsCompleted)
-                throw new Exception("Silo Failed to start");
+            else if (_hostStopped.IsCompleted)
+                throw new Exception("Host failed to start.");
         }
 
         public override void Dispose()
         {
+            var timeout = TimeSpan.FromSeconds(60);
+
             base.Dispose();
 
             Host.Stop();
-            var completed = _siloStopped.Wait(60000);
+
+            var completed = _hostStopped.Wait((int)timeout.TotalMilliseconds);
 
             if (!completed)
-                throw new TimeoutException("ServiceTester: The service failed to shutdown within the 60 second limit.");
+                throw new TimeoutException(
+                    $"{nameof(NonOrleansServiceTester<TServiceHost>)}: The service failed to shutdown within the {timeout.TotalSeconds} seconds.");
         }
     }
 }

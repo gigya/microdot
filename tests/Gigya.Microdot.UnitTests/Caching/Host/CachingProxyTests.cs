@@ -29,17 +29,14 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
     [TestFixture,Parallelizable(ParallelScope.All)]
     public class CachingProxyTests
     {
-     
         private ISlowService Service { get; set; }
-        private MicrodotInitializer _microdotInitializer;
 
         [OneTimeSetUp]
         public void SetUp()
         {
             try
             {
-                _microdotInitializer = new MicrodotInitializer("", new NLogModule());
-                Service =new NonOrleansServiceTester<SlowServiceHost>(
+                Service = new NonOrleansServiceTester<SlowServiceHost>(
                         new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: ServiceTesterBase.GetPort()))
                     .GetServiceProxyWithCaching<ISlowService>();
             }
@@ -53,7 +50,6 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         [OneTimeTearDown]
         public void TearDown()
         {
-            _microdotInitializer.Dispose();
         }
 
         public enum Parameters { Identical, Different }

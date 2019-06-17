@@ -50,15 +50,15 @@ namespace Gigya.Microdot.Testing.Service
         public ServiceTester()
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort()) { InitTimeOutSec = 10 };
-            Init(args);
+            Initialize(args);
         }
 
         public ServiceTester(ServiceArguments serviceArguments)
         {
-            Init(serviceArguments);
+            Initialize(serviceArguments);
         }
 
-        private void Init(ServiceArguments serviceArguments)
+        private void Initialize(ServiceArguments serviceArguments)
         {
             Host = new TServiceHost();
 
@@ -80,7 +80,7 @@ namespace Gigya.Microdot.Testing.Service
                     throw new Exception("Silo Failed to start", e);
                 }
             }
-            if (SiloStopped.IsCompleted)
+            else if (SiloStopped.IsCompleted)
                 throw new Exception("Silo Failed to start");
         }
 
