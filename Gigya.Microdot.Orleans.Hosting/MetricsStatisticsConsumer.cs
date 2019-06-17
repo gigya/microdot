@@ -30,112 +30,72 @@ using System.Collections.Generic;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-
     public class MetricsStatisticsConsumer : IMetricTelemetryConsumer
     {
-        private readonly ConcurrentDictionary<string, double> latestMetricValues = new ConcurrentDictionary<string, double>();
-        private readonly ConcurrentDictionary<string, Timer> latestMetricTimers = new ConcurrentDictionary<string, Timer>();
-
-        private readonly MetricsContext context = Metrics.Metric.Context("Silo");
+        private readonly ConcurrentDictionary<string, double> _latestMetricValues = new ConcurrentDictionary<string, double>();
+        private readonly Unit _totalMillisecondsUnit = Unit.Custom("TotalMilliseconds");
+        private readonly MetricsContext _context = Metrics.Metric.Context("Silo");
 
         public void IncrementMetric(string name)
         {
-            IncrementMetric(name, 1);
+            IncrementGauge(name, 1);
         }
 
         public void IncrementMetric(string name, double value)
         {
-            TrackMetric(name, value);
+            IncrementGauge(name, value);
         }
 
         public void DecrementMetric(string name)
         {
-            DecrementMetric(name, 1);
+            IncrementGauge(name, -1);
         }
 
         public void DecrementMetric(string name, double value)
         {
-            TrackMetric(name, -value);
+            IncrementGauge(name, -1 * value);
         }
 
-        //properties?
+        private void IncrementGauge(string name, double value)
+        {
+            //Increment Gauge by value
+            UpdateGauge(name, value, (k, v) => v + value, Unit.None);
+        }
+
         public void TrackMetric(string name, double value, IDictionary<string, string> properties = null)
         {
-            bool exists = true;
-            
-            latestMetricValues.AddOrUpdate(name, key => {
-                exists = false;
-                return value;
-            }, (k, v) => v + value);
-
-            // New counter discovered
-            if (!exists)
-                context.Gauge(name, () => latestMetricValues[name], Unit.None);
+            //Override Gauge to last value
+            UpdateGauge(name, value, (k, v) => value, Unit.None);
         }
 
         public void TrackMetric(string name, TimeSpan value, IDictionary<string, string> properties = null)
         {
-            latestMetricTimers.AddOrUpdate(name, (k) =>
+            UpdateGauge(name, value.TotalMilliseconds, (k, v) => value.TotalMilliseconds, _totalMillisecondsUnit);
+        }
+
+        private void UpdateGauge(string name, double firstTimeValue, Func<string, double, double> updateValueFactory, Unit unit)
+        {
+            bool exists = true;
+
+            _latestMetricValues.AddOrUpdate(name, key =>
             {
-                var result = context.Timer(name, unit: Unit.None);
-                result.Record((int)value.TotalMilliseconds, TimeUnit.Milliseconds);
-                return result;
-            }, (k, timer) =>
-           {
-               timer.Record((int)value.TotalMilliseconds, TimeUnit.Milliseconds);
-               return timer;
-           });
-        }
+                exists = false;
 
-        public void TrackDependency(string name, string commandName, DateTimeOffset startTime, TimeSpan duration, bool success)
-        {
-            return;
-        }
+                return firstTimeValue;
+            }, updateValueFactory);
 
-        public void TrackEvent(string name, IDictionary<string, string> properties = null, IDictionary<string, double> metrics = null)
-        {
-            return;
-        }
-
-        public void TrackRequest(string name, DateTimeOffset startTime, TimeSpan duration, string responseCode, bool success)
-        {
-            return;
-        }
-
-        public void TrackException(Exception exception, IDictionary<string, string> properties = null, IDictionary<string, double> metrics = null)
-        {
-            return;
-        }
-
-        public void TrackTrace(string message)
-        {
-            return;
-        }
-
-        public void TrackTrace(string message, Severity severityLevel)
-        {
-            return;
-        }
-
-        public void TrackTrace(string message, Severity severityLevel, IDictionary<string, string> properties)
-        {
-            return;
-        }
-
-        public void TrackTrace(string message, IDictionary<string, string> properties)
-        {
-            return;
+            // New counter discovered
+            if (!exists)
+                _context.Gauge(name, () => _latestMetricValues[name], unit);
         }
 
         public void Flush()
         {
-            return;
         }
 
         public void Close()
         {
-            return;
+            _context.Dispose();
         }
     }
-
 }
