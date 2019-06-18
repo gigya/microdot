@@ -29,10 +29,10 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GrainActivator : AbstractServiceActivator
     {
-        private Lazy<IGrainFactory> Factory { get; }
+        private Lazy<IClusterClient> Factory { get; }
         private ConcurrentDictionary<Type, IGrain> GrainCache { get; }
 
-        public GrainActivator(Lazy<IGrainFactory> factory)
+        public GrainActivator(Lazy<IClusterClient> factory)
         {
             Factory = factory;
             GrainCache = new ConcurrentDictionary<Type, IGrain>();

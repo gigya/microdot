@@ -39,11 +39,10 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public void FireAndForget(Func<Task> asyncAction)
         {
-            var infraLongProcessingGrain = _grainFactory.Value.GetGrain<IRequestProcessingGrain>(0);
-            infraLongProcessingGrain.Do(new Immutable<RequestProcessingAction>(() => asyncAction())).Ignore();
+            asyncAction().Ignore();
         }
 
 
-        public void Dispose() {}
+        public void Dispose() { }
     }
 }
