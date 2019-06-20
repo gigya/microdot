@@ -10,6 +10,7 @@ using Orleans;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -17,15 +18,17 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class MicrodotIncomingGrainCallFilter : IIncomingGrainCallFilter
     {
         private readonly ILog _log;
+        private readonly ClusterIdentity _clusterIdentity;
         private Counter EventsDiscarded { get; }
 
         private readonly IEventPublisher<GrainCallEvent> _eventPublisher;
         private readonly Func<LoadShedding> _loadSheddingConfig;
 
         public MicrodotIncomingGrainCallFilter(IEventPublisher<GrainCallEvent> eventPublisher,
-            Func<LoadShedding> loadSheddingConfig, ILog log)
+            Func<LoadShedding> loadSheddingConfig, ILog log, ClusterIdentity clusterIdentity)
         {
             _log = log;
+            _clusterIdentity = clusterIdentity;
 
             _eventPublisher = eventPublisher;
             _loadSheddingConfig = loadSheddingConfig;
@@ -93,7 +96,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
             }
 
-            //     grainEvent.SiloDeploymentId = ConfigBuilder.ClusterConfiguration.Globals.DeploymentId;
+             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
 
             grainEvent.TargetType = target.InterfaceMethod.DeclaringType?.FullName;
             grainEvent.TargetMethod = target.InterfaceMethod.Name;

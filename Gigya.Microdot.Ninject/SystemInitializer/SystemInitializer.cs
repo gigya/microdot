@@ -72,7 +72,7 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
                 Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                 if (!_kernel.IsBinded(typeof(ISourceBlock<>).MakeGenericType(configType)))
                 {
-                    _kernel.Bind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+                    _kernel.Bind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications).InSingletonScope();
                 }
 
                 if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(sourceBlockType)))

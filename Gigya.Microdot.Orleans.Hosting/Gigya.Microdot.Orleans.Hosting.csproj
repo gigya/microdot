@@ -53,7 +53,6 @@
     <Compile Include="ExcludeGrainFromStatisticsAttribute.cs" />
     <Compile Include="OrleansConfigurationBuilder.cs" />
     <Compile Include="OrleansCustomSerialization.cs" />
-    <Compile Include="DelegatingBootstrapProvider.cs" />
     <Compile Include="Events\GrainCallEvent.cs" />
     <Compile Include="GigyaSiloHost.cs" />
     <Compile Include="GrainActivator.cs" />

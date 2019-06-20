@@ -35,7 +35,7 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 
         public void Dispose()
         {
-         //   throw new NotImplementedException();
+
         }
 
         public ILogger CreateLogger(string categoryName)

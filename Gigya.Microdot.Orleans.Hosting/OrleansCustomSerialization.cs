@@ -1,12 +1,13 @@
-﻿#region Copyright 
+﻿#region Copyright
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License"); 
-// you may not use this file except in compliance with the License.  
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -18,27 +19,25 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#endregion
 
-using System;
-using System.Linq;
-using System.Net.Http;
+#endregion Copyright
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Orleans.Runtime;
 using Orleans.Serialization;
+using System;
+using System.Linq;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
     /// <summary>
     /// This class is called by the Orleans runtime to perform serialization for special types, and should not be called directly from your code.
     /// </summary>
-    /// 
+    ///
     public class OrleansCustomSerialization : IExternalSerializer
     {
         private readonly Type[] _supportedTypes;
         private readonly JsonSerializerSettings _jsonSettings;
-
 
         public OrleansCustomSerialization()
         {
@@ -55,10 +54,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                 DateParseHandling = DateParseHandling.None
             };
         }
-
-        //public void Initialize(Logger logger)
-        //{
-        //}
 
         public bool IsSupportedType(Type itemType)
         {
@@ -88,5 +83,4 @@ namespace Gigya.Microdot.Orleans.Hosting
             return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
         }
     }
-    
 }
