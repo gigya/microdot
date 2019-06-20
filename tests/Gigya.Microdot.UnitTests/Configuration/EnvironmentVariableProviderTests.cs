@@ -1,6 +1,7 @@
 ﻿using System;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;
 
 using NSubstitute;
@@ -58,7 +59,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public void ReadsEnvFromDifferentFile()
         {
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", "C:\\gigya\\envVars.json");
-            new EnvironmentVariableProvider(_fileSystem);
+            new EnvironmentVariableProvider(_fileSystem,new CurrentApplicationInfo("test"));
 
             _fileSystem.Received().TryReadAllTextFromFile("c:\\gigya\\envvars.json");
         }
@@ -66,7 +67,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [Test]
         public void ReadsEnvFromDefaultFile()
         {
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
+            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
 
             _fileSystem.Received().TryReadAllTextFromFile(environmentVariableProvider.PlatformSpecificPathPrefix + "/gigya/environmentVariables.json");
         }
@@ -76,7 +77,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             Environment.SetEnvironmentVariable("ZONE", "il1b");
 
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
+            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
 
             environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("il1a");
             environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe("il1");
@@ -88,7 +89,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [Test]
         public void ReadAndSeEnvVariables_AllEmpty()
         {
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
+            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
 
             environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("il1a");
             environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe("il1");
@@ -101,7 +102,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => null);
 
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem);
+            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
 
             // assert environment variables were not changed
             environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe(DEFAULT_ZONE);
@@ -117,7 +118,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             Action doAction = () =>
                               {
-                                  new EnvironmentVariableProvider(_fileSystem);
+                                  new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
                               };
             doAction.ShouldThrow<ConfigurationException>();
         }

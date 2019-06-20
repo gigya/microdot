@@ -12,7 +12,7 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(appName)).InTransientScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(appName)).InSingletonScope();
 
             loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
             // Set custom Binding 

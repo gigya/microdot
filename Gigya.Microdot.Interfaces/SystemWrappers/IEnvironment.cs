@@ -43,7 +43,13 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         string DeploymentEnvironment { get; }
 
         string ConsulAddress { get; }
-   
+
+        /// <summary>
+        /// Logical instance name for the current application, which can be used to differentiate between
+        /// multiple identical applications running on the same host.
+        /// </summary>
+        string InstanceName { get; }
+
         [Obsolete("To be removed on Microdot version 2.0. Use IEnvironmentVariableProvider.SetEnvironmentVariableForProcess instead")]
         void SetEnvironmentVariableForProcess(string name, string value);
 

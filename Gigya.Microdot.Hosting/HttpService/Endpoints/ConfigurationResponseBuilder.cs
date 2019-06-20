@@ -32,7 +32,7 @@ using System.Runtime;
 using System.Text;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Newtonsoft.Json;
 
@@ -40,17 +40,17 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {
     public class ConfigurationResponseBuilder
     {
-        JsonSerializerSettings JsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented};
+        readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented};
 
         private UsageTracking UsageTracking { get; }
         private ServiceArguments ServiceArguments { get; }
         public CurrentApplicationInfo AppInfo { get; }
         private ConfigCache ConfigCache { get; }
-        private IEnvironmentVariableProvider Envs { get; }
+        private IEnvironment Envs { get; }
         private IAssemblyProvider AssemblyProvider { get; }
 
         public ConfigurationResponseBuilder(ConfigCache configCache,
-                                            IEnvironmentVariableProvider envs,
+                                            IEnvironment envs,
                                             IAssemblyProvider assemblyProvider,
                                             UsageTracking usageTracking,
                                             ServiceArguments serviceArguments,
@@ -209,7 +209,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             {
                 { "ApplicationName", AppInfo.Name },
                 { "HostName", CurrentApplicationInfo.HostName},
-                { "InstanceName", AppInfo.InstanceName },
+                { "InstanceName", Envs.InstanceName },
                 { "OSUser", AppInfo.OsUser },
                 { "OSVersion", Environment.OSVersion.ToString() },
                 { "CommandLine", Environment.CommandLine },

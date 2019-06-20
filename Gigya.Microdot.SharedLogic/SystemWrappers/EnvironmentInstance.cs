@@ -37,9 +37,11 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
     {
         private readonly IEnvironmentVariableProvider _environmentVariableProvider;
         private readonly string _region;
+        private const string DEFAULT_INSTANCE_NAME = "DefaultInstance";
+
         private Func<DataCentersConfig> GetDataCentersConfig { get; }
 
-        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider, Func<DataCentersConfig> getDataCentersConfig)
+        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider, Func<DataCentersConfig> getDataCentersConfig, CurrentApplicationInfo applicationInfo)
         {
             _environmentVariableProvider = environmentVariableProvider;
             GetDataCentersConfig = getDataCentersConfig;
@@ -47,11 +49,13 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
             _region = environmentVariableProvider.GetEnvironmentVariable("REGION");
             DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
             ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
+            InstanceName = applicationInfo.InstanceName ?? environmentVariableProvider.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME") ?? DEFAULT_INSTANCE_NAME;
 
             if (string.IsNullOrEmpty(Zone) || string.IsNullOrEmpty(DeploymentEnvironment))
                 throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %ZONE%, %ENV%");
         }
-
+       
+        public string InstanceName { get; }
         public string Zone { get; }
         public string Region => _region ?? GetDataCentersConfig().Current; // if environmentVariable %REGION% does not exist, take the region from DataCenters configuration (the region was previously called "DataCenter")
         public string DeploymentEnvironment { get; }        

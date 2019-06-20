@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Activation;
@@ -25,6 +26,7 @@ namespace Microsoft.Framework.DependencyInjection.Ninject
 
         public IServiceScope CreateScope()
         {
+
             return new NinjectServiceScope(_resolver, _inheritedParameters);
         }
 

@@ -54,7 +54,7 @@ namespace Gigya.Microdot.SharedLogic.Events
                 evt.ServiceName = AppInfo.Name;
             
             if (evt.ServiceInstanceName == null) 
-                evt.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
+                evt.ServiceInstanceName = Environment.InstanceName;
             
             if (evt.ServiceVersion == null) 
                 evt.ServiceVersion = AppInfo.Version.ToString(4);

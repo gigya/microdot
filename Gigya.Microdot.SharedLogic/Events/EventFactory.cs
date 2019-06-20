@@ -22,17 +22,20 @@
 
 using System;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
     public class EventFactory<T> : IEventFactory<T>  where T : IEvent
     {
         private readonly CurrentApplicationInfo AppInfo;
+        private readonly IEnvironment _environment;
         private readonly Func<T> _eventFactory;
 
-        public EventFactory(Func<T> eventFactory, CurrentApplicationInfo appInfo)
+        public EventFactory(Func<T> eventFactory, CurrentApplicationInfo appInfo, IEnvironment environment)
         {
             AppInfo = appInfo;
+            _environment = environment;
             _eventFactory = eventFactory;
         }
 
@@ -42,7 +45,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
             // Add Application information
             evt.ServiceName = AppInfo.Name;
-            evt.ServiceInstanceName = AppInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : AppInfo.InstanceName;
+            evt.ServiceInstanceName = _environment.InstanceName;
             evt.ServiceVersion = AppInfo.Version.ToString(4);
             evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
             evt.HostName = CurrentApplicationInfo.HostName;

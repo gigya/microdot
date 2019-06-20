@@ -55,7 +55,7 @@ namespace Gigya.Microdot.Testing.Shared
         public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
         {
             ServicePointManager.DefaultConnectionLimit = 200;
-               Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME)).InTransientScope();
+               Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME)).InSingletonScope();
             this.Load<MicrodotModule>();
 
             Rebind<IEventPublisher>().To<NullEventPublisher>();

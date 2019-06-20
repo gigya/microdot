@@ -213,6 +213,7 @@ namespace Gigya.Microdot.UnitTests.Events
         public string Region => nameof(Region);
         public string DeploymentEnvironment => nameof(DeploymentEnvironment);
         public string ConsulAddress => nameof(ConsulAddress);
+        public string InstanceName => nameof(InstanceName);
 
         [Obsolete("To be deleted on version 2.0")]
         public string GetEnvironmentVariable(string name) => name;

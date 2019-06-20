@@ -32,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
             var k = new StandardKernel();
             k.Load(new ConfigVerificationModule(new ConsoleLogLoggersModules(), new ServiceArguments()));
             k.Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo("InfraTests")).InTransientScope();
+                .ToConstant(new CurrentApplicationInfo("InfraTests")).InSingletonScope();
 
             IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
             providerMock.GetAssemblies().Returns(info => new[] {GetType().Assembly} );

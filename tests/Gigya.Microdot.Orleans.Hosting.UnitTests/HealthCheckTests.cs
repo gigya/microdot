@@ -59,7 +59,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             int port = ServiceTesterBase.GetPort();
             ///serviceDrainTimeSec:
             var  serviceArguments=new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
-                SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:1){InitTimeOutSec =10};
+                SiloClusterMode.PrimaryNode, port,serviceDrainTimeSec:1,instanceName:"test"){InitTimeOutSec =10};
             
             var customServiceTester =new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
