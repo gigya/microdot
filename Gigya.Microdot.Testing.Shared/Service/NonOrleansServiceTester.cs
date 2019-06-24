@@ -36,7 +36,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public TServiceHost Host = new TServiceHost();
         private Task _hostStopped;
 
-        public NonOrleansServiceTester(TracingContext tracingContext = null) : base(tracingContext)
+        public NonOrleansServiceTester(Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                                             ConsoleOutputMode.Disabled,
@@ -48,7 +48,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             Initialize(args);
         }
 
-        public NonOrleansServiceTester(ServiceArguments serviceArguments, TracingContext tracingContext = null) : base(tracingContext)
+        public NonOrleansServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
         {
             Initialize(serviceArguments);
         }

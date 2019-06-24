@@ -48,13 +48,13 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
 
 
-        public ServiceTesterBase(TracingContext tracingContext = null)
+        public ServiceTesterBase(Action<IBindingRoot> additionalBinding = null)
         {
             _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules(),
                 (kernel =>
                 {
-                    if (tracingContext != null)
-                        kernel.Rebind<TracingContext>().ToConstant(tracingContext).InSingletonScope();
+                    additionalBinding?.Invoke(kernel);
+                 
                 })).Kernel;
             ResolutionRoot = _kernel;
         }

@@ -1,12 +1,8 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Gigya.Microdot.Orleans.Ninject.Host;
-using Microsoft.Extensions.DependencyInjection;
-using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
 
