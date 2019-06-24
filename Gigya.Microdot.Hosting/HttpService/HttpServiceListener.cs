@@ -427,12 +427,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new RequestException("Only requests with content are supported.");
             }
 
-            var errors = new List<ValidationResult>();
-            if (!_validator.TryValidateObjectRecursive(context.Request, errors))
-            {
-                _failureCounter.Increment("InvalidRequestFormat");
-                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
-            }
+        
         }
 
 
@@ -531,6 +526,15 @@ namespace Gigya.Microdot.Hosting.HttpService
                     return JsonConvert.DeserializeObject<HttpServiceRequest>(json, JsonSettings);
                 }
             });
+            var errors = new List<ValidationResult>();
+
+            if (   !_validator.TryValidateObjectRecursive(request.Overrides, errors) 
+                || !_validator.TryValidateObjectRecursive(request.TracingData, errors)
+                )
+            {
+                _failureCounter.Increment("InvalidRequestFormat");
+                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
+            }
 
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");

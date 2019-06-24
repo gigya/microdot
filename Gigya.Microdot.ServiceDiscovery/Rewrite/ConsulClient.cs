@@ -275,8 +275,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public void Dispose()
         {
-            _disposed = true;                
-            _httpClient.Dispose();
+            _disposed = true;
+            try
+            {
+                _httpClient.Dispose();
+            }
+            catch (Exception e)
+            {
+                
+            }
+         
         }
     }
 }
