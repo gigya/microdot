@@ -74,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
 
         [Test]
-        public async Task RequestContextShouldOverridePortAndHost()
+        public async Task ServiceProxyRpcMessageShouldRemainSame()
         {
             const string serviceName = "DemoService";
             const int defaultPort = 5555;
@@ -91,6 +91,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 TracingContext tracingContext = kernel.Get<TracingContext>();
 
+                tracingContext.SetRequestID("g"); 
+                
                 var serviceProxy = providerFactory(serviceName);
                 Uri uri = null;
                 string requestMessage = null;
@@ -124,6 +126,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
         }
 
+        // Don't change structure, unless the original class is changing on purpose.
+        // It used to ensure, the public protocol isn't broken or changed by mistake.
         public class TracingData
         {
             [JsonRequired]
@@ -293,7 +297,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
 
-                //Disable  TracingContext.SetRequestID("1");
+                kernel.Get<TracingContext>().SetRequestID("1");
 
         int counter = 0;
                 var messageHandler = new MockHttpMessageHandler();
@@ -442,72 +446,72 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.ShouldBe(expected);
         }
 
-       // [Test]
-        //public async Task ToUpper_MethodCallFailsWithRequestException_CorrectExceptionIsThrown()
-        //{
-        //    var expected = new RequestException("You request is invalid.").ThrowAndCatch();
-        //    var messageHandler = new MockHttpMessageHandler();
-        //    messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
+        [Test]
+        public async Task ToUpper_MethodCallFailsWithRequestException_CorrectExceptionIsThrown()
+        {
+            var expected = new RequestException("You request is invalid.").ThrowAndCatch();
+            var messageHandler = new MockHttpMessageHandler();
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
 
-        //    Func<Task> action = async () => await CreateClient(messageHandler).ToUpper("aaaa");
+            Func<Task> action = async () => await CreateClient(messageHandler).ToUpper("aaaa");
 
-        //    action.ShouldThrow<RequestException>().Message.Should().Be(expected.Message);
-        //}
+            action.ShouldThrow<RequestException>().Message.Should().Be(expected.Message);
+        }
 
-        //[Test]
-        //public async Task ToUpper_MethodCallFailsWithCustomerFacingException_CorrectExceptionIsThrown()
-        //{
-        //    var expected = new RequestException("You action is invalid, Mr. Customer.", 30000).ThrowAndCatch();
-        //    var messageHandler = new MockHttpMessageHandler();
-        //    messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+        [Test]
+        public async Task ToUpper_MethodCallFailsWithCustomerFacingException_CorrectExceptionIsThrown()
+        {
+            var expected = new RequestException("You action is invalid, Mr. Customer.", 30000).ThrowAndCatch();
+            var messageHandler = new MockHttpMessageHandler();
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-        //    var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RequestException>();
+            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RequestException>();
 
-        //    actual.Message.ShouldBe(expected.Message);
-        //    actual.ErrorCode.ShouldBe(expected.ErrorCode);
-        //}
+            actual.Message.ShouldBe(expected.Message);
+            actual.ErrorCode.ShouldBe(expected.ErrorCode);
+        }
 
-        //[Test]
-        //public async Task ToUpper_MethodCallFailsWithEnvironmentException_CorrectExceptionIsThrown()
-        //{
-        //    var expected = new EnvironmentException("You environment is invalid.").ThrowAndCatch();
-        //    var messageHandler = new MockHttpMessageHandler();
-        //    messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+        [Test]
+        public async Task ToUpper_MethodCallFailsWithEnvironmentException_CorrectExceptionIsThrown()
+        {
+            var expected = new EnvironmentException("You environment is invalid.").ThrowAndCatch();
+            var messageHandler = new MockHttpMessageHandler();
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-        //    var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<EnvironmentException>();
+            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<EnvironmentException>();
 
-        //    actual.Message.ShouldBe(expected.Message);
-        //}
-
-
+            actual.Message.ShouldBe(expected.Message);
+        }
 
 
-        //[Test]
-        //public async Task ToUpper_MethodCallFailsWithRemoteServiceException_CorrectExceptionIsThrown()
-        //{
-        //    var expected = new RemoteServiceException("A service is invalid.", "someUri").ThrowAndCatch();
-        //    var messageHandler = new MockHttpMessageHandler();
-        //    messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-        //    var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
-        //    actual.Message.ShouldBe(expected.Message);
-        //    actual.RequestedUri.ShouldBe(expected.RequestedUri);
-        //    actual.InnerException.ShouldBeNull();
-        //}
+        [Test]
+        public async Task ToUpper_MethodCallFailsWithRemoteServiceException_CorrectExceptionIsThrown()
+        {
+            var expected = new RemoteServiceException("A service is invalid.", "someUri").ThrowAndCatch();
+            var messageHandler = new MockHttpMessageHandler();
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-        //[Test]
-        //public async Task ToUpper_MethodCallFailsWithProgrammaticException_CorrectExceptionIsThrown()
-        //{
-        //    var expected = new ProgrammaticException("You code is invalid.").ThrowAndCatch();
-        //    var messageHandler = new MockHttpMessageHandler();
-        //    messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
-        //    var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
+            actual.Message.ShouldBe(expected.Message);
+            actual.RequestedUri.ShouldBe(expected.RequestedUri);
+            actual.InnerException.ShouldBeNull();
+        }
 
-        //    actual.InnerException.ShouldBeOfType<ProgrammaticException>();
-        //    actual.InnerException.Message.ShouldBe(expected.Message);
-        //}
+        [Test]
+        public async Task ToUpper_MethodCallFailsWithProgrammaticException_CorrectExceptionIsThrown()
+        {
+            var expected = new ProgrammaticException("You code is invalid.").ThrowAndCatch();
+            var messageHandler = new MockHttpMessageHandler();
+            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+
+            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
+
+            actual.InnerException.ShouldBeOfType<ProgrammaticException>();
+            actual.InnerException.Message.ShouldBe(expected.Message);
+        }
 
         [Test]
         public async Task ToUpper_MethodCallFailsWithInvalidJson_CorrectExceptionIsThrown()
