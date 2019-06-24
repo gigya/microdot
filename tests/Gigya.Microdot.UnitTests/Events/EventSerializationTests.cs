@@ -193,7 +193,7 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent.ShouldContainKey(EventConsts.infrVersion);
             serializedEvent[EventConsts.infrVersion].ShouldBe(AppInfo.Version.ToString(4));
 
-            serializedEvent.ShouldNotContainKey(EventConsts.srvSystemInstance);
+            serializedEvent.ShouldContainKey(EventConsts.srvSystemInstance);
                     
             serializedEvent.ShouldContainKey(EventConsts.runtimeHost);
             serializedEvent[EventConsts.runtimeHost].ShouldBe(CurrentApplicationInfo.HostName);
