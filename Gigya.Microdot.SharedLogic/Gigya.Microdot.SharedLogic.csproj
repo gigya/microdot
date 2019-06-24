@@ -53,6 +53,7 @@
     <Compile Include="Events\MembersToLogExtractor.cs" />
     <Compile Include="Events\EventSerializer.cs" />
     <Compile Include="Events\Param.cs" />
+    <Compile Include="Events\TracingContextNoneOrleans.cs" />
     <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />
     <Compile Include="Exceptions\StackTraceEnhancer.cs" />
     <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />

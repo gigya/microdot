@@ -41,6 +41,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
     /// </summary>
     public sealed class RemoteHostPool : IDisposable
     {
+        private readonly TracingContext _tracingContext;
         public ISourceBlock<ServiceReachabilityStatus> ReachabilitySource => ReachabilityBroadcaster;
         public  bool IsServiceDeploymentDefined => DiscoverySource.IsServiceDeploymentDefined;
         private readonly BroadcastBlock<EndPointsResult> _endPointsChanged = new BroadcastBlock<EndPointsResult>(null);
@@ -86,8 +87,10 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             , ILog log
             , HealthMonitor healthMonitor
             , MetricsContext metrics
+            ,TracingContext tracingContext
         )
         {
+            _tracingContext = tracingContext;
             DiscoverySource = discovery;
             DeploymentIdentifier = deploymentIdentifier;
             ReachabilityChecker = reachabilityChecker;
@@ -258,7 +261,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
         {
             LastEndpointRequest = DateTime.UtcNow;
 
-            var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
                 return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Host, hostOverride.Port?? GetConfig().DefaultPort);
@@ -285,7 +288,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 
         public async Task<IEndPointHandle> GetOrWaitForNextHost(CancellationToken cancellationToken)
         {
-            var hostOverride = TracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(DeploymentIdentifier.ServiceName);
 
             if (hostOverride != null)
                 return new OverriddenRemoteHost(DeploymentIdentifier.ServiceName, hostOverride.Host, hostOverride.Port ?? GetConfig().DefaultPort);

@@ -39,6 +39,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService

@@ -34,6 +34,7 @@ using System;
 using System.Linq;
 using System.Net.NetworkInformation;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
 namespace Gigya.Microdot.Testing.Shared.Service
@@ -45,12 +46,18 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
         public int BasePort { get; protected set; }
 
-        public ServiceTesterBase()
+
+
+        public ServiceTesterBase(TracingContext tracingContext = null)
         {
-            _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
+            _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules(),
+                (kernel =>
+                {
+                    if (tracingContext != null)
+                        kernel.Rebind<TracingContext>().ToConstant(tracingContext).InSingletonScope();
+                })).Kernel;
             ResolutionRoot = _kernel;
         }
-
         /// <summary>
         /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.

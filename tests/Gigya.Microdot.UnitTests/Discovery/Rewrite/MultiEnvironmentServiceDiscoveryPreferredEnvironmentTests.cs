@@ -37,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private object _currentEnvironment;
         private DiscoveryConfig _discoveryConfig;
         private IMultiEnvironmentServiceDiscovery _serviceDiscovery;
-
+        private TracingContext _tracingContext;
         [SetUp]
         public async Task Setup()
         {
@@ -63,8 +63,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             discovery.CreateLoadBalancer(Arg.Any<DeploymentIdentifier>(), Arg.Any<ReachabilityCheck>(), TrafficRoutingStrategy.RandomByRequestID)
                 .ReturnsForAnyArgs(c => _loadBalancerByEnvironment[c.Arg<DeploymentIdentifier>().DeploymentEnvironment]);
             _serviceDiscovery = _unitTestingKernel.Get<Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>>()(ServiceName, (x, y) => new Task(null));
-
-            TracingContext.SetPreferredEnvironment(null);
+            _tracingContext = _unitTestingKernel.Get<TracingContext>();
+            _tracingContext.SetPreferredEnvironment(null);
         }
 
         [TearDown]
@@ -78,7 +78,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task GotServiceFromPreferredEnvironment()
         {
-            TracingContext.SetPreferredEnvironment(Canary);
+            _tracingContext.SetPreferredEnvironment(Canary);
 
             var node = await _serviceDiscovery.GetNode();
             Assert.IsInstanceOf<PreferredEnvironmentLoadBalancer>(node.LoadBalancer);
@@ -104,9 +104,9 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task FallbackFromPreferredToMasterEnvironment()
         {
-            _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();            
+            _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();
 
-            TracingContext.SetPreferredEnvironment(Canary);
+            _tracingContext.SetPreferredEnvironment(Canary);
 
             var node = await _serviceDiscovery.GetNode();
             Assert.IsInstanceOf<MasterLoadBalancer>(node.LoadBalancer);
@@ -159,7 +159,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _discoveryConfig.EnvironmentFallbackEnabled = true;
 
-            TracingContext.SetPreferredEnvironment(Canary);
+            _tracingContext.SetPreferredEnvironment(Canary);
 
             var node = await _serviceDiscovery.GetNode();
             Assert.IsInstanceOf<StagingLoadBalancer>(node.LoadBalancer);
@@ -176,7 +176,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _discoveryConfig.EnvironmentFallbackEnabled = true;
 
-            TracingContext.SetPreferredEnvironment(Canary);
+            _tracingContext.SetPreferredEnvironment(Canary);
 
             var node = await _serviceDiscovery.GetNode();
             Assert.IsInstanceOf<PreferredEnvironmentLoadBalancer>(node.LoadBalancer);
@@ -193,8 +193,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _discoveryConfig.EnvironmentFallbackEnabled = true;
 
-            TracingContext.SetPreferredEnvironment(Canary);
-            TracingContext.SetHostOverride(ServiceName, "override-host");
+            _tracingContext.SetPreferredEnvironment(Canary);
+            _tracingContext.SetHostOverride(ServiceName, "override-host");
 
             var node = await _serviceDiscovery.GetNode();
             Assert.IsNull(node.LoadBalancer);
@@ -245,7 +245,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 
             _discoveryConfig.EnvironmentFallbackEnabled = true;
 
-            TracingContext.SetPreferredEnvironment(Canary);
+            _tracingContext.SetPreferredEnvironment(Canary);
 
             _serviceDiscovery.GetNode().ShouldThrow<ServiceUnreachableException>();
 

@@ -26,8 +26,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void SetUp()
         {
             Metric.ShutdownContext("Service");
-            TracingContext.SetUpStorage();
-            TracingContext.SetRequestID("1");
         }
 
 

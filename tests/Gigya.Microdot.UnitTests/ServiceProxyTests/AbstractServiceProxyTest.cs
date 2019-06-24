@@ -27,11 +27,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [SetUp]
         public virtual void SetUp()
         {
-            TracingContext.SetUpStorage();
             
             unitTesting = new TestingKernel<ConsoleLog>(mockConfig: MockConfig);
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
-            TracingContext.SetRequestID("1");
             ExceptionSerializer = unitTesting.Get<JsonExceptionSerializer>();
         }
 

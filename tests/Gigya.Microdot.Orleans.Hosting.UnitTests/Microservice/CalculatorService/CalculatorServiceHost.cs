@@ -62,12 +62,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             return new FakesLoggersModules();
         }
 
+        public IKernel Kernel;
         protected override void PreConfigure(IKernel kernel)
         {
             base.PreConfigure(kernel);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
             kernel.RebindForTests();
+            Kernel = kernel;
 
         }
 

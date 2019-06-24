@@ -17,5 +17,10 @@ namespace Gigya.Microdot.Fakes
             Events.Enqueue(evt);
             return PublishingTasks;
         }
+
+        public void Clear()
+        {
+            Events = new ConcurrentQueue<IEvent>();
+        }
     }
 }

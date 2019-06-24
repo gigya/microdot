@@ -39,6 +39,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Orleans.Core.Abstractions">
+      <HintPath>..\packages\Microsoft.Orleans.Core.Abstractions\lib\netstandard2.0\Orleans.Core.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />

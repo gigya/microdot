@@ -30,8 +30,7 @@ using System;
 using System.Collections.Generic;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Gigya.Microdot.SharedLogic.Events;
 using Orleans.Runtime;
 using Orleans.Serialization;
 
@@ -60,6 +59,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             // Register logger per category
             Kernel.BindPerString<OrleansLogAdapter>();
             Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();
+            Rebind<TracingContext>().To<OrleansTracingContext>().InSingletonScope();
         }
     }
 }

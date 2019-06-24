@@ -54,6 +54,8 @@ namespace Gigya.Microdot.ServiceProxy
 {
     public class ServiceProxyProvider : IDisposable, IServiceProxyProvider
     {
+        private readonly TracingContext _tracingContext;
+
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -150,8 +152,9 @@ namespace Gigya.Microdot.ServiceProxy
             Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery> serviceDiscoveryFactory,
             Func<DiscoveryConfig> getConfig,
             JsonExceptionSerializer exceptionSerializer, 
-            CurrentApplicationInfo appInfo)
+            CurrentApplicationInfo appInfo,TracingContext tracingContext)
         {
+            _tracingContext = tracingContext;
             EventPublisher = eventPublisher;
             CertificateLocator = certificateLocator;
 
@@ -318,11 +321,11 @@ namespace Gigya.Microdot.ServiceProxy
             {
                 HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
                 ServiceName = AppInfo.Name,
-                RequestID = TracingContext.TryGetRequestID(),
+                RequestID = _tracingContext.TryGetRequestID(),
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID(),
+                ParentSpanID = _tracingContext.TryGetSpanID(),
                 SpanStartTime = DateTimeOffset.UtcNow,
-                AbandonRequestBy = TracingContext.AbandonRequestBy
+                AbandonRequestBy = _tracingContext.AbandonRequestBy
             };
             PrepareRequest?.Invoke(request);
 
@@ -369,7 +372,7 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.TargetPort = effectivePort.Value;
                     clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
 
-                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
+                    request.Overrides = _tracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
                         ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 

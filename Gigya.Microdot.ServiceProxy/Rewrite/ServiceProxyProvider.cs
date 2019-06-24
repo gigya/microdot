@@ -19,6 +19,8 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 	/// </summary>
 	public class ServiceProxyProvider : IServiceProxyProvider
     {
+        private readonly TracingContext _tracingContext;
+
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -36,8 +38,9 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
 
-        public ServiceProxyProvider(string serviceName)
+        public ServiceProxyProvider(string serviceName, TracingContext tracingContext)
         {
+            _tracingContext = tracingContext;
             ServiceName = serviceName;
         }
 
@@ -57,7 +60,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
             if (resultReturnType == null)
                 throw new ArgumentNullException(nameof(resultReturnType));
             
-            var hostOverride = TracingContext.GetHostOverride(ServiceName);
+            var hostOverride = _tracingContext.GetHostOverride(ServiceName);
 
             if (hostOverride != null)
             {

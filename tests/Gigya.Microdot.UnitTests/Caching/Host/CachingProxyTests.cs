@@ -1,6 +1,4 @@
-﻿using Gigya.Microdot.Logging.NLog;
-using Gigya.Microdot.Ninject;
-using Gigya.Microdot.SharedLogic;
+﻿using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;

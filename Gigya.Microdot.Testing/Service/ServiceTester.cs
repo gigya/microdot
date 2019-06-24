@@ -36,6 +36,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Testing.Service
 {
@@ -47,13 +48,13 @@ namespace Gigya.Microdot.Testing.Service
         private IClusterClient _clusterClient;
         private readonly object _locker = new object();
 
-        public ServiceTester()
+        public ServiceTester(TracingContext tracingContext = null) : base(tracingContext)
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort()) { InitTimeOutSec = 10 };
             Initialize(args);
         }
 
-        public ServiceTester(ServiceArguments serviceArguments)
+        public ServiceTester(ServiceArguments serviceArguments, TracingContext tracingContext = null) : base(tracingContext)
         {
             Initialize(serviceArguments);
         }

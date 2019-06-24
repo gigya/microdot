@@ -20,40 +20,21 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic.Events;
+using Orleans.Runtime;
 
-namespace Gigya.Microdot.Interfaces.Events
+namespace Gigya.Microdot.Orleans.Hosting
 {
-    public interface IEvent
+   public class OrleansTracingContext : TracingContext
     {
-        string EventType { get; }
+        protected override void Set(string key, object value)
+        {
+            RequestContext.Set(key, value);
+        }
 
-        bool ShouldAudit { get; }
-        
-        DateTime Timestamp { get;  }
-        string RequestId { get; set; }
-
-        string SpanId { get; set; }
-
-        string ParentSpanId { get; set; }
-        
-       EventConfiguration Configuration { get; set; }
-
-        IEnvironment Environment { get; set; }
-
-        IStackTraceEnhancer StackTraceEnhancer { get; set; }
-
-        string HostName { get; set; }
-        
-        string InfraVersion { get; set; }
-        
-        string ServiceVersion { get; set; }
-        
-        string ServiceInstanceName { get; set; }
-
-        string ServiceName { get; set; }
+        protected override object Get(string key)
+        {
+            return RequestContext.Get(key);
+        }
     }
 }

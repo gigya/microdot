@@ -62,15 +62,15 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.callID)]
-        public string RequestId { get; set; } = TracingContext.TryGetRequestID();
+        public string RequestId { get; set; } // Publisher populated from TracingContent
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.spanID)]
-        public string SpanId { get; set; } = TracingContext.TryGetSpanID();
+        public string SpanId { get; set; } // Publisher populated from TracingContent
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.parentSpanID)]
-        public string ParentSpanId { get; set; } = TracingContext.TryGetParentSpanID();
+        public string ParentSpanId { get; set; } // Publisher populated from TracingContent
 
         //============ PUBLISHER INFO ===============
 
