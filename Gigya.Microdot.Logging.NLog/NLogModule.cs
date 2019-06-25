@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -46,13 +47,19 @@ namespace Gigya.Microdot.Logging.NLog
             // Bind Orleans log with string context
             funcLog.ToMethod(c =>
                 {
-                    return x =>
+                    return loggerName =>
                     {
-                        var caller = new ConstructorArgument("caller", x);
-                        return c.Kernel.Get<NLogLogger>(caller);
+                        var dict = c.Kernel.Get<ConcurrentDictionary<string, ILog>>();
+                        return dict.GetOrAdd(loggerName
+                            , logName =>
+                            {
+                                var caller = new ConstructorArgument("caller", logName);
+                                return c.Kernel.Get<NLogLogger>(caller);
+                            });
+
                     };
                 })
-             .InScope(GetTypeOfTarget);
+                .InTransientScope();
         }
 
         /// <summary>
