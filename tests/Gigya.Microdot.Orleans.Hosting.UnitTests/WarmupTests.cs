@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
@@ -6,37 +7,24 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class WarmupTests
     {
-
-        [SetUp]
-        public void SetUp()
-        {
-            DependantClassFake.ResetWarmedTimes();
-        }
 
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
             ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>();
+            var beforeGrainCreated = DateTime.Now;
+
             IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);
 
-            int result = await grain.TestWarmedTimes();
+            var dependencyCreateDate = await grain.DependencyCreateDate();
 
-            Assert.AreEqual(result, 2);
+            Assert.Greater(beforeGrainCreated, dependencyCreateDate, "dependencyCreateDate should create before grain is created");
 
             tester.Dispose();
         }
 
-        [Test]
-        [Repeat(1)]
-        public async Task VerifyWarmupBeforeSiloStart()
-        {
-            using (var tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>())
-
-                Assert.AreEqual(DependantClassFake.WarmedTimes, 1);
-
-        }
     }
 }

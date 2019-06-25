@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Orleans;
 
@@ -7,58 +8,53 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
     [HttpService(6556)]
     public interface IWarmupTestService
     {
-        Task<int> TestWarmedTimes();
+        Task<DateTime> CreateDate();
+        Task<DateTime> DependencyCreateDate();
     }
 
     public interface IWarmupTestServiceGrain : IWarmupTestService, IGrainWithIntegerKey
     {
-
     }
 
     public class WarmupTestServiceGrain : Grain, IWarmupTestServiceGrain
     {
-        private readonly IDependantClassFake _dependantClassFake;
+        private readonly ISingletonDependency _singletonDependency;
+        private readonly DateTime _initTime;
 
-        public WarmupTestServiceGrain(IDependantClassFake dependantClassFake)
+        public WarmupTestServiceGrain(ISingletonDependency singletonDependency)
         {
-            _dependantClassFake = dependantClassFake;
-            _dependantClassFake.ThisClassIsWarmed();
+            _initTime = DateTime.Now;
+            _singletonDependency = singletonDependency;
         }
 
-        public async Task<int> TestWarmedTimes()
+        public Task<DateTime> CreateDate()
         {
-            return DependantClassFake.WarmedTimes;
+            return Task.FromResult(_initTime);
+        }
+
+        public Task<DateTime> DependencyCreateDate()
+        {
+            return Task.FromResult(_singletonDependency.CreateDate());
         }
     }
 
-    public interface IDependantClassFake
+    public interface ISingletonDependency
     {
-        void IncreaseWarmedTimes();
-        bool ThisClassIsWarmed();
+        DateTime CreateDate();
     }
 
-    public class DependantClassFake : IDependantClassFake
+    public class SingletonDependency : ISingletonDependency
     {
-        public static int WarmedTimes { get; private set; }
+        public DateTime InitTime;
 
-        public static void ResetWarmedTimes()
+        public SingletonDependency()
         {
-            WarmedTimes = 0;
+            InitTime = DateTime.Now;
         }
 
-        public DependantClassFake()
+        public DateTime CreateDate()
         {
-            IncreaseWarmedTimes();
-        }
-
-        public void IncreaseWarmedTimes()
-        {
-            WarmedTimes++;
-        }
-
-        public bool ThisClassIsWarmed()
-        {
-            return true;
+            return InitTime;
         }
     }
 }

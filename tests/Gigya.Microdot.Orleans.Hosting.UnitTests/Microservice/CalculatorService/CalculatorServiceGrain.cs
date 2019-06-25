@@ -26,6 +26,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;

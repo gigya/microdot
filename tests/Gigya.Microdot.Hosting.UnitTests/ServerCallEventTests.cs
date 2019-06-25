@@ -1,31 +1,31 @@
 using System;
 using System.Linq;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Events;
+using Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Orleans.Hosting.Events;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
-    public class GrainCallEventTests
+    public class ServerCallEventTests
     {
         private const int REPEAT = 1;
 
         private SpyEventPublisher _flumeQueue;
         private ICalculatorService _serviceProxy;
-        private ServiceTester<CalculatorServiceHost> _serviceTester;
+        private NonOrleansServiceTester<CalculatorServiceHost> _serviceTester;
         readonly TracingContextNoneOrleans _tracingContext = new TracingContextNoneOrleans();
 
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
-            _serviceTester = new ServiceTester<CalculatorServiceHost>(k=>k.Rebind<TracingContext>().ToConstant(_tracingContext));
+            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>(k=>k.Rebind<TracingContext>().ToConstant(_tracingContext));
             
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
             
@@ -40,25 +40,23 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 
         [Test]
         [Repeat(REPEAT)]
-        public async Task SingleGrainCall_CallSucceeds_PublishesEvent()
+        public async Task SingleServerCall_CallSucceeds_PublishesEvent()
         {
             _flumeQueue.Clear();
 
-            var requestId = nameof(SingleGrainCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
+            var requestId = nameof(SingleServerCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
             
             _tracingContext.SetRequestID(requestId);
             _tracingContext.TryGetRequestID();
 
             await _serviceProxy.Add(5, 3);
-
-
+            await Task.Delay(100);
             var events = _flumeQueue.Events;
-            var grainReq = events.Where(r => r.EventType == "grainReq")
-                .Select(r => (GrainCallEvent)r)
-                .Single(r => r.TargetType == typeof(ICalculatorWorkerGrain).FullName);
-            
-            Assert.AreEqual("Add", grainReq.TargetMethod);
-            Assert.AreEqual(requestId, grainReq.RequestId);
+            var serverReq = (ServiceCallEvent) events.Single();
+            Assert.AreEqual("serverReq", serverReq.EventType);
+            Assert.AreEqual(nameof(ICalculatorService), serverReq.ServiceName);
+            Assert.AreEqual("Add", serverReq.ServiceMethod);
+            Assert.AreEqual(requestId, serverReq.RequestId);
         }
     }
 }

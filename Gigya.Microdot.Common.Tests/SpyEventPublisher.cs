@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Events;
 using NSubstitute;
 
-namespace Gigya.Microdot.Fakes
+namespace Gigya.Microdot.Common.Tests
 {
     public class SpyEventPublisher : IEventPublisher
     {
