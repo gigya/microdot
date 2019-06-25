@@ -33,15 +33,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-
         public CalculatorServiceHost() 
         { }
 
-
-
-
         public override string ServiceName => "TestService";
-
 
         public override ILoggingModule GetLoggingModule()
         {
@@ -53,7 +48,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             base.PreConfigure(kernel);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
-            kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InSingletonScope();
+            kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
             kernel.RebindForTests();
             Kernel = kernel;
 

@@ -45,7 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GrainCallEventTests.cs" />
+    <Compile Include="ServerCallEventTests.cs" />
     <Compile Include="NonOrleansMicroService\CalculatorService.cs" />
     <Compile Include="NonOrleansMicroService\CalculatorServiceHost.cs" />
     <Compile Include="NonOrleansMicroService\ICalculatorService.cs" />

@@ -45,7 +45,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInitialize.cs" />
     <Compile Include="GrainAgeLimitServiceTests.cs" />
     <Compile Include="GrainCallEventTests.cs" />
     <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />

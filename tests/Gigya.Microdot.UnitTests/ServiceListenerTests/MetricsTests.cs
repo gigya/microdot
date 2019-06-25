@@ -18,7 +18,7 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class MetricsTests
     {
 

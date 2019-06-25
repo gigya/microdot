@@ -25,8 +25,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Service;
 using Gigya.ServiceContract.Attributes;
@@ -55,7 +57,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
     }
 
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)] // We seeing there is some expectation to not run in parallel between the tests!
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)] // We seeing there is some expectation to not run in parallel between the tests!
     public class CalculatorServiceTests
     {
         private ServiceTester<CalculatorServiceHost> Tester { get; set; }
@@ -63,17 +65,21 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
         private ICalculatorService Service { get; set; }
         private ICalculatorService ServiceWithCaching { get; set; }
-
+        private readonly FakeRevokingManager _fakeRevokingManager = new FakeRevokingManager();
 
         [OneTimeSetUp]
         public void SetUp()
         {
             try
             {
-                Tester = new ServiceTester<CalculatorServiceHost>();
+                Tester = new ServiceTester<CalculatorServiceHost>(k =>
+                {
+                    k.Rebind<ICacheRevoker>().ToConstant(_fakeRevokingManager);
+                    k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
+                });
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
-                ProxyProvider   = Tester.GetServiceProxyProvider("CalculatorService");
+                ProxyProvider = Tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)
             {
@@ -183,7 +189,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CallWeakRequestWith_ComplexObject_ParamAndNoReturnType()
         {
-     
+
 
             var wrapper = new Wrapper { INT = 100, STR = "100" };
             var dict = new Dictionary<string, object> { { "wrapper", JsonConvert.SerializeObject(wrapper) } };
@@ -199,7 +205,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task CallWeakRequestWith_Int_ParamAndNoReturnType()
         {
 
-      
+
             var dict = new Dictionary<string, object> { { "a", "5" } };
 
             var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JObject));
@@ -210,9 +216,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public async Task CallWeakRequestWith_NoParamsAndNoReturnType()
         {
-;
+            ;
             var dict = new Dictionary<string, object>();
-           
+
 
             var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", typeof(ICalculatorService).FullName, dict), typeof(JObject));
             var json = (JToken)res;
@@ -267,7 +273,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             //Items shouldBe come from the Cache
             secondValue.ShouldBe(firstValue);
 
-            await AssemblyInitialize.ResolutionRoot.Get<ICacheRevoker>().Revoke(id);
+            await _fakeRevokingManager.Revoke(id);
 
             //Items shouldBe remove from Cache
             await Task.Delay(200);
@@ -353,9 +359,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Service.LogGrainId();
         }
 
-        [Test]
+        [Test,Ignore("This silo need to run on separate app domain from nunit it should set default before any Regex is called")]
         public async Task RegexTestWithTimeout()
         {
+            //This silo need to run on separate app domain from nunit it should set default before any Regex is called
             await Service.RegexTestWithDefaultTimeoutDefault(10);
         }
 

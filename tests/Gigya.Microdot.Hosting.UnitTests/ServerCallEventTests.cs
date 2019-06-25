@@ -7,14 +7,13 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService;
 using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
-    public class GrainCallEventTests
+    public class ServerCallEventTests
     {
         private const int REPEAT = 1;
 
@@ -45,13 +44,13 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         {
             _flumeQueue.Clear();
 
-            var requestId = nameof(SingleGrainCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
+            var requestId = nameof(SingleServerCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
             
             _tracingContext.SetRequestID(requestId);
             _tracingContext.TryGetRequestID();
 
             await _serviceProxy.Add(5, 3);
-
+            await Task.Delay(100);
             var events = _flumeQueue.Events;
             var serverReq = (ServiceCallEvent) events.Single();
             Assert.AreEqual("serverReq", serverReq.EventType);
