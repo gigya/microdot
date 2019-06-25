@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GrainCallEventTests.cs" />
     <Compile Include="NonOrleansMicroService\CalculatorService.cs" />
     <Compile Include="NonOrleansMicroService\CalculatorServiceHost.cs" />
     <Compile Include="NonOrleansMicroService\ICalculatorService.cs" />
@@ -73,6 +74,10 @@
   </Target>
   -->
   <ItemGroup>
+    <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj">
+      <Project>{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}</Project>
+      <Name>Gigya.Microdot.Common.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
       <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
       <Name>Gigya.Microdot.Hosting</Name>

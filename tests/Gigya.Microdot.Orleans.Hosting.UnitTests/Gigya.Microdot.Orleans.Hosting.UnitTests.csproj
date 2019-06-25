@@ -72,7 +72,6 @@
     <Compile Include="ServiceTesterTests.cs" />
     <Compile Include="SchemaEndpointTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpyEventPublisher.cs" />
     <Compile Include="Validation\SensitivityAttributesValidatorTests.cs" />
     <Compile Include="WarmupTests.cs" />
   </ItemGroup>

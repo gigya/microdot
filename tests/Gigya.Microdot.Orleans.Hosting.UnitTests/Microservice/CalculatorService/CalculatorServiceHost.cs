@@ -20,31 +20,17 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using System.Collections.Generic;
-using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Ninject;
-using Ninject.Syntax;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
-    public class FakesLoggersModules : ILoggingModule
-    {
-        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
-        {
-            logBinding.To<ConsoleLog>().InSingletonScope();
-            logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>()).InSingletonScope();
-            eventPublisherBinding.To<SpyEventPublisher>().InSingletonScope();
-        }
-    }
-
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
 

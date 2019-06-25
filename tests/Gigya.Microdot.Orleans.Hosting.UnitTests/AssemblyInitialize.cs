@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
