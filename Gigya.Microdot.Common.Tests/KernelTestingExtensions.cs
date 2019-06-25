@@ -18,7 +18,7 @@ namespace Gigya.Microdot.Fakes.KernelUtils
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
             return kernel;
         }
-        //#ORLEANS20, we need to rebind CrashHandler to fake one, else we have unexpected shutdown 
+
         public static IKernel RebindForTests(this IKernel kernel)
         {
             return kernel.WithNoMetrics().WithLogForTests().WithNoCrashHandler();
