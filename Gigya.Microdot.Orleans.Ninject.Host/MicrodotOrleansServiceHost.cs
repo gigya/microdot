@@ -79,7 +79,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(Arguments, AfterOrleansStartup, BeforeOrleansShutdown);
+            SiloHost.Start(Arguments, AfterOrleansStartup);
         }
 
         /// <summary>
@@ -176,13 +176,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>        
         protected virtual async Task AfterOrleansStartup(IGrainFactory grainFactory) { }
-
-
-        /// <summary>
-        /// When overridden, allows running shutdown code before the silo has stopped, i.e. IBootstrapProvider.Close().
-        /// </summary>
-        /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>
-        protected virtual async Task BeforeOrleansShutdown(IGrainFactory grainFactory) { }
 
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 

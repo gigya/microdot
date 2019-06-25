@@ -38,7 +38,6 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    //TODO beforeOrleansShutdown delete #ORLEANS20
     public class GigyaSiloHost
     {
         private readonly IServiceProviderInit _serviceProvider;
@@ -73,8 +72,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private ISiloHost _siloHost;
 
-        public void Start(ServiceArguments serviceArguments, Func<IGrainFactory, Task> afterOrleansStartup = null,
-            Func<IGrainFactory, Task> beforeOrleansShutdown = null)
+        public void Start(ServiceArguments serviceArguments, Func<IGrainFactory, Task> afterOrleansStartup = null)
         {
             AfterOrleansStartup = afterOrleansStartup;
             _serviceArguments = serviceArguments;
