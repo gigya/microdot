@@ -27,26 +27,34 @@ using Newtonsoft.Json.Linq;
 using Orleans.Serialization;
 using System;
 using System.Linq;
+using System.Collections.Generic;
+
+// ReSharper disable AssignNullToNotNullAttribute
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
     /// <summary>
     /// This class is called by the Orleans runtime to perform serialization for special types, and should not be called directly from your code.
     /// </summary>
-    ///
     public class OrleansCustomSerialization : IExternalSerializer
     {
-        private readonly Type[] _supportedTypes;
-        private readonly JsonSerializerSettings _jsonSettings;
+        protected readonly Dictionary<string,Type> _supportedTypes;
+
+        public Func<JsonSerializerSettings> JsonSettingsFunc { get; set; }
 
         public OrleansCustomSerialization()
         {
             _supportedTypes = new[]
             {
-                typeof(JObject), typeof(JArray), typeof(JToken), typeof(JValue), typeof(JProperty), typeof(JConstructor)
-            };
+                typeof(JObject), 
+                typeof(JArray), 
+                typeof(JToken), 
+                typeof(JValue), 
+                typeof(JProperty), 
+                typeof(JConstructor)
+            }.ToDictionary(t => t.FullName);
 
-            _jsonSettings = new JsonSerializerSettings
+            JsonSettingsFunc = () => new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
@@ -55,14 +63,17 @@ namespace Gigya.Microdot.Orleans.Hosting
             };
         }
 
-        public bool IsSupportedType(Type itemType)
+        public virtual bool IsSupportedType(Type itemType)
         {
-            var result = _supportedTypes.Any(type => type == itemType);
+            if(itemType == null)
+                throw new ArgumentNullException(nameof(itemType) + " can not be null");
+
+            var result = _supportedTypes.ContainsKey(itemType.FullName);
 
             return result;
         }
 
-        public object DeepCopy(object source, ICopyContext context)
+        public virtual object DeepCopy(object source, ICopyContext context)
         {
             if (source is JToken token)
                 return token.DeepClone();
@@ -70,17 +81,37 @@ namespace Gigya.Microdot.Orleans.Hosting
             return source;
         }
 
-        public void Serialize(object item, ISerializationContext context, Type expectedType)
+        public virtual void Serialize(object item, ISerializationContext context, Type expectedType)
         {
-            //Because we convert Json to string in order to serialize.
-            SerializationManager.SerializeInner(item.ToString(), context, typeof(string));
+            var serializedObject = JsonConvert.SerializeObject(item, expectedType, JsonSettingsFunc());
+            SerializationManager.SerializeInner(serializedObject, context);
         }
 
-        public object Deserialize(Type expectedType, IDeserializationContext context)
+        public virtual object Deserialize(Type expectedType, IDeserializationContext context)
         {
             var str = SerializationManager.DeserializeInner<string>(context);
+            return JsonConvert.DeserializeObject(str, expectedType, JsonSettingsFunc());
+        }
 
-            return JsonConvert.DeserializeObject(str, expectedType, _jsonSettings);
+        public virtual void RegisterType(Type itemType)
+        {
+            if(itemType == null)
+                throw new ArgumentNullException(nameof(itemType) + " can not be null");
+            
+            _supportedTypes[itemType.FullName] = itemType;
+        }
+
+        public virtual void UnRegisterType(Type itemType)
+        {
+            if(itemType == null)
+                throw new ArgumentNullException(nameof(itemType) + " can not be null");
+
+            _supportedTypes.Remove(itemType.FullName);
+        }
+
+        public virtual IEnumerable<Type> GetRegistered()
+        {
+            return _supportedTypes.Values;
         }
     }
 }

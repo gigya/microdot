@@ -93,8 +93,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         ///  TelemetryOptionsExtensions
         ///  TypeManagementOptions
         /// </summary>
-        /// <returns></returns>
-
         public ISiloHostBuilder GetBuilder()
         {
             return _siloHostBuilder;
@@ -215,6 +213,30 @@ namespace Gigya.Microdot.Orleans.Hosting
                         }
                     }
                 }
+            });
+        }
+
+        /// <summary>
+        /// Configure custom serializer extending the default one (in terms of types it expected to serialize and settings used).
+        /// </summary>
+        /// <param name="fromType">The serializer type to remove.</param>
+        /// <param name="toType">The serializer type to use. The best practice is one inheriting from <see cref="OrleansCustomSerialization"/>.</param>
+        /// <param name="fallback">Gets the fallback serializer, used as a last resort when no other serializer is able to serialize an object.
+        /// BinaryFormatterSerializer is the default fallback serializer.
+        /// </param>
+        public void ReplaceSerializationProvider(Type toType, Type fromType = null, Type fallback = null)
+        {
+            fromType = fromType ?? typeof(OrleansCustomSerialization);
+
+            _siloHostBuilder.Configure<SerializationProviderOptions>(options =>
+            {
+                var current = options.SerializationProviders.SingleOrDefault(t => t == fromType);
+
+                if(current != null)
+                    options.SerializationProviders.Remove(current);
+
+                options.SerializationProviders.Add(toType);
+                options.FallbackSerializationProvider = fallback;
             });
         }
     }
