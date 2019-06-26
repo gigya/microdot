@@ -20,7 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.Validators;
@@ -28,12 +30,13 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Ninject;
+using Orleans;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        public CalculatorServiceHost() 
+        public CalculatorServiceHost()
         { }
 
         public override string ServiceName => "TestService";
@@ -52,6 +55,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             kernel.RebindForTests();
             Kernel = kernel;
 
+        }
+
+        protected override Task AfterOrleansStartup(IGrainFactory grainFactory)
+        {
+            if (grainFactory == null) throw new NullReferenceException("AfterOrleansStartup no grainFactory");
+            return base.AfterOrleansStartup(grainFactory);
         }
 
         public class MockServiceValidator : ServiceValidator

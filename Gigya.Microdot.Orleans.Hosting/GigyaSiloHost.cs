@@ -148,16 +148,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private async Task StartupTask(IServiceProvider serviceProvider, CancellationToken arg2)
         {
-            try
-            {
-                if (AfterOrleansStartup != null)
-                    await AfterOrleansStartup(GrainFactory);
-            }
-            catch (Exception ex)
-            {
-                _startupTaskExceptions = ex;
-                throw;
-            }
+            
 
             try
             {
