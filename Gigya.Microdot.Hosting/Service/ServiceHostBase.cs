@@ -23,15 +23,11 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.SharedLogic;
-
-
-[assembly: InternalsVisibleTo("LINQPadQuery")]
 
 namespace Gigya.Microdot.Hosting.Service
 {
@@ -57,7 +53,7 @@ namespace Gigya.Microdot.Hosting.Service
         protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
 
         /// <summary>
-        /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
+        /// Version of wrapping infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
         /// </summary>
         protected virtual Version InfraVersion => null;
 

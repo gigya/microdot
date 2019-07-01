@@ -70,15 +70,17 @@ namespace Gigya.Microdot.SharedLogic
                 throw new ArgumentNullException(nameof(name));
 
             OsUser = WindowsIdentity.GetCurrent().Name;
-            InfraVersion = typeof(CurrentApplicationInfo).Assembly.GetName().Version;
+
             Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
 
             // ReSharper disable once PossibleNullReferenceException
             IsRunningAsWindowsService = Environment.OSVersion.Platform == PlatformID.Win32NT &&
                 WindowsIdentity.GetCurrent().Name == @"NT AUTHORITY\SYSTEM";
+            
             HasConsoleWindow = !IsRunningAsWindowsService && !Console.IsInputRedirected;
 
             InfraVersion = infraVersion ?? typeof(CurrentApplicationInfo).Assembly.GetName().Version;
+
             InstanceName = instanceName;
         }
     }

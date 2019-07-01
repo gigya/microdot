@@ -72,8 +72,8 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName,Arguments.InstanceName, InfraVersion)).InSingletonScope();
-
+            
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName)).InSingletonScope();
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -120,10 +120,7 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnVerifyConfiguration()
         {
             Kernel = CreateKernel();
-            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
-
-            Kernel.Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo(ServiceName,Arguments.InstanceName ,InfraVersion)).InSingletonScope();
+            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
             ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
             base.OnVerifyConfiguration();
         }

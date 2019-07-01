@@ -66,7 +66,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             Kernel = CreateKernel();
 
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName,Arguments.InstanceName, InfraVersion)).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName)).InSingletonScope();
 
             PreConfigure(Kernel);
 
@@ -121,7 +121,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected override void OnVerifyConfiguration()
         {
             Kernel = CreateKernel();
-            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
+            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
             ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
             base.OnVerifyConfiguration();
         }
