@@ -66,7 +66,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             Kernel = CreateKernel();
 
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName)).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InSingletonScope();
 
             PreConfigure(Kernel);
 
@@ -194,6 +194,16 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Get<SystemInitializer>().Dispose();
             Kernel.Get<IWorkloadMetrics>().Dispose();
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
+           
+            try
+            {
+                Kernel.Get<ILog>().Info(x => x("Silo stopped gracefully, trying to dispose dependencies."));
+            }
+            catch
+            {
+                Console.WriteLine("Silo stopped gracefully, trying to dispose dependencies.");
+            }
+
             Dispose();
         }
 

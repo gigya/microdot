@@ -139,6 +139,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             try
             {
                 _siloHost?.StopAsync(cancelAfter).Wait(cancelAfter);
+                _siloHost?.Dispose();
             }
             catch (Exception e)
             {
