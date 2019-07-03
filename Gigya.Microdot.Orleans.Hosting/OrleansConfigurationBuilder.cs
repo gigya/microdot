@@ -217,26 +217,25 @@ namespace Gigya.Microdot.Orleans.Hosting
         }
 
         /// <summary>
-        /// Configure custom serializer extending the default one (in terms of types it expected to serialize and settings used).
+        /// Configure custom serializer in addition to the default one (in terms of types it expected to serialize and settings used).
         /// </summary>
-        /// <param name="fromType">The serializer type to remove.</param>
-        /// <param name="toType">The serializer type to use. The best practice is one inheriting from <see cref="OrleansCustomSerialization"/>.</param>
-        /// <param name="fallback">Gets the fallback serializer, used as a last resort when no other serializer is able to serialize an object.
-        /// BinaryFormatterSerializer is the default fallback serializer.
-        /// </param>
-        public void ReplaceSerializationProvider(Type toType, Type fromType = null, Type fallback = null)
+        /// <param name="remove">The serializer type to remove. Use typeof(OrleansCustomSerialization) if type inheriting from it, otherwise use null.</param>
+        /// <param name="add">The serializer type to add. The best practice is inherit from <see cref="OrleansCustomSerialization"/>.</param>
+        /// <exception cref="InvalidOperationException">If type to remove wasn't previously added.</exception>
+        public void ReplaceSerializationProvider(Type remove, Type add)
         {
-            fromType = fromType ?? typeof(OrleansCustomSerialization);
-
             _siloHostBuilder.Configure<SerializationProviderOptions>(options =>
             {
-                var current = options.SerializationProviders.SingleOrDefault(t => t == fromType);
+                if (remove != null)
+                {
+                    var toRemove = options.SerializationProviders.SingleOrDefault(t => t == remove);
+                    if(toRemove != null)
+                        options.SerializationProviders.Remove(toRemove);
+                    else
+                        throw new InvalidOperationException("Not found in the SerializationProviders types. Can't delete.");
+                }
 
-                if(current != null)
-                    options.SerializationProviders.Remove(current);
-
-                options.SerializationProviders.Add(toType);
-                options.FallbackSerializationProvider = fallback;
+                options.SerializationProviders.Add(add);
             });
         }
     }

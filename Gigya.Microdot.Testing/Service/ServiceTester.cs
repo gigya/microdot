@@ -42,33 +42,45 @@ namespace Gigya.Microdot.Testing.Service
 {
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
+        private readonly Type _customSerializer;
         public TServiceHost Host { get; private set; }
         public Task SiloStopped { get; private set; }
 
         private IClusterClient _clusterClient;
+        
         private readonly object _locker = new object();
 
-        public ServiceTester(Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
+        public ServiceArguments ServiceArguments{ get; private set; }
+        
+        public ServiceTester(Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
         {
-            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort(), initTimeOutSec:10);
-            Initialize(args);
+            _customSerializer = customSerializer;
+            ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, 
+                ConsoleOutputMode.Disabled, 
+                SiloClusterMode.PrimaryNode, 
+                GetPort(), 
+                initTimeOutSec: 15);
+            
+            Initialize();
         }
 
-        public ServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
+        public ServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
         {
-            Initialize(serviceArguments);
+            ServiceArguments = serviceArguments;
+            Initialize();
         }
 
-        private void Initialize(ServiceArguments serviceArguments)
+        private void Initialize()
         {
             Host = new TServiceHost();
 
-            BasePort = serviceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
+            BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            SiloStopped = Task.Run(() => Host.Run(serviceArguments));
+            SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
+            
             if (SiloStopped.IsFaulted)
             {
                 try
@@ -98,58 +110,80 @@ namespace Gigya.Microdot.Testing.Service
         {
             _clusterClient?.Dispose();
 
-            Host.Stop(); //don't use host.dispose, host.stop should do all the work
+            Host.Stop(); // don't use host.dispose, host.stop should do all the work
 
-            var completed = SiloStopped.Wait(60000);
+            var siloStopTimeout = TimeSpan.FromSeconds(60);
+            
+            var completed = SiloStopped.Wait(siloStopTimeout);
 
             if (!completed)
-                throw new TimeoutException(
-                    "ServiceTester: The service failed to shutdown within the 60 second limit.");
+                throw new TimeoutException($"ServiceTester: The service failed to shutdown within the {siloStopTimeout.TotalSeconds} seconds limit.");
 
-            if (Host.WaitForServiceGracefullyStoppedAsync().IsCompleted &&
-                Host.WaitForServiceGracefullyStoppedAsync().Result == StopResult.Force)
+            var waitStopped = Host.WaitForServiceGracefullyStoppedAsync();
+
+            // We aren't actually waiting?
+            if (waitStopped.IsCompleted && waitStopped.Result == StopResult.Force)
                 throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
+           
             base.Dispose();
-
         }
 
         public IClusterClient GrainClient
         {
             get
             {
-                InitGrainClient(timeout: TimeSpan.FromSeconds(10));
+                InitGrainClient();
                 return _clusterClient;
             }
         }
 
-        protected virtual IClusterClient InitGrainClient(TimeSpan? timeout)
+        protected virtual IClusterClient InitGrainClient()
         {
             if (_clusterClient == null)
             {
                 lock (_locker)
                 {
-                    if (_clusterClient != null) return _clusterClient;
+                    if (_clusterClient != null) 
+                        return _clusterClient;
+
                     var gateways = new[]
                     {
-                        new IPEndPoint( IPAddress.Loopback,  BasePort + (int) PortOffsets.SiloGateway ),
+                        new IPEndPoint( IPAddress.Loopback,  BasePort + (int) PortOffsets.SiloGateway),
                     };
 
-                    ClientBuilder grainClientBuilder = new ClientBuilder();
+                    var grainClientBuilder = new ClientBuilder();
+                    
                     grainClientBuilder.UseStaticClustering(gateways);
 
-                    grainClientBuilder.Configure<ClusterOptions>(options =>
-                    {
-                        options.ClusterId = "dev";
-                        options.ServiceId = "dev";
-                    });
+                    grainClientBuilder
+                        .Configure<ClusterOptions>(options =>
+                        {
+                            options.ClusterId = "dev";
+                            options.ServiceId = "dev";
+                        })
+                        .Configure<SerializationProviderOptions>(options =>
+                        {
+                            options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
 
+                            // The custom serializer inherits the default one,
+                            // so replace it (as base class will supports all registered serialization types)
+                            if (_customSerializer != null &&
+                                _customSerializer.IsSubclassOf(typeof(OrleansCustomSerialization)))
+                            {
+                                options.SerializationProviders.Remove(typeof(OrleansCustomSerialization));
+                            }
+
+                            options.SerializationProviders.Add(_customSerializer);
+                        });
 
                     var grainClient = grainClientBuilder.Build();
+
                     grainClient.Connect().GetAwaiter().GetResult();
 
                     _clusterClient = grainClient;
                 }
             }
+            
             return _clusterClient;
         }
     }

@@ -71,7 +71,7 @@ namespace Gigya.Microdot.SharedLogic
         public int? ShutdownWhenPidExits { get; }
 
         /// <summary>
-        /// Specifies drain time in this time the servcie status will be 521.
+        /// Specifies drain time in this time the service status will be 521.
         /// </summary>
         public int? ServiceDrainTimeSec { get;  }
 
@@ -80,6 +80,9 @@ namespace Gigya.Microdot.SharedLogic
         /// </summary>
         public int? OnStopWaitTimeSec { get; private set; }
 
+        /// <summary>
+        /// Defines the time to wait for the service to start, if elapsed, the service start aborted. Default is 180 seconds.
+        /// </summary>
         public int? InitTimeOutSec { get; private set; }
 
         /// <summary>
