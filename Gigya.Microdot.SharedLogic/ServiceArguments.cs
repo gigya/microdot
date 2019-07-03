@@ -78,9 +78,9 @@ namespace Gigya.Microdot.SharedLogic
         /// <summary>
         /// Defines the time to wait for the service to stop, default is 10 seconds. Only after OnStopWaitTimeSec+ServiceDrainTimeSec the service will be forcibly closed.
         /// </summary>
-        public int? OnStopWaitTimeSec { get; set; }
+        public int? OnStopWaitTimeSec { get; private set; }
 
-        public int? InitTimeOutSec { get; set; } = 60;
+        public int? InitTimeOutSec { get; private set; }
 
         /// <summary>
         /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
@@ -102,7 +102,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? shutdownWaitTimeSec=null,int? serviceDrainTimeSec=null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? onStopWaitTimeSec=null,int? serviceDrainTimeSec=null, int?  initTimeOutSec=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -111,8 +111,9 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
-            OnStopWaitTimeSec = shutdownWaitTimeSec;
+            OnStopWaitTimeSec = onStopWaitTimeSec;
             ServiceDrainTimeSec = serviceDrainTimeSec;
+            InitTimeOutSec = initTimeOutSec;
             ApplyDefaults();
         }
 
@@ -132,6 +133,8 @@ namespace Gigya.Microdot.SharedLogic
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
             OnStopWaitTimeSec = TryParseInt(ParseStringArg(nameof(OnStopWaitTimeSec), args));
             ServiceDrainTimeSec = TryParseInt(ParseStringArg(nameof(ServiceDrainTimeSec), args));
+            InitTimeOutSec = TryParseInt(ParseStringArg(nameof(InitTimeOutSec), args));
+
             ApplyDefaults();
         }
 
@@ -190,7 +193,8 @@ namespace Gigya.Microdot.SharedLogic
 
             if (OnStopWaitTimeSec == null)
                 OnStopWaitTimeSec = 10;
-
+            if (InitTimeOutSec == null)
+                InitTimeOutSec = 60*3;
             // ReSharper restore SwitchStatementMissingSomeCases
         }
 

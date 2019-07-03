@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             ///shutdownWaitTimeSec: 0 
             var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
-                 SiloClusterMode.PrimaryNode, ServiceTesterBase.GetPort(), shutdownWaitTimeSec: 0);
+                 SiloClusterMode.PrimaryNode, ServiceTesterBase.GetPort(), onStopWaitTimeSec: 0);
             _tester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             Action act = () => _tester.Dispose();

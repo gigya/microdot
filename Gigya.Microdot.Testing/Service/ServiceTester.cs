@@ -50,7 +50,7 @@ namespace Gigya.Microdot.Testing.Service
 
         public ServiceTester(Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
         {
-            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort()) { InitTimeOutSec = 10 };
+            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled, SiloClusterMode.PrimaryNode, GetPort(), initTimeOutSec:10);
             Initialize(args);
         }
 
