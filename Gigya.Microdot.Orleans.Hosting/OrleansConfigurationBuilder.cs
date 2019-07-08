@@ -110,13 +110,17 @@ namespace Gigya.Microdot.Orleans.Hosting
                 .UsePerfCounterEnvironmentStatistics()
                 // We paid attention that AddFromApplicationBaseDirectory making issues of non-discovering grain types.
                 .ConfigureApplicationParts(parts => parts.AddFromAppDomain())
-                .UseDashboard(o =>
-                {
-                    o.Port = _endPointDefinition.SiloDashboardPort;
-                    o.CounterUpdateIntervalMs = (int)TimeSpan.Parse(_orleansConfig.DashboardConfig.WriteInterval).TotalMilliseconds;
-                    o.HideTrace = _orleansConfig.DashboardConfig.HideTrace;
-                })
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
+
+            if (_orleansConfig.Dashboard.Enable)
+            {
+                hostBuilder.UseDashboard(o =>
+                    {
+                        o.Port = _endPointDefinition.SiloDashboardPort;
+                        o.CounterUpdateIntervalMs = (int)TimeSpan.Parse(_orleansConfig.Dashboard.WriteInterval).TotalMilliseconds;
+                        o.HideTrace = _orleansConfig.Dashboard.HideTrace;
+                    });
+            }
 
             SetGrainCollectionOptions(hostBuilder);
 

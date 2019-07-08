@@ -34,8 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public enum Reminders
         {
-        InMemory = 0, Sql = 1
-
+            InMemory = 0, Sql = 1
         }
 
         public string StorageProviderTypeFullName { get; set; }

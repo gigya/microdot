@@ -66,7 +66,9 @@ namespace Gigya.Microdot.Testing.Service
 
         public ServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
         {
+            _customSerializer = customSerializer;
             ServiceArguments = serviceArguments;
+
             Initialize();
         }
 
@@ -165,15 +167,14 @@ namespace Gigya.Microdot.Testing.Service
                         {
                             options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
 
-                            // The custom serializer inherits the default one,
-                            // so replace it (as base class will supports all registered serialization types)
-                            if (_customSerializer != null &&
-                                _customSerializer.IsSubclassOf(typeof(OrleansCustomSerialization)))
+                            if (_customSerializer != null)
                             {
-                                options.SerializationProviders.Remove(typeof(OrleansCustomSerialization));
+                                // IF the custom serializer inherits the default one,
+                                // replace it (as base class will supports all registered serialization types)
+                                if(_customSerializer.IsSubclassOf(typeof(OrleansCustomSerialization)))
+                                    options.SerializationProviders.Remove(typeof(OrleansCustomSerialization));
+                                options.SerializationProviders.Add(_customSerializer);
                             }
-
-                            options.SerializationProviders.Add(_customSerializer);
                         });
 
                     var grainClient = grainClientBuilder.Build();
