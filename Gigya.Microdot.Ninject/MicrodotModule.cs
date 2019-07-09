@@ -67,11 +67,9 @@ namespace Gigya.Microdot.Ninject
         {
             //Need to be initialized before using any regex!
             new RegexTimeoutInitializer().Init();
-
             Kernel
-                .Bind(typeof(ConcurrentDictionary<,>))
-                .To(typeof(DisposableConcurrentDictionary<,>))
-                .InSingletonScope();
+                .Bind(typeof(CollectionThatLockOnKernel<,>)).ToSelf().InSingletonScope();
+
 
             if (Kernel.CanResolve<Func<long, DateTime>>() == false)
                 Kernel.Load<FuncModule>();

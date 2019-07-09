@@ -129,6 +129,7 @@ namespace Gigya.Microdot.Hosting.Service
                 catch (Exception e)
                 {
                     ServiceStartedEvent.TrySetException(e);
+
                     throw;
                 }
 

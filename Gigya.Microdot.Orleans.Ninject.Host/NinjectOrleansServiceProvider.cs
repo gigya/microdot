@@ -24,7 +24,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Framework.DependencyInjection.Ninject;
 using Ninject;
 using Ninject.Syntax;
@@ -103,6 +105,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
 
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
+            Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(MicoDotLoggerFactory)).InSingletonScope();
+            Kernel.Rebind(typeof(ILoggerProvider)).To(typeof(LoggerProvider)).InSingletonScope();
+
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
                 var resolver = context.Kernel.Get<IResolutionRoot>();
@@ -119,5 +124,51 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
 
 
+    }
+
+
+
+    public class MicoDotLoggerFactory : ILoggerFactory
+    {
+        private ILoggerProvider LoggerProvider;
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
+
+        public ILogger CreateLogger(string categoryName)
+        {
+            return LoggerProvider.CreateLogger(categoryName);
+        }
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+
+        public MicoDotLoggerFactory(LoggerProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+    }
+
+    public class LoggerProvider : ILoggerProvider
+    {
+        private readonly OrleansLogProvider _logProvider;
+
+        public LoggerProvider(OrleansLogProvider logProvider)
+        {
+            _logProvider = logProvider;
+        }
+
+        public void Dispose()
+        {
+
+        }
+
+        public ILogger CreateLogger(string categoryName)
+        {
+            return _logProvider.CreateLogger(categoryName);
+        }
     }
 }
