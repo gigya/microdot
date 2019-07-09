@@ -13,7 +13,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public string MetricsTableWriteInterval { get; set; } = "00:00:01";
 
-        public DashboardConfig Dashboard { get; set; }
+        public DashboardConfig Dashboard { get; set; } = new DashboardConfig(); // We need initialization, else will be null, and no default will be available
         public double DefaultGrainAgeLimitInMins { get; set; } = 30;
         public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
 
