@@ -40,13 +40,12 @@ namespace Gigya.Microdot.Orleans.Hosting
 {
     public class GigyaSiloHost
     {
-        private readonly IServiceProviderInit _serviceProvider;
+        private readonly IOrleansToNinjectBinding _serviceProvider;
         private readonly OrleansLogProvider _logProvider;
         private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
         private readonly OrleansConfig _orleansConfig;
         private readonly Func<IServiceProvider> _factoryServiceProvider;
         private readonly TracingContext _tracingContext;
-        public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
         private ILog Log { get; }
@@ -54,7 +53,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private ServiceArguments _serviceArguments = new ServiceArguments();
 
         public GigyaSiloHost(ILog log, HttpServiceListener httpServiceListener,
-            IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, 
+            IOrleansToNinjectBinding serviceProvider, OrleansLogProvider logProvider, 
             OrleansConfigurationBuilder orleansConfigurationBuilder, OrleansConfig orleansConfig,
             Func<IServiceProvider> factoryServiceProvider,
             TracingContext tracingContext)

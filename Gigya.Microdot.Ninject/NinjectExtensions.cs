@@ -21,86 +21,42 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using Ninject;
-using Ninject.Activation;
-using Ninject.Infrastructure;
 using Ninject.Planning.Bindings;
 
 namespace Gigya.Microdot.Ninject
 {
-    public class CollectionThatLockOnKernel<TKey, TService> : IDisposable
+    public class DisposableCollection<TKey, TService> : IDisposable
     {
         private readonly IKernel _kernel;
-        readonly Dictionary<TKey, TService> _dictionary = new Dictionary<TKey, TService>();
+        readonly ConcurrentDictionary<TKey, TService> _dictionary = new ConcurrentDictionary<TKey, TService>();
 
-        public CollectionThatLockOnKernel(IKernel kernel)
+        public DisposableCollection(IKernel kernel)
         {
             _kernel = kernel;
         }
 
         public TService GetOrAdd(TKey key, Func<TKey, TService> factory)
         {
-            if (_dictionary.TryGetValue(key, out var value))
-            {
-                return value;
-            }
-            else
-            {
-                //Lock to the kernel this is the implication of ninject singleton scope
-                lock (_kernel)
-                {
-                    if (_dictionary.TryGetValue(key, out var result))
-                    {
-                        return result;
-                    }
-                    else
-                    {
-                        result = factory(key); //Mast take lock on the kernel to prevent deadlock
-                        _dictionary.Add(key, result);
-                        return result;
-                    }
-                }
-            }
-
+            return _dictionary.GetOrAdd(key, factory);
         }
 
-        public TService GetOrAdd(TKey key, TService factory)
+        public TService GetOrAdd(TKey key, TService service)
         {
-            if (_dictionary.TryGetValue(key, out var value))
-            {
-                return value;
-            }
-            else
-            {
-                //Lock to the kernel this is the implication of ninject singleton scope
-                lock (_kernel)
-                {
-                    if (_dictionary.TryGetValue(key, out var result))
-                    {
-                        return result;
-                    }
-                    else
-                    {
-                        result = factory;
-                        _dictionary.Add(key, result);
-                        return result;
-                    }
-                }
-            }
+            return _dictionary.GetOrAdd(key, service);
         }
 
         public void Dispose()
         {
             IDisposable[] disposables = null;
             //Lock to the kernel this is the implication of ninject singleton scope
-            lock (_kernel)
-            {
+           
                 disposables = _dictionary.Values.
                     Select(x => x as IDisposable).
                     Where(x => x != null).ToArray();
-            }
+          
 
             foreach (var disposable in disposables)
             {
@@ -117,9 +73,7 @@ namespace Gigya.Microdot.Ninject
     }
 
 
-
-
-public static class NinjectExtensions
+    public static class NinjectExtensions
 {
     /// <summary>
     /// Binds <see cref="TService"/> to <see cref="TImplementation"/> and configures Ninject factories in the form
@@ -133,7 +87,7 @@ public static class NinjectExtensions
     public static void BindPerKey<TKey, TService, TImplementation>(this IKernel kernel)
         where TImplementation : TService
     {
-        var dict = kernel.Get<CollectionThatLockOnKernel<TKey, TService>>();
+        var dict = kernel.Get<DisposableCollection<TKey, TService>>();
 
         kernel.Rebind<TService>().To<TImplementation>();
 
@@ -168,7 +122,7 @@ public static class NinjectExtensions
     public static void BindPerKey<TKey, TParam, TService, TImplementation>(this IKernel kernel)
         where TImplementation : TService
     {
-        var dict = kernel.Get<CollectionThatLockOnKernel<TKey, TService>>();
+        var dict = kernel.Get<DisposableCollection<TKey, TService>>();
 
         kernel.Rebind<TService>().To<TImplementation>();
 
@@ -203,7 +157,7 @@ public static class NinjectExtensions
     public static void BindPerMultiKey<TKey1, TKey2, TService, TImplementation>(this IKernel kernel)
         where TImplementation : TService
     {
-        var dict = kernel.Get<CollectionThatLockOnKernel<Tuple<TKey1, TKey2>, TService>>();
+        var dict = kernel.Get<DisposableCollection<Tuple<TKey1, TKey2>, TService>>();
 
         kernel.Rebind<TService>().To<TImplementation>();
 

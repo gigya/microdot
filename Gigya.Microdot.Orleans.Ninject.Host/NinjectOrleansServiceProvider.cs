@@ -55,10 +55,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// <summary>
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
-    public class NinjectOrleansServiceProvider : IServiceProviderInit
+    public class OrleansToNinjectBinding : IOrleansToNinjectBinding
     {
 
-        public NinjectOrleansServiceProvider(IKernel kernel)
+        public OrleansToNinjectBinding(IKernel kernel)
         {
             Kernel = kernel;
         }
@@ -105,8 +105,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
 
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
-            Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(MicoDotLoggerFactory)).InSingletonScope();
-            Kernel.Rebind(typeof(ILoggerProvider)).To(typeof(LoggerProvider)).InSingletonScope();
+            Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
 
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
@@ -126,9 +125,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
     }
 
-
-
-    public class MicoDotLoggerFactory : ILoggerFactory
+    /// <summary>
+    /// Replacing the original Microsoft Logger factory to avoid blocking code.
+    /// Ninject using lock by scope which leading to deadlock in this scenario.
+    /// </summary>
+    public class NonBlockingLoggerFactory : ILoggerFactory
     {
         private ILoggerProvider LoggerProvider;
         public void Dispose()
@@ -146,29 +147,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             LoggerProvider = provider;
         }
 
-        public MicoDotLoggerFactory(LoggerProvider provider)
+        public NonBlockingLoggerFactory(OrleansLogProvider provider)
         {
             LoggerProvider = provider;
         }
     }
 
-    public class LoggerProvider : ILoggerProvider
-    {
-        private readonly OrleansLogProvider _logProvider;
 
-        public LoggerProvider(OrleansLogProvider logProvider)
-        {
-            _logProvider = logProvider;
-        }
-
-        public void Dispose()
-        {
-
-        }
-
-        public ILogger CreateLogger(string categoryName)
-        {
-            return _logProvider.CreateLogger(categoryName);
-        }
-    }
+    
 }

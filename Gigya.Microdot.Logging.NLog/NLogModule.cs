@@ -49,7 +49,7 @@ namespace Gigya.Microdot.Logging.NLog
                 {
                     return loggerName =>
                     {
-                        var dict = c.Kernel.Get<CollectionThatLockOnKernel<string, ILog>>();
+                        var dict = c.Kernel.Get<DisposableCollection<string, ILog>>();
                         return dict.GetOrAdd(loggerName
                             , logName =>
                             {
