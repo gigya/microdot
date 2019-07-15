@@ -134,7 +134,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
 
             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
-            grainEvent.TargetType = target.InterfaceMethod.DeclaringType?.FullName;
+            grainEvent.TargetType = target.Grain?.GetType().FullName ??target.InterfaceMethod.DeclaringType?.FullName;
             grainEvent.TargetMethod = target.InterfaceMethod.Name;
             grainEvent.Exception = ex;
             grainEvent.ErrCode = ex != null ? null : (int?)0;

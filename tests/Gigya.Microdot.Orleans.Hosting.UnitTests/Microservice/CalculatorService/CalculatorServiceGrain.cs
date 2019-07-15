@@ -260,7 +260,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
             await Task.Delay(150);
 
-            var serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            var serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x=>x.TargetType==typeof(CalculatorServiceGrain).FullName);
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
             serviceCallEvent.GrainKeyLong.ShouldBe(0);
             serviceCallEvent.GrainKeyGuid.ShouldBeNull();
@@ -269,7 +269,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             var id = await GrainFactory.GetGrain<IUserGrainWithGuid>(Guid.NewGuid()).GetIdentety();
             await Task.Delay(150);
 
-            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x => x.TargetType == typeof(UserGrainWithGuid).FullName);
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
             serviceCallEvent.GrainKeyGuid.ToString().ShouldBe(id);
             serviceCallEvent.GrainKeyString.ShouldBeNull();
@@ -278,7 +278,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
             id = await GrainFactory.GetGrain<IUserGrainWithLong>(123).GetIdentety();
             await Task.Delay(150);
-            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x => x.TargetType == typeof(UserGrainWithLong).FullName);
             serviceCallEvent.GrainKeyLong.ShouldBe(123);
             serviceCallEvent.GrainKeyString.ShouldBeNull();
             serviceCallEvent.GrainKeyGuid.ShouldBeNull();
@@ -287,7 +287,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
             id = await GrainFactory.GetGrain<IUserGrainWithString>("test").GetIdentety();
             await Task.Delay(150);
-            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last();
+            serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x => x.TargetType == typeof(UserGrainWithString).FullName);
 
             serviceCallEvent.GrainKeyString.ShouldBe("test");
             serviceCallEvent.GrainKeyExtention.ShouldBeNull();
