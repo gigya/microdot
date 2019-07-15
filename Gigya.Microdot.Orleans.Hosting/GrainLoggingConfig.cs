@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting
@@ -14,6 +13,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// <summary>
         /// This will what present are written 
         /// </summary>
+        [Range(0.000000001,1)]
         public decimal LogRatio { get; set; } = 0.01m;
     }
 }

@@ -53,7 +53,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             //TODO add test that validate that we are not introducing new grain in micro dot
             bool isMicrodotGrain = context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
             bool isServiceGrain = isOrleansGrain == false && isMicrodotGrain == false;
-           
+
             // Drop the request if we're overloaded
             var loadSheddingConfig = _loadSheddingConfig();
             if (
@@ -85,7 +85,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 string callId = _tracingContext.TryGetRequestID();
                 uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
                 if (
-                    //Don't write logs
+                       //Don't write logs
                        loggingConfig.LogRatio != 0
                     && (
                         //Write all logs
@@ -109,29 +109,31 @@ namespace Gigya.Microdot.Orleans.Hosting
         private void PublishEvent(IGrainCallContext target, Exception ex)
         {
             var grainEvent = _eventPublisher.CreateEvent();
+            if (target.Grain != null && target.Grain is ISystemTarget == false)
+            {
+                if (target.Grain?.GetPrimaryKeyString() != null)
+                {
+                    grainEvent.GrainKeyString = target.Grain.GetPrimaryKeyString();
+                }
+                else if (target.Grain.IsPrimaryKeyBasedOnLong())
+                {
+                    grainEvent.GrainKeyLong = target.Grain.GetPrimaryKeyLong(out var keyExt);
+                    grainEvent.GrainKeyExtention = keyExt;
+                }
+                else
+                {
+                    grainEvent.GrainKeyGuid = target.Grain.GetPrimaryKey(out var keyExt);
+                    grainEvent.GrainKeyExtention = keyExt;
+                }
 
-            if (target.Grain?.GetPrimaryKeyString() != null)
-            {
-                grainEvent.GrainKeyString = target.Grain.GetPrimaryKeyString();
-            }
-            else if (target.Grain.IsPrimaryKeyBasedOnLong())
-            {
-                grainEvent.GrainKeyLong = target.Grain.GetPrimaryKeyLong(out var keyExt);
-                grainEvent.GrainKeyExtention = keyExt;
-            }
-            else
-            {
-                grainEvent.GrainKeyGuid = target.Grain.GetPrimaryKey(out var keyExt);
-                grainEvent.GrainKeyExtention = keyExt;
+                if (target is Grain grainTarget)
+                {
+                    grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
+                }
             }
 
-            if (target is Grain grainTarget)
-            {
-                grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
-            }
 
             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
-
             grainEvent.TargetType = target.InterfaceMethod.DeclaringType?.FullName;
             grainEvent.TargetMethod = target.InterfaceMethod.Name;
             grainEvent.Exception = ex;

@@ -52,6 +52,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             base.PreConfigure(kernel);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
+            Func<GrainLoggingConfig> writeGrainLog = () => new GrainLoggingConfig{LogMicrodotGrains = true, LogRatio = 1, LogServiceGrains = true, LogOrleansGrains = true};
+            kernel.Rebind<Func<GrainLoggingConfig>>().ToConstant(writeGrainLog);
             kernel.RebindForTests();
             Kernel = kernel;
 
