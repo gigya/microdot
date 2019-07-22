@@ -81,7 +81,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 RequestTimings.Current.Request.Stop();
                 var loggingConfig = _grainLoggingConfig();
 
-                string callId = _tracingContext.TryGetRequestID();
+                string callId = TracingContext.TryGetRequestID();
                 uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
                 if (
                        //Don't write logs
