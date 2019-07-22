@@ -23,12 +23,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
-    public abstract class TracingContext
+    public static class TracingContext
     {
+        static TracingContext()
+        {
+            Implementation = new TracingContextSourcev();
+        }
+
+        public static TracingContextSourcev Implementation;
+
         private const string SPAN_ID_KEY = "MD_SpanID";
         private const string PARENT_SPAN_ID_KEY = "MD_SParentSpanID";
         private const string REQUEST_ID_KEY = "MD_SServiceTraceRequestID";
@@ -36,27 +44,26 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string SPAN_START_TIME = "MD_SSpanStartTime";
         private const string REQUEST_DEATH_TIME = "MD_SRequestDeathTime";
 
-        private T? TryGetNullableValue<T>(string key) where T : struct
+        private static T? TryGetNullableValue<T>(string key) where T : struct
         {
-            object value = Get(key);
+            object value = Implementation.Get(key);
             return value as T?;
         }
 
-        private T TryGetValue<T>(string key) where T : class
+        private static T TryGetValue<T>(string key) where T : class
         {
-            object value = Get(key); ;
+            object value = Implementation.Get(key); ;
             return value as T;
         }
 
-        protected abstract void Set(string key, object value);
-        protected abstract object Get(string key);
 
-        internal void SetOverrides(RequestOverrides overrides)
+
+        internal static void SetOverrides(RequestOverrides overrides)
         {
-            Set(OVERRIDES_KEY, overrides);
+            Implementation.Set(OVERRIDES_KEY, overrides);
         }
 
-        internal RequestOverrides TryGetOverrides()
+        internal static RequestOverrides TryGetOverrides()
         {
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY);
         }
@@ -66,7 +73,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         /// <param name="serviceName">The name of the service for which to retrieve the host override.</param>
         /// <returns>A <see cref="HostOverride"/> instance with information about the overriden host for the specified service, or null if no override was set.</returns>
-        public HostOverride GetHostOverride(string serviceName)
+        public static HostOverride GetHostOverride(string serviceName)
         {
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY)
                 ?.Hosts
@@ -74,34 +81,34 @@ namespace Gigya.Microdot.SharedLogic.Events
         }
 
 
-        public string GetPreferredEnvironment()
+        public static string GetPreferredEnvironment()
         {
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY)?.PreferredEnvironment;
         }
 
-        public void SetPreferredEnvironment(string preferredEnvironment)
+        public static void SetPreferredEnvironment(string preferredEnvironment)
         {
 
-            RequestOverrides overrides = (RequestOverrides)Get(OVERRIDES_KEY);
+            RequestOverrides overrides = (RequestOverrides)Implementation.Get(OVERRIDES_KEY);
 
             if (overrides == null)
             {
                 overrides = new RequestOverrides();
-                Set(OVERRIDES_KEY, overrides);
+                Implementation.Set(OVERRIDES_KEY, overrides);
             }
 
             overrides.PreferredEnvironment = preferredEnvironment;
         }
 
-        public void SetHostOverride(string serviceName, string host, int? port = null)
+        public static void SetHostOverride(string serviceName, string host, int? port = null)
         {
 
-            var overrides = (RequestOverrides)Get(OVERRIDES_KEY);
+            var overrides = (RequestOverrides)Implementation.Get(OVERRIDES_KEY);
 
             if (overrides == null)
             {
                 overrides = new RequestOverrides();
-                Set(OVERRIDES_KEY, overrides);
+                Implementation.Set(OVERRIDES_KEY, overrides);
             }
 
             if (overrides.Hosts == null)
@@ -119,17 +126,17 @@ namespace Gigya.Microdot.SharedLogic.Events
             hostOverride.Port = port;
         }
 
-        public string TryGetRequestID()
+        public static string TryGetRequestID()
         {
             return TryGetValue<string>(REQUEST_ID_KEY);
         }
 
-        public string TryGetSpanID()
+        public static string TryGetSpanID()
         {
             return TryGetValue<string>(SPAN_ID_KEY);
         }
 
-        public string TryGetParentSpanID()
+        public static string TryGetParentSpanID()
         {
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
@@ -138,36 +145,83 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// <summary>
         /// The time at which the request was sent from the client.
         /// </summary>
-        public DateTimeOffset? SpanStartTime
+        public static DateTimeOffset? SpanStartTime
         {
             get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
-            set => Set(SPAN_START_TIME, value);
+            set => Implementation.Set(SPAN_START_TIME, value);
         }
 
         /// <summary>
         /// The time at which the topmost API gateway is going to give up on the whole end-to-end request, after which
         /// it makes no sense to try and handle it, or to subsequently call other services.
         /// </summary>
-        public DateTimeOffset? AbandonRequestBy
+        public static DateTimeOffset? AbandonRequestBy
         {
             get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
-            set => Set(REQUEST_DEATH_TIME, value);
+            set => Implementation.Set(REQUEST_DEATH_TIME, value);
         }
 
         /// <summary>
         /// This add requestID to logical call context in unsafe way (no copy on write)
         /// in order to propagate to parent task. From there on it is immutable and safe.
         /// </summary> 
-        public void SetRequestID(string requestID)
+        public static void SetRequestID(string requestID)
         {
-            Set(REQUEST_ID_KEY, requestID);
+            Implementation.Set(REQUEST_ID_KEY, requestID);
         }
 
-        public void SetSpan(string spanId, string parentSpanId)
+        public static void SetSpan(string spanId, string parentSpanId)
         {
-            Set(SPAN_ID_KEY, spanId);
-            Set(PARENT_SPAN_ID_KEY, parentSpanId);
+            Implementation.Set(SPAN_ID_KEY, spanId);
+            Implementation.Set(PARENT_SPAN_ID_KEY, parentSpanId);
         }
 
+    }
+
+    public class TracingContextSourcev
+    {
+        private readonly TracingContextNoneOrleans fallback;
+
+        private readonly MethodInfo _getMethodInfo;
+        Action<string, object> setter;
+        Func<string, object> getter;
+
+        public TracingContextSourcev()
+        {
+            fallback = new TracingContextNoneOrleans();
+
+            var type = Type.GetType("Orleans.Runtime.RequestContext, Orleans.Core.Abstractions", throwOnError: false);
+            if(type != null)
+            {
+                var setMethodInfo = type.GetMethod("Set", BindingFlags.Static | BindingFlags.Public);
+                _getMethodInfo =  type.GetMethod("Get", BindingFlags.Static | BindingFlags.Public);
+
+                setter = (key, value) =>
+                {
+                    setMethodInfo.Invoke(null, new[]{key, value});
+                };
+
+                getter = (key) =>
+                {
+                    return _getMethodInfo.Invoke(null, new []{key});
+                };
+            }
+        }
+
+        public void Set(string key, object value)
+        {
+            if (setter != null)
+                setter(key, value);
+            else
+                fallback.Set(key, value);
+        }
+
+        public object Get(string key)
+        {
+            if (getter != null)
+                return getter(key);
+            
+            return fallback.Get(key);
+        }
     }
 }

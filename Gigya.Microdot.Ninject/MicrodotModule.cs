@@ -88,7 +88,6 @@ namespace Gigya.Microdot.Ninject
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
-            Rebind<TracingContext>().To<TracingContextNoneOrleans>().InSingletonScope();
 
             Rebind<MetricsContext>()
                 .ToMethod(c => Metric.Context(GetTypeOfTarget(c).Name))

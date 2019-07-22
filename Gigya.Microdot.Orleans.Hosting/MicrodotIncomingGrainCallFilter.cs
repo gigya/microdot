@@ -18,18 +18,17 @@ namespace Gigya.Microdot.Orleans.Hosting
     {
         private readonly ILog _log;
         private readonly ClusterIdentity _clusterIdentity;
-        private readonly TracingContext _tracingContext;
         private Counter EventsDiscarded { get; }
 
         private readonly IEventPublisher<GrainCallEvent> _eventPublisher;
         private readonly Func<LoadShedding> _loadSheddingConfig;
 
         public MicrodotIncomingGrainCallFilter(IEventPublisher<GrainCallEvent> eventPublisher,
-            Func<LoadShedding> loadSheddingConfig, ILog log, ClusterIdentity clusterIdentity, TracingContext tracingContext)
+            Func<LoadShedding> loadSheddingConfig, ILog log, ClusterIdentity clusterIdentity)
         {
             _log = log;
             _clusterIdentity = clusterIdentity;
-            _tracingContext = tracingContext;
+            
 
             _eventPublisher = eventPublisher;
             _loadSheddingConfig = loadSheddingConfig;
@@ -127,46 +126,46 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
             if (config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
-                && _tracingContext.SpanStartTime != null
-                && _tracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
+                && TracingContext.SpanStartTime != null
+                && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
                 if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
                     _log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new
                     {
-                        clientSendTime = _tracingContext.SpanStartTime,
+                        clientSendTime = TracingContext.SpanStartTime,
                         currentTime = now,
                         maxDelayInSecs = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
-                        actualDelayInSecs = (now - _tracingContext.SpanStartTime.Value).TotalSeconds,
+                        actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
                     }));
                 else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Orleans request since too much time passed since the client sent it to us.", unencrypted: new Tags
                     {
-                        ["clientSendTime"] = _tracingContext.SpanStartTime.ToString(),
+                        ["clientSendTime"] = TracingContext.SpanStartTime.ToString(),
                         ["currentTime"] = now.ToString(),
                         ["maxDelayInSecs"] = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
-                        ["actualDelayInSecs"] = (now - _tracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
+                        ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
                     });
             }
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
             if (config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
-                && _tracingContext.AbandonRequestBy != null
-                && now > _tracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
+                && TracingContext.AbandonRequestBy != null
+                && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
                     _log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new
                     {
-                        requestDeathTime = _tracingContext.AbandonRequestBy,
+                        requestDeathTime = TracingContext.AbandonRequestBy,
                         currentTime = now,
-                        overTimeInSecs = (now - _tracingContext.AbandonRequestBy.Value).TotalSeconds,
+                        overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
                     throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags
                     {
-                        ["requestDeathTime"] = _tracingContext.AbandonRequestBy.ToString(),
+                        ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
                         ["currentTime"] = now.ToString(),
-                        ["overTimeInSecs"] = (now - _tracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                        ["overTimeInSecs"] = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
                     });
             }
         }

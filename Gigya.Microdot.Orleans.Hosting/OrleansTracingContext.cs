@@ -25,14 +25,14 @@ using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-   public class OrleansTracingContext : TracingContext
-    {
-        protected override void Set(string key, object value)
+    public class OrleansTracingContext 
+        {
+        public void Set(string key, object value)
         {
             RequestContext.Set(key, value);
         }
 
-        protected override object Get(string key)
+        public object Get(string key)
         {
             return RequestContext.Get(key);
         }

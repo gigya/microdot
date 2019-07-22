@@ -59,7 +59,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             // Register logger per category
             Kernel.BindPerString<OrleansLogAdapter>();
             Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();
-            Rebind<TracingContext>().To<OrleansTracingContext>().InSingletonScope();
         }
     }
 }

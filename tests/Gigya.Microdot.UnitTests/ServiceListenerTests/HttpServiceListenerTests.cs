@@ -59,10 +59,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             _insecureClient = _kernel.Get<IDemoService>();
             _exceptionSerializer = _kernel.Get<JsonExceptionSerializer>();
-            TracingContext tracingContext = _kernel.Get<TracingContext>();
+
 
             Metric.ShutdownContext("Service");
-            tracingContext.SetRequestID("1");
+            TracingContext.SetRequestID("1");
 
             _testinghost = new TestingHost<IDemoService>(onInitialize: kernel =>
                 {

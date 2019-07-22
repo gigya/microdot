@@ -25,12 +25,12 @@ using System.Threading;
 namespace Gigya.Microdot.SharedLogic.Events
 {
 
-    public class TracingContextNoneOrleans : TracingContext
+    public class TracingContextNoneOrleans 
     {
 
         private readonly AsyncLocal<Dictionary<string, object>> CallContextData = new AsyncLocal<Dictionary<string, object>>();
 
-        protected override object Get(string key)
+        public  object Get(string key)
         {
             var values = CallContextData.Value;
 
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         /// <param name="key">The key for the value to be updated / added.</param>
         /// <param name="value">The value to be stored into RequestContext.</param>
-        protected override void Set(string key, object value)
+        public  void Set(string key, object value)
         {
             var values = CallContextData.Value;
 

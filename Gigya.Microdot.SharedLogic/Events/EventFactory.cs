@@ -30,14 +30,13 @@ namespace Gigya.Microdot.SharedLogic.Events
     {
         private readonly CurrentApplicationInfo _appInfo;
         private readonly IEnvironment _environment;
-        private readonly TracingContext _tracingContext;
         private readonly Func<T> _eventFactory;
 
-        public EventFactory(Func<T> eventFactory, CurrentApplicationInfo appInfo, IEnvironment environment,TracingContext tracingContext)
+        public EventFactory(Func<T> eventFactory, CurrentApplicationInfo appInfo, IEnvironment environment)
         {
             _appInfo = appInfo;
             _environment = environment;
-            _tracingContext = tracingContext;
+            
             _eventFactory = eventFactory;
         }
 
@@ -52,9 +51,9 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.InfraVersion = _appInfo.InfraVersion.ToString(4);
             evt.HostName = CurrentApplicationInfo.HostName;
             
-            evt.RequestId = _tracingContext.TryGetRequestID();
-            evt.SpanId = _tracingContext.TryGetSpanID();
-            evt.ParentSpanId = _tracingContext.TryGetParentSpanID();
+            evt.RequestId = TracingContext.TryGetRequestID();
+            evt.SpanId = TracingContext.TryGetSpanID();
+            evt.ParentSpanId = TracingContext.TryGetParentSpanID();
 
             return  evt;
         }

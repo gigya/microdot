@@ -46,8 +46,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
-                TracingContext tracingContext = kernel.Get<TracingContext>();
-
 
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -57,7 +55,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 serviceProxy.HttpMessageHandler = messageHandler;
 
                 //If we set Request Id we would like always to select same Host
-                tracingContext.SetRequestID("dumyId1");
+                TracingContext.SetRequestID("dumyId1");
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
                 string host;
@@ -67,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     host.ShouldBe(hostOfFirstReq);
                 }
 
-                tracingContext.SetRequestID("dumyId2");
+                TracingContext.SetRequestID("dumyId2");
                 host = (string)await serviceProxy.Invoke(request, typeof(string));
                 host.ShouldNotBe(hostOfFirstReq);
             }
@@ -89,9 +87,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
-                TracingContext tracingContext = kernel.Get<TracingContext>();
 
-                tracingContext.SetRequestID("g"); 
+                TracingContext.SetRequestID("g"); 
                 
                 var serviceProxy = providerFactory(serviceName);
                 Uri uri = null;
@@ -109,7 +106,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 string expectedHost = "override-host";
                 int expectedPort = 5318;
 
-                tracingContext.SetHostOverride(serviceName, expectedHost, expectedPort);
+                TracingContext.SetHostOverride(serviceName, expectedHost, expectedPort);
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 await serviceProxy.Invoke(request, typeof(string));
@@ -204,9 +201,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var kernel = new TestingKernel<ConsoleLog>(k => k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope(), dict);
             var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory(serviceName);
-            TracingContext tracingContext = kernel.Get<TracingContext>();
-
-
 
             var messageHandler = new MockHttpMessageHandler();
             messageHandler
@@ -216,8 +210,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             serviceProxy.HttpMessageHandler = messageHandler;
 
-
-            tracingContext.SetHostOverride(serviceName, overrideHost);
+            TracingContext.SetHostOverride(serviceName, overrideHost);
 
             var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
             for (int i = 0; i < 50; i++)
@@ -297,7 +290,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
 
-                kernel.Get<TracingContext>().SetRequestID("1");
+                TracingContext.SetRequestID("1");
 
         int counter = 0;
                 var messageHandler = new MockHttpMessageHandler();
@@ -342,8 +335,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     k => k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope(), dict)
             )
             {
-                TracingContext tracingContext = kernel.Get<TracingContext>();
-
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
 
@@ -365,7 +356,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 string overrideHost = "override-host";
                 int overridePort = 5318;
-                tracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
+                TracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
                 serviceProxy.HttpMessageHandler = messageHandler;
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());

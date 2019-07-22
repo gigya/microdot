@@ -45,7 +45,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly OrleansConfigurationBuilder _orleansConfigurationBuilder;
         private readonly OrleansConfig _orleansConfig;
         private readonly Func<IServiceProvider> _factoryServiceProvider;
-        private readonly TracingContext _tracingContext;
         public static IGrainFactory GrainFactory { get; private set; }
         private Exception _startupTaskExceptions { get; set; }
         private Func<IGrainFactory, Task> AfterOrleansStartup { get; set; }
@@ -56,8 +55,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         public GigyaSiloHost(ILog log, HttpServiceListener httpServiceListener,
             IServiceProviderInit serviceProvider, OrleansLogProvider logProvider, 
             OrleansConfigurationBuilder orleansConfigurationBuilder, OrleansConfig orleansConfig,
-            Func<IServiceProvider> factoryServiceProvider,
-            TracingContext tracingContext)
+            Func<IServiceProvider> factoryServiceProvider
+            )
 
         {
             _serviceProvider = serviceProvider;
@@ -65,7 +64,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
             _orleansConfig = orleansConfig;
             _factoryServiceProvider = factoryServiceProvider;
-            _tracingContext = tracingContext;
+            
             Log = log;
             HttpServiceListener = httpServiceListener;
         }
@@ -93,7 +92,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 builder.AddIncomingGrainCallFilter<MicrodotIncomingGrainCallFilter>()
                     .AddOutgoingGrainCallFilter(async o =>
                     {
-                        _tracingContext.SpanStartTime = DateTimeOffset.UtcNow;
+                        TracingContext.SpanStartTime = DateTimeOffset.UtcNow;
                         await o.Invoke();
                     });
 

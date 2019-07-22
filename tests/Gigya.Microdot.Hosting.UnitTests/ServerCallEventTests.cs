@@ -20,13 +20,12 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         private SpyEventPublisher _flumeQueue;
         private ICalculatorService _serviceProxy;
         private NonOrleansServiceTester<CalculatorServiceHost> _serviceTester;
-        readonly TracingContextNoneOrleans _tracingContext = new TracingContextNoneOrleans();
 
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
-            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>(k=>k.Rebind<TracingContext>().ToConstant(_tracingContext));
-            
+            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>();
+
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
             
             _flumeQueue = (SpyEventPublisher)_serviceTester.Host.Kernel.Get<IEventPublisher>();
@@ -46,8 +45,8 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 
             var requestId = nameof(SingleServerCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
             
-            _tracingContext.SetRequestID(requestId);
-            _tracingContext.TryGetRequestID();
+            TracingContext.SetRequestID(requestId);
+            TracingContext.TryGetRequestID();
 
             await _serviceProxy.Add(5, 3);
             await Task.Delay(100);

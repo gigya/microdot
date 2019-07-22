@@ -47,7 +47,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         // Dependencies
         private readonly string ServiceName;
         private readonly IEnvironment Environment;
-        private readonly TracingContext _tracingContext;
         private readonly ReachabilityCheck ReachabilityCheck;
         private readonly IDiscovery Discovery;
         private readonly Func<DiscoveryConfig> GetDiscoveryConfig;
@@ -62,12 +61,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public MultiEnvironmentServiceDiscovery(string serviceName, ReachabilityCheck reachabilityCheck,
                 IDiscovery discovery, Func<DiscoveryConfig> getDiscoveryConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus,
-                IDateTime dateTime, IEnvironment environment, TracingContext tracingContext)
+                IDateTime dateTime, IEnvironment environment)
         {
             _healthStatus = new HealthMessage(Health.Info, message: null, suppressMessage: true);
             ServiceName = serviceName;
             Environment = environment;
-            _tracingContext = tracingContext;
+            
             ReachabilityCheck = reachabilityCheck;
             Discovery = discovery;
             GetDiscoveryConfig = getDiscoveryConfig;
@@ -82,11 +81,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             _lastUsageTime = DateTime.UtcNow;
             NodeAndLoadBalancer nodeAndLoadBalancer = null;
-            string preferredEnvironment = _tracingContext.GetPreferredEnvironment();
+            string preferredEnvironment = TracingContext.GetPreferredEnvironment();
 
             // 1. Use explicit host override if provided in request
             //    TBD: Theoretically if we only ever call a service through host overrides we might not have a health check for the service at all (though it is in use)
-            var hostOverride = _tracingContext.GetHostOverride(ServiceName); 
+            var hostOverride = TracingContext.GetHostOverride(ServiceName); 
             if (hostOverride != null)
                 return new NodeAndLoadBalancer {
                     Node = new Node(hostOverride.Host, hostOverride.Port),

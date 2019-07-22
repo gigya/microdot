@@ -15,8 +15,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class EventSerializer: IEventSerializer
     {
-        private readonly TracingContext _tracingContext;
-
         [DebuggerDisplay("{" + nameof(Name) + "}")]
         private class MemberToSerialize
         {
@@ -35,9 +33,9 @@ namespace Gigya.Microdot.SharedLogic.Events
         public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
             IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, 
             Func<EventConfiguration> eventConfig, 
-            CurrentApplicationInfo appInfo, TracingContext tracingContext)
+            CurrentApplicationInfo appInfo)
         {
-            _tracingContext = tracingContext;
+            
             LoggingConfigFactory = loggingConfigFactory;
             Environment = environment;
             StackTraceEnhancer = stackTraceEnhancer;
@@ -51,9 +49,9 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.Configuration = LoggingConfigFactory();
             evt.Environment = Environment;
             evt.StackTraceEnhancer = StackTraceEnhancer;
-            evt.RequestId = evt.RequestId ?? _tracingContext.TryGetRequestID();
-            evt.SpanId = evt.SpanId ?? _tracingContext.TryGetSpanID();
-            evt.ParentSpanId = evt.ParentSpanId ?? _tracingContext.TryGetParentSpanID();
+            evt.RequestId = evt.RequestId ?? TracingContext.TryGetRequestID();
+            evt.SpanId = evt.SpanId ?? TracingContext.TryGetSpanID();
+            evt.ParentSpanId = evt.ParentSpanId ?? TracingContext.TryGetParentSpanID();
 
             // If event wasn't created with factory these fields left unpopulated
             if (evt.ServiceName == null) 
