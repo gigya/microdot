@@ -22,12 +22,11 @@
 
 #endregion Copyright
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public interface IServiceProviderInit
+    public interface IOrleansToNinjectBinding
     {
          void ConfigureServices(IServiceCollection services);
     }

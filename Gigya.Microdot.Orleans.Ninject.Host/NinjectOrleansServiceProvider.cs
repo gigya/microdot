@@ -24,7 +24,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Framework.DependencyInjection.Ninject;
 using Ninject;
 using Ninject.Syntax;
@@ -53,10 +55,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// <summary>
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
-    public class NinjectOrleansServiceProvider : IServiceProviderInit
+    public class OrleansToNinjectBinding : IOrleansToNinjectBinding
     {
 
-        public NinjectOrleansServiceProvider(IKernel kernel)
+        public OrleansToNinjectBinding(IKernel kernel)
         {
             Kernel = kernel;
         }
@@ -103,6 +105,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
 
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
+            Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
+
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
                 var resolver = context.Kernel.Get<IResolutionRoot>();
@@ -120,4 +124,35 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
 
     }
+
+    /// <summary>
+    /// Replacing the original Microsoft Logger factory to avoid blocking code.
+    /// Ninject using lock by scope which leading to deadlock in this scenario.
+    /// </summary>
+    public class NonBlockingLoggerFactory : ILoggerFactory
+    {
+        private ILoggerProvider LoggerProvider;
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
+
+        public ILogger CreateLogger(string categoryName)
+        {
+            return LoggerProvider.CreateLogger(categoryName);
+        }
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+
+        public NonBlockingLoggerFactory(OrleansLogProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+    }
+
+
+    
 }

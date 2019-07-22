@@ -54,7 +54,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             var events = _flumeQueue.Events;
             var grainReq = events.Where(r => r.EventType == "grainReq")
                 .Select(r => (GrainCallEvent)r)
-                .Single(r => r.TargetType == typeof(ICalculatorWorkerGrain).FullName);
+                .Single(r => r.TargetType == typeof(CalculatorServiceGrain).FullName);
             
             Assert.AreEqual("Add", grainReq.TargetMethod);
             Assert.AreEqual(requestId, grainReq.RequestId);

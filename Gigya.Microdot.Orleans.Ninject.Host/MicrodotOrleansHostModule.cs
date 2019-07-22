@@ -53,7 +53,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
 
-            Rebind<NinjectOrleansServiceProvider, IServiceProviderInit>().To<NinjectOrleansServiceProvider>().InSingletonScope();
+            Rebind<IOrleansToNinjectBinding>().To<OrleansToNinjectBinding>().InSingletonScope();
             Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
        
             // Register logger per category

@@ -45,7 +45,8 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="IServiceProviderInit.cs" />
+    <Compile Include="GrainLoggingConfig.cs" />
+    <Compile Include="IOrleansToNinjectBinding.cs" />
     <Compile Include="Logging\OrleansLogEnrichment.cs" />
     <Compile Include="MicrodotIncomingGrainCallFilter.cs" />
     <Compile Include="OrleansConfig.cs" />
