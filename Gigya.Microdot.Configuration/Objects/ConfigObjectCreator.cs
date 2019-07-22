@@ -216,8 +216,9 @@ namespace Gigya.Microdot.Configuration.Objects
                 {
                     updatedConfig = LatestNode.ToObject(ObjectType);
                 }
-                catch (JsonException ex)
+                catch (Exception ex)
                 {
+                    // It is not only JsonException, as sometimes a custom deserializer capable to throw god knows what (including ProgrammaticException)
                     errors.Add(new ValidationResult("Failed to deserialize config object: " + HealthMonitor.GetMessages(ex)));
                 }
 
