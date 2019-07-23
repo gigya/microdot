@@ -525,15 +525,19 @@ namespace Gigya.Microdot.Hosting.HttpService
                     return JsonConvert.DeserializeObject<HttpServiceRequest>(json, JsonSettings);
                 }
             });
-            var errors = new List<ValidationResult>();
 
-            if (   !_validator.TryValidateObjectRecursive(request.Overrides, errors) 
-                || !_validator.TryValidateObjectRecursive(request.TracingData, errors)
-                )
-            {
-                _failureCounter.Increment("InvalidRequestFormat");
-                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
-            }
+            // TODO: We have an issue when calling from Legacy:
+            // http://kibana.gigya.net/kibana3/#/dashboard/elasticsearch/logdog_dashboard?query=callID:8f74364e9cab4aa4954374b8064155a1&from=2019-07-23T10:29:15.218Z&to=2019-07-23T10:31:15.220Z
+
+            // var errors = new List<ValidationResult>();
+            // 
+            // if (   !_validator.TryValidateObjectRecursive(request.Overrides, errors) 
+            //     || !_validator.TryValidateObjectRecursive(request.TracingData, errors)
+            //     )
+            // {
+            //     _failureCounter.Increment("InvalidRequestFormat");
+            //     throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
+            // }
 
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
