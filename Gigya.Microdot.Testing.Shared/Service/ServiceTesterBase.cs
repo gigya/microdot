@@ -31,8 +31,10 @@ using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Threading;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.UnitTests.Caching.Host;
@@ -54,7 +56,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
                 (kernel =>
                 {
                     additionalBinding?.Invoke(kernel);
-                 
+
                 })).Kernel;
             ResolutionRoot = _kernel;
         }
@@ -129,7 +131,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         {
             _kernel.Dispose();
         }
-
+        private static List<Semaphore> portMaintainer = new List<Semaphore>();
 
         public static int GetPort()
         {
@@ -149,11 +151,36 @@ namespace Gigya.Microdot.Testing.Shared.Service
                     if (!freeRangePort)
                         break;
                 }
-
+                bool someOneElseWantThisPort = false;
                 if (freeRangePort)
                 {
-                    Console.WriteLine($"Service Tester found a free port: {randomPort}");
-                    return randomPort;
+
+                    for (int port = randomPort; port <= randomPort + range; port++)
+                    {
+                        var name = $"ServiceTester-{port}";
+                        if (Semaphore.TryOpenExisting(name, out var _))
+                        {
+                            someOneElseWantThisPort = true;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                portMaintainer.Add(new Semaphore(1, 1, name));
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e);
+                                someOneElseWantThisPort = true;
+                            }
+                        }
+                    }
+
+                    if (someOneElseWantThisPort == false)
+                    {
+                        Console.WriteLine($"Service Tester found a free port: {randomPort}");
+                        return randomPort;
+                    }
                 }
             }
 
