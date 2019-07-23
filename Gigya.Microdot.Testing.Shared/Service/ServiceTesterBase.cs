@@ -155,6 +155,10 @@ namespace Gigya.Microdot.Testing.Shared.Service
                 if (freeRangePort)
                 {
 
+                    // We need to avoid race condition between different App Domains and processes running in 
+                    // parallel and allocating the same port, especially the tests running in parallel.
+                    // The semaphore is machine / OS wide, so the hope it is good enough.
+
                     for (int port = randomPort; port <= randomPort + range; port++)
                     {
                         var name = $"ServiceTester-{port}";
