@@ -485,7 +485,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
                 var endpoints = nodes.Select(ep => new ConsulEndPoint
                 {
-                    HostName = ep.Node.Name,
+                    HostName = ep.Name,
                     Port = ep.Service.Port,
                     Version = GetEndpointVersion(ep)
                 }).OrderBy(x => x.HostName).ThenBy(x => x.Port).ToArray();

@@ -254,7 +254,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var versionTag = serviceEntry.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
             var version = versionTag?.Substring(versionPrefix.Length);
 
-            return new ConsulNode(serviceEntry.Node.Name, serviceEntry.Service?.Port, version);
+            return new ConsulNode(serviceEntry.Name, serviceEntry.Service?.Port, version);
         }
 
 
