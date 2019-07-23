@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Newtonsoft.Json;
@@ -23,7 +24,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             get
             {
                 if (Service.ServiceIpAddress != Node.NodeIpAddress && !string.IsNullOrEmpty(Service.ServiceIpAddress))
-                    return Service.ServiceIpAddress;
+                    if (IPAddress.TryParse(Service.ServiceIpAddress, out _))
+                        return Service.ServiceIpAddress;
                 return Node.NodeName;
             }
         }
@@ -38,36 +40,16 @@ namespace Gigya.Microdot.ServiceDiscovery
         [JsonProperty(PropertyName = "Address")]
         internal string NodeIpAddress { get; set; }
 
-        //public string Name
-        //{
-        //    get
-        //    {
-        //        if (ServiceIpAddress != NodeIpAddress && !string.IsNullOrEmpty(ServiceIpAddress))
-        //            return ServiceIpAddress;
-
-        //        return NodeName;
-        //    }
-        //}
-
     }
 
     public class AgentService
     {
-        private string _serviceIpAddress = string.Empty;
         public string[] Tags { get; set; }
 
         public int Port { get; set; }
 
         [JsonProperty(PropertyName = "Address")]
-        internal string ServiceIpAddress
-        {
-            get => _serviceIpAddress;
-            set
-            {
-                if (!string.IsNullOrEmpty(value))
-                    _serviceIpAddress = value;
-            }
-        }
+        internal string ServiceIpAddress { get; set; } = string.Empty;
 
     }
 
