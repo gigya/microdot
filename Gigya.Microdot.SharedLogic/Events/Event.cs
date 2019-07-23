@@ -62,15 +62,15 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.callID)]
-        public string RequestId { get; set; } // Publisher populated from TracingContent
+        public string RequestId { get; set; } = TracingContext.TryGetRequestID();
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.spanID)]
-        public string SpanId { get; set; } // Publisher populated from TracingContent
+        public string SpanId { get; set; } = TracingContext.TryGetSpanID();
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.parentSpanID)]
-        public string ParentSpanId { get; set; } // Publisher populated from TracingContent
+        public string ParentSpanId { get; set; } = TracingContext.TryGetSpanID();
 
         //============ PUBLISHER INFO ===============
 
@@ -90,7 +90,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
-        public string HostName  { get; set;} // Publisher populated from CurrentApplicationInfo;
+        public string HostName  { get; set; } = CurrentApplicationInfo.HostName;
 
         /// <summary>The value of the %REGION% environment variable. .</summary>
         [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]

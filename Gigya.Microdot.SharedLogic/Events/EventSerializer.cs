@@ -49,10 +49,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.Configuration = LoggingConfigFactory();
             evt.Environment = Environment;
             evt.StackTraceEnhancer = StackTraceEnhancer;
-            evt.RequestId = evt.RequestId ?? TracingContext.TryGetRequestID();
-            evt.SpanId = evt.SpanId ?? TracingContext.TryGetSpanID();
-            evt.ParentSpanId = evt.ParentSpanId ?? TracingContext.TryGetParentSpanID();
-
+            
             // If event wasn't created with factory these fields left unpopulated
             if (evt.ServiceName == null) 
                 evt.ServiceName = AppInfo.Name;
@@ -65,9 +62,6 @@ namespace Gigya.Microdot.SharedLogic.Events
             
             if (evt.InfraVersion == null) 
                 evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
-            
-            if (evt.HostName == null) 
-                evt.HostName = CurrentApplicationInfo.HostName;
             
             foreach (var member in GetMembersToSerialize(evt.GetType()))
                 if (predicate == null || predicate(member.Attribute) == true)

@@ -36,7 +36,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             _appInfo = appInfo;
             _environment = environment;
-            
             _eventFactory = eventFactory;
         }
 
@@ -49,11 +48,6 @@ namespace Gigya.Microdot.SharedLogic.Events
             evt.ServiceInstanceName = _environment.InstanceName;
             evt.ServiceVersion = _appInfo.Version.ToString(4);
             evt.InfraVersion = _appInfo.InfraVersion.ToString(4);
-            evt.HostName = CurrentApplicationInfo.HostName;
-            
-            evt.RequestId = TracingContext.TryGetRequestID();
-            evt.SpanId = TracingContext.TryGetSpanID();
-            evt.ParentSpanId = TracingContext.TryGetParentSpanID();
 
             return  evt;
         }

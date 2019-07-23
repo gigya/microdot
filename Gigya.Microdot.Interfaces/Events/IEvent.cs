@@ -32,15 +32,10 @@ namespace Gigya.Microdot.Interfaces.Events
         string EventType { get; }
 
         bool ShouldAudit { get; }
-        
+
         DateTime Timestamp { get;  }
-        string RequestId { get; set; }
 
-        string SpanId { get; set; }
-
-        string ParentSpanId { get; set; }
-        
-       EventConfiguration Configuration { get; set; }
+        EventConfiguration Configuration { get; set; }
 
         IEnvironment Environment { get; set; }
 
