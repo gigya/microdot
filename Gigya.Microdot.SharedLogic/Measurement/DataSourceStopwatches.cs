@@ -36,6 +36,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement
             File      = new DataSourceOperationStopwatches();
             Memcached = new DataSourceOperationStopwatches();
             Hades     = new DataSourceOperationStopwatches();
+            CouchDb = new DataSourceOperationStopwatches();
         }
 
 
@@ -44,15 +45,17 @@ namespace Gigya.Microdot.SharedLogic.Measurement
         public DataSourceOperationStopwatches File;
         public DataSourceOperationStopwatches Memcached;
         public DataSourceOperationStopwatches Hades;
+        public DataSourceOperationStopwatches CouchDb;
 
         public DataSourceOperationStopwatches this[DataSourceType type] {
             get {
                 switch (type) {
                     case DataSourceType.MySql:     return MySql;
-                    case DataSourceType.Mongo: return Mongo;
+                    case DataSourceType.Mongo:     return Mongo;
                     case DataSourceType.File:      return File;
                     case DataSourceType.Memcached: return Memcached;
                     case DataSourceType.Hades:     return Hades;
+                    case DataSourceType.CouchDb:   return CouchDb;
                     default: throw GAssert.LogAndMakeFailureException();
                 }
             }
@@ -69,6 +72,6 @@ namespace Gigya.Microdot.SharedLogic.Measurement
         }
     }
 
-    public enum DataSourceType { MySql, Mongo, File, Memcached, Hades }
+    public enum DataSourceType { MySql, Mongo, File, Memcached, Hades, CouchDb }
     public enum DataSourceOperation { Read, Write, Delete }
 }
