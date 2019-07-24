@@ -25,26 +25,12 @@ namespace Gigya.Microdot.UnitTests
 
         public override string ServiceName => $"TestingHost-{HostId}";
 
-        private readonly Action<IKernel> _configure;
-        private readonly Action<IKernel> _onInitialize;
-
-        private IKernel _kernel;
-
-        public TestingHost()
-        {
-        }
-
-        public TestingHost(Action<IKernel> onInitialize)
-        {
-            _onInitialize = onInitialize;
-
-        }
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
-            _kernel = kernel;
+            
             kernel.Rebind<ILog>().ToConstant(new ConsoleLog());
 
             kernel.Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
@@ -57,16 +43,10 @@ namespace Gigya.Microdot.UnitTests
 
             kernel.Bind<T>().ToConstant(Substitute.For<T>());
 
-            _configure?.Invoke(kernel);
-
             Instance = kernel.Get<T>();
         }
 
-        protected override void OnInitilize(IResolutionRoot resolutionRoot)
-        {
-            base.OnInitilize(resolutionRoot);
-            _onInitialize?.Invoke(_kernel);
-        }
+ 
 
         private class WaitingWorker : IWorker
         {

@@ -6,6 +6,7 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 using NSubstitute;
@@ -18,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
     public class ConsulClientTests
     {
         private const string ServiceName = "MyService-prod";
-        private const int ConsulPort = 8501;
+        private  int ConsulPort = ServiceTesterBase.GetPort();
         private const string Zone = "us1a";
 
         private const string Host1 = "Host1";

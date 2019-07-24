@@ -136,12 +136,17 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public static int GetPort()
         {
             IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-            TcpConnectionInformation[] tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
-            var occupiedPorts = tcpConnInfoArray.Select(p => p.LocalEndPoint.Port).Distinct().ToHashSet();
+            List<int> occupiedPortsData= new List<int>();
+            occupiedPortsData.AddRange( ipGlobalProperties.GetActiveTcpConnections().Select(x=>x.LocalEndPoint.Port));
+            occupiedPortsData.AddRange(ipGlobalProperties.GetActiveTcpListeners().Select(x => x.Port));
+            occupiedPortsData.AddRange(ipGlobalProperties.GetActiveUdpListeners().Select(x => x.Port));
 
-            for (int retry = 0; retry < 100; retry++)
+
+            var occupiedPorts = occupiedPortsData.Distinct().ToHashSet();
+
+            for (int retry = 0; retry < 10000; retry++)
             {
-                var randomPort = new Random(Guid.NewGuid().GetHashCode()).Next(50000, 60000);
+                var randomPort = new Random( ).Next(50000, 60000);
                 bool freeRangePort = true;
                 int range = Enum.GetValues(typeof(PortOffsets)).Cast<int>().Max();
 

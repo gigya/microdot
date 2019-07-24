@@ -23,7 +23,7 @@ namespace Gigya.Microdot.UnitTests.Caching
     public class Thing
     {
         [Key]
-        public long Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; }
     }
 

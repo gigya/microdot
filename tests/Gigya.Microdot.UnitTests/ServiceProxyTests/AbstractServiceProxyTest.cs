@@ -37,8 +37,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [TearDown]
         public virtual void TearDown()
         {
-            //clear TracingContext for testing only
-            CallContext.FreeNamedDataSlot("#ORL_RC");
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
         }
 

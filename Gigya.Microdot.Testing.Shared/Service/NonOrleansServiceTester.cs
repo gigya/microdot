@@ -27,7 +27,6 @@ using Gigya.Microdot.SharedLogic;
 using Ninject.Syntax;
 using System;
 using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {

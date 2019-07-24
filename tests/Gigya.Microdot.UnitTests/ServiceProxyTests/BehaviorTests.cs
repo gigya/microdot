@@ -16,6 +16,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using Newtonsoft.Json;
 using Ninject;
 using NUnit.Framework;
@@ -29,13 +30,19 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
     public class BehaviorTests : AbstractServiceProxyTest
     {
+        [OneTimeSetUp]
+        public void startClean()
+        {
+            TracingContext.ClearContext();
+        }
         [Test]
         public async Task AllRequestsForSameCallID_SameHostSelected()
         {
+            var port = ServiceTesterBase.GetPort();
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "host1,host2"},
-                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
             using (var kernel =
@@ -46,6 +53,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
+                serviceProxy.DefaultPort = port;
 
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -75,7 +83,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ServiceProxyRpcMessageShouldRemainSame()
         {
             const string serviceName = "DemoService";
-            const int defaultPort = 5555;
+             int defaultPort = ServiceTesterBase.GetPort();
             var dict = new Dictionary<string, string>
             {
                 {$"Discovery.Services.{serviceName}.Source", "Config"},
@@ -104,14 +112,18 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
                 string expectedHost = "override-host";
-                int expectedPort = 5318;
+                int expectedPort = ServiceTesterBase.GetPort();
 
                 TracingContext.SetHostOverride(serviceName, expectedHost, expectedPort);
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 await serviceProxy.Invoke(request, typeof(string));
                 var body = requestMessage;
-                JsonConvert.DeserializeObject<GigyaRequestProtocol>(body, new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Error });
+                Console.WriteLine($"error: {body}");
+             
+                    JsonConvert.DeserializeObject<GigyaRequestProtocol>(body, new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Error });
+
+            
                 uri.Host.ShouldBe(expectedHost);
                 uri.Port.ShouldBe(expectedPort);
             }
@@ -190,7 +202,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task RequestContextShouldOverrideHostOnly()
         {
             const string serviceName = "DemoService";
-            const int defaultPort = 5555;
+            int defaultPort = ServiceTesterBase.GetPort();
 
             var dict = new Dictionary<string, string> {
                 {$"Discovery.Services.{serviceName}.Source", "Config"},
@@ -225,10 +237,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task AllHostsAreHavingNetworkErrorsShouldTryEachOnce()
         {
+            var port = ServiceTesterBase.GetPort();
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "host1,host2"},
-                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
             using (var kernel =
@@ -242,7 +255,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
-
+                serviceProxy.DefaultPort = port;
                 int counter = 0;
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -271,11 +284,12 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task OneHostHasNetworkErrorShouldMoveToNextHost()
         {
+            var port = ServiceTesterBase.GetPort();
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "host1,host2"},
-                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
             using (var kernel =
@@ -289,7 +303,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
-
+                serviceProxy.DefaultPort = port;
                 TracingContext.SetRequestID("1");
 
         int counter = 0;
@@ -323,11 +337,12 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task RequestContextOverrideShouldFailOnFirstAttempt()
         {
+            var port = ServiceTesterBase.GetPort();
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "notImpotent"},
-                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
             using (var kernel =
@@ -337,6 +352,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
+                serviceProxy.DefaultPort = port;
 
                 //Disable  TracingContext.SetRequestID("1");
 
@@ -375,10 +391,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task FailedHostShouldBeRemovedFromHostList()
         {
+            var port = ServiceTesterBase.GetPort();
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "local"},
-                {"Discovery.Services.DemoService.DefaultPort", "5555"}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
             using (var kernel =
@@ -389,6 +406,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
+                serviceProxy.DefaultPort = port;
 
                 //Disable  TracingContext.SetRequestID("1");
 

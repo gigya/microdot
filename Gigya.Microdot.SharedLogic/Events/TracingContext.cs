@@ -35,7 +35,7 @@ namespace Gigya.Microdot.SharedLogic.Events
             Implementation = new TracingContextSourcev();
         }
 
-        public static TracingContextSourcev Implementation;
+        internal static TracingContextSourcev Implementation;
 
         private const string SPAN_ID_KEY = "MD_SpanID";
         private const string PARENT_SPAN_ID_KEY = "MD_SParentSpanID";
@@ -43,6 +43,17 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string OVERRIDES_KEY = "MD_SOverrides";
         private const string SPAN_START_TIME = "MD_SSpanStartTime";
         private const string REQUEST_DEATH_TIME = "MD_SRequestDeathTime";
+
+        public static void ClearContext()
+        {
+            Implementation.Set(SPAN_ID_KEY,null);
+            Implementation.Set(PARENT_SPAN_ID_KEY, null);
+            Implementation.Set(REQUEST_ID_KEY, null);
+            Implementation.Set(OVERRIDES_KEY, null);
+            Implementation.Set(SPAN_START_TIME, null);
+            Implementation.Set(REQUEST_DEATH_TIME, null);
+
+        }
 
         private static T? TryGetNullableValue<T>(string key) where T : struct
         {

@@ -95,7 +95,6 @@
     <Compile Include="Monitor\WorkloadMetricsTests.cs" />
     <Compile Include="NinjectExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Monitor\RequestTimings.cs" />
     <Compile Include="RequestOverridesTests.cs" />
     <Compile Include="Serialization\BusinessEntity.cs" />
     <Compile Include="Serialization\ExceptionSerializationTests.cs" />

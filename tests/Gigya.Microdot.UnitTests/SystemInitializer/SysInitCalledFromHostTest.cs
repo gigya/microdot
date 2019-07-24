@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
+using Gigya.Microdot.Testing.Shared.Service;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -14,7 +16,11 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
         {
             IValidator validatorFake = Substitute.For<IValidator>();
             ServiceHostFake<IValidator> srvHost = new ServiceHostFake<IValidator>(validatorFake);
-            Task.Run(() => srvHost.Run());
+            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
+                ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode,
+                ServiceTesterBase.GetPort(), initTimeOutSec: 10);
+            Task.Run(() => srvHost.Run(args));
 
             await srvHost.WaitForServiceStartedAsync();
             srvHost.Dispose();
@@ -25,9 +31,13 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
         [Test]
         public async Task WorkloadMetricsCalledOnce()
         {
+            var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
+                ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode,
+                ServiceTesterBase.GetPort(), initTimeOutSec: 10);
             IWorkloadMetrics workloadMetricsFake = Substitute.For<IWorkloadMetrics>();
             ServiceHostFake<IWorkloadMetrics> srvHost = new ServiceHostFake<IWorkloadMetrics>(workloadMetricsFake);
-            Task.Run(() => srvHost.Run());
+            Task.Run(() => srvHost.Run(args));
             await srvHost.WaitForServiceStartedAsync();
             srvHost.Dispose();
 

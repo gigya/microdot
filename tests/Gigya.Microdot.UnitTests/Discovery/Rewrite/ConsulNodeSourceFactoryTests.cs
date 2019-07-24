@@ -9,6 +9,7 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
+using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Ninject;
 using NSubstitute;
@@ -22,7 +23,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     {
         private const string ServiceName = "MyService";
         private const string Env = "prod";
-        private const int ConsulPort = 8502;
+        private  int ConsulPort = ServiceTesterBase.GetPort();
         private const string Zone = "us1a";
         private const string Host1 = "Host1";
         private const int Port1 = 1234;
