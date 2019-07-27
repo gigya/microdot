@@ -309,7 +309,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             // T = 2.5s. Refresh task should have completed by now, verify new value. Should not trigger another refresh.
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(secondValue);
 
-            await Task.Delay(TimeSpan.FromSeconds(1.5));
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             // T = 5s. We're past the original TTL (from T=0s) but not past the refreshed TTL (from T=2s). Should still
             // return the refreshed value (7), not another (9). If (9) was returned, it means the data source was accessed

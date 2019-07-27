@@ -51,14 +51,15 @@ namespace Gigya.Microdot.Testing.Service
         private readonly object _locker = new object();
 
         public ServiceArguments ServiceArguments{ get; private set; }
-        
+
         public ServiceTester(Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
         {
             _customSerializer = customSerializer;
+
             ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, 
                 ConsoleOutputMode.Disabled, 
                 SiloClusterMode.PrimaryNode, 
-                GetPort(), 
+                _port.Port, 
                 initTimeOutSec: 15);
             
             Initialize();
@@ -67,6 +68,7 @@ namespace Gigya.Microdot.Testing.Service
         public ServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
         {
             _customSerializer = customSerializer;
+            
             ServiceArguments = serviceArguments;
 
             Initialize();

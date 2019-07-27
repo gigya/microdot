@@ -39,19 +39,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
     {
         private ServiceTester<CalculatorServiceHost> _tester;
 
-
         [Test]
         public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
         {
-            ///shutdownWaitTimeSec: 0 
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, ConsoleOutputMode.Disabled,
-                 SiloClusterMode.PrimaryNode, ServiceTesterBase.GetPort(), onStopWaitTimeSec: 0);
+            // shutdownWaitTimeSec: 0 
+            var serviceArguments = new ServiceArguments(
+                ServiceStartupMode.CommandLineNonInteractive, 
+                ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode, 
+                DisposablePort.GetPort().Port, 
+                onStopWaitTimeSec: 0);
+
             _tester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             Action act = () => _tester.Dispose();
+
             act.ShouldThrow<Exception>().Message.ShouldContain("service failed to shutdown gracefully");
         }
-
     }
-
 }

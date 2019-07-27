@@ -158,7 +158,12 @@ namespace Gigya.Microdot.Hosting.HttpService
             catch (HttpListenerException ex)
             {
                 if (ex.ErrorCode != 5)
+                {
+                    ex.Data["HttpPort"] = ServiceEndPointDefinition.HttpPort;
+                    ex.Data["Prefix"] = Prefix;
+                    ex.Data["User"] = AppInfo.OsUser;
                     throw;
+                }
 
                 throw new Exception(
                     "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +

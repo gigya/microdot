@@ -38,7 +38,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task AllRequestsForSameCallID_SameHostSelected()
         {
-            var port = ServiceTesterBase.GetPort();
+            var port = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "host1,host2"},
@@ -83,7 +83,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ServiceProxyRpcMessageShouldRemainSame()
         {
             const string serviceName = "DemoService";
-             int defaultPort = ServiceTesterBase.GetPort();
+             int defaultPort = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string>
             {
                 {$"Discovery.Services.{serviceName}.Source", "Config"},
@@ -112,7 +112,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 serviceProxy.HttpMessageHandler = messageHandler;
                 string expectedHost = "override-host";
-                int expectedPort = ServiceTesterBase.GetPort();
+                int expectedPort = DisposablePort.GetPort().Port;
 
                 TracingContext.SetHostOverride(serviceName, expectedHost, expectedPort);
 
@@ -202,7 +202,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task RequestContextShouldOverrideHostOnly()
         {
             const string serviceName = "DemoService";
-            int defaultPort = ServiceTesterBase.GetPort();
+            int defaultPort = DisposablePort.GetPort().Port;
 
             var dict = new Dictionary<string, string> {
                 {$"Discovery.Services.{serviceName}.Source", "Config"},
@@ -237,7 +237,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task AllHostsAreHavingNetworkErrorsShouldTryEachOnce()
         {
-            var port = ServiceTesterBase.GetPort();
+            var port = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", "host1,host2"},
@@ -284,7 +284,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task OneHostHasNetworkErrorShouldMoveToNextHost()
         {
-            var port = ServiceTesterBase.GetPort();
+            var port = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
@@ -337,7 +337,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task RequestContextOverrideShouldFailOnFirstAttempt()
         {
-            var port = ServiceTesterBase.GetPort();
+            var port = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
@@ -391,7 +391,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task FailedHostShouldBeRemovedFromHostList()
         {
-            var port = ServiceTesterBase.GetPort();
+            var port = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "local"},

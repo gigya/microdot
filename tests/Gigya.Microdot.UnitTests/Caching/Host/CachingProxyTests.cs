@@ -35,7 +35,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             try
             {
                 Service = new NonOrleansServiceTester<SlowServiceHost>(
-                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: ServiceTesterBase.GetPort()))
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port))
                     .GetServiceProxyWithCaching<ISlowService>();
             }
             catch (Exception ex)

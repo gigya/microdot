@@ -40,8 +40,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
                 SiloClusterMode.PrimaryNode,
-                GetPort(), initTimeOutSec: 10);
-           
+                _port.Port, initTimeOutSec: 10);
+
             Initialize(args);
         }
 
@@ -49,7 +49,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
         {
             Initialize(serviceArguments);
         }
-
 
         private void Initialize(ServiceArguments serviceArguments)
         {
@@ -74,11 +73,11 @@ namespace Gigya.Microdot.Testing.Shared.Service
                 }
                 catch (Exception e)
                 {
-                    throw new Exception("Host failed to start.", e);
+                    throw new Exception($"Host failed to start. The port: {BasePort}", e);
                 }
             }
             else if (_hostStopped.IsCompleted)
-                throw new Exception("Host failed to start.");
+                throw new Exception($"Host failed to start. The port: {BasePort}");
         }
 
         public override void Dispose()

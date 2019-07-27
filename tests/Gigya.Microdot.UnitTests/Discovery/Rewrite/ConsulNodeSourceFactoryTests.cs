@@ -23,7 +23,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     {
         private const string ServiceName = "MyService";
         private const string Env = "prod";
-        private  int ConsulPort = ServiceTesterBase.GetPort();
+        private  int ConsulPort = DisposablePort.GetPort().Port;
         private const string Zone = "us1a";
         private const string Host1 = "Host1";
         private const int Port1 = 1234;

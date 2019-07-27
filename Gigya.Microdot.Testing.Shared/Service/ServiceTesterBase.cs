@@ -26,15 +26,10 @@ using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Parameters;
 using Ninject.Syntax;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Threading;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.UnitTests.Caching.Host;
@@ -45,19 +40,17 @@ namespace Gigya.Microdot.Testing.Shared.Service
     {
         private readonly IKernel _kernel;
         protected IResolutionRoot ResolutionRoot;
-
+        
         public int BasePort { get; protected set; }
-
-
+        
+        protected DisposablePort _port;
 
         public ServiceTesterBase(Action<IBindingRoot> additionalBinding = null)
         {
-            _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules(),
-                (kernel =>
-                {
-                    additionalBinding?.Invoke(kernel);
+            _port = DisposablePort.GetPort();
+            
+            _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules(), kernel => additionalBinding?.Invoke(kernel)).Kernel;
 
-                })).Kernel;
             ResolutionRoot = _kernel;
         }
         /// <summary>
@@ -129,71 +122,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
         public virtual void Dispose()
         {
+            _port?.Dispose(); // as if not allocated, will be null;
             _kernel.Dispose();
-        }
-        private static List<Semaphore> portMaintainer = new List<Semaphore>();
-
-        public static int GetPort()
-        {
-            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
-            List<int> occupiedPortsData= new List<int>();
-            occupiedPortsData.AddRange( ipGlobalProperties.GetActiveTcpConnections().Select(x=>x.LocalEndPoint.Port));
-            occupiedPortsData.AddRange(ipGlobalProperties.GetActiveTcpListeners().Select(x => x.Port));
-            occupiedPortsData.AddRange(ipGlobalProperties.GetActiveUdpListeners().Select(x => x.Port));
-
-
-            var occupiedPorts = occupiedPortsData.Distinct().ToHashSet();
-
-            for (int retry = 0; retry < 10000; retry++)
-            {
-                var randomPort = new Random( ).Next(50000, 60000);
-                bool freeRangePort = true;
-                int range = Enum.GetValues(typeof(PortOffsets)).Cast<int>().Max();
-
-                for (int port = randomPort; port <= randomPort + range; port++)
-                {
-                    freeRangePort = freeRangePort && (occupiedPorts.Contains(port) == false);
-                    if (!freeRangePort)
-                        break;
-                }
-                bool someOneElseWantThisPort = false;
-                if (freeRangePort)
-                {
-
-                    // We need to avoid race condition between different App Domains and processes running in 
-                    // parallel and allocating the same port, especially the tests running in parallel.
-                    // The semaphore is machine / OS wide, so the hope it is good enough.
-
-                    for (int port = randomPort; port <= randomPort + range; port++)
-                    {
-                        var name = $"ServiceTester-{port}";
-                        if (Semaphore.TryOpenExisting(name, out var _))
-                        {
-                            someOneElseWantThisPort = true;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                portMaintainer.Add(new Semaphore(1, 1, name));
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e);
-                                someOneElseWantThisPort = true;
-                            }
-                        }
-                    }
-
-                    if (someOneElseWantThisPort == false)
-                    {
-                        Console.WriteLine($"Service Tester found a free port: {randomPort}");
-                        return randomPort;
-                    }
-                }
-            }
-
-            throw new Exception("can't find free port ");
         }
     }
 }

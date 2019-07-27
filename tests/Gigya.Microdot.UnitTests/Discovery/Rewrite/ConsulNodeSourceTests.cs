@@ -21,7 +21,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
     [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ConsulNodeSourceTests
     {
-        private  int ConsulPort = ServiceTesterBase.GetPort();
+        private  int ConsulPort = DisposablePort.GetPort().Port;
         private const string Zone = "us1a";
 
         private const string Host1 = "Host1";

@@ -19,7 +19,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
     public class ConsulClientTests
     {
         private const string ServiceName = "MyService-prod";
-        private  int ConsulPort = ServiceTesterBase.GetPort();
+        private  int ConsulPort = DisposablePort.GetPort().Port;
         private const string Zone = "us1a";
 
         private const string Host1 = "Host1";
