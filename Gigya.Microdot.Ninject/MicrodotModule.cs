@@ -78,7 +78,11 @@ namespace Gigya.Microdot.Ninject
                                                                 typeof(SharedLogicAssembly), 
                                                                 typeof(ServiceDiscoveryAssembly));
 
+
             Bind<IRemoteHostPoolFactory>().ToFactory();
+
+            Kernel.BindPerKey<string, ReportingStrategy, IPassiveAggregatingHealthCheck, PassiveAggregatingHealthCheck>();
+
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
