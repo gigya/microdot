@@ -70,7 +70,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>A unique, random ID coming from Gator</summary>    
         [EventField(EventConsts.parentSpanID)]
-        public string ParentSpanId { get; set; } = TracingContext.TryGetSpanID();
+        public string ParentSpanId { get; set; } = TracingContext.TryGetParentSpanID();
 
         //============ PUBLISHER INFO ===============
 
