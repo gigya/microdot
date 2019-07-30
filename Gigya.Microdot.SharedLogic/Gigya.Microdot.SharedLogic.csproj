@@ -72,6 +72,7 @@
     <Compile Include="Monitor\AggregatingHealthStatus.cs" />
     <Compile Include="Monitor\HealthCheckMessage.cs" />
     <Compile Include="Monitor\IHealthMonitor.cs" />
+    <Compile Include="Monitor\PassiveAggregatingHealthCheck.cs" />
     <Compile Include="PortOffsets.cs" />
     <Compile Include="ServcieShutdownSource.cs" />
     <Compile Include="Rewrite\Node.cs" />
