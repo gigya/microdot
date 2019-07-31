@@ -62,6 +62,24 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 RejectRequestIfLateOrOverloaded(context);
             }
+            var loggingConfig = _grainLoggingConfig();
+
+            var shouldLoad = ((loggingConfig.LogOrleansGrains && isOrleansGrain)
+                              || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
+                              || (loggingConfig.LogServiceGrains && isServiceGrain));
+            if (shouldLoad == false)
+            {
+                await context.Invoke();
+                return;
+            }
+
+            string callId = TracingContext.TryGetRequestID();
+            uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
+            if (loggingConfig.LogRatio == 0 || callId == null ||  (uint)callId.GetHashCode() % uint.MaxValue > max)
+            {
+                await context.Invoke();
+                return;
+            }
 
             RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
             RequestTimings.Current.Request.Start();
@@ -79,29 +97,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             finally
             {
                 RequestTimings.Current.Request.Stop();
-                var loggingConfig = _grainLoggingConfig();
-
-                string callId = TracingContext.TryGetRequestID();
-                uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
-                if (
-                       //Don't write logs
-                       loggingConfig.LogRatio != 0
-                    && (
-                        //Write all logs
-                        loggingConfig.LogRatio == 1
-                        //Write some of the logs 
-                        || (callId != null && (uint)callId.GetHashCode() % uint.MaxValue < max)
-                     ))
-                {
-
-                    if (((loggingConfig.LogOrleansGrains && isOrleansGrain)
-                         || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
-                         || (loggingConfig.LogServiceGrains && isServiceGrain))
-                    )
-                    {
-                        PublishEvent(context, ex);
-                    }
-                }
+                PublishEvent(context, ex);
             }
         }
 
@@ -133,7 +129,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
 
             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
-            grainEvent.TargetType = target.Grain?.GetType().FullName ??target.InterfaceMethod.DeclaringType?.FullName;
+            grainEvent.TargetType = target.Grain?.GetType().FullName ?? target.InterfaceMethod.DeclaringType?.FullName;
             grainEvent.TargetMethod = target.InterfaceMethod.Name;
             grainEvent.Exception = ex;
             grainEvent.ErrCode = ex != null ? null : (int?)0;
