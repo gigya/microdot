@@ -12,8 +12,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 {
     public class GigyaSiloHostFake : GigyaSiloHost
     {
-        public GigyaSiloHostFake(WarmupTestServiceHostWithSiloHostFake host,  ILog log, OrleansConfigurationBuilder configBuilder, HttpServiceListener httpServiceListener, IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig, ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig) : 
-            base(log, configBuilder, httpServiceListener, eventPublisher, loadSheddingConfig, orleansConfigSourceBlock, orleansConfig)
+        public GigyaSiloHostFake(WarmupTestServiceHostWithSiloHostFake host,  ILog log, OrleansConfigurationBuilder configBuilder,
+            HttpServiceListener httpServiceListener, IEventPublisher<GrainCallEvent> eventPublisher, Func<LoadShedding> loadSheddingConfig,
+            ISourceBlock<OrleansConfig> orleansConfigSourceBlock, OrleansConfig orleansConfig, Func<GrainLogging> grainLoggingConfig) : 
+            base(log, configBuilder, httpServiceListener, eventPublisher, loadSheddingConfig, orleansConfigSourceBlock, orleansConfig, grainLoggingConfig)
         {
             try
             {

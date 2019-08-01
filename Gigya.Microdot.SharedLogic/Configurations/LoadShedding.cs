@@ -24,6 +24,10 @@ namespace Gigya.Microdot.SharedLogic.Configurations
 
         public Toggle   DropOrleansRequestsBySpanTime           { get; set; } = Toggle.Disabled;
         public TimeSpan DropOrleansRequestsOlderThanSpanTimeBy  { get; set; } = TimeSpan.FromSeconds(5);
+
+        public bool ApplyToServiceGrains  { get; set; } = true;
+        public bool ApplyToMicrodotGrains { get; set; } = false;
+        public bool ApplyToOrleansGrains  { get; set; } = false;
     }
 
 }
