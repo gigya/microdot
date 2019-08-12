@@ -82,7 +82,11 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            return true;
+            // #ORLEANS2 TODO: we paid attention to massive GC when deactivation of huge amount of grains
+            //                 as internal code concatenate grain ids for the log
+            //                 see more details in https://github.com/dotnet/orleans/issues/5851
+            //                 We should configure the log level according to the category.
+            return logLevel >= LogLevel.Information && logLevel != LogLevel.None;
         }
 
         public IDisposable BeginScope<TState>(TState state)
