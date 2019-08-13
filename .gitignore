@@ -251,3 +251,8 @@ paket-files/
 .idea/
 *.sln.iml
 OrleansAdoNetContent/
+
+# For local publishing
+.nuget/
+.nuget-packages/
+
