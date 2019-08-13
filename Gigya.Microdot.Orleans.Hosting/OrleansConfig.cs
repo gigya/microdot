@@ -2,6 +2,9 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -21,6 +24,33 @@ namespace Gigya.Microdot.Orleans.Hosting
         public ZooKeeperConfig ZooKeeper { get; set; }
 
         public MySqlConfig MySql_v4_0 { get; set; }
+
+        /// <summary>
+        /// Keyed by a category. Corresponding to OrleansLogAdapter Category.
+        /// Most probable case is a class name with namespace e.g. Orleans.Runtime.Catalog.
+        /// Use _ instead of . Meaning Orleans.Runtime.Catalog is Orleans_Runtime_Catalog.
+        /// The log entry will be tagged with IsOrleansLog_b: true.
+        /// </summary>
+        /// <example>
+        /// <![CDATA[
+        ///  <CategoryLogLevels>
+        ///      <Orleans_Runtime_Catalog LogLevel="None"/>
+        ///  </CategoryLogLevels>
+        /// ]]>
+        /// </example>
+        public IDictionary<string, OrleansLogLevel> CategoryLogLevels { get; set; } = new ConcurrentDictionary<string, OrleansLogLevel>();
+
+        /// <summary>
+        /// The default of log level, if not changed on the category level.
+        /// The default of default: Information.
+        /// </summary>
+        /// <example>
+        /// <![CDATA[
+        ///    <DefaultCategoryLogLevel>Information</DefaultCategoryLogLevel>
+        /// ]]>
+        /// </example>
+        [JsonConverter(typeof(StringEnumConverter))]
+        public LogLevel DefaultCategoryLogLevel  { get; set; } = LogLevel.Information;
     }
 
     public class ZooKeeperConfig
@@ -31,6 +61,15 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class MySqlConfig
     {
         public string ConnectionString { get; set; }
+    }
+
+    public class OrleansLogLevel
+    {
+        /// <summary>
+        /// Value is <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+        /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
+        public LogLevel LogLevel;
     }
 
     public class GrainAgeLimitConfig
@@ -53,7 +92,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
     public class DashboardConfig
     {
-        public string WriteInterval { get; set; } = "00:00:30";
+        public string WriteInterval { get; set; } = "00:00:30"; // Recommended, not less than
         public bool HideTrace { get; set; } = true;
         public bool Enable { get; set; } = true;
     }

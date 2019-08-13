@@ -32,14 +32,16 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
     {
         private readonly OrleansLogEnrichment _logEnrichment;
         private readonly ILog _logImplementation;
+        private readonly Func<OrleansConfig> _orleansConfigFunc;
+        private readonly string _category;
 
-        public OrleansLogAdapter(string category, Func<string, ILog> logImplementation, OrleansLogEnrichment logEnrichment)
+        public OrleansLogAdapter(string category, Func<string, ILog> logImplementation, OrleansLogEnrichment logEnrichment, Func<OrleansConfig> orleansConfigFunc)
         {
+            _category = category;
             _logEnrichment = logEnrichment;
+            _orleansConfigFunc = orleansConfigFunc;
             _logImplementation = logImplementation(category);
         }
-
-
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
@@ -55,23 +57,23 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
             var level = TraceEventType.Critical;
             switch (logLevel)
             {
-                case LogLevel.Critical:
-                    level = TraceEventType.Critical;
-                    break;
-                case LogLevel.Debug:
+                case LogLevel.Trace:
                     level = TraceEventType.Verbose;
                     break;
-                case LogLevel.Trace:
+                case LogLevel.Debug:
                     level = TraceEventType.Verbose;
                     break;
                 case LogLevel.Information:
                     level = TraceEventType.Information;
                     break;
+                case LogLevel.Warning:
+                    level = TraceEventType.Warning;
+                    break;
                 case LogLevel.Error:
                     level = TraceEventType.Error;
                     break;
-                case LogLevel.Warning:
-                    level = TraceEventType.Warning;
+                case LogLevel.Critical:
+                    level = TraceEventType.Critical;
                     break;
                 case LogLevel.None:
                     return;
@@ -82,19 +84,26 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            // #ORLEANS2 TODO: we paid attention to massive GC when deactivation of huge amount of grains
-            //                 as internal code concatenate grain ids for the log
-            //                 see more details in https://github.com/dotnet/orleans/issues/5851
-            //                 We should configure the log level according to the category.
-            return logLevel >= LogLevel.Information && logLevel != LogLevel.None;
+            // #ORLEANS2 [Done] We paid attention to massive GC when deactivation of huge amount of grains
+            //           as orleans code concatenate grain ids for the log entry
+            //           see more details in https://github.com/dotnet/orleans/issues/5851
+            
+            var config = _orleansConfigFunc();
+
+            // Configure the log level according to the category.
+            if(_category != null && config.CategoryLogLevels.Count >0)
+                if (config.CategoryLogLevels.TryGetValue(_category.Replace(".", "_"), out var configLogLevel))
+                {
+                    return logLevel >= configLogLevel.LogLevel;
+                }
+
+            return logLevel >= config.DefaultCategoryLogLevel;
         }
 
         public IDisposable BeginScope<TState>(TState state)
         {
             return NullScope.Instance;
         }
-
-
 
         public void Write(TraceEventType level, Action<LogDelegate> log, string file = "", int line = 0, string method = null)
         {
