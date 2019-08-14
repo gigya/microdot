@@ -33,11 +33,11 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
         private readonly OrleansLogEnrichment _logEnrichment;
         private readonly ILog _logImplementation;
         private readonly Func<OrleansConfig> _orleansConfigFunc;
-        private readonly string _category;
+        private readonly string _categoryUnderline;
 
         public OrleansLogAdapter(string category, Func<string, ILog> logImplementation, OrleansLogEnrichment logEnrichment, Func<OrleansConfig> orleansConfigFunc)
         {
-            _category = category;
+            _categoryUnderline = category?.Replace(".", "_"); // The element in config, contains '_' for every '.' in class name
             _logEnrichment = logEnrichment;
             _orleansConfigFunc = orleansConfigFunc;
             _logImplementation = logImplementation(category);
@@ -85,14 +85,14 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
         public bool IsEnabled(LogLevel logLevel)
         {
             // #ORLEANS2 [Done] We paid attention to massive GC when deactivation of huge amount of grains
-            //           as orleans code concatenate grain ids for the log entry
+            //           as orleans code concatenates grain ids for the log entry
             //           see more details in https://github.com/dotnet/orleans/issues/5851
             
             var config = _orleansConfigFunc();
 
             // Configure the log level according to the category.
-            if(_category != null && config.CategoryLogLevels.Count >0)
-                if (config.CategoryLogLevels.TryGetValue(_category.Replace(".", "_"), out var configLogLevel))
+            if(_categoryUnderline != null && config.CategoryLogLevels.Count >0)
+                if (config.CategoryLogLevels.TryGetValue(_categoryUnderline, out var configLogLevel))
                 {
                     return logLevel >= configLogLevel.LogLevel;
                 }
