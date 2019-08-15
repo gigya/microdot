@@ -144,9 +144,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
                                 $"Process id: {Process.GetCurrentProcess().Id}");
         }
 
-        private static void IsHttpSysLocked(int port)
+        private static void IsHttpSysLocked(int port, bool https = false)
         {
-            var urlPrefixTemplate = true ? "https://+:{0}/" : "http://+:{0}/";
+            var urlPrefixTemplate = https ? "https://+:{0}/" : "http://+:{0}/";
             var Prefix = string.Format(urlPrefixTemplate, port);
 
             var Listener = new System.Net.HttpListener
