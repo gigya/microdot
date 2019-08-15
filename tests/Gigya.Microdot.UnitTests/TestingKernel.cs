@@ -27,6 +27,8 @@ using System.Net;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
+using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -57,7 +59,6 @@ namespace Gigya.Microdot.Testing.Shared
             ServicePointManager.DefaultConnectionLimit = 200;
                Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME)).InSingletonScope();
             this.Load<MicrodotModule>();
-
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();
             Rebind<IDiscovery>().To<AlwaysLocalhostDiscovery>().InSingletonScope();
@@ -68,7 +69,7 @@ namespace Gigya.Microdot.Testing.Shared
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
 
             Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
-
+            this.WithNoCrashHandler();
             additionalBindings?.Invoke(this);
 
             Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()

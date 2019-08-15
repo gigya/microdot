@@ -71,7 +71,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
                 var occupiedPorts = Occupied(); // work on up-to-date list of ports in every retry
 
                 var randomPort = random.Next(rangeFrom, rangeTo);
-                
+
                 // Check the every port in the sequence isn't occupoed
                 bool freeRange = true;
                 for (int port = randomPort; port < randomPort + sequence; port++)
@@ -105,6 +105,10 @@ namespace Gigya.Microdot.Testing.Shared.Service
                                 var item = new Semaphore(1, 1, name);
                                 result._semaphores.Add(item);
                                 portMaintainer.TryAdd(item, DateTime.UtcNow);
+                                if (port == randomPort)
+                                {
+                                    IsHttpSysLocked(port);
+                                }
                             }
                             catch (Exception e)
                             {
@@ -115,6 +119,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
                             }
                         }
                     }
+
+
 
                     if (someOneElseWantThisPort == false)
                     {
@@ -136,6 +142,24 @@ namespace Gigya.Microdot.Testing.Shared.Service
                                 $"New semaphore exceptions: {totalNewSemExceptions}. " +
                                 $"Total elapsed, ms: {sw.ElapsedMilliseconds}." +
                                 $"Process id: {Process.GetCurrentProcess().Id}");
+        }
+
+        private static void IsHttpSysLocked(int port)
+        {
+            var urlPrefixTemplate = true ? "https://+:{0}/" : "http://+:{0}/";
+            var Prefix = string.Format(urlPrefixTemplate, port);
+
+            var Listener = new System.Net.HttpListener
+            {
+                IgnoreWriteExceptions = true,
+                Prefixes = { Prefix }
+            };
+
+            Listener.Start();
+
+            Thread.SpinWait(1);
+            Listener.Stop();
+
         }
     }
 }
