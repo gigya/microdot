@@ -26,6 +26,8 @@ using System.Linq;
 using Ninject;
 using Ninject.Planning.Bindings;
 
+#pragma warning disable 1574
+
 namespace Gigya.Microdot.Ninject
 {
     public class DisposableCollection<TKey, TService> : IDisposable
