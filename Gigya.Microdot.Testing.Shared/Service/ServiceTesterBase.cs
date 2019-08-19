@@ -28,31 +28,25 @@ using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Ninject;
 using Ninject.Parameters;
-using Ninject.Syntax;
 using System;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {
-        private readonly IKernel _kernel;
-        protected IResolutionRoot ResolutionRoot;
-        
+        public IKernel CommunicationKernel = new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
+
         public int BasePort { get; protected set; }
         
         protected DisposablePort _port;
 
-        public ServiceTesterBase(Action<IBindingRoot> additionalBinding = null)
+        protected ServiceTesterBase()
         {
             _port = DisposablePort.GetPort();
-            
-            _kernel = new MicrodotInitializer("", new ConsoleLogLoggersModules(), kernel => additionalBinding?.Invoke(kernel)).Kernel;
-
-            ResolutionRoot = _kernel;
         }
+
         /// <summary>
         /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
@@ -62,17 +56,18 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy with caching.</returns>
         public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot
+            var factory = CommunicationKernel
                 .Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
+            
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
                 (serName, checker) => new LocalhostServiceDiscovery()));
 
             provider.DefaultPort = BasePort;
             if (timeout != null)
                 provider.InnerProvider.SetHttpTimeout(timeout.Value);
-            if (ResolutionRoot.Get<IMetadataProvider>().HasCachedMethods(typeof(TServiceInterface)))
+            if (CommunicationKernel.Get<IMetadataProvider>().HasCachedMethods(typeof(TServiceInterface)))
             {
-                var cachingProxy = ResolutionRoot.Get<CachingProxyProvider<TServiceInterface>>(
+                var cachingProxy = CommunicationKernel.Get<CachingProxyProvider<TServiceInterface>>(
                     new ConstructorArgument("dataSource", provider.Client),
                     new ConstructorArgument("serviceName", (string)null));
 
@@ -90,7 +85,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance/>.</returns>
         public virtual TServiceInterface GetServiceProxy<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
+            var factory = CommunicationKernel.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
 
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
                 (serName, checker) => new LocalhostServiceDiscovery()));
@@ -110,7 +105,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance"/>.</returns>
         public virtual IServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, ServiceProxyProvider>>();
+            var factory = CommunicationKernel.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, ServiceProxyProvider>>();
 
             var provider = factory(serviceName, (srName, r) => new LocalhostServiceDiscovery());
             provider.DefaultPort = BasePort;
@@ -123,7 +118,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public virtual void Dispose()
         {
             _port?.Dispose(); // as if not allocated, will be null;
-            _kernel.Dispose();
+            CommunicationKernel.Dispose();
         }
     }
 }

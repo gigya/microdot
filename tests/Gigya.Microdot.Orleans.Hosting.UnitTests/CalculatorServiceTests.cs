@@ -25,12 +25,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -72,11 +74,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                Tester = new ServiceTester<CalculatorServiceHost>(k =>
+                Tester = new ServiceTester<CalculatorServiceHost>
                 {
-                    k.Rebind<ICacheRevoker>().ToConstant(_fakeRevokingManager);
-                    k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
-                });
+                    CommunicationKernel = new MicrodotInitializer(
+                        "CalculatorServiceCommLayer", 
+                        new ConsoleLogLoggersModules(),
+                        k =>
+                        {
+                            k.Rebind<ICacheRevoker>().ToConstant(_fakeRevokingManager);
+                            k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
+                        }                    
+                    ).Kernel
+                };
+                
                 Service = Tester.GetServiceProxy<ICalculatorService>();
                 ServiceWithCaching = Tester.GetServiceProxyWithCaching<ICalculatorService>();
                 ProxyProvider = Tester.GetServiceProxyProvider("CalculatorService");
@@ -87,7 +97,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 throw;
             }
         }
-
 
         [OneTimeTearDown]
         public void TearDown()

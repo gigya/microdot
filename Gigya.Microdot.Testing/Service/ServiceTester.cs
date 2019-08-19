@@ -36,7 +36,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using Ninject.Syntax;
 
 namespace Gigya.Microdot.Testing.Service
 {
@@ -52,25 +51,16 @@ namespace Gigya.Microdot.Testing.Service
 
         public ServiceArguments ServiceArguments{ get; private set; }
 
-        public ServiceTester(Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
+        public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
         {
             _customSerializer = customSerializer;
 
-            ServiceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, 
-                ConsoleOutputMode.Disabled, 
-                SiloClusterMode.PrimaryNode, 
-                _port.Port, 
-                initTimeOutSec: 15);
+            ServiceArguments = serviceArguments ?? new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, 
+                            ConsoleOutputMode.Disabled, 
+                            SiloClusterMode.PrimaryNode, 
+                            _port.Port, 
+                            initTimeOutSec: 15);
             
-            Initialize();
-        }
-
-        public ServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null, Type customSerializer = null) : base(additionalBinding)
-        {
-            _customSerializer = customSerializer;
-            
-            ServiceArguments = serviceArguments;
-
             Initialize();
         }
 

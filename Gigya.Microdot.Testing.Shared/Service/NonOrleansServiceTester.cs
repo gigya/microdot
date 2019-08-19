@@ -24,7 +24,6 @@
 
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
-using Ninject.Syntax;
 using System;
 using System.Threading.Tasks;
 
@@ -35,7 +34,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public TServiceHost Host = new TServiceHost();
         private Task _hostStopped;
 
-        public NonOrleansServiceTester(Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
+        public NonOrleansServiceTester()
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
@@ -45,7 +44,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             Initialize(args);
         }
 
-        public NonOrleansServiceTester(ServiceArguments serviceArguments, Action<IBindingRoot> additionalBinding = null) : base(additionalBinding)
+        public NonOrleansServiceTester(ServiceArguments serviceArguments)
         {
             Initialize(serviceArguments);
         }

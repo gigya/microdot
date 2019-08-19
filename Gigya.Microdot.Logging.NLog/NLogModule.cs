@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Linq;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -14,7 +12,7 @@ namespace Gigya.Microdot.Logging.NLog
 {
     /// <summary>
     /// Configures the logger to be <see cref="NLogLogger"/> (instance per type) and the event publisher to be
-    /// <see cref="NullEventPublisher"/>.
+    /// <see cref="LogEventPublisher"/>.
     /// </summary>
     public class NLogModule : NinjectModule, ILoggingModule
     {
