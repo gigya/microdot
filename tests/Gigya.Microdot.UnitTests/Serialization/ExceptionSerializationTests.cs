@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     {
                         // Configure the same, but pointless for exceptions
                         options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
+                        options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
                         options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                     })
                 .Build();
@@ -90,19 +92,25 @@ namespace Gigya.Microdot.UnitTests.Serialization
             expected.ErrorCode.ShouldBe(10000);
         }
 
-        // [Test] //#ORLEANS20 - I don't now why, but round/trip for HttpRequestException is loosing stack trace...
-        // public void OrleansSerialization_HttpRequestException_IsEquivalent()
-        // {
-        //     var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
-        // 
-        //     var actual1 = (HttpRequestException)_serializationManager.DeepCopy(expected);
-        //     AssertExceptionsAreEqual(expected, actual1);
-        // 
-        //     var actual = _serializationManager.RoundTripSerializationForTesting(expected);
-        //     var actual2 = _serializationManager.DeserializeFromByteArray<HttpRequestException>(_serializationManager.SerializeToByteArray(expected));
-        //     AssertExceptionsAreEqual(expected, actual2);
-        //     AssertExceptionsAreEqual(expected, actual);
-        // }
+
+        /// <summary>
+        /// [DONE] #ORLEANS20 - I don't now why, but round/trip for HttpRequestException is loosing stack trace...
+        /// https://github.com/dotnet/orleans/issues/5876
+        /// </summary>
+        [Test]
+        public void OrleansSerialization_HttpRequestException_IsEquivalent()
+        {
+            var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
+
+            var actual1 = (HttpRequestException)_serializationManager.DeepCopy(expected);
+            AssertExceptionsAreEqual(expected, actual1);
+
+            var actual = _serializationManager.RoundTripSerializationForTesting(expected);
+            var actual2 = _serializationManager.DeserializeFromByteArray<HttpRequestException>(_serializationManager.SerializeToByteArray(expected));
+            
+            AssertExceptionsAreEqual(expected, actual2);
+            AssertExceptionsAreEqual(expected, actual);
+        }
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)
 		{

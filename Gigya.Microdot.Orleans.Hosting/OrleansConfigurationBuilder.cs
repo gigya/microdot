@@ -105,6 +105,12 @@ namespace Gigya.Microdot.Orleans.Hosting
             hostBuilder.Configure<SerializationProviderOptions>(options =>
                 {
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
+                    
+                    // A workaround for an Orleans issue
+                    // to ensure the stack trace properly de/serialized
+                    // Gigya.Microdot.UnitTests.Serialization.ExceptionSerializationTests
+                    options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
+
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
                 .UsePerfCounterEnvironmentStatistics()

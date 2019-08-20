@@ -54,6 +54,7 @@
     <Compile Include="ClusterIdentity.cs" />
     <Compile Include="ExcludeGrainFromStatisticsAttribute.cs" />
     <Compile Include="OrleansConfigurationBuilder.cs" />
+    <Compile Include="HttpRequestExceptionSerializer.cs" />
     <Compile Include="OrleansCustomSerialization.cs" />
     <Compile Include="Events\GrainCallEvent.cs" />
     <Compile Include="GigyaSiloHost.cs" />
