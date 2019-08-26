@@ -240,9 +240,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                             // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
                             //-----------------------------------------------------------------------------------------
                             TracingContext.SetRequestID(requestData.TracingData.RequestID);
-                            TracingContext.SetSpan(requestData.TracingData.SpanID, requestData.TracingData.ParentSpanID);
                             TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
                             TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
+                            TracingContext.SetSpan(null, requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
 
                             SetCallEventRequestData(callEvent, requestData);
 

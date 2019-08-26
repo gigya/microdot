@@ -321,7 +321,7 @@ namespace Gigya.Microdot.ServiceProxy
                 ServiceName = AppInfo.Name,
                 RequestID = TracingContext.TryGetRequestID(),
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID(),
+                ParentSpanID = TracingContext.TryGetParentSpanID(),
                 SpanStartTime = DateTimeOffset.UtcNow,
                 AbandonRequestBy = TracingContext.AbandonRequestBy
             };
