@@ -73,7 +73,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// Initialized once; saves us doing expensive reflection per event.</summary>
         private ConcurrentDictionary<Type, List<MemberToSerialize>> membersToSerialize = new ConcurrentDictionary<Type, List<MemberToSerialize>>();
 
-
+        //TODO Support jobject
         List<MemberToSerialize> GetMembersToSerialize(Type t)
         {
             List<MemberToSerialize> res;

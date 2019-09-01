@@ -30,11 +30,10 @@ namespace Gigya.Microdot.Hosting.HttpService
 {
     public abstract class AbstractServiceActivator : IActivator
     {
-        public async Task<InvocationResult> Invoke(ServiceMethod serviceMethod, object[] arguments)
+        public async Task<InvocationResult> Invoke(ServiceMethod serviceMethod, object[] argumentsWithDefaults)
         {
             var invokeTarget = GetInvokeTarget(serviceMethod);
 
-            object[] argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
 
             var sw = Stopwatch.StartNew();
             var task = (Task)serviceMethod.ServiceInterfaceMethod.Invoke(invokeTarget, argumentsWithDefaults);
@@ -45,41 +44,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             return new InvocationResult { Result = result, ExecutionTime = executionTime };
         }
 
-        private static object[] GetConvertedAndDefaultArguments(MethodInfo method, object[] arguments)
-        {
-            var parameters = method.GetParameters();
-
-            object[] argumentsWithDefaults = new object[parameters.Length];
-
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                object argument = null;
-                var param = parameters[i];
-
-                if (i < arguments.Length)
-                {
-                    argument = JsonHelper.ConvertWeaklyTypedValue(arguments[i], param.ParameterType);
-                }
-                else
-                {                    
-                    if (param.IsOptional)
-                    {
-                        if (param.HasDefaultValue)
-                            argument = param.DefaultValue;
-                        else if (param.ParameterType.IsValueType)
-                            argument = Activator.CreateInstance(param.ParameterType);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Call to method {method.Name} is missing argument for {param.Name} and this paramater is not optional.");
-                    }                   
-                }
-
-                argumentsWithDefaults[i] = argument;
-            }
-
-            return argumentsWithDefaults;
-        }
 
         protected abstract object GetInvokeTarget(ServiceMethod serviceMethod);        
     }

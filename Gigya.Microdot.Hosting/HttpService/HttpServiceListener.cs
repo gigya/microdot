@@ -225,6 +225,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
+                    object[] argumentsWithDefaults=null;
                     ServiceMethod serviceMethod = null;
                     ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                     try
@@ -235,6 +236,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                             await CheckSecureConnection(context);
 
                             requestData = await ParseRequest(context);
+                           
 
                             //-----------------------------------------------------------------------------------------
                             // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
@@ -251,6 +253,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
+                            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
+                            argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
                         }
                         catch (Exception e)
                         {
@@ -263,7 +267,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                         RejectRequestIfLateOrOverloaded();
 
-                        var responseJson = await GetResponse(context, serviceMethod, requestData);
+                        var responseJson = await GetResponse(context, serviceMethod, requestData, argumentsWithDefaults);
                         if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
                         {
                             callEvent.ErrCode = 0;
@@ -288,11 +292,47 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        IEnumerable<DictionaryEntry> arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-                        _serverRequestPublisher.TryPublish(callEvent, arguments, serviceMethod);
+                        _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
                 }
             }
+        }
+
+
+        private static object[] GetConvertedAndDefaultArguments(MethodInfo method, object[] arguments)
+        {
+            var parameters = method.GetParameters();
+
+            object[] argumentsWithDefaults = new object[parameters.Length];
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                object argument = null;
+                var param = parameters[i];
+
+                if (i < arguments.Length)
+                {
+                    argument = JsonHelper.ConvertWeaklyTypedValue(arguments[i], param.ParameterType);
+                }
+                else
+                {
+                    if (param.IsOptional)
+                    {
+                        if (param.HasDefaultValue)
+                            argument = param.DefaultValue;
+                        else if (param.ParameterType.IsValueType)
+                            argument = System.Activator.CreateInstance(param.ParameterType);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Call to method {method.Name} is missing argument for {param.Name} and this paramater is not optional.");
+                    }
+                }
+
+                argumentsWithDefaults[i] = argument;
+            }
+
+            return argumentsWithDefaults;
         }
 
         private void SetCallEventRequestData(ServiceCallEvent callEvent, HttpServiceRequest requestData)
@@ -550,11 +590,10 @@ namespace Gigya.Microdot.Hosting.HttpService
             return request;
         }
 
-        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData)
+        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData,object[] arguments)
         {
             var taskType = serviceMethod.ServiceInterfaceMethod.ReturnType;
             var resultType = taskType.IsGenericType ? taskType.GetGenericArguments().First() : null;
-            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
             var settings = requestData.Target.IsWeaklyTyped ? JsonSettingsWeak : JsonSettings;
 
             var invocationResult = await Activator.Invoke(serviceMethod, arguments);
