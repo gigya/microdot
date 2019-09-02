@@ -55,12 +55,10 @@ namespace Gigya.Microdot.Hosting.HttpService
             _eventPublisher.TryPublish(callEvent);
         }
 
-
         private IEnumerable<Param> ExtractParamValues(object[] arguments, ServiceMethod serviceMethod)
         {
             EndPointMetadata metaData = _serviceEndPointDefinition.GetMetaData(serviceMethod);
             var methodParameterInfos = serviceMethod.ServiceInterfaceMethod.GetParameters();
-            List<Param> result = new List<Param>(arguments.Length);
             for (int i = 0; i < arguments.Length; i++)
             {
                 var parameterInfo = methodParameterInfos[i];
@@ -75,21 +73,20 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     foreach (var metaParam in metaParams)
                     {
-                        result.Add(new Param
+                       yield return new Param
                         {
                             Name = string.Intern($"{parameterInfo.Name}_{metaParam.Name}"),
                             Value = metaParam.Value,
                             Sensitivity = metaParam.Sensitivity ?? sensitivity
-                        });
+                        };
                     }
                 }
                 else
                 {
-                    result.Add(new Param { Name = parameterInfo.Name, Value = value, Sensitivity = sensitivity });
+                    yield return new Param { Name = parameterInfo.Name, Value = value, Sensitivity = sensitivity };
                 }
             }
-
-            return result;
+;
         }
     }
 }
