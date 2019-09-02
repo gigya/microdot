@@ -1,17 +1,16 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
 
     public interface IServerRequestPublisher
     {
-        void TryPublish(ServiceCallEvent callEvent, IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod);
+        void TryPublish(ServiceCallEvent callEvent, object[] arguments, ServiceMethod serviceMethod);
         ServiceCallEvent GetNewCallEvent();
     }
 
@@ -20,14 +19,17 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly IEventPublisher<ServiceCallEvent> _eventPublisher;
         private readonly IMembersToLogExtractor _membersToLogExtractor;
         private readonly IServiceEndPointDefinition _serviceEndPointDefinition;
+        private readonly ILog _log;
 
         public ServerRequestPublisher(IEventPublisher<ServiceCallEvent> eventPublisher,
                                       IMembersToLogExtractor membersToLogExtractor,
-                                      IServiceEndPointDefinition serviceEndPointDefinition)
+                                      IServiceEndPointDefinition serviceEndPointDefinition
+                                      ,ILog log)
         {
             _eventPublisher = eventPublisher;
             _membersToLogExtractor = membersToLogExtractor;
             _serviceEndPointDefinition = serviceEndPointDefinition;
+            _log = log;
         }
 
         public ServiceCallEvent GetNewCallEvent()
@@ -35,47 +37,56 @@ namespace Gigya.Microdot.Hosting.HttpService
             return _eventPublisher.CreateEvent();
         }
 
-        public void TryPublish(ServiceCallEvent callEvent, IEnumerable<DictionaryEntry> arguments, ServiceMethod serviceMethod)
+        public void TryPublish(ServiceCallEvent callEvent, object[] arguments, ServiceMethod serviceMethod)
         {
-            EndPointMetadata metaData = _serviceEndPointDefinition.GetMetaData(serviceMethod);
-            callEvent.Params = arguments.SelectMany(_ => ExtractParamValues(_, metaData)).Select(_ => new Param
+            try
             {
-                Name = _.name,
-                Value = _.value,
-                Sensitivity = _.sensitivity,
-            });
-
+                if (arguments != null)
+                {
+                    callEvent.Params = ExtractParamValues(arguments, serviceMethod);
+                }
+            }
+            catch (Exception e)
+            {
+                _log.Error("Can not extract params from request", exception: e,
+                    unencryptedTags: new {serviceInterfaceMethod = serviceMethod.ServiceInterfaceMethod.Name});
+            }
+            
             _eventPublisher.TryPublish(callEvent);
         }
 
-
-        private IEnumerable<(string name, object value, Sensitivity sensitivity)> ExtractParamValues(DictionaryEntry pair, EndPointMetadata metaData)
+        private IEnumerable<Param> ExtractParamValues(object[] arguments, ServiceMethod serviceMethod)
         {
-            var key = pair.Key.ToString();
-            var sensitivity = metaData.ParameterAttributes[key].Sensitivity ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
-            if (metaData.ParameterAttributes[key].IsLogFieldAttributeExists == true && (pair.Value is string) == false)
+            EndPointMetadata metaData = _serviceEndPointDefinition.GetMetaData(serviceMethod);
+            var methodParameterInfos = serviceMethod.ServiceInterfaceMethod.GetParameters();
+            for (int i = 0; i < arguments.Length; i++)
             {
-                var type = pair.Value?.GetType();
-                if (type?.IsClass==true)
+                var parameterInfo = methodParameterInfos[i];
+                var value = arguments[i];
+                var sensitivity = metaData.ParameterAttributes[parameterInfo.Name].Sensitivity
+                                  ?? metaData.MethodSensitivity ?? Sensitivity.Sensitive;
+
+                if (metaData.ParameterAttributes[parameterInfo.Name].IsLogFieldAttributeExists == true
+                    && (value is string) == false && value?.GetType().IsClass == true)
                 {
-                    var metaParams = _membersToLogExtractor.ExtractMembersToLog(pair.Value);
+                    var metaParams = _membersToLogExtractor.ExtractMembersToLog(value);
 
                     foreach (var metaParam in metaParams)
                     {
-                        var tuple = (
-                            name: $"{key}_{metaParam.Name}",
-                            value: metaParam.Value,
-                            sensitivity: metaParam.Sensitivity ?? sensitivity);
-
-                        yield return tuple;
+                       yield return new Param
+                        {
+                            Name = string.Intern($"{parameterInfo.Name}_{metaParam.Name}"),
+                            Value = metaParam.Value,
+                            Sensitivity = metaParam.Sensitivity ?? sensitivity
+                        };
                     }
                 }
+                else
+                {
+                    yield return new Param { Name = parameterInfo.Name, Value = value, Sensitivity = sensitivity };
+                }
             }
-            else
-            {
-                yield return (key, pair.Value, sensitivity);
-            }
+;
         }
-
     }
 }
