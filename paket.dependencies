@@ -20,15 +20,15 @@ nuget System.ComponentModel.Annotations ~> 4.0
 nuget DataAnnotationsValidator ~> 2.1.0
 
 # Orleans
-nuget Microsoft.Orleans.Core 2.4.1
-nuget Microsoft.Orleans.OrleansRuntime 2.4.1
-nuget Microsoft.Orleans.OrleansProviders 2.4.1
-nuget Microsoft.Orleans.OrleansSqlUtils 2.4.1
-nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.1
-nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.1
-nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.1
-nuget Microsoft.Orleans.Client 2.4.1
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.1
+nuget Microsoft.Orleans.Core 2.4.2
+nuget Microsoft.Orleans.OrleansRuntime 2.4.2
+nuget Microsoft.Orleans.OrleansProviders 2.4.2
+nuget Microsoft.Orleans.OrleansSqlUtils 2.4.2
+nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.2
+nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.2
+nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.2
+nuget Microsoft.Orleans.Client 2.4.2
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.2
 
 nuget OrleansDashboard
 nuget Microsoft.AspNetCore.Hosting
