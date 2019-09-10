@@ -10,6 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.Core" Version="2.4.2" />
+    <PackageReference Include="Microsoft.Orleans.OrleansCodeGenerator" Version="2.4.2" />
+    <PackageReference Include="Microsoft.Orleans.OrleansCodeGenerator.Build" Version="2.4.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
