@@ -95,8 +95,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             CrashHandler = kernel.Get<ICrashHandler>();
             CrashHandler.Init(OnCrash);
 
-            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
+                workloadMetrics.Init();
+            }
 
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
