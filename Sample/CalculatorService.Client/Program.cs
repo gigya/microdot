@@ -12,7 +12,6 @@ namespace CalculatorService.Client
         {
             try
             {
-                System.Threading.Thread.Sleep(7000);
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
                 Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
                 Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
