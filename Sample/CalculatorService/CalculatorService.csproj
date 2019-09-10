@@ -4,6 +4,9 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <Company>Gigya</Company>
     <Authors>Gigya</Authors>
+    <ApplicationIcon />
+    <OutputType>Exe</OutputType>
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,12 @@
     <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
     <ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="loadPaths.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

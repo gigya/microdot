@@ -4,12 +4,24 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <Company>Gigya</Company>
     <Authors>Gigya</Authors>
+    <ApplicationIcon />
+    <OutputType>Exe</OutputType>
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
     <ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Discovery.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="loadPaths.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
