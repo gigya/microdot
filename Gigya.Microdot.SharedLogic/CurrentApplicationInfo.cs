@@ -69,13 +69,11 @@ namespace Gigya.Microdot.SharedLogic
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            OsUser = WindowsIdentity.GetCurrent().Name;
+            OsUser = "N/A";
 
             Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
 
-            // ReSharper disable once PossibleNullReferenceException
-            IsRunningAsWindowsService = Environment.OSVersion.Platform == PlatformID.Win32NT &&
-                WindowsIdentity.GetCurrent().Name == @"NT AUTHORITY\SYSTEM";
+            IsRunningAsWindowsService = false;
             
             HasConsoleWindow = !IsRunningAsWindowsService && !Console.IsInputRedirected;
 
