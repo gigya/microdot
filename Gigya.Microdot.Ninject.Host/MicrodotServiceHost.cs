@@ -100,8 +100,11 @@ namespace Gigya.Microdot.Ninject.Host
             CrashHandler = kernel.Get<ICrashHandler>();
             CrashHandler.Init(OnCrash);
 
-            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
+                workloadMetrics.Init();
+            }
 
             var metricsInitializer = kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
@@ -176,7 +179,8 @@ namespace Gigya.Microdot.Ninject.Host
                 Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
             }
             Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
-            Kernel.Get<IWorkloadMetrics>().Dispose();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                Kernel.Get<IWorkloadMetrics>().Dispose();
             Dispose();
         }
 

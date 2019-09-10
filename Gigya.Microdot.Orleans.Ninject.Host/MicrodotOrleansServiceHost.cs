@@ -195,7 +195,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
 
             Kernel.Get<SystemInitializer>().Dispose();
-            Kernel.Get<IWorkloadMetrics>().Dispose();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                Kernel.Get<IWorkloadMetrics>().Dispose();
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
            
             try
