@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 
-using FluentAssertions;
-
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
@@ -15,6 +13,7 @@ using Metrics.MetricData;
 using NSubstitute;
 
 using NUnit.Framework;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -59,7 +58,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 testinghost.Host.Instance.Increment(0).Returns((ulong)1);
 
                 var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
-                res.Should().Be(1);
+                res.ShouldBe<ulong>(1);
 
                 testinghost.Host.Instance.Received().Increment(0);
                 Thread.Sleep(100);

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using FluentAssertions;
-
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
@@ -50,11 +48,11 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void ServiceArguments()
         {
             var args = new ServiceArguments(new[] {"--SlotNumber:5"});
-            args.SlotNumber.Should().Be(5);
+            args.SlotNumber.ShouldBe(5);
 
 
             args = new ServiceArguments(slotNumber:5);
-            args.SlotNumber.Should().Be(5);
+            args.SlotNumber.ShouldBe(5);
         }
 
         private TestingKernel<ConsoleLog> SetUpKernel(ServiceArguments serviceArguments, 
@@ -88,11 +86,11 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var kernel = SetUpKernel(new ServiceArguments(slotNumber: 5));
             var serviceEndpointDefinition = kernel.Get<IServiceEndPointDefinition>();
 
-            serviceEndpointDefinition.HttpPort.Should().Be(40005);
-            serviceEndpointDefinition.SiloGatewayPort.Should().Be(41005);
-            serviceEndpointDefinition.SiloNetworkingPort.Should().Be(42005);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(42001);
-            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(43005);
+            serviceEndpointDefinition.HttpPort.ShouldBe(40005);
+            serviceEndpointDefinition.SiloGatewayPort.ShouldBe(41005);
+            serviceEndpointDefinition.SiloNetworkingPort.ShouldBe(42005);
+            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.ShouldBe(42001);
+            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.ShouldBe(43005);
         }
 
         [Test]
@@ -103,11 +101,11 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
             var serviceEndpointDefinition = kernel.Get<IServiceEndPointDefinition>();
 
-            serviceEndpointDefinition.HttpPort.Should().Be(40001);
-            serviceEndpointDefinition.SiloGatewayPort.Should().Be(41001);
-            serviceEndpointDefinition.SiloNetworkingPort.Should().Be(42001);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(42001);
-            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(43001);
+            serviceEndpointDefinition.HttpPort.ShouldBe(40001);
+            serviceEndpointDefinition.SiloGatewayPort.ShouldBe(41001);
+            serviceEndpointDefinition.SiloNetworkingPort.ShouldBe(42001);
+            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.ShouldBe(42001);
+            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.ShouldBe(43001);
         }
 
         [Test]
@@ -130,12 +128,12 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
             var serviceEndpointDefinition = kernel.Get<IServiceEndPointDefinition>();
 
-            serviceEndpointDefinition.HttpPort.Should().Be(basePort);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(serviceEndpointDefinition.SiloNetworkingPort);            
+            serviceEndpointDefinition.HttpPort.ShouldBe(basePort);
+            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.ShouldBe(serviceEndpointDefinition.SiloNetworkingPort);            
 
-            serviceEndpointDefinition.SiloGatewayPort.Should().Be(basePort+1);
-            serviceEndpointDefinition.SiloNetworkingPort.Should().Be(basePort+2);
-            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(basePort+3);
+            serviceEndpointDefinition.SiloGatewayPort.ShouldBe(basePort+1);
+            serviceEndpointDefinition.SiloNetworkingPort.ShouldBe(basePort+2);
+            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.ShouldBe(basePort+3);
         }
 
     }

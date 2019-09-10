@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using FluentAssertions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.Shared;
@@ -7,6 +6,7 @@ using Ninject;
 using NSubstitute;
 
 using NUnit.Framework;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                                                                k.Rebind<IServiceProxyProvider<IDemoService>>().ToConstant(serviceProxy);
                                                            });
             var useServiceWithNoCache = kernel.Get<UseServiceWithNoCache>();
-            (await useServiceWithNoCache.DemoService.IncrementInt(1)).Should().Be(100);
+            (await useServiceWithNoCache.DemoService.IncrementInt(1)).ShouldBe(100);
         }
     }
 
