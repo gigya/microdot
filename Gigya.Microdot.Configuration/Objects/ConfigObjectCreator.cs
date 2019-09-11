@@ -58,6 +58,7 @@ namespace Gigya.Microdot.Configuration.Objects
         private JObject LatestNode { get; set; }
         private JObject Empty { get; } = new JObject();
         private DataAnnotationsValidator.DataAnnotationsValidator Validator { get; }
+        private bool isCreated = false;
 
         private readonly AggregatingHealthStatus healthStatus;
 
@@ -215,8 +216,9 @@ namespace Gigya.Microdot.Configuration.Objects
                 {
                     updatedConfig = LatestNode.ToObject(ObjectType);
                 }
-                catch (JsonException ex)
+                catch (Exception ex)
                 {
+                    // It is not only JsonException, as sometimes a custom deserializer capable to throw god knows what (including ProgrammaticException)
                     errors.Add(new ValidationResult("Failed to deserialize config object: " + HealthMonitor.GetMessages(ex)));
                 }
 
@@ -229,12 +231,18 @@ namespace Gigya.Microdot.Configuration.Objects
                 Latest = updatedConfig;
                 ValidationErrors = null;
                 UsageTracking.AddConfigObject(Latest, ConfigPath);
-
-                Log.Info(_ => _("A config object has been updated", unencryptedTags: new
+                if (isCreated)
                 {
-                    ConfigObjectType = ObjectType.FullName,
-                    ConfigObjectPath = ConfigPath
-                }));
+                    Log.Info(_ => _("A config object has been updated", unencryptedTags: new
+                    {
+                        ConfigObjectType = ObjectType.FullName,
+                        ConfigObjectPath = ConfigPath
+                    }));
+                }
+                else//It mean we are first time not need to send update messsage 
+                {
+                    isCreated = true;
+                }
 
                 SendChangeNotification?.Invoke(Latest);
             }

@@ -1,2 +1,7 @@
 Ninject
-Microsoft.Orleans.OrleansCodeGenerator
+Microsoft.Orleans.OrleansCodeGenerator.Build
+Microsoft.Orleans.Core
+
+# Solve binding redirect issue, related to project vs nuget references. OrleansDashboard depends on.
+Microsoft.AspNetCore.Hosting
+Microsoft.AspNetCore.Server.Kestrel

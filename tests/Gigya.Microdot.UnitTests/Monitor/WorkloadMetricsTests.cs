@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Gigya.Microdot.SharedLogic.Monitor;
@@ -20,7 +17,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class WorkloadMetricsTests
     {
         private const string Cpu = "CPU";

@@ -8,7 +8,6 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;

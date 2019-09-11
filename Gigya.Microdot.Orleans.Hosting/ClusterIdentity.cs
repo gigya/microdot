@@ -21,15 +21,13 @@
 #endregion
 
 using System;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    /// <summary>Provides information about services in this silo. /// </summary>
+    /// <summary>Provides information about services in this silo.</summary>
     public class ClusterIdentity
     {
         /// <summary>
@@ -48,20 +46,16 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// <summary>
         /// Performs discovery of services in the silo and populates the class' static members with information about them.
         /// </summary>
-        public ClusterIdentity(ServiceArguments serviceArguments, ILog log, IEnvironment environment)
+        public ClusterIdentity(ILog log, IEnvironment environment, CurrentApplicationInfo appInfo)
         {
-            if (serviceArguments.SiloClusterMode != SiloClusterMode.ZooKeeper)
-                return;
 
             string dc = environment.Zone;
             string env = environment.DeploymentEnvironment;
 
-         
-
-            var serviceIdSourceString = string.Join("_", dc, env, CurrentApplicationInfo.Name, CurrentApplicationInfo.InstanceName);
+            var serviceIdSourceString = string.Join("_", dc, env, appInfo.Name, environment.InstanceName);
             ServiceId = Guid.Parse(serviceIdSourceString.GetHashCode().ToString("X32"));
 
-            DeploymentId = serviceIdSourceString + "_" + CurrentApplicationInfo.Version;
+            DeploymentId = serviceIdSourceString + "_" + appInfo.Version;
 
             log.Info(_ => _("Orleans Cluster Identity Information (see tags)", unencryptedTags: new { OrleansDeploymentId = DeploymentId, OrleansServiceId = ServiceId, serviceIdSourceString }));
         }

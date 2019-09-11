@@ -41,10 +41,12 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         int SiloNetworkingPort { get; }
 
-        // Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
-        // localhost and the original base port are always assumed (since the secondary nodes must use a
-        // base port override to avoid port conflicts).
-        int SiloNetworkingPortOfPrimaryNode { get; }
+        /// <summary>
+        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
+        /// localhost and the original base port are always assumed (since the secondary nodes must use a
+        /// base port override to avoid port conflicts).
+        ///</summary> 
+        int? SiloNetworkingPortOfPrimaryNode { get; }
 
         int HttpPort { get; }
 
@@ -54,7 +56,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         /// </summary>
         Dictionary<Type, string> ServiceNames { get; }
 
-		/// <summary>
+        int SiloDashboardPort { get; }
+
+        /// <summary>
 		/// Determines which service method should be called for the specified <see cref="InvocationTarget"/>.
 		/// </summary>
 		/// <param name="target">The invocation target specified by the remote client.</param>

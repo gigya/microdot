@@ -22,17 +22,13 @@
 
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
-using System.Reflection;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
-using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Ninject;
-using Ninject.Planning.Bindings;
 
 namespace Gigya.Microdot.Ninject.SystemInitializer
 {
@@ -70,24 +66,25 @@ namespace Gigya.Microdot.Ninject.SystemInitializer
                 if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(configType)))
                 {
                     dynamic getLatestLambda = configObjectCreator.GetLambdaOfGetLatest(configType);
-                    _kernel.Rebind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda());
+                    _kernel.Bind(typeof(Func<>).MakeGenericType(configType)).ToMethod(t => getLatestLambda()).InSingletonScope();
                 }
 
                 Type sourceBlockType = typeof(ISourceBlock<>).MakeGenericType(configType);
                 if (!_kernel.IsBinded(typeof(ISourceBlock<>).MakeGenericType(configType)))
                 {
-                    _kernel.Rebind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications);
+                    _kernel.Bind(sourceBlockType).ToMethod(t => configObjectCreator.ChangeNotifications).InSingletonScope();
                 }
 
                 if (!_kernel.IsBinded(typeof(Func<>).MakeGenericType(sourceBlockType)))
                 {
                     dynamic changeNotificationsLambda = configObjectCreator.GetLambdaOfChangeNotifications(sourceBlockType);
-                    _kernel.Rebind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda());
+                    _kernel.Bind(typeof(Func<>).MakeGenericType(sourceBlockType)).ToMethod(t => changeNotificationsLambda()).InSingletonScope();
                 }
 
+                //Let the developers replace the config
                 if (!_kernel.IsBinded(configType))
                 {
-                    _kernel.Rebind(configType).ToMethod(t => configObjectCreator.GetLatest());
+                    _kernel.Bind(configType).ToMethod(t => configObjectCreator.GetLatest()).InSingletonScope();
                 }
                 
                 _configObjectsCache.RegisterConfigObjectCreator(configObjectCreator);

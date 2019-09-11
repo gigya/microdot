@@ -8,7 +8,6 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
-using Ninject.Syntax;
 using NSubstitute;
 
 namespace Gigya.Microdot.UnitTests.SystemInitializer
@@ -21,8 +20,9 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
 
     public class ServiceHostFake<TFake> : MicrodotServiceHost<IServiceFake> 
     {
+        public override string ServiceName => nameof(IServiceFake).Substring(1);
+
         private TFake _fake;
-        private TaskCompletionSource<bool> _hostInitializedEvent = new TaskCompletionSource<bool>();
         public ServiceHostFake(TFake fake)
         {
             _fake = fake;
@@ -33,29 +33,18 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             return new NLogModule();
         }
 
-        protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
+        protected override void PreConfigure(IKernel kernel)
         {
+            base.PreConfigure(kernel);
+       
             kernel.Rebind<TFake>().ToConstant(_fake);
             kernel.Rebind<IEventPublisher<CrashEvent>>().ToConstant(Substitute.For<IEventPublisher<CrashEvent>>());
             kernel.Rebind<IMetricsInitializer>().ToConstant(Substitute.For<IMetricsInitializer>());
         }
 
-        protected override void OnInitilize(IResolutionRoot resolutionRoot)
+        protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
-            _hostInitializedEvent.SetResult(true);
-        }
-
-        public async Task StopHost()
-        {
-            await WaitForServiceStartedAsync();
-            Stop();
-            await WaitForServiceGracefullyStoppedAsync();
-            Dispose();
-        }
-
-        public async Task WaitForHostInitialized()
-        {
-            await _hostInitializedEvent.Task;
+          //  throw new System.NotImplementedException();
         }
     }
 }

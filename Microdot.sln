@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
 	ProjectSection(SolutionItems) = preProject
@@ -67,6 +67,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Client", "Sample\CalculatorService.Client\CalculatorService.Client.csproj", "{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Orleans", "Sample\CalculatorService.Orleans\CalculatorService.Orleans.csproj", "{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Common.Tests", "Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj", "{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -162,6 +164,10 @@ Global
 		{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -175,9 +181,10 @@ Global
 		{5B1BA713-F5BA-466B-B79E-95261DB27FA9} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
 		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
 		{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
+		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {8A847321-B6B0-4BA9-9AC3-0DB91FA99B90}
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
+		SolutionGuid = {8A847321-B6B0-4BA9-9AC3-0DB91FA99B90}
 	EndGlobalSection
 EndGlobal

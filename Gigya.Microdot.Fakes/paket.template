@@ -1,8 +1,7 @@
 type
 	project
 description
-	A Collection of fakes for various Microdot components, used for testing.
-	Part of the Microdot framework. See also Gigya.Microdot.Testing.
+	Tools to help write tests for Microdot services.
 projectUrl
 	https://github.com/gigya/microdot
 licenseUrl

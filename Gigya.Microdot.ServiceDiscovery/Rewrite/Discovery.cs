@@ -197,6 +197,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         public void Dispose()
         {
+            foreach (var sourceFactory in NodeSourceFactories)
+            {
+                sourceFactory.Value.Dispose();
+            }
+
             _shutdownTokenSource.Cancel();
             _shutdownTokenSource.Dispose();
         }

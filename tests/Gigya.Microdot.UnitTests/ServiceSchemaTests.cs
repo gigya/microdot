@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
@@ -10,7 +9,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ServiceSchemaTests
     {
 

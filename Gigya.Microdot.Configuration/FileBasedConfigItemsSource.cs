@@ -39,14 +39,16 @@ namespace Gigya.Microdot.Configuration
         private readonly IConfigurationLocationsParser _configurationLocations;
         private readonly IEnvironmentVariableProvider _environmentVariableProvider;
         private readonly IFileSystem _fileSystem;
+        private readonly ConfigDecryptor _configDecryptor;
 
         private readonly Regex paramMatcher = new Regex(@"([^\\]|^)%(?<envName>[^%]+)%", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
-        public FileBasedConfigItemsSource(IConfigurationLocationsParser configurationLocations, IEnvironmentVariableProvider environmentVariableProvider, IFileSystem fileSystem)
+        public FileBasedConfigItemsSource(IConfigurationLocationsParser configurationLocations, IEnvironmentVariableProvider environmentVariableProvider, IFileSystem fileSystem, ConfigDecryptor configDecryptor)
         {
             _configurationLocations = configurationLocations;
             _environmentVariableProvider = environmentVariableProvider;
             _fileSystem = fileSystem;
+            _configDecryptor = configDecryptor;
         }
 
         public async Task<ConfigItemsCollection> GetConfiguration()
@@ -212,13 +214,13 @@ namespace Gigya.Microdot.Configuration
             conf.TryGetValue(key, out ConfigItem old);
             if (old == null)
             {
-                var configItem = new ConfigItem { Key = key, Value = value, Priority = priority, Node = node };
+                var configItem = new ConfigItem(_configDecryptor) { Key = key, Value = value, Priority = priority, Node = node ,};
                 configItem.Overrides.Add(configItemInfo);
                 conf[key] = configItem;
             }
             else if (old.Priority < priority)
             {
-                var configItem = new ConfigItem
+                var configItem = new ConfigItem(_configDecryptor)
                 {
                     Key = key,
                     Value = value,

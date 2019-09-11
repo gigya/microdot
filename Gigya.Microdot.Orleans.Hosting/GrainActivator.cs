@@ -45,7 +45,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private IGrain GetGrain(Type grainInterfaceType)
         {
-            var getGrainMethod = typeof(IGrainFactory).GetMethod("GetGrain", new[] { typeof(long), typeof(string) })
+          
+            var getGrainMethod = typeof(IGrainFactory).GetMethod( nameof( Factory.Value.GetGrain), new[] { typeof(long), typeof(string) })
                 .MakeGenericMethod(grainInterfaceType);
 
             return (IGrain)getGrainMethod.Invoke(Factory.Value, new object[] { 0, null });

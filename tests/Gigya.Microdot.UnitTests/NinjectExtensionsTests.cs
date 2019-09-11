@@ -11,7 +11,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class NinjectExtensionsTests
     {
         [Test]

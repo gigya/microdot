@@ -30,7 +30,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement
     /// various data sources (mysql, mongo, etc), the time it took to perform calls to providers, and the total time spent
     /// processing the current request.</summary>
     [Serializable]
-    public class RequestTimings:MarshalByRefObject
+    public class RequestTimings
     {
         internal readonly ConcurrentDictionary<string, Aggregator> UserStats = new ConcurrentDictionary<string, Aggregator>();
 

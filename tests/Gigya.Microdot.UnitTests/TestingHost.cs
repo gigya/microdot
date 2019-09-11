@@ -16,34 +16,26 @@ using NSubstitute;
 
 namespace Gigya.Microdot.UnitTests
 {
-   
-
-    public class TestingHost<T> : MicrodotServiceHost<T> where T : class 
+    public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
+        // Last word is good enought for randomization, but easier to follow
+        private readonly string HostId = Guid.NewGuid().ToString().Substring(24);
+
         public T Instance { get; private set; }
 
-        private readonly Action<IKernel> _configure;
-        private readonly Action<IKernel> _onInitialize;
+        public override string ServiceName => $"TestingHost-{HostId}";
 
-        private IKernel _kernel;
 
-        public TestingHost(Action<IKernel> configure = null, Action<IKernel> onInitialize = null)
-        {
-            this._configure = configure;
-            this._onInitialize = onInitialize;
-        }
-
-        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(false); }
+        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
-            _kernel = kernel;
+            
             kernel.Rebind<ILog>().ToConstant(new ConsoleLog());
 
             kernel.Rebind<IConfigurationDataWatcher, ManualConfigurationEvents>()
                   .To<ManualConfigurationEvents>()
                   .InSingletonScope();
-
 
             kernel.Rebind<IEventPublisher>().To<NullEventPublisher>();
             kernel.Rebind<IWorker>().To<WaitingWorker>();
@@ -51,16 +43,10 @@ namespace Gigya.Microdot.UnitTests
 
             kernel.Bind<T>().ToConstant(Substitute.For<T>());
 
-            _configure?.Invoke(kernel);
-
             Instance = kernel.Get<T>();
         }
 
-        protected override void OnInitilize(IResolutionRoot resolutionRoot)
-        {
-            base.OnInitilize(resolutionRoot);
-            _onInitialize?.Invoke(_kernel);
-        }
+ 
 
         private class WaitingWorker : IWorker
         {
@@ -79,20 +65,10 @@ namespace Gigya.Microdot.UnitTests
 
         private class FakesLoggersModules : ILoggingModule
         {
-            private readonly bool _useHttpLog;
-
-            public FakesLoggersModules(bool useHttpLog)
+            public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> logFactory)
             {
-                _useHttpLog = useHttpLog;
-            }
-
-            public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
-            {
-                if (_useHttpLog)
-                    logBinding.To<HttpLog>();
-                else
-                    logBinding.To<ConsoleLog>();
-
+                logBinding.To<ConsoleLog>();
+                logFactory.ToMethod(c => caller => c.Kernel.Get<ConsoleLog>());
                 eventPublisherBinding.To<NullEventPublisher>();
             }
         }

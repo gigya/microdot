@@ -1,5 +1,4 @@
 Gigya.ServiceContract
 Ninject
-Microsoft.Orleans.Core
-NSubstitute
-System.Threading.Tasks.Dataflow
+Microsoft.Orleans.Client
+

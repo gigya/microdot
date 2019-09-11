@@ -25,7 +25,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -77,17 +76,21 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>The name of the reporting system (comments/socialize/hades/mongo etc)</summary>
         [EventField(EventConsts.srvSystem, OmitFromAudit = true)]
-        public string ServiceName { get; } = CurrentApplicationInfo.Name;
+        public string ServiceName { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         /// <summary>The name of the instance of the reporting system</summary>
         [EventField(EventConsts.srvSystemInstance, OmitFromAudit = true)]
-        public string ServiceInstanceName { get; } = CurrentApplicationInfo.InstanceName == CurrentApplicationInfo.DEFAULT_INSTANCE_NAME ? null : CurrentApplicationInfo.InstanceName;
+        public string ServiceInstanceName { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         [EventField(EventConsts.srvVersion, OmitFromAudit = true)]
-        public string ServiceVersion => CurrentApplicationInfo.Version.ToString(4);
+        public string ServiceVersion  { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         [EventField(EventConsts.infrVersion, OmitFromAudit = true)]
-        public string InfraVersion => CurrentApplicationInfo.InfraVersion.ToString(4);
+        public string InfraVersion  { get; set;} // Publisher populated from CurrentApplicationInfo;
+
+        ///// <summary>The hostname of the server making the report</summary>    
+        [EventField(EventConsts.runtimeHost)]
+        public string HostName  { get; set; } = CurrentApplicationInfo.HostName;
 
         /// <summary>The value of the %REGION% environment variable. .</summary>
         [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]
@@ -106,9 +109,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.runtimeENV, OmitFromAudit = true)]
         public string RuntimeENV => Environment.DeploymentEnvironment;
 
-        ///// <summary>The hostname of the server making the report</summary>    
-        [EventField(EventConsts.runtimeHost)]
-        public string HostName => CurrentApplicationInfo.HostName;
 
         //============ MESSAGE ===============
         public int? ErrCode { get; set; }
@@ -233,7 +233,5 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>Whether exception stack traces should be excluded. Note: can be overridden by derived classes.</summary>                
         public virtual bool ShouldExcludeStackTrace => Configuration.ExcludeStackTraceRule?.IsMatch(ErrCode_.ToString()) == true;
-
-
     }
 }

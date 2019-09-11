@@ -28,12 +28,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
     public class ClientCallEvent : Event
     {
-
-        public ClientCallEvent()
-        {
-            ParentSpanId = TracingContext.TryGetSpanID();
-        }
-
         public override string EventType => EventConsts.ClientReqType;
 
         /// <summary>The name of the calling  system (comments/socialize/hades/mongo etc)</summary>

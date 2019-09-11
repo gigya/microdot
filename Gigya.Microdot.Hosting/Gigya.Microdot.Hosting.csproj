@@ -14,6 +14,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <TargetFrameworkProfile />
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <noWarn>1591</noWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -39,6 +40,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Orleans.Core.Abstractions">
+      <HintPath>..\packages\Microsoft.Orleans.Core.Abstractions\lib\netstandard2.0\Orleans.Core.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -83,7 +87,6 @@
     <Compile Include="Validators\ConfigObjectTypeValidator.cs" />
     <Compile Include="Validators\SensitivityAttributesValidator.cs" />
     <Compile Include="Service\ServiceHostBase.cs" />
-    <Compile Include="Service\HostExtensionMethods.cs" />
     <Compile Include="HttpService\Endpoints\HealthStatusResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Validators\IValidator.cs" />

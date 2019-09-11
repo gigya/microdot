@@ -28,37 +28,44 @@ using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class HealthCheckTests
     {
-        private ServiceTester<CalculatorServiceHost> tester;
+        private ServiceTester<CalculatorServiceHost> _tester;
+        private int BasePort => _tester.Host.Arguments.BasePortOverride.Value;
 
-        private int mainPort = 9555;
         [OneTimeSetUp]
         public void SetUp()
         {
-            tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(mainPort);
+            _tester = new ServiceTester<CalculatorServiceHost>();
         }
 
         [OneTimeTearDown]
         public void TearDown()
         {
-            tester.Dispose();
+            _tester.Dispose();
         }
 
         [Test]
         public async Task HealthCheck_ServcieDrain_StatueShouldBe521()
         {
-            int port = 6755;//prevent prot collision, more then one silo is runing at the same time in this TestFixture.
-            var customServiceTester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(basePortOverride: port, serviceDrainTimeSec: 10);
+            int port = DisposablePort.GetPort().Port;
+            
+            //serviceDrainTimeSec:
+            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
+                ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 1, instanceName: "test", initTimeOutSec: 10);
+
+            var customServiceTester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
-            await  Task.Delay(200);
+            await Task.Delay(200);
 
             var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
@@ -68,23 +75,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void HealthCheck_NotHealthy_ShouldReturn500()
         {
-            tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(false);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            _tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(false);
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{BasePort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
+
 
         [Test]
         public void HealthCheck_Healthy_ShouldReturn200()
         {
-            tester.GetGrainClient<IProgrammableHealthGrain>(0).SetHealth(true);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            _tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(true);
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{BasePort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Test]
         public void HealthCheck_NotImplemented_ShouldReturn200()
         {
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{mainPort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{BasePort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
             httpResponseMessage.Content.ShouldNotBeNull();
         }

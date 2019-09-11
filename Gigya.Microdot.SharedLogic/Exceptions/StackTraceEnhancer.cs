@@ -14,6 +14,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 {
     public class StackTraceEnhancer : IStackTraceEnhancer
     {
+        private CurrentApplicationInfo AppInfo { get; }
         private Func<StackTraceEnhancerSettings> GetConfig { get; }
         private IEnvironment Environment { get; }
         private static readonly JsonSerializer Serializer = new JsonSerializer
@@ -25,8 +26,9 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             Converters = { new StripHttpRequestExceptionConverter() }
         };
 
-        public StackTraceEnhancer(Func<StackTraceEnhancerSettings> getConfig, IEnvironment environment)
+        public StackTraceEnhancer(Func<StackTraceEnhancerSettings> getConfig, IEnvironment environment, CurrentApplicationInfo appInfo)
         {
+            AppInfo = appInfo;
             GetConfig = getConfig;
             Environment = environment;
         }
@@ -35,8 +37,8 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         {
             var breadcrumb = new Breadcrumb
             {
-                ServiceName = CurrentApplicationInfo.Name,
-                ServiceVersion = CurrentApplicationInfo.Version.ToString(),
+                ServiceName = AppInfo.Name,
+                ServiceVersion = AppInfo.Version.ToString(),
                 HostName = CurrentApplicationInfo.HostName,
                 DataCenter = Environment.Zone,
                 DeploymentEnvironment = Environment.DeploymentEnvironment

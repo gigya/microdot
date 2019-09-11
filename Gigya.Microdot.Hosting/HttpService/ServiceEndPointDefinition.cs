@@ -50,9 +50,15 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public int SiloNetworkingPort { get; }
 
-        public int SiloNetworkingPortOfPrimaryNode { get; }
+        /// <summary>
+        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
+        /// localhost and the original base port are always assumed (since the secondary nodes must use a
+        /// base port override to avoid port conflicts).
+        ///</summary> 
+        public int? SiloNetworkingPortOfPrimaryNode { get; }
 
         public Dictionary<Type, string> ServiceNames { get; }
+        public int SiloDashboardPort { get; }
 
         private ConcurrentDictionary<ServiceMethod,  EndPointMetadata> _metadata= new ConcurrentDictionary<ServiceMethod, EndPointMetadata>();
 
@@ -60,7 +66,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
 
         public ServiceEndPointDefinition(IServiceInterfaceMapper mapper,
-            ServiceArguments serviceArguments, Func<DiscoveryConfig> getConfig)
+            ServiceArguments serviceArguments, Func<DiscoveryConfig> getConfig, CurrentApplicationInfo appInfo)
         {
             _serviceMethodResolver = new ServiceMethodResolver(mapper);
             var serviceInterfaces = mapper.ServiceInterfaceTypes.ToArray();
@@ -92,7 +98,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
 
             var config = getConfig();
-            var serviceConfig = config.Services[CurrentApplicationInfo.Name];
+            var serviceConfig = config.Services[appInfo.Name];
 
             UseSecureChannel = serviceConfig.UseHttpsOverride ?? interfacePorts.First().UseHttps;
 
@@ -110,16 +116,16 @@ namespace Gigya.Microdot.Hosting.HttpService
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
                 SiloNetworkingPort = basePort + (int)PortOffsets.SiloNetworking;
-                SiloNetworkingPortOfPrimaryNode = interfacePorts.First().BasePortWithoutOverrides + (int)PortOffsets.SiloNetworking;
+                SiloNetworkingPortOfPrimaryNode = (serviceArguments.SiloNetworkingPortOfPrimaryNode ?? 0) + (int)PortOffsets.SiloNetworking;
+                SiloDashboardPort = basePort + (int)PortOffsets.SiloDashboard;
             }
             else
             {
-
                 if (serviceConfig.DefaultSlotNumber == null)
                     throw new ConfigurationException("Service is configured to run in slot based port but " +
                                                      "DefaultSlotNumber is not set in configuration. " +
                                                      "Either disable this mode via Service.IsSlotMode config value or set it via " +
-                                                     $"Discovery.{CurrentApplicationInfo.Name}.DefaultSlotNumber.");                
+                                                     $"Discovery.{appInfo.Name}.DefaultSlotNumber.");                
 
                 int? slotNumber = serviceArguments.SlotNumber ?? serviceConfig.DefaultSlotNumber;
 
@@ -127,13 +133,14 @@ namespace Gigya.Microdot.Hosting.HttpService
                     throw new ConfigurationException("Service is configured to run in slot based port but SlotNumber " +
                                                      "command-line argument was not specified and DefaultSlotNumber is not set in configuration. " +
                                                      "Either disable this mode via Service.IsSlotMode config value or set it via " +
-                                                     $"Discovery.{CurrentApplicationInfo.Name}.DefaultSlotNumber.");
+                                                     $"Discovery.{appInfo.Name}.DefaultSlotNumber.");
 
                 HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
                 MetricsPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Metrics).Value;
                 SiloGatewayPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloGateway).Value;
                 SiloNetworkingPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloNetworking).Value;
                 SiloNetworkingPortOfPrimaryNode = config.PortAllocation.GetPort(serviceConfig.DefaultSlotNumber, PortOffsets.SiloNetworking).Value;
+                SiloDashboardPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloDashboard).Value;
             }
 
             foreach (var method in _serviceMethodResolver.GrainMethods)

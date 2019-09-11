@@ -18,7 +18,9 @@ using RichardSzalay.MockHttp;
 
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
-{  
+{
+    [TestFixture, Parallelizable(ParallelScope.None)]
+
     public class MetricsTests : AbstractServiceProxyTest
     {
         [Test]

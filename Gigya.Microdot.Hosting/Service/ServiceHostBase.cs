@@ -23,15 +23,11 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.SharedLogic;
-
-
-[assembly: InternalsVisibleTo("LINQPadQuery")]
 
 namespace Gigya.Microdot.Hosting.Service
 {
@@ -43,21 +39,21 @@ namespace Gigya.Microdot.Hosting.Service
 
         private DelegatingServiceBase WindowsService { get; set; }
         private ManualResetEvent StopEvent { get; }
-        private TaskCompletionSource<object> ServiceStartedEvent { get; set; }
+        protected TaskCompletionSource<object> ServiceStartedEvent { get; set; }
         private TaskCompletionSource<StopResult> ServiceGracefullyStopped { get; set; }
         private Process MonitoredShutdownProcess { get; set; }
-        private readonly string _serviceName;
-        protected CrashHandler CrashHandler { get; set; }
+        protected ICrashHandler CrashHandler { get; set; }
 
         /// <summary>
         /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
         /// </summary>
-        protected virtual string ServiceName => _serviceName;
+        public abstract string ServiceName { get; }
 
+         
         protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
 
         /// <summary>
-        /// Version of underlying infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
+        /// Version of wrapping infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
         /// </summary>
         protected virtual Version InfraVersion => null;
 
@@ -72,21 +68,19 @@ namespace Gigya.Microdot.Hosting.Service
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
 
-            _serviceName = GetType().Name;
-
          
-            if (_serviceName.EndsWith("Host") && _serviceName.Length > 4)
-                _serviceName = _serviceName.Substring(0, _serviceName.Length - 4);
         }
 
+
         /// <summary>
-        /// Start the service, autodetecting between Windows service and command line. Always blocks until service is stopped.
+        /// Start the service, auto detecting between Windows service and command line. Always blocks until service is stopped.
         /// </summary>
         public void Run(ServiceArguments argumentsOverride = null)
         {
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
-            CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
+            
+            
 
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
@@ -128,7 +122,17 @@ namespace Gigya.Microdot.Hosting.Service
                     MonitoredShutdownProcess.EnableRaisingEvents = true;
                 }
 
-                OnStart();
+                try
+                {
+                    OnStart();
+                }
+                catch (Exception e)
+                {
+                    ServiceStartedEvent.TrySetException(e);
+
+                    throw;
+                }
+
                 if (Arguments.ServiceStartupMode == ServiceStartupMode.CommandLineInteractive)
                 {
                     Thread.Sleep(10); // Allow any startup log messages to flush to Console.
@@ -238,7 +242,7 @@ namespace Gigya.Microdot.Hosting.Service
                         Console.BackgroundColor = restoreBack;
                         Console.ForegroundColor = restoreFore;
                     }
-                    else if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Standard)
+                    else  
                     {
                         foreach (var result in results)
                             Console.WriteLine(result);
@@ -275,10 +279,7 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         public void Stop()
         {
-            if (StopEvent.WaitOne(0))
-                throw new InvalidOperationException("Service is already stopped, or is running in an unsupported mode.");
-
-            StopEvent.Set();
+                StopEvent.Set();
         }
 
         protected virtual void OnCrash()
@@ -294,7 +295,6 @@ namespace Gigya.Microdot.Hosting.Service
             if (Arguments == null)
             {
                 Arguments = new ServiceArguments(args);
-                CurrentApplicationInfo.Init(ServiceName, Arguments.InstanceName, InfraVersion);
             }
 
             try

@@ -38,6 +38,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         public ServiceProxyProvider(string serviceName)
         {
+            
             ServiceName = serviceName;
         }
 

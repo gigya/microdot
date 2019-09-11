@@ -32,7 +32,8 @@ namespace Gigya.Microdot.SharedLogic.Logging
 {
     public class LogCallSiteInfo
     {
-        public Type ReflectedType;
+        public string LoggerName;
+        public string Namespace;
         public string ClassName;
         public string AssemblyName;
         public string AssemblyVersion;
@@ -57,7 +58,8 @@ namespace Gigya.Microdot.SharedLogic.Logging
 
             var logCallSiteInfo = new LogCallSiteInfo
             {
-                ReflectedType = CallSiteInfoTemplate?.ReflectedType,
+                LoggerName = CallSiteInfoTemplate?.LoggerName,
+                Namespace = CallSiteInfoTemplate?.Namespace,
                 ClassName = CallSiteInfoTemplate?.ClassName,
                 AssemblyName = CallSiteInfoTemplate?.AssemblyName,
                 AssemblyVersion = CallSiteInfoTemplate?.AssemblyVersion,
@@ -80,17 +82,17 @@ namespace Gigya.Microdot.SharedLogic.Logging
                             encryptedTags = null;
                         }
 
-                        var unencTags = TagsExtractor.GetTagsFromObject(unencryptedTags)
-                                                     .Concat(exception.GetUnencryptedTags())
-                                                     .Where(_ => _.Value != null)
-                                                     .FormatTagsWithTypeSuffix()
-                                                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                        var unencTags = RemoveDuplicatesTag(TagsExtractor.GetTagsFromObject(unencryptedTags)
+                            .Concat(exception.GetUnencryptedTags())
+                            .Where(_ => _.Value != null)
+                            .FormatTagsWithTypeSuffix()
+                        );
 
-                        var encTags = TagsExtractor.GetTagsFromObject(encryptedTags)
-                                                   .Concat(exception.GetEncryptedTagsAndExtendedProperties())
-                                                   .Where(_ => _.Value != null)
-                                                   .FormatTagsWithoutTypeSuffix()
-                                                   .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                        var encTags = RemoveDuplicatesTag(TagsExtractor.GetTagsFromObject(encryptedTags)
+                            .Concat(exception.GetEncryptedTagsAndExtendedProperties())
+                            .Where(_ => _.Value != null)
+                            .FormatTagsWithoutTypeSuffix());
+
 
                         WriteLog(level, logCallSiteInfo, message, encTags, unencTags, exception, stackTrace);
                     });
@@ -99,6 +101,27 @@ namespace Gigya.Microdot.SharedLogic.Logging
             {
                 Trace.TraceError($"Programmatic error while logging: {ex}");
             }
+        }
+
+        private IDictionary<string, string> RemoveDuplicatesTag(IEnumerable<KeyValuePair<string, string>> formatTagsWithTypeSuffix)
+        {
+            int i = 0;
+            var tags = new Dictionary<string, string>(formatTagsWithTypeSuffix?.Count() ?? 0);
+            foreach (var tag in formatTagsWithTypeSuffix)
+            {
+                try
+                {
+                    tags.Add(tag.Key, tag.Value);
+                }
+                catch (ArgumentException)
+                {
+                    i++;
+                    tags.Add($"{tag.Key}_Duplicate_{i}", tag.Value);
+                }
+            }
+            if (i > 0)
+                tags.Add("DuplicateTags", i.ToString());
+            return tags;
         }
 
 

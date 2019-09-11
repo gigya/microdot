@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,12 +32,12 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
-using Orleans.Runtime.Configuration;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -65,14 +64,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         protected override void OnStart()
         {
-
             Kernel = CreateKernel();
+
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InSingletonScope();
 
             PreConfigure(Kernel);
 
             Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
-
-            Kernel.Get<ClusterConfiguration>().WithNinject(Kernel);
 
             PreInitialize(Kernel);
 
@@ -81,7 +79,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Warmup(Kernel);
 
             SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(AfterOrleansStartup, BeforeOrleansShutdown);
+            SiloHost.Start(Arguments, AfterOrleansStartup);
         }
 
         /// <summary>
@@ -94,7 +92,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             Kernel.Get<SystemInitializer>().Init();
-            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            CrashHandler = kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
 
             IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
@@ -119,13 +118,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             warmup.Warmup();
         }
 
-	    protected override void OnVerifyConfiguration()
-	    {
-		    Kernel = CreateKernel();
-		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
-		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-		    base.OnVerifyConfiguration();
-	    }
+        protected override void OnVerifyConfiguration()
+        {
+            Kernel = CreateKernel();
+            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
+            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+            base.OnVerifyConfiguration();
+        }
 
         /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
@@ -135,6 +134,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual IKernel CreateKernel()
         {
             return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
 
         }
 
@@ -153,7 +153,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
+
         }
 
 
@@ -167,6 +168,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual void Configure(IKernel kernel, OrleansCodeConfig commonConfig) { }
 
 
+
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
         /// <summary>
@@ -174,13 +176,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// </summary>
         /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>        
         protected virtual async Task AfterOrleansStartup(IGrainFactory grainFactory) { }
-
-
-        /// <summary>
-        /// When overridden, allows running shutdown code before the silo has stopped, i.e. IBootstrapProvider.Close().
-        /// </summary>
-        /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>
-        protected virtual async Task BeforeOrleansShutdown(IGrainFactory grainFactory) { }
 
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -199,6 +194,16 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Get<SystemInitializer>().Dispose();
             Kernel.Get<IWorkloadMetrics>().Dispose();
             SiloHost.Stop(); // This calls BeforeOrleansShutdown()
+           
+            try
+            {
+                Kernel.Get<ILog>().Info(x => x("Silo stopped gracefully, trying to dispose dependencies."));
+            }
+            catch
+            {
+                Console.WriteLine("Silo stopped gracefully, trying to dispose dependencies.");
+            }
+
             Dispose();
         }
 

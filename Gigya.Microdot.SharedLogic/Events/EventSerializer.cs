@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -25,43 +24,56 @@ namespace Gigya.Microdot.SharedLogic.Events
             public EventFieldAttribute Attribute;
         }
 
-
         private Func<EventConfiguration> LoggingConfigFactory { get; }
         private IEnvironment Environment { get; }
         private IStackTraceEnhancer StackTraceEnhancer { get; }
         private Func<EventConfiguration> EventConfig { get; }
-
+        private CurrentApplicationInfo AppInfo { get; }
 
         public EventSerializer(Func<EventConfiguration> loggingConfigFactory,
-            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, Func<EventConfiguration> eventConfig)
+            IEnvironment environment, IStackTraceEnhancer stackTraceEnhancer, 
+            Func<EventConfiguration> eventConfig, 
+            CurrentApplicationInfo appInfo)
         {
+            
             LoggingConfigFactory = loggingConfigFactory;
             Environment = environment;
             StackTraceEnhancer = stackTraceEnhancer;
             EventConfig = eventConfig;
+            AppInfo = appInfo;
         }
-
-
 
         public IEnumerable<SerializedEventField> Serialize(IEvent evt, Func<EventFieldAttribute, bool> predicate = null)
         {
+            // Consider to move events fields population to IEventFactory
             evt.Configuration = LoggingConfigFactory();
             evt.Environment = Environment;
             evt.StackTraceEnhancer = StackTraceEnhancer;
-
+            
+            // If event wasn't created with factory these fields left unpopulated
+            if (evt.ServiceName == null) 
+                evt.ServiceName = AppInfo.Name;
+            
+            if (evt.ServiceInstanceName == null) 
+                evt.ServiceInstanceName = Environment.InstanceName;
+            
+            if (evt.ServiceVersion == null) 
+                evt.ServiceVersion = AppInfo.Version.ToString(4);
+            
+            if (evt.InfraVersion == null) 
+                evt.InfraVersion = AppInfo.InfraVersion.ToString(4);
+            
             foreach (var member in GetMembersToSerialize(evt.GetType()))
                 if (predicate == null || predicate(member.Attribute) == true)
                     foreach (var field in SerializeEventFieldAndSubfields(evt, member))
                         yield return field;
         }
 
-
-
         /// <summary>The list of members in this <see cref="Event"/> that are decorated with <see cref="EventFieldAttribute"/>.
         /// Initialized once; saves us doing expensive reflection per event.</summary>
         private ConcurrentDictionary<Type, List<MemberToSerialize>> membersToSerialize = new ConcurrentDictionary<Type, List<MemberToSerialize>>();
 
-
+        //TODO Support jobject
         List<MemberToSerialize> GetMembersToSerialize(Type t)
         {
             List<MemberToSerialize> res;

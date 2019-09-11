@@ -30,7 +30,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
@@ -38,8 +37,6 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -86,11 +83,11 @@ namespace Gigya.Microdot.Hosting.HttpService
         private IServiceEndPointDefinition ServiceEndPointDefinition { get; }
         private HttpListener Listener { get; }
         private ILog Log { get; }
-        private IEventPublisher<ServiceCallEvent> EventPublisher { get; }
         private IEnumerable<ICustomEndpoint> CustomEndpoints { get; }
         private IEnvironment Environment { get; }
         private JsonExceptionSerializer ExceptionSerializer { get; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
+        private CurrentApplicationInfo AppInfo { get; }
 
         private ServiceSchema ServiceSchema { get; }
 
@@ -105,25 +102,27 @@ namespace Gigya.Microdot.Hosting.HttpService
         private DataAnnotationsValidator.DataAnnotationsValidator _validator = new DataAnnotationsValidator.DataAnnotationsValidator();
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
-                                   ICertificateLocator certificateLocator, ILog log, IEventPublisher<ServiceCallEvent> eventPublisher,
+                                   ICertificateLocator certificateLocator, ILog log,
                                    IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
                                    JsonExceptionSerializer exceptionSerializer, 
                                    ServiceSchema serviceSchema,                                   
                                    Func<LoadShedding> loadSheddingConfig,
-                                   IServerRequestPublisher serverRequestPublisher)
-
+                                   IServerRequestPublisher serverRequestPublisher,
+                                   CurrentApplicationInfo appInfo
+                                   )
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
+            
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
             Log = log;
-            EventPublisher = eventPublisher;
             CustomEndpoints = customEndpoints.ToArray();
             Environment = environment;
             ExceptionSerializer = exceptionSerializer;
             LoadSheddingConfig = loadSheddingConfig;
+            AppInfo = appInfo;
 
             if (serviceEndPointDefinition.UseSecureChannel)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -137,7 +136,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 Prefixes = { Prefix }
             };
 
-            var context = Metric.Context("Service").Context(CurrentApplicationInfo.Name);
+            var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
             _deserializationTime = context.Timer("Deserialization", Unit.Calls);
             _roundtripTime = context.Timer("Roundtrip", Unit.Calls);
@@ -159,12 +158,17 @@ namespace Gigya.Microdot.Hosting.HttpService
             catch (HttpListenerException ex)
             {
                 if (ex.ErrorCode != 5)
+                {
+                    ex.Data["HttpPort"] = ServiceEndPointDefinition.HttpPort;
+                    ex.Data["Prefix"] = Prefix;
+                    ex.Data["User"] = AppInfo.OsUser;
                     throw;
+                }
 
                 throw new Exception(
                     "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +
                     "To configure them, run the following commands in an elevated (administrator) command prompt:\n" +
-                    $"netsh http add urlacl url={Prefix} user={CurrentApplicationInfo.OsUser}");
+                    $"netsh http add urlacl url={Prefix} user={AppInfo.OsUser}");
             }
 
             StartListening();
@@ -215,13 +219,13 @@ namespace Gigya.Microdot.Hosting.HttpService
                 // Regular endpoint handling
                 using (_activeRequestsCounter.NewContext("Request"))
                 {
-                    TracingContext.SetUpStorage();
                     RequestTimings.GetOrCreate(); // initialize request timing context
 
                     string methodName = null;
                     // Initialize with empty object for protocol backwards-compatibility.
 
                     var requestData = new HttpServiceRequest { TracingData = new TracingData() };
+                    object[] argumentsWithDefaults=null;
                     ServiceMethod serviceMethod = null;
                     ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                     try
@@ -232,6 +236,16 @@ namespace Gigya.Microdot.Hosting.HttpService
                             await CheckSecureConnection(context);
 
                             requestData = await ParseRequest(context);
+                           
+
+                            //-----------------------------------------------------------------------------------------
+                            // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
+                            //-----------------------------------------------------------------------------------------
+                            TracingContext.SetRequestID(requestData.TracingData.RequestID);
+                            TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
+                            TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
+                            TracingContext.SetSpan(null, requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
+
                             SetCallEventRequestData(callEvent, requestData);
 
                             TracingContext.SetOverrides(requestData.Overrides);
@@ -239,6 +253,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
+                            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
+                            argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
                         }
                         catch (Exception e)
                         {
@@ -251,7 +267,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                         RejectRequestIfLateOrOverloaded();
 
-                        var responseJson = await GetResponse(context, serviceMethod, requestData);
+                        var responseJson = await GetResponse(context, serviceMethod, requestData, argumentsWithDefaults);
                         if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
                         {
                             callEvent.ErrCode = 0;
@@ -276,11 +292,47 @@ namespace Gigya.Microdot.Hosting.HttpService
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
 
-                        IEnumerable<DictionaryEntry> arguments = (requestData.Arguments ?? new OrderedDictionary()).Cast<DictionaryEntry>();
-                        _serverRequestPublisher.TryPublish(callEvent, arguments, serviceMethod);
+                        _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
                 }
             }
+        }
+
+
+        private static object[] GetConvertedAndDefaultArguments(MethodInfo method, object[] arguments)
+        {
+            var parameters = method.GetParameters();
+
+            object[] argumentsWithDefaults = new object[parameters.Length];
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                object argument = null;
+                var param = parameters[i];
+
+                if (i < arguments.Length)
+                {
+                    argument = JsonHelper.ConvertWeaklyTypedValue(arguments[i], param.ParameterType);
+                }
+                else
+                {
+                    if (param.IsOptional)
+                    {
+                        if (param.HasDefaultValue)
+                            argument = param.DefaultValue;
+                        else if (param.ParameterType.IsValueType)
+                            argument = System.Activator.CreateInstance(param.ParameterType);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Call to method {method.Name} is missing argument for {param.Name} and this paramater is not optional.");
+                    }
+                }
+
+                argumentsWithDefaults[i] = argument;
+            }
+
+            return argumentsWithDefaults;
         }
 
         private void SetCallEventRequestData(ServiceCallEvent callEvent, HttpServiceRequest requestData)
@@ -419,12 +471,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new RequestException("Only requests with content are supported.");
             }
 
-            var errors = new List<ValidationResult>();
-            if (!_validator.TryValidateObjectRecursive(context.Request, errors))
-            {
-                _failureCounter.Increment("InvalidRequestFormat");
-                throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
-            }
+        
         }
 
 
@@ -475,7 +522,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.ContentType = contentType;
             context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
-            context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, CurrentApplicationInfo.Version.ToString());
+            context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, AppInfo.Version.ToString());
             context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
             context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
 
@@ -513,7 +560,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                 serviceCallEvent.ClientResponseTime = sw.Elapsed.TotalMilliseconds;
         }
 
-
         private async Task<HttpServiceRequest> ParseRequest(HttpListenerContext context)
         {
             var request = await _deserializationTime.Time(async () =>
@@ -525,23 +571,29 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
             });
 
+            // TODO: We have an issue when calling from Legacy:
+            // http://kibana.gigya.net/kibana3/#/dashboard/elasticsearch/logdog_dashboard?query=callID:8f74364e9cab4aa4954374b8064155a1&from=2019-07-23T10:29:15.218Z&to=2019-07-23T10:31:15.220Z
+
+            // var errors = new List<ValidationResult>();
+            // 
+            // if (   !_validator.TryValidateObjectRecursive(request.Overrides, errors) 
+            //     || !_validator.TryValidateObjectRecursive(request.TracingData, errors)
+            //     )
+            // {
+            //     _failureCounter.Increment("InvalidRequestFormat");
+            //     throw new RequestException("Invalid request format: " + string.Join("\n", errors.Select(a => a.MemberNames + ": " + a.ErrorMessage)));
+            // }
+
             request.TracingData = request.TracingData ?? new TracingData();
             request.TracingData.RequestID = request.TracingData.RequestID ?? Guid.NewGuid().ToString("N");
-
-            TracingContext.SetRequestID(request.TracingData.RequestID);
-            TracingContext.SetSpan(request.TracingData.SpanID, request.TracingData.ParentSpanID);
-            TracingContext.SpanStartTime    = request.TracingData.SpanStartTime;
-            TracingContext.AbandonRequestBy = request.TracingData.AbandonRequestBy;
 
             return request;
         }
 
-
-        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData)
+        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData,object[] arguments)
         {
             var taskType = serviceMethod.ServiceInterfaceMethod.ReturnType;
             var resultType = taskType.IsGenericType ? taskType.GetGenericArguments().First() : null;
-            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
             var settings = requestData.Target.IsWeaklyTyped ? JsonSettingsWeak : JsonSettings;
 
             var invocationResult = await Activator.Invoke(serviceMethod, arguments);

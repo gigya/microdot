@@ -2,15 +2,17 @@ using System;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
+using Ninject;
 using Ninject.Activation;
 using Ninject.Modules;
+using Ninject.Parameters;
 using Ninject.Syntax;
 
 namespace Gigya.Microdot.Logging.NLog
 {
     /// <summary>
     /// Configures the logger to be <see cref="NLogLogger"/> (instance per type) and the event publisher to be
-    /// <see cref="NullEventPublisher"/>.
+    /// <see cref="LogEventPublisher"/>.
     /// </summary>
     public class NLogModule : NinjectModule, ILoggingModule
     {
@@ -19,7 +21,8 @@ namespace Gigya.Microdot.Logging.NLog
         /// </summary>
         public override void Load()
         {
-            Bind(Bind<ILog>(), Bind<IEventPublisher>());
+            Bind(Bind<ILog>(), Bind<IEventPublisher>(),Rebind<Func<string, ILog>>());
+      
         }
 
         /// <summary>
@@ -27,16 +30,34 @@ namespace Gigya.Microdot.Logging.NLog
         /// </summary>
         /// <param name="logBinding"></param>
         /// <param name="eventPublisherBinding"></param>
-        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding)
+        public void Bind(IBindingToSyntax<ILog> logBinding, IBindingToSyntax<IEventPublisher> eventPublisherBinding, IBindingToSyntax<Func<string, ILog>> funcLog)
         {
+            // Bind microdot log that takes the caller name from class asking for the log
             logBinding
                 .To<NLogLogger>()
                 .InScope(GetTypeOfTarget)
                 .WithConstructorArgument("receivingType", (context, target) => GetTypeOfTarget(context));
-
+            
             eventPublisherBinding
                 .To<LogEventPublisher>()
                 .InSingletonScope();
+            
+            // Bind Orleans log with string context
+            funcLog.ToMethod(c =>
+                {
+                    return loggerName =>
+                    {
+                        var dict = c.Kernel.Get<DisposableCollection<string, ILog>>();
+                        return dict.GetOrAdd(loggerName
+                            , logName =>
+                            {
+                                var caller = new ConstructorArgument("caller", logName);
+                                return c.Kernel.Get<NLogLogger>(caller);
+                            });
+
+                    };
+                })
+                .InTransientScope();
         }
 
         /// <summary>

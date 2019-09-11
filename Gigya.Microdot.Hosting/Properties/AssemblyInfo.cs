@@ -44,5 +44,5 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Common.Application.Ninject")]
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.Ninject")]
 
-
+[assembly: InternalsVisibleTo("LINQPadQuery")]
 

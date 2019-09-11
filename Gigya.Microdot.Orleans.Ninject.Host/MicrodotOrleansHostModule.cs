@@ -26,7 +26,13 @@ using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.SharedLogic;
 using Ninject.Modules;
 using Orleans;
-using Orleans.Runtime.Configuration;
+using System;
+using System.Collections.Generic;
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Orleans.Hosting.Logging;
+using Gigya.Microdot.SharedLogic.Events;
+using Orleans.Runtime;
+using Orleans.Serialization;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -38,15 +44,21 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         public override void Load()
         {
             this.BindClassesAsSingleton(new[] { typeof(Grain) }, typeof(OrleansHostingAssembly));
-            this.BindInterfacesAsSingleton(new[] {typeof(Grain)}, typeof(OrleansHostingAssembly));
-            
+            this.BindInterfacesAsSingleton(new[] { typeof(Grain) },new List<Type>{typeof(ILog)}, typeof(OrleansHostingAssembly));
+
             Rebind<IActivator>().To<GrainActivator>().InSingletonScope();
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
-            Rebind<ClusterConfiguration>().ToSelf().InSingletonScope();
-            Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
 
-            Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();                                    
+            Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
+            Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
+
+            Rebind<IOrleansToNinjectBinding>().To<OrleansToNinjectBinding>().InSingletonScope();
+            Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
+       
+            // Register logger per category
+            Kernel.BindPerString<OrleansLogAdapter>();
+            Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();
         }
     }
 }

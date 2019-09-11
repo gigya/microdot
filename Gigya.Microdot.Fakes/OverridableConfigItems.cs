@@ -30,24 +30,19 @@ namespace Gigya.Microdot.Fakes
 {
     public class OverridableConfigItems : IConfigItemsSource
     {
+        private readonly ConfigDecryptor _configDecryptor;
         private Dictionary<string, string> Data { get; }
 
         private FileBasedConfigItemsSource FileBasedConfigItemsSource { get; }
 
-
         public OverridableConfigItems(FileBasedConfigItemsSource fileBasedConfigItemsSource,
-                                        Dictionary<string, string> data)
+                                        Dictionary<string, string> data, ConfigDecryptor configDecryptor)
         {
+            _configDecryptor = configDecryptor;
             FileBasedConfigItemsSource = fileBasedConfigItemsSource;
             Data = data;
         }
 
-
-        public OverridableConfigItems(FileBasedConfigItemsSource fileBasedConfigItemsSource)
-        {
-            FileBasedConfigItemsSource = fileBasedConfigItemsSource;
-            Data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        }
 
         public async Task<ConfigItemsCollection> GetConfiguration()
         {
@@ -64,7 +59,7 @@ namespace Gigya.Microdot.Fakes
             var items = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in Data)
             {
-                items.Add(item.Key, new ConfigItem
+                items.Add(item.Key, new ConfigItem(_configDecryptor)
                 {
                     Key = item.Key,
                     Value = item.Value,

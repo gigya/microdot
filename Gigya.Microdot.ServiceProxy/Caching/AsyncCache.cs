@@ -72,6 +72,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         /// </summary>
         internal int CacheKeyCount => RevokeKeyToCacheKeysIndex.Sum(item => item.Value.Count);
 
+        private static long oneTime = 0;
 
         public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener, Func<CacheConfig> getRevokeConfig)
         {
@@ -79,8 +80,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             GetRevokeConfig = getRevokeConfig;
             Log = log;
 
-            if (ObjectCache.Host == null)
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (ObjectCache.Host == null
+                && Interlocked.CompareExchange(ref oneTime, 1, 0) == 0)
+            {
                 ObjectCache.Host = this;
+            }
             else
                 Log.Error("AsyncCache: Failed to register with ObjectCache.Host since it was already registered. Cache memory size will not be reported to Metrics.NET. Please make sure AsyncCache is singleton to prevent this issue.");
 

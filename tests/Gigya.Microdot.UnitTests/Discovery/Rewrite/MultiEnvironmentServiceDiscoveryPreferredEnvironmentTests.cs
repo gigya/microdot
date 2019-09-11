@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -11,21 +10,19 @@ using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
 using Ninject;
 using NSubstitute;
-using NSubstitute.ClearExtensions;
 using NUnit.Framework;
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class MultiEnvironmentServiceDiscoveryPreferredEnvironmentTests
     {
-        private const string ServiceName = "ServiceName";
+        private string ServiceName;
         private const string Canary = "canary";
         private const string Prod = "prod";
         private const string Staging = "staging";
@@ -41,9 +38,10 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         private DiscoveryConfig _discoveryConfig;
         private IMultiEnvironmentServiceDiscovery _serviceDiscovery;
 
-        [SetUp]
+       [SetUp]
         public async Task Setup()
         {
+            ServiceName = TestContext.CurrentContext.Test.FullName;
             IDiscovery discovery = Substitute.For<IDiscovery>();
             _discoveryConfig = new DiscoveryConfig
             {
@@ -107,7 +105,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Test]
         public async Task FallbackFromPreferredToMasterEnvironment()
         {
-            _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();            
+            _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();
 
             TracingContext.SetPreferredEnvironment(Canary);
 
@@ -211,7 +209,6 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         public void ServiceNotDeployed()
         {
             _currentEnvironment = Prod;
-
             _loadBalancerByEnvironment[Prod] = ServiceUndeployedLoadBalancer();
 
             _serviceDiscovery.GetNode().ShouldThrow<ServiceUnreachableException>();
@@ -247,7 +244,8 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _loadBalancerByEnvironment[Canary] = ServiceUndeployedLoadBalancer();
 
             _discoveryConfig.EnvironmentFallbackEnabled = true;
-
+            //wait for config to update
+          
             TracingContext.SetPreferredEnvironment(Canary);
 
             _serviceDiscovery.GetNode().ShouldThrow<ServiceUnreachableException>();

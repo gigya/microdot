@@ -250,3 +250,9 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+OrleansAdoNetContent/
+
+# For local publishing
+.nuget/
+.nuget-packages/
+

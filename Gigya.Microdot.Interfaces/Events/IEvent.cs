@@ -32,7 +32,7 @@ namespace Gigya.Microdot.Interfaces.Events
         string EventType { get; }
 
         bool ShouldAudit { get; }
-        
+
         DateTime Timestamp { get;  }
 
         EventConfiguration Configuration { get; set; }
@@ -40,5 +40,15 @@ namespace Gigya.Microdot.Interfaces.Events
         IEnvironment Environment { get; set; }
 
         IStackTraceEnhancer StackTraceEnhancer { get; set; }
+
+        string HostName { get; set; }
+        
+        string InfraVersion { get; set; }
+        
+        string ServiceVersion { get; set; }
+        
+        string ServiceInstanceName { get; set; }
+
+        string ServiceName { get; set; }
     }
 }

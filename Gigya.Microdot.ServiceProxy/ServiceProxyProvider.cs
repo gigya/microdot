@@ -142,13 +142,17 @@ namespace Gigya.Microdot.ServiceProxy
 
         private bool Disposed { get; set; }
 
+        private CurrentApplicationInfo AppInfo { get; }
+
         public ServiceProxyProvider(string serviceName, IEventPublisher<ClientCallEvent> eventPublisher,
             ICertificateLocator certificateLocator,
             ILog log,
             Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery> serviceDiscoveryFactory,
             Func<DiscoveryConfig> getConfig,
-            JsonExceptionSerializer exceptionSerializer)
+            JsonExceptionSerializer exceptionSerializer, 
+            CurrentApplicationInfo appInfo)
         {
+            
             EventPublisher = eventPublisher;
             CertificateLocator = certificateLocator;
 
@@ -157,6 +161,7 @@ namespace Gigya.Microdot.ServiceProxy
             ServiceName = serviceName;
             GetDiscoveryConfig = getConfig;
             ExceptionSerializer = exceptionSerializer;
+            AppInfo = appInfo;
 
             var metricsContext = Metric.Context(METRICS_CONTEXT_NAME).Context(ServiceName);
             _serializationTime = metricsContext.Timer("Serialization", Unit.Calls);
@@ -170,9 +175,6 @@ namespace Gigya.Microdot.ServiceProxy
 
             ServiceDiscovery = serviceDiscoveryFactory(serviceName, ValidateReachability);
         }
-
-
-
 
         /// <summary>
         /// Sets the length of time to wait for a HTTP request before aborting the request.
@@ -316,10 +318,10 @@ namespace Gigya.Microdot.ServiceProxy
             request.TracingData = new TracingData
             {
                 HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
-                ServiceName = CurrentApplicationInfo.Name,
+                ServiceName = AppInfo.Name,
                 RequestID = TracingContext.TryGetRequestID(),
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                
-                ParentSpanID = TracingContext.TryGetSpanID(),
+                ParentSpanID = TracingContext.TryGetParentSpanID(),
                 SpanStartTime = DateTimeOffset.UtcNow,
                 AbandonRequestBy = TracingContext.AbandonRequestBy
             };
@@ -516,6 +518,8 @@ namespace Gigya.Microdot.ServiceProxy
                     var exception = response.StatusCode == HttpStatusCode.ServiceUnavailable ?
                         new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}") :
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
+                    if (nodeAndLoadBalancer.LoadBalancer == null)
+                        throw exception;
 
                     nodeAndLoadBalancer.LoadBalancer.ReportUnreachable(nodeAndLoadBalancer.Node, exception);
                     _hostFailureCounter.Increment("NotGigyaHost");
