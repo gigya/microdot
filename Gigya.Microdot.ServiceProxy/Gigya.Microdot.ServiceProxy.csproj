@@ -2,9 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Company>Gigya</Company>
-    <Authors>Gigya</Authors>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SolutionVersion.cs" Link="Properties\SolutionVersion.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Metrics.NET" Version="0.5.5" />

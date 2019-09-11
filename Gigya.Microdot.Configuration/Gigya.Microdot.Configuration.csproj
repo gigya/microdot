@@ -2,10 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <Company>Gigya</Company>
-    <Authors>Gigya</Authors>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="..\SolutionVersion.cs" Link="Properties\SolutionVersion.cs" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="DataAnnotationsValidator.NETCore" Version="1.0.3" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.9.0" />
