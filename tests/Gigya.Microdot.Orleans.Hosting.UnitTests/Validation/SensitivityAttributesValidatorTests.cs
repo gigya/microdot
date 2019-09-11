@@ -28,7 +28,9 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json.Linq;
 using Ninject;
@@ -37,7 +39,7 @@ using NUnit.Framework;
 
 namespace Gigya.Common.Application.UnitTests.Validation
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
 
     public class SensitivityAttributesValidatorTests
     {
@@ -46,15 +48,15 @@ namespace Gigya.Common.Application.UnitTests.Validation
         private IValidator _serviceValidator;
         private IServiceInterfaceMapper _serviceInterfaceMapper;
         private Type[] _typesToValidate;
-        private TestingKernel<ConsoleLog> _unitTesting;
+        private MicrodotInitializer _unitTesting;
 
         [SetUp]
         public void Setup()
         {
             _serviceInterfaceMapper = Substitute.For<IServiceInterfaceMapper>();
             _serviceInterfaceMapper.ServiceInterfaceTypes.Returns(_ => _typesToValidate);
-            _unitTesting = new TestingKernel<ConsoleLog>(kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
-            _serviceValidator = _unitTesting.Get<SensitivityAttributesValidator>();
+            _unitTesting = new MicrodotInitializer("",new ConsoleLogLoggersModules(),kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
+            _serviceValidator = _unitTesting.Kernel.Get<SensitivityAttributesValidator>();
         }
 
         [TearDown]

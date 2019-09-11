@@ -26,11 +26,17 @@ namespace Gigya.Microdot.Logging.NLog
             AssemblyName reflectedAssembly = receivingType.Assembly.GetName();
             CallSiteInfoTemplate = new LogCallSiteInfo
             {
-                ReflectedType = receivingType,
+                LoggerName = receivingType.Name,
+                Namespace = receivingType.Namespace,
                 ClassName = receivingType.Name,
                 AssemblyName = reflectedAssembly.Name,
                 AssemblyVersion = reflectedAssembly.Version.ToString(),
             };
+        }
+
+        public NLogLogger(string caller)
+        {
+            Logger = LogManager.GetLogger(caller);
         }
 
         protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo,

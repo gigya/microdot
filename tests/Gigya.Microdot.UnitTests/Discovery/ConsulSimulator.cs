@@ -26,6 +26,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private TaskCompletionSource<bool> _waitForKeyValueIndexModification;
         private TaskCompletionSource<bool> _waitForHealthIndexModification;
         private Exception _httpErrorFake;
+        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo("");
 
         private int _requestsCounter = 0;
         private int _healthRequestsCounter = 0;
@@ -51,7 +52,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 throw new Exception(
                     "ConsulSimulator is trying to open a port to simulate Consul responses. The specified HTTP port wasn't configured to run without administrative permissions.\n" +
                     "To configure it, run the following command in an elevated (administrator) command prompt:\n" +
-                    $"netsh http add urlacl url={prefix} user={CurrentApplicationInfo.OsUser}");
+                    $"netsh http add urlacl url={prefix} user={AppInfo.OsUser}");
             }
 
             StartListening();

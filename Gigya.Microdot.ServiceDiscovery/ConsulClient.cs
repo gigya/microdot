@@ -78,7 +78,8 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         public ConsulClient(string serviceName, Func<ConsulConfig> getConfig,
             ISourceBlock<ConsulConfig> configChanged, IEnvironment environment,
-            ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus)
+            ILog log, IDateTime dateTime, Func<string, AggregatingHealthStatus> getAggregatedHealthStatus, 
+            CurrentApplicationInfo appInfo)
         {
             _serviceName = serviceName;
             _serviceNameOrigin = serviceName;

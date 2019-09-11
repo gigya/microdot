@@ -21,27 +21,52 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Framework.DependencyInjection.Ninject;
 using Ninject;
 using Ninject.Syntax;
-using Orleans.Runtime.Configuration;
+using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
+    //Idea here is to in reach microsoft abstraction to bind service per key
+    //In Ninject we can simplify the default implementation by calling IEnumerable<TService> for multiple implementation
+    //We have need for similar solution that is more robust we have a lot of keys for the same service.
+    //We implement it by create similar abstraction but register it on a dictionary<Key,TService> you can read more look for BindPerKey
+    public class KeyedServiceCollection<TKey, TService> : IKeyedServiceCollection<TKey, TService>
+        where TService : class
+    {
+        public TService GetService(IServiceProvider services, TKey key)
+        {
+            return GetServices(services).FirstOrDefault(s => s.Equals(key))?.GetService(services);
+        }
+
+        public IEnumerable<IKeyedService<TKey, TService>> GetServices(IServiceProvider services)
+        {
+            return services.GetService<IEnumerable<IKeyedService<TKey, TService>>>();
+        }
+    }
+
     /// <summary>
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
-    public class NinjectOrleansServiceProvider : IServiceProvider
+    public class OrleansToNinjectBinding : IOrleansToNinjectBinding
     {
-        internal static IKernel Kernel { get; set; }
-        private ConcurrentDictionary<Type, Type> TypeToElementTypeInterface { get; }= new ConcurrentDictionary<Type, Type>();
 
-        public IServiceProvider ConfigureServices(IServiceCollection services)
-        {            
-      
+        public OrleansToNinjectBinding(IKernel kernel)
+        {
+            Kernel = kernel;
+        }
+
+        internal IKernel Kernel { get; set; }
+
+        public void ConfigureServices(IServiceCollection services)
+        {
             foreach (var descriptor in services)
             {
                 IBindingWhenInNamedWithOrOnSyntax<object> binding;
@@ -50,9 +75,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                 {
                     binding = Kernel.Bind(descriptor.ServiceType).To(descriptor.ImplementationType);
                 }
+
                 else if (descriptor.ImplementationFactory != null)
                 {
-                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context => descriptor.ImplementationFactory(this));
+                    binding = Kernel.Bind(descriptor.ServiceType).ToMethod(context =>
+                    {
+                        var serviceProvider = context.Kernel.Get<IServiceProvider>();
+                        return descriptor.ImplementationFactory(serviceProvider);
+                    });
                 }
                 else
                 {
@@ -65,48 +95,64 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        throw new NotImplementedException("We do not support Scoped binding of Orleans.");
+                        binding.InRequestScope();
+                        break;
+
                     case ServiceLifetime.Transient:
                         binding.InTransientScope();
                         break;
                 }
             }
 
-            return this;
-        }
+            Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>));
+            Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
 
-
-        public object GetService(Type serviceType)
-        {
-            var elementType = TypeToElementTypeInterface.GetOrAdd(serviceType, t =>
+            Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                    return t.GetGenericArguments().FirstOrDefault();
-                else
-                    return null;
-            });
+                var resolver = context.Kernel.Get<IResolutionRoot>();
+                var inheritedParams = context.Parameters.Where(p => p.ShouldInherit);
 
-            if (elementType == null)
-                return Kernel.Get(serviceType);
+                var scopeParam = new ScopeParameter();
+                inheritedParams = inheritedParams.AddOrReplaceScopeParameter(scopeParam);
 
-            var results = Kernel.GetAll(elementType).ToArray();
-            var typedResults = Array.CreateInstance(elementType, results.Length);
-            Array.Copy(results, typedResults, results.Length);
-            return typedResults;
+                return new NinjectServiceProvider(resolver, inheritedParams.ToArray());
+            }).InRequestScope();
+
+            Kernel.Bind<IServiceScopeFactory>().ToMethod(context => { return new NinjectServiceScopeFactory(context); })
+                .InRequestScope();
         }
+
+
     }
 
-    public static class OrleansNinjectExtensions
+    /// <summary>
+    /// Replacing the original Microsoft Logger factory to avoid blocking code.
+    /// Ninject using lock by scope which leading to deadlock in this scenario.
+    /// </summary>
+    public class NonBlockingLoggerFactory : ILoggerFactory
     {
-        public static ClusterConfiguration WithNinject(this ClusterConfiguration clusterConfiguration, IKernel kernel)
+        private ILoggerProvider LoggerProvider;
+        public void Dispose()
         {
-            if (NinjectOrleansServiceProvider.Kernel != null && !NinjectOrleansServiceProvider.Kernel.IsDisposed)
-                throw new InvalidOperationException("NinjectOrleansServiceProvider is already in use.");
-            
-            NinjectOrleansServiceProvider.Kernel = kernel;
-            clusterConfiguration.Defaults.StartupTypeName = typeof(NinjectOrleansServiceProvider).AssemblyQualifiedName;
-            return clusterConfiguration;
+            //throw new NotImplementedException();
         }
 
+        public ILogger CreateLogger(string categoryName)
+        {
+            return LoggerProvider.CreateLogger(categoryName);
+        }
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+
+        public NonBlockingLoggerFactory(OrleansLogProvider provider)
+        {
+            LoggerProvider = provider;
+        }
     }
+
+
+    
 }

@@ -30,12 +30,13 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Shared.Helpers;
 using NUnit.Framework;
 using Gigya.ServiceContract.Attributes;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class MembersToLogExtractorTests
     {
         private ILog _logMocked;
@@ -76,7 +77,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void ExtractMembersValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
-            const int numberOfPrivatePropertiesAndFields = 8;
+            const int numberOfPrivatePropertiesAndFields = 9;
 
             var mock = new PersonMockData();
             var reflectionMetadataInfos = _extractor.ExtractMemberMetadata(mock.GetType()).ToDictionary(x => x.Name);
@@ -90,14 +91,16 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             reflectionMetadataInfos[nameof(PersonMockData.IsMale)].ValueExtractor(mock).ShouldBe(mock.IsMale);
             reflectionMetadataInfos[nameof(PersonMockData.Sensitive)].ValueExtractor(mock).ShouldBe(mock.Sensitive);
             reflectionMetadataInfos[nameof(PersonMockData.Cryptic)].ValueExtractor(mock).ShouldBe(mock.Cryptic);
+            reflectionMetadataInfos[nameof(PersonMockData.JObjectFieldNonSensitive)].ValueExtractor(mock).ShouldBe(mock.JObjectFieldNonSensitive);
 
+            
             reflectionMetadataInfos.Count.ShouldBe(numberOfPrivatePropertiesAndFields);
         }
 
         [Test]
         public void ExtractPropertiesAndFieldsValues_ExtractDataFromObject_ShouldBeEquivilent()
         {
-            const int numberOfPrivatePropertiesAndFields = 8;
+            const int numberOfPrivatePropertiesAndFields = 9;
 
             var mock = new PersonMockData();
             var reflectionMetadataInfos = _extractor.ExtractMemberMetadata(mock.GetType()).ToDictionary(x => x.Name);
@@ -317,12 +320,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             [Sensitive(Secretive = true)]
 
             private string PrivateFieldCryptic = "PrivateFieldCryptic";
+
             #endregion
 
             #region Log Fields
             [NonSensitive]
             public string FieldNonSensitive = "FieldName";
 
+            [NonSensitive]
+            public JObject JObjectFieldNonSensitive = JObject.Parse("{a:1}");
 
             [Sensitive(Secretive = false)]
 

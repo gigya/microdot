@@ -20,34 +20,32 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#endregion
+#endregion Copyright
 
-using System;
-using System.Linq;
-using System.Reflection;
-using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes.Discovery;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.Orleans.Hosting;
-using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Parameters;
-using Ninject.Syntax;
+using System;
+using Gigya.Microdot.Ninject;
+using Gigya.Microdot.UnitTests.Caching.Host;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {
-        protected ILog Log { get; }
+        public IKernel CommunicationKernel = new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
 
-        protected IResolutionRoot ResolutionRoot { get; set; }
+        public int BasePort { get; protected set; }
+        
+        protected DisposablePort _port;
 
-        protected int BasePort { get; set; }
+        protected ServiceTesterBase()
+        {
+            _port = DisposablePort.GetPort();
+        }
 
         /// <summary>
         /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
@@ -58,17 +56,18 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy with caching.</returns>
         public virtual TServiceInterface GetServiceProxyWithCaching<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot
+            var factory = CommunicationKernel
                 .Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
+            
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
                 (serName, checker) => new LocalhostServiceDiscovery()));
 
             provider.DefaultPort = BasePort;
             if (timeout != null)
                 provider.InnerProvider.SetHttpTimeout(timeout.Value);
-            if (ResolutionRoot.Get<IMetadataProvider>().HasCachedMethods(typeof(TServiceInterface)))
+            if (CommunicationKernel.Get<IMetadataProvider>().HasCachedMethods(typeof(TServiceInterface)))
             {
-                var cachingProxy = ResolutionRoot.Get<CachingProxyProvider<TServiceInterface>>(
+                var cachingProxy = CommunicationKernel.Get<CachingProxyProvider<TServiceInterface>>(
                     new ConstructorArgument("dataSource", provider.Client),
                     new ConstructorArgument("serviceName", (string)null));
 
@@ -86,7 +85,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <returns>An ServiceProxy instance/>.</returns>
         public virtual TServiceInterface GetServiceProxy<TServiceInterface>(TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
+            var factory = CommunicationKernel.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, IServiceProxyProvider>>();
 
             var provider = new ServiceProxyProvider<TServiceInterface>(serviceName => factory(serviceName,
                 (serName, checker) => new LocalhostServiceDiscovery()));
@@ -104,9 +103,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
         /// <param name="serviceName">Name of service </param>
         /// <param name="timeout">Optional. The timeout for ServiceProxy calls.</param>
         /// <returns>An ServiceProxy instance"/>.</returns>
-        public virtual ServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
+        public virtual IServiceProxyProvider GetServiceProxyProvider(string serviceName, TimeSpan? timeout = null)
         {
-            var factory = ResolutionRoot.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, ServiceProxyProvider>>();
+            var factory = CommunicationKernel.Get<Func<string, Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery>, ServiceProxyProvider>>();
 
             var provider = factory(serviceName, (srName, r) => new LocalhostServiceDiscovery());
             provider.DefaultPort = BasePort;
@@ -116,24 +115,10 @@ namespace Gigya.Microdot.Testing.Shared.Service
             return provider;
         }
 
-        protected virtual ServiceArguments GetServiceArguments(int? basePortOverride, bool isSecondary, int? shutdownWaitTime, ServiceStartupMode startupMode = ServiceStartupMode.CommandLineNonInteractive)
+        public virtual void Dispose()
         {
-            if (isSecondary && basePortOverride == null)
-                throw new ArgumentException("You must specify a basePortOverride when running a secondary silo.");
-
-            var siloClusterMode = isSecondary ? SiloClusterMode.SecondaryNode : SiloClusterMode.PrimaryNode;
-            ServiceArguments arguments = new ServiceArguments(startupMode, basePortOverride: basePortOverride, siloClusterMode: siloClusterMode, shutdownWaitTimeSec: shutdownWaitTime);
-
-            if (basePortOverride != null)
-                return arguments;
-
-            var commonConfig = new BaseCommonConfig();
-            var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, Log));
-            var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
-
-            return new ServiceArguments(startupMode, basePortOverride: basePort, shutdownWaitTimeSec: shutdownWaitTime);
+            _port?.Dispose(); // as if not allocated, will be null;
+            CommunicationKernel.Dispose();
         }
-
-        public abstract void Dispose();
     }
 }

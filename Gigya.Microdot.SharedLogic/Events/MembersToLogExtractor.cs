@@ -29,6 +29,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.ServiceContract.Attributes;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
@@ -109,7 +110,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         internal IEnumerable<ReflectionMetadataInfo> ExtractMemberMetadata(Type type, int recursionDepth = 0,
             Sensitivity? parentSensitivity = null)
-        {            
+        {
             var members = type.FindMembers(MemberTypes.Property | MemberTypes.Field,
                     BindingFlags.Public | BindingFlags.Instance, null, null)
                 .Where(x => x is FieldInfo || ((x is PropertyInfo propertyInfo) && propertyInfo.CanRead));
@@ -136,19 +137,36 @@ namespace Gigya.Microdot.SharedLogic.Events
                 var memberSensitivity = ExtractSensitivity(member) ?? parentSensitivity;
 
                 var memberType = GetMemberUnderlyingType(member);
-                var hasInnerMembers = typeArguments != null && typeArguments.Contains(memberType);                
+
+              
+             
+
+                ReflectionMetadataInfo[] innerMembers = null;
+                bool hasInnerMembers = memberType != typeof(JObject) && memberType != typeof(JArray) &&
+                                       memberType != typeof(JToken) &&
+                                       (typeArguments != null && typeArguments.Contains(memberType));
+                try
+                {
+                  if (hasInnerMembers)
+                  {
+                      innerMembers = ExtractMemberMetadata(memberType, recursionDepth + 1, memberSensitivity)
+                          .ToArray();
+                  }
+                }
+                catch (Exception e)
+                {
+                   _log.Error("can not extractMemberMetadata ",unencryptedTags:new { memberType, memberName = member.Name },exception:e);
+                }
 
                 yield return new ReflectionMetadataInfo
                 {
                     Name = member.Name,
                     ValueExtractor = lambda.Compile(),
                     Sensitivity = memberSensitivity,
-                    InnerMembers = hasInnerMembers
-                        ? ExtractMemberMetadata(memberType, recursionDepth + 1, memberSensitivity).ToArray()
-                        : null
+                    InnerMembers = innerMembers
                 };
             }
-        }        
+        }
 
         private Type GetMemberUnderlyingType(MemberInfo member)
         {

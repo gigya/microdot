@@ -31,10 +31,10 @@ using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class SchemaEndpointTests
     {
-        private ServiceProxyProvider _serviceProxyProvider;
+        private IServiceProxyProvider _serviceProxyProvider;
         private ServiceTester<CalculatorServiceHost> _tester;
 
 
@@ -43,7 +43,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(8555);
+                _tester = new ServiceTester<CalculatorServiceHost>();
                 _serviceProxyProvider = _tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)

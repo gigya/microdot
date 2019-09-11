@@ -21,15 +21,16 @@ namespace Gigya.Microdot.Hosting.Metrics
         private IConfiguration Configuration { get; }
         private ILog Log { get; }
         private IEnvironmentVariableProvider EnvProvider { get; }
+        public CurrentApplicationInfo AppInfo { get; }
 
-
-        public MetricsInitializer(ILog log, IConfiguration configuration, IMetricsSettings metricsSettings, HealthMonitor healthMonitor, IEnvironmentVariableProvider envProvider)
+        public MetricsInitializer(ILog log, IConfiguration configuration, IMetricsSettings metricsSettings, HealthMonitor healthMonitor, IEnvironmentVariableProvider envProvider, CurrentApplicationInfo appInfo)
         {
             Configuration = configuration;
             MetricsSettings = metricsSettings;
             HealthMonitor = healthMonitor;
             Log = log;
             EnvProvider = envProvider;
+            AppInfo = appInfo;
         }
 
         public void Init()
@@ -60,7 +61,7 @@ namespace Gigya.Microdot.Hosting.Metrics
                 {
                     throw new EnvironmentException(
                         $"Port {metricsPort} defined for Metrics.NET wasn't configured to run without administrative premissions.\nRun:\n" +
-                        $"netsh http add urlacl url=http://+:{metricsPort}/ user={CurrentApplicationInfo.OsUser}", metricsException);
+                        $"netsh http add urlacl url=http://+:{metricsPort}/ user={AppInfo.OsUser}", metricsException);
                 }
 
                 throw new EnvironmentException("Problem loading metrics.net", metricsException);

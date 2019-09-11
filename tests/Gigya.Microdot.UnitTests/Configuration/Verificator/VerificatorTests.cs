@@ -6,7 +6,6 @@ using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
@@ -20,17 +19,10 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
     /// <summary>
     /// The tests to ensure Verificator recognizing the configuration failures in major cases we expect
     /// </summary>
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class VerificatorTests
     {
         private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";
-
-        [OneTimeSetUp]
-        public void Load()
-        {
-            string APPNAME = "InfraTests";
-            CurrentApplicationInfo.Init(APPNAME);
-        }
 
         /// <summary>
         /// Initial common kernel setup for mocks
@@ -38,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         public (StandardKernel k, IAssemblyProvider providerMock, IFileSystem fileSystemMock) Setup()
         {
             var k = new StandardKernel();
-            k.Load(new ConfigVerificationModule(new FakesLoggersModules(false), new ServiceArguments()));
+            k.Load(new ConfigVerificationModule(new ConsoleLogLoggersModules(), new ServiceArguments(), "InfraTests", infraVersion: null));
 
             IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
             providerMock.GetAssemblies().Returns(info => new[] {GetType().Assembly} );
@@ -57,19 +49,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         [Description("check we recognize a broken XML file")]
         public void WhenConfigIsNotValidXmlShouldAddFailure()
         {
-            var setup = Setup();
+            var (k, providerMock, fileSystemMock) = Setup();
 
-            setup.providerMock.GetAllTypes().Returns(info => new[]
+            providerMock.GetAllTypes().Returns(info => new[]
             {
                 typeof(VerifiedConfig2),
             });
 
-            setup.fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new []
+            fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new []
             {
                 "VerifiedConfig2.config",
             });
 
-            setup.fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
+            fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
             {
                 string content;
                 if (callinfo.ArgAt<string>(0) == "VerifiedConfig2.config")
@@ -83,7 +75,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
                 return Task.FromResult(content);
             });
 
-            var v = setup.k.Get<ConfigurationVerificator>();
+            var v = k.Get<ConfigurationVerificator>();
 
             var s = v.Verify();
 
@@ -112,19 +104,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         [Description("check we recognize a violation of annotated property in config object")]
         public void WhenDataAnnotationViolatedShouldAddFailure()
         {
-            var setup = Setup();
+            var (k, providerMock, fileSystemMock) = Setup();
 
-            setup.providerMock.GetAllTypes().Returns(info => new[]
+            providerMock.GetAllTypes().Returns(info => new[]
             {
                 typeof(VerifiedConfig2),
             });
 
-            setup.fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
+            fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
             {
                 "VerifiedConfig2.config",
             });
 
-            setup.fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
+            fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
             {
                 string content;
                 if (callinfo.ArgAt<string>(0) == "VerifiedConfig2.config")
@@ -138,7 +130,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
                 return Task.FromResult(content);
             });
 
-            var v = setup.k.Get<ConfigurationVerificator>();
+            var v = k.Get<ConfigurationVerificator>();
 
             var s = v.Verify();
 
@@ -164,19 +156,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         [Description("check we actually loading the value for property from File, not the default in class")]
         public void WhenValueLoadedFromConfigFileShouldSuccess()
         {
-            var setup = Setup();
+            var (k, providerMock, fileSystemMock) = Setup();
 
-            setup.providerMock.GetAllTypes().Returns(info => new[]
+            providerMock.GetAllTypes().Returns(info => new[]
             {
                         typeof(VerifiedConfig1),
                     });
 
-            setup.fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
+            fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
             {
                         "VerifiedConfig1.config",
                     });
 
-            setup.fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
+            fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
             {
                 var content = "";
                 if (callinfo.ArgAt<string>(0) == "VerifiedConfig1.config")
@@ -191,11 +183,11 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
                 return Task.FromResult(content);
             });
 
-            var v = setup.k.Get<ConfigurationVerificator>();
+            var v = k.Get<ConfigurationVerificator>();
 
             var s = v.Verify();
 
-            var creator = setup.k.Get<Func<Type, IConfigObjectCreator>>()(typeof(VerifiedConfig1));
+            var creator = k.Get<Func<Type, IConfigObjectCreator>>()(typeof(VerifiedConfig1));
             ((VerifiedConfig1) creator.GetLatest()).ValueLoaded.ShouldBe("theValue");
 
             s.All(passed => passed.Type == typeof(VerifiedConfig1)).ShouldBeTrue();
@@ -208,19 +200,19 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         [Description("check we recognize a case of a value is not converted into a another type")]
         public void WhenValueIsNotSuitableShouldAddFailure()
         {
-            var setup = Setup();
+            var (k, providerMock, fileSystemMock) = Setup();
 
-            setup.providerMock.GetAllTypes().Returns(info => new[]
+            providerMock.GetAllTypes().Returns(info => new[]
             {
                 typeof(VerifiedConfig3),
             });
 
-            setup.fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
+            fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>()).Returns(info => new[]
             {
                 "VerifiedConfig3.config",
             });
 
-            setup.fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
+            fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
             {
                 string content;
                 if (callinfo.ArgAt<string>(0) == "VerifiedConfig3.config")
@@ -239,7 +231,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
             });
 
 
-            var v = setup.k.Get<ConfigurationVerificator>();
+            var v = k.Get<ConfigurationVerificator>();
 
             var s = v.Verify();
 

@@ -1,27 +1,56 @@
 ﻿using System;
 using System.Net.Http;
-
-
 using Gigya.Common.Contracts.Exceptions;
-
+using Gigya.Microdot.Orleans.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-
+using Orleans;
+using Orleans.Configuration;
 using Orleans.Serialization;
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Serialization
 {
-	[TestFixture]
+
+	[TestFixture,Parallelizable(ParallelScope.Fixtures)]
 	public class ExceptionSerializationTests
-	{
+    {
+        private SerializationManager _serializationManager;
 		private MyServiceException MyServiceException { get; set; }
 
+        /// <remarks>
+        /// c:\gigya\orleans\test\Benchmarks\Serialization\SerializationBenchmarks.cs
+        /// </remarks>
+        private void InitializeSerializer()
+        {
+            Type fallback = null; // use default
+
+            var client = new ClientBuilder()
+                .UseLocalhostClustering()
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = nameof(ExceptionSerializationTests);
+                    options.ServiceId = Guid.NewGuid().ToString();
+                })
+                .Configure<SerializationProviderOptions>(
+                    options =>
+                    {
+                        // Configure the same, but pointless for exceptions
+                        options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
+                        options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
+                        options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
+                    })
+                .Build();
+            
+            _serializationManager = client.ServiceProvider.GetRequiredService<SerializationManager>();
+        }
+
 		[OneTimeSetUp]
-		public void SetUp()
+		public void OneTimeSetUp()
 		{
 		    try
 		    {
-                SerializationManager.InitializeForTesting();
+                InitializeSerializer();
 
                 MyServiceException = new MyServiceException(
                     "My message",
@@ -37,7 +66,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
 		[Test]
 		public void OrleansSerialization_MyServiceException_IsEquivalent()
 		{
-			var actual = SerializationManager.RoundTripSerializationForTesting(MyServiceException);
+			var actual = _serializationManager.RoundTripSerializationForTesting(MyServiceException);
 
 			AssertExceptionsAreEqual(MyServiceException, actual);
 		}
@@ -47,7 +76,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
 		{
 		    var expected = new Exception("Intermediate exception", MyServiceException).ThrowAndCatch();
 
-			var actual = SerializationManager.RoundTripSerializationForTesting(new Exception("Intermediate exception", MyServiceException).ThrowAndCatch());
+			var actual = _serializationManager.RoundTripSerializationForTesting(new Exception("Intermediate exception", MyServiceException).ThrowAndCatch());
 
 			AssertExceptionsAreEqual(expected, actual);
 		}
@@ -57,19 +86,29 @@ namespace Gigya.Microdot.UnitTests.Serialization
         {
             var expected = new RequestException("Test",10000).ThrowAndCatch();
 
-            var actual = SerializationManager.RoundTripSerializationForTesting(expected);
+            var actual = _serializationManager.RoundTripSerializationForTesting(expected);
 
             AssertExceptionsAreEqual(expected, actual);
             expected.ErrorCode.ShouldBe(10000);
         }
 
+
+        /// <summary>
+        /// [DONE] #ORLEANS20 - I don't now why, but round/trip for HttpRequestException is loosing stack trace...
+        /// https://github.com/dotnet/orleans/issues/5876
+        /// </summary>
         [Test]
         public void OrleansSerialization_HttpRequestException_IsEquivalent()
         {
             var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
 
-            var actual = SerializationManager.RoundTripSerializationForTesting(expected);
+            var actual1 = (HttpRequestException)_serializationManager.DeepCopy(expected);
+            AssertExceptionsAreEqual(expected, actual1);
 
+            var actual = _serializationManager.RoundTripSerializationForTesting(expected);
+            var actual2 = _serializationManager.DeserializeFromByteArray<HttpRequestException>(_serializationManager.SerializeToByteArray(expected));
+            
+            AssertExceptionsAreEqual(expected, actual2);
             AssertExceptionsAreEqual(expected, actual);
         }
 
@@ -96,4 +135,5 @@ namespace Gigya.Microdot.UnitTests.Serialization
 				AssertExceptionsAreEqual(expected.InnerException, actual.InnerException);
 		}
 	}
+
 }

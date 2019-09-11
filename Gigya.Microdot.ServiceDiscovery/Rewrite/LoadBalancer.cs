@@ -75,8 +75,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             Func<DiscoveryConfig> getConfig,
             IDateTime dateTime, 
             ILog log,
-            IEnvironment environment)
+            IEnvironment environment
+            )
         {
+            
             DeploymentIdentifier = deploymentIdentifier;
             Discovery = discovery;
             ReachabilityCheck = reachabilityCheck;

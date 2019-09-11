@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Testing.Shared.Service;
+using NUnit.Framework;
+using Shouldly;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.SharedLogic;
-using Ninject;
-using NUnit.Framework;
-using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Caching.Host
 {
@@ -25,11 +24,9 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         }
     }
 
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.All)]
     public class CachingProxyTests
     {
-        private SlowServiceHost Host { get; set; }
-        private Task StopTask { get; set; }
         private ISlowService Service { get; set; }
 
         [OneTimeSetUp]
@@ -37,8 +34,9 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         {
             try
             {
-                Host = new SlowServiceHost(k => { Service = k.Get<ISlowService>(); });
-                StopTask = Host.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
+                Service = new NonOrleansServiceTester<SlowServiceHost>(
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port))
+                    .GetServiceProxyWithCaching<ISlowService>();
             }
             catch (Exception ex)
             {
@@ -50,19 +48,19 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         [OneTimeTearDown]
         public void TearDown()
         {
-            Host.Stop();
-            StopTask.Wait();
-            Host.Dispose();
         }
 
-
         public enum Parameters { Identical, Different }
-        public enum Execute { Consecutively, InParallel }
-        public enum Cache { Enabled, Disabled }
-        public enum Calls { Succeed, Throw }
-        public enum DataType { Simple, Complex }
-        public enum ResultsShouldBe { Identical, Different }
 
+        public enum Execute { Consecutively, InParallel }
+
+        public enum Cache { Enabled, Disabled }
+
+        public enum Calls { Succeed, Throw }
+
+        public enum DataType { Simple, Complex }
+
+        public enum ResultsShouldBe { Identical, Different }
 
         [Theory]
         public async Task MultipleCalls_BehavesAsExpected(Cache cache, Parameters parameters, Execute execute, Calls calls, DataType dataType)
@@ -81,7 +79,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             {
                 var method = cache == Cache.Enabled ? new ComplexDelegate(Service.ComplexSlowMethod) : Service.ComplexSlowMethodUncached;
                 var datas = Enumerable.Range(0, 10).Select(i => new SlowData());
-                call = async i => (await method(delay, new [] { new SlowData { SerialNumber = parameters == Parameters.Identical ? 0 : i } }, shouldThrow)).First().SerialNumber;
+                call = async i => (await method(delay, new[] { new SlowData { SerialNumber = parameters == Parameters.Identical ? 0 : i } }, shouldThrow)).First().SerialNumber;
             }
 
             List<Task<int>> tasks;

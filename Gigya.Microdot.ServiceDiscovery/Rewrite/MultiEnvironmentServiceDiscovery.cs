@@ -59,13 +59,14 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private HealthMessage _healthStatus;
 
 
-        public MultiEnvironmentServiceDiscovery(string serviceName, IEnvironment environment, ReachabilityCheck reachabilityCheck,
+        public MultiEnvironmentServiceDiscovery(string serviceName, ReachabilityCheck reachabilityCheck,
                 IDiscovery discovery, Func<DiscoveryConfig> getDiscoveryConfig, Func<string, AggregatingHealthStatus> getAggregatingHealthStatus,
-                IDateTime dateTime)
+                IDateTime dateTime, IEnvironment environment)
         {
             _healthStatus = new HealthMessage(Health.Info, message: null, suppressMessage: true);
             ServiceName = serviceName;
             Environment = environment;
+            
             ReachabilityCheck = reachabilityCheck;
             Discovery = discovery;
             GetDiscoveryConfig = getDiscoveryConfig;

@@ -88,6 +88,7 @@ namespace Gigya.Microdot.ServiceDiscovery.HostManagement
             , MetricsContext metrics
         )
         {
+            
             DiscoverySource = discovery;
             DeploymentIdentifier = deploymentIdentifier;
             ReachabilityChecker = reachabilityChecker;

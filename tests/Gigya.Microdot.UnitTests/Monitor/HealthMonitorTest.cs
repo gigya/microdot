@@ -11,7 +11,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class HealthMonitorTest
     {
         const string COMPONENT = "Component";

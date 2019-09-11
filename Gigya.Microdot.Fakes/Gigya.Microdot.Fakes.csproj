@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <noWarn>1591</noWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,6 +45,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="ConsoleLogLoggersModules.cs" />
     <Compile Include="Discovery\AlwaysLocalHost.cs" />
     <Compile Include="Discovery\AlwaysLocalHostDiscovery.cs" />
     <Compile Include="MetricsInitializerFake.cs" />
@@ -53,7 +55,6 @@
     <Compile Include="Discovery\LocalhostEndPointHandle.cs" />
     <Compile Include="FakeHealthMonitor.cs" />
     <Compile Include="FakeLog.cs" />
-    <Compile Include="HttpLog.cs" />
     <Compile Include="ManualConfigurationEvents.cs" />
     <Compile Include="MockConfigItemsCollection.cs" />
     <Compile Include="NullEventPublisher.cs" />
@@ -65,6 +66,10 @@
     <Compile Include="TraceLog.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
+      <Project>{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}</Project>
+      <Name>Gigya.Microdot.Ninject</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
       <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
       <Name>Gigya.Microdot.ServiceDiscovery</Name>
@@ -101,6 +106,17 @@
       <ItemGroup>
         <Reference Include="Metrics">
           <HintPath>..\packages\Metrics.NET\lib\net45\Metrics.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="Ninject">
+          <HintPath>..\packages\Ninject\lib\net45\Ninject.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

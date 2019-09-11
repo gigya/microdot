@@ -1,45 +1,30 @@
-﻿using System.Diagnostics;
+﻿
+using System;
 using System.Threading.Tasks;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
-using Ninject;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class WarmupTests
     {
-        private int mainPort = 9555;
 
-        [TearDown]
-        public void TearDown()
-        {
-            DependantClassFake.ResetWarmedTimes();
-        }
-        
         [Test]
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
-            ServiceTester<CalculatorServiceHost> tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(mainPort);
-            
-            IWarmupTestServiceGrain grain = tester.GetGrainClient<IWarmupTestServiceGrain>(0);
-            int result = await grain.TestWarmedTimes();
-            result = await grain.TestWarmedTimes();
-            result = await grain.TestWarmedTimes();
+            ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>();
+            var beforeGrainCreated = DateTime.Now;
 
-            Assert.AreEqual(result, 1);
+            IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);
+
+            var dependencyCreateDate = await grain.DependencyCreateDate();
+
+            Assert.Greater(beforeGrainCreated, dependencyCreateDate, "dependencyCreateDate should create before grain is created");
 
             tester.Dispose();
         }
 
-        [Test][Repeat(2)]
-        public async Task VerifyWarmupBeforeSiloStart()
-        {
-            WarmupTestServiceHostWithSiloHostFake host = new WarmupTestServiceHostWithSiloHostFake();
-            Task.Run(() => host.Run());
-            await host.WaitForHostDisposed();
-        }
     }
 }

@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
 using NSubstitute;
@@ -16,11 +15,11 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ConsulClientTests
     {
         private const string ServiceName = "MyService-prod";
-        private const int ConsulPort = 8501;
+        private  int ConsulPort = DisposablePort.GetPort().Port;
         private const string Zone = "us1a";
 
         private const string Host1 = "Host1";

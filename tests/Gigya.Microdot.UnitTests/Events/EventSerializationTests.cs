@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Events;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -19,18 +18,20 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
+        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests));
+
+
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment()), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration(), AppInfo);
+
         EventSerializer SerializerWithoutStackTrace { get; } = new EventSerializer(() => new EventConfiguration { ExcludeStackTraceRule = new Regex(".*") }, new NullEnvironment(),
-            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment()), () => new EventConfiguration());
+            new StackTraceEnhancer(() => new StackTraceEnhancerSettings(), new NullEnvironment(), AppInfo), () => new EventConfiguration(), AppInfo);
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            if (CurrentApplicationInfo.Name == null)
-                CurrentApplicationInfo.Init("Tests");
+            Environment.SetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME",null);
         }
-
 
         [Test]
         public async Task PublishExceptionEvent_WhileShouldExcludeStackTraceForFlume()
@@ -184,15 +185,15 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent[EventConsts.details].ShouldBe(EventConsts.details);
                                         
             serializedEvent.ShouldContainKey(EventConsts.srvSystem);
-            serializedEvent[EventConsts.srvSystem].ShouldBe(CurrentApplicationInfo.Name);
+            serializedEvent[EventConsts.srvSystem].ShouldBe(AppInfo.Name);
 
             serializedEvent.ShouldContainKey(EventConsts.srvVersion);
-            serializedEvent[EventConsts.srvVersion].ShouldBe(CurrentApplicationInfo.Version.ToString(4));
+            serializedEvent[EventConsts.srvVersion].ShouldBe(AppInfo.Version.ToString(4));
 
             serializedEvent.ShouldContainKey(EventConsts.infrVersion);
-            serializedEvent[EventConsts.infrVersion].ShouldBe(CurrentApplicationInfo.Version.ToString(4));
+            serializedEvent[EventConsts.infrVersion].ShouldBe(AppInfo.Version.ToString(4));
 
-            serializedEvent.ShouldNotContainKey(EventConsts.srvSystemInstance);
+            serializedEvent.ShouldContainKey(EventConsts.srvSystemInstance);
                     
             serializedEvent.ShouldContainKey(EventConsts.runtimeHost);
             serializedEvent[EventConsts.runtimeHost].ShouldBe(CurrentApplicationInfo.HostName);
@@ -212,6 +213,7 @@ namespace Gigya.Microdot.UnitTests.Events
         public string Region => nameof(Region);
         public string DeploymentEnvironment => nameof(DeploymentEnvironment);
         public string ConsulAddress => nameof(ConsulAddress);
+        public string InstanceName => nameof(InstanceName);
 
         [Obsolete("To be deleted on version 2.0")]
         public string GetEnvironmentVariable(string name) => name;

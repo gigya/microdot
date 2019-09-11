@@ -22,9 +22,9 @@
 
 using System;
 using System.Linq;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Newtonsoft.Json.Linq;
 
@@ -37,8 +37,9 @@ namespace Gigya.Microdot.Configuration
 
         private IFileSystem FileSystem { get; }
 
-        public EnvironmentVariableProvider(IFileSystem fileSystem)
+        public EnvironmentVariableProvider(IFileSystem fileSystem, CurrentApplicationInfo applicationInfo)
         {
+
             FileSystem = fileSystem;
             PlatformSpecificPathPrefix = Environment.OSVersion.Platform == PlatformID.Unix ? "/etc" : "D:";
 
@@ -48,11 +49,13 @@ namespace Gigya.Microdot.Configuration
             {
                 locEnvFilePath = string.Format(ENV_FILEPATH, PlatformSpecificPathPrefix);
             }
-
             ReadFromFile(locEnvFilePath);
 
             DataCenter = GetEnvironmentVariable("ZONE") ?? GetEnvironmentVariable("DC");
             DeploymentEnvironment = GetEnvironmentVariable("ENV");
+            
+            //Should not be allowed override by file
+            SetEnvironmentVariableForProcess("AppName", applicationInfo.Name);
         }
 
         public void SetEnvironmentVariableForProcess(string name, string value)
@@ -69,7 +72,6 @@ namespace Gigya.Microdot.Configuration
 
         [Obsolete("To be deleted on version 2.0")]
         public string DeploymentEnvironment { get; }
-
 
         /// <summary>
         /// Reads each property in file and sets its environment variable.

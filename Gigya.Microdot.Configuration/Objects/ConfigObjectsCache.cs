@@ -6,6 +6,13 @@ namespace Gigya.Microdot.Configuration.Objects
 {
     public class ConfigObjectsCache : IConfigObjectsCache
     {
+        private readonly ConfigDecryptor _configDecryptor;
+
+        public  ConfigObjectsCache(ConfigDecryptor configDecryptor)
+        {
+            _configDecryptor = configDecryptor;
+        }
+    
         private List<IConfigObjectCreator> _configObjectCreatorsList = new List<IConfigObjectCreator>();
 
         public void RegisterConfigObjectCreator(IConfigObjectCreator configObjectCreator)
@@ -18,8 +25,8 @@ namespace Gigya.Microdot.Configuration.Objects
 
         public void DecryptAndReloadConfigObjects(Func<string, string> configDecryptor, Func<string, bool> isValidEncryptedStringFormat)
         {
-            ConfigItem.ConfigDecryptor = configDecryptor;
-            ConfigItem.IsValidEncryptedStringFormat = isValidEncryptedStringFormat;
+            _configDecryptor.ConfigDecryptorFunc = configDecryptor;
+            _configDecryptor.IsValidEncryptedStringFormat = isValidEncryptedStringFormat;
 
             foreach (IConfigObjectCreator configObjectCreator in _configObjectCreatorsList)
             {

@@ -1,50 +1,20 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Hosting.Validators;
+﻿using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
-using Gigya.Microdot.SharedLogic;
 using Ninject;
-using NSubstitute;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService
 {
     public class WarmupTestServiceHostWithSiloHostFake : CalculatorServiceHost
     {
-        private TaskCompletionSource<bool> _hostDisposedEvent = new TaskCompletionSource<bool>();
-
-        protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
+        protected override void PreConfigure(IKernel kernel)
         {
-            kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
-            kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>();
-
-            kernel.Rebind<GigyaSiloHost>().To<GigyaSiloHostFake>();
-            kernel.Rebind<IDependantClassFake>().To<DependantClassFake>().InTransientScope();
-            kernel.Rebind<ILog>().To<NullLog>();
-            kernel.Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>();
-            kernel.Rebind<IAssemblyProvider>().To<AssemblyProvider>();
-
-            ServiceArguments args = new ServiceArguments(basePortOverride:9555);
-            kernel.Rebind<ServiceArguments>().ToConstant(args);
-            kernel.Rebind<WarmupTestServiceHostWithSiloHostFake>().ToConstant(this);
+            base.PreConfigure(kernel);
+            kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
         }
 
-        public async Task StopHost()
-        {
-            await WaitForServiceStartedAsync();
-            Stop();
-            await WaitForServiceGracefullyStoppedAsync();
-            Dispose();
 
-            _hostDisposedEvent.SetResult(true);
-        }
 
-        public async Task WaitForHostDisposed()
-        {
-            await _hostDisposedEvent.Task;
-        }
+
     }
 }

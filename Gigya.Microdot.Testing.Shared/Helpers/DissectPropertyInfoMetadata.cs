@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Gigya.Microdot.SharedLogic.Events;
+using Gigya.ServiceContract.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Testing.Shared.Helpers
 {
@@ -32,7 +32,6 @@ namespace Gigya.Microdot.Testing.Shared.Helpers
 
             return null;
         }
-
 
         public static IEnumerable<(object Value, MemberTypes MemberType, string Name, Sensitivity? Sensitivity, bool WithException, MemberInfo Member)> GetMemberWithSensitivity<TInstance>(TInstance instance, Sensitivity defualtSensitivity = Sensitivity.Sensitive) where TInstance : class
         {

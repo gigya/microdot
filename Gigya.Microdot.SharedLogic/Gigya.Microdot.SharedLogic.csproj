@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <noWarn>1591</noWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -48,9 +49,12 @@
     <Compile Include="ApplicationDirectoryProvider.cs" />
     <Compile Include="AssemblyProvider.cs" />
     <Compile Include="Configurations\LoadShedding.cs" />
+    <Compile Include="Events\EventFactory.cs" />
+    <Compile Include="Events\IEventFactory.cs" />
     <Compile Include="Events\MembersToLogExtractor.cs" />
     <Compile Include="Events\EventSerializer.cs" />
     <Compile Include="Events\Param.cs" />
+    <Compile Include="Events\TracingContextNoneOrleans.cs" />
     <Compile Include="Exceptions\ExceptionHierarchySerializationBinder.cs" />
     <Compile Include="Exceptions\StackTraceEnhancer.cs" />
     <Compile Include="Exceptions\StripHttpRequestExceptionConverter.cs" />

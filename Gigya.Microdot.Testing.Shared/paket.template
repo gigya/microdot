@@ -2,6 +2,7 @@ type
 	project
 description
 	Tools to help write tests for Microdot services.
+    The project contains logic for both Orleans and Non-Orleans host testers.
 projectUrl
 	https://github.com/gigya/microdot
 licenseUrl

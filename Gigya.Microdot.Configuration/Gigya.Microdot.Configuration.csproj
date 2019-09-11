@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <noWarn>1591</noWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,6 +55,7 @@
     <Compile Include="ConfigFactory.cs" />
     <Compile Include="ConfigFile.cs" />
     <Compile Include="ConfigFileDeclaration.cs" />
+    <Compile Include="ConfigDecryptor.cs" />
     <Compile Include="ConfigItem.cs" />
     <Compile Include="ConfigItemsCollection.cs" />
     <Compile Include="ConfigurationAssembly.cs" />

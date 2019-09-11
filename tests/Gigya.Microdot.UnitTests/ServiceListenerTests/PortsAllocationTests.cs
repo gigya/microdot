@@ -12,7 +12,6 @@ using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
 
@@ -26,7 +25,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class PortsAllocationTests
     {
         [Test]
@@ -126,15 +125,17 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]        
         public void IsSlotModeFlag_Working()
         {
-            var kernel = SetUpKernel(new ServiceArguments(),false);
+             int basePort = 5555;
+            var kernel = SetUpKernel(new ServiceArguments(){SiloNetworkingPortOfPrimaryNode = basePort},false);
 
             var serviceEndpointDefinition = kernel.Get<IServiceEndPointDefinition>();
 
-            serviceEndpointDefinition.HttpPort.Should().Be(5555);
-            serviceEndpointDefinition.SiloGatewayPort.Should().Be(5556);
-            serviceEndpointDefinition.SiloNetworkingPort.Should().Be(5557);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(5557);            
-            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(5558);
+            serviceEndpointDefinition.HttpPort.Should().Be(basePort);
+            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(serviceEndpointDefinition.SiloNetworkingPort);            
+
+            serviceEndpointDefinition.SiloGatewayPort.Should().Be(basePort+1);
+            serviceEndpointDefinition.SiloNetworkingPort.Should().Be(basePort+2);
+            ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(basePort+3);
         }
 
     }

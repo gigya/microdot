@@ -1,7 +1,5 @@
 ﻿using System.IO;
 using System.Reflection;
-
-using FluentAssertions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 

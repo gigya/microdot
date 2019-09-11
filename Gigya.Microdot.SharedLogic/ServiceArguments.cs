@@ -71,14 +71,27 @@ namespace Gigya.Microdot.SharedLogic
         public int? ShutdownWhenPidExits { get; }
 
         /// <summary>
-        /// Specifies drain time in this time the servcie status will be 521.
+        /// Specifies drain time in this time the service status will be 521.
         /// </summary>
         public int? ServiceDrainTimeSec { get;  }
 
         /// <summary>
         /// Defines the time to wait for the service to stop, default is 10 seconds. Only after OnStopWaitTimeSec+ServiceDrainTimeSec the service will be forcibly closed.
         /// </summary>
-        public int? OnStopWaitTimeSec { get; set; }
+        public int? OnStopWaitTimeSec { get; private set; }
+
+        /// <summary>
+        /// Defines the time to wait for the service to start, if elapsed, the service start aborted. Default is 180 seconds.
+        /// </summary>
+        public int? InitTimeOutSec { get; private set; }
+
+        /// <summary>
+        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
+        /// localhost and the original base port are always assumed (since the secondary nodes must use a
+        /// base port override to avoid port conflicts).
+        ///</summary> 
+        public int? SiloNetworkingPortOfPrimaryNode{ get ; set ; }
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ServiceArguments"/> class, explicitly specifying the arguments.
@@ -92,7 +105,7 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? shutdownWaitTimeSec=null,int? serviceDrainTimeSec=null)
+                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? onStopWaitTimeSec=null,int? serviceDrainTimeSec=null, int?  initTimeOutSec=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -101,8 +114,9 @@ namespace Gigya.Microdot.SharedLogic
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
             SlotNumber = slotNumber;
-            OnStopWaitTimeSec = shutdownWaitTimeSec;
+            OnStopWaitTimeSec = onStopWaitTimeSec;
             ServiceDrainTimeSec = serviceDrainTimeSec;
+            InitTimeOutSec = initTimeOutSec;
             ApplyDefaults();
         }
 
@@ -122,6 +136,8 @@ namespace Gigya.Microdot.SharedLogic
             SlotNumber = TryParseInt(ParseStringArg(nameof(SlotNumber), args));
             OnStopWaitTimeSec = TryParseInt(ParseStringArg(nameof(OnStopWaitTimeSec), args));
             ServiceDrainTimeSec = TryParseInt(ParseStringArg(nameof(ServiceDrainTimeSec), args));
+            InitTimeOutSec = TryParseInt(ParseStringArg(nameof(InitTimeOutSec), args));
+
             ApplyDefaults();
         }
 
@@ -180,7 +196,8 @@ namespace Gigya.Microdot.SharedLogic
 
             if (OnStopWaitTimeSec == null)
                 OnStopWaitTimeSec = 10;
-
+            if (InitTimeOutSec == null)
+                InitTimeOutSec = 60*3;
             // ReSharper restore SwitchStatementMissingSomeCases
         }
 

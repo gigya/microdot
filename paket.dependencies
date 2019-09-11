@@ -1,7 +1,7 @@
 source https://api.nuget.org/v3/index.json
 
 framework: net472
-redirects: on
+redirects: off
 content: once
 copy_content_to_output_dir: always
 
@@ -15,31 +15,39 @@ nuget Metrics.NET ~> 0.0
 nuget Newtonsoft.Json >= 9 lowest_matching: true
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
-nuget ZooKeeperNetEx 3.4.12.0 # We have an issue with 3.4.12.1
+nuget ZooKeeperNetEx
 nuget System.ComponentModel.Annotations ~> 4.0
 nuget DataAnnotationsValidator ~> 2.1.0
 
 # Orleans
-nuget Microsoft.Orleans.Core  1.3.1
-nuget Microsoft.Orleans.OrleansRuntime  1.3.1
-nuget Microsoft.Orleans.OrleansProviders 1.3.1
-nuget Microsoft.Orleans.OrleansSqlUtils  1.3.1
-nuget Microsoft.Orleans.OrleansZooKeeperUtils  1.3.1
-nuget Microsoft.Orleans.OrleansCodeGenerator  1.3.1
-nuget Microsoft.Orleans.OrleansCodeGenerator.Build 1.3.1
-nuget Microsoft.Orleans.TestingHost 1.3.1
-nuget Microsoft.CodeAnalysis.CSharp 1.3.2
-nuget Microsoft.CodeAnalysis.Common 1.3.2
-nuget Microsoft.Extensions.DependencyInjection.Abstractions 1.1.1
-nuget Microsoft.Extensions.DependencyInjection 1.1.1
+nuget Microsoft.Orleans.Core 2.4.2
+nuget Microsoft.Orleans.OrleansRuntime 2.4.2
+nuget Microsoft.Orleans.OrleansProviders 2.4.2
+nuget Microsoft.Orleans.OrleansSqlUtils 2.4.2
+nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.2
+nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.2
+nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.2
+nuget Microsoft.Orleans.Client 2.4.2
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.2
 
-#Ninject
+nuget OrleansDashboard
+nuget Microsoft.AspNetCore.Hosting
+nuget Microsoft.AspNetCore.Server.Kestrel
+
+nuget Microsoft.CodeAnalysis.CSharp
+nuget Microsoft.CodeAnalysis.Common
+
+nuget Microsoft.Extensions.DependencyInjection.Abstractions
+nuget Microsoft.Extensions.DependencyInjection
+nuget Microsoft.Orleans.Server
+
+# Ninject
 nuget Ninject ~> 3.3
 nuget Ninject.Extensions.Factory ~> 3.3
 nuget Ninject.Extensions.Conventions ~> 3.3
 nuget Castle.Core ~> 4.0
 
-#Tests only dependencies
+# Tests only dependencies
 nuget NUnit ~> 3.0
 nuget RichardSzalay.MockHttp 
 nuget NSubstitute >= 3.1
@@ -47,17 +55,3 @@ nuget FluentAssertions
 nuget Nuget.CommandLine 
 nuget Shouldly
 nuget NLog ~> 4.0
-
-#To support .NET framework 4.7.2 (Please don't modify)
-nuget System.IO redirects: off
-nuget System.IO.Compression redirects: off
-nuget System.IO.FileSystem redirects: off
-nuget System.Linq redirects: off
-nuget System.Linq.Expressions redirects: off
-nuget System.Reflection redirects: off
-nuget System.Runtime redirects: off
-nuget System.Runtime.Extensions redirects: off
-nuget System.Runtime.InteropServices redirects: off
-nuget System.Runtime.InteropServices.RuntimeInformation redirects: off
-nuget System.Xml.ReaderWriter redirects: off
-#End of fragment

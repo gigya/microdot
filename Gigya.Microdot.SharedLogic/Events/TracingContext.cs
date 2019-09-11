@@ -23,27 +23,56 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
+using System.Reflection;
 using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {
     public static class TracingContext
     {
-        private const string SPAN_ID_KEY = "SpanID";
-        private const string PARENT_SPAN_ID_KEY = "ParentSpanID";
-        private const string ORLEANS_REQUEST_CONTEXT_KEY = "#ORL_RC";
-        private const string REQUEST_ID_KEY = "ServiceTraceRequestID";
-        private const string OVERRIDES_KEY = "Overrides";
-        private const string SPAN_START_TIME = "SpanStartTime";
-        private const string REQUEST_DEATH_TIME = "RequestDeathTime";
+        static TracingContext()
+        {
+            Implementation = new TracingContextSourcev();
+        }
+
+        internal static TracingContextSourcev Implementation;
+
+        private const string SPAN_ID_KEY = "MD_SpanID";
+        private const string PARENT_SPAN_ID_KEY = "MD_SParentSpanID";
+        private const string REQUEST_ID_KEY = "MD_SServiceTraceRequestID";
+        private const string OVERRIDES_KEY = "MD_SOverrides";
+        private const string SPAN_START_TIME = "MD_SSpanStartTime";
+        private const string REQUEST_DEATH_TIME = "MD_SRequestDeathTime";
+
+        public static void ClearContext()
+        {
+            Implementation.Set(SPAN_ID_KEY,null);
+            Implementation.Set(PARENT_SPAN_ID_KEY, null);
+            Implementation.Set(REQUEST_ID_KEY, null);
+            Implementation.Set(OVERRIDES_KEY, null);
+            Implementation.Set(SPAN_START_TIME, null);
+            Implementation.Set(REQUEST_DEATH_TIME, null);
+
+        }
+
+        private static T? TryGetNullableValue<T>(string key) where T : struct
+        {
+            object value = Implementation.Get(key);
+            return value as T?;
+        }
+
+        private static T TryGetValue<T>(string key) where T : class
+        {
+            object value = Implementation.Get(key); ;
+            return value as T;
+        }
+
 
 
         internal static void SetOverrides(RequestOverrides overrides)
         {
-            SetValue(OVERRIDES_KEY, overrides);
+            Implementation.Set(OVERRIDES_KEY, overrides);
         }
-
 
         internal static RequestOverrides TryGetOverrides()
         {
@@ -54,13 +83,14 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// Retrieves the host override for the specified service, or returns null if no override was set.
         /// </summary>
         /// <param name="serviceName">The name of the service for which to retrieve the host override.</param>
-        /// <returns>A <see cref="HostOverride"/> instace with information about the overidden host for the specified service, or null if no override was set.</returns>
+        /// <returns>A <see cref="HostOverride"/> instance with information about the overriden host for the specified service, or null if no override was set.</returns>
         public static HostOverride GetHostOverride(string serviceName)
         {
             return TryGetValue<RequestOverrides>(OVERRIDES_KEY)
                 ?.Hosts
                 ?.SingleOrDefault(o => o.ServiceName == serviceName);
         }
+
 
         public static string GetPreferredEnvironment()
         {
@@ -69,29 +99,27 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public static void SetPreferredEnvironment(string preferredEnvironment)
         {
-            SetUpStorage();
 
-            RequestOverrides overrides = TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+            RequestOverrides overrides = (RequestOverrides)Implementation.Get(OVERRIDES_KEY);
 
             if (overrides == null)
             {
                 overrides = new RequestOverrides();
-                SetValue(OVERRIDES_KEY, overrides);
+                Implementation.Set(OVERRIDES_KEY, overrides);
             }
 
             overrides.PreferredEnvironment = preferredEnvironment;
         }
 
-        public static void SetHostOverride(string serviceName, string host, int? port=null)
+        public static void SetHostOverride(string serviceName, string host, int? port = null)
         {
-            SetUpStorage();
 
-            var overrides = TryGetValue<RequestOverrides>(OVERRIDES_KEY);
+            var overrides = (RequestOverrides)Implementation.Get(OVERRIDES_KEY);
 
             if (overrides == null)
             {
                 overrides = new RequestOverrides();
-                SetValue(OVERRIDES_KEY, overrides);
+                Implementation.Set(OVERRIDES_KEY, overrides);
             }
 
             if (overrides.Hosts == null)
@@ -109,9 +137,8 @@ namespace Gigya.Microdot.SharedLogic.Events
             hostOverride.Port = port;
         }
 
-
         public static string TryGetRequestID()
-        {            
+        {
             return TryGetValue<string>(REQUEST_ID_KEY);
         }
 
@@ -125,13 +152,14 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
+
         /// <summary>
         /// The time at which the request was sent from the client.
         /// </summary>
         public static DateTimeOffset? SpanStartTime
         {
             get => TryGetNullableValue<DateTimeOffset>(SPAN_START_TIME);
-            set => CloneAndSetValue(SPAN_START_TIME, value);
+            set => Implementation.Set(SPAN_START_TIME, value);
         }
 
         /// <summary>
@@ -141,75 +169,70 @@ namespace Gigya.Microdot.SharedLogic.Events
         public static DateTimeOffset? AbandonRequestBy
         {
             get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
-            set => SetValue(REQUEST_DEATH_TIME, value);
+            set => Implementation.Set(REQUEST_DEATH_TIME, value);
         }
 
         /// <summary>
         /// This add requestID to logical call context in unsafe way (no copy on write)
-        /// in order to propergate to parent task. From there on it is immutable and safe.
-        /// </summary>        
+        /// in order to propagate to parent task. From there on it is immutable and safe.
+        /// </summary> 
         public static void SetRequestID(string requestID)
         {
-            SetValue(REQUEST_ID_KEY, requestID);
+            Implementation.Set(REQUEST_ID_KEY, requestID);
         }
 
         public static void SetSpan(string spanId, string parentSpanId)
         {
-            SetValue(SPAN_ID_KEY, spanId);
-            SetValue(PARENT_SPAN_ID_KEY, parentSpanId);
+            Implementation.Set(SPAN_ID_KEY, spanId);
+            Implementation.Set(PARENT_SPAN_ID_KEY, parentSpanId);
         }
 
-        private static void SetValue(string key, object value)
+    }
+
+    public class TracingContextSourcev
+    {
+        private readonly TracingContextNoneOrleans fallback;
+
+        private readonly MethodInfo _getMethodInfo;
+        Action<string, object> setter;
+        Func<string, object> getter;
+
+        public TracingContextSourcev()
         {
-            var context = GetContextData();
+            fallback = new TracingContextNoneOrleans();
 
-            if(context == null)
-                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
-
-            context[key] = value;
-        }
-
-        // Implemented better in next Micrdot using Orleans 1.5
-        private static void CloneAndSetValue(string key, object value)
-        {
-            var context = GetContextData();
-
-            if(context == null)
-                throw new InvalidOperationException($"You must call {nameof(SetUpStorage)}() before setting a value on {nameof(TracingContext)}");
-
-            var cloned = new Dictionary<string, object>(context);
-            cloned[key] = value;
-            CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, cloned);
-        }
-
-        private static T TryGetValue<T>(string key) where T : class
-        {
-            object value = null;
-            GetContextData()?.TryGetValue(key, out value);
-            return value as T;
-        }
-
-        private static T? TryGetNullableValue<T>(string key) where T : struct
-        {
-            object value = null;
-            GetContextData()?.TryGetValue(key, out value);
-            return value as T?;
-        }
-
-        /// Must setup localstorage in upper most task (one that opens other tasks)
-        /// https://stackoverflow.com/questions/31953846/if-i-cant-use-tls-in-c-sharp-async-programming-what-can-i-use
-        public static void SetUpStorage()
-        {
-            if (GetContextData() == null)
+            var type = Type.GetType("Orleans.Runtime.RequestContext, Orleans.Core.Abstractions", throwOnError: false);
+            if(type != null)
             {
-                CallContext.LogicalSetData(ORLEANS_REQUEST_CONTEXT_KEY, new Dictionary<string, object>());
+                var setMethodInfo = type.GetMethod("Set", BindingFlags.Static | BindingFlags.Public);
+                _getMethodInfo =  type.GetMethod("Get", BindingFlags.Static | BindingFlags.Public);
+
+                setter = (key, value) =>
+                {
+                    setMethodInfo.Invoke(null, new[]{key, value});
+                };
+
+                getter = (key) =>
+                {
+                    return _getMethodInfo.Invoke(null, new []{key});
+                };
             }
         }
 
-
-        private static Dictionary<string, object> GetContextData()
+        public void Set(string key, object value)
         {
-            return (Dictionary<string, object>)CallContext.LogicalGetData(ORLEANS_REQUEST_CONTEXT_KEY);
+            if (setter != null)
+                setter(key, value);
+            else
+                fallback.Set(key, value);
+        }
+
+        public object Get(string key)
+        {
+            if (getter != null)
+                return getter(key);
+            
+            return fallback.Get(key);
         }
     }
 }

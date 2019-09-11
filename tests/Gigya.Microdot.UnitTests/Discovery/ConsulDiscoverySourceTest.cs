@@ -5,12 +5,9 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
@@ -22,7 +19,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ConsulDiscoverySourceTest
     {
         private const string SERVICE_NAME = "ServiceName";

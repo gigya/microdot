@@ -25,11 +25,9 @@ using System.Threading;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
@@ -56,7 +54,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// <summary>
         /// Creates a new instance of <see cref="MicrodotServiceHost{TInterface}"/>
         /// </summary>
-        /// <exception cref="ArgumentException">Thrown when the provided type provided for the <see cref="TInterface"/>
+        /// <exception cref="ArgumentException">Thrown when the provided type provided for the <typeparamref name="TInterface" />
         /// generic argument is not an interface.</exception>
         protected MicrodotServiceHost()
         {
@@ -74,6 +72,8 @@ namespace Gigya.Microdot.Ninject.Host
         protected override void OnStart()
         {
             Kernel = CreateKernel();
+            
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName)).InSingletonScope();
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -97,7 +97,8 @@ namespace Gigya.Microdot.Ninject.Host
         protected virtual void PreInitialize(IKernel kernel)
         {
             Kernel.Get<SystemInitializer.SystemInitializer>().Init();
-            CrashHandler = kernel.Get<Func<Action, CrashHandler>>()(OnCrash);
+            CrashHandler = kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
 
             IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
@@ -116,15 +117,15 @@ namespace Gigya.Microdot.Ninject.Host
 
         }
 
-	    protected override void OnVerifyConfiguration()
-	    {
-		    Kernel = CreateKernel();
-		    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments));
-		    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-		    base.OnVerifyConfiguration();
-	    }
+        protected override void OnVerifyConfiguration()
+        {
+            Kernel = CreateKernel();
+            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
+            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+            base.OnVerifyConfiguration();
+        }
 
-	    /// <summary>
+        /// <summary>
         /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
         /// can be overridden to customize which kernel is used (e.g. MockingKernel);
         /// </summary>
@@ -147,19 +148,20 @@ namespace Gigya.Microdot.Ninject.Host
         {
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>());
-            kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
+            kernel.Rebind<ServiceArguments>().ToConstant(Arguments).InSingletonScope();
         }
 
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
         /// after infrastructure was binded but before the silo is started. You must bind an implementation to the
-        /// interface defined by <see cref="TInterface"/>.
+        /// interface defined by <typeparamref name="TInterface" />.
         /// </summary>
         /// <param name="kernel">A <see cref="IKernel"/> already configured with infrastructure bindings.</param>
         /// <param name="commonConfig">An <see cref="BaseCommonConfig"/> that allows you to select which
         /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
+
 
 
         /// <summary>

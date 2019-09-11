@@ -47,7 +47,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-        public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig)
+        public ConsulClient(ILog log, IEnvironment environment, IDateTime dateTime, Func<ConsulConfig> getConfig, CurrentApplicationInfo appInfo)
         {
             Zone = environment.Zone;
             Log = log;
@@ -275,8 +275,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <inheritdoc />
         public void Dispose()
         {
-            _disposed = true;                
-            _httpClient.Dispose();
+            _disposed = true;
+            try
+            {
+                _httpClient.Dispose();
+            }
+            catch (Exception e)
+            {
+                
+            }
+         
         }
     }
 }

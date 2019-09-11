@@ -7,3 +7,5 @@ Microsoft.Orleans.OrleansProviders
 Ninject
 Ninject.Extensions.Conventions
 Ninject.Extensions.Factory
+Microsoft.Orleans.Server
+

@@ -33,64 +33,76 @@ using Ninject.Modules;
 
 namespace Gigya.Microdot.Ninject
 {
-	// ReSharper disable once ClassNeverInstantiated.Local
+    // ReSharper disable once ClassNeverInstantiated.Local
 
-	/// <summary>
-	/// </summary>
-	public class ConfigVerificationModule : NinjectModule
-	{
-		/// <summary>
-		/// Null ending implementation of log and event publisher to satisfy DI chain of initialization in configuration verification mode.
-		/// Strictly for config verification.
-		/// Should not be used in any other scenarios.
-		/// Subject to change.
-		/// </summary>
-		private sealed class ConfigVerificationNullLogAndPublisher : LogBase, IEventPublisher
-		{
-			protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
-			{
-				return Task.FromResult(true);
-			}
+    /// <summary>
+    /// </summary>
+    public class ConfigVerificationModule : NinjectModule
+    {
+        /// <summary>
+        /// Null ending implementation of log and event publisher to satisfy DI chain of initialization in configuration verification mode.
+        /// Strictly for config verification.
+        /// Should not be used in any other scenarios.
+        /// Subject to change.
+        /// </summary>
+        private sealed class ConfigVerificationNullLogAndPublisher : LogBase, IEventPublisher
+        {
+            protected override Task<bool> WriteLog(TraceEventType level, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
+            {
+                return Task.FromResult(true);
+            }
 
-			public override TraceEventType? MinimumTraceLevel { get => TraceEventType.Verbose; set{} }
+            public override TraceEventType? MinimumTraceLevel { get => TraceEventType.Verbose; set{} }
 
-			private static readonly PublishingTasks PublishingTasks = new PublishingTasks
-			{
-				PublishEvent = Task.FromResult(true), 
-				PublishAudit = Task.FromResult(true)
-			};
+            private static readonly PublishingTasks PublishingTasks = new PublishingTasks
+            {
+                PublishEvent = Task.FromResult(true), 
+                PublishAudit = Task.FromResult(true)
+            };
 
-			public PublishingTasks TryPublish(IEvent evt)
-			{            
-				return PublishingTasks;
-			}
-		}
+            public PublishingTasks TryPublish(IEvent evt)
+            {            
+                return PublishingTasks;
+            }
+        }
 
-		private readonly ILoggingModule _loggingModule = null;
-		private readonly ServiceArguments _arguments;
+        private readonly ILoggingModule _loggingModule = null;
+        private readonly ServiceArguments _arguments;
+        private readonly string _serviceName;
+        private readonly Version _infraVersion = null;
 
-		/// <summary>
-		/// </summary>
-		public ConfigVerificationModule (ILoggingModule loggingModule, ServiceArguments arguments)
-		{
-			_loggingModule = loggingModule;
-			_arguments = arguments;
-		}
+        /// <summary>
+        /// </summary>
+        public ConfigVerificationModule (ILoggingModule loggingModule, ServiceArguments arguments, string serviceName, Version infraVersion = null)
+        {
+            _serviceName = serviceName;
 
-		public override void Load()
-		{
-			Kernel.Load<MicrodotModule>();
+            if(_serviceName == null)
+                throw new ArgumentNullException(nameof(_serviceName));
 
-			// Required to allow assembly provider been instantiated
-			Kernel.Rebind<ServiceArguments>().ToConstant(_arguments);
+            _infraVersion = infraVersion;
+            _loggingModule = loggingModule;
+            _arguments = arguments;
+        }
 
-			_loggingModule?.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>());
+        public override void Load()
+        {
+            Kernel.Load<MicrodotModule>();
 
-			// Be ready that no ILog bound
-			if (Kernel.TryGet<ILog>() == null)
-			{
-				Kernel.Rebind<ILog, IEventPublisher>().To<ConfigVerificationNullLogAndPublisher>().InSingletonScope();
-			}
-		}
-	}
+            Kernel.Bind<CurrentApplicationInfo>()
+                .ToConstant(new CurrentApplicationInfo(_serviceName, _arguments.InstanceName, _infraVersion))
+                .InSingletonScope();
+
+            // Required to allow assembly provider been instantiated
+            Kernel.Rebind<ServiceArguments>().ToConstant(_arguments);
+
+            _loggingModule?.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(),Rebind<Func<string, ILog>>());
+
+            // Be ready that no ILog bound
+            if (Kernel.TryGet<ILog>() == null)
+            {
+                Kernel.Rebind<ILog, IEventPublisher>().To<ConfigVerificationNullLogAndPublisher>().InSingletonScope();
+            }
+        }
+    }
 }

@@ -29,7 +29,7 @@ using Newtonsoft.Json.Linq;
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {
 	/// <summary>
-	/// Serializes and deserializes exceptions into JSON, with inheritance hiearchy tolerance.
+	/// Serializes and deserializes exceptions into JSON, with inheritance hierarchy tolerance.
 	/// </summary>
 	public class JsonExceptionSerializer
 	{
@@ -59,8 +59,8 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 	    }
 
 	    /// <summary>
-	    /// Deserializes an exception from JSON, and uses the inheritance hiearchy embedded into the $type property in order to fall back to the
-	    /// first type up the hiearchy that successfully deserializes. 
+	    /// Deserializes an exception from JSON, and uses the inheritance hierarchy embedded into the $type property in order to fall back to the
+	    /// first type up the hierarchy that successfully deserializes. 
 	    /// </summary>
 	    /// <param name="json">The JSON to deserialize.</param>
 	    /// <returns>The deserialized exception.</returns>
@@ -77,7 +77,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 
 
         /// <summary>
-        /// Serializes and exception into JSON, and embeds the entire inheritance hiearchy of the exception into the $type property.
+        /// Serializes and exception into JSON, and embeds the entire inheritance hierarchy of the exception into the $type property.
         /// </summary>
         /// <param name="ex">The exception to serialize.</param>
         /// <returns>The JSON into which the exception was serialized.</returns>

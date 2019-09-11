@@ -39,7 +39,8 @@ namespace Gigya.Microdot.Fakes
             AssemblyName reflectedAssembly = ReceivingType.Assembly.GetName();
             CallSiteInfoTemplate = new LogCallSiteInfo
             {
-                ReflectedType = ReceivingType,
+                LoggerName = ReceivingType.Name,
+                Namespace = ReceivingType.Namespace,
                 ClassName = ReceivingType.Name,
                 AssemblyName = reflectedAssembly.Name,
                 AssemblyVersion = reflectedAssembly.Version.ToString(),

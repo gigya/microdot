@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
@@ -29,11 +30,13 @@ using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Ninject;
@@ -64,21 +67,22 @@ namespace Gigya.Microdot.Ninject
         {
             //Need to be initialized before using any regex!
             new RegexTimeoutInitializer().Init();
-
-            Kernel
-                .Bind(typeof(ConcurrentDictionary<,>))
-                .To(typeof(DisposableConcurrentDictionary<,>))
-                .InSingletonScope();
-
+            Kernel.Bind(typeof(DisposableCollection<,>)).ToSelf().InSingletonScope();
             if (Kernel.CanResolve<Func<long, DateTime>>() == false)
                 Kernel.Load<FuncModule>();
 
             this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly), typeof(SharedLogicAssembly), typeof(ServiceDiscoveryAssembly));
-            
+            this.BindInterfacesAsSingleton(NonSingletonBaseTypes,new List<Type>{typeof(ILog)}, 
+                                                                typeof(ConfigurationAssembly), 
+                                                                typeof(ServiceProxyAssembly), 
+                                                                typeof(SharedLogicAssembly), 
+                                                                typeof(ServiceDiscoveryAssembly));
+
+
             Bind<IRemoteHostPoolFactory>().ToFactory();
 
             Kernel.BindPerKey<string, ReportingStrategy, IPassiveAggregatingHealthCheck, PassiveAggregatingHealthCheck>();
+
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();

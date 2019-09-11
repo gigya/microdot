@@ -26,27 +26,35 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Service;
+using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ServiceTesterTests
     {
         private ServiceTester<CalculatorServiceHost> _tester;
-        
 
         [Test]
         public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
         {
-            _tester = AssemblyInitialize.ResolutionRoot.GetServiceTester<CalculatorServiceHost>(8555,shutdownWaitTime:TimeSpan.Zero);
+            // shutdownWaitTimeSec: 0 
+            var serviceArguments = new ServiceArguments(
+                ServiceStartupMode.CommandLineNonInteractive, 
+                ConsoleOutputMode.Disabled,
+                SiloClusterMode.PrimaryNode, 
+                DisposablePort.GetPort().Port, 
+                onStopWaitTimeSec: 0);
+
+            _tester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             Action act = () => _tester.Dispose();
+
             act.ShouldThrow<Exception>().Message.ShouldContain("service failed to shutdown gracefully");
         }
-
     }
-
 }

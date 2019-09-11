@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Ninject;
 using NSubstitute;
@@ -19,12 +18,12 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ConsulNodeSourceFactoryTests : UpdatableConfigTests
     {
         private const string ServiceName = "MyService";
         private const string Env = "prod";
-        private const int ConsulPort = 8502;
+        private  int ConsulPort = DisposablePort.GetPort().Port;
         private const string Zone = "us1a";
         private const string Host1 = "Host1";
         private const int Port1 = 1234;

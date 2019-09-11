@@ -6,7 +6,6 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.Testing;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
 
@@ -18,7 +17,7 @@ using NUnit.Framework;
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
   
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public abstract class AbstractServiceProxyTest
     {
         protected TestingKernel<ConsoleLog> unitTesting;
@@ -28,11 +27,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [SetUp]
         public virtual void SetUp()
         {
-            TracingContext.SetUpStorage();
             
             unitTesting = new TestingKernel<ConsoleLog>(mockConfig: MockConfig);
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
-            TracingContext.SetRequestID("1");
             ExceptionSerializer = unitTesting.Get<JsonExceptionSerializer>();
         }
 
@@ -40,8 +37,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [TearDown]
         public virtual void TearDown()
         {
-            //clear TracingContext for testing only
-            CallContext.FreeNamedDataSlot("#ORL_RC");
             Metric.ShutdownContext(ServiceProxyProvider.METRICS_CONTEXT_NAME);
         }
 

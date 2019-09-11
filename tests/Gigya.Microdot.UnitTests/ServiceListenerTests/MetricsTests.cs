@@ -5,99 +5,94 @@ using System.Threading;
 using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Logging.NLog;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.Testing;
-using Gigya.Microdot.Testing.Shared;
+using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Metrics.MetricData;
-
-using Ninject;
-
 using NSubstitute;
 
 using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class MetricsTests
     {
-        private IDemoService _proxyInstance;
+
         [SetUp]
         public void SetUp()
         {
             Metric.ShutdownContext("Service");
-
-            TracingContext.SetUpStorage();
-            TracingContext.SetRequestID("1");
-
-           
-            var kernel = new TestingKernel<ConsoleLog>();
-            _proxyInstance = kernel.Get<IDemoService>();
         }
 
 
         [TearDown]
-        public  void TearDown()
+        public void TearDown()
         {
             Metric.ShutdownContext("Service");
         }
+        
+        
+        /*
+            The test bringing test host with Calculator service and calling to a method 
+                1) without exception
+                2) with exception
+            And counting amount of Calls that Http Service Listener records.
 
+            Chaing of calls:
+            
+            Gigya.Microdot
+                .Hosting.HttpService.HttpServiceListener.HttpServiceListener.Ctor()
+                .Ninject.Host.MicrodotServiceHost.OnStart()
+                .Hosting.Service.ServiceHostBase.Run()
+                .Testing.Shared.Service.NonOrleansServiceTester<Gigya.Microdot.UnitTests.TestingHost<Gigya.Microdot.UnitTests.IDemoService>>
+        */
 
         [Test]
         public void TestMetricsOnSuccess()
         {
-            TestingHost<IDemoService> testinghost = new TestingHost<IDemoService>();
-            var task = testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
-            testinghost.Instance.Increment(0).Returns((ulong)1);
-        
-         
-            var res = _proxyInstance.Increment(0).Result;
-            res.Should().Be(1);
+            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
+            {
+                testinghost.Host.Instance.Increment(0).Returns((ulong)1);
 
-            testinghost.Instance.Received().Increment(0);
+                var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
+                res.Should().Be(1);
 
-        
-            testinghost.Stop();
-            task.Wait();
-            Thread.Sleep(100);
-            GetMetricsData().AssertEquals(DefaultExpected());
-
+                testinghost.Host.Instance.Received().Increment(0);
+                Thread.Sleep(100);
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected());
+            }
         }
 
- 
         [Test]
         public void TestMetricsOnFailure()
         {
-            TestingHost<IDemoService> testinghost = new TestingHost<IDemoService>();
-            var task = testinghost.RunAsync(new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive));
-
-            testinghost.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception(); });
-
-            Assert.Throws<RemoteServiceException>(() => _proxyInstance.DoSomething().GetAwaiter().GetResult());
-
-            var metricsExpected = DefaultExpected();
-
-            metricsExpected.Counters = new List<MetricDataEquatable>
+            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
-                new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
-            };
+                testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
 
-            testinghost.Stop();
-            task.Wait();
+                Assert.Throws<RemoteServiceException>(() => testinghost.GetServiceProxy<IDemoService>().DoSomething().GetAwaiter().GetResult());
 
-            GetMetricsData().AssertEquals(metricsExpected);
+                var metricsExpected = DefaultExpected();
+
+                metricsExpected.Counters = new List<MetricDataEquatable>
+                {
+                    new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
+                };
+
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(metricsExpected);
+            }
         }
 
 
-        private static MetricsData GetMetricsData()
+        private MetricsData GetMetricsData(string hostName)
         {
             return
                 Metric.Context("Service")
-                      .Context(CurrentApplicationInfo.Name)
+                      .Context(hostName)
                       .DataProvider.CurrentMetricsData;
         }
 

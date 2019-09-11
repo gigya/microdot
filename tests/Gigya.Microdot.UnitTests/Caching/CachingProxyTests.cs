@@ -10,7 +10,6 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Gigya.ServiceContract.HttpService;
@@ -21,7 +20,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class CachingProxyTests
     {
         const string FirstResult  = "First Result";
@@ -48,7 +47,6 @@ namespace Gigya.Microdot.UnitTests.Caching
             var fakeRevokingManager =new FakeRevokingManager();
             _kernel.Rebind<IRevokeListener>().ToConstant(fakeRevokingManager);
             _kernel.Rebind<ICacheRevoker>().ToConstant(fakeRevokingManager);
-            var getDiscoveryConfigToEnableConfigEventsToBeRaised = _kernel.Get<DiscoveryConfig>();
 
         }
 

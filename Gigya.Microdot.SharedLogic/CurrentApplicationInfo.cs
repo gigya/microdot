@@ -25,69 +25,63 @@ using System.Net;
 using System.Reflection;
 using System.Security.Principal;
 
-namespace Gigya.Microdot.SharedLogic {
+namespace Gigya.Microdot.SharedLogic
+{
 
-	/// <summary>
-	/// Provides info about the current application.
-	/// </summary>
-	public static class CurrentApplicationInfo
-	{
-	    public const string DEFAULT_INSTANCE_NAME = "DefaultInstance";
+    /// <summary>
+    /// Provides info about the current application.
+    /// I think we should use this class only for init IEnvironment the get should be in IEnvironment it simply the code 
+    /// </summary>
+    public class CurrentApplicationInfo
+    {
+        /// <summary>Application/system/micro-service name, as provided by developer.</summary>
+        public string Name { get; private set; }
 
-		/// <summary>Application/system/micro-service name, as provided by developer.</summary>
-		public static string Name { get; private set; }
+        /// <summary>The name of the operating system user that runs this process.</summary>
+        public string OsUser { get; }
 
-		/// <summary>Logical instance name for the current application, which can be used to differentiate between
-		/// multiple identical applications running on the same host.</summary>
-		public static string InstanceName { get; private set; }
-
-		/// <summary>The name of the operating system user that runs this process.</summary>
-		public static string OsUser { get; }
-
-		/// <summary>The application version.</summary>
-		public static Version Version { get; }
+        /// <summary>The application version.</summary>
+        public Version Version { get; }
 
         /// <summary>The Infrastructure version.</summary>
-        public static Version InfraVersion { get; private set; }
+        public Version InfraVersion { get; private set; }
 
         /// <summary>
-        /// Name of host, the current process is runing on.
+        /// Name of host, the current process is running on.
         /// </summary>
-        public static string HostName { get; }
+        public static string HostName { get; } = Dns.GetHostName();
 
-		/// <summary>
-		/// Indicates if the current process is running as a Windows service.
-		/// </summary>
-		public static bool IsRunningAsWindowsService { get; }
+        /// <summary>
+        /// Indicates if the current process is running as a Windows service.
+        /// </summary>
+        public bool IsRunningAsWindowsService { get; }
 
-        public static bool HasConsoleWindow { get; }
+        public bool HasConsoleWindow { get; }
 
-	    static CurrentApplicationInfo()
-		{
-            OsUser = WindowsIdentity.GetCurrent().Name;
-		    InfraVersion = typeof(CurrentApplicationInfo).Assembly.GetName().Version;
-            Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
-			HostName = Dns.GetHostName();
-			// ReSharper disable once PossibleNullReferenceException
-			IsRunningAsWindowsService = Environment.OSVersion.Platform == PlatformID.Win32NT &&
-                WindowsIdentity.GetCurrent().Name == @"NT AUTHORITY\SYSTEM";
-		    HasConsoleWindow = !IsRunningAsWindowsService && !Console.IsInputRedirected;
-        }
+        /// <summary>
+        /// Waring take it form IEnvironment
+        /// </summary>
+        internal string InstanceName { get; }
 
-		public static void Init(string name, string instanceName = null, Version infraVersion = null )
-		{
-		    
-		    if (name == null)
-		        throw new ArgumentNullException(nameof(name));
+        public CurrentApplicationInfo(string name, string instanceName = null, Version infraVersion = null)
+        {
             Name = name;
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
 
-			InfraVersion = infraVersion ?? typeof(CurrentApplicationInfo).Assembly.GetName().Version;
-			InstanceName = instanceName
-		                   ?? Environment.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME")
-		                   ?? DEFAULT_INSTANCE_NAME;
+            OsUser = WindowsIdentity.GetCurrent().Name;
 
-            if (string.IsNullOrEmpty(InstanceName))
-                throw new ArgumentNullException(nameof(instanceName));
-		}
-	}
+            Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
+
+            // ReSharper disable once PossibleNullReferenceException
+            IsRunningAsWindowsService = Environment.OSVersion.Platform == PlatformID.Win32NT &&
+                WindowsIdentity.GetCurrent().Name == @"NT AUTHORITY\SYSTEM";
+            
+            HasConsoleWindow = !IsRunningAsWindowsService && !Console.IsInputRedirected;
+
+            InfraVersion = infraVersion ?? typeof(CurrentApplicationInfo).Assembly.GetName().Version;
+
+            InstanceName = instanceName;
+        }
+    }
 }
