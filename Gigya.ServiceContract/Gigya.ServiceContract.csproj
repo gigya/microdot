@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Gigya.ServiceContract</PackageId>
+    <PackageVersion>7.0.0.0</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
