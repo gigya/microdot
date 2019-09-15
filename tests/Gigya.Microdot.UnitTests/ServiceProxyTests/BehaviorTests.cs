@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-
+using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
@@ -462,7 +462,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             Func<Task> action = async () => await CreateClient(messageHandler).ToUpper("aaaa");
 
-            action.ShouldThrow<RequestException>().Message.ShouldBe(expected.Message);
+            action.ShouldThrow<RequestException>().Message.Should().Be(expected.Message);
         }
 
         [Test]

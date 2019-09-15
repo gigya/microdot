@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
@@ -109,7 +110,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                        .Returns(info => info.Arg<int>() + 1);
 
             var res = await _insecureClient.IncrementInt(0);
-            res.ShouldBe(1);
+            res.Should().Be(1);
 
             await _testinghost.Host.Instance.Received().IncrementInt(0);
         }
@@ -123,12 +124,12 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                        .Returns(info => info.Arg<ulong>() + 1);
 
             var res = await _insecureClient.Increment(0);
-            res.ShouldBe<ulong>(1);
+            res.Should().Be(1);
 
             ulong maxLongPlusOne = (ulong)long.MaxValue + 1;
 
             res = await _insecureClient.Increment(maxLongPlusOne);
-            res.ShouldBe(maxLongPlusOne + 1);
+            res.Should().Be(maxLongPlusOne + 1);
 
             await _testinghost.Host.Instance.Received().Increment(0);
         }
@@ -139,7 +140,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             _testinghost.Host.Instance.ToUpper(null).Returns((string)null);
             var res = await _insecureClient.ToUpper(null);
-            res.ShouldBeNullOrEmpty();
+            res.Should().BeNullOrEmpty();
             await _testinghost.Host.Instance.Received().ToUpper(null);
         }
 
