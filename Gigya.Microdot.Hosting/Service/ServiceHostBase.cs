@@ -23,7 +23,6 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
