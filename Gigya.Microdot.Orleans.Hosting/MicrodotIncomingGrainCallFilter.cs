@@ -53,6 +53,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             bool isMicrodotGrain = context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
             bool isServiceGrain = isOrleansGrain == false && isMicrodotGrain == false;
 
+            var grainTags = GetGrainTags(context);
             // Drop the request if we're overloaded
             var loadSheddingConfig = _loadSheddingConfig();
             if (
@@ -60,7 +61,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 || (loadSheddingConfig.ApplyToServiceGrains && isServiceGrain)
                 )
             {
-                RejectRequestIfLateOrOverloaded(context);
+                RejectRequestIfLateOrOverloaded(grainTags);
             }
             var loggingConfig = _grainLoggingConfig();
 
@@ -75,7 +76,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             string callId = TracingContext.TryGetRequestID();
             uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
-            if (loggingConfig.LogRatio == 0 || callId == null ||  (uint)callId.GetHashCode() % uint.MaxValue > max)
+            bool shouldSkipLogging = loggingConfig.LogRatio != 1 && ( loggingConfig.LogRatio == 0 || callId == null || (uint)callId.GetHashCode() % uint.MaxValue > max);
+          
+            if (shouldSkipLogging)
             {
                 await context.Invoke();
                 return;
@@ -97,40 +100,22 @@ namespace Gigya.Microdot.Orleans.Hosting
             finally
             {
                 RequestTimings.Current.Request.Stop();
-                PublishEvent(context, ex);
+                PublishEvent(ex, grainTags);
             }
         }
 
-        private void PublishEvent(IGrainCallContext target, Exception ex)
+        private void PublishEvent(Exception ex,GrainTags grainTags)
         {
             var grainEvent = _eventPublisher.CreateEvent();
-            if (target.Grain != null && target.Grain is ISystemTarget == false)
-            {
-                if (target.Grain?.GetPrimaryKeyString() != null)
-                {
-                    grainEvent.GrainKeyString = target.Grain.GetPrimaryKeyString();
-                }
-                else if (target.Grain.IsPrimaryKeyBasedOnLong())
-                {
-                    grainEvent.GrainKeyLong = target.Grain.GetPrimaryKeyLong(out var keyExt);
-                    grainEvent.GrainKeyExtention = keyExt;
-                }
-                else
-                {
-                    grainEvent.GrainKeyGuid = target.Grain.GetPrimaryKey(out var keyExt);
-                    grainEvent.GrainKeyExtention = keyExt;
-                }
 
-                if (target is Grain grainTarget)
-                {
-                    grainEvent.SiloAddress = grainTarget.RuntimeIdentity;
-                }
-            }
-
-
+            grainEvent.GrainKeyExtention = grainTags.GrainKeyExtention;
+            grainEvent.GrainKeyGuid = grainTags.GrainKeyGuid;
+            grainEvent.GrainKeyLong = grainTags.GainKeyLong;
+            grainEvent.GrainKeyString = grainTags.GrainKeyString;
+            grainEvent.SiloAddress = grainTags.SiloAddress;
             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
-            grainEvent.TargetType = target.Grain?.GetType().FullName ?? target.InterfaceMethod.DeclaringType?.FullName;
-            grainEvent.TargetMethod = target.InterfaceMethod.Name;
+            grainEvent.TargetType = grainTags.TargetType;
+            grainEvent.TargetMethod = grainTags.TargetMethod;
             grainEvent.Exception = ex;
             grainEvent.ErrCode = ex != null ? null : (int?)0;
 
@@ -144,11 +129,67 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        private void RejectRequestIfLateOrOverloaded(IGrainCallContext grainCallContext)
+        private  GrainTags GetGrainTags(IGrainCallContext target)
+        {
+            string grainKeyString = null;
+            Guid? grainKeyGuid = null;
+            long? grainKeyLong = null;
+            string grainKeyExtention = null;
+            string siloAddress = null;
+            if (target.Grain != null && target.Grain is ISystemTarget == false)
+            {
+                if (target.Grain?.GetPrimaryKeyString() != null)
+                {
+                    grainKeyString = target.Grain.GetPrimaryKeyString();
+                }
+                else if (target.Grain.IsPrimaryKeyBasedOnLong())
+                {
+                    grainKeyLong = target.Grain.GetPrimaryKeyLong(out var keyExt);
+                    grainKeyExtention = keyExt;
+                }
+                else
+                {
+                    grainKeyGuid = target.Grain.GetPrimaryKey(out var keyExt);
+                    grainKeyExtention = keyExt;
+                }
+
+                if (target is Grain grainTarget)
+                {
+                    siloAddress = grainTarget.RuntimeIdentity;
+                }
+            }
+
+            var grainType = target.Grain?.GetType().FullName ?? target.InterfaceMethod.DeclaringType?.FullName;
+            var targetMethod = target.InterfaceMethod.Name;
+
+            return new GrainTags(grainKeyString, grainKeyGuid, grainKeyLong, grainKeyExtention, siloAddress, grainType, targetMethod);
+        }
+
+        class GrainTags
+        {
+            public readonly string GrainKeyString;
+            public readonly Guid? GrainKeyGuid;
+            public readonly long? GainKeyLong;
+            public readonly string GrainKeyExtention;
+            public readonly string SiloAddress;
+            public readonly string TargetType;
+            public readonly string TargetMethod;
+            public GrainTags(string grainKeyString, Guid? grainKeyGuid, long? grainKeyLong, string grainKeyExtention, string siloAddress, string targetType, string targetMethod)
+            {
+                GrainKeyString = grainKeyString;
+                GrainKeyGuid = grainKeyGuid;
+                GainKeyLong = grainKeyLong;
+                GrainKeyExtention = grainKeyExtention;
+                SiloAddress = siloAddress;
+                TargetType = targetType;
+                TargetMethod = targetMethod;
+            }
+
+        }
+        private void RejectRequestIfLateOrOverloaded(GrainTags grainTags)
         {
             var config = _loadSheddingConfig();
             var now = DateTimeOffset.UtcNow;
-
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
             if (config.DropOrleansRequestsBySpanTime != LoadShedding.Toggle.Disabled
                 && TracingContext.SpanStartTime != null
@@ -161,6 +202,14 @@ namespace Gigya.Microdot.Orleans.Hosting
                         currentTime = now,
                         maxDelayInSecs = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
                         actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
+                        targetType = grainTags.TargetType,
+                        targetMethod = grainTags.TargetMethod,
+                        grainKeyExtention = grainTags.GrainKeyExtention,
+                        grainKeyGuid = grainTags.GrainKeyGuid?.ToString(),
+                        grainKeyString = grainTags.GrainKeyString,
+                        siloAddress = grainTags.SiloAddress,
+                        gainKeyLong = grainTags.GainKeyLong?.ToString(),
+
                     }));
                 else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
                 {
@@ -173,7 +222,14 @@ namespace Gigya.Microdot.Orleans.Hosting
                              ["currentTime"] = now.ToString(),
                              ["maxDelayInSecs"] = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
                              ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
-                         });
+                             ["targetType"] = grainTags.TargetType,
+                             ["targetMethod"] = grainTags.TargetMethod,
+                             ["grainKeyExtention"] = grainTags.GrainKeyExtention,
+                             ["grainKeyGuid"] = grainTags.GrainKeyGuid?.ToString(),
+                             ["grainKeyString"] = grainTags.GrainKeyString,
+                             ["siloAddress"] = grainTags.SiloAddress,
+                             ["gainKeyLong"] = grainTags.GainKeyLong?.ToString(),
+                            }); 
                 }
 
             }
@@ -190,6 +246,14 @@ namespace Gigya.Microdot.Orleans.Hosting
                         requestDeathTime = TracingContext.AbandonRequestBy,
                         currentTime = now,
                         overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
+                        targetType = grainTags.TargetType,
+                        targetMethod = grainTags.TargetMethod,
+                        grainKeyExtention = grainTags.GrainKeyExtention,
+                        grainKeyGuid = grainTags.GrainKeyGuid?.ToString(),
+                        grainKeyString = grainTags.GrainKeyString,
+                        siloAddress = grainTags.SiloAddress,
+                        gainKeyLong = grainTags.GainKeyLong?.ToString(),
+
                     }));
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
                 {
@@ -199,7 +263,15 @@ namespace Gigya.Microdot.Orleans.Hosting
                         ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
                         ["currentTime"] = now.ToString(),
                         ["overTimeInSecs"] = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                        ["targetType"] = grainTags.TargetType,
+                        ["targetMethod"] = grainTags.TargetMethod,
+                        ["grainKeyExtention"] = grainTags.GrainKeyExtention,
+                        ["grainKeyGuid"] = grainTags.GrainKeyGuid?.ToString(),
+                        ["grainKeyString"] = grainTags.GrainKeyString,
+                        ["siloAddress"] = grainTags.SiloAddress,
+                        ["gainKeyLong"] = grainTags.GainKeyLong?.ToString(),
                     });
+              
                 }
             }
         }
