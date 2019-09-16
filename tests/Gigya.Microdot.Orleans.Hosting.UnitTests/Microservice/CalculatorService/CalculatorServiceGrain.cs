@@ -22,12 +22,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -40,7 +38,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Orleans;
 using Orleans.Concurrency;
-using Orleans.Runtime;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService
@@ -261,38 +258,29 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             await Task.Delay(150);
 
             var serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x=>x.TargetType==typeof(CalculatorServiceGrain).FullName);
-            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
-            serviceCallEvent.GrainKeyLong.ShouldBe(0);
-            serviceCallEvent.GrainKeyGuid.ShouldBeNull();
-            serviceCallEvent.GrainKeyString.ShouldBeNull();
+            serviceCallEvent.GrainID.ShouldBe("0");
+
 
             var id = await GrainFactory.GetGrain<IUserGrainWithGuid>(Guid.NewGuid()).GetIdentety();
             await Task.Delay(150);
 
             serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x => x.TargetType == typeof(UserGrainWithGuid).FullName);
-            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
-            serviceCallEvent.GrainKeyGuid.ToString().ShouldBe(id);
-            serviceCallEvent.GrainKeyString.ShouldBeNull();
-            serviceCallEvent.GrainKeyLong.ShouldBeNull();
+            serviceCallEvent.GrainID.ShouldBe(id);
 
 
             id = await GrainFactory.GetGrain<IUserGrainWithLong>(123).GetIdentety();
             await Task.Delay(150);
             serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x => x.TargetType == typeof(UserGrainWithLong).FullName);
-            serviceCallEvent.GrainKeyLong.ShouldBe(123);
-            serviceCallEvent.GrainKeyString.ShouldBeNull();
-            serviceCallEvent.GrainKeyGuid.ShouldBeNull();
-            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
+            serviceCallEvent.GrainID.ShouldBe("123");
+     
 
 
             id = await GrainFactory.GetGrain<IUserGrainWithString>("test").GetIdentety();
             await Task.Delay(150);
             serviceCallEvent = eventPublisher.Events.OfType<GrainCallEvent>().Last(x => x.TargetType == typeof(UserGrainWithString).FullName);
 
-            serviceCallEvent.GrainKeyString.ShouldBe("test");
-            serviceCallEvent.GrainKeyExtention.ShouldBeNull();
-            serviceCallEvent.GrainKeyLong.ShouldBeNull();
-            serviceCallEvent.GrainKeyGuid.ShouldBeNull();
+            serviceCallEvent.GrainID.ShouldBe("test");
+   
         }
     }
 }

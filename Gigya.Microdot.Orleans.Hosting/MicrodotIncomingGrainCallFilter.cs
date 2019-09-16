@@ -8,18 +8,20 @@ using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Orleans;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
     //TODO: create separate filters for concerns of logging, load shedding and so on
+    [SuppressMessage("ReSharper", "SpecifyACultureInStringConversionExplicitly")]
     public class MicrodotIncomingGrainCallFilter : IIncomingGrainCallFilter
     {
         private readonly ILog _log;
         private readonly ClusterIdentity _clusterIdentity;
 
         private readonly Func<GrainLoggingConfig> _grainLoggingConfig;
-        private Counter EventsDiscarded { get; }
+        private Meter DropEvent { get; }
 
         private readonly IEventPublisher<GrainCallEvent> _eventPublisher;
         private readonly Func<LoadShedding> _loadSheddingConfig;
@@ -33,27 +35,19 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             _eventPublisher = eventPublisher;
             _loadSheddingConfig = loadSheddingConfig;
-            EventsDiscarded = Metric.Context("GigyaSiloHost").Counter("GrainCallEvents discarded", Unit.Items);
+
+            DropEvent = Metric.Context("GigyaSiloHost").Meter("LoadShedding Drop Event", Unit.Items);
         }
 
         public async Task Invoke(IIncomingGrainCallContext context)
         {
-
-            if (context.InterfaceMethod == null || context.InterfaceMethod.DeclaringType == null)
-            {
-                // We observing behavior when no interface method
-                // We still don't want to prevent it happen.
-                await context.Invoke();
-                return;
-            }
-            // Identify the grain type
-
-            bool isOrleansGrain = context.InterfaceMethod.Module.Assembly.FullName?.StartsWith("Orleans") == true;
+            bool noContainsInterface = context.InterfaceMethod == null || context.InterfaceMethod.DeclaringType == null;
+            bool isOrleansGrain = !noContainsInterface && context.InterfaceMethod.Module.Assembly.FullName.StartsWith("Orleans");
             //TODO add test that validate that we are not introducing new grain in micro dot
-            bool isMicrodotGrain = context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
-            bool isServiceGrain = isOrleansGrain == false && isMicrodotGrain == false;
+            bool isMicrodotGrain = !noContainsInterface && context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
+            bool isServiceGrain = !noContainsInterface && isOrleansGrain == false && isMicrodotGrain == false;
 
-            var grainTags = GetGrainTags(context);
+            var grainTags = new Lazy<GrainTags>(() => new GrainTags(context));
             // Drop the request if we're overloaded
             var loadSheddingConfig = _loadSheddingConfig();
             if (
@@ -65,20 +59,11 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             var loggingConfig = _grainLoggingConfig();
 
-            var shouldLoad = ((loggingConfig.LogOrleansGrains && isOrleansGrain)
+            var shouldLog = ((loggingConfig.LogOrleansGrains && isOrleansGrain)
                               || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
-                              || (loggingConfig.LogServiceGrains && isServiceGrain));
-            if (shouldLoad == false)
-            {
-                await context.Invoke();
-                return;
-            }
-
-            string callId = TracingContext.TryGetRequestID();
-            uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
-            bool shouldSkipLogging = loggingConfig.LogRatio != 1 && ( loggingConfig.LogRatio == 0 || callId == null || (uint)callId.GetHashCode() % uint.MaxValue > max);
-          
-            if (shouldSkipLogging)
+                              || (loggingConfig.LogServiceGrains && isServiceGrain)
+                               );
+            if (shouldLog == false || ShouldSkipLogging(loggingConfig))
             {
                 await context.Invoke();
                 return;
@@ -104,89 +89,68 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        private void PublishEvent(Exception ex,GrainTags grainTags)
+        private static bool ShouldSkipLogging(GrainLoggingConfig loggingConfig)
+        {
+            string callId = TracingContext.TryGetRequestID();
+            uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
+            bool shouldSkipLogging = (loggingConfig.LogRatio == 0 || callId == null ||
+                                      (uint)callId.GetHashCode() % uint.MaxValue > max);
+            return shouldSkipLogging;
+        }
+
+        private void PublishEvent(Exception ex, Lazy<GrainTags> grainTags)
         {
             var grainEvent = _eventPublisher.CreateEvent();
 
-            grainEvent.GrainKeyExtention = grainTags.GrainKeyExtention;
-            grainEvent.GrainKeyGuid = grainTags.GrainKeyGuid;
-            grainEvent.GrainKeyLong = grainTags.GainKeyLong;
-            grainEvent.GrainKeyString = grainTags.GrainKeyString;
-            grainEvent.SiloAddress = grainTags.SiloAddress;
+            grainEvent.GrainID = grainTags.Value.GrainId;
+            grainEvent.SiloAddress = grainTags.Value.SiloAddress;
             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
-            grainEvent.TargetType = grainTags.TargetType;
-            grainEvent.TargetMethod = grainTags.TargetMethod;
+            grainEvent.TargetType = grainTags.Value.TargetType;
+            grainEvent.TargetMethod = grainTags.Value.TargetMethod;
             grainEvent.Exception = ex;
             grainEvent.ErrCode = ex != null ? null : (int?)0;
 
-            try
-            {
-                _eventPublisher.TryPublish(grainEvent);
-            }
-            catch (Exception)
-            {
-                EventsDiscarded.Increment();
-            }
-        }
-
-        private  GrainTags GetGrainTags(IGrainCallContext target)
-        {
-            string grainKeyString = null;
-            Guid? grainKeyGuid = null;
-            long? grainKeyLong = null;
-            string grainKeyExtention = null;
-            string siloAddress = null;
-            if (target.Grain != null && target.Grain is ISystemTarget == false)
-            {
-                if (target.Grain?.GetPrimaryKeyString() != null)
-                {
-                    grainKeyString = target.Grain.GetPrimaryKeyString();
-                }
-                else if (target.Grain.IsPrimaryKeyBasedOnLong())
-                {
-                    grainKeyLong = target.Grain.GetPrimaryKeyLong(out var keyExt);
-                    grainKeyExtention = keyExt;
-                }
-                else
-                {
-                    grainKeyGuid = target.Grain.GetPrimaryKey(out var keyExt);
-                    grainKeyExtention = keyExt;
-                }
-
-                if (target is Grain grainTarget)
-                {
-                    siloAddress = grainTarget.RuntimeIdentity;
-                }
-            }
-
-            var grainType = target.Grain?.GetType().FullName ?? target.InterfaceMethod.DeclaringType?.FullName;
-            var targetMethod = target.InterfaceMethod.Name;
-
-            return new GrainTags(grainKeyString, grainKeyGuid, grainKeyLong, grainKeyExtention, siloAddress, grainType, targetMethod);
+            _eventPublisher.TryPublish(grainEvent);
         }
 
         class GrainTags
         {
-            public readonly string GrainKeyString;
-            public readonly Guid? GrainKeyGuid;
-            public readonly long? GainKeyLong;
-            public readonly string GrainKeyExtention;
+            public readonly string GrainId;
             public readonly string SiloAddress;
             public readonly string TargetType;
             public readonly string TargetMethod;
-            public GrainTags(string grainKeyString, Guid? grainKeyGuid, long? grainKeyLong, string grainKeyExtention, string siloAddress, string targetType, string targetMethod)
-            {
-                GrainKeyString = grainKeyString;
-                GrainKeyGuid = grainKeyGuid;
-                GainKeyLong = grainKeyLong;
-                GrainKeyExtention = grainKeyExtention;
-                SiloAddress = siloAddress;
-                TargetType = targetType;
-                TargetMethod = targetMethod;
-            }
 
+            public GrainTags(IGrainCallContext target)
+            {
+                if (target.Grain != null && target.Grain is ISystemTarget == false)
+                {
+                    if (target.Grain?.GetPrimaryKeyString() != null)
+                    {
+                        GrainId = target.Grain.GetPrimaryKeyString();
+                    }
+                    else if (target.Grain.IsPrimaryKeyBasedOnLong())
+                    {
+                        GrainId = target.Grain.GetPrimaryKeyLong(out var keyExt).ToString();
+                        GrainId = (string.IsNullOrEmpty(keyExt) ? "" : keyExt + "/") + GrainId;
+                    }
+                    else
+                    {
+                        GrainId = target.Grain.GetPrimaryKey(out var keyExt).ToString();
+                        GrainId = (string.IsNullOrEmpty(keyExt) ? "" : keyExt + "/") + GrainId;
+                    }
+
+                    // ReSharper disable once SuspiciousTypeConversion.Global
+                    if (target is Grain grainTarget)
+                    {
+                        SiloAddress = grainTarget.RuntimeIdentity;
+                    }
+                }
+
+                TargetType = target.Grain?.GetType().FullName ?? target.InterfaceMethod.DeclaringType?.FullName;
+                TargetMethod = target.InterfaceMethod.Name;
+            }
         }
-        private void RejectRequestIfLateOrOverloaded(GrainTags grainTags)
+        private void RejectRequestIfLateOrOverloaded(Lazy<GrainTags> grainTags)
         {
             var config = _loadSheddingConfig();
             var now = DateTimeOffset.UtcNow;
@@ -195,43 +159,23 @@ namespace Gigya.Microdot.Orleans.Hosting
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropOrleansRequestsOlderThanSpanTimeBy < now)
             {
-                if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
-                    _log.Warn(_ => _("Accepted Orleans request despite that too much time passed since the client sent it to us.", unencryptedTags: new
-                    {
-                        clientSendTime = TracingContext.SpanStartTime,
-                        currentTime = now,
-                        maxDelayInSecs = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds,
-                        actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
-                        targetType = grainTags.TargetType,
-                        targetMethod = grainTags.TargetMethod,
-                        grainKeyExtention = grainTags.GrainKeyExtention,
-                        grainKeyGuid = grainTags.GrainKeyGuid?.ToString(),
-                        grainKeyString = grainTags.GrainKeyString,
-                        siloAddress = grainTags.SiloAddress,
-                        gainKeyLong = grainTags.GainKeyLong?.ToString(),
 
-                    }));
+                var totalMilliseconds = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalMilliseconds.ToString();
+                var actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString();
+                if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
+
+                {
+                    _log.Warn(_ =>
+                        _("Accepted Orleans request despite that too much time passed since the client sent it to us."
+                            , unencryptedTags: CreateExceptionTags(grainTags, now, nameof(config.DropOrleansRequestsOlderThanSpanTimeBy), totalMilliseconds, actualDelayInSecs)));
+                }
                 else if (config.DropOrleansRequestsBySpanTime == LoadShedding.Toggle.Drop)
                 {
-                    //Add grain  id to tags  
+                    DropEvent.Mark();
                     throw new EnvironmentException(
-                         "Dropping Orleans request since too much time passed since the client sent it to us.",
-                         unencrypted: new Tags
-                         {
-                             ["clientSendTime"] = TracingContext.SpanStartTime.ToString(),
-                             ["currentTime"] = now.ToString(),
-                             ["maxDelayInSecs"] = config.DropOrleansRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
-                             ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
-                             ["targetType"] = grainTags.TargetType,
-                             ["targetMethod"] = grainTags.TargetMethod,
-                             ["grainKeyExtention"] = grainTags.GrainKeyExtention,
-                             ["grainKeyGuid"] = grainTags.GrainKeyGuid?.ToString(),
-                             ["grainKeyString"] = grainTags.GrainKeyString,
-                             ["siloAddress"] = grainTags.SiloAddress,
-                             ["gainKeyLong"] = grainTags.GainKeyLong?.ToString(),
-                            }); 
+                        "Dropping Orleans request since too much time passed since the client sent it to us.",
+                        unencrypted: CreateExceptionTags(grainTags, now, nameof(config.DropOrleansRequestsOlderThanSpanTimeBy), totalMilliseconds, actualDelayInSecs));
                 }
-
             }
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
@@ -240,39 +184,54 @@ namespace Gigya.Microdot.Orleans.Hosting
                 && TracingContext.AbandonRequestBy != null
                 && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
-                if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
-                    _log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout.", unencryptedTags: new
-                    {
-                        requestDeathTime = TracingContext.AbandonRequestBy,
-                        currentTime = now,
-                        overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
-                        targetType = grainTags.TargetType,
-                        targetMethod = grainTags.TargetMethod,
-                        grainKeyExtention = grainTags.GrainKeyExtention,
-                        grainKeyGuid = grainTags.GrainKeyGuid?.ToString(),
-                        grainKeyString = grainTags.GrainKeyString,
-                        siloAddress = grainTags.SiloAddress,
-                        gainKeyLong = grainTags.GainKeyLong?.ToString(),
+                var totalMilliseconds = config.TimeToDropBeforeDeathTime.TotalMilliseconds.ToString();
+                var actualDelayInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString();
 
-                    }));
+                if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
+                    _log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout."
+                        , unencryptedTags: CreateTags(grainTags, now, nameof(config.TimeToDropBeforeDeathTime), totalMilliseconds, actualDelayInSecs)));
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
                 {
+                    DropEvent.Mark();
                     //Add grain  id to tags  
-                    throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.", unencrypted: new Tags
-                    {
-                        ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
-                        ["currentTime"] = now.ToString(),
-                        ["overTimeInSecs"] = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
-                        ["targetType"] = grainTags.TargetType,
-                        ["targetMethod"] = grainTags.TargetMethod,
-                        ["grainKeyExtention"] = grainTags.GrainKeyExtention,
-                        ["grainKeyGuid"] = grainTags.GrainKeyGuid?.ToString(),
-                        ["grainKeyString"] = grainTags.GrainKeyString,
-                        ["siloAddress"] = grainTags.SiloAddress,
-                        ["gainKeyLong"] = grainTags.GainKeyLong?.ToString(),
-                    });
-              
+                    throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.",
+                        unencrypted: CreateExceptionTags(grainTags, now, nameof(config.TimeToDropBeforeDeathTime), totalMilliseconds, actualDelayInSecs));
+
                 }
+            }
+
+
+            object CreateTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, string dropConfigValue, string actualDelayInSecs)
+            {
+                return new
+                {
+                    currentTime = nowOffset,
+                    // ReSharper disable once RedundantAnonymousTypePropertyName
+                    dropConfigName = dropConfigName,
+                    // ReSharper disable once RedundantAnonymousTypePropertyName
+                    dropConfigValue = dropConfigValue,
+                    // ReSharper disable once RedundantAnonymousTypePropertyName
+                    actualDelayInSecs = actualDelayInSecs,
+                    targetType = grainTagsLazy.Value.TargetType,
+                    targetMethod = grainTagsLazy.Value.TargetMethod,
+                    grainID = grainTagsLazy.Value.GrainId,
+                    siloAddress = grainTagsLazy.Value.SiloAddress,
+                };
+            }
+
+            Tags CreateExceptionTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, string dropConfigValue, string actualDelayInSecs)
+            {
+                return new Tags
+                {
+                    ["currentTime"] = nowOffset.ToString(),
+                    ["dropConfigName"] = dropConfigName,
+                    ["dropConfigValue"] = dropConfigValue,
+                    ["actualDelayInSecs"] = actualDelayInSecs,
+                    ["targetType"] = grainTagsLazy.Value.TargetType,
+                    ["targetMethod"] = grainTagsLazy.Value.TargetMethod,
+                    ["grainID"] = grainTagsLazy.Value.GrainId,
+                    ["siloAddress"] = grainTagsLazy.Value.SiloAddress,
+                };
             }
         }
     }
