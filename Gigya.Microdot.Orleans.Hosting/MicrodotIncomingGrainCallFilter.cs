@@ -36,16 +36,15 @@ namespace Gigya.Microdot.Orleans.Hosting
             _eventPublisher = eventPublisher;
             _loadSheddingConfig = loadSheddingConfig;
 
-            DropEvent = Metric.Context("GigyaSiloHost").Meter("LoadShedding Drop Event", Unit.Items);
+            DropEvent = Metric.Context("Silo").Meter("LoadShedding Drop Event", Unit.Items);
         }
 
         public async Task Invoke(IIncomingGrainCallContext context)
         {
-            bool noContainsInterface = context.InterfaceMethod == null || context.InterfaceMethod.DeclaringType == null;
-            bool isOrleansGrain = !noContainsInterface && context.InterfaceMethod.Module.Assembly.FullName.StartsWith("Orleans");
+            bool isOrleansGrain = context.InterfaceMethod == null || context.InterfaceMethod.DeclaringType == null || context.InterfaceMethod.Module.Assembly.FullName.StartsWith("Orleans");
             //TODO add test that validate that we are not introducing new grain in micro dot
-            bool isMicrodotGrain = !noContainsInterface && context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
-            bool isServiceGrain = !noContainsInterface && isOrleansGrain == false && isMicrodotGrain == false;
+            bool isMicrodotGrain = isOrleansGrain == false && context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
+            bool isServiceGrain =  isOrleansGrain == false && isMicrodotGrain == false;
 
             var grainTags = new Lazy<GrainTags>(() => new GrainTags(context));
             // Drop the request if we're overloaded
@@ -55,6 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 || (loadSheddingConfig.ApplyToServiceGrains && isServiceGrain)
                 )
             {
+                //Can brake the flow by throwing Overloaded
                 RejectRequestIfLateOrOverloaded(grainTags);
             }
             var loggingConfig = _grainLoggingConfig();
@@ -63,14 +63,15 @@ namespace Gigya.Microdot.Orleans.Hosting
                               || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
                               || (loggingConfig.LogServiceGrains && isServiceGrain)
                                );
-            if (shouldLog == false || ShouldSkipLogging(loggingConfig))
+
+            shouldLog = shouldLog && ShouldSkipLogging(loggingConfig) == false;
+
+            if (shouldLog)
             {
-                await context.Invoke();
-                return;
+                RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
+                RequestTimings.Current.Request.Start();
             }
 
-            RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
-            RequestTimings.Current.Request.Start();
             Exception ex = null;
 
             try
@@ -84,8 +85,11 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             finally
             {
-                RequestTimings.Current.Request.Stop();
-                PublishEvent(ex, grainTags);
+                if (shouldLog)
+                {
+                    RequestTimings.Current.Request.Stop();
+                    PublishEvent(ex, grainTags);
+                }
             }
         }
 
@@ -146,8 +150,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                     }
                 }
 
-                TargetType = target.Grain?.GetType().FullName ?? target.InterfaceMethod.DeclaringType?.FullName;
-                TargetMethod = target.InterfaceMethod.Name;
+                TargetType = target.Grain?.GetType().FullName ?? target.InterfaceMethod?.DeclaringType?.FullName;
+                TargetMethod = target.InterfaceMethod?.Name;
             }
         }
         private void RejectRequestIfLateOrOverloaded(Lazy<GrainTags> grainTags)
