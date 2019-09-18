@@ -181,9 +181,9 @@ namespace Gigya.Microdot.SharedLogic.Events
             Implementation.Set(REQUEST_ID_KEY, requestID);
         }
 
-        public static void SetSpan(string spanId, string parentSpanId)
+        public static void SetParentSpan(string parentSpanId)
         {
-            Implementation.Set(SPAN_ID_KEY, spanId);
+       
             Implementation.Set(PARENT_SPAN_ID_KEY, parentSpanId);
         }
 
