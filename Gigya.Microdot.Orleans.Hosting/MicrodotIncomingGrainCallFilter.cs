@@ -59,12 +59,11 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             var loggingConfig = _grainLoggingConfig();
 
-            var shouldLog = ((loggingConfig.LogOrleansGrains && isOrleansGrain)
-                              || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
-                              || (loggingConfig.LogServiceGrains && isServiceGrain)
-                               );
+            bool shouldLog = (loggingConfig.LogOrleansGrains && isOrleansGrain)
+                                   || (loggingConfig.LogMicrodotGrains && isMicrodotGrain)
+                                   || (loggingConfig.LogServiceGrains && isServiceGrain);
 
-            shouldLog = shouldLog && (loggingConfig.LogRatio == 1 || ShouldSkipLoggingUnderRatio(loggingConfig) == false);
+            shouldLog = shouldLog && !ShouldSkipLoggingUnderRatio(loggingConfig, TracingContext.TryGetRequestID());
             GrainCallEvent grainEvent = null;
 
             if (shouldLog)
@@ -76,7 +75,6 @@ namespace Gigya.Microdot.Orleans.Hosting
                 grainEvent.ParentSpanId = TracingContext.TryGetParentSpanID();
                 grainEvent.SpanId = Guid.NewGuid().ToString("N");
                 TracingContext.SetParentSpan(grainEvent.SpanId);
-
             }
 
             Exception ex = null;
@@ -100,9 +98,11 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
-        private static bool ShouldSkipLoggingUnderRatio(GrainLoggingConfig loggingConfig)
+        private static bool ShouldSkipLoggingUnderRatio(GrainLoggingConfig loggingConfig, string callId = null)
         {
-            string callId = TracingContext.TryGetRequestID();
+            if (loggingConfig.LogRatio == 1)
+                return false;
+
             uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
             bool shouldSkipLogging = (loggingConfig.LogRatio == 0 || callId == null ||
                                       (uint)callId.GetHashCode() % uint.MaxValue > max);
@@ -192,8 +192,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                 && TracingContext.AbandonRequestBy != null
                 && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
-                var totalMilliseconds = config.TimeToDropBeforeDeathTime.TotalMilliseconds.ToString();
-                var actualDelayInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString();
+                var totalMilliseconds = config.TimeToDropBeforeDeathTime.TotalMilliseconds;
+                var actualDelayInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds;
 
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
                     _log.Warn(_ => _("Accepted Orleans request despite exceeding the API gateway timeout."
@@ -203,13 +203,13 @@ namespace Gigya.Microdot.Orleans.Hosting
                     DropEvent.Mark();
                     //Add grain  id to tags  
                     throw new EnvironmentException("Dropping Orleans request since the API gateway timeout passed.",
-                        unencrypted: CreateExceptionTags(grainTags, now, nameof(config.TimeToDropBeforeDeathTime), totalMilliseconds, actualDelayInSecs));
+                        unencrypted: CreateExceptionTags(grainTags, now, nameof(config.TimeToDropBeforeDeathTime), totalMilliseconds.ToString(), actualDelayInSecs.ToString()));
 
                 }
             }
 
 
-            object CreateTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, string dropConfigValue, string actualDelayInSecs)
+            object CreateTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, double dropConfigValue, double actualDelayInSecs)
             {
                 return new
                 {
