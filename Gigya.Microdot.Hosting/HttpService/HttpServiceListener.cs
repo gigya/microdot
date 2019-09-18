@@ -244,7 +244,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                             TracingContext.SetRequestID(requestData.TracingData.RequestID);
                             TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
                             TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
-                            TracingContext.SetSpan(null, requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
+                            TracingContext.SetParentSpan(requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
 
                             SetCallEventRequestData(callEvent, requestData);
 

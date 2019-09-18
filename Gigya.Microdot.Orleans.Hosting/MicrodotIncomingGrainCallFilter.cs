@@ -44,7 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             bool isOrleansGrain = context.InterfaceMethod == null || context.InterfaceMethod.DeclaringType == null || context.InterfaceMethod.Module.Assembly.FullName.StartsWith("Orleans");
             //TODO add test that validate that we are not introducing new grain in micro dot
             bool isMicrodotGrain = isOrleansGrain == false && context.InterfaceMethod.DeclaringType.Name == nameof(IRequestProcessingGrain);
-            bool isServiceGrain =  isOrleansGrain == false && isMicrodotGrain == false;
+            bool isServiceGrain = isOrleansGrain == false && isMicrodotGrain == false;
 
             var grainTags = new Lazy<GrainTags>(() => new GrainTags(context));
             // Drop the request if we're overloaded
@@ -64,12 +64,19 @@ namespace Gigya.Microdot.Orleans.Hosting
                               || (loggingConfig.LogServiceGrains && isServiceGrain)
                                );
 
-            shouldLog = shouldLog && ShouldSkipLogging(loggingConfig) == false;
+            shouldLog = shouldLog && (loggingConfig.LogRatio == 1 || ShouldSkipLoggingUnderRatio(loggingConfig) == false);
+            GrainCallEvent grainEvent = null;
 
             if (shouldLog)
             {
                 RequestTimings.GetOrCreate(); // Ensure request timings is created here and not in the grain call.
                 RequestTimings.Current.Request.Start();
+                grainEvent = _eventPublisher.CreateEvent();
+
+                grainEvent.ParentSpanId = TracingContext.TryGetParentSpanID();
+                grainEvent.SpanId = Guid.NewGuid().ToString("N");
+                TracingContext.SetParentSpan(grainEvent.SpanId);
+
             }
 
             Exception ex = null;
@@ -88,12 +95,12 @@ namespace Gigya.Microdot.Orleans.Hosting
                 if (shouldLog)
                 {
                     RequestTimings.Current.Request.Stop();
-                    PublishEvent(ex, grainTags);
+                    PublishEvent(ex, grainTags, grainEvent);
                 }
             }
         }
 
-        private static bool ShouldSkipLogging(GrainLoggingConfig loggingConfig)
+        private static bool ShouldSkipLoggingUnderRatio(GrainLoggingConfig loggingConfig)
         {
             string callId = TracingContext.TryGetRequestID();
             uint max = (uint)Math.Round(loggingConfig.LogRatio * uint.MaxValue);
@@ -102,10 +109,8 @@ namespace Gigya.Microdot.Orleans.Hosting
             return shouldSkipLogging;
         }
 
-        private void PublishEvent(Exception ex, Lazy<GrainTags> grainTags)
+        private void PublishEvent(Exception ex, Lazy<GrainTags> grainTags, GrainCallEvent grainEvent)
         {
-            var grainEvent = _eventPublisher.CreateEvent();
-
             grainEvent.GrainID = grainTags.Value.GrainId;
             grainEvent.SiloAddress = grainTags.Value.SiloAddress;
             grainEvent.SiloDeploymentId = _clusterIdentity.DeploymentId;
@@ -113,7 +118,6 @@ namespace Gigya.Microdot.Orleans.Hosting
             grainEvent.TargetMethod = grainTags.Value.TargetMethod;
             grainEvent.Exception = ex;
             grainEvent.ErrCode = ex != null ? null : (int?)0;
-
             _eventPublisher.TryPublish(grainEvent);
         }
 
@@ -128,7 +132,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 if (target.Grain != null && target.Grain is ISystemTarget == false)
                 {
-                    if (target.Grain?.GetPrimaryKeyString() != null)
+                    if (target.Grain.GetPrimaryKeyString() != null)
                     {
                         GrainId = target.Grain.GetPrimaryKeyString();
                     }
