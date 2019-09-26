@@ -49,6 +49,7 @@ using Gigya.Microdot.SharedLogic.Security;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -515,6 +516,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
+            if (contentType == "application/json" && ShouldAdjustJsonToDotNetFramwork())
+                data = AdjustJsonToDotNetFramwork(data);
             var body = Encoding.UTF8.GetBytes(data ?? "");
 
             context.Response.StatusCode = (int)httpStatus;
@@ -547,6 +550,50 @@ namespace Gigya.Microdot.Hosting.HttpService
                     encryptedTags: new { response = data }));
                 return false;
             }
+        }
+
+        private string AdjustJsonToDotNetFramwork(string data)
+        {
+            var json = JToken.Parse(data);
+            var allTypeTokens = new List<JProperty>();
+            PoplulateTokens(json, "$type", allTypeTokens);
+            foreach (var item in allTypeTokens)
+            {
+                if (item.Value.Type == JTokenType.String)
+                    item.Value.Replace(item.Value.ToString().Replace("System.Private.CoreLib", "mscorlib"));
+            }
+            var ret = json.ToString(Formatting.Indented);
+            return ret;
+        }
+
+        private void PoplulateTokens(JToken json, string tokenName, List<JProperty> allTokens)
+        {
+            if (json.Type == JTokenType.Object)
+            {
+                foreach (var prop in (json as JObject).Properties())
+                {
+                    if (prop.Name == tokenName)
+                        allTokens.Add(prop);
+                    else if (prop.Value.Type == JTokenType.Object || prop.Value.Type == JTokenType.Array)
+                        PoplulateTokens(prop.Value, tokenName, allTokens);
+                }
+            }
+            else if (json.Type == JTokenType.Array)
+            {
+                foreach (var item in (json as JArray))
+                {
+                    if (item.Type == JTokenType.Object || item.Type == JTokenType.Array)
+                        PoplulateTokens(item, tokenName, allTokens);
+                }
+            }
+        }
+
+        private bool ShouldAdjustJsonToDotNetFramwork()
+        {
+            var envVar = Environment.GetEnvironmentVariable("GIGYA_ENABLE_JSON_COMPATIBILITY_SHIM");
+            if (envVar == "true")
+                return true;
+            return false;
         }
 
         private async Task WriteResponseAndMeasureTime(HttpListenerContext context, byte[] body, ServiceCallEvent serviceCallEvent = null)
