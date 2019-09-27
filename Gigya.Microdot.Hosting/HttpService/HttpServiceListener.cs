@@ -517,7 +517,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
             if (contentType == "application/json" && ShouldAdjustJsonToDotNetFramwork())
-                data = AdjustJsonToDotNetFramwork(data);
+                data = AdjustJsonToDotNetFramework(data);
             var body = Encoding.UTF8.GetBytes(data ?? "");
 
             context.Response.StatusCode = (int)httpStatus;
@@ -552,18 +552,26 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
         }
 
-        private string AdjustJsonToDotNetFramwork(string data)
+        private string AdjustJsonToDotNetFramework(string data)
         {
-            var json = JToken.Parse(data);
-            var allTypeTokens = new List<JProperty>();
-            PoplulateTokens(json, "$type", allTypeTokens);
-            foreach (var item in allTypeTokens)
+            if (string.IsNullOrEmpty(data)) return data;
+            try
             {
-                if (item.Value.Type == JTokenType.String)
-                    item.Value.Replace(item.Value.ToString().Replace("System.Private.CoreLib", "mscorlib"));
+                var json = JToken.Parse(data);
+                var allTypeTokens = new List<JProperty>();
+                PoplulateTokens(json, "$type", allTypeTokens);
+                foreach (var item in allTypeTokens)
+                {
+                    if (item.Value.Type == JTokenType.String)
+                        item.Value.Replace(item.Value.ToString().Replace("System.Private.CoreLib", "mscorlib"));
+                }
+                var ret = json.ToString(Formatting.Indented);
+                return ret;
             }
-            var ret = json.ToString(Formatting.Indented);
-            return ret;
+            catch(Exception ex)
+            {
+                throw new Exception($"Failed to adjust json to Dot Net Framework. input was: '{data}'", ex);
+            }
         }
 
         private void PoplulateTokens(JToken json, string tokenName, List<JProperty> allTokens)
