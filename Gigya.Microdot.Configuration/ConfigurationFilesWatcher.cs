@@ -121,7 +121,7 @@ namespace Gigya.Microdot.Configuration
 
         public void Dispose()
         {
-            _rootWatcher.Dispose();
+            _rootWatcher?.Dispose();
             refreshTimer.Dispose();
         }
     }
