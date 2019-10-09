@@ -210,7 +210,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private async Task HandleRequest(HttpListenerContext context)
         {
             RequestTimings.ClearCurrentTimings();
-            using (context.Response)
+            try
             {
                 var sw = Stopwatch.StartNew();
 
@@ -283,7 +283,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         Exception ex = GetRelevantException(e);
                         string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
                         await TryWriteResponse(context, json, GetExceptionStatusCode(ex), serviceCallEvent: callEvent);
-                    }
+                  }
                     finally
                     {
                         sw.Stop();
@@ -296,6 +296,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
                 }
+            }
+            finally
+            {
+                context.Response.Close();
             }
         }
 
