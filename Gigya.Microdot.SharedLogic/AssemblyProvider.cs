@@ -92,7 +92,7 @@ namespace Gigya.Microdot.SharedLogic
         {
             try
             {
-                return assembly.GetExportedTypes();
+                return assembly.GetTypes();
             }
             catch (Exception ex)
             {
