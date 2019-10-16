@@ -168,7 +168,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 return;
 
             _shutdownToken.Cancel();
-            _shutdownToken.Dispose();
+            //_shutdownToken.Dispose(); - this causes ObjectDisposedException so for now it's commented out
             _serviceListHealthMonitor.Dispose();
         }
         

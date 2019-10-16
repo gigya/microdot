@@ -71,7 +71,7 @@ namespace Gigya.Microdot.Configuration
                                        .Select(match => new
                                        {
                                            Placehodler = "%" + match.Groups[1].Value + "%",
-                                           Value = _environmentVariableProvider.GetEnvironmentVariable(match.Groups[1].Value)
+                                           Value = _environmentVariableProvider.GetEnvironmentVariable(match.Groups[1].Value.ToUpper())
                                        }).ToList();
 
                 if (list.Any())

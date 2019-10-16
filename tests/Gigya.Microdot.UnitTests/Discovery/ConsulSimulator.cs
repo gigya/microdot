@@ -321,8 +321,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         
         public void Dispose()
         {
-            _consulListener.Close();
-            ((IDisposable)_consulListener)?.Dispose();
+            //_consulListener.Close();
+            //((IDisposable)_consulListener)?.Dispose();
             _waitForKeyValueIndexModification.TrySetResult(false);
             _waitForHealthIndexModification.TrySetResult(false);
         }

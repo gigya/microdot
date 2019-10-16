@@ -2,18 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.12.0" />
-    <PackageReference Include="Shouldly" Version="3.0.2" />
+    <PackageReference Include="NUnit" Version="3.10.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj" />
+    <ProjectReference Include="..\DataAnnotationsValidator\DataAnnotationsValidator.csproj" />
   </ItemGroup>
 
 </Project>

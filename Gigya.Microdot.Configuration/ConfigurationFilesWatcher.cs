@@ -65,7 +65,28 @@ namespace Gigya.Microdot.Configuration
 
         private void CreateRootWatcher()
         {
-            
+            var usePolling = Environment.GetEnvironmentVariable("GIGYA_CONFIG_USE_POLLING");
+            if (usePolling == "true")
+            {
+                CreateSchedualWatcher();
+            }
+            else
+            {
+                CreateFileSystemWatcher();
+            }
+        }
+
+        private void CreateSchedualWatcher()
+        {
+            var pollingIntervalEnvVar = Environment.GetEnvironmentVariable("GIGYA_CONFIG_POLLING_INTERVAL");
+            bool ok = int.TryParse(pollingIntervalEnvVar, out int pollingInterval);
+            if (!ok) pollingInterval = 30; // Default
+
+            refreshTimer.Change(TimeSpan.FromSeconds(pollingInterval), TimeSpan.FromSeconds(pollingInterval));
+        }
+
+        private void CreateFileSystemWatcher()
+        {
             _rootWatcher = new FileSystemWatcher
             {
                 Path = Path.GetDirectoryName(ConfigurationLocationsParser.ConfigRoot),
@@ -80,7 +101,6 @@ namespace Gigya.Microdot.Configuration
             _rootWatcher.Changed += OnRootChanged;
             _rootWatcher.Deleted += OnRootChanged;
         }
-
 
         private void OnRootChanged(object sender, FileSystemEventArgs e)
         {
@@ -101,7 +121,7 @@ namespace Gigya.Microdot.Configuration
 
         public void Dispose()
         {
-            _rootWatcher.Dispose();
+            _rootWatcher?.Dispose();
             refreshTimer.Dispose();
         }
     }

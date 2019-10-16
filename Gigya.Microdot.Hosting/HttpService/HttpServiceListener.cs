@@ -49,6 +49,7 @@ using Gigya.Microdot.SharedLogic.Security;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -209,7 +210,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private async Task HandleRequest(HttpListenerContext context)
         {
             RequestTimings.ClearCurrentTimings();
-            using (context.Response)
+            try
             {
                 var sw = Stopwatch.StartNew();
 
@@ -282,7 +283,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         Exception ex = GetRelevantException(e);
                         string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
                         await TryWriteResponse(context, json, GetExceptionStatusCode(ex), serviceCallEvent: callEvent);
-                    }
+                  }
                     finally
                     {
                         sw.Stop();
@@ -295,6 +296,10 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
                 }
+            }
+            finally
+            {
+                context.Response.Close();
             }
         }
 
@@ -515,6 +520,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             context.Response.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
+            if (contentType == "application/json" && ShouldAdjustJsonToDotNetFramwork())
+                data = AdjustJsonToDotNetFramework(data);
             var body = Encoding.UTF8.GetBytes(data ?? "");
 
             context.Response.StatusCode = (int)httpStatus;
@@ -547,6 +554,58 @@ namespace Gigya.Microdot.Hosting.HttpService
                     encryptedTags: new { response = data }));
                 return false;
             }
+        }
+
+        private string AdjustJsonToDotNetFramework(string data)
+        {
+            if (string.IsNullOrEmpty(data)) return data;
+            try
+            {
+                var json = JToken.Parse(data);
+                var allTypeTokens = new List<JProperty>();
+                PoplulateTokens(json, "$type", allTypeTokens);
+                foreach (var item in allTypeTokens)
+                {
+                    if (item.Value.Type == JTokenType.String)
+                        item.Value.Replace(item.Value.ToString().Replace("System.Private.CoreLib", "mscorlib"));
+                }
+                var ret = json.ToString(Formatting.Indented);
+                return ret;
+            }
+            catch(Exception ex)
+            {
+                throw new Exception($"Failed to adjust json to Dot Net Framework. input was: '{data}'", ex);
+            }
+        }
+
+        private void PoplulateTokens(JToken json, string tokenName, List<JProperty> allTokens)
+        {
+            if (json.Type == JTokenType.Object)
+            {
+                foreach (var prop in (json as JObject).Properties())
+                {
+                    if (prop.Name == tokenName)
+                        allTokens.Add(prop);
+                    else if (prop.Value.Type == JTokenType.Object || prop.Value.Type == JTokenType.Array)
+                        PoplulateTokens(prop.Value, tokenName, allTokens);
+                }
+            }
+            else if (json.Type == JTokenType.Array)
+            {
+                foreach (var item in (json as JArray))
+                {
+                    if (item.Type == JTokenType.Object || item.Type == JTokenType.Array)
+                        PoplulateTokens(item, tokenName, allTokens);
+                }
+            }
+        }
+
+        private bool ShouldAdjustJsonToDotNetFramwork()
+        {
+            var envVar = Environment.GetEnvironmentVariable("GIGYA_ENABLE_JSON_COMPATIBILITY_SHIM");
+            if (envVar == "true")
+                return true;
+            return false;
         }
 
         private async Task WriteResponseAndMeasureTime(HttpListenerContext context, byte[] body, ServiceCallEvent serviceCallEvent = null)

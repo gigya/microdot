@@ -39,8 +39,8 @@ namespace Gigya.Microdot.Configuration
     ///<remarks>    
     ///If the environment variable "GIGYA_CONFIG_PATHS_FILE" is present, the path contained in it will be used. 
     ///If GIGYA_CONFIG_PATHS_FILE is not presented we will try to take folder from GIGYA_CONFIG_ROOT + loadPaths.json    
-    ///If it not present as well it will be assumed that the list can be read from c:/gigya/config/loadPaths.json (by default). 
-    ///In Linux, the path will be /etc/gigya/config/loadPaths.
+    ///If it not present as well it will be assumed that the list can be read from d:/gigya/config/loadpaths.json (by default). 
+    ///In Linux, the path will be /etc/gigya/config/loadpaths.json
     /// 
     ///Beware! This class is used during the logger initialization and shouldn't log anything at this stage.
     ///</remarks>
@@ -49,7 +49,7 @@ namespace Gigya.Microdot.Configuration
         internal const string GIGYA_CONFIG_PATHS_FILE = "GIGYA_CONFIG_PATHS_FILE";
         internal const string GIGYA_CONFIG_ROOT = "GIGYA_CONFIG_ROOT";
         internal const string GIGYA_CONFIG_ROOT_DEFAULT = "/gigya/config/";
-        internal const string LOADPATHS_JSON = "loadPaths.json";
+        internal const string LOADPATHS_JSON = "loadpaths.json";
         private string AppName { get; }
 
 
@@ -81,7 +81,7 @@ namespace Gigya.Microdot.Configuration
 
             Trace.WriteLine("Started parsing configurations from location " + LoadPathsFilePath +"\n");
 
-            var configPathDeclarations = ParseAndValidateConfigLines(LoadPathsFilePath, fileSystemInstance);
+            var configPathDeclarations = ParseAndValidateConfigLines(fileSystemInstance);
 
             ConfigFileDeclarations = ExpandConfigPathDeclarations(environmentVariableProvider, configPathDeclarations, environmentVariableProvider.PlatformSpecificPathPrefix).ToArray();
         }
@@ -160,7 +160,7 @@ namespace Gigya.Microdot.Configuration
         }
 
 
-        private ConfigFileDeclaration[] ParseAndValidateConfigLines(string configPathFiles, IFileSystem fileSystemInstance)
+        private ConfigFileDeclaration[] ParseAndValidateConfigLines(IFileSystem fileSystemInstance)
         {
             ConfigFileDeclaration[] configs;
 
@@ -171,7 +171,7 @@ namespace Gigya.Microdot.Configuration
             }
             catch (Exception ex)
             {
-                throw new ConfigurationException($"Problem reading {configPathFiles} file, {ex.InnerException}.", ex);
+                throw new ConfigurationException($"Problem reading {LoadPathsFilePath} file, {ex.InnerException}.", ex);
             }
 
             if (configs == null)
@@ -182,7 +182,7 @@ namespace Gigya.Microdot.Configuration
             if(configLocationWithDuplicatePriority.Any())
             {
                 var message = new StringBuilder();
-                message.AppendLine($"In {configPathFiles} some configurations lines have duplicate priorities.");
+                message.AppendLine($"In {LoadPathsFilePath} some configurations lines have duplicate priorities.");
                 foreach(var distinctPriority in configLocationWithDuplicatePriority)
                 {
                     message.AppendLine($"Following locations share priority {distinctPriority.Key}:");

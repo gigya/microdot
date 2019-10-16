@@ -4,7 +4,7 @@ using System.Linq;
 using Gigya.Microdot.Ninject;
 
 using Ninject;
-
+using Ninject.Extensions.Factory;
 using NUnit.Framework;
 
 using Shouldly;
@@ -71,7 +71,7 @@ namespace Gigya.Microdot.UnitTests
         [Test]
         public void BindPerKey_WithAndWithoutParam_DifferentInstances()
         {
-            var k = new StandardKernel();
+            var k = new StandardKernel(new FuncModule());
 
             k.BindPerKey<int, IFoo, Foo>();
             k.BindPerKey<int, string, IFoo, Foo>();
@@ -85,7 +85,7 @@ namespace Gigya.Microdot.UnitTests
 
         private void Test_BindPerKey<TService, TImplementation>() where TImplementation : TService
         {
-            var k = new StandardKernel();
+            var k = new StandardKernel(new FuncModule());
             
             k.BindPerKey<int, TService, TImplementation>();
 
@@ -102,7 +102,7 @@ namespace Gigya.Microdot.UnitTests
 
         private void Test_BindPerKeyWithParam<TService, TImplementation>() where TImplementation : TService
         {
-            var k = new StandardKernel();
+            var k = new StandardKernel(new FuncModule());
 
             k.BindPerKey<int, string, TService, TImplementation>();
 
@@ -126,7 +126,7 @@ namespace Gigya.Microdot.UnitTests
 
         private void Test_BindPerMultiKey<TService, TImplementation>() where TImplementation : TService
         {
-            var k = new StandardKernel();
+            var k = new StandardKernel(new FuncModule());
 
             k.BindPerMultiKey<int, string, TService, TImplementation>();
 

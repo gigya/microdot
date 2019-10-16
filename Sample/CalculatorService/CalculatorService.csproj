@@ -1,134 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5B1BA713-F5BA-466B-B79E-95261DB27FA9}</ProjectGuid>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ApplicationIcon />
     <OutputType>Exe</OutputType>
-    <RootNamespace>CalculatorService</RootNamespace>
-    <AssemblyName>CalculatorService</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <noWarn>1591</noWarn>
+    <StartupObject />
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>3</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\System.Threading.Tasks.Dataflow\lib\netstandard1.1\System.Threading.Tasks.Dataflow.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+    <ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="CalculatorService.cs" />
-    <Compile Include="CalculatorServiceHost.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="loadPaths.json">
+    <None Update="loadpaths.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="paket.references" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
-      <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
-      <Name>Gigya.Microdot.Configuration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj">
-      <Project>{33C1B76E-47B2-40BC-A434-81EE22996BEF}</Project>
-      <Name>Gigya.Microdot.Hosting</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
-      <Project>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</Project>
-      <Name>Gigya.Microdot.Interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj">
-      <Project>{06E45085-5A54-4BFE-BD24-E9C3983A2689}</Project>
-      <Name>Gigya.Microdot.Logging.NLog</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj">
-      <Project>{4E6A024F-DDC9-4A27-A859-77EBC3241009}</Project>
-      <Name>Gigya.Microdot.Ninject.Host</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
-      <Project>{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}</Project>
-      <Name>Gigya.Microdot.Ninject</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
-      <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
-      <Name>Gigya.Microdot.ServiceDiscovery</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj">
-      <Project>{1FCB2569-A640-4292-9CDC-821AEEF14813}</Project>
-      <Name>Gigya.Microdot.ServiceProxy</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
-      <Project>{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}</Project>
-      <Name>Gigya.Microdot.SharedLogic</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj">
-      <Project>{1FB8E464-6A36-44A2-A343-8E95B51B4542}</Project>
-      <Name>CalculatorService.Interface</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="Ninject">
-          <HintPath>..\..\packages\Ninject\lib\net45\Ninject.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
+
 </Project>
