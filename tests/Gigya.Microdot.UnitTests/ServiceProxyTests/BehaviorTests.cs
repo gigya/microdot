@@ -290,28 +290,26 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
-            using (var kernel =
-                new TestingKernel<ConsoleLog>(
-                 k =>
-                 {
-                     k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                 }, dict)
-            )
+            using (var kernel = new TestingKernel<ConsoleLog>(k =>
             {
+                k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
+            }, dict)) {
 
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
                 serviceProxy.DefaultPort = port;
                 TracingContext.SetRequestID("1");
 
-        int counter = 0;
+                int counterHost1 = 0;
+                int counterHost2 = 0;
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
                     .When("*")
-                    .Respond(req =>
-                    {
-
-                        counter++;
+                    .Respond(req => {
+                        if (req.RequestUri.Host == "host1")
+                            counterHost1++;
+                        if (req.RequestUri.Host == "host2")
+                            counterHost2++;
 
                         if (req.RequestUri.Host == "host1") throw new HttpRequestException();
                         return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
@@ -327,7 +325,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     server.ShouldBe("host2");
                 }
 
-                counter.ShouldBe(3);
+                counterHost2.ShouldBe(3);
             }
         }
 
