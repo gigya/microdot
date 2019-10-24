@@ -37,7 +37,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         internal static TracingContextSourcev Implementation;
 
-        private const string SPAN_ID_KEY = "MD_SpanID";
         private const string PARENT_SPAN_ID_KEY = "MD_SParentSpanID";
         private const string REQUEST_ID_KEY = "MD_SServiceTraceRequestID";
         private const string OVERRIDES_KEY = "MD_SOverrides";
@@ -46,7 +45,6 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         public static void ClearContext()
         {
-            Implementation.Set(SPAN_ID_KEY,null);
             Implementation.Set(PARENT_SPAN_ID_KEY, null);
             Implementation.Set(REQUEST_ID_KEY, null);
             Implementation.Set(OVERRIDES_KEY, null);
@@ -142,11 +140,6 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(REQUEST_ID_KEY);
         }
 
-        public static string TryGetSpanID()
-        {
-            return TryGetValue<string>(SPAN_ID_KEY);
-        }
-
         public static string TryGetParentSpanID()
         {
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
@@ -181,9 +174,9 @@ namespace Gigya.Microdot.SharedLogic.Events
             Implementation.Set(REQUEST_ID_KEY, requestID);
         }
 
-        public static void SetSpan(string spanId, string parentSpanId)
+        public static void SetParentSpan(string parentSpanId)
         {
-            Implementation.Set(SPAN_ID_KEY, spanId);
+       
             Implementation.Set(PARENT_SPAN_ID_KEY, parentSpanId);
         }
 
