@@ -372,7 +372,13 @@ namespace Gigya.Microdot.ServiceProxy
 
                     request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
                         ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
-                    string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
+                    string requestContent = _serializationTime.Time(() =>
+                    {
+                        var reqAsJson = JsonConvert.SerializeObject(request, jsonSettings);
+                        if (DotNetCoreCompatibility.ShouldAdjustJsonToDotNetFramwork())
+                            reqAsJson = DotNetCoreCompatibility.AdjustJsonToDotNetFramework(reqAsJson);
+                        return reqAsJson;
+                    });
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
                     httpContent.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
