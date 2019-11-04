@@ -32,9 +32,9 @@ namespace Gigya.Microdot.SharedLogic
                 var ret = json.ToString(Formatting.Indented);
                 return ret;
             }
-            catch (Exception ex)
+            catch 
             {
-                throw new Exception($"Failed to adjust json to Dot Net Framework. input was: '{data}'", ex);
+                return data;
             }
         }
 
