@@ -15,7 +15,7 @@ nuget Metrics.NET ~> 0.0
 nuget Newtonsoft.Json >= 9 lowest_matching: true
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
-nuget ZooKeeperNetEx
+nuget ZooKeeperNetEx ~> 3.0
 nuget System.ComponentModel.Annotations ~> 4.0
 nuget DataAnnotationsValidator ~> 2.1.0
 
@@ -29,17 +29,28 @@ nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.2
 nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.2
 nuget Microsoft.Orleans.Client 2.4.2
 nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.2
+nuget Microsoft.AspNetCore.Http.Features 2.2
+nuget Microsoft.Extensions.Primitives 2.2
+nuget Microsoft.Orleans.OrleansProviders 2.4.2
+nuget Microsoft.Orleans.OrleansRuntime  2.4.2
+nuget Microsoft.Orleans.Server  2.4.2
+nuget Microsoft.Orleans.Core.Abstractions  2.4.2
+nuget OrleansDashboard 2.4.5 
 
-nuget OrleansDashboard
-nuget Microsoft.AspNetCore.Hosting
-nuget Microsoft.AspNetCore.Server.Kestrel
+nuget Microsoft.Extensions.Configuration ~> 2
+nuget Microsoft.AspNetCore.Connections.Abstractions ~> 2
+nuget Microsoft.AspNetCore.Hosting ~> 2
+nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
+nuget Microsoft.Extensions.Logging.Abstractions ~> 2
+nuget Microsoft.Extensions.ObjectPool ~> 2
+nuget Microsoft.Extensions.DependencyModel ~> 2
+nuget Microsoft.Extensions.FileSystemGlobbing ~> 2
 
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 
-nuget Microsoft.Extensions.DependencyInjection.Abstractions
-nuget Microsoft.Extensions.DependencyInjection
-nuget Microsoft.Orleans.Server
+nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 2
+nuget Microsoft.Extensions.DependencyInjection ~> 2
 
 # Ninject
 nuget Ninject ~> 3.3
@@ -49,9 +60,9 @@ nuget Castle.Core ~> 4.0
 
 # Tests only dependencies
 nuget NUnit ~> 3.0
-nuget RichardSzalay.MockHttp 
-nuget NSubstitute >= 3.1
-nuget FluentAssertions 
-nuget Nuget.CommandLine 
-nuget Shouldly
+nuget RichardSzalay.MockHttp ~> 5.0
+nuget NSubstitute ~> 4.0
+nuget FluentAssertions ~> 5.0
+nuget Nuget.CommandLine ~> 5.0
+nuget Shouldly ~> 3.0
 nuget NLog ~> 4.0
