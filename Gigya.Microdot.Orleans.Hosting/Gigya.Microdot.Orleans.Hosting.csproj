@@ -81,13 +81,6 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <PropertyGroup>
-        <__paket__NETStandard_Library_targets>netstandard2.0\NETStandard.Library</__paket__NETStandard_Library_targets>
-      </PropertyGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <PropertyGroup>
         <__paket__Microsoft_Orleans_Reminders_AdoNet_targets>netstandard2.0\Microsoft.Orleans.Reminders.AdoNet</__paket__Microsoft_Orleans_Reminders_AdoNet_targets>
       </PropertyGroup>
     </When>
@@ -1286,7 +1279,7 @@
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
       <ItemGroup>
         <Reference Include="ZooKeeperNetEx">
-          <HintPath>..\packages\ZooKeeperNetEx\lib\netstandard1.3\ZooKeeperNetEx.dll</HintPath>
+          <HintPath>..\packages\ZooKeeperNetEx\lib\net461\ZooKeeperNetEx.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
@@ -1297,5 +1290,4 @@
   <Import Project="..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets" Condition="Exists('..\packages\Microsoft.Orleans.OrleansCodeGenerator.Build\build\Microsoft.Orleans.OrleansCodeGenerator.Build.targets')" Label="Paket" />
   <Import Project="..\packages\Microsoft.Orleans.Persistence.AdoNet\build\$(__paket__Microsoft_Orleans_Persistence_AdoNet_targets).targets" Condition="Exists('..\packages\Microsoft.Orleans.Persistence.AdoNet\build\$(__paket__Microsoft_Orleans_Persistence_AdoNet_targets).targets')" Label="Paket" />
   <Import Project="..\packages\Microsoft.Orleans.Reminders.AdoNet\build\$(__paket__Microsoft_Orleans_Reminders_AdoNet_targets).targets" Condition="Exists('..\packages\Microsoft.Orleans.Reminders.AdoNet\build\$(__paket__Microsoft_Orleans_Reminders_AdoNet_targets).targets')" Label="Paket" />
-  <Import Project="..\packages\NETStandard.Library\build\$(__paket__NETStandard_Library_targets).targets" Condition="Exists('..\packages\NETStandard.Library\build\$(__paket__NETStandard_Library_targets).targets')" Label="Paket" />
 </Project>
