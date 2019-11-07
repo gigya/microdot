@@ -55,12 +55,36 @@ namespace Gigya.Microdot.Testing.Service
         {
             _customSerializer = customSerializer;
 
-            ServiceArguments = serviceArguments ?? new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, 
-                            ConsoleOutputMode.Disabled, 
-                            SiloClusterMode.PrimaryNode, 
-                            _port.Port, 
-                            initTimeOutSec: 15);
-            
+            if (serviceArguments == null) // Create default args with disposable port
+            {
+                _port = DisposablePort.GetPort();
+                ServiceArguments = new ServiceArguments(
+                    serviceStartupMode: ServiceStartupMode.CommandLineNonInteractive,
+                    consoleOutputMode: ConsoleOutputMode.Disabled,
+                    siloClusterMode: SiloClusterMode.PrimaryNode,
+                    basePortOverride: _port.Port,
+                    initTimeOutSec: 15);
+            }
+            else if (serviceArguments.BasePortOverride == null) // Copy passed args and add disposable port
+            {
+                _port = DisposablePort.GetPort();
+                ServiceArguments = new ServiceArguments(
+                    serviceStartupMode: serviceArguments.ServiceStartupMode,
+                    consoleOutputMode: serviceArguments.ConsoleOutputMode,
+                    siloClusterMode: serviceArguments.SiloClusterMode,
+                    basePortOverride: _port.Port,
+                    instanceName: serviceArguments.InstanceName,
+                    shutdownWhenPidExits: serviceArguments.ShutdownWhenPidExits,
+                    slotNumber: serviceArguments.SlotNumber,
+                    onStopWaitTimeSec: serviceArguments.OnStopWaitTimeSec,
+                    serviceDrainTimeSec: serviceArguments.ServiceDrainTimeSec,
+                    initTimeOutSec: serviceArguments.InitTimeOutSec);
+            }
+            else
+            {
+                ServiceArguments = serviceArguments;
+            }
+
             Initialize();
         }
 
@@ -68,7 +92,7 @@ namespace Gigya.Microdot.Testing.Service
         {
             Host = new TServiceHost();
 
-            BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
+            BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();            
 
             SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
 

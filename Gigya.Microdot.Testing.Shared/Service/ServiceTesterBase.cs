@@ -42,11 +42,6 @@ namespace Gigya.Microdot.Testing.Shared.Service
         
         protected DisposablePort _port;
 
-        protected ServiceTesterBase()
-        {
-            _port = DisposablePort.GetPort();
-        }
-
         /// <summary>
         /// GetObject a ServiceProxy with caching  that is configured to call the service under test. Both the port and the hostname of
         /// the provided ServiceProxy is changed to match those of the service which was started by the ServiceTester.
