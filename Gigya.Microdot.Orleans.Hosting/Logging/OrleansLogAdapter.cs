@@ -21,15 +21,20 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
+using System.Linq;
 using Gigya.Microdot.Interfaces.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions.Internal;
+using Microsoft.Extensions.Logging.Internal;
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
     public class OrleansLogAdapter : ILogger
     {
+        private readonly string[] _logKeysToIgnore = { "{OriginalFormat}" };
         private readonly OrleansLogEnrichment _logEnrichment;
         private readonly ILog _logImplementation;
         private readonly Func<OrleansConfig> _orleansConfigFunc;
@@ -53,7 +58,25 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 
             var logMessage = formatter(state, exception);
 
-            Action<LogDelegate> action = _ => _(logMessage, exception: exception, unencryptedTags: new { eventId.Id, eventId.Name, IsOrleansLog = true, eventHeuristicName });
+            var unencryptedTags = new Dictionary<string, object>
+            {
+                {"eventId.Id", eventId.Id},
+                {"eventId.Name", eventId.Name},
+                {"IsOrleansLog", true},
+                {"eventHeuristicName", eventHeuristicName}
+            };
+
+            if (state is FormattedLogValues values)
+            {
+                foreach (var value in values)
+                {
+                    if (!_logKeysToIgnore.Contains(value.Key))
+                    {
+                        unencryptedTags[value.Key] = value.Value;
+                    }
+                }
+            }
+
             var level = TraceEventType.Critical;
             switch (logLevel)
             {
@@ -78,9 +101,15 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
                 case LogLevel.None:
                     return;
             }
-            _logImplementation.Write(level, action);
+            _logImplementation.Write(level, LogDelegateAction);
+
+            void LogDelegateAction(LogDelegate logDelegate)
+            {
+                logDelegate(logMessage, exception: exception, unencryptedTags: unencryptedTags);
+            }
 
         }
+ 
 
         public bool IsEnabled(LogLevel logLevel)
         {
