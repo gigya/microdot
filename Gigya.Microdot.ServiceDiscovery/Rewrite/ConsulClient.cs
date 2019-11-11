@@ -140,9 +140,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response.SetResult(result);
         }
 
-        internal async Task<ConsulResponse<string>> GetDeploymentVersion(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        internal async Task<ConsulResponse<ServiceKeyValue>> GetDeploymentFilter(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            string version = null;
+            var serviceKeyValue = new ServiceKeyValue();
+
             var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.Zone, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -155,11 +156,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 			}
             else
             {
-                version = response.ResponseObject?.Version;
+                serviceKeyValue.Version = response.ResponseObject?.Version;
+                serviceKeyValue.InstanceName = response.ResponseObject?.InstanceName;
                 response.IsUndeployed = false;
             }
 
-            return response.SetResult(version);
+            return response.SetResult(serviceKeyValue);
         }
 
 
@@ -254,7 +256,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             var versionTag = serviceEntry.Service?.Tags?.FirstOrDefault(t => t.StartsWith(versionPrefix));
             var version = versionTag?.Substring(versionPrefix.Length);
 
-            return new ConsulNode(serviceEntry.Node.Name, serviceEntry.Service?.Port, version);
+
+            const string instanceNamePrefix = "instancename:";
+            var instanceNameTag = serviceEntry.Service?.Tags?.FirstOrDefault(t => t.StartsWith(instanceNamePrefix));
+            var instanceName = instanceNameTag?.Substring(instanceNamePrefix.Length);
+
+            return new ConsulNode(serviceEntry.Node.Name, serviceEntry.Service?.Port, version, instanceName);
         }
 
 

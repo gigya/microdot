@@ -27,14 +27,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
     internal class ConsulNode: Node
     {
-        public ConsulNode(string hostName, int? port = null, string version=null) : base(hostName, port)
+        public ConsulNode(string hostName, int? port = null, string version = null, string instanceName = null) : base(
+            hostName, port)
         {
             Version = version;
+            InstanceName = instanceName ?? "";
         }
 
         /// <summary>
         /// Version of this node (relevant only for Consul nodes)
         /// </summary>
         public string Version { get; }
+        public string InstanceName { get; }
     }
 }
