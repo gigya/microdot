@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 using FluentAssertions;
@@ -34,14 +35,18 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var kernel = SetUpKernel(new ServiceArguments(slotNumber: 5));
             var serviceProxyFunc = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = serviceProxyFunc(TestingKernel<ConsoleLog>.APPNAME);
-            var handlerMock = new MockHttpMessageHandler();
-            handlerMock.When("*").Respond(req =>
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
             {
-                req.RequestUri.Port.ShouldBe(40001);
-                return HttpResponseFactory.GetResponse(content: "null");
-            });
+                var handlerMock = new MockHttpMessageHandler();
+                handlerMock.When("*").Respond(req =>
+                {
+                    req.RequestUri.Port.ShouldBe(40001);
+                    return HttpResponseFactory.GetResponse(content: "null");
+                });
+                return handlerMock;
+            };
 
-            serviceProxy.HttpMessageHandler = handlerMock;
+            serviceProxy.HttpMessageHandlerFactory = messageHandlerFactory;
             await serviceProxy.Invoke(new HttpServiceRequest("myMethod", null, new Dictionary<string, object>()), typeof(int?));
         }
 

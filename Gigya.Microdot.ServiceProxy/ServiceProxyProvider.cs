@@ -104,22 +104,22 @@ namespace Gigya.Microdot.ServiceProxy
         private readonly Counter _hostFailureCounter;
         private readonly Counter _applicationExceptionCounter;
 
-        private HttpMessageHandler _httpMessageHandler = new HttpClientHandler();
+        private HttpMessageHandler _httpMessageHandler = null;
 
-        protected internal HttpMessageHandler HttpMessageHandler
+
+        private DateTime _lastHttpsTestTime = DateTime.MinValue;
+        private readonly TimeSpan _httpsTestInterval = TimeSpan.FromMinutes(1);
+
+        private Func<HttpMessageHandler> _httpMessageHandlerFactory;
+
+        protected internal Func<HttpMessageHandler> HttpMessageHandlerFactory
         {
-            get
-            {
-                lock (HttpClientLock)
-                {
-                    return _httpMessageHandler;
-                }
-            }
+            get => _httpMessageHandlerFactory;
             set
             {
                 lock (HttpClientLock)
                 {
-                    _httpMessageHandler = value;
+                    _httpMessageHandlerFactory = value;
                     LastHttpClient = null;
                 }
             }
@@ -138,7 +138,7 @@ namespace Gigya.Microdot.ServiceProxy
 
         private object HttpClientLock { get; } = new object();
         private HttpClient LastHttpClient { get; set; }
-        private Tuple<bool, string, TimeSpan?> LastHttpClientKey { get; set; }
+        private (bool useHttps, string securityRole, TimeSpan? timeout)? LastHttpClientKey { get; set; }
 
         private bool Disposed { get; set; }
 
@@ -185,39 +185,97 @@ namespace Gigya.Microdot.ServiceProxy
             Timeout = timeout;
         }
 
-        private HttpClient GetHttpClient(ServiceDiscoveryConfig config)
+        private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig config, bool tryHttps, string hostname, int basePort)
         {
+            var forceHttps = config.UseHttpsOverride ?? UseHttpsDefault;
+            var useHttps = tryHttps || forceHttps;
+            string securityRole = config.SecurityRole;
+            var httpKey = (useHttps, securityRole, requestTimeout: config.RequestTimeout);
+
             lock (HttpClientLock)
             {
-                bool useHttps = config.UseHttpsOverride ?? UseHttpsDefault;
-                string securityRole = config.SecurityRole;
-                var httpKey = Tuple.Create(useHttps, securityRole, config.RequestTimeout);
-
                 if (LastHttpClient != null && LastHttpClientKey.Equals(httpKey))
-                    return LastHttpClient;
+                    return ( httpClient: LastHttpClient, isHttps: useHttps);
 
-                if (useHttps)
-                    InitHttps(securityRole);
+                // In case we're trying HTTPs and the previous request on this instance was HTTP (or if this is the first request)
+                if (!forceHttps && httpKey.useHttps && !(LastHttpClientKey?.useHttps ?? false))
+                {
+                    var now = DateTime.Now;
+                    if (now - _lastHttpsTestTime > _httpsTestInterval)
+                    {
+                        _lastHttpsTestTime = now;
+                        RunHttpsAvailabilityTest(httpKey.securityRole, httpKey.requestTimeout, hostname, basePort);
+                    }
 
-                LastHttpClientKey = httpKey;
-                LastHttpClient = new HttpClient(HttpMessageHandler);
-                TimeSpan? timeout = Timeout ?? config.RequestTimeout;
-                if (timeout.HasValue)
-                    LastHttpClient.Timeout = timeout.Value;
-                return LastHttpClient;
+                    httpKey.useHttps = false;
+                    httpKey.securityRole = null;
+                }
+
+                if (!(LastHttpClientKey?.Equals(httpKey) ?? false))
+                {
+                    var messageHandler = CreateMessageHandler(httpKey.useHttps, httpKey.securityRole);
+                    var httpClient = CreateHttpClient(messageHandler, httpKey.requestTimeout);
+
+                    LastHttpClient = httpClient;
+                    LastHttpClientKey = httpKey;
+                    _httpMessageHandler = messageHandler;
+                }
+
+                return (httpClient: LastHttpClient, isHttps: httpKey.useHttps);
             }
         }
 
-
-        private void InitHttps(string securityRole)
+        private HttpClient CreateHttpClient(HttpMessageHandler messageHandler, TimeSpan? requestTimeout)
         {
-            if (HttpMessageHandler == null)
-                HttpMessageHandler = new HttpClientHandler();
+            var httpClient = new HttpClient(messageHandler);
+            TimeSpan? timeout = Timeout ?? requestTimeout;
+            if (timeout.HasValue)
+                httpClient.Timeout = timeout.Value;
 
-            var wrh = HttpMessageHandler as HttpClientHandler;
+            return httpClient;
+        }
+
+        private void RunHttpsAvailabilityTest(string securityRole, TimeSpan? requestTimeout, string hostname, int basePort)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var messageHandler = CreateMessageHandler(true, securityRole);
+                    var httpsClient = CreateHttpClient(messageHandler, requestTimeout);
+
+                    var testUri = BuildUri(hostname, basePort, true) + ServiceName + ".status";
+                    var response = await httpsClient.GetAsync(testUri);
+                    if (!response.IsSuccessStatusCode)
+                        return;
+
+                    lock (HttpClientLock)
+                    {
+                        LastHttpClient = httpsClient;
+                        LastHttpClientKey = (useHttps: true, securityRole, requestTimeout);
+                        _httpMessageHandler = messageHandler;
+                    }
+                }
+                catch (HttpRequestException)
+                {
+                    Log.Info(_ => _($"HTTPS for service {ServiceName} is not available."));
+                }
+            });
+        }
+
+        private HttpMessageHandler CreateMessageHandler(bool https, string securityRole)
+        {
+            var httpMessageHandler = HttpMessageHandlerFactory?.Invoke() ?? new HttpClientHandler();
+            if (!https)
+                return httpMessageHandler;
+
+            var wrh = httpMessageHandler as HttpClientHandler;
 
             if (wrh == null)
-                throw new ProgrammaticException("When using HTTPS in ServiceProxy, only WebRequestHandler is supported.", unencrypted: new Tags { { "HandlerType", HttpMessageHandler.GetType().FullName } });
+            {
+                Log.Warn($"When using HTTPS in ServiceProxy, only WebRequestHandler is supported. Actual type: {httpMessageHandler.GetType().FullName}");
+                return httpMessageHandler;
+            }
 
             var clientCert = CertificateLocator.GetCertificate("Client");
             var clientRootCertHash = clientCert.GetHashOfRootCertificate();
@@ -265,6 +323,8 @@ namespace Gigya.Microdot.ServiceProxy
                         throw new ArgumentOutOfRangeException(nameof(errors), errors, "The supplied value of SslPolicyErrors is invalid.");
                 }
             };
+
+            return wrh;
         }
 
 
@@ -275,8 +335,21 @@ namespace Gigya.Microdot.ServiceProxy
             if (port == null)
                 throw new Exception("No port is configured");
 
-            var uri = BuildUri(node.Hostname, port.Value, config);
-            var response = await GetHttpClient(config).GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage response;
+            try
+            {
+                var uri = BuildUri(node.Hostname, port.Value, true);
+
+                response = await GetHttpClient(config, true, node.Hostname, port.Value)
+                    .httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+            }
+            catch (HttpRequestException ex)
+                when (!UseHttpsDefault && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
+            {
+                var uri = BuildUri(node.Hostname, port.Value, false);
+                response = await GetHttpClient(config, false, node.Hostname, port.Value)
+                    .httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
+            }
 
             bool headerExists = response.Headers.Contains(GigyaHttpHeaders.ServerHostname);
 
@@ -287,10 +360,20 @@ namespace Gigya.Microdot.ServiceProxy
         }
 
 
-        private string BuildUri(string hostName, int port, ServiceDiscoveryConfig config)
+        private string BuildUri(string hostName, int basePort, bool useHttps)
         {
-            var useHttps = config.UseHttpsOverride ?? UseHttpsDefault;
-            var urlTemplate = useHttps ? "https://{0}:{1}/" : "http://{0}:{1}/";
+            string urlTemplate;
+            int port;
+            if (useHttps)
+            {
+                urlTemplate = "https://{0}:{1}/";
+                port = UseHttpsDefault ? basePort : basePort + (int)PortOffsets.Https;
+            }
+            else
+            {
+                urlTemplate = "http://{0}:{1}/";
+                port = basePort;
+            }
             return string.Format(urlTemplate, hostName, port);
         }
 
@@ -327,6 +410,11 @@ namespace Gigya.Microdot.ServiceProxy
             };
             PrepareRequest?.Invoke(request);
 
+            // Try connecting via HTTPS if:
+            // - If This IS an originally HTTPS supporting service (e.g. KeyManagementService), and "use http" is not overwritten to 'false' in the config, OR
+            // - This is NOT an originally HTTPS supporting service
+            //bool originalHttpsService = UseHttpsDefault && (GetConfig().UseHttpsOverride ?? true);
+            bool tryHttps = !UseHttpsDefault || (GetConfig().UseHttpsOverride ?? true);
             while (true)
             {
                 var config = GetConfig();
@@ -348,13 +436,7 @@ namespace Gigya.Microdot.ServiceProxy
                         {"Required configuration key", $"Discovery.{ServiceName}.DefaultPort"}
                     });
 
-                // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
-                var uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, config) + ServiceName;
-                if (request.Target.MethodName != null)
-                    uri += $".{request.Target.MethodName}";
-                if (request.Target.Endpoint != null)
-                    uri += $"/{request.Target.Endpoint}";
-
+                string uri = null;
                 try
                 {
                     Log.Debug(_ => _("ServiceProxy: Calling remote service. See tags for details.",
@@ -380,7 +462,17 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
                     {
-                        response = await GetHttpClient(config).PostAsync(uri, httpContent).ConfigureAwait(false);
+                        var (httpClient, isHttps) = GetHttpClient(config, tryHttps, nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
+
+                        // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
+                        uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, isHttps) + ServiceName;
+                        if (request.Target.MethodName != null)
+                            uri += $".{request.Target.MethodName}";
+                        if (request.Target.Endpoint != null)
+                            uri += $"/{request.Target.Endpoint}";
+
+                        response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
+
                         responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     }
                     finally
@@ -395,6 +487,12 @@ namespace Gigya.Microdot.ServiceProxy
                             clientCallEvent.ServerTimeMs = executionTime.TotalMilliseconds;
                         }
                     }
+                }
+                catch (HttpRequestException ex) 
+                    when (!UseHttpsDefault && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
+                {
+                    tryHttps = false;
+                    continue;
                 }
                 catch (HttpRequestException ex)
                 {
@@ -555,7 +653,7 @@ namespace Gigya.Microdot.ServiceProxy
             if (disposing)
             {
                 LastHttpClient?.Dispose();
-                _httpMessageHandler.Dispose();
+                _httpMessageHandler?.Dispose();
             }
 
             Disposed = true;

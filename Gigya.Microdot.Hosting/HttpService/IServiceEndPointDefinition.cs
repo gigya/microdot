@@ -50,6 +50,10 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         int HttpPort { get; }
 
+        int HttpsPort { get; }
+
+        bool ListenBoth { get; } // Temp: remove after testing
+
         /// <summary>
         /// Provides a friendly name for each service, keyed by the type of the service interface (the one decorated
         /// with <see cref="HttpServiceAttribute"/>).

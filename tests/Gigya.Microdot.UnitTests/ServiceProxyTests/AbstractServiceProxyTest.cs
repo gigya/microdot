@@ -52,10 +52,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ServiceProxyProviderSpy<T> : ServiceProxyProvider<T>
     {
-        public ServiceProxyProviderSpy(Func<string, IServiceProxyProvider> serviceProxyFactory, HttpMessageHandler httpMessageHandler)
+        public ServiceProxyProviderSpy(Func<string, IServiceProxyProvider> serviceProxyFactory, Func<HttpMessageHandler> httpMessageHandlerFactory)
             : base(serviceProxyFactory)
         {
-            ((ServiceProxyProvider)InnerProvider).HttpMessageHandler = httpMessageHandler;
+            ((ServiceProxyProvider)InnerProvider).HttpMessageHandlerFactory = httpMessageHandlerFactory;
         }
     }
 }
