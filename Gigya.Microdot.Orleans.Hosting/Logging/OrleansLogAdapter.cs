@@ -34,6 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
     public class OrleansLogAdapter : ILogger
     {
+        private readonly int _maxNumberOfTags = 20;
         private readonly string[] _logKeysToIgnore = { "{OriginalFormat}" };
         private readonly OrleansLogEnrichment _logEnrichment;
         private readonly ILog _logImplementation;
@@ -66,10 +67,13 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
                 {"eventHeuristicName", eventHeuristicName}
             };
 
+            int numberOfTags = unencryptedTags.Count;
+
             if (state is FormattedLogValues values)
             {
-                foreach (var value in values)
+                for (var i = 0; i < values.Count && i < _maxNumberOfTags - numberOfTags; i++)
                 {
+                    var value = values[i];
                     if (!_logKeysToIgnore.Contains(value.Key))
                     {
                         unencryptedTags[value.Key] = value.Value;
