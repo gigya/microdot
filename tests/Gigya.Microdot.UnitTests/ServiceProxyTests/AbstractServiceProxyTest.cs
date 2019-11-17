@@ -41,10 +41,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
 
 
-        protected IDemoService CreateClient(HttpMessageHandler mockHttpMessageHandler = null)
+        protected IDemoService CreateClient(Func<HttpMessageHandler> httpMessageHandlerFactory = null)
         {
             return unitTesting
-                .Get<ServiceProxyProviderSpy<IDemoService>>(new ConstructorArgument("httpMessageHandler", mockHttpMessageHandler ?? new HttpClientHandler()))
+                .Get<ServiceProxyProviderSpy<IDemoService>>(new ConstructorArgument("httpMessageHandlerFactory", httpMessageHandlerFactory ?? (() =>  new HttpClientHandler())))
                 .Client;
         }
     }

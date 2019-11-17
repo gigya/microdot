@@ -229,7 +229,12 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 messageHandler
                     .When("*")
                     .Respond(req =>
-                        HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}:{req.RequestUri.Port}'"));
+                    {
+                        if (req.Method == HttpMethod.Get && req.RequestUri.Scheme == "https")
+                            throw new HttpRequestException();
+
+                        return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}:{req.RequestUri.Port}'");
+                    });
                 return messageHandler;
             };
             string overrideHost = "override-host";
@@ -334,6 +339,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                         .Respond(req =>
                         {
 
+                            if (req.Method == HttpMethod.Get && req.RequestUri.Scheme == "https")
+                                throw new HttpRequestException();
+                            
                             counter++;
 
                             if (req.RequestUri.Host == "host1") throw new HttpRequestException();
@@ -389,6 +397,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                         .When("*")
                         .Respond(req =>
                         {
+                            if (req.Method == HttpMethod.Get && req.RequestUri.Scheme == "https")
+                                throw new HttpRequestException();
+
                             counter++;
 
                             throw new HttpRequestException();
@@ -478,10 +489,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallSucceeds_ResultIsCorrect()
         {
             var expected = "AAAA";
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(content: $"'{expected}'"));
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(content: $"'{expected}'"));
 
-            var actual = await CreateClient(messageHandler).ToUpper("aaaa");
+                return messageHandler;
+            };
+
+            var actual = await CreateClient(messageHandlerFactory).ToUpper("aaaa");
 
             actual.ShouldBe(expected);
         }
@@ -490,10 +506,16 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithRequestException_CorrectExceptionIsThrown()
         {
             var expected = new RequestException("You request is invalid.").ThrowAndCatch();
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
 
-            Func<Task> action = async () => await CreateClient(messageHandler).ToUpper("aaaa");
+                return messageHandler;
+            };
+
+
+            Func<Task> action = async () => await CreateClient(messageHandlerFactory).ToUpper("aaaa");
 
             action.ShouldThrow<RequestException>().Message.Should().Be(expected.Message);
         }
@@ -502,10 +524,14 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithCustomerFacingException_CorrectExceptionIsThrown()
         {
             var expected = new RequestException("You action is invalid, Mr. Customer.", 30000).ThrowAndCatch();
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
-
-            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RequestException>();
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+                
+                return messageHandler;
+            };
+            var actual = CreateClient(messageHandlerFactory).ToUpper("aaaa").ShouldThrow<RequestException>();
 
             actual.Message.ShouldBe(expected.Message);
             actual.ErrorCode.ShouldBe(expected.ErrorCode);
@@ -515,10 +541,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithEnvironmentException_CorrectExceptionIsThrown()
         {
             var expected = new EnvironmentException("You environment is invalid.").ThrowAndCatch();
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<EnvironmentException>();
+                return messageHandler;
+            };
+
+            var actual = CreateClient(messageHandlerFactory).ToUpper("aaaa").ShouldThrow<EnvironmentException>();
 
             actual.Message.ShouldBe(expected.Message);
         }
@@ -530,10 +561,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithRemoteServiceException_CorrectExceptionIsThrown()
         {
             var expected = new RemoteServiceException("A service is invalid.", "someUri").ThrowAndCatch();
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            { 
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
+                return messageHandler;
+            };
+
+            var actual = CreateClient(messageHandlerFactory).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
             actual.Message.ShouldBe(expected.Message);
             actual.RequestedUri.ShouldBe(expected.RequestedUri);
@@ -544,10 +580,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithProgrammaticException_CorrectExceptionIsThrown()
         {
             var expected = new ProgrammaticException("You code is invalid.").ThrowAndCatch();
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
-            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
+                return messageHandler;
+            };
+
+            var actual = CreateClient(messageHandlerFactory).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
             actual.InnerException.ShouldBeOfType<ProgrammaticException>();
             actual.InnerException.Message.ShouldBe(expected.Message);
@@ -557,10 +598,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithInvalidJson_CorrectExceptionIsThrown()
         {
             string badJson = "not JSON!";
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(HttpStatusCode.InternalServerError, content: badJson));
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(HttpStatusCode.InternalServerError, content: badJson));
 
-            var actual = CreateClient(messageHandler).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
+                return messageHandler;
+            };
+
+            var actual = CreateClient(messageHandlerFactory).ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
             actual.EncryptedTags["responseContent"].ShouldBe(badJson);
             actual.InnerException.ShouldBeAssignableTo<JsonException>();

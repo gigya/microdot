@@ -28,10 +28,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {            
             var resMessage = HttpResponseFactory.GetResponse(content:"''");
 
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(resMessage);
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(resMessage);
+
+                return messageHandler;
+            };
             
-            await CreateClient(messageHandler).ToUpper("aaaa");
+            await CreateClient(messageHandlerFactory).ToUpper("aaaa");
 
             var expected = DefaultExpected();
 
@@ -44,12 +49,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task RequestTimeoutTest()
         {
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(a => { throw new TaskCanceledException(); });
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(a => { throw new TaskCanceledException(); });
+
+                return messageHandler;
+            };
 
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (Exception)
             {
@@ -66,12 +76,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {            
             var resMessage = HttpResponseFactory.GetResponse(HttpStatusCode.ServiceUnavailable, isGigyaHost:false);
 
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(resMessage);
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(resMessage);
+
+                return messageHandler;
+            };
 
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (Exception)
             {
@@ -88,12 +103,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             var resMessage = HttpResponseFactory.GetResponse(isGigyaHost: false);
 
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(resMessage);
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(resMessage);
+
+                return messageHandler;
+            };
 
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (Exception)
             {
@@ -109,13 +129,18 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task JsonSerializationExceptionTest()
         {
             var resMessage = HttpResponseFactory.GetResponse(content: "{");
-            
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(resMessage);
+
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(resMessage);
+
+                return messageHandler;
+            };
 
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (Exception)
             {
@@ -131,12 +156,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         [Test]
         public async Task HostsFailureTest()
         {
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(a => { throw new HttpRequestException(); });
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(a => { throw new HttpRequestException(); });
+
+                return messageHandler;
+            };
 
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (Exception)
             {
@@ -154,13 +184,18 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task NullExceptionReceivedTest()
         {
             var resMessage = HttpResponseFactory.GetResponseWithException(ExceptionSerializer, new NullReferenceException());
-            
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(resMessage);
+
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(resMessage);
+
+                return messageHandler;
+            };
 
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (Exception)
             {
@@ -177,13 +212,18 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task RequestExceptionReceivedTest()
         {
             var resMessage = HttpResponseFactory.GetResponseWithException(ExceptionSerializer, new RequestException("Post not allowed"), HttpStatusCode.MethodNotAllowed);
-            
-            var messageHandler = new MockHttpMessageHandler();
-            messageHandler.When("*").Respond(resMessage);
-                                           
+
+            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler.When("*").Respond(resMessage);
+
+                return messageHandler;
+            };
+
             try
             {
-                await CreateClient(messageHandler).ToUpper("aaaa");
+                await CreateClient(messageHandlerFactory).ToUpper("aaaa");
             }
             catch (RequestException)
             {
