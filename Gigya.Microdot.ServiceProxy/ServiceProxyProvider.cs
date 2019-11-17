@@ -190,7 +190,7 @@ namespace Gigya.Microdot.ServiceProxy
             var forceHttps = config.UseHttpsOverride ?? UseHttpsDefault;
             var useHttps = tryHttps || forceHttps;
             string securityRole = config.SecurityRole;
-            var httpKey = (useHttps, securityRole, requestTimeout: config.RequestTimeout);
+            (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, config.RequestTimeout);
 
             lock (HttpClientLock)
             {
