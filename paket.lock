@@ -121,7 +121,7 @@ NUGET
     Microsoft.Extensions.FileProviders.Physical (2.2)
       Microsoft.Extensions.FileProviders.Abstractions (>= 2.2)
       Microsoft.Extensions.FileSystemGlobbing (>= 2.2)
-    Microsoft.Extensions.FileSystemGlobbing (3.0)
+    Microsoft.Extensions.FileSystemGlobbing (2.2)
     Microsoft.Extensions.Hosting.Abstractions (2.2)
       Microsoft.Extensions.Configuration.Abstractions (>= 2.2)
       Microsoft.Extensions.DependencyInjection.Abstractions (>= 2.2)
