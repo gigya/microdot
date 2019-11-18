@@ -20,22 +20,23 @@ nuget System.ComponentModel.Annotations ~> 4.0
 nuget DataAnnotationsValidator ~> 2.1.0
 
 # Orleans
-nuget Microsoft.Orleans.Core 2.4.2
-nuget Microsoft.Orleans.OrleansRuntime 2.4.2
-nuget Microsoft.Orleans.OrleansProviders 2.4.2
-nuget Microsoft.Orleans.OrleansSqlUtils 2.4.2
-nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.2
-nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.2
-nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.2
-nuget Microsoft.Orleans.Client 2.4.2
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.2
+nuget Microsoft.Orleans.Core 2.4.3
+nuget Microsoft.Orleans.OrleansRuntime 2.4.3
+nuget Microsoft.Orleans.OrleansProviders 2.4.3
+nuget Microsoft.Orleans.OrleansSqlUtils 2.4.3
+nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.3
+nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.3
+nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.3
+nuget Microsoft.Orleans.Client 2.4.3
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.3
 nuget Microsoft.AspNetCore.Http.Features 2.2
 nuget Microsoft.Extensions.Primitives 2.2
-nuget Microsoft.Orleans.OrleansProviders 2.4.2
-nuget Microsoft.Orleans.OrleansRuntime  2.4.2
-nuget Microsoft.Orleans.Server  2.4.2
-nuget Microsoft.Orleans.Core.Abstractions  2.4.2
+nuget Microsoft.Orleans.OrleansProviders 2.4.3
+nuget Microsoft.Orleans.OrleansRuntime  2.4.3
+nuget Microsoft.Orleans.Server  2.4.3
+nuget Microsoft.Orleans.Core.Abstractions 2.4.3
 nuget OrleansDashboard 2.4.5 
+nuget System.Diagnostics.PerformanceCounter 4.5.0 
 
 nuget Microsoft.Extensions.Configuration ~> 2
 nuget Microsoft.AspNetCore.Connections.Abstractions ~> 2
