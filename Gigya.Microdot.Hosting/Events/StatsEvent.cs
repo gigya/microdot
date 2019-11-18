@@ -79,6 +79,31 @@ namespace Gigya.Microdot.Hosting.Events
         public long? CallsMySqlDelete => Timings.Value.DataSource.MySql.Delete.Calls;
 
 
+        [EventField("stats.file.time", OmitFromAudit = true)]
+        public double? FileTime => Timings.Value.DataSource.File.Total.ElapsedMS;
+
+        [EventField("stats.file.readTime", OmitFromAudit = true)]
+        public double? TimeFileRead => Timings.Value.DataSource.File.Read.ElapsedMS;
+
+        [EventField("stats.file.writeTime", OmitFromAudit = true)]
+        public double? TimeFileWrite => Timings.Value.DataSource.File.Write.ElapsedMS;
+
+        [EventField("stats.file.deleteTime", OmitFromAudit = true)]
+        public double? TimeFileDelete => Timings.Value.DataSource.File.Delete.ElapsedMS;
+
+        [EventField("stats.file.calls", OmitFromAudit = true)]
+        public long? CallsFile => Timings.Value.DataSource.File.Total.Calls;
+
+        [EventField("stats.file.reads", OmitFromAudit = true)]
+        public long? CallsFileRead => Timings.Value.DataSource.File.Read.Calls;
+
+        [EventField("stats.file.writes", OmitFromAudit = true)]
+        public long? CallsFileWrite => Timings.Value.DataSource.File.Write.Calls;
+
+        [EventField("stats.file.deletes", OmitFromAudit = true)]
+        public long? CallsFileDelete => Timings.Value.DataSource.File.Delete.Calls;
+
+
         [EventField("stats.mongo.time", OmitFromAudit = true)]
         public double? TimeMongo => Timings.Value.DataSource.Mongo.Total.ElapsedMS;
 
