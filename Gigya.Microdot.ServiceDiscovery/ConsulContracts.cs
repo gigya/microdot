@@ -51,4 +51,13 @@ namespace Gigya.Microdot.ServiceDiscovery
         [JsonProperty("version")]
         public string Version { get; set; }
     }
+
+    public class CouchDbKeyValue
+    {
+        public string ActiveAvailabilityZone { get; set; }
+
+        public string ConsulZone { get; set; }
+    }
+
 }
+ 
