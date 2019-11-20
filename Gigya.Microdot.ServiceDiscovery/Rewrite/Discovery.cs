@@ -47,7 +47,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         private Func<DeploymentIdentifier, ConfigNodeSource> CreateConfigNodeSource { get; }
         private Dictionary<string, INodeSourceFactory> NodeSourceFactories { get; }
 
-        class NodeSourceAndAccesstime
+
+    class NodeSourceAndAccesstime
         {
             public string NodeSourceType;
             public Task<INodeSource> NodeSourceTask;
@@ -77,13 +78,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
 
-
         /// <inheritdoc />
         public ILoadBalancer CreateLoadBalancer(DeploymentIdentifier deploymentIdentifier, ReachabilityCheck reachabilityCheck, TrafficRoutingStrategy trafficRoutingStrategy)
         {
             return _createLoadBalancer(deploymentIdentifier, reachabilityCheck, trafficRoutingStrategy);
         }
-
 
 
         /// <inheritdoc />
@@ -115,7 +114,40 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             else return null;
         }
 
+        public async Task<(string version, Node[] nodes)> WaitForServiceChanges(DeploymentIdentifier deploymentIdentifier)
+        {
+            TaskCompletionSource<(string version, Node[] nodes)> tcs = new TaskCompletionSource<(string version, Node[] nodes)>();
 
+            // We have a cached node source; query it
+            if (_nodeSources.TryGetValue(deploymentIdentifier, out Lazy<NodeSourceAndAccesstime> lazySource))
+            {
+                lazySource.Value.LastAccessTime = DateTime.UtcNow;
+                var nodeSource = await lazySource.Value.NodeSourceTask.ConfigureAwait(false);
+
+                nodeSource.RegisterForSchemaChangeEvent(deploymentIdentifier, tcs);
+            }
+
+            // No node source but the service is deployed; create one and query it
+            else if (await IsServiceDeployed(deploymentIdentifier).ConfigureAwait(false))
+            {
+                string sourceType = GetConfiguredSourceType(deploymentIdentifier);
+                lazySource = _nodeSources.GetOrAdd(deploymentIdentifier, _ => new Lazy<NodeSourceAndAccesstime>(() =>
+                    new NodeSourceAndAccesstime
+                    {
+                        NodeSourceType = sourceType,
+                        LastAccessTime = DateTime.UtcNow,
+                        NodeSourceTask = CreateNodeSource(sourceType, deploymentIdentifier)
+                    }));
+                var nodeSource = await lazySource.Value.NodeSourceTask.ConfigureAwait(false);
+
+                nodeSource.RegisterForSchemaChangeEvent(deploymentIdentifier, tcs);
+            }
+
+            // No node source and the service is not deployed; return null
+            else return (null, null);
+
+            return await tcs.Task;
+        }
 
         private async Task<bool> IsServiceDeployed(DeploymentIdentifier deploymentIdentifier)
         {

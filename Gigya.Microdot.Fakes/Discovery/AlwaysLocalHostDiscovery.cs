@@ -51,5 +51,15 @@ namespace Gigya.Microdot.Fakes.Discovery
         public void Dispose()
         {
         }
+
+        public TaskCompletionSource<(string version, Node[] nodes)> WaitForServiceChanges(DeploymentIdentifier deploymentIdentifier)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<(string version, Node[] nodes)> IDiscovery.WaitForServiceChanges(DeploymentIdentifier deploymentIdentifier)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

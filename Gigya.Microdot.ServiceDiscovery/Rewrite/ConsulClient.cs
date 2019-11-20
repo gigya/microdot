@@ -219,8 +219,9 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 	            using (var timeoutcancellationToken = new CancellationTokenSource(httpTaskTimeout))
 	            using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutcancellationToken.Token))
 	            {
-		            var response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
-		            using (response)
+                    var response = await _httpClient.GetAsync(commandPath, HttpCompletionOption.ResponseContentRead, cancellationSource.Token).ConfigureAwait(false);
+
+                    using (response)
 		            {
 			            responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 			            consulResult.StatusCode = response.StatusCode;
