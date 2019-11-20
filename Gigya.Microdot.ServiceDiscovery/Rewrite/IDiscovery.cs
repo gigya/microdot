@@ -48,5 +48,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <param name="deploymentIdentifier">identifier for service and env for which LoadBalancer is requested</param>
         /// <returns>a list of <see cref="Node"/>, or null if the service is not deployed in the requested environment</returns>
         Task<Node[]> GetNodes(DeploymentIdentifier deploymentIdentifier);
+
+        Task<(string version, Node[] nodes)> WaitForServiceChanges(DeploymentIdentifier deploymentIdentifier);
     }
 }

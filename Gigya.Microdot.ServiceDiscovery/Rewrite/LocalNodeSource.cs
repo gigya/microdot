@@ -43,6 +43,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         {
             // nothing to shutdown            
         }
+
+        public void RegisterForSchemaChangeEvent(DeploymentIdentifier deploymentIdentifier, System.Threading.Tasks.TaskCompletionSource<(string version, Node[] nodes)> tcs)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
 }

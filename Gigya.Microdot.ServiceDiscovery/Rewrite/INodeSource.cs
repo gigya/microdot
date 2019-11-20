@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
 
@@ -37,5 +38,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <returns>A non-empty array of nodes.</returns>
         /// <exception cref="EnvironmentException">Thrown when no nodes are available, the service was undeployed or an error occurred.</exception>
         Node[] GetNodes();
+
+        void RegisterForSchemaChangeEvent(DeploymentIdentifier deploymentIdentifier, TaskCompletionSource<(string version, Node[] nodes)> tcs);
     }
 }

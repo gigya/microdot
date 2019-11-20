@@ -21,6 +21,8 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,8 +57,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 		private HealthMessage _healthStatus = new HealthMessage(Health.Info, message: null, suppressMessage: true);
         private readonly IDisposable _healthCheck;
+        private ConcurrentDictionary<TaskCompletionSource<(string version, Node[] nodes)>, Boolean> _taskCompletionSourcesList { get; }
 
-		public ConsulNodeSource(
+
+        public ConsulNodeSource(
 			DeploymentIdentifier deploymentIdentifier,
 			ILog log,
 			ConsulClient consulClient,
@@ -64,7 +68,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 			Func<ConsulConfig> getConfig,
 			Func<string, AggregatingHealthStatus> getAggregatingHealthStatus)
 		{
-			DeploymentIdentifier = deploymentIdentifier;
+            _taskCompletionSourcesList = new ConcurrentDictionary<TaskCompletionSource<(string version, Node[] nodes)>, Boolean>();
+            DeploymentIdentifier = deploymentIdentifier;
 			Log = log;
 			ConsulClient = consulClient;
 			DateTime = dateTime;
@@ -89,7 +94,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 			else return nodes.Nodes;
 		}
 
-
+        public void RegisterForSchemaChangeEvent(DeploymentIdentifier deploymentIdentifier, TaskCompletionSource<(string version, Node[] nodes)> tcs)
+        {
+            _taskCompletionSourcesList.TryAdd(tcs, false);
+        }
 
 
 		private async Task UpdateLoop()
@@ -111,8 +119,34 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 					if (deploymentVersionTask.IsCompleted)
 					{
 						deploymentVersion = deploymentVersionTask.Result;
-						if (deploymentVersion.Error == null && deploymentVersion.IsUndeployed == false)
-							lastKnownDeploymentVersion = deploymentVersion.ResponseObject;
+                        if (deploymentVersion.Error == null && deploymentVersion.IsUndeployed == false)
+                        {
+                            if (lastKnownDeploymentVersion != deploymentVersion.ResponseObject)
+                            {
+                                List<TaskCompletionSource<(string version, Node[] nodes)>> toRemoveList = new List<TaskCompletionSource<(string version, Node[] nodes)>>();
+
+                                foreach (KeyValuePair<TaskCompletionSource<(string version, Node[] nodes)>, Boolean> entry in _taskCompletionSourcesList)
+                                {
+                                    if (entry.Value == false)
+                                    {
+                                        entry.Key.SetResult((deploymentVersion.ResponseObject, null));
+
+                                        _taskCompletionSourcesList.TryUpdate(entry.Key, false, true);
+
+                                        toRemoveList.Add(entry.Key);
+                                    }
+                                }
+
+                                foreach (TaskCompletionSource<(string version, Node[] nodes)> key in toRemoveList)
+                                {
+                                    var val = new Boolean();
+                                    _taskCompletionSourcesList.TryRemove(key, out val);
+                                }
+                            }
+
+                            lastKnownDeploymentVersion = deploymentVersion.ResponseObject;
+                        }
+
 						deploymentVersionTask = ConsulClient.GetDeploymentVersion(DeploymentIdentifier, deploymentVersion.ModifyIndex ?? InitialModifyIndex, _shutdownToken.Token);
 					}
 
