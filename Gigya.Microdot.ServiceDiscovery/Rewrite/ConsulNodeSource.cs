@@ -146,30 +146,30 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
 
 
-		private void Update(ConsulResponse<ServiceKeyValue> deploymentInfoResponse, ConsulResponse<ConsulNode[]> nodesResponse, 
+		private void Update(ConsulResponse<ServiceKeyValue> deploymentFilterResponse, ConsulResponse<ConsulNode[]> nodesResponse, 
 		    ServiceKeyValue lastKnownDeploymentFilter = null, ConsulNode[] lastKnownNodes = null)
 		{
 			// Service no longer deployed
-			if (deploymentInfoResponse.IsUndeployed == true)
+			if (deploymentFilterResponse.IsUndeployed == true)
 			{
-				Log.Info(_ => _("Consul reported service was undeployed", unencryptedTags: MakeLogTags(deploymentInfoResponse, nodesResponse)));
+				Log.Info(_ => _("Consul reported service was undeployed", unencryptedTags: MakeLogTags(deploymentFilterResponse, nodesResponse)));
 				_healthStatus = new HealthMessage(Health.Healthy, "Service was undeployed");
 			}
 
 			// Error getting version or nodes
 			else if (lastKnownDeploymentFilter == null || lastKnownNodes == null)
 			{
-				Log.Error(_ => _("Consul error", exception: deploymentInfoResponse.Error ?? nodesResponse.Error, unencryptedTags: MakeLogTags(deploymentInfoResponse, nodesResponse)));
-				_healthStatus = new HealthMessage(Health.Unhealthy, "Consul error: " + (deploymentInfoResponse.Error ?? nodesResponse.Error).Message);
-				_nodesOrError = (null, new EnvironmentException("Consul error", deploymentInfoResponse.Error ?? nodesResponse.Error, unencrypted: MakeExceptionTags(deploymentInfoResponse, nodesResponse)));
+				Log.Error(_ => _("Consul error", exception: deploymentFilterResponse.Error ?? nodesResponse.Error, unencryptedTags: MakeLogTags(deploymentFilterResponse, nodesResponse)));
+				_healthStatus = new HealthMessage(Health.Unhealthy, "Consul error: " + (deploymentFilterResponse.Error ?? nodesResponse.Error).Message);
+				_nodesOrError = (null, new EnvironmentException("Consul error", deploymentFilterResponse.Error ?? nodesResponse.Error, unencrypted: MakeExceptionTags(deploymentFilterResponse, nodesResponse)));
 			}
 
 			// No healthy nodes with matching version/instancename
 			else if (lastKnownNodes.All(n => n.Version != lastKnownDeploymentFilter.Version && n.InstanceName != lastKnownDeploymentFilter.InstanceName))
 			{
-				Log.Error(_ => _("No nodes were specified in Consul for the requested service and service's active version/instancename.", unencryptedTags: MakeLogTags(deploymentInfoResponse, nodesResponse)));
+				Log.Error(_ => _("No nodes were specified in Consul for the requested service and service's active version/instancename.", unencryptedTags: MakeLogTags(deploymentFilterResponse, nodesResponse)));
 				_healthStatus = new HealthMessage(Health.Unhealthy, "No nodes were specified in Consul for the requested service and service's active version/instancename.");
-				_nodesOrError = (null, new EnvironmentException("No nodes were specified in Consul for the requested service and service's active version/instancename.", unencrypted: MakeExceptionTags(deploymentInfoResponse, nodesResponse)));
+				_nodesOrError = (null, new EnvironmentException("No nodes were specified in Consul for the requested service and service's active version/instancename.", unencrypted: MakeExceptionTags(deploymentFilterResponse, nodesResponse)));
 			}
 
 			// All ok, update nodes
@@ -180,8 +180,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 				    .Select(_ => new Node(_.Hostname, _.Port))
 				    .ToArray();
 				_nodesOrError = (nodes, null);
-				if (deploymentInfoResponse.Error != null || nodesResponse.Error != null)
-					_healthStatus = new HealthMessage(Health.Unhealthy, "Consul error: " + (deploymentInfoResponse.Error ?? nodesResponse.Error).Message);
+				if (deploymentFilterResponse.Error != null || nodesResponse.Error != null)
+					_healthStatus = new HealthMessage(Health.Unhealthy, "Consul error: " + (deploymentFilterResponse.Error ?? nodesResponse.Error).Message);
 				else if (nodes.Length < lastKnownNodes.Length)
 					_healthStatus = new HealthMessage(Health.Healthy, $"{nodes.Length} nodes matching to version '{lastKnownDeploymentFilter.Version}' and instancename '{lastKnownDeploymentFilter.InstanceName}' from total of {lastKnownNodes.Length} nodes");
 				else _healthStatus = new HealthMessage(Health.Healthy, $"{nodes.Length} nodes");
