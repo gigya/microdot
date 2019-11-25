@@ -76,6 +76,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             AfterOrleansStartup = afterOrleansStartup;
             _serviceArguments = serviceArguments;
 
+            Log.Info(_ => _("Build Bridges, Not Silos!"));
             Log.Info(_ => _("Starting Orleans silo..."));
 
             var builder = _orleansConfigurationBuilder.GetBuilder()

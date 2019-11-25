@@ -50,5 +50,9 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         [JsonProperty("version")]
         public string Version { get; set; }
+
+        [JsonProperty("instancename")]
+        public string InstanceName { get; set; }
     }
+
 }
