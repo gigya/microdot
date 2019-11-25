@@ -14,3 +14,23 @@ System.Threading.Tasks.Dataflow
 Microsoft.Orleans.Server
 Microsoft.Orleans.OrleansTelemetryConsumers.Counters
 OrleansDashboard
+
+
+
+# lock dependcy in nuspac 
+Microsoft.Extensions.Configuration 
+Microsoft.AspNetCore.Connections.Abstractions 
+Microsoft.AspNetCore.Hosting 
+Microsoft.AspNetCore.Server.Kestrel 
+Microsoft.Extensions.Logging.Abstractions
+Microsoft.Extensions.ObjectPool 
+Microsoft.Extensions.DependencyModel 
+Microsoft.Extensions.FileSystemGlobbing 
+Microsoft.AspNetCore.Http.Features 
+Microsoft.Extensions.Primitives 
+Microsoft.Orleans.Core.Abstractions 
+System.Diagnostics.PerformanceCounter 
+Microsoft.AspNetCore.Http.Features 
+Microsoft.Extensions.Primitives 
+Microsoft.Orleans.Core.Abstractions 
+System.Diagnostics.PerformanceCounter 

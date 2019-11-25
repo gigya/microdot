@@ -140,10 +140,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             return response.SetResult(result);
         }
 
-        internal async Task<ConsulResponse<ServiceKeyValue>> GetDeploymentFilter(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        internal async Task<ConsulResponse<ServiceKeyValue>> TryGetDeploymentFilter(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
-            var serviceKeyValue = new ServiceKeyValue();
-
             var response = await GetKey<ServiceKeyValue>(modifyIndex, "service", deploymentIdentifier.GetConsulServiceName(), deploymentIdentifier.Zone, cancellationToken);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -156,12 +154,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 			}
             else
             {
-                serviceKeyValue.Version = response.ResponseObject?.Version;
-                serviceKeyValue.InstanceName = response.ResponseObject?.InstanceName;
                 response.IsUndeployed = false;
             }
 
-            return response.SetResult(serviceKeyValue);
+            return response.SetResult(response.ResponseObject);
         }
 
 

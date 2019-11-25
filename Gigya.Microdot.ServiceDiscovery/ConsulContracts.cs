@@ -52,7 +52,7 @@ namespace Gigya.Microdot.ServiceDiscovery
         public string Version { get; set; }
 
         [JsonProperty("instancename")]
-        public string InstanceName { get; set; } = "";
+        public string InstanceName { get; set; }
     }
 
 }

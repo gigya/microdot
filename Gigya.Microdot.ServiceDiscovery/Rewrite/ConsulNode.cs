@@ -31,7 +31,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             hostName, port)
         {
             Version = version;
-            InstanceName = instanceName ?? "";
+            InstanceName = instanceName;
         }
 
         /// <summary>
