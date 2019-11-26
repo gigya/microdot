@@ -231,6 +231,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 var sw = Stopwatch.StartNew();
 
                 // Special endpoints should not be logged/measured/traced like regular endpoints
+                // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
                 if (await TryHandleSpecialEndpoints(context)) return;
 
                 // Regular endpoint handling
@@ -249,8 +250,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                     {
                         try
                         {
-                            ValidateRequest(context);
                             await CheckSecureConnection(context);
+
+                            ValidateRequest(context);
 
                             requestData = await ParseRequest(context);
                            
