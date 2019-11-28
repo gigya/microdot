@@ -122,22 +122,14 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
-            if (/* Remove after testing */ ServiceEndPointDefinition.ListenBoth /* Remove after testing */ || !ServiceEndPointDefinition.UseSecureChannel)
+            Listener = new HttpListener
             {
-                Listener = new HttpListener
-                {
-                    IgnoreWriteExceptions = true,
-                    Prefixes = { GetPrefix(true) , GetPrefix(false)}
-                };
-            }
-            else
-            {
-                Listener = new HttpListener
-                {
-                    IgnoreWriteExceptions = true,
-                    Prefixes = { GetPrefix(true) }
-                };
-            }
+                IgnoreWriteExceptions = true,
+                Prefixes = { $"https://+:{ServiceEndPointDefinition.HttpsPort}/" }
+            };
+
+            if (ServiceEndPointDefinition.HttpPort != null)
+                Listener.Prefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/"); 
 
             var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
@@ -150,32 +142,20 @@ namespace Gigya.Microdot.Hosting.HttpService
             _endpointContext = context.Context("Endpoints");
         }
 
-        private string GetPrefix(bool isBasePort)
-        {
-            string urlPrefixTemplate = ServiceEndPointDefinition.UseSecureChannel || !isBasePort ? "https://+:{0}/" : "http://+:{0}/";
-            int port = isBasePort ? ServiceEndPointDefinition.HttpPort : ServiceEndPointDefinition.HttpsPort;
-            return string.Format(urlPrefixTemplate, port);
-        }
         public void Start()
         {
             try
             {
                 Listener.Start();
-                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefixes = Listener.Prefixes }));
+                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefixes = string.Join(",", Listener.Prefixes) }));
             }
             catch (HttpListenerException ex)
             {
                 if (ex.ErrorCode != 5)
                 {
-                    if (ServiceEndPointDefinition.UseSecureChannel)
-                    {
-                        ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpPort}";
-                    }
-                    else
-                    {
-                        ex.Data["HttpPort"] = ServiceEndPointDefinition.HttpPort;
-                        ex.Data["HttpsPort"] = ServiceEndPointDefinition.HttpsPort;
-                    }
+                    ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpsPort}";
+                    if (ServiceEndPointDefinition.HttpPort != null)
+                        ex.Data["HttpPort"] = $"{ServiceEndPointDefinition.HttpPort}";
 
                     ex.Data["Prefixes"] = Listener.Prefixes;
                     ex.Data["User"] = AppInfo.OsUser;

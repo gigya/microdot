@@ -48,11 +48,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         ///</summary> 
         int? SiloNetworkingPortOfPrimaryNode { get; }
 
-        int HttpPort { get; }
+        int? HttpPort { get; }
 
         int HttpsPort { get; }
-
-        bool ListenBoth { get; } // Temp: remove after testing
 
         /// <summary>
         /// Provides a friendly name for each service, keyed by the type of the service interface (the one decorated

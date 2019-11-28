@@ -41,10 +41,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
 
 
-        protected IDemoService CreateClient(Func<HttpMessageHandler> httpMessageHandlerFactory = null)
+        protected IDemoService CreateClient()
         {
             return unitTesting
-                .Get<ServiceProxyProviderSpy<IDemoService>>(new ConstructorArgument("httpMessageHandlerFactory", httpMessageHandlerFactory ?? (() =>  new HttpClientHandler())))
+                .Get<ServiceProxyProviderSpy<IDemoService>>()
                 .Client;
         }
     }
@@ -52,10 +52,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ServiceProxyProviderSpy<T> : ServiceProxyProvider<T>
     {
-        public ServiceProxyProviderSpy(Func<string, IServiceProxyProvider> serviceProxyFactory, Func<HttpMessageHandler> httpMessageHandlerFactory)
+        public ServiceProxyProviderSpy(Func<string, IServiceProxyProvider> serviceProxyFactory)
             : base(serviceProxyFactory)
         {
-            ((ServiceProxyProvider)InnerProvider).HttpMessageHandlerFactory = httpMessageHandlerFactory;
         }
     }
 }
