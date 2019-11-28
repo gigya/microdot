@@ -64,7 +64,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         }
 
         /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
-        internal async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
+        public async Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken)
         {
             var urlCommand = $"v1/health/service/{deploymentIdentifier.GetConsulServiceName()}?dc={deploymentIdentifier.Zone}&passing&index={modifyIndex}";
             var response = await Call<ConsulNode[]>(urlCommand, cancellationToken, longPolling: true).ConfigureAwait(false);
