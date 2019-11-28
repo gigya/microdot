@@ -25,7 +25,7 @@ using Gigya.Microdot.SharedLogic.Rewrite;
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
 
-    internal class ConsulNode: Node
+    public class ConsulNode: Node
     {
         public ConsulNode(string hostName, int? port = null, string version = null, string instanceName = null) : base(
             hostName, port)

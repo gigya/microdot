@@ -62,5 +62,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 		Task<ConsulResponse<T>> GetKeyFromOtherZone<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
 
 
-	}
+        Task<ConsulResponse<ConsulNode[]>> GetHealthyNodes(DeploymentIdentifier deploymentIdentifier, ulong modifyIndex, CancellationToken cancellationToken);
+    }
 }
