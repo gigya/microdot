@@ -1,4 +1,5 @@
-﻿using Gigya.Microdot.Fakes.KernelUtils;
+﻿using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;

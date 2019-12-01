@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DummyCertificateLocator.cs" />
     <Compile Include="FakesLoggersModules.cs" />
     <Compile Include="KernelTestingExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

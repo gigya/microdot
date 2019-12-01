@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Gigya.Microdot.SharedLogic.HttpService;
 
-namespace Gigya.Microdot.UnitTests
+namespace Gigya.Microdot.Common.Tests
 {
-    class DummyCertificateLocator : ICertificateLocator
+    public class DummyCertificateLocator : ICertificateLocator
     {
         public X509Certificate2 GetCertificate(string certName)
         {

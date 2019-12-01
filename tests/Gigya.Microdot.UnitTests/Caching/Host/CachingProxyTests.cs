@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.UnitTests.Caching.Host
