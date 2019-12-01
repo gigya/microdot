@@ -227,7 +227,7 @@ namespace Gigya.Microdot.ServiceProxy
                     messageHandler = _httpMessageHandlerFactory(true, securityRole);
                     httpsClient = CreateHttpClient(messageHandler, requestTimeout);
                     return (httpsClient, isHttps: true);
-                }, CancellationToken.None);
+                }, cancellationToken: CancellationToken.None);
 
                 lock (HttpClientLock)
                 {
@@ -250,7 +250,7 @@ namespace Gigya.Microdot.ServiceProxy
                 throw new Exception("No port is configured");
 
             Func<bool, (HttpClient client, bool isHttps)> clientFactory = tryHttps  => GetHttpClient(config, tryHttps, node.Hostname, port.Value);
-            return ValidateReachability(node.Hostname, port.Value, fallbackOnProtocolError: true, clientFactory, cancellationToken);
+            return ValidateReachability(node.Hostname, port.Value, fallbackOnProtocolError: true, clientFactory: clientFactory, cancellationToken: cancellationToken);
         }
 
         private async Task ValidateReachability(string hostname,
