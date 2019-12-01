@@ -337,7 +337,6 @@ namespace Gigya.Microdot.ServiceProxy
             // Try connecting via HTTPS if:
             // - If This IS an originally HTTPS supporting service (e.g. KeyManagementService), and "use http" is not overwritten to 'false' in the config, OR
             // - This is NOT an originally HTTPS supporting service
-            //bool originalHttpsService = UseHttpsDefault && (GetConfig().UseHttpsOverride ?? true);
             bool tryHttps = !UseHttpsDefault || (GetConfig().UseHttpsOverride ?? true);
             while (true)
             {

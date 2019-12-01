@@ -47,16 +47,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             unitTesting.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
         }
 
-        class DummyCertificateLocator : ICertificateLocator
-        {
-            public X509Certificate2 GetCertificate(string certName)
-            {
-                var ecdsa = ECDsa.Create(); // generate asymmetric key pair
-                var req = new CertificateRequest("cn=foobar", ecdsa, HashAlgorithmName.SHA256);
-                return req.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(5));
-            }
-        }
-
         [Test]
         public async Task AllRequestsForSameCallID_SameHostSelected()
         {

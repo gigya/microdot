@@ -194,7 +194,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             HttpRequestMessage request = null;
             string requestContent = null;
-            Func<HttpMessageHandler> messageHandlerFactory = () =>
+            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
             {
                 var mockHandler = new MockHttpMessageHandler();
                 mockHandler.When("*").Respond(async r =>
@@ -211,8 +211,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 return mockHandler;
             };
             var kernel = new TestingKernel<ConsoleLog>();
-            var client = kernel
-                .Get<ServiceProxyProviderSpy<T>>(new ConstructorArgument("httpMessageHandlerFactory", messageHandlerFactory));
+            kernel.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            var client = kernel.Get<ServiceProxyProviderSpy<T>>();
 
             client.DefaultPort = _testinghost.BasePort;
 

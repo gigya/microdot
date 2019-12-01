@@ -81,6 +81,7 @@
     <Compile Include="Discovery\Rewrite\MultiEnvironmentConsulDiscoveryMasterFallBackTest.cs" />
     <Compile Include="Discovery\Rewrite\MultiEnvironmentServiceDiscoveryPreferredEnvironmentTests.cs" />
     <Compile Include="Discovery\ServiceDiscoveryConfigChangeTest.cs" />
+    <Compile Include="DummyCertificateLocator.cs" />
     <Compile Include="Events\EventSerializationTests.cs" />
     <Compile Include="Monitor\HealthStatusTests.cs" />
     <Compile Include="HttpServiceRequestTests.cs" />
