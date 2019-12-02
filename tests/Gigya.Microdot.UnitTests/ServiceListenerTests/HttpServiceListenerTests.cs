@@ -9,8 +9,11 @@ using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -91,8 +94,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TestCase(typeof(RequestException))]
         public async Task RequestWithException_ShouldNotWrap(Type exceptionType)
         {
-            var _kernel = new TestingKernel<ConsoleLog>();
-            var _exceptionSerializer = _kernel.Get<JsonExceptionSerializer>();
+            var _kernel = new MicrodotInitializer("",new FakesLoggersModules(),k=>k.RebindForTests());
+            var _exceptionSerializer = _kernel.Kernel.Get<JsonExceptionSerializer>();
             _testinghost.Host.Instance.When(a => a.DoSomething()).Throw(i => (Exception)Activator.CreateInstance(exceptionType, "MyEx", null, null, null));
 
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
