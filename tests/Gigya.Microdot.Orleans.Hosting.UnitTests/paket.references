@@ -5,6 +5,7 @@ Microsoft.Orleans.OrleansCodeGenerator.Build
 Microsoft.Orleans.OrleansProviders
 NSubstitute
 NUnit
+NUnit3TestAdapter
 Ninject
 Shouldly
 Castle.Core

@@ -59,6 +59,7 @@ nuget Castle.Core ~> 4.0
 
 # Tests only dependencies
 nuget NUnit ~> 3.0
+nuget NUnit3TestAdapter ~> 3.15
 nuget RichardSzalay.MockHttp ~> 5.0
 nuget NSubstitute ~> 4.0
 nuget FluentAssertions ~> 5.0

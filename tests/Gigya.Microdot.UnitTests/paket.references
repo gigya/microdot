@@ -3,6 +3,7 @@ FluentAssertions
 Metrics.NET
 NSubstitute
 NUnit
+NUnit3TestAdapter
 RichardSzalay.MockHttp
 Shouldly
 Ninject

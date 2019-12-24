@@ -1,4 +1,5 @@
 Gigya.ServiceContract
 Newtonsoft.Json
 NUnit
+NUnit3TestAdapter
 Shouldly
