@@ -405,7 +405,7 @@
         </Reference>
         <Reference Include="System.Collections.NonGeneric">
           <HintPath>..\packages\System.Collections.NonGeneric\lib\net46\System.Collections.NonGeneric.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -430,7 +430,7 @@
       <ItemGroup>
         <Reference Include="System.ComponentModel.Primitives">
           <HintPath>..\packages\System.ComponentModel.Primitives\lib\net45\System.ComponentModel.Primitives.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -441,7 +441,7 @@
       <ItemGroup>
         <Reference Include="System.ComponentModel.TypeConverter">
           <HintPath>..\packages\System.ComponentModel.TypeConverter\lib\net462\System.ComponentModel.TypeConverter.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -452,7 +452,7 @@
       <ItemGroup>
         <Reference Include="System.Diagnostics.FileVersionInfo">
           <HintPath>..\packages\System.Diagnostics.FileVersionInfo\lib\net46\System.Diagnostics.FileVersionInfo.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -463,7 +463,7 @@
       <ItemGroup>
         <Reference Include="System.Diagnostics.Process">
           <HintPath>..\packages\System.Diagnostics.Process\lib\net461\System.Diagnostics.Process.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -474,7 +474,7 @@
       <ItemGroup>
         <Reference Include="System.Diagnostics.TraceSource">
           <HintPath>..\packages\System.Diagnostics.TraceSource\lib\net46\System.Diagnostics.TraceSource.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -485,7 +485,7 @@
       <ItemGroup>
         <Reference Include="System.IO">
           <HintPath>..\packages\System.IO\lib\net462\System.IO.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -496,7 +496,7 @@
       <ItemGroup>
         <Reference Include="System.Linq.Expressions">
           <HintPath>..\packages\System.Linq.Expressions\lib\net463\System.Linq.Expressions.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -518,7 +518,7 @@
       <ItemGroup>
         <Reference Include="System.Net.NameResolution">
           <HintPath>..\packages\System.Net.NameResolution\lib\net46\System.Net.NameResolution.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -529,7 +529,7 @@
       <ItemGroup>
         <Reference Include="System.Net.NetworkInformation">
           <HintPath>..\packages\System.Net.NetworkInformation\lib\net46\System.Net.NetworkInformation.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -579,7 +579,7 @@
         </Reference>
         <Reference Include="System.Runtime">
           <HintPath>..\packages\System.Runtime\lib\net462\System.Runtime.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -601,7 +601,7 @@
       <ItemGroup>
         <Reference Include="System.Runtime.InteropServices.RuntimeInformation">
           <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -612,7 +612,7 @@
       <ItemGroup>
         <Reference Include="System.Runtime.Serialization.Formatters">
           <HintPath>..\packages\System.Runtime.Serialization.Formatters\lib\net46\System.Runtime.Serialization.Formatters.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -626,7 +626,7 @@
         </Reference>
         <Reference Include="System.Runtime.Serialization.Primitives">
           <HintPath>..\packages\System.Runtime.Serialization.Primitives\lib\net46\System.Runtime.Serialization.Primitives.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -637,7 +637,7 @@
       <ItemGroup>
         <Reference Include="System.Security.Cryptography.Algorithms">
           <HintPath>..\packages\System.Security.Cryptography.Algorithms\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -648,7 +648,7 @@
       <ItemGroup>
         <Reference Include="System.Security.Cryptography.Encoding">
           <HintPath>..\packages\System.Security.Cryptography.Encoding\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -659,7 +659,7 @@
       <ItemGroup>
         <Reference Include="System.Security.Cryptography.Primitives">
           <HintPath>..\packages\System.Security.Cryptography.Primitives\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -681,7 +681,7 @@
       <ItemGroup>
         <Reference Include="System.Threading.Thread">
           <HintPath>..\packages\System.Threading.Thread\lib\net46\System.Threading.Thread.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -692,7 +692,7 @@
       <ItemGroup>
         <Reference Include="System.Threading.ThreadPool">
           <HintPath>..\packages\System.Threading.ThreadPool\lib\net46\System.Threading.ThreadPool.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -714,7 +714,7 @@
       <ItemGroup>
         <Reference Include="System.Xml.XmlDocument">
           <HintPath>..\packages\System.Xml.XmlDocument\lib\net46\System.Xml.XmlDocument.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -725,7 +725,7 @@
       <ItemGroup>
         <Reference Include="System.Xml.XPath">
           <HintPath>..\packages\System.Xml.XPath\lib\net46\System.Xml.XPath.dll</HintPath>
-          <Private>False</Private>
+          <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
