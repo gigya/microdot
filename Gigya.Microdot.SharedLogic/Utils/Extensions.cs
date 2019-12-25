@@ -87,6 +87,14 @@ namespace Gigya.Microdot.SharedLogic.Utils
 
             return length < value.Length ? value.Substring(value.Length - length) : value;
         }
+
+        public static string OrWhenEmpty(this string self, string other)
+        {
+            return
+                string.IsNullOrEmpty(self) == false
+                ? self
+                : other;
+        }
     }
 
 

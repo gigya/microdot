@@ -57,6 +57,9 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="config\loadPaths.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

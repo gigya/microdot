@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.IO;
 using System.Linq;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -32,24 +33,24 @@ namespace Gigya.Microdot.Configuration
 {
     public class EnvironmentVariableProvider : IEnvironmentVariableProvider
     {
-        private const string GIGYA_ENV_VARS_FILE = "GIGYA_ENVVARS_FILE";
-        private const string ENV_FILEPATH = "{0}/gigya/environmentVariables.json";
+        private const string GIGYA_ENV_VARS_JSON_FILE = "GIGYA_ENV_VARS_JSON_FILE";
 
         private IFileSystem FileSystem { get; }
 
         public EnvironmentVariableProvider(IFileSystem fileSystem, CurrentApplicationInfo applicationInfo)
         {
-
+            // TODO: document changes
             FileSystem = fileSystem;
+            
             PlatformSpecificPathPrefix = Environment.OSVersion.Platform == PlatformID.Unix ? "/etc" : "D:";
 
-            var locEnvFilePath = GetEnvironmentVariable(GIGYA_ENV_VARS_FILE);
+            var envFilePath =
+                Environment.GetEnvironmentVariable(GIGYA_ENV_VARS_JSON_FILE) ?? "env.json";
 
-            if (string.IsNullOrEmpty(locEnvFilePath))
-            {
-                locEnvFilePath = string.Format(ENV_FILEPATH, PlatformSpecificPathPrefix);
-            }
-            ReadFromFile(locEnvFilePath);
+            if (Path.IsPathRooted(envFilePath) == false)
+                envFilePath = Path.Combine(Environment.CurrentDirectory, envFilePath);
+
+            ReadFromFile(envFilePath);
 
             DataCenter = GetEnvironmentVariable("ZONE") ?? GetEnvironmentVariable("DC");
             DeploymentEnvironment = GetEnvironmentVariable("ENV");
@@ -65,6 +66,7 @@ namespace Gigya.Microdot.Configuration
 
         public string GetEnvironmentVariable(string name) { return Environment.GetEnvironmentVariable(name)?.ToLower(); }
 
+        [Obsolete("To be deleted in version 2.0")]
         public string PlatformSpecificPathPrefix { get; }
 
         [Obsolete("To be deleted on version 2.0")]

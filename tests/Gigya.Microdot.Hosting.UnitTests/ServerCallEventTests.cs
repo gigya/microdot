@@ -24,6 +24,10 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
+            // TODO: move to .env
+            Environment.SetEnvironmentVariable("ZONE", "zone");
+            Environment.SetEnvironmentVariable("ENV", "env");
+            
             _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>();
 
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
