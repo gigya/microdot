@@ -21,19 +21,20 @@ namespace Gigya.Microdot.UnitTests.Configuration
         private IFileSystem _fileSystem;
         private IEnvironmentVariableProvider environmentVariableProvider;
 
-        private const string env = "env1";
-        private const string zone = "dc1";
+        private static string env = Environment.GetEnvironmentVariable("ENV");
+        private static string zone = Environment.GetEnvironmentVariable("ZONE");
+
         private const string testData =
-@"//$(prefix) is a root folder c:\ or \etc
+@"
     [
-        {Pattern: '$(prefix)/Gigya/Config/*.config',                       Priority:  2, SearchOption: 'TopDirectoryOnly' },
-        {Pattern: '$(prefix)/Gigya/Config/$(appName)/*.config',            Priority:  3, SearchOption: 'TopDirectoryOnly' },
-        {Pattern: '$(prefix)/Gigya/Config/%ENV%/*.config',                 Priority:  4, SearchOption: 'TopDirectoryOnly' },
-        {Pattern: '$(prefix)/Gigya/Config/%ZONE%/*.config',                  Priority:  5, SearchOption: 'TopDirectoryOnly' },
-        {Pattern: '$(prefix)/Gigya/Config/%ZONE%/$(appName)/*.config',       Priority:  6, SearchOption: 'TopDirectoryOnly' },
-        {Pattern: '$(prefix)/Gigya/Config/%ZONE%/%ENV%/*.config',            Priority:  7, SearchOption: 'TopDirectoryOnly' },
-        {Pattern: '$(prefix)/Gigya/Config/%ZONE%/%ENV%/$(appName)/*.config', Priority:  8, SearchOption: 'TopDirectoryOnly' },                    
-        {Pattern: '$(prefix)/Gigya/Config/_local/*.config',                Priority: 9,  SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/*.config',                       Priority:  2, SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/$(appName)/*.config',            Priority:  3, SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/%ENV%/*.config',                 Priority:  4, SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/%ZONE%/*.config',                  Priority:  5, SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/%ZONE%/$(appName)/*.config',       Priority:  6, SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/%ZONE%/%ENV%/*.config',            Priority:  7, SearchOption: 'TopDirectoryOnly' },
+        {Pattern: 'Gigya/Config/%ZONE%/%ENV%/$(appName)/*.config', Priority:  8, SearchOption: 'TopDirectoryOnly' },                    
+        {Pattern: 'Gigya/Config/_local/*.config',                Priority: 9,  SearchOption: 'TopDirectoryOnly' },
         {Pattern: './Config/*.config',                                     Priority: 10, SearchOption: 'AllDirectories' }
     ]";
 
@@ -56,14 +57,14 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var expected = new[] {
                 new ConfigFileDeclaration {Pattern = $"./Config/*.config", Priority = 10},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/_local/*.config", Priority = 9},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/{zone}/{env}/{""}/*.config", Priority = 8},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/{zone}/{env}/*.config", Priority = 7},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/{zone}/{""}/*.config", Priority = 6},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/{zone}/*.config", Priority = 5},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/{env}/*.config", Priority = 4},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/{""}/*.config", Priority = 3},
-                new ConfigFileDeclaration {Pattern = $"c:/Gigya/Config/*.config", Priority = 2}
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/_local/*.config", Priority = 9},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{env}/{""}/*.config", Priority = 8},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{env}/*.config", Priority = 7},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{""}/*.config", Priority = 6},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/*.config", Priority = 5},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{env}/*.config", Priority = 4},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{""}/*.config", Priority = 3},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/*.config", Priority = 2}
             };
 
            
@@ -75,6 +76,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
 
         [Test]
+        [Ignore("To be reenabled after environment variable provider phased out.")]
         public void AllPathExists_NoEnvironmentVariablesExists_EnvironmentExceptionExpected()
         {
             Action act = () => BaseTest(new Dictionary<string, string>(), new ConfigFileDeclaration[0]);

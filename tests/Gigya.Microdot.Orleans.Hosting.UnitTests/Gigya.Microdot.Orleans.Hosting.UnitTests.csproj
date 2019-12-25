@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TestContextAttribute.cs" />
     <Compile Include="GrainAgeLimitServiceTests.cs" />
     <Compile Include="GrainCallEventTests.cs" />
     <Compile Include="HostTests.cs" />
@@ -80,7 +81,7 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="config\loadpaths.json">
+    <None Include="config\loadPaths.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="paket.references" />

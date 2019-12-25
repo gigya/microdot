@@ -88,12 +88,12 @@ namespace Gigya.Microdot.SharedLogic.Utils
             return length < value.Length ? value.Substring(value.Length - length) : value;
         }
 
-        public static string OrWhenEmpty(this string self, string other)
+        public static string NullWhenEmpty(this string self)
         {
             return
                 string.IsNullOrEmpty(self) == false
                 ? self
-                : other;
+                : null;
         }
     }
 

@@ -70,14 +70,12 @@ namespace Gigya.Microdot.Configuration
             AppName = appInfo.Name;
 
             ConfigRoot =
-                    environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_ROOT)
-                .OrWhenEmpty(
-                    Path.Combine(Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT));
+                environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_ROOT).NullWhenEmpty()
+                ?? Path.Combine(Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT);
 
             LoadPathsFilePath =
-                    environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE)
-                .OrWhenEmpty(
-                    Path.Combine(ConfigRoot, LOADPATHS_JSON));
+                environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE).NullWhenEmpty()
+                ?? Path.Combine(ConfigRoot, LOADPATHS_JSON);
             
             Trace.WriteLine("Started parsing configurations from location " + LoadPathsFilePath +"\n");
 
