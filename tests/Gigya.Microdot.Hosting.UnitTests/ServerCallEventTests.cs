@@ -24,7 +24,6 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
-            // TODO: move to .env
             Environment.SetEnvironmentVariable("ZONE", "zone");
             Environment.SetEnvironmentVariable("ENV", "env");
             
@@ -39,6 +38,9 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         public void TestFixtureTearDown()
         {
             _serviceTester?.Dispose();
+
+            Environment.SetEnvironmentVariable("ZONE", null);
+            Environment.SetEnvironmentVariable("ENV", null);
         }
 
         [Test]
