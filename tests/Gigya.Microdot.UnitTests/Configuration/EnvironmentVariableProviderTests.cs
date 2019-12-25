@@ -56,6 +56,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
+        [Ignore("To be reenabled after environment variable provider phased out.")]
         public void ReadsEnvFromDifferentFile()
         {
             Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", "C:\\gigya\\envVars.json");
@@ -65,6 +66,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
+        [Ignore("To be reenabled after environment variable provider phased out.")]
         public void ReadsEnvFromDefaultFile()
         {
             var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
