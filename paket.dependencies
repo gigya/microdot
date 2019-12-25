@@ -1,6 +1,6 @@
 source https://api.nuget.org/v3/index.json
 
-framework: net472
+framework: auto-detect
 redirects: off
 content: once
 copy_content_to_output_dir: always
