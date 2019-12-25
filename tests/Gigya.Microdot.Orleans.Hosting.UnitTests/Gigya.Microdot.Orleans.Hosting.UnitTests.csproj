@@ -80,7 +80,7 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="loadpaths.json">
+    <None Include="config\loadpaths.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="paket.references" />
