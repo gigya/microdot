@@ -85,7 +85,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement
     }
 
     internal class Aggregator
-    {        
+    {
         public TimeSpan TotalTime { get; set; }
         public long TotalInstances { get; set; }
     }

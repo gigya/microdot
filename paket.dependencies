@@ -8,15 +8,18 @@ copy_content_to_output_dir: always
 nuget Gigya.ServiceContract ~> 2.0
 
 # .Net
+nuget System.ComponentModel.Annotations ~> 4.0
+nuget System.Diagnostics.PerformanceCounter 4.5.0 
+nuget System.Net.Http ~> 4.3
 nuget System.ValueTuple
+nuget Microsoft.CSharp ~> 4.7
 
-# Misc
+#
 nuget Metrics.NET ~> 0.0
-nuget Newtonsoft.Json >= 9 lowest_matching: true
+nuget Newtonsoft.Json 12.0.3
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
-nuget System.ComponentModel.Annotations ~> 4.0
 nuget DataAnnotationsValidator ~> 2.1.0
 
 # Orleans
@@ -34,7 +37,6 @@ nuget Microsoft.Extensions.Primitives 2.2
 nuget Microsoft.Orleans.Server  2.4.3
 nuget Microsoft.Orleans.Core.Abstractions 2.4.3
 nuget OrleansDashboard 2.4.5 
-nuget System.Diagnostics.PerformanceCounter 4.5.0 
 
 nuget Microsoft.Extensions.Configuration ~> 2
 nuget Microsoft.AspNetCore.Connections.Abstractions ~> 2
