@@ -12,3 +12,6 @@ Castle.Core
 Microsoft.Orleans.Core
 DataAnnotationsValidator
 System.ComponentModel.Annotations
+
+# Remove after the transition to netcore completed
+System.ServiceProcess.ServiceController

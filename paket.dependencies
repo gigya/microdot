@@ -13,6 +13,7 @@ nuget System.Diagnostics.PerformanceCounter 4.5.0
 nuget System.Net.Http ~> 4.3
 nuget System.ValueTuple
 nuget Microsoft.CSharp ~> 4.7
+nuget System.ServiceProcess.ServiceController ~> 4.7
 
 #
 nuget Metrics.NET ~> 0.0
