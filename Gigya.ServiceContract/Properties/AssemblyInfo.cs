@@ -24,29 +24,10 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("Gigya.ServiceContract")]
-[assembly: AssemblyProduct("Gigya.ServiceContract")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.ServiceProxy")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("db6d3561-835e-40d5-b9d4-83951cf426df")]
-
-[assembly: AssemblyCompany("Gigya")]
-[assembly: AssemblyCopyright("© 2017 Gigya Inc.")]
-[assembly: AssemblyTrademark("")]
-
-
-[assembly: AssemblyInformationalVersion("2.7.1")]// if pre-release should be in the format of "2.4.11-pre01".
-[assembly: AssemblyVersion("2.7.1")]
-[assembly: AssemblyFileVersion("2.7.1")]
-
-
-
-[assembly: AssemblyDescription("")]
 
 
 
