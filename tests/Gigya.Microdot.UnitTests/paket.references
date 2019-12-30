@@ -12,6 +12,10 @@ Castle.Core
 Microsoft.Orleans.Core
 DataAnnotationsValidator
 System.ComponentModel.Annotations
+System.Net.Http
+System.Runtime.Caching
+Microsoft.CSharp
+Microsoft.NET.Test.Sdk
 
 # Remove after the transition to netcore completed
 System.ServiceProcess.ServiceController

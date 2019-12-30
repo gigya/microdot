@@ -5,3 +5,6 @@ Nito.AsyncEx
 System.Collections.Immutable
 System.Threading.Tasks.Dataflow
 System.ValueTuple
+System.ComponentModel.Annotations
+System.Net.Http
+System.Runtime.Caching

@@ -8,12 +8,14 @@ copy_content_to_output_dir: always
 nuget Gigya.ServiceContract ~> 2.0
 
 # .Net
+nuget Microsoft.CSharp ~> 4.7
 nuget System.ComponentModel.Annotations ~> 4.0
+nuget System.Data.DataSetExtensions ~> 4.5
 nuget System.Diagnostics.PerformanceCounter 4.5.0 
 nuget System.Net.Http ~> 4.3
-nuget System.ValueTuple
-nuget Microsoft.CSharp ~> 4.7
+nuget System.Runtime.Caching ~> 4.7
 nuget System.ServiceProcess.ServiceController ~> 4.7
+nuget System.ValueTuple
 
 #
 nuget Metrics.NET ~> 0.0
@@ -30,7 +32,8 @@ nuget Microsoft.Orleans.OrleansProviders 2.4.3
 nuget Microsoft.Orleans.OrleansSqlUtils 2.4.3
 nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.3
 nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.3
-nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.3
+#nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.3
+nuget Microsoft.Orleans.CodeGenerator.MSBuild 2.4.3
 nuget Microsoft.Orleans.Client 2.4.3
 nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.3
 nuget Microsoft.AspNetCore.Http.Features 2.2
@@ -69,3 +72,4 @@ nuget FluentAssertions ~> 5.0
 nuget Nuget.CommandLine ~> 5.0
 nuget Shouldly ~> 3.0
 nuget NLog ~> 4.0
+nuget Microsoft.NET.Test.Sdk ~> 16.2

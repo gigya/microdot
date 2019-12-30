@@ -6,8 +6,6 @@
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Hosting</AssemblyTitle>
     <Product>Gigya.Microdot.Hosting</Product>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DefineConstants>CODE_ANALYSIS;DEBUG;TRACE</DefineConstants>
     <NoWarn>1587</NoWarn>
   </PropertyGroup>

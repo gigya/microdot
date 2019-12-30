@@ -21,7 +21,6 @@
 #endregion
 
 using System.Reflection;
-using System.Reflection.DispatchProxy;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {

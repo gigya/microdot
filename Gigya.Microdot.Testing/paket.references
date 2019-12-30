@@ -1,4 +1,6 @@
 Gigya.ServiceContract
 Ninject
 Microsoft.Orleans.Client
+Microsoft.CSharp
+System.Net.Http
 

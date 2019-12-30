@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using FluentAssertions;
 
@@ -356,7 +355,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 //Disable  TracingContext.SetRequestID("1");
 
-                CallContext.FreeNamedDataSlot("#ORL_RC");
+                //CallContext.FreeNamedDataSlot("#ORL_RC");
 
                 int counter = 0;
                 var messageHandler = new MockHttpMessageHandler();
@@ -410,7 +409,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 //Disable  TracingContext.SetRequestID("1");
 
-                CallContext.FreeNamedDataSlot("#ORL_RC");
+                //CallContext.FreeNamedDataSlot("#ORL_RC");
 
                 int counter = 0;
                 var messageHandler = new MockHttpMessageHandler();
