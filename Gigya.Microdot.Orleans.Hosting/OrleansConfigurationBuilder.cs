@@ -109,7 +109,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                     // A workaround for an Orleans issue
                     // to ensure the stack trace properly de/serialized
                     // Gigya.Microdot.UnitTests.Serialization.ExceptionSerializationTests
-                    options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
+                    options.SerializationProviders.Add(typeof(NonSerializedExceptionsSerializer));
 
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })

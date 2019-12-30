@@ -37,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     {
                         // Configure the same, but pointless for exceptions
                         options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
-                        options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
+                        options.SerializationProviders.Add(typeof(NonSerializedExceptionsSerializer));
                         options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                     })
                 .Build();
@@ -100,6 +100,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void OrleansSerialization_HttpRequestException_IsEquivalent()
         {
+            System.Diagnostics.Debugger.Launch();
+
             var expected = new HttpRequestException("HTTP request exception").ThrowAndCatch();
 
             var actual1 = (HttpRequestException)_serializationManager.DeepCopy(expected);
