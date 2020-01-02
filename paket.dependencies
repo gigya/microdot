@@ -48,7 +48,7 @@ nuget Microsoft.Extensions.FileSystemGlobbing ~> 2
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 
-nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 2
+nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 3
 nuget Microsoft.Extensions.DependencyInjection ~> 2
 
 # Ninject

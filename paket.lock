@@ -112,7 +112,7 @@ NUGET
       Microsoft.Extensions.FileProviders.Physical (>= 2.2)
     Microsoft.Extensions.DependencyInjection (2.2)
       Microsoft.Extensions.DependencyInjection.Abstractions (>= 2.2)
-    Microsoft.Extensions.DependencyInjection.Abstractions (2.2)
+    Microsoft.Extensions.DependencyInjection.Abstractions (3.1)
     Microsoft.Extensions.DependencyModel (2.1)
       Microsoft.DotNet.PlatformAbstractions (>= 2.1)
       Newtonsoft.Json (>= 9.0.1)
