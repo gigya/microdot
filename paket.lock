@@ -132,7 +132,7 @@ NUGET
       Microsoft.Extensions.DependencyInjection.Abstractions (>= 2.2)
       Microsoft.Extensions.Logging.Abstractions (>= 2.2)
       Microsoft.Extensions.Options (>= 2.2)
-    Microsoft.Extensions.Logging.Abstractions (2.2)
+    Microsoft.Extensions.Logging.Abstractions (3.1)
     Microsoft.Extensions.Logging.Configuration (2.2)
       Microsoft.Extensions.Logging (>= 2.2)
       Microsoft.Extensions.Options.ConfigurationExtensions (>= 2.2)
