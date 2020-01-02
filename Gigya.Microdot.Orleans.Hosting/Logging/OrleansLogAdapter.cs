@@ -24,7 +24,6 @@ using System;
 using System.Diagnostics;
 using Gigya.Microdot.Interfaces.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
@@ -102,7 +101,7 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
 
         public IDisposable BeginScope<TState>(TState state)
         {
-            return NullScope.Instance;
+            return null;
         }
 
         public void Write(TraceEventType level, Action<LogDelegate> log, string file = "", int line = 0, string method = null)
