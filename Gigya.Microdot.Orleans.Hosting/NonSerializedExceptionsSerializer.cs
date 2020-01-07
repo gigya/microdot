@@ -24,6 +24,7 @@
 
 using Orleans.Serialization;
 using System;
+using System.Net.Http;
 using System.Reflection;
 
 // ReSharper disable AssignNullToNotNullAttribute
@@ -46,7 +47,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         {
             return
                 typeof(Exception).IsAssignableFrom(itemType)
-                && itemType.GetCustomAttributes(typeof(SerializableAttribute), false).Length == 0;
+                && itemType.GetCustomAttributes(typeof(SerializableAttribute), false).Length == 0 ||
+                typeof(HttpRequestException).IsAssignableFrom(itemType);
         }
 
         public void Serialize(object item, ISerializationContext context, Type expectedType)
@@ -56,7 +58,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             ((ILBasedSerializer)context.ServiceProvider.GetService(typeof(ILBasedSerializer))).Serialize(item, context, expectedType);
 
-            static FieldInfo getStateTraceStringField(Type type)
+            FieldInfo getStateTraceStringField(Type type)
             {
                 if (type == typeof(Exception))
                     return type.GetField("_stackTraceString", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

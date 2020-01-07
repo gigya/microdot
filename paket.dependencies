@@ -16,6 +16,7 @@ nuget System.Net.Http ~> 4.3
 nuget System.Runtime.Caching ~> 4.7
 nuget System.ServiceProcess.ServiceController ~> 4.7
 nuget System.ValueTuple
+nuget System.Reflection.Emit ~> 4.7
 
 #
 nuget Metrics.NET ~> 0.0

@@ -25,7 +25,7 @@ using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
-
+using Gigya.Microdot.System_Reflection.DispatchProxy;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {

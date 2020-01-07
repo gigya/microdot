@@ -3,7 +3,7 @@
   <PropertyGroup>
     <RootNamespace>Gigya.Common.Contracts.UnitTests</RootNamespace>
     <AssemblyName>Gigya.Common.Contracts.UnitTests</AssemblyName>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <noWarn>1591</noWarn>

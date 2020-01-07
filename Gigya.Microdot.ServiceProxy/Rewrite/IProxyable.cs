@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.System_Reflection.DispatchProxy;
 using System.Reflection;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite

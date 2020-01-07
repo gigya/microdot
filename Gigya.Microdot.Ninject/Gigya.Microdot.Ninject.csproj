@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Ninject</AssemblyTitle>
     <Product>Gigya.Microdot.Ninject</Product>

@@ -8,3 +8,4 @@ System.ValueTuple
 System.ComponentModel.Annotations
 System.Net.Http
 System.Runtime.Caching
+System.Reflection.Emit
