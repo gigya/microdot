@@ -4,7 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.ServiceDiscovery</AssemblyTitle>
-    <Product>Gigya.Microdot.ServiceDiscovery</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />

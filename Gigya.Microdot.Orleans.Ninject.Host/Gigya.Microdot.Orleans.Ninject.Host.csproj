@@ -5,9 +5,6 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Orleans.Ninject.Host</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Ninject.Host</Product>
-    <AssemblyTitle>Gigya.Microdot.Orleans.Ninject.Host</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Ninject.Host</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />

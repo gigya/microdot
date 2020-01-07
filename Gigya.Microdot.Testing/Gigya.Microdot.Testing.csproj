@@ -6,9 +6,6 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Testing</AssemblyTitle>
-    <Product>Gigya.Microdot.Testing</Product>
-    <AssemblyTitle>Gigya.Microdot.Testing</AssemblyTitle>
-    <Product>Gigya.Microdot.Testing</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
@@ -25,6 +22,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

@@ -4,9 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Fakes</AssemblyTitle>
-    <Product>Gigya.Microdot.Fakes</Product>
-    <AssemblyTitle>Gigya.Microdot.Fakes</AssemblyTitle>
-    <Product>Gigya.Microdot.Fakes</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />

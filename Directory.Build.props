@@ -1,0 +1,10 @@
+<Project>
+ <PropertyGroup>
+   <Company>Gigya Inc.</Company>
+   <Copyright>© 2018 Gigya Inc.</Copyright>
+   <Product>Microdot Framework</Product>
+   <Description>Microdot Framework</Description>
+   <AssemblyVersion></AssemblyVersion>
+   <Version>2.1.0</Version>
+ </PropertyGroup>
+</Project>

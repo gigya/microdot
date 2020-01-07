@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyTitle>Gigya.Microdot.Interfaces</AssemblyTitle>
-    <Product>Gigya.Microdot.Interfaces</Product>
     <noWarn>1591</noWarn>
   </PropertyGroup>
   <ItemGroup>

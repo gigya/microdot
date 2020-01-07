@@ -4,9 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Logging.NLog</AssemblyTitle>
-    <Product>Gigya.Microdot.Logging.NLog</Product>
-    <AssemblyTitle>Gigya.Microdot.Logging.NLog</AssemblyTitle>
-    <Product>Gigya.Microdot.Logging.NLog</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />

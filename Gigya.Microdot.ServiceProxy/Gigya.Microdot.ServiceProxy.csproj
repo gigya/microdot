@@ -4,9 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.ServiceProxy</AssemblyTitle>
-    <Product>Gigya.Microdot.ServiceProxy</Product>
-    <AssemblyTitle>Gigya.Microdot.ServiceProxy</AssemblyTitle>
-    <Product>Gigya.Microdot.ServiceProxy</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />

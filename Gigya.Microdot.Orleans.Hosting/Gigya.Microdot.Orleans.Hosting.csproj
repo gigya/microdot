@@ -4,9 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Orleans.Host</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Host</Product>
-    <AssemblyTitle>Gigya.Microdot.Orleans.Host</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Host</Product>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

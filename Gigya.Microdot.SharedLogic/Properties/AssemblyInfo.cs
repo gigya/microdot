@@ -43,6 +43,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Ninject.Host")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Ninject.Host")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Ninject")]
-
-
 [assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]

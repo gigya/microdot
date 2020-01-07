@@ -4,7 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.SharedLogic</AssemblyTitle>
-    <Product>Gigya.Microdot.SharedLogic</Product>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
