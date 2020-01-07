@@ -104,7 +104,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
 
             var actual1 = (HttpRequestException)_serializationManager.DeepCopy(expected);
             AssertExceptionsAreEqual(expected, actual1);
-            var str = expected.StackTrace;
+
             var actual = _serializationManager.RoundTripSerializationForTesting(expected);
             var actual2 = _serializationManager.DeserializeFromByteArray<HttpRequestException>(_serializationManager.SerializeToByteArray(expected));
             

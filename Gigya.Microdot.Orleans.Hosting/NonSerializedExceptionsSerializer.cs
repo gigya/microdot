@@ -26,11 +26,23 @@ using Orleans.Serialization;
 using System;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
+    /// <summary>
+    /// Serializes exceptions that aren't marked with <see cref="SerializableAttribute"/>
+    /// </summary>
+    /// <remarks>
+    /// In netcore some exceptions may not have the <see cref="SerializableAttribute"/> which
+    /// makes their binary serialization impossible with the framework itself. To tackle that
+    /// this serializer reroutes the serializetion to <see cref="ILBasedSerializer"/> and 
+    /// forces the exception stack trace field to be initialized.
+    /// The serializer also handles <see cref="HttpRequestException"/> since it failes to
+    /// serialize the stack trace correctly (net472).
+    /// </remarks>
     public class NonSerializedExceptionsSerializer : IExternalSerializer
     {
         public object DeepCopy(object source, ICopyContext context)
