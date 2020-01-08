@@ -120,12 +120,14 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             if (_orleansConfig.Dashboard.Enable)
             {
-                hostBuilder.UseDashboard(o =>
-                    {
-                        o.Port = _endPointDefinition.SiloDashboardPort;
-                        o.CounterUpdateIntervalMs = (int)TimeSpan.Parse(_orleansConfig.Dashboard.WriteInterval).TotalMilliseconds;
-                        o.HideTrace = _orleansConfig.Dashboard.HideTrace;
-                    });
+
+                //    hostBuilder.UseDashboard(o =>
+                //        {
+                //            o.Port = _endPointDefinition.SiloDashboardPort;
+                //            o.CounterUpdateIntervalMs = (int)TimeSpan.Parse(_orleansConfig.Dashboard.WriteInterval).TotalMilliseconds;
+                //            o.HideTrace = _orleansConfig.Dashboard.HideTrace;
+                //        });
+                //}
             }
 
             SetGrainCollectionOptions(hostBuilder);
@@ -145,8 +147,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             hostBuilder.Configure<ClusterMembershipOptions>(options =>
             {
-                // Minimizes artificial startup delay to a maximum of 0.5 seconds (instead of 10 seconds)
-                options.ExpectedClusterSize = 1;
+               
             });
 
             SetReminder(hostBuilder);
