@@ -130,7 +130,6 @@ namespace Gigya.Microdot.UnitTests.Events
 
 
         [Test]
-        [Ignore("Restore when assembly info will be correctly generated.")]
         public async Task PublishClientCallEvent()
         {
             var evt = new ClientCallEvent

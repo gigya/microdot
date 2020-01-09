@@ -35,21 +35,19 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
 
     public class EnvironmentInstance : IEnvironment
     {
-        private readonly IEnvironmentVariableProvider _environmentVariableProvider;
         private readonly string _region;
         private const string DEFAULT_INSTANCE_NAME = "DefaultInstance";
 
         private Func<DataCentersConfig> GetDataCentersConfig { get; }
 
-        public EnvironmentInstance(IEnvironmentVariableProvider environmentVariableProvider, Func<DataCentersConfig> getDataCentersConfig, CurrentApplicationInfo applicationInfo)
+        public EnvironmentInstance(Func<DataCentersConfig> getDataCentersConfig, CurrentApplicationInfo applicationInfo)
         {
-            _environmentVariableProvider = environmentVariableProvider;
             GetDataCentersConfig = getDataCentersConfig;
-            Zone = environmentVariableProvider.GetEnvironmentVariable("ZONE") ?? environmentVariableProvider.GetEnvironmentVariable("DC");
-            _region = environmentVariableProvider.GetEnvironmentVariable("REGION");
-            DeploymentEnvironment = environmentVariableProvider.GetEnvironmentVariable("ENV");
-            ConsulAddress = environmentVariableProvider.GetEnvironmentVariable("CONSUL");
-            InstanceName = applicationInfo.InstanceName ?? environmentVariableProvider.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME") ?? DEFAULT_INSTANCE_NAME;
+            Zone = Environment.GetEnvironmentVariable("ZONE") ?? Environment.GetEnvironmentVariable("DC");
+            _region = Environment.GetEnvironmentVariable("REGION");
+            DeploymentEnvironment = Environment.GetEnvironmentVariable("ENV");
+            ConsulAddress = Environment.GetEnvironmentVariable("CONSUL");
+            InstanceName = applicationInfo.InstanceName ?? Environment.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME") ?? DEFAULT_INSTANCE_NAME;
 
             if (string.IsNullOrEmpty(Zone) || string.IsNullOrEmpty(DeploymentEnvironment))
                 throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %ZONE%, %ENV%");
@@ -63,11 +61,10 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
 
         [Obsolete("To be deleted on version 2.0")]
         public void SetEnvironmentVariableForProcess(string name, string value)
-        {
-            _environmentVariableProvider.SetEnvironmentVariableForProcess(name, value);
-        }
+            => Environment.SetEnvironmentVariable(name, value);
 
         [Obsolete("To be deleted on version 2.0")]
-        public string GetEnvironmentVariable(string name) => _environmentVariableProvider.GetEnvironmentVariable(name); 
+        public string GetEnvironmentVariable(string name)
+            => Environment.GetEnvironmentVariable(name);
     }
 }

@@ -1,24 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>Gigya.Common.Contracts.UnitTests</RootNamespace>
-    <AssemblyName>Gigya.Common.Contracts.UnitTests</AssemblyName>
     <TargetFramework>net472</TargetFramework>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <noWarn>1591</noWarn>
-    <AssemblyTitle>Gigya.Microdot.ServiceContract.UnitTests</AssemblyTitle>
-    <Version>2.4.1.0</Version>
-    <AssemblyVersion>2.4.1.0</AssemblyVersion>
-    <FileVersion>2.4.1.0</FileVersion>
-    <AssemblyTitle>Gigya.Microdot.ServiceContract.UnitTests</AssemblyTitle>
-    <Version>2.4.1.0</Version>
-    <AssemblyVersion>2.4.1.0</AssemblyVersion>
-    <FileVersion>2.4.1.0</FileVersion>
-    <AssemblyTitle>Gigya.Microdot.ServiceContract.UnitTests</AssemblyTitle>
-    <Version>2.4.1.0</Version>
-    <AssemblyVersion>2.4.1.0</AssemblyVersion>
-    <FileVersion>2.4.1.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />

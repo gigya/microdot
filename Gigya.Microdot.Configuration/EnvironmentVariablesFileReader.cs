@@ -37,63 +37,61 @@ namespace Gigya.Microdot.Configuration
     ///     "EnvVar1":"Value"
     /// }
     /// </summary>
-    public class EnvironmentVariablesFileReader
-    {
-        private const string GIGYA_ENV_VARS_FILE = "GIGYA_ENVVARS_FILE";
-        private const string ENV_FILEPATH = "{0}/gigya/environmentVariables.json";
-        private readonly string locEnvFilePath;
+    //public class EnvironmentVariablesFileReader
+    //{
+    //    private const string GIGYA_ENV_VARS_FILE = "GIGYA_ENVVARS_FILE";
+    //    private const string ENV_FILEPATH = "{0}/gigya/environmentVariables.json";
+    //    private readonly string locEnvFilePath;
 
-        private IEnvironmentVariableProvider EnvironmentVariableProvider { get; }
-        private IFileSystem FileSystem { get; }
+    //    private IFileSystem FileSystem { get; }
 
-        /// <summary>
-        /// Parses the content of environment variables file content.
-        /// </summary>        
-        public EnvironmentVariablesFileReader(IFileSystem fileSystem, IEnvironmentVariableProvider environmentVariableProvider)
-        {
-            locEnvFilePath = environmentVariableProvider.GetEnvironmentVariable(GIGYA_ENV_VARS_FILE);
+    //    /// <summary>
+    //    /// Parses the content of environment variables file content.
+    //    /// </summary>        
+    //    public EnvironmentVariablesFileReader(IFileSystem fileSystem)
+    //    {
+    //        locEnvFilePath = Environment.GetEnvironmentVariable(GIGYA_ENV_VARS_FILE);
 
-            if (string.IsNullOrEmpty(locEnvFilePath))
-            {
-                locEnvFilePath = string.Format(ENV_FILEPATH, environmentVariableProvider.PlatformSpecificPathPrefix);
-            }
+    //        if (string.IsNullOrEmpty(locEnvFilePath))
+    //        {
+    //            locEnvFilePath = string.Format(ENV_FILEPATH, environmentVariableProvider.PlatformSpecificPathPrefix);
+    //        }
 
-            EnvironmentVariableProvider = environmentVariableProvider;
-            FileSystem = fileSystem;
-        }
+    //        FileSystem = fileSystem;
+    //    }
 
 
-        /// <summary>
-        /// Reads each property in file and sets its environment variable.
-        /// </summary>
-        /// <returns>Names of environment variables read from file</returns>
-        public void ReadFromFile()
-        {
-            JObject envVarsObject;
+    //    /// <summary>
+    //    /// Reads each property in file and sets its environment variable.
+    //    /// </summary>
+    //    /// <returns>Names of environment variables read from file</returns>
+    //    public void ReadFromFile()
+    //    {
+    //        JObject envVarsObject;
 
-            try
-            {
-                var text = FileSystem.TryReadAllTextFromFile(locEnvFilePath);
+    //        try
+    //        {
+    //            var text = FileSystem.TryReadAllTextFromFile(locEnvFilePath);
 
-                if (string.IsNullOrEmpty(text))
-                    return;
+    //            if (string.IsNullOrEmpty(text))
+    //                return;
 
-                envVarsObject = JObject.Parse(text);
-            }
-            catch (Exception ex)
-            {
-                throw new ConfigurationException($"Missing or invalid configuration file: {locEnvFilePath}", ex);
-            }
+    //            envVarsObject = JObject.Parse(text);
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            throw new ConfigurationException($"Missing or invalid configuration file: {locEnvFilePath}", ex);
+    //        }
 
-            if (envVarsObject == null)
-                return;
+    //        if (envVarsObject == null)
+    //            return;
 
-            var properties = envVarsObject.Properties().Where(a => a.HasValues).ToArray();
+    //        var properties = envVarsObject.Properties().Where(a => a.HasValues).ToArray();
 
-            foreach (var property in properties)
-            {
-                 EnvironmentVariableProvider.SetEnvironmentVariableForProcess(property.Name, property.Value.Value<string>());
-            }
-        }
-    }
+    //        foreach (var property in properties)
+    //        {
+    //             EnvironmentVariableProvider.SetEnvironmentVariableForProcess(property.Name, property.Value.Value<string>());
+    //        }
+    //    }
+    //}
 }

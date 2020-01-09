@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Configuration;
+using System.IO;
+using System.Linq;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -56,73 +59,37 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        [Ignore("To be reenabled after environment variable provider phased out.")]
-        public void ReadsEnvFromDifferentFile()
+        public void ReadsEnvFromFile()
         {
-            Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", "C:\\gigya\\envVars.json");
-            new EnvironmentVariableProvider(_fileSystem,new CurrentApplicationInfo("test"));
+            var path = "some/path";
 
-            _fileSystem.Received().TryReadAllTextFromFile("c:\\gigya\\envvars.json");
+            var entries = EnvironmentVariables.ReadFromFile(_fileSystem, path);
+
+            Assert.IsTrue(
+                Enumerable.SequenceEqual(
+                    entries.Select(x => (x.Key, x.Value)),
+                    new[] {
+                        ("REGION", "il1"),
+                        ("ZONE", "il1a"),
+                        ("ENV", "orl11"),
+                        ("GIGYA_CONFIG_PATHS_FILE", "C:\\gigya\\Config\\loadPaths1.json"),
+                    }));
+                
+            _fileSystem.Received().TryReadAllTextFromFile(path);
         }
-
-        [Test]
-        [Ignore("To be reenabled after environment variable provider phased out.")]
-        public void ReadsEnvFromDefaultFile()
-        {
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
-
-            _fileSystem.Received().TryReadAllTextFromFile(environmentVariableProvider.PlatformSpecificPathPrefix + "/gigya/environmentVariables.json");
-        }
-
-        [Test]
-        public void ReadAndSeEnvVariables_SomeEmpty()
-        {
-            Environment.SetEnvironmentVariable("ZONE", "il1b");
-
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
-
-            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("il1a");
-            environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe("il1");
-            environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
-            environmentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
-        }
-
-
-        [Test]
-        public void ReadAndSeEnvVariables_AllEmpty()
-        {
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
-
-            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe("il1a");
-            environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe("il1");
-            environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe("orl11");
-            environmentVariableProvider.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE").ShouldBe("c:\\gigya\\config\\loadpaths1.json");
-        }
-
-        [Test]
-        public void OnNotExistingFile_DoNothing()
-        {
-            _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => null);
-
-            var environmentVariableProvider = new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
-
-            // assert environment variables were not changed
-            environmentVariableProvider.GetEnvironmentVariable("ZONE").ShouldBe(DEFAULT_ZONE);
-            environmentVariableProvider.GetEnvironmentVariable("REGION").ShouldBe(DEFAULT_REGION);
-            environmentVariableProvider.GetEnvironmentVariable("ENV").ShouldBe(DEFAULT_ENV);
-        }
-
 
         [Test]
         public void OnFileParsingFailure_DoNothing()
         {
+            var path = "some/path";
+
             _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => @"Invalid JSON file");
 
-            Action doAction = () =>
-                              {
-                                  new EnvironmentVariableProvider(_fileSystem, new CurrentApplicationInfo("test"));
-                              };
-            doAction.ShouldThrow<ConfigurationException>();
+            Action doAction = () => {
+                EnvironmentVariables.ReadFromFile(_fileSystem, path);
+            };
+
+            doAction.ShouldThrow<ConfigurationErrorsException>();
         }
     }
 }

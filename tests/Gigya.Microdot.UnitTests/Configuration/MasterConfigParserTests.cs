@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using Gigya.Common.Contracts.Exceptions;
@@ -16,10 +17,10 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
+    [NonParallelizable]
     public class MasterConfigParserTests
     {
         private IFileSystem _fileSystem;
-        private IEnvironmentVariableProvider environmentVariableProvider;
 
         private static string env = Environment.GetEnvironmentVariable("ENV");
         private static string zone = Environment.GetEnvironmentVariable("ZONE");
@@ -45,10 +46,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
             _fileSystem = Substitute.For<IFileSystem>();
             _fileSystem.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => testData);
             _fileSystem.Exists(Arg.Any<string>()).Returns(a => true);
-
-            environmentVariableProvider = Substitute.For<IEnvironmentVariableProvider>();
-            environmentVariableProvider.PlatformSpecificPathPrefix.Returns("c:");
-
         }
 
 
@@ -76,10 +73,10 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
 
         [Test]
-        [Ignore("To be reenabled after environment variable provider phased out.")]
+        //[Ignore("To be reenabled after environment variable provider phased out.")]
         public void AllPathExists_NoEnvironmentVariablesExists_EnvironmentExceptionExpected()
         {
-            Action act = () => BaseTest(new Dictionary<string, string>(), new ConfigFileDeclaration[0]);
+            Action act = () => BaseTest(new Dictionary<string, string> { { "ENV", null }, { "ZONE", null } }, new ConfigFileDeclaration[0]);
 
             act.ShouldThrow<EnvironmentException>()
                .Message.ShouldContain("Some environment variables are not defined, please add them");
@@ -93,9 +90,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [TestCase(@"[{Pattern: {}, Priority:  1 }]", TestName = "Invalid Pattern")]
         [TestCase(@"[{Pattern: './*.config', Priority:  null }]", TestName = "Invalid Priority")]
         public void FileFormatIsInvalid_ShouldThrowEnvironmentException(string testData)
-        {            
+        {
             _fileSystem.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => testData);
-            Action act = () => new ConfigurationLocationsParser(_fileSystem, environmentVariableProvider, new CurrentApplicationInfo(""));
+            Action act = () => new ConfigurationLocationsParser(_fileSystem, new CurrentApplicationInfo(""));
             
             act.ShouldThrow<EnvironmentException>()
                 .Message.ShouldContain("Problem reading");
@@ -110,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             {Pattern: '$(prefix)/Gigya/Config/$(appName)/*.config',            Priority:  1, SearchOption: 'TopDirectoryOnly' }]";
 
             _fileSystem.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => testData);
-            Action act = () => new ConfigurationLocationsParser(_fileSystem, environmentVariableProvider, new CurrentApplicationInfo(""));
+            Action act = () => new ConfigurationLocationsParser(_fileSystem, new CurrentApplicationInfo(""));
 
             act.ShouldThrow<EnvironmentException>()
                 .Message.ShouldContain("some configurations lines have duplicate priorities");
@@ -118,19 +115,30 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
         public void BaseTest(Dictionary<string, string>  envDictionary, ConfigFileDeclaration[] expected)
         {
+            var oldEnv = new Dictionary<string, string>();
 
-            environmentVariableProvider.GetEnvironmentVariable(Arg.Any<string>()).Returns(key =>  {
-                envDictionary.TryGetValue(key.Arg<string>(), out string val);
-                return val;
-                                                                         });
-
-            var configs = new ConfigurationLocationsParser(_fileSystem, environmentVariableProvider, new CurrentApplicationInfo(""));
-            configs.ConfigFileDeclarations.Count.ShouldBe(expected.Length);
-
-            foreach (var pair in configs.ConfigFileDeclarations.Zip(expected, (first, second) => new { first, second }))
+            foreach (var e in envDictionary)
             {
-                pair.first.Pattern.ShouldBe(pair.second.Pattern);
-                pair.first.Priority.ShouldBe(pair.second.Priority);
+                oldEnv[e.Key] = Environment.GetEnvironmentVariable(e.Key);
+                Environment.SetEnvironmentVariable(e.Key, e.Value);
+            }
+
+            try
+            {
+                var configs = new ConfigurationLocationsParser(_fileSystem, new CurrentApplicationInfo(""));
+                configs.ConfigFileDeclarations.Count.ShouldBe(expected.Length);
+
+                foreach (var pair in configs.ConfigFileDeclarations.Zip(expected, (first, second) => new { first, second }))
+                {
+                    pair.first.Pattern.ShouldBe(pair.second.Pattern);
+                    pair.first.Priority.ShouldBe(pair.second.Priority);
+                }
+            }
+
+            finally
+            {
+                foreach (var e in oldEnv)
+                    Environment.SetEnvironmentVariable(e.Key, e.Value);
             }
         }
     }

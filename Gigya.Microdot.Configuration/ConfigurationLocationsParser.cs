@@ -65,16 +65,16 @@ namespace Gigya.Microdot.Configuration
         public string ConfigRoot { get; }
         public string LoadPathsFilePath { get; }
 
-        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, IEnvironmentVariableProvider environmentVariableProvider, CurrentApplicationInfo appInfo)
+        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, CurrentApplicationInfo appInfo)
         {
             AppName = appInfo.Name;
 
             ConfigRoot =
-                environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_ROOT).NullWhenEmpty()
+                Environment.GetEnvironmentVariable(GIGYA_CONFIG_ROOT).NullWhenEmpty()
                 ?? Path.Combine(Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT);
 
             LoadPathsFilePath =
-                environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE).NullWhenEmpty()
+                Environment.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE).NullWhenEmpty()
                 ?? Path.Combine(ConfigRoot, LOADPATHS_JSON);
             
             Trace.WriteLine("Started parsing configurations from location " + LoadPathsFilePath +"\n");

@@ -32,7 +32,7 @@ using Newtonsoft.Json.Linq;
 namespace Gigya.Microdot.Configuration
 {
     [Obsolete]
-    public class EnvironmentVariableProvider : IEnvironmentVariableProvider
+    public class EnvironmentVariableProvider
     {
         private const string GIGYA_ENV_VARS_JSON_FILE = "GIGYA_ENV_VARS_JSON_FILE";
 
