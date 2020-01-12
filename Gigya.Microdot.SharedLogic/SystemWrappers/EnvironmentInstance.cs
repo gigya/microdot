@@ -21,9 +21,11 @@
 #endregion
 
 using System;
+using System.IO;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {
@@ -37,6 +39,12 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
     {
         private readonly string _region;
         private const string DEFAULT_INSTANCE_NAME = "DefaultInstance";
+        
+        private const string GIGYA_CONFIG_ROOT_DEFAULT = "config";
+        private const string LOADPATHS_JSON = "loadPaths.json";
+
+        private const string GIGYA_CONFIG_ROOT_KEY = "GIGYA_CONFIG_ROOT";
+        private const string GIGYA_CONFIG_PATHS_FILE_KEY = "GIGYA_CONFIG_PATHS_FILE";
 
         private Func<DataCentersConfig> GetDataCentersConfig { get; }
 
@@ -51,13 +59,52 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
 
             if (string.IsNullOrEmpty(Zone) || string.IsNullOrEmpty(DeploymentEnvironment))
                 throw new EnvironmentException("One or more of the following environment variables, which are required, have not been set: %ZONE%, %ENV%");
+
+            ConfigRoot = GetConfigRoot();
+            LoadPathsFile = GetLoadPathsFile();
         }
-       
+
+        private DirectoryInfo GetConfigRoot()
+        {
+            var configRootPath =
+                            Environment.GetEnvironmentVariable(GIGYA_CONFIG_ROOT_KEY).NullWhenEmpty()
+                            ?? Path.Combine(Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT);
+
+            var dirInfo = new DirectoryInfo(configRootPath);
+
+            if (dirInfo.Exists == false)
+                throw new EnvironmentException(
+                    $"ConfigRoot path doesn't exist '{ dirInfo.FullName }'. " +
+                    $"Use '{GIGYA_CONFIG_ROOT_KEY}' environment variable to override default path.");
+
+            return dirInfo;
+        }
+
+        private FileInfo GetLoadPathsFile()
+        {
+            var loadPathsFilePath =
+                            Environment.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE_KEY).NullWhenEmpty()
+                            ?? Path.Combine(ConfigRoot.FullName, LOADPATHS_JSON);
+
+            var fileInfo = new FileInfo(loadPathsFilePath);
+
+            if (fileInfo.Exists == false)
+                throw new EnvironmentException(
+                    $"LoadPaths file isn't found at '{ fileInfo.FullName }'. " +
+                    $"Use '{GIGYA_CONFIG_PATHS_FILE_KEY}' environment variable to define absolute path" +
+                    $"to the file or place a 'loadPaths.json' at your config root.");
+
+            return fileInfo;
+        }
+
+
         public string InstanceName { get; }
         public string Zone { get; }
         public string Region => _region ?? GetDataCentersConfig().Current; // if environmentVariable %REGION% does not exist, take the region from DataCenters configuration (the region was previously called "DataCenter")
         public string DeploymentEnvironment { get; }        
         public string ConsulAddress { get; }
+        public DirectoryInfo ConfigRoot { get; }
+        public FileInfo LoadPathsFile { get; }
 
         [Obsolete("To be deleted on version 2.0")]
         public void SetEnvironmentVariableForProcess(string name, string value)

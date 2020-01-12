@@ -21,7 +21,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
         private const string DEFAULT_ZONE = "default_zone";
         private const string DEFAULT_ENV = "default_env";
 
-        private IFileSystem _fileSystem;
         private string _originalENV;
         private string _originalREGION;
         private string _originalZone;
@@ -29,15 +28,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [SetUp]
         public void SetUp()
         {
-            _fileSystem = Substitute.For<IFileSystem>();
-
-            _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => @"{
-                REGION: 'il1',
-                ZONE: 'il1a',
-	            ENV: 'orl11',	
-	            GIGYA_CONFIG_PATHS_FILE: 'C:\\gigya\\Config\\loadPaths1.json',
-            }");
-
             _originalREGION = Environment.GetEnvironmentVariable("REGION");
             _originalZone = Environment.GetEnvironmentVariable("ZONE");
             _originalENV = Environment.GetEnvironmentVariable("ENV");
@@ -61,35 +51,58 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [Test]
         public void ReadsEnvFromFile()
         {
-            var path = "some/path";
+            var path = Path.GetTempFileName();
 
-            var entries = EnvironmentVariables.ReadFromFile(_fileSystem, path);
+            try
+            {
+                File.WriteAllText(path, @"{
+                    REGION: 'il1',
+                    ZONE: 'il1a',
+	                ENV: 'orl11',	
+	                GIGYA_CONFIG_PATHS_FILE: 'C:\\gigya\\Config\\loadPaths1.json',
+                }");
+                
+                var entries = EnvironmentVariables.ReadFromJsonFile(path);
 
-            Assert.IsTrue(
-                Enumerable.SequenceEqual(
-                    entries.Select(x => (x.Key, x.Value)),
-                    new[] {
+                Assert.IsTrue(
+                    Enumerable.SequenceEqual(
+                        entries.Select(x => (x.Key, x.Value)),
+                        new[] {
                         ("REGION", "il1"),
                         ("ZONE", "il1a"),
                         ("ENV", "orl11"),
                         ("GIGYA_CONFIG_PATHS_FILE", "C:\\gigya\\Config\\loadPaths1.json"),
-                    }));
-                
-            _fileSystem.Received().TryReadAllTextFromFile(path);
+                        }));
+            }
+
+            finally
+            {
+                File.Delete(path);
+            }
         }
 
         [Test]
         public void OnFileParsingFailure_DoNothing()
         {
-            var path = "some/path";
+            var path = Path.GetTempFileName();
 
-            _fileSystem.TryReadAllTextFromFile(Arg.Any<string>()).Returns(a => @"Invalid JSON file");
+            try
+            {
+                File.WriteAllText(path, @"invalid file");
 
-            Action doAction = () => {
-                EnvironmentVariables.ReadFromFile(_fileSystem, path);
-            };
 
-            doAction.ShouldThrow<ConfigurationErrorsException>();
+                Action doAction = () =>
+                {
+                    EnvironmentVariables.ReadFromJsonFile(path);
+                };
+
+                doAction.ShouldThrow<ConfigurationErrorsException>();
+            }
+
+            finally
+            {
+                File.Delete(path);
+            }
         }
     }
 }

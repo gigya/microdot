@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.IO;
 
 namespace Gigya.Microdot.Interfaces.SystemWrappers
 {
@@ -49,6 +50,16 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         /// multiple identical applications running on the same host.
         /// </summary>
         string InstanceName { get; }
+        
+        /// <summary>
+        /// The configuration root directory.
+        /// </summary>
+        DirectoryInfo ConfigRoot { get; }
+        
+        /// <summary>
+        /// The load paths file.
+        /// </summary>
+        FileInfo LoadPathsFile { get; }
 
         [Obsolete("To be removed on Microdot version 2.0. Use IEnvironmentVariableProvider.SetEnvironmentVariableForProcess instead")]
         void SetEnvironmentVariableForProcess(string name, string value);

@@ -49,12 +49,8 @@ namespace Gigya.Microdot.Configuration
     /// </remarks>
     public class ConfigurationLocationsParser: IConfigurationLocationsParser
     {
-        internal const string GIGYA_CONFIG_PATHS_FILE = "GIGYA_CONFIG_PATHS_FILE";
-        internal const string GIGYA_CONFIG_ROOT = "GIGYA_CONFIG_ROOT";
-        internal const string GIGYA_CONFIG_ROOT_DEFAULT = "config";
-        internal const string LOADPATHS_JSON = "loadPaths.json";
+        // TODO: this class isn't a service, can be simplified.
         private string AppName { get; }
-
 
         private class ErrorAggregator
         {
@@ -65,17 +61,13 @@ namespace Gigya.Microdot.Configuration
         public string ConfigRoot { get; }
         public string LoadPathsFilePath { get; }
 
-        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, CurrentApplicationInfo appInfo)
+        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, IEnvironment environment, CurrentApplicationInfo appInfo)
         {
             AppName = appInfo.Name;
 
-            ConfigRoot =
-                Environment.GetEnvironmentVariable(GIGYA_CONFIG_ROOT).NullWhenEmpty()
-                ?? Path.Combine(Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT);
+            ConfigRoot = environment.ConfigRoot.FullName;
 
-            LoadPathsFilePath =
-                Environment.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE).NullWhenEmpty()
-                ?? Path.Combine(ConfigRoot, LOADPATHS_JSON);
+            LoadPathsFilePath = environment.LoadPathsFile.FullName;
             
             Trace.WriteLine("Started parsing configurations from location " + LoadPathsFilePath +"\n");
 
