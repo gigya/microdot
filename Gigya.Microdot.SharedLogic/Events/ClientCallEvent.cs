@@ -74,5 +74,14 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.statsNetworkTime, OmitFromAudit = true)]
         public double? NetworkTimeMS => TotalTimeMS - ServerTimeMs;
 
+        [EventField(EventConsts.numDocumentsRead)]
+        public int? numDocumentsRead { get; set; }
+
+        [EventField(EventConsts.clientCallSize)]
+        public int? clientCallSize { get; set; }
+
+        [EventField(EventConsts.clientResponseSize)]
+        public int? clientResponseSize { get; set; }
+
     }
 }

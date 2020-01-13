@@ -74,6 +74,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string runtimeDC = "runtime.dc";
         public const string runtimeENV = "runtime.env";
 
+        public const string numDocumentsRead = "numDocumentsRead";
+        public const string clientCallSize = "clientCallSize";
+        public const string clientResponseSize = "clientResponseSize";
+
         public const string siteID = "siteID";
         public const string apikey = "apikey";
         public const string partnerID = "partnerID";

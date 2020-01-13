@@ -380,8 +380,14 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
                     {
-                        response = await GetHttpClient(config).PostAsync(uri, httpContent).ConfigureAwait(false);
+                        HttpClient cli = GetHttpClient(config);
+
+                        response = await cli.PostAsync(uri, httpContent).ConfigureAwait(false);
+
                         responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                        clientCallEvent.clientCallSize = requestContent.Length;
+                        clientCallEvent.clientResponseSize = (responseContent != null ? responseContent.Length : 0);
                     }
                     finally
                     {
