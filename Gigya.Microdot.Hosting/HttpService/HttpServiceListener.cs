@@ -101,6 +101,12 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
         private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
+        private TaskCompletionSource<int> _ReadyToGetTraffic=new TaskCompletionSource<int>();
+
+        public void StartGettingTraffic()
+        {
+            _ReadyToGetTraffic.TrySetResult(1);
+        }
 
         public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
                                    ICertificateLocator certificateLocator, ILog log,
@@ -178,6 +184,9 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async void StartListening()
         {
+
+            await _ReadyToGetTraffic.Task;
+
             while (Listener.IsListening)
             {
                 HttpListenerContext context;

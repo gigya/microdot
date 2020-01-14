@@ -24,7 +24,7 @@ nuget Newtonsoft.Json 12.0.3
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
-nuget DataAnnotationsValidator ~> 2.1.0
+nuget DataAnnotationsValidator ~> 2.1.0 # Shouldn't it be removed?
 
 # Orleans
 nuget Microsoft.Orleans.Core 2.4.3
