@@ -24,11 +24,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Fakes.KernelUtils;
-using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -37,6 +37,7 @@ using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Ninject;
 using NSubstitute;
@@ -67,6 +68,7 @@ namespace Gigya.Microdot.Testing.Shared
             locationsParserMock.ConfigFileDeclarations.Returns(Enumerable.Empty<ConfigFileDeclaration>().ToArray());
             Rebind<IConfigurationLocationsParser>().ToConstant(locationsParserMock);
             Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
+            Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
 
             Rebind<IHealthMonitor>().To<FakeHealthMonitor>().InSingletonScope();
             this.WithNoCrashHandler();

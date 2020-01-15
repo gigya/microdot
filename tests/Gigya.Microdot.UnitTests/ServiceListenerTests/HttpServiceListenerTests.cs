@@ -9,8 +9,11 @@ using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -91,8 +94,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TestCase(typeof(RequestException))]
         public async Task RequestWithException_ShouldNotWrap(Type exceptionType)
         {
-            var _kernel = new TestingKernel<ConsoleLog>();
-            var _exceptionSerializer = _kernel.Get<JsonExceptionSerializer>();
+            var _kernel = new MicrodotInitializer("",new FakesLoggersModules(),k=>k.RebindForTests());
+            var _exceptionSerializer = _kernel.Kernel.Get<JsonExceptionSerializer>();
             _testinghost.Host.Instance.When(a => a.DoSomething()).Throw(i => (Exception)Activator.CreateInstance(exceptionType, "MyEx", null, null, null));
 
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
@@ -194,16 +197,25 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             HttpRequestMessage request = null;
             string requestContent = null;
-            var mockHandler = new MockHttpMessageHandler();
-            mockHandler.When("*").Respond(async r =>
+            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
             {
-                request = r;
-                requestContent = await r.Content.ReadAsStringAsync();
-                return HttpResponseFactory.GetResponse(content: "''");
-            });
+                var mockHandler = new MockHttpMessageHandler();
+                mockHandler.When("*").Respond(async r =>
+                {
+                    if (r.Method != HttpMethod.Get)
+                    {
+                        request = r;
+                        requestContent = await r.Content.ReadAsStringAsync();
+                    }
+
+                    return HttpResponseFactory.GetResponse(content: "''");
+                });
+
+                return mockHandler;
+            };
             var kernel = new TestingKernel<ConsoleLog>();
-            var client = kernel
-                .Get<ServiceProxyProviderSpy<T>>(new ConstructorArgument("httpMessageHandler", mockHandler));
+            kernel.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            var client = kernel.Get<ServiceProxyProviderSpy<T>>();
 
             client.DefaultPort = _testinghost.BasePort;
 

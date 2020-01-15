@@ -9,6 +9,7 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
@@ -53,6 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             base.PreConfigure(kernel);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");
             kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.RebindForTests();
           
         }

@@ -24,6 +24,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
@@ -85,6 +86,16 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
+            Kernel.Bind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => (useHttp, securityRole) =>
+            {
+                var clientHandler = new HttpClientHandler();
+                if (useHttp)
+                {
+                    var httpAuthenticator = c.Kernel.Get<IHttpsAuthenticator>();
+                    httpAuthenticator.AddHttpMessageHandlerAuthentication(clientHandler, securityRole);
+                }
+                return clientHandler;
+            });
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
 
