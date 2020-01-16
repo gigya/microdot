@@ -27,7 +27,9 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 
 namespace Gigya.Microdot.Hosting.Service
 {
@@ -57,7 +59,9 @@ namespace Gigya.Microdot.Hosting.Service
         /// </summary>
         protected virtual Version InfraVersion => null;
 
-        protected ServiceHostBase()
+        public HostConfiguration HostConfiguration { get; }
+
+        protected ServiceHostBase(HostConfiguration configuration)
         {
             if (IntPtr.Size != 8)
                 throw new Exception("You must run in 64-bit mode. Please make sure you unchecked the 'Prefer 32-bit' checkbox from the build section of the project properties.");
@@ -67,8 +71,8 @@ namespace Gigya.Microdot.Hosting.Service
             ServiceStartedEvent = new TaskCompletionSource<object>();
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
-
-         
+            
+            this.HostConfiguration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
 

@@ -3,6 +3,7 @@ System.Threading.Tasks.Dataflow
 Metrics.NET
 Newtonsoft.Json
 System.ComponentModel.Annotations
+System.Configuration.ConfigurationManager
 
 Microsoft.CSharp
 System.Net.Http

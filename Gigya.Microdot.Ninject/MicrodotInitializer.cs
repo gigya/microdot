@@ -1,4 +1,5 @@
 ﻿using System;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
@@ -12,7 +13,7 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(appName)).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(appName, Environment.UserName, "")).InSingletonScope();
 
             loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
             // Set custom Binding 

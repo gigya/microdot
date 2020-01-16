@@ -8,5 +8,8 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj" />
+  </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

@@ -30,6 +30,7 @@ using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -57,7 +58,7 @@ namespace Gigya.Microdot.Testing.Shared
         public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
         {
             ServicePointManager.DefaultConnectionLimit = 200;
-               Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME)).InSingletonScope();
+               Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME, Environment.UserName, "")).InSingletonScope();
             this.Load<MicrodotModule>();
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();

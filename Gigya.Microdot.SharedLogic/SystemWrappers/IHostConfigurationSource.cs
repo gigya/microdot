@@ -1,4 +1,4 @@
-#region Copyright 
+﻿#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,28 +20,19 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
+using System.IO;
+using Gigya.Microdot.Interfaces.Configuration;
 
-namespace Gigya.Microdot.Interfaces.Configuration
+namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {
-    //public interface IEnvironmentVariableProvider
-    //{
-    //    /// <summary>
-    //    /// Initialized with environment variable DC
-    //    /// </summary>
-    //    [Obsolete("To be removed on Microdot version 2.0. Use IEnvironment.Zone instead")]
-    //    string DataCenter { get; }
-
-    //    /// <summary>
-    //    /// Initialized with environment variable ENV
-    //    /// </summary>
-    //    [Obsolete("To be removed on Microdot version 2.0. Use IEnvironment.DeploymentEnvironment instead")]
-    //    string DeploymentEnvironment { get; }
-
-    //    string GetEnvironmentVariable(string name);
-
-    //    void SetEnvironmentVariableForProcess(string name, string value);
-
-    //    string PlatformSpecificPathPrefix { get; }
-    //}
+    public interface IHostConfigurationSource
+    {
+        string Zone { get; }
+        string Region { get; }
+        string DeploymentEnvironment { get; }
+        string ConsulAddress { get; }
+        CurrentApplicationInfo ApplicationInfo { get; }
+        DirectoryInfo ConfigRoot { get; }
+        FileInfo LoadPathsFile { get; }
+    }
 }

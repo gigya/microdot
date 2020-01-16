@@ -24,6 +24,7 @@
 
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
@@ -109,20 +110,20 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             catch (Exception e)
             {
-                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: e);
+                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.s_HostName } }, innerException: e);
             }
 
             if (_startupTaskExceptions != null)
-                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: _startupTaskExceptions);
+                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.s_HostName } }, innerException: _startupTaskExceptions);
 
-            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
 
             afterOrleansStartup?.Invoke(_siloHost.Services.GetService<IGrainFactory>());
             if (afterOrleansStartup != null)
-                Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+                Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
 
             HttpServiceListener.StartGettingTraffic();
-            Log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+            Log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
         }
 
         public void Stop()

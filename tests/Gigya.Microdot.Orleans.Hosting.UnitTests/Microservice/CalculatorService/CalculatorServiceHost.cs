@@ -29,6 +29,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using Orleans;
 
@@ -36,8 +37,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        public CalculatorServiceHost()
-        { }
+        
 
         public override string ServiceName => "TestService";
 
@@ -47,6 +47,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
 
         public IKernel Kernel;
+
+        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        {
+        }
+
         protected override void PreConfigure(IKernel kernel)
         {
             base.PreConfigure(kernel);

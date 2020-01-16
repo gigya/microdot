@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -34,7 +35,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
+                k.Rebind<IEnvironment>().To<HostConfiguration>();
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
                 _consulClientMock = new ConsulClientMock();
@@ -70,7 +71,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
             var node = await _serviceDiscovery.GetNode();
-            node.Node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
+            node.Node.Hostname.ShouldContain(CurrentApplicationInfo.s_HostName);
         }
 
     }

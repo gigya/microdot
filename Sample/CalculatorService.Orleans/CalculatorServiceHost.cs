@@ -2,12 +2,18 @@
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
+using Gigya.Microdot.Configuration;
 
 namespace CalculatorService.Orleans
 {
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
+        protected CalculatorServiceHost(HostConfiguration configuration) : base(configuration)
+        {
+        }
+
         public override string ServiceName => nameof(CalculatorService);
 
         static void Main(string[] args)
@@ -19,9 +25,13 @@ namespace CalculatorService.Orleans
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
 
+            var config = 
+                new HostConfiguration(
+                    new EnvironmentVarialbesConfigurationSource());
+
             try
             {
-                new CalculatorServiceHost().Run();
+                new CalculatorServiceHost(config).Run();
             }
             catch (Exception ex)
             {

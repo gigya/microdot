@@ -7,6 +7,7 @@ using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using NSubstitute;
 
@@ -23,7 +24,8 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
         public override string ServiceName => nameof(IServiceFake).Substring(1);
 
         private TFake _fake;
-        public ServiceHostFake(TFake fake)
+        public ServiceHostFake(TFake fake, HostConfiguration configuration)
+            : base(configuration)
         {
             _fake = fake;
         }

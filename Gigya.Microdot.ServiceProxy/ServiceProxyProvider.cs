@@ -36,6 +36,7 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -317,7 +318,7 @@ namespace Gigya.Microdot.ServiceProxy
                 throw new ArgumentNullException(nameof(request));
             request.TracingData = new TracingData
             {
-                HostName = CurrentApplicationInfo.HostName?.ToUpperInvariant(),
+                HostName = CurrentApplicationInfo.s_HostName?.ToUpperInvariant(),
                 ServiceName = AppInfo.Name,
                 RequestID = TracingContext.TryGetRequestID(),
                 SpanID = Guid.NewGuid().ToString("N"), //Each call is new span                

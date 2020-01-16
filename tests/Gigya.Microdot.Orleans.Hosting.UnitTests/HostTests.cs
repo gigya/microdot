@@ -9,6 +9,7 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
@@ -40,6 +41,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
+        public TestHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        {
+        }
+
         public override string ServiceName => "TestService";
 
         public override ILoggingModule GetLoggingModule()

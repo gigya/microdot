@@ -38,6 +38,7 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -533,7 +534,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, AppInfo.Version.ToString());
-            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.s_HostName);
             context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
 
             try

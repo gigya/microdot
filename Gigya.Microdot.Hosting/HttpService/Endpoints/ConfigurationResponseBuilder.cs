@@ -32,6 +32,7 @@ using System.Runtime;
 using System.Text;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Newtonsoft.Json;
@@ -208,7 +209,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             return new Dictionary<string, string>
             {
                 { "ApplicationName", AppInfo.Name },
-                { "HostName", CurrentApplicationInfo.HostName},
+                { "HostName", CurrentApplicationInfo.s_HostName},
                 { "InstanceName", Envs.InstanceName },
                 { "OSUser", AppInfo.OsUser },
                 { "OSVersion", Environment.OSVersion.ToString() },

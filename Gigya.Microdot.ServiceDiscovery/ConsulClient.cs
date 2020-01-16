@@ -30,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -92,7 +93,7 @@ namespace Gigya.Microdot.ServiceDiscovery
             _waitForConfigChange = new TaskCompletionSource<bool>();
             configChanged.LinkTo(new ActionBlock<ConsulConfig>(ConfigChanged));
 
-            ConsulAddress = new Uri($"http://{environment.ConsulAddress ?? $"{CurrentApplicationInfo.HostName}:8500"}");
+            ConsulAddress = new Uri($"http://{environment.ConsulAddress ?? $"{CurrentApplicationInfo.s_HostName}:8500"}");
             _httpClient = new HttpClient { BaseAddress = ConsulAddress, Timeout = TimeSpan.FromMinutes(100) }; // timeout will be implemented using cancellationToken when calling httpClient
             var aggregatedHealthStatus = getAggregatedHealthStatus("ConsulClient");
 

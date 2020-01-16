@@ -17,6 +17,7 @@ nuget System.Runtime.Caching ~> 4.7
 nuget System.ServiceProcess.ServiceController ~> 4.7
 nuget System.ValueTuple
 nuget System.Reflection.Emit ~> 4.7
+nuget System.Configuration.ConfigurationManager ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
 
 #
 nuget Metrics.NET ~> 0.0

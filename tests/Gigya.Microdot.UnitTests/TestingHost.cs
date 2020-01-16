@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
@@ -10,6 +11,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using Ninject.Syntax;
 using NSubstitute;
@@ -20,6 +22,10 @@ namespace Gigya.Microdot.UnitTests
     {
         // Last word is good enought for randomization, but easier to follow
         private readonly string HostId = Guid.NewGuid().ToString().Substring(24);
+
+        public TestingHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        {
+        }
 
         public T Instance { get; private set; }
 

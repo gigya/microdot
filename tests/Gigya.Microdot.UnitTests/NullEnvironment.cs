@@ -1,4 +1,5 @@
-﻿using Gigya.Microdot.Interfaces.SystemWrappers;
+﻿using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +18,8 @@ namespace Gigya.Microdot.UnitTests
         public string InstanceName => nameof(InstanceName);
         public DirectoryInfo ConfigRoot => new DirectoryInfo(Directory.GetCurrentDirectory());
         public FileInfo LoadPathsFile => new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json"));
+
+        public CurrentApplicationInfo ApplicationInfo => throw new NotImplementedException();
 
         [Obsolete("To be deleted on version 2.0")]
         public string GetEnvironmentVariable(string name) => name;

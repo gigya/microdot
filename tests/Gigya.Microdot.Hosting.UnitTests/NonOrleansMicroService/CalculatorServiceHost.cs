@@ -4,6 +4,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
@@ -12,6 +13,11 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
     {
         public override string ServiceName { get; } = "ICalculatorService";
         public IKernel Kernel;
+
+        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        {
+        }
+
         protected override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();

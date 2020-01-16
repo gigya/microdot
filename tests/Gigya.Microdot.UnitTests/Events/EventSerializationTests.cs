@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Events;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -19,7 +20,7 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests));
+        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests), Environment.UserName, "");
 
 
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
@@ -197,7 +198,7 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent.ShouldContainKey(EventConsts.srvSystemInstance);
                     
             serializedEvent.ShouldContainKey(EventConsts.runtimeHost);
-            serializedEvent[EventConsts.runtimeHost].ShouldBe(CurrentApplicationInfo.HostName);
+            serializedEvent[EventConsts.runtimeHost].ShouldBe(CurrentApplicationInfo.s_HostName);
 
             serializedEvent.ShouldContainKey(EventConsts.tags + ".UnencryptedTag");
             serializedEvent[EventConsts.tags + ".UnencryptedTag"].ShouldBe("UnencryptedTagValue");

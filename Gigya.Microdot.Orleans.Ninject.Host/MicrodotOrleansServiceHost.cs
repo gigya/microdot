@@ -27,14 +27,17 @@ using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
@@ -56,6 +59,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public abstract ILoggingModule GetLoggingModule();
 
+        protected MicrodotOrleansServiceHost(HostConfiguration configuration) : base(configuration)
+        {
+        }
 
         /// <summary>
         /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
@@ -66,7 +72,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             Kernel = CreateKernel();
 
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
+
 
             PreConfigure(Kernel);
 
@@ -208,6 +215,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         }
 
         private readonly object lockHandale = new object();
+
+
+
         protected override void Dispose(bool disposing)
         {
             lock (lockHandale)

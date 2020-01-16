@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -90,7 +91,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
-        public string HostName  { get; set; } = CurrentApplicationInfo.HostName;
+        public string HostName  { get; set; } = CurrentApplicationInfo.s_HostName;
 
         /// <summary>The value of the %REGION% environment variable. .</summary>
         [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]

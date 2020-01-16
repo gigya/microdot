@@ -34,7 +34,7 @@ using System.Linq;
 using System.Net;
 using Orleans.Providers;
 using Orleans;
-
+using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

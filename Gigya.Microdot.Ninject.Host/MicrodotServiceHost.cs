@@ -26,10 +26,13 @@ using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using Ninject.Syntax;
 
@@ -56,7 +59,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when the provided type provided for the <typeparamref name="TInterface" />
         /// generic argument is not an interface.</exception>
-        protected MicrodotServiceHost()
+        protected MicrodotServiceHost(HostConfiguration configuration) : base(configuration)
         {
             if (typeof(TInterface).IsInterface == false)
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
@@ -73,7 +76,8 @@ namespace Gigya.Microdot.Ninject.Host
         {
             Kernel = CreateKernel();
             
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName)).InSingletonScope();
+            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
             Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
@@ -88,7 +92,7 @@ namespace Gigya.Microdot.Ninject.Host
             Listener.Start();
            
             Listener.StartGettingTraffic();
-            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostConfiguration.ApplicationInfo.HostName }));
         }
 
         /// <summary>

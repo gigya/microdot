@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
@@ -90,7 +91,7 @@ namespace Gigya.Microdot.Ninject
             Kernel.Load<MicrodotModule>();
 
             Kernel.Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo(_serviceName, _arguments.InstanceName, _infraVersion))
+                .ToConstant(new CurrentApplicationInfo(_serviceName, Environment.UserName, "", instanceName: _arguments.InstanceName, infraVersion: _infraVersion))
                 .InSingletonScope();
 
             // Required to allow assembly provider been instantiated

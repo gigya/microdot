@@ -1,19 +1,45 @@
-﻿using Gigya.Microdot.Interfaces.SystemWrappers;
+﻿using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.SharedLogic.Utils;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Gigya.Microdot.Configuration
 {
-    public static class EnvironmentVariables
+
+    public sealed class FileHostConfigurationSource : IHostConfigurationSource
     {
-        public sealed class Entry
+        public CurrentApplicationInfo ApplicationInfo { get; }
+
+        public string Zone                  => GetOrNull(nameof(Zone));
+        public string Region                => GetOrNull(nameof(Region));
+        public string DeploymentEnvironment => GetOrNull(nameof(DeploymentEnvironment));
+        public string ConsulAddress         => GetOrNull(nameof(ConsulAddress));
+        
+        public DirectoryInfo ConfigRoot => GetOrNull(nameof(ConfigRoot))   ?.To(x => new DirectoryInfo(x));
+        public FileInfo LoadPathsFile   => GetOrNull(nameof(LoadPathsFile))?.To(x => new FileInfo(x));
+
+        #region Entries
+        private readonly Dictionary<string, Entry> entries;
+
+        private string GetOrNull(string key)
+        {
+            if (entries.TryGetValue(key, out var val))
+                return val.Value;
+            return null;
+        }
+        #endregion
+
+        public FileHostConfigurationSource(string path)
+        {
+            entries = ReadFromJsonFile(path).ToDictionary(x => x.Key);
+        }
+
+        private sealed class Entry
         {
             public string Key { get; }
             public string Value { get; }
@@ -25,12 +51,7 @@ namespace Gigya.Microdot.Configuration
             }
         }
 
-        /// <summary>
-        /// Reads JSON files with the following format: { "key": "value"[, ...] }.
-        /// </summary>
-        /// <param name="path">The path to file.</param>
-        /// <returns>Enumeration of read entries, which can be applied to the environment.</returns>
-        public static IEnumerable<Entry> ReadFromJsonFile(string path)
+        private static IEnumerable<Entry> ReadFromJsonFile(string path)
         {
             JObject envVarsObject;
 
@@ -57,12 +78,6 @@ namespace Gigya.Microdot.Configuration
                 .Where(a => a.HasValues)
                 .Select(x => new Entry(x.Name, x.Value.Value<string>()))
                 .ToArray();
-        }
-
-        public static void ApplyToEnvironment(IEnumerable<Entry> entries)
-        {
-            foreach (var e in entries)
-                Environment.SetEnvironmentVariable(e.Key, e.Value);
         }
     }
 }

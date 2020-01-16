@@ -23,6 +23,7 @@
 using System;
 using System.Net;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic;
 
@@ -35,9 +36,9 @@ namespace Gigya.Microdot.ServiceDiscovery
     {
         public override string SourceName => "Local";
 
-        public LocalDiscoverySource(DeploymentIdentifier deploymentIdentifier) : base($"{CurrentApplicationInfo.HostName}-{deploymentIdentifier.ServiceName}")
+        public LocalDiscoverySource(DeploymentIdentifier deploymentIdentifier) : base($"{CurrentApplicationInfo.s_HostName}-{deploymentIdentifier.ServiceName}")
         {
-            Result = new EndPointsResult{EndPoints  = new[] { new EndPoint { HostName = CurrentApplicationInfo.HostName }}} ;
+            Result = new EndPointsResult{EndPoints  = new[] { new EndPoint { HostName = CurrentApplicationInfo.s_HostName }}} ;
         }
 
         public override Exception AllEndpointsUnreachable(EndPointsResult endPointsResult, Exception lastException, string lastExceptionEndPoint, string unreachableHosts)

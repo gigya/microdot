@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -64,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             return k =>
                         {
                             _environment = Substitute.For<IEnvironment>();
-                            _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
+                            _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.s_HostName}:{ConsulPort}");
                             _environment.Zone.Returns(Zone);
                             k.Rebind<IEnvironment>().ToMethod(_ => _environment);
                         };
