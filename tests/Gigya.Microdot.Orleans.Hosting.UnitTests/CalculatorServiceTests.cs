@@ -23,14 +23,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.ServiceContract.Attributes;
@@ -77,7 +81,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 Tester = new ServiceTester<CalculatorServiceHost>
                 {
                     CommunicationKernel = new MicrodotInitializer(
-                        "CalculatorServiceCommLayer", 
+                        new HostConfiguration(new TestHostConfigurationSource()),
                         new ConsoleLogLoggersModules(),
                         k =>
                         {

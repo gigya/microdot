@@ -55,9 +55,6 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         
         public HostConfiguration(IEnumerable<IHostConfigurationSource> sources)
         {
-            ConfigRoot = GetDefaultConfigRoot();
-            LoadPathsFile = GetDefaultPathsFile();
-            
             foreach (var s in sources)
             {
                 Zone                  = s.Zone                  ?? Zone;
@@ -74,6 +71,9 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
             if (DeploymentEnvironment == null) throw new ArgumentNullException($"{ nameof(DeploymentEnvironment) } wasn't supplied.");
             if (ConsulAddress         == null) throw new ArgumentNullException($"{ nameof(ConsulAddress)         } wasn't supplied.");
             if (ApplicationInfo       == null) throw new ArgumentNullException($"{ nameof(ApplicationInfo)       } wasn't supplied.");
+
+            ConfigRoot ??= GetDefaultConfigRoot();
+            LoadPathsFile ??= GetDefaultPathsFile();
 
             if (ConfigRoot.Exists == false)
             {

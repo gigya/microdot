@@ -13,11 +13,6 @@
     <Copyright>Copyright ©  2017</Copyright>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="config\loadPaths.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
@@ -34,6 +29,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Microservice\GrainAgeLimitTestService\GrainAgeLimitTestServiceHost.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="loadPaths.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

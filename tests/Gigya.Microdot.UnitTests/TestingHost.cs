@@ -20,16 +20,20 @@ namespace Gigya.Microdot.UnitTests
 {
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
-        // Last word is good enought for randomization, but easier to follow
-        private readonly string HostId = Guid.NewGuid().ToString().Substring(24);
-
-        public TestingHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        public TestingHost() : base(new HostConfiguration(new TestHostConfigurationSource(appName: GenerateServiceName())))
         {
+            
+        }
+
+        private static string GenerateServiceName()
+        {
+            // Last word is good enought for randomization, but easier to follow
+            return $"TestingHost-{ Guid.NewGuid().ToString().Substring(24) }";
         }
 
         public T Instance { get; private set; }
 
-        public override string ServiceName => $"TestingHost-{HostId}";
+        public override string ServiceName => this.HostConfiguration.ApplicationInfo.Name;
 
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }

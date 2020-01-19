@@ -31,12 +31,18 @@ using Ninject.Parameters;
 using System;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.UnitTests.Caching.Host;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
+using Gigya.Microdot.Common.Tests;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
     public abstract class ServiceTesterBase : IDisposable
     {
-        public IKernel CommunicationKernel = new MicrodotInitializer("", new ConsoleLogLoggersModules()).Kernel;
+        public IKernel CommunicationKernel = new MicrodotInitializer(
+            new HostConfiguration(new TestHostConfigurationSource()),
+            new ConsoleLogLoggersModules())
+            .Kernel;
 
         public int BasePort { get; protected set; }
         

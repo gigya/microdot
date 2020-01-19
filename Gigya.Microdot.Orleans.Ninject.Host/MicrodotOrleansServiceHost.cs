@@ -72,6 +72,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             Kernel = CreateKernel();
 
+            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
 
 

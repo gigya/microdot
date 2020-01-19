@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Net;
 using CalculatorService.Interface;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 
 namespace CalculatorService.Client
@@ -20,7 +24,9 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("ENV", "dev");
                 Environment.SetEnvironmentVariable("GIGYA_BASE_PATH", Environment.CurrentDirectory);
 
-                using (var microdotInitializer = new MicrodotInitializer("CalculatorService.Client", new NLogModule()))
+                using (var microdotInitializer = new MicrodotInitializer(
+                    new HostConfiguration(new TestHostConfigurationSource()),
+                    new NLogModule()))
                 {
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
                     int sum = calculatorService.Add(2, 3).Result;

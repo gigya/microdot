@@ -89,11 +89,7 @@ namespace Gigya.Microdot.Ninject
         public override void Load()
         {
             Kernel.Load<MicrodotModule>();
-
-            Kernel.Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo(_serviceName, Environment.UserName, "", instanceName: _arguments.InstanceName, infraVersion: _infraVersion))
-                .InSingletonScope();
-
+            
             // Required to allow assembly provider been instantiated
             Kernel.Rebind<ServiceArguments>().ToConstant(_arguments);
 

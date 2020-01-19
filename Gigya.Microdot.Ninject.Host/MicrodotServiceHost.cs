@@ -129,6 +129,8 @@ namespace Gigya.Microdot.Ninject.Host
         {
             Kernel = CreateKernel();
             Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
+            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
             ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
             base.OnVerifyConfiguration();
         }

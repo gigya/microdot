@@ -1,8 +1,11 @@
 ﻿using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Reflection;
 using System.Text;
 
 namespace Gigya.Microdot.Common.Tests
@@ -30,15 +33,16 @@ namespace Gigya.Microdot.Common.Tests
             string consulAddress = null,
             CurrentApplicationInfo applicationInfo = null,
             DirectoryInfo configRoot = null,
-            FileInfo loadPathsFile = null)
+            FileInfo loadPathsFile = null,
+            string appName = null)
         {
             this.Zone = zone ?? "zone";
             this.Region = region ?? "region";
             this.DeploymentEnvironment = deploymentEnvironment ?? "env";
             this.ConsulAddress = consulAddress ?? "addr";
-            this.ApplicationInfo = applicationInfo ?? new CurrentApplicationInfo("", Environment.UserName, "");
-            this.ConfigRoot = configRoot ?? new DirectoryInfo(Directory.GetCurrentDirectory());
-            this.LoadPathsFile = loadPathsFile ?? new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json"));
+            this.ApplicationInfo = applicationInfo ?? new CurrentApplicationInfo(appName ?? "test", Environment.UserName, Dns.GetHostName());
+            this.ConfigRoot = configRoot ?? new DirectoryInfo(this.GetType().Assembly.Location.To(Path.GetDirectoryName));
+            this.LoadPathsFile = loadPathsFile;// ?? new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json"));
         }
     }
 }

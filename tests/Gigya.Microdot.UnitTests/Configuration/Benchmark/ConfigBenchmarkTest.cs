@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using NUnit.Framework;
 
@@ -18,7 +22,9 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
         {
 
  
-            MicrodotInitializer microdotInitializer = new MicrodotInitializer("CalculatorService.Client",new NLogModule(), kernel =>
+            MicrodotInitializer microdotInitializer = new MicrodotInitializer(
+                new HostConfiguration(new TestHostConfigurationSource()),
+                new NLogModule(), kernel =>
             {
             });
             _testingKernel = microdotInitializer.Kernel;

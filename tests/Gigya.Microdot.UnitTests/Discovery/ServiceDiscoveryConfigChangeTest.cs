@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -36,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
-                k.Rebind<IEnvironment>().To<HostConfiguration>();
+                k.Rebind<IEnvironment>().ToConstant(new HostConfiguration(new TestHostConfigurationSource()));
                 _consulClientMock = new ConsulClientMock();
                 _consulClientMock.SetResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, ActiveVersion = ServiceVersion, IsQueryDefined = true });
                 k.Rebind<Func<string,IConsulClient>>().ToMethod(c=>s=>_consulClientMock);

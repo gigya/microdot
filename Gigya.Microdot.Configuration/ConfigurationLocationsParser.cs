@@ -88,6 +88,7 @@ namespace Gigya.Microdot.Configuration
 
             foreach (var configPath in configPathsSet)
             {
+                // TODO: should be taken from host config. The parser should also be injectable.
                 var list = Regex.Matches(configPath.Pattern, "%([^%]+)%")
                                 .Cast<Match>()
                                 .Select(match => new

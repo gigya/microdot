@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Ninject.Extensions.Conventions;
 using Ninject.Syntax;
 
@@ -61,7 +62,8 @@ namespace Gigya.Microdot.Ninject
             var list = new List<Type>
             {
                 typeof(IConfigObject),
-                typeof(IEvent)
+                typeof(IEvent),
+                typeof(IEnvironment)
             };
 
             if (nonSingletonBaseTypes != null)

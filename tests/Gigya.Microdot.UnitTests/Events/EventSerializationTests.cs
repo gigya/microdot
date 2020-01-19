@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Events;
@@ -20,7 +21,7 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests), Environment.UserName, "");
+        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests), Environment.UserName, Dns.GetHostName());
 
 
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),

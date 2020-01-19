@@ -8,6 +8,7 @@
     <AssemblyTitle>Gigya.Microdot.Testing.Shared</AssemblyTitle>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />

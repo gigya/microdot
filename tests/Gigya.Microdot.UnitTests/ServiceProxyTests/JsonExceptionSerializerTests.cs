@@ -65,7 +65,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             var breadcrumbs = ((RequestException)actual).Breadcrumbs;
             breadcrumbs.ShouldNotBeEmpty();
-            breadcrumbs.First().ServiceName.ShouldBe("InfraTests");            
+            breadcrumbs.First().ServiceName.ShouldBe("test");            
         }
 
         [Test]
@@ -78,8 +78,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             var breadcrumbs = ((RequestException)actual2).Breadcrumbs;
             breadcrumbs.Count.ShouldBe(2);
-            breadcrumbs[0].ServiceName.ShouldBe("InfraTests");
-            breadcrumbs[1].ServiceName.ShouldBe("InfraTests");
+            breadcrumbs[0].ServiceName.ShouldBe("test");
+            breadcrumbs[1].ServiceName.ShouldBe("test");
         }
 
         [Test]

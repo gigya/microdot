@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-
+using System.Net;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -55,12 +55,12 @@ namespace Gigya.Microdot.UnitTests.Configuration
             var expected = new[] {
                 new ConfigFileDeclaration {Pattern = $"./Config/*.config", Priority = 10},
                 new ConfigFileDeclaration {Pattern = $"Gigya/Config/_local/*.config", Priority = 9},
-                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{env}/{""}/*.config", Priority = 8},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{env}/{"test"}/*.config", Priority = 8},
                 new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{env}/*.config", Priority = 7},
-                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{""}/*.config", Priority = 6},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/{"test"}/*.config", Priority = 6},
                 new ConfigFileDeclaration {Pattern = $"Gigya/Config/{zone}/*.config", Priority = 5},
                 new ConfigFileDeclaration {Pattern = $"Gigya/Config/{env}/*.config", Priority = 4},
-                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{""}/*.config", Priority = 3},
+                new ConfigFileDeclaration {Pattern = $"Gigya/Config/{"test"}/*.config", Priority = 3},
                 new ConfigFileDeclaration {Pattern = $"Gigya/Config/*.config", Priority = 2}
             };
 
@@ -92,7 +92,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public void FileFormatIsInvalid_ShouldThrowEnvironmentException(string testData)
         {
             _fileSystem.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => testData);
-            Action act = () => new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("", Environment.UserName, ""));
+            Action act = () => new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("test", Environment.UserName, Dns.GetHostName()));
             
             act.ShouldThrow<EnvironmentException>()
                 .Message.ShouldContain("Problem reading");
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             {Pattern: '$(prefix)/Gigya/Config/$(appName)/*.config',            Priority:  1, SearchOption: 'TopDirectoryOnly' }]";
 
             _fileSystem.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => testData);
-            Action act = () => new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("", Environment.UserName, ""));
+            Action act = () => new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("test", Environment.UserName, Dns.GetHostName()));
 
             act.ShouldThrow<EnvironmentException>()
                 .Message.ShouldContain("some configurations lines have duplicate priorities");
@@ -125,7 +125,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             try
             {
-                var configs = new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("", Environment.UserName, ""));
+                var configs = new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("test", Environment.UserName, Dns.GetHostName()));
                 configs.ConfigFileDeclarations.Count.ShouldBe(expected.Length);
 
                 foreach (var pair in configs.ConfigFileDeclarations.Zip(expected, (first, second) => new { first, second }))

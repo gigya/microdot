@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
 using Ninject;
@@ -30,6 +32,11 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         public (StandardKernel k, IAssemblyProvider providerMock, IFileSystem fileSystemMock) Setup()
         {
             var k = new StandardKernel();
+
+            var config = new HostConfiguration(new TestHostConfigurationSource());
+            k.Bind<IEnvironment>().ToConstant(config);
+            k.Bind<CurrentApplicationInfo>().ToConstant(config.ApplicationInfo);
+
             k.Load(new ConfigVerificationModule(new ConsoleLogLoggersModules(), new ServiceArguments(), "InfraTests", infraVersion: null));
 
             IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
