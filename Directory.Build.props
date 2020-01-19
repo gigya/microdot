@@ -6,5 +6,7 @@
    <Description>Microdot Framework</Description>
    <AssemblyVersion></AssemblyVersion>
    <Version>2.1.0</Version>
+
+   <RunSettingsFilePath>$(SolutionDir)\test.runsettings</RunSettingsFilePath>
  </PropertyGroup>
 </Project>
