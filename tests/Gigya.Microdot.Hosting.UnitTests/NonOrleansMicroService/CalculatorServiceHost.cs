@@ -4,6 +4,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
@@ -21,6 +22,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         {
             Kernel = kernel;
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.Bind<ICalculatorService>().To<CalculatorService>().InSingletonScope();
         }
 

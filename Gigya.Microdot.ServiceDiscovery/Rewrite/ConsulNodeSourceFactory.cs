@@ -136,13 +136,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 if (consulResponse.Error.InnerException is TaskCanceledException == false)
                 {
-                    Log.Error("Error calling Consul to get all services list", exception: consulResponse.Error, unencryptedTags: new
-                    {
-                        consulAddress = consulResponse.ConsulAddress,
-                        commandPath   = consulResponse.CommandPath,
-                        responseCode  = consulResponse.StatusCode,
-                        content       = consulResponse.ResponseContent
-                    });
+                    Log.Error("Error calling Consul to get all services list", exception: consulResponse.Error);
                 }
 
                 _healthStatus = HealthCheckResult.Unhealthy($"Error calling Consul: {consulResponse.Error.Message}");

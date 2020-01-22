@@ -76,6 +76,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             AfterOrleansStartup = afterOrleansStartup;
             _serviceArguments = serviceArguments;
 
+            Log.Info(_ => _("Build Bridges, Not Silos!"));
             Log.Info(_ => _("Starting Orleans silo..."));
 
             var builder = _orleansConfigurationBuilder.GetBuilder()
@@ -117,6 +118,11 @@ namespace Gigya.Microdot.Orleans.Hosting
             Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
 
             afterOrleansStartup?.Invoke(_siloHost.Services.GetService<IGrainFactory>());
+            if (afterOrleansStartup != null)
+                Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+
+            HttpServiceListener.StartGettingTraffic();
+            Log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
 
         public void Stop()

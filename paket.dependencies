@@ -31,8 +31,6 @@ nuget Microsoft.Orleans.Client 2.4.3
 nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.3
 nuget Microsoft.AspNetCore.Http.Features 2.2
 nuget Microsoft.Extensions.Primitives 2.2
-nuget Microsoft.Orleans.OrleansProviders 2.4.3
-nuget Microsoft.Orleans.OrleansRuntime  2.4.3
 nuget Microsoft.Orleans.Server  2.4.3
 nuget Microsoft.Orleans.Core.Abstractions 2.4.3
 nuget OrleansDashboard 2.4.5 

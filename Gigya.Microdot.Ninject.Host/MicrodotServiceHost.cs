@@ -82,9 +82,13 @@ namespace Gigya.Microdot.Ninject.Host
 
             PreInitialize(Kernel);
             OnInitilize(Kernel);
-
+            //don't move up the get should be after all the binding are done
+            var log = Kernel.Get<ILog>();
             Listener = Kernel.Get<HttpServiceListener>();
             Listener.Start();
+           
+            Listener.StartGettingTraffic();
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
 
         /// <summary>
