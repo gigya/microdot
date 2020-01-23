@@ -169,7 +169,7 @@ namespace Gigya.Microdot.ServiceProxy
 
         private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig config, bool tryHttps, string hostname, int basePort)
         {
-            var forceHttps = config.UseHttpsOverride ?? UseHttpsDefault;
+            var forceHttps = UseHttpsDefault && (config.UseHttpsOverride ?? true);
             var useHttps = tryHttps || forceHttps;
             string securityRole = config.SecurityRole;
             (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, config.RequestTimeout);
@@ -334,10 +334,7 @@ namespace Gigya.Microdot.ServiceProxy
             };
             PrepareRequest?.Invoke(request);
 
-            // Try connecting via HTTPS if:
-            // - If This IS an originally HTTPS supporting service (e.g. KeyManagementService), and "use http" is not overwritten to 'false' in the config, OR
-            // - This is NOT an originally HTTPS supporting service
-            bool tryHttps = !UseHttpsDefault || (GetConfig().UseHttpsOverride ?? true);
+            bool tryHttps = GetConfig().UseHttpsOverride ?? true;
             while (true)
             {
                 var config = GetConfig();

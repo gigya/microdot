@@ -61,7 +61,7 @@ namespace Gigya.Microdot.SharedLogic.Security
 			var config = HttpsConfigurationFactory();
 			if (!config.Certificates.TryGetValue(certName, out CertificateConfig certificateConfig))
 			{
-				throw new ConfigurationException($"No configuration is found for {certName}" );
+				throw new ConfigurationException($"No certificate configuration is found for {certName}" );
 			}
 
 			string certPath = certificateConfig.CertificatePath;

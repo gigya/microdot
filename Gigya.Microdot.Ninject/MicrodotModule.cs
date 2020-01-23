@@ -86,10 +86,10 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
-            Kernel.Bind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => (useHttp, securityRole) =>
+            Kernel.Bind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => (useHttps, securityRole) =>
             {
                 var clientHandler = new HttpClientHandler();
-                if (useHttp)
+                if (useHttps)
                 {
                     var httpAuthenticator = c.Kernel.Get<IHttpsAuthenticator>();
                     httpAuthenticator.AddHttpMessageHandlerAuthentication(clientHandler, securityRole);
