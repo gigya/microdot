@@ -157,7 +157,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
                 else
                 {
-                    HttpPort = httpsEnabled ? (int?)null : config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
+                    HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
                     HttpsPort = httpsEnabled ? config.PortAllocation.GetPort(slotNumber, PortOffsets.Https).Value : (int?)null;
                 }
 
