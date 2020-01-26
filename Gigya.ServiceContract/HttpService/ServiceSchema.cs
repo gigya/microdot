@@ -52,6 +52,7 @@ namespace Gigya.Common.Contracts.HttpService
             SetHashCode();
         }
 
+        // TODO: Why?
         public string Hash { get; set; }
 
         private void SetHashCode()
@@ -192,10 +193,36 @@ namespace Gigya.Common.Contracts.HttpService
 
         private IEnumerable<FieldSchema> GetFields(Type type)
         {
-            var baseFields = type.BaseType != typeof(object) && type.BaseType != null ? GetFields(type.BaseType) : new FieldSchema[0];
-            var properties = type.GetProperties().Select(_ => new FieldSchema(_));
-            var fields = type.GetFields().Select(_ => new FieldSchema(_));
-            return baseFields.Concat(properties).Concat(fields);
+            var fields = new Dictionary<string, FieldSchema>();
+            
+            while (type != null)
+            {
+                void with(FieldSchema fs)
+                {
+                    if (fields.TryGetValue(fs.Name, out var s))
+                        s.Attributes = s.Attributes.Union(fs.Attributes).ToArray();
+                    else
+                        fields.Add(fs.Name, fs);
+                }
+
+                void add(IEnumerable<FieldSchema> fss)
+                {
+                    foreach (var fs in fss)
+                        with(fs);
+                }
+
+                add(type
+                    .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                    .Select(x => new FieldSchema(x)));
+
+                add(type
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                    .Select(x => new FieldSchema(x)));
+                
+                type = type.BaseType;
+            }
+
+            return fields.Values;
         }
 
         private bool IsCompositeType(Type type)

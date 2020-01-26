@@ -33,11 +33,15 @@ namespace Gigya.Common.Contracts.UnitTests
     {
         [Sensitive]
         public int BaseField;
+
+        public virtual int VirtProp { get; set; }
     }
     class Data: DataParamBase
     {
         public string s;
         public Nested n;
+
+        public override int VirtProp { get => base.VirtProp; set => base.VirtProp = value; }
     }
 
     class Nested
@@ -58,6 +62,35 @@ namespace Gigya.Common.Contracts.UnitTests
     {
         [PublicEndpoint("demo.doSomething")]
         Task<ResponseData> DoSomething(int i, double? nd, string s, [Sensitive] Data data);
+    }
+
+    abstract class AbctractClass
+    {
+        public abstract int PropAbstractVirtual { get; set; }
+        public abstract int PropAbstract { get; set; }
+    }
+
+    class VirtClass : AbctractClass
+    {
+        public int fldHidden;
+        public override int PropAbstractVirtual { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override int PropAbstract { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public virtual int PropVirtual { get; set; }
+    }
+
+    class SpecificClass : VirtClass
+    {
+        // TODO: UB
+        public new int fldHidden;
+        public override int PropAbstractVirtual { get => base.PropAbstractVirtual; set => base.PropAbstractVirtual = value; }
+        public override int PropVirtual { get => base.PropVirtual; set => base.PropVirtual = value; }
+    }
+
+    internal interface IDoublesTest
+    {
+        [PublicEndpoint("test")]
+        Task Test(SpecificClass obj);
     }
 
     [TestFixture,Parallelizable(ParallelScope.Fixtures)]
@@ -93,16 +126,24 @@ namespace Gigya.Common.Contracts.UnitTests
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[2].Name == "s");
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Name == nameof(DataParamBase.BaseField));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(int));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Name == nameof(Data.s));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Type == typeof(string));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[3].Name == nameof(DataParamBase.BaseField));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[3].Attributes[0].Attribute is SensitiveAttribute);
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[3].Type == typeof(int));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Name == nameof(Data.s));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(string));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Type == typeof(ResponseData));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Name == nameof(ResponseData.a));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Type == typeof(string));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[1].Name == nameof(ResponseData.b));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[1].Type == typeof(int));
+        }
+
+        [Test]
+        public void ServiceSchema_DoesntContainDuplicates()
+        {
+            ServiceSchema schema = new ServiceSchema(new[] { typeof(IDoublesTest) });
+
+            Assert.AreEqual(4, schema.Interfaces[0].Methods[0].Parameters[0].Fields.Length);
         }
 
 
