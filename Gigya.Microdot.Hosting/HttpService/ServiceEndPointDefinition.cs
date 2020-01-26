@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public int? HttpPort { get; }
 
-        public int HttpsPort { get; }
+        public int? HttpsPort { get; }
 
         public int SiloGatewayPort { get; }
 
@@ -102,6 +102,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             var config = getConfig();
             var serviceConfig = config.Services[appInfo.Name];
 
+            bool originallyHttpsSupporting = interfacePorts.First().UseHttps;
+            bool httpsEnabled = serviceConfig.UseHttpsOverride ?? true;
+
             UseSecureChannel = serviceConfig.UseHttpsOverride ?? interfacePorts.First().UseHttps;
 
             if (config.PortAllocation.IsSlotMode == false && serviceArguments.SlotNumber == null)
@@ -114,8 +117,16 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                 var basePort = interfacePorts.First().BasePort;
 
-                HttpPort = UseSecureChannel ? (int?) null : basePort + (int) PortOffsets.Http;
-                HttpsPort = basePort + (UseSecureChannel ? (int)PortOffsets.Http : (int)PortOffsets.Https);
+                if (originallyHttpsSupporting)
+                {
+                    HttpPort = httpsEnabled ? (int?)null : basePort + (int)PortOffsets.Http;
+                    HttpsPort = httpsEnabled ? basePort + (int)PortOffsets.Http : (int?)null;
+                }
+                else
+                {
+                    HttpPort = basePort + (int)PortOffsets.Http;
+                    HttpsPort = httpsEnabled ? basePort + (int)PortOffsets.Https : (int?)null;
+                }
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
                 SiloNetworkingPort = basePort + (int)PortOffsets.SiloNetworking;
@@ -138,8 +149,18 @@ namespace Gigya.Microdot.Hosting.HttpService
                                                      "Either disable this mode via Service.IsSlotMode config value or set it via " +
                                                      $"Discovery.{appInfo.Name}.DefaultSlotNumber.");
 
-                HttpPort = UseSecureChannel ? (int?)null : config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
-                HttpsPort = config.PortAllocation.GetPort(slotNumber, UseSecureChannel ? PortOffsets.Http : PortOffsets.Https).Value;
+                if (originallyHttpsSupporting)
+                {
+                    int? port = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
+                    HttpPort = httpsEnabled ? null : port;
+                    HttpsPort = httpsEnabled ? port : null;
+                }
+                else
+                {
+                    HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
+                    HttpsPort = httpsEnabled ? config.PortAllocation.GetPort(slotNumber, PortOffsets.Https).Value : (int?)null;
+                }
+
                 MetricsPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Metrics).Value;
                 SiloGatewayPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloGateway).Value;
                 SiloNetworkingPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloNetworking).Value;

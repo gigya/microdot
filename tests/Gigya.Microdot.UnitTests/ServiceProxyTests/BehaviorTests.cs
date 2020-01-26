@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -10,6 +11,8 @@ using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
@@ -20,6 +23,9 @@ using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Service;
 using Newtonsoft.Json;
 using Ninject;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using NSubstitute.Exceptions;
 using NUnit.Framework;
 
 using RichardSzalay.MockHttp;
@@ -871,6 +877,71 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 server = await serviceProxy.Invoke(request, typeof(string));
 
                 server.ShouldBe("some HTTP response");
+            }
+        }
+
+        [Test]
+        public async Task HttpsDisabled_NoCertificate_CallSucceeds()
+        {
+            var host = "host1";
+            var httpsPortOffset = 5;
+            var port = DisposablePort.GetPort().Port;
+            var dict = new Dictionary<string, string>
+            {
+                {"Discovery.Services.DemoService.Source", "Config"},
+                {"Discovery.Services.DemoService.Hosts", host},
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.UseHttpsOverride", "false"}
+            };
+
+            int httpsTestCount = 0;
+            bool httpsMethodCalled = false;
+
+            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("https://*")
+                    .Respond(req =>
+                        HttpResponseFactory.GetResponseWithException(ExceptionSerializer, new SocketException()));
+
+                messageHandler
+                    .When("http://*")
+                    .Respond(req => HttpResponseFactory.GetResponse(content: "'some HTTP response'"));
+
+                return messageHandler;
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                 k =>
+                 {
+                     k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
+                     k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+
+                     var certificateLocator = Substitute.For<ICertificateLocator>();
+                     certificateLocator
+                         .When(cl => cl.GetCertificate(Arg.Any<string>()))
+                         .Do(x => throw new Exception());
+                     k.Rebind<ICertificateLocator>().ToConstant(certificateLocator);
+
+                     var httpsAuthenticator = Substitute.For<IHttpsAuthenticator>();
+                     httpsAuthenticator
+                         .When(a => a.AddHttpMessageHandlerAuthentication(Arg.Any<HttpClientHandler>(), Arg.Any<string>()))
+                         .Do(x => throw new Exception());
+                     k.Rebind<IHttpsAuthenticator>().ToConstant(httpsAuthenticator);
+                 }, dict)
+            )
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+                serviceProxy.DefaultPort = port;
+                TracingContext.SetRequestID("1");
+
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
+
+                await serviceProxy.Invoke(request, typeof(string));
             }
         }
     }

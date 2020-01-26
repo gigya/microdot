@@ -50,7 +50,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         int? HttpPort { get; }
 
-        int HttpsPort { get; }
+        int? HttpsPort { get; }
 
         /// <summary>
         /// Provides a friendly name for each service, keyed by the type of the service interface (the one decorated

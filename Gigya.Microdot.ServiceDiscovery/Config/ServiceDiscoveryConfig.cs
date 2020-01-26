@@ -83,9 +83,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// </summary>
         public bool? UseHttpsOverride { get; set; }
 
-        // Temp for testing
-        public bool? ListenBoth { get; set; }
-
         /// <summary>
         /// Gets or sets the name of server certificate to trust. Defaults to null, which means it will trust a
         /// certificate with any name (but still checks its Certificate Authority).
