@@ -126,16 +126,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
+            if (ServiceEndPointDefinition.HttpsPort != null)
+                ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
-            Listener = new HttpListener
-            {
-                IgnoreWriteExceptions = true,
-                Prefixes = { $"https://+:{ServiceEndPointDefinition.HttpsPort}/" }
-            };
-
+            Listener = new HttpListener {IgnoreWriteExceptions = true};
+            if (ServiceEndPointDefinition.HttpsPort != null)
+                Listener.Prefixes.Add($"https://+:{ServiceEndPointDefinition.HttpsPort}/");
             if (ServiceEndPointDefinition.HttpPort != null)
-                Listener.Prefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/"); 
+                Listener.Prefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/");
+            if (!Listener.Prefixes.Any())
+                Log.Warn(_ => _("HttpServiceListener is not listening on any ports, no HTTP or HTTPS ports in ServiceEndPointDefinition"));
 
             var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
@@ -159,9 +159,10 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 if (ex.ErrorCode != 5)
                 {
-                    ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpsPort}";
                     if (ServiceEndPointDefinition.HttpPort != null)
                         ex.Data["HttpPort"] = $"{ServiceEndPointDefinition.HttpPort}";
+                    if (ServiceEndPointDefinition.HttpsPort != null)
+                        ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpsPort}";
 
                     ex.Data["Prefixes"] = Listener.Prefixes;
                     ex.Data["User"] = AppInfo.OsUser;
@@ -485,14 +486,18 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async Task CheckSecureConnection(HttpListenerContext context)
         {
-            if (ServiceEndPointDefinition.UseSecureChannel && !context.Request.IsSecureConnection)
-            {
-                _failureCounter.Increment("IncorrectSecurityType");
-                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", unencrypted: new Tags { { "serviceIsSecure", ServiceEndPointDefinition.UseSecureChannel.ToString() }, { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
-            }
-
             if (!context.Request.IsSecureConnection)
-                return;
+            {
+                // If a non-secure request reaches the HTTP port, we are safe
+                if (context.Request.LocalEndPoint?.Port == ServiceEndPointDefinition.HttpPort)
+                {
+                    return;
+                }
+
+                _failureCounter.Increment("IncorrectSecurityType");
+                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", 
+                    unencrypted: new Tags { { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
+            }
 
             var clientCertificate = await context.Request.GetClientCertificateAsync();
 
