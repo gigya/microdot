@@ -1,5 +1,6 @@
 ﻿using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Gigya.Microdot.Configuration
@@ -19,6 +20,8 @@ namespace Gigya.Microdot.Configuration
         public DirectoryInfo ConfigRoot { get; }
 
         public FileInfo LoadPathsFile { get; }
+
+        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
 
         public ApplicationInfoSource(CurrentApplicationInfo applicationInfo)
         {

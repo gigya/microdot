@@ -23,11 +23,13 @@
 #endregion Copyright
 
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared.Service;
 using Orleans;
 using Orleans.Configuration;
@@ -51,7 +53,7 @@ namespace Gigya.Microdot.Testing.Service
 
         public ServiceArguments ServiceArguments{ get; private set; }
 
-        public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
+        public ServiceTester(HostConfiguration hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
         {
             _customSerializer = customSerializer;
 

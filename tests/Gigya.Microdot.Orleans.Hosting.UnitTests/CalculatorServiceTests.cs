@@ -78,7 +78,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                Tester = new ServiceTester<CalculatorServiceHost>
+                Tester = new ServiceTester<CalculatorServiceHost>(
+                    new HostConfiguration(new TestHostConfigurationSource()))
                 {
                     CommunicationKernel = new MicrodotInitializer(
                         new HostConfiguration(new TestHostConfigurationSource()),

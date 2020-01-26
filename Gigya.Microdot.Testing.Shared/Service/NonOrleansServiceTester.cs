@@ -22,8 +22,10 @@
 
 #endregion Copyright
 
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using System;
 using System.Threading.Tasks;
 
@@ -34,7 +36,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public TServiceHost Host = new TServiceHost();
         private Task _hostStopped;
 
-        public NonOrleansServiceTester()
+        public NonOrleansServiceTester(HostConfiguration config) : base(config)
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
@@ -44,7 +46,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             Initialize(args);
         }
 
-        public NonOrleansServiceTester(ServiceArguments serviceArguments)
+        public NonOrleansServiceTester(ServiceArguments serviceArguments, HostConfiguration config) : base(config)
         {
             Initialize(serviceArguments);
         }

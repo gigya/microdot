@@ -9,12 +9,14 @@ using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Service;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
@@ -45,7 +47,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [SetUp]
         public virtual void SetUp()
         {
-            _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>();
+            _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
+                new HostConfiguration(new TestHostConfigurationSource()));
             _insecureClient = _testinghost.GetServiceProxy<IDemoService>();
             Metric.ShutdownContext("Service");
             TracingContext.SetRequestID("1");

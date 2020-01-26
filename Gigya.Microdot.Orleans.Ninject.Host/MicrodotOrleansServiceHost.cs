@@ -128,7 +128,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         protected override void OnVerifyConfiguration()
         {
+            // TODO: This kernel is replaced in OnStart
             Kernel = CreateKernel();
+            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
             Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
             ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
             base.OnVerifyConfiguration();

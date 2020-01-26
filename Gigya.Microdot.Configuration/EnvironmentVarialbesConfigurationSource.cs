@@ -25,6 +25,8 @@ namespace Gigya.Microdot.Configuration
 
         public FileInfo LoadPathsFile { get; }
 
+        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
+
         public EnvironmentVarialbesConfigurationSource()
         {
             this.ApplicationInfo = null;

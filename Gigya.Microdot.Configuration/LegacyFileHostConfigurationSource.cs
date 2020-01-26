@@ -12,6 +12,7 @@ namespace Gigya.Microdot.Configuration
 {
     public sealed class LegacyFileHostConfigurationSource : IHostConfigurationSource
     {
+        // TODO: Do we need Zone and Region, or can it be abstracted away in favor of generic configuration properties
         public string Zone { get; }
 
         public string Region { get; }
@@ -26,6 +27,8 @@ namespace Gigya.Microdot.Configuration
 
         public FileInfo LoadPathsFile { get; }
 
+        public IDictionary<string, string> CustomKeys { get; }
+
         public LegacyFileHostConfigurationSource(string path)
         {
             var entries =
@@ -39,6 +42,8 @@ namespace Gigya.Microdot.Configuration
 
             ConfigRoot =    get("GIGYA_CONFIG_ROOT")      ?.To(x => new DirectoryInfo(x));
             LoadPathsFile = get("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
+
+            CustomKeys = entries.ToDictionary(x => x.Key, x => x.Value.Value);
 
             string get(string key)
             {
@@ -90,7 +95,7 @@ namespace Gigya.Microdot.Configuration
                 envVarsObject
                 .Properties()
                 .Where(a => a.HasValues)
-                .Select(x => new Entry(x.Name, x.Value.Value<string>()))
+                .Select(x => new Entry(x.Name.ToUpperInvariant(), x.Value.Value<string>()))
                 .ToArray();
         }
     }

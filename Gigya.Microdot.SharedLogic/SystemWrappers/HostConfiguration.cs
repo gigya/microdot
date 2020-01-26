@@ -39,22 +39,20 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
 
     public class HostConfiguration : IEnvironment
     {
-        private readonly string _region;
-
         private const string GIGYA_CONFIG_ROOT_DEFAULT = "config";
         private const string LOADPATHS_JSON = "loadPaths.json";
 
         private const string GIGYA_CONFIG_ROOT_KEY = "GIGYA_CONFIG_ROOT";
         private const string GIGYA_CONFIG_PATHS_FILE_KEY = "GIGYA_CONFIG_PATHS_FILE";
 
-        private Func<DataCentersConfig> GetDataCentersConfig { get; }
-
-
+        // TODO: Add doc
         public HostConfiguration(params IHostConfigurationSource[] sources)
             : this(sources as IEnumerable<IHostConfigurationSource>) { }
         
         public HostConfiguration(IEnumerable<IHostConfigurationSource> sources)
         {
+            customKeys = new Dictionary<string, string>();
+
             foreach (var s in sources)
             {
                 Zone                  = s.Zone                  ?? Zone;
@@ -64,10 +62,12 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
                 ApplicationInfo       = s.ApplicationInfo       ?? ApplicationInfo;
                 ConfigRoot            = s.ConfigRoot            ?? ConfigRoot;
                 LoadPathsFile         = s.LoadPathsFile         ?? LoadPathsFile;
+
+                consumeCustomKeys(s);
             }
 
             if (Zone                  == null) throw new ArgumentNullException($"{ nameof(Zone)                  } wasn't supplied.");
-            if (Region                == null) throw new ArgumentNullException($"{ nameof(Region)                } wasn't supplied.");
+         // if (Region                == null) throw new ArgumentNullException($"{ nameof(Region)                } wasn't supplied.");
             if (DeploymentEnvironment == null) throw new ArgumentNullException($"{ nameof(DeploymentEnvironment) } wasn't supplied.");
             if (ConsulAddress         == null) throw new ArgumentNullException($"{ nameof(ConsulAddress)         } wasn't supplied.");
             if (ApplicationInfo       == null) throw new ArgumentNullException($"{ nameof(ApplicationInfo)       } wasn't supplied.");
@@ -75,6 +75,7 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
             ConfigRoot ??= GetDefaultConfigRoot();
             LoadPathsFile ??= GetDefaultPathsFile();
 
+            // TODO: Fix error messages.
             if (ConfigRoot.Exists == false)
             {
                 throw new EnvironmentException(
@@ -89,6 +90,14 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
                     $"Use '{GIGYA_CONFIG_PATHS_FILE_KEY}' environment variable to define absolute path" +
                     $"to the file or place a 'loadPaths.json' at your config root.");
             }
+
+            void consumeCustomKeys(IHostConfigurationSource cs)
+            {
+                foreach (var k in cs.CustomKeys)
+                {
+                    customKeys[k.Key] = k.Value;
+                }
+            }
         }
 
         private DirectoryInfo GetDefaultConfigRoot() =>
@@ -100,15 +109,28 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
                 .To(x => new FileInfo(x));
 
 
-        [Obsolete("Use the ApplicationInfo property instead. Will be removed in 3.0.")]
+        [Obsolete("Use the ApplicationInfo property instead. Will be removed in 4.0.")]
         public string InstanceName => ApplicationInfo.Name;
 
         public string Zone { get; }
-        public string Region { get; } //_region ?? GetDataCentersConfig().Current; // if environmentVariable %REGION% does not exist, take the region from DataCenters configuration (the region was previously called "DataCenter")
+        public string Region { get; }
         public string DeploymentEnvironment { get; }
         public string ConsulAddress { get; }
         public DirectoryInfo ConfigRoot { get; }
         public FileInfo LoadPathsFile { get; }
         public CurrentApplicationInfo ApplicationInfo { get; }
+
+
+        private readonly Dictionary<string, string> customKeys;
+        
+        public string this[string key]
+        {
+            get
+            {
+                if (customKeys.TryGetValue(key, out var val))
+                    return val;
+                return null;
+            }
+        }
     }
 }

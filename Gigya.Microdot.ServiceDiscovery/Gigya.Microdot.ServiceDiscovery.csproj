@@ -14,8 +14,5 @@
     <Content Include="Rewrite\_diagram_from_draw.io.xml" />
     <Content Include="Rewrite\_diagram.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Rewrite\IConsulServiceListMonitor.cs" />
-  </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

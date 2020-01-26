@@ -24,8 +24,10 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;
 
@@ -43,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                _tester = new ServiceTester<CalculatorServiceHost>();
+                _tester = new ServiceTester<CalculatorServiceHost>(new HostConfiguration(new TestHostConfigurationSource()));
                 _serviceProxyProvider = _tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)

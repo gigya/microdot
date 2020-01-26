@@ -24,10 +24,12 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
@@ -44,7 +46,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [OneTimeSetUp]
         public void SetUp()
         {
-            _tester = new ServiceTester<CalculatorServiceHost>();
+            _tester = new ServiceTester<CalculatorServiceHost>(
+                new HostConfiguration(new TestHostConfigurationSource()));
         }
 
         [OneTimeTearDown]
@@ -63,7 +66,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 ConsoleOutputMode.Disabled,
                 SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 1, instanceName: "test", initTimeOutSec: 10);
 
-            var customServiceTester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
+            var customServiceTester = new ServiceTester<CalculatorServiceHost>(
+                new HostConfiguration(new TestHostConfigurationSource()),
+                serviceArguments: serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
             await Task.Delay(200);

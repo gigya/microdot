@@ -38,14 +38,20 @@ namespace Gigya.Microdot.Configuration
     {
         private readonly IConfigurationLocationsParser _configurationLocations;
         private readonly IFileSystem _fileSystem;
+        private readonly IEnvironment _environment;
         private readonly ConfigDecryptor _configDecryptor;
 
         private readonly Regex paramMatcher = new Regex(@"([^\\]|^)%(?<envName>[^%]+)%", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
-        public FileBasedConfigItemsSource(IConfigurationLocationsParser configurationLocations, IFileSystem fileSystem, ConfigDecryptor configDecryptor)
+        public FileBasedConfigItemsSource(
+            IConfigurationLocationsParser configurationLocations,
+            IFileSystem fileSystem,
+            IEnvironment environment,
+            ConfigDecryptor configDecryptor)
         {
             _configurationLocations = configurationLocations;
             _fileSystem = fileSystem;
+            _environment = environment;
             _configDecryptor = configDecryptor;
         }
 
@@ -69,7 +75,7 @@ namespace Gigya.Microdot.Configuration
                                        .Select(match => new
                                        {
                                            Placehodler = "%" + match.Groups[1].Value + "%",
-                                           Value = Environment.GetEnvironmentVariable(match.Groups[1].Value)
+                                           Value = _environment[match.Groups[1].Value.ToUpperInvariant()]
                                        }).ToList();
 
                 if (list.Any())

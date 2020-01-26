@@ -1,4 +1,6 @@
-﻿using Gigya.Microdot.SharedLogic;
+﻿using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
@@ -35,7 +37,8 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             try
             {
                 Service = new NonOrleansServiceTester<SlowServiceHost>(
-                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port))
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port),
+                        new HostConfiguration(new TestHostConfigurationSource()))
                     .GetServiceProxyWithCaching<ISlowService>();
             }
             catch (Exception ex)

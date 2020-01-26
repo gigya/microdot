@@ -29,6 +29,8 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
     // TODO: Remove in favor of property in app instance
     public interface IEnvironment
     {
+        string this[string key] { get; }
+
         /// <summary>
         /// The current Region this application runs in, e.g. "us1", "eu2".
         /// Initialized from the environment variable "REGION".

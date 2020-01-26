@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System.Collections.Generic;
 using System.IO;
 using Gigya.Microdot.Interfaces.Configuration;
 
@@ -34,5 +35,6 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         CurrentApplicationInfo ApplicationInfo { get; }
         DirectoryInfo ConfigRoot { get; }
         FileInfo LoadPathsFile { get; }
+        IDictionary<string, string> CustomKeys { get; }
     }
 }

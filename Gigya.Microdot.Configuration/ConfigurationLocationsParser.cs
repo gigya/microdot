@@ -73,11 +73,11 @@ namespace Gigya.Microdot.Configuration
 
             var configPathDeclarations = ParseAndValidateConfigLines(LoadPathsFilePath, fileSystemInstance);
 
-            ConfigFileDeclarations = ExpandConfigPathDeclarations(configPathDeclarations).ToArray();
+            ConfigFileDeclarations = ExpandConfigPathDeclarations(configPathDeclarations, environment).ToArray();
         }
 
 
-        private List<ConfigFileDeclaration> ExpandConfigPathDeclarations(ConfigFileDeclaration[] configs)
+        private List<ConfigFileDeclaration> ExpandConfigPathDeclarations(ConfigFileDeclaration[] configs, IEnvironment environment)
         {
 
             var configPathsSet = new SortedSet<ConfigFileDeclaration>(configs);
@@ -88,13 +88,26 @@ namespace Gigya.Microdot.Configuration
 
             foreach (var configPath in configPathsSet)
             {
+                // TODO: provide an explicit abstraction
+                string getReplacement(string key)
+                {
+                    switch (key)
+                    {
+                        case "GIGYA_CONFIG_ROOT": return environment.ConfigRoot.FullName;
+                        case "DC": case "ZONE": return environment.Zone;
+                        case "REGION": return environment.Region;
+                        case "ENV": return environment.DeploymentEnvironment;
+                        default: return environment[key];
+                    }
+                }
+                
                 // TODO: should be taken from host config. The parser should also be injectable.
                 var list = Regex.Matches(configPath.Pattern, "%([^%]+)%")
                                 .Cast<Match>()
                                 .Select(match => new
                                 {
                                     Placehodler = match.Groups[0].Value,
-                                    Value = Environment.GetEnvironmentVariable(match.Groups[1].Value)
+                                    Value = getReplacement(match.Groups[1].Value)
                                 }).ToList();
 
                 var missingEnvVariables = list.Where(a => string.IsNullOrEmpty(a.Value)).Select(a => a.Placehodler.Trim('%')).ToList();

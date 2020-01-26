@@ -11,6 +11,7 @@ using System.Text;
 
 namespace Gigya.Microdot.Configuration
 {
+    [Obsolete("Remove before next major version.")]
     public static class EnvironmentVariables
     {
         public sealed class Entry

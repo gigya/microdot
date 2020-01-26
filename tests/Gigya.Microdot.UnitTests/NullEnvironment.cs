@@ -11,6 +11,8 @@ namespace Gigya.Microdot.UnitTests
 {
     internal class NullEnvironment : IEnvironment
     {
+        public string this[string key] => throw new NotImplementedException();
+
         public string Zone => nameof(Zone);
         public string Region => nameof(Region);
         public string DeploymentEnvironment => nameof(DeploymentEnvironment);

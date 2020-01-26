@@ -67,7 +67,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServiceContract", "ServiceC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.ServiceContract", "Gigya.ServiceContract\Gigya.ServiceContract.csproj", "{DB6D3561-835E-40D5-B9D4-83951CF426DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.LanguageExtensions", "Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj", "{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.LanguageExtensions", "Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj", "{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9E13FD47-A463-4D69-A078-59EECAEC294F}"
+	ProjectSection(SolutionItems) = preProject
+		Changelog.md = Changelog.md
+		Directory.Build.props = Directory.Build.props
+		paket.dependencies = paket.dependencies
+		README.md = README.md
+		test.runsettings = test.runsettings
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -192,7 +201,7 @@ Global
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF} = {A14C7201-FAAC-487C-AED3-8A0CA86A8A88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {8A847321-B6B0-4BA9-9AC3-0DB91FA99B90}
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
+		SolutionGuid = {8A847321-B6B0-4BA9-9AC3-0DB91FA99B90}
 	EndGlobalSection
 EndGlobal

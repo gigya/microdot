@@ -25,7 +25,8 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("GIGYA_BASE_PATH", Environment.CurrentDirectory);
 
                 using (var microdotInitializer = new MicrodotInitializer(
-                    new HostConfiguration(new TestHostConfigurationSource()),
+                    // TODO: make correct config
+                    new HostConfiguration(null),
                     new NLogModule()))
                 {
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();

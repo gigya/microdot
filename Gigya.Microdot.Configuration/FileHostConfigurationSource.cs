@@ -23,6 +23,8 @@ namespace Gigya.Microdot.Configuration
         public DirectoryInfo ConfigRoot => GetOrNull(nameof(ConfigRoot))   ?.To(x => new DirectoryInfo(x));
         public FileInfo LoadPathsFile   => GetOrNull(nameof(LoadPathsFile))?.To(x => new FileInfo(x));
 
+        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
+
         #region Entries
         private readonly Dictionary<string, Entry> entries;
 

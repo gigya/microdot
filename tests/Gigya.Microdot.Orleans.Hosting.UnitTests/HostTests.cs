@@ -26,7 +26,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
             try
             {
-                var host = new ServiceTester<TestHost>();
+                var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
                 host.GetServiceProxy<ICalculatorService>();
                 Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
                  host.Dispose();
