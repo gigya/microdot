@@ -18,7 +18,8 @@ namespace System.Diagnostics
             {
                 for (int i = 0; i < Environment.ProcessorCount; i++)
                     yield return i;
-            };
+                yield break;
+            }
 
             var mask = (ulong)p.ProcessorAffinity.ToInt64();
             for (var i = 0; i < 64; i++)
