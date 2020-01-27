@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 // ReSharper disable CheckNamespace
 namespace System.Diagnostics
@@ -11,7 +12,7 @@ namespace System.Diagnostics
         /// </summary>
         public static IEnumerable<int> ProcessorAffinityList(this Process p)
         {
-            if (Environment.OSVersion.Platform == PlatformID.MacOSX) 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 // Processor affinity for processes or threads is not supported on this platform. 
                 // So just return all processors
             {
