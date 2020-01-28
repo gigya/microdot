@@ -25,10 +25,15 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
-            Environment.SetEnvironmentVariable("ZONE", "zone");
-            Environment.SetEnvironmentVariable("ENV", "env");
-            
-            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>(new HostConfiguration(new TestHostConfigurationSource()));
+            //Environment.SetEnvironmentVariable("ZONE", "zone");
+            //Environment.SetEnvironmentVariable("ENV", "env");
+
+            var config = new HostConfiguration(new TestHostConfigurationSource(
+                zone: "zone",
+                deploymentEnvironment: "env",
+                appName: "ICalculatorService"));
+
+            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>(config);
 
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
             
@@ -40,8 +45,8 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         {
             _serviceTester?.Dispose();
 
-            Environment.SetEnvironmentVariable("ZONE", null);
-            Environment.SetEnvironmentVariable("ENV", null);
+            //Environment.SetEnvironmentVariable("ZONE", null);
+            //Environment.SetEnvironmentVariable("ENV", null);
         }
 
         [Test]

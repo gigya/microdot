@@ -14,7 +14,11 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         public override string ServiceName { get; } = "ICalculatorService";
         public IKernel Kernel;
 
-        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource(appName: "ICalculatorService")))
+        {
+        }
+
+        public CalculatorServiceHost(HostConfiguration hostConfiguration) : base(hostConfiguration)
         {
         }
 

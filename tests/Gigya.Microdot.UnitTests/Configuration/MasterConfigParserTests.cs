@@ -4,11 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
-
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using NSubstitute;
 
 using NUnit.Framework;
@@ -73,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
 
         [Test]
-        //[Ignore("To be reenabled after environment variable provider phased out.")]
+        [Ignore("Test this in new config system.")]
         public void AllPathExists_NoEnvironmentVariablesExists_EnvironmentExceptionExpected()
         {
             Action act = () => BaseTest(new Dictionary<string, string> { { "ENV", null }, { "ZONE", null } }, new ConfigFileDeclaration[0]);
@@ -125,7 +126,13 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             try
             {
-                var configs = new ConfigurationLocationsParser(_fileSystem, new NullEnvironment(), new CurrentApplicationInfo("test", Environment.UserName, Dns.GetHostName()));
+                var config = new HostConfiguration(
+                    new TestHostConfigurationSource(),
+                    new EnvironmentVarialbesConfigurationSource(),
+                    new ApplicationInfoSource(
+                        new CurrentApplicationInfo("test", Environment.UserName, Dns.GetHostName())));
+
+                var configs = new ConfigurationLocationsParser(_fileSystem, config, config.ApplicationInfo);
                 configs.ConfigFileDeclarations.Count.ShouldBe(expected.Length);
 
                 foreach (var pair in configs.ConfigFileDeclarations.Zip(expected, (first, second) => new { first, second }))

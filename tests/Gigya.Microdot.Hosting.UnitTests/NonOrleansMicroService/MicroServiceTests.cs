@@ -1,5 +1,7 @@
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using NUnit.Framework;
 using Shouldly;
 using System;
@@ -16,17 +18,17 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         [SetUp]
         public void Setup()
         {
-            Environment.SetEnvironmentVariable("REGION", "us1", EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("ZONE", "us1a", EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
+            //Environment.SetEnvironmentVariable("REGION", "us1", EnvironmentVariableTarget.Process);
+            //Environment.SetEnvironmentVariable("ZONE", "us1a", EnvironmentVariableTarget.Process);
+            //Environment.SetEnvironmentVariable("ENV", "_Test", EnvironmentVariableTarget.Process);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Environment.SetEnvironmentVariable("REGION", null);
-            Environment.SetEnvironmentVariable("ZONE", null);
-            Environment.SetEnvironmentVariable("ENV", null);
+            //Environment.SetEnvironmentVariable("REGION", null);
+            //Environment.SetEnvironmentVariable("ZONE", null);
+            //Environment.SetEnvironmentVariable("ENV", null);
         }
 
         [Test]
@@ -39,7 +41,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             //ConsoleOutputMode.Standard
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
-            var x = new CalculatorServiceHost();
+            var config = new HostConfiguration(
+                new TestHostConfigurationSource(
+                    region: "us1",
+                    zone: "zone",
+                    deploymentEnvironment: "_Test"));
+
+            var x = new CalculatorServiceHost(config);
             await Task.Run(() => x.Run(serviceArguments));
             var canaryType = typeof(MetricsConfiguration);
 
