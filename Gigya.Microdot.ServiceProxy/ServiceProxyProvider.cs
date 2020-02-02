@@ -167,9 +167,9 @@ namespace Gigya.Microdot.ServiceProxy
             Timeout = timeout;
         }
 
-        private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig config, bool tryHttps, string hostname, int basePort)
+        private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig config, DiscoveryConfig discoveryConfig, bool tryHttps, string hostname, int basePort)
         {
-            var forceHttps = UseHttpsDefault && (config.UseHttpsOverride ?? true);
+            var forceHttps = UseHttpsDefault && (config.UseHttpsOverride ?? discoveryConfig.UseHttpsOverride);
             var useHttps = tryHttps || forceHttps;
             string securityRole = config.SecurityRole;
             (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, config.RequestTimeout);
@@ -249,7 +249,7 @@ namespace Gigya.Microdot.ServiceProxy
             if (port == null)
                 throw new Exception("No port is configured");
 
-            Func<bool, (HttpClient client, bool isHttps)> clientFactory = tryHttps  => GetHttpClient(config, tryHttps, node.Hostname, port.Value);
+            Func<bool, (HttpClient client, bool isHttps)> clientFactory = tryHttps  => GetHttpClient(config, GetDiscoveryConfig(), tryHttps, node.Hostname, port.Value);
             return ValidateReachability(node.Hostname, port.Value, fallbackOnProtocolError: true, clientFactory: clientFactory, cancellationToken: cancellationToken);
         }
 
@@ -334,7 +334,9 @@ namespace Gigya.Microdot.ServiceProxy
             };
             PrepareRequest?.Invoke(request);
 
-            bool tryHttps = GetConfig().UseHttpsOverride ?? true;
+            var discoveryConfig = GetDiscoveryConfig();
+            // Use service configuration if exists, if not use global configuration
+            bool tryHttps = GetConfig().UseHttpsOverride ?? discoveryConfig.UseHttpsOverride;
             while (true)
             {
                 var config = GetConfig();
@@ -382,7 +384,7 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
                     {
-                        var (httpClient, isHttps) = GetHttpClient(config, tryHttps, nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
+                        var (httpClient, isHttps) = GetHttpClient(config, discoveryConfig, tryHttps, nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
 
                         // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
                         uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, isHttps) + ServiceName;

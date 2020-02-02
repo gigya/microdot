@@ -103,9 +103,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             var serviceConfig = config.Services[appInfo.Name];
 
             bool originallyHttpsSupporting = interfacePorts.First().UseHttps;
-            bool httpsEnabled = serviceConfig.UseHttpsOverride ?? true;
 
-            UseSecureChannel = serviceConfig.UseHttpsOverride ?? interfacePorts.First().UseHttps;
+            // Use service configuration if exists, if not use global configuration
+            UseSecureChannel = serviceConfig.UseHttpsOverride ?? config.UseHttpsOverride;
 
             if (config.PortAllocation.IsSlotMode == false && serviceArguments.SlotNumber == null)
             {
@@ -119,13 +119,13 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                 if (originallyHttpsSupporting)
                 {
-                    HttpPort = httpsEnabled ? (int?)null : basePort + (int)PortOffsets.Http;
-                    HttpsPort = httpsEnabled ? basePort + (int)PortOffsets.Http : (int?)null;
+                    HttpPort = UseSecureChannel ? (int?)null : basePort + (int)PortOffsets.Http;
+                    HttpsPort = UseSecureChannel ? basePort + (int)PortOffsets.Http : (int?)null;
                 }
                 else
                 {
                     HttpPort = basePort + (int)PortOffsets.Http;
-                    HttpsPort = httpsEnabled ? basePort + (int)PortOffsets.Https : (int?)null;
+                    HttpsPort = UseSecureChannel ? basePort + (int)PortOffsets.Https : (int?)null;
                 }
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
@@ -152,13 +152,13 @@ namespace Gigya.Microdot.Hosting.HttpService
                 if (originallyHttpsSupporting)
                 {
                     int? port = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
-                    HttpPort = httpsEnabled ? null : port;
-                    HttpsPort = httpsEnabled ? port : null;
+                    HttpPort = UseSecureChannel ? null : port;
+                    HttpsPort = UseSecureChannel ? port : null;
                 }
                 else
                 {
                     HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
-                    HttpsPort = httpsEnabled ? config.PortAllocation.GetPort(slotNumber, PortOffsets.Https).Value : (int?)null;
+                    HttpsPort = UseSecureChannel ? config.PortAllocation.GetPort(slotNumber, PortOffsets.Https).Value : (int?)null;
                 }
 
                 MetricsPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Metrics).Value;
