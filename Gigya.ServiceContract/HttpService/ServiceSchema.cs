@@ -197,7 +197,7 @@ namespace Gigya.Common.Contracts.HttpService
             
             while (type != null)
             {
-                void with(FieldSchema fs)
+                void add(FieldSchema fs)
                 {
                     if (fields.TryGetValue(fs.Name, out var s))
                         s.Attributes = s.Attributes.Union(fs.Attributes).ToArray();
@@ -205,17 +205,17 @@ namespace Gigya.Common.Contracts.HttpService
                         fields.Add(fs.Name, fs);
                 }
 
-                void add(IEnumerable<FieldSchema> fss)
+                void addRange(IEnumerable<FieldSchema> fss)
                 {
                     foreach (var fs in fss)
-                        with(fs);
+                        add(fs);
                 }
 
-                add(type
+                addRange(type
                     .GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                     .Select(x => new FieldSchema(x)));
 
-                add(type
+                addRange(type
                     .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                     .Select(x => new FieldSchema(x)));
                 
