@@ -4,13 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
-    <Company>SAP SE</Company>
-    <Product>Gigya.Microdot.Common.Tests</Product>
-    <Copyright>Copyright © SAP SE 2019</Copyright>
-    <AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
-    <Company>SAP SE</Company>
-    <Product>Gigya.Microdot.Common.Tests</Product>
-    <Copyright>Copyright © SAP SE 2019</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />

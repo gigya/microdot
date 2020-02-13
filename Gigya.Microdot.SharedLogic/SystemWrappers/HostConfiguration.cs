@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -55,13 +56,13 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
 
             foreach (var s in sources)
             {
-                Zone                  = s.Zone                  ?? Zone;
-                Region                = s.Region                ?? Region;
-                DeploymentEnvironment = s.DeploymentEnvironment ?? DeploymentEnvironment;
-                ConsulAddress         = s.ConsulAddress         ?? ConsulAddress;
-                ApplicationInfo       = s.ApplicationInfo       ?? ApplicationInfo;
-                ConfigRoot            = s.ConfigRoot            ?? ConfigRoot;
-                LoadPathsFile         = s.LoadPathsFile         ?? LoadPathsFile;
+                Zone                  = pipeParameter(nameof(Zone),                  Zone,                  s.Zone);
+                Region                = pipeParameter(nameof(Region),                Region,                s.Region);
+                DeploymentEnvironment = pipeParameter(nameof(DeploymentEnvironment), DeploymentEnvironment, s.DeploymentEnvironment);
+                ConsulAddress         = pipeParameter(nameof(ConsulAddress),         ConsulAddress,         s.ConsulAddress);
+                ApplicationInfo       = pipeParameter(nameof(ApplicationInfo),       ApplicationInfo,       s.ApplicationInfo);
+                ConfigRoot            = pipeFsiParameter(nameof(ConfigRoot),         ConfigRoot,            s.ConfigRoot);
+                LoadPathsFile         = pipeFsiParameter(nameof(LoadPathsFile),      LoadPathsFile,         s.LoadPathsFile);
 
                 consumeCustomKeys(s);
             }
@@ -97,6 +98,29 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
                 {
                     customKeys[k.Key] = k.Value;
                 }
+            }
+
+            T pipeFsiParameter<T>(string name, T orig, T @new)
+                where T : FileSystemInfo
+            {
+                if (orig == null && @new != null)
+                    Trace.WriteLine($"HostConfiguration: Setting { name } <- {@new.FullName}");
+
+                if (orig != null && @new != null)
+                    Trace.WriteLine($"HostConfiguration: Overriding { name } <- { @new.FullName }");
+
+                return @new ?? orig;
+            }
+
+            T pipeParameter<T>(string name, T orig, T @new)
+            {
+                if (orig == null && @new != null)
+                    Trace.WriteLine($"HostConfiguration: Setting { name } <- {@new}");
+
+                if (orig != null && @new != null)
+                    Trace.WriteLine($"HostConfiguration: Overriding { name } <- { @new }");
+
+                return @new ?? orig;
             }
         }
 
