@@ -25,7 +25,7 @@ namespace Gigya.Microdot.Configuration
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
+        public IDictionary<string, string> CustomKeys { get; }
 
         public EnvironmentVarialbesConfigurationSource()
         {
@@ -37,6 +37,15 @@ namespace Gigya.Microdot.Configuration
             this.ConsulAddress         = Environment.GetEnvironmentVariable("CONSUL");
             this.ConfigRoot            = Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT")      ?.To(x => new DirectoryInfo(x));
             this.LoadPathsFile         = Environment.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
+
+            var d = new Dictionary<string, string>();
+
+            d.Add("DC", Environment.GetEnvironmentVariable("DC"));
+            d.Add("ENV", Environment.GetEnvironmentVariable("ENV"));
+            d.Add("GIGYA_CONFIG_ROOT", Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT"));
+            d.Add("GIGYA_BASE_PATH", Environment.GetEnvironmentVariable("GIGYA_BASE_PATH"));
+
+            this.CustomKeys = d;
         }
     }
 }
