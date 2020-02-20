@@ -57,9 +57,16 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-    public sealed class HttpServiceListener : IDisposable
+    public interface IRequestListener : IDisposable
+    {
+        Task Listen();
+    }
+
+    public sealed class HttpServiceListener : IRequestListener
     {
         private readonly IServerRequestPublisher _serverRequestPublisher;
+
+        private Task listeningTask;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -109,15 +116,19 @@ namespace Gigya.Microdot.Hosting.HttpService
             _ReadyToGetTraffic.TrySetResult(1);
         }
 
-        public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
-                                   ICertificateLocator certificateLocator, ILog log,
-                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
-                                   JsonExceptionSerializer exceptionSerializer, 
-                                   ServiceSchema serviceSchema,                                   
-                                   Func<LoadShedding> loadSheddingConfig,
-                                   IServerRequestPublisher serverRequestPublisher,
-                                   CurrentApplicationInfo appInfo
-                                   )
+        public HttpServiceListener(
+            IActivator activator,
+            IWorker worker,
+            IServiceEndPointDefinition serviceEndPointDefinition,
+            ICertificateLocator certificateLocator,
+            ILog log,
+            IEnumerable<ICustomEndpoint> customEndpoints,
+            IEnvironment environment,
+            JsonExceptionSerializer exceptionSerializer,
+            ServiceSchema serviceSchema,
+            Func<LoadShedding> loadSheddingConfig,
+            IServerRequestPublisher serverRequestPublisher,
+            CurrentApplicationInfo appInfo)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -155,8 +166,14 @@ namespace Gigya.Microdot.Hosting.HttpService
             _endpointContext = context.Context("Endpoints");
         }
 
+        public Task Listen()
+        {
+            this.listeningTask = this.Start();
 
-        public void Start()
+            return this.listeningTask;
+        }
+
+        public async Task Start()
         {
             try
             {
@@ -183,7 +200,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
 
-        private async void StartListening()
+        private async Task StartListening()
         {
 
             await _ReadyToGetTraffic.Task;
@@ -655,5 +672,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             Worker.Dispose();
             Listener.Close();
         }
+
     }
 }
