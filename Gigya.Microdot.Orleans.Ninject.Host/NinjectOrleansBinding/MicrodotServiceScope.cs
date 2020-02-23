@@ -4,11 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    /// <summary>
-    /// Not using ninject scope feature do prevent memory leak
-    /// BY designed ServiceScope should be the only root that hold all scope service.
-    /// it prevent memory leak by letting scope be collected even when not dispose if not reference any more
-    /// </summary>
+    /// <remarks>
+    /// Not using Ninject scope feature to prevent memory leak.
+    /// All dependency references should only be rooted through ServiceScope, so they would
+    /// be collected with the scope itself.
+    /// It prevents memory leak that was caused by lack of user scope cleanup
+    /// (not calling dispose at the end of the scope) and keeping dependencies rooted in Ninject cache.
+    /// </remarks>
     internal class MicrodotServiceScope : IServiceScope, IServiceProvider
     {
         private readonly RequestScopedType _scopedType;
