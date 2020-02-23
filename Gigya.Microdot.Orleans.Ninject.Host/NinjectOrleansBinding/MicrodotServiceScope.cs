@@ -11,20 +11,25 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     /// It prevents memory leak that was caused by lack of user scope cleanup
     /// (not calling dispose at the end of the scope) and keeping dependencies rooted in Ninject cache.
     /// </remarks>
+
+    /// decorator on IServiceProvider that manage the life time of Service on Scope
     internal class MicrodotServiceScope : IServiceScope, IServiceProvider
     {
-        private readonly RequestScopedType _scopedType;
+        private readonly IRequestScopedType _scopedType;
         private readonly object _locker = new object();
 
         // ReSharper disable once CollectionNeverQueried.Local
         private Dictionary<Type, object> _scopeServices;
         private List<IDisposable> _disposables;
-        public MicrodotServiceScope(IServiceProvider serviceProvider, RequestScopedType scopedType)
+        
+        private readonly IServiceProvider _component;
+        public MicrodotServiceScope(IServiceProvider serviceProvider, IRequestScopedType scopedType)
         {
-            ServiceProvider = serviceProvider;
             _scopedType = scopedType;
+            _component = serviceProvider;
         }
-        public IServiceProvider ServiceProvider { get; }
+
+        public IServiceProvider ServiceProvider => this;
 
         public void Dispose()
         {
@@ -48,8 +53,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                     {
                         return service;
                     }
-                    
-                    var result = ServiceProvider.GetService(serviceType);
+
+                    var result = _component.GetService(serviceType);
                     _scopeServices.Add(serviceType, result);
                     if (result is IDisposable disposable)
                     {
@@ -61,7 +66,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
             else
             {
-                return ServiceProvider.GetService(serviceType);
+                return _component.GetService(serviceType);
             }
 
 

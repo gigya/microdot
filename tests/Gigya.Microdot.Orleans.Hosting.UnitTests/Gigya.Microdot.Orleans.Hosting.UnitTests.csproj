@@ -52,6 +52,7 @@
     <Compile Include="Microservice\CalculatorService\IGarinAgeLimitService.cs" />
     <Compile Include="Microservice\WarmupTestService\WarmupTestServiceGrain.cs" />
     <Compile Include="Microservice\WarmupTestService\WarmupTestServiceHostWithSiloHostFake.cs" />
+    <Compile Include="OrleansToNinjectBinding\OrleansToNinjectBindingTests.cs" />
     <Compile Include="Validation\ConfigObjectTypeValidatorTest.cs" />
     <Compile Include="Validation\LogFieldAttributeValidatorTest.cs" />
     <Compile Include="Microservice\AgeLimitService\GrainConfigAgeTesterService.cs" />
@@ -728,6 +729,17 @@
       <ItemGroup>
         <Reference Include="Ninject">
           <HintPath>..\..\packages\Ninject\lib\net45\Ninject.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
+      <ItemGroup>
+        <Reference Include="Ninject.Extensions.Factory">
+          <HintPath>..\..\packages\Ninject.Extensions.Factory\lib\net45\Ninject.Extensions.Factory.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
