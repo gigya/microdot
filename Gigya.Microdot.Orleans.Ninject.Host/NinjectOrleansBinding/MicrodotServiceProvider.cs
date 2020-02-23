@@ -2,13 +2,13 @@ using System;
 using Ninject;
 using Ninject.Syntax;
 
-namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    internal class MicroDotServiceProvider : IServiceProvider
+    internal class MicrodotServiceProvider : IServiceProvider
     {
         private readonly IResolutionRoot _resolutionRoot;
 
-        public MicroDotServiceProvider(IResolutionRoot resolutionRoot)
+        public MicrodotServiceProvider(IResolutionRoot resolutionRoot)
         {
             _resolutionRoot = resolutionRoot;
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Runtime;
 
-namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     //Idea here is to in reach microsoft abstraction to bind service per key
     //In Ninject we can simplify the default implementation by calling IEnumerable<TService> for multiple implementation
@@ -20,6 +20,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
 
         public IEnumerable<IKeyedService<TKey, TService>> GetServices(IServiceProvider services)
         {
+            // ninject IEnumerable feature the get all the implementations of service 
             return services.GetService<IEnumerable<IKeyedService<TKey, TService>>>();
         }
     }

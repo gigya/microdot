@@ -51,13 +51,13 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="GrainsWarmup.cs" />
-    <Compile Include="IOC\KeyedServiceCollection.cs" />
-    <Compile Include="IOC\MicroDotServiceProvider.cs" />
-    <Compile Include="IOC\MicroDotServiceScope.cs" />
-    <Compile Include="IOC\MicroDotServiceScopeFactory.cs" />
-    <Compile Include="IOC\OrleansToNinjectBinding.cs" />
-    <Compile Include="IOC\NonBlockingLoggerFactory.cs" />
-    <Compile Include="IOC\RequestBindingType.cs" />
+    <Compile Include="NinjectOrleansBinding\KeyedServiceCollection.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotServiceProvider.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotServiceScope.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotServiceScopeFactory.cs" />
+    <Compile Include="NinjectOrleansBinding\OrleansToNinjectBinding.cs" />
+    <Compile Include="NinjectOrleansBinding\NonBlockingLoggerFactory.cs" />
+    <Compile Include="NinjectOrleansBinding\RequestScopedType.cs" />
     <Compile Include="MicrodotOrleansHostModule.cs" />
     <Compile Include="MicrodotOrleansServiceHost.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

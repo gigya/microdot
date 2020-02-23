@@ -28,19 +28,19 @@ using Ninject;
 using Ninject.Syntax;
 using Orleans.Runtime;
 
-namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     /// <summary>
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
 
-    public class OrleansToNinjectBinding : IOrleansToNinjectBinding
+    internal class OrleansToNinjectBinding : IOrleansToNinjectBinding
     {
-        private readonly RequestBindingType _bindingType;
+        private readonly RequestScopedType _scopedType;
 
-        public OrleansToNinjectBinding(IKernel kernel, RequestBindingType bindingType)
+        public OrleansToNinjectBinding(IKernel kernel, RequestScopedType scopedType)
         {
-            _bindingType = bindingType;
+            _scopedType = scopedType;
             Kernel = kernel;
         }
         internal IKernel Kernel { get; set; }
@@ -75,7 +75,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        _bindingType.Register(descriptor.ServiceType);
+                        _scopedType.Register(descriptor.ServiceType);
                         break;
 
                     case ServiceLifetime.Transient:
@@ -86,11 +86,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
 
             Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InSingletonScope();
             Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
-            Kernel.Rebind<IServiceProvider, MicroDotServiceProvider>().To<MicroDotServiceProvider>().InSingletonScope();
-            Kernel.Rebind<IServiceScopeFactory, MicroDotServiceScopeFactory>().To<MicroDotServiceScopeFactory>().InSingletonScope();
+            Kernel.Rebind<IServiceProvider, MicrodotServiceProvider>().To<MicrodotServiceProvider>().InSingletonScope();
+            Kernel.Rebind<IServiceScopeFactory, MicrodotServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
             
             // should be one per scope 
-            Kernel.Rebind<IServiceScope, MicroDotServiceScope>().To<MicroDotServiceScope>().InTransientScope();
+            Kernel.Rebind<IServiceScope, MicrodotServiceScope>().To<MicrodotServiceScope>().InTransientScope();
         }
 
 

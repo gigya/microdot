@@ -1,7 +1,7 @@
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Microsoft.Extensions.Logging;
 
-namespace Gigya.Microdot.Orleans.Ninject.Host.IOC
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     /// <summary>
     /// Replacing the original Microsoft Logger factory to avoid blocking code.
