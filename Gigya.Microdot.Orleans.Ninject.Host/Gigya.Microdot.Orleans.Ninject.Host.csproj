@@ -51,13 +51,15 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="GrainsWarmup.cs" />
-    <Compile Include="Microsoft.DI\NinjectRegistration.cs" />
-    <Compile Include="Microsoft.DI\NinjectServiceScopeFactory.cs" />
-    <Compile Include="Microsoft.DI\ScopeParameter.cs" />
-    <Compile Include="NinjectOrleansServiceProvider.cs" />
+    <Compile Include="IOC\KeyedServiceCollection.cs" />
+    <Compile Include="IOC\MicroDotServiceProvider.cs" />
+    <Compile Include="IOC\MicroDotServiceScope.cs" />
+    <Compile Include="IOC\MicroDotServiceScopeFactory.cs" />
+    <Compile Include="IOC\OrleansToNinjectBinding.cs" />
+    <Compile Include="IOC\NonBlockingLoggerFactory.cs" />
+    <Compile Include="IOC\RequestBindingType.cs" />
     <Compile Include="MicrodotOrleansHostModule.cs" />
     <Compile Include="MicrodotOrleansServiceHost.cs" />
-    <Compile Include="NinjectServiceProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -93,9 +95,7 @@
       <Name>Gigya.Microdot.Orleans.Hosting</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Microsoft.DI\LICENSE.txt" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">

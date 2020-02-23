@@ -30,7 +30,7 @@ using System;
 using System.Collections.Generic;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Logging;
-using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.Orleans.Ninject.Host.IOC;
 using Orleans.Runtime;
 using Orleans.Serialization;
 

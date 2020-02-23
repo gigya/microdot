@@ -23,8 +23,21 @@ namespace CalculatorService.Client
                 using (var microdotInitializer = new MicrodotInitializer("CalculatorService.Client", new NLogModule()))
                 {
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
-                    int sum = calculatorService.Add(2, 3).Result;
-                    Console.WriteLine($"Sum: {sum}");
+                    while (true)
+                    {
+                        try
+                        {
+                            int sum = calculatorService.Add(2, 3).Result;
+
+                            Console.WriteLine($"Sum: {sum}");
+                        }
+                        catch (Exception e)
+                        {
+                          ////  Console.WriteLine(e);
+                          //  throw;
+                        }
+                    }
+             
                 }
             }
             catch (Exception ex)
