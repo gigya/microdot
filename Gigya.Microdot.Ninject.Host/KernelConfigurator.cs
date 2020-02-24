@@ -29,11 +29,21 @@ namespace Gigya.Microdot.Ninject.Host
 
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
+
+            kernel.Bind<IRequestListener>().To<HttpServiceListener>();
+
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments).InSingletonScope();
         }
-        public abstract void Configure(IKernel kernel);
-        
+        public void Configure(IKernel kernel)
+        {
+            
+            this.Configure(kernel, kernel.Get<BaseCommonConfig>());
+        }
+
+        protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
+
+
         public void PreInitialize(IKernel kernel)
         {
             kernel.Get<SystemInitializer.SystemInitializer>().Init();

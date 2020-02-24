@@ -33,10 +33,10 @@ namespace Gigya.Microdot.UnitTests
 
         public T Instance { get; private set; }
 
-        public override string ServiceName => this.HostConfiguration.ApplicationInfo.Name;
+        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
 
 
-        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
+        public override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {

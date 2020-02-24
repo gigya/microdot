@@ -10,6 +10,7 @@ using System;
 using System.Diagnostics;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
+using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
@@ -45,7 +46,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
         }
 
-        public override string ServiceName => "TestService";
+        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
 
         public override ILoggingModule GetLoggingModule()
         {
@@ -53,13 +54,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
 
-        protected override void PreConfigure(IKernel kernel)
+        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
-            base.PreConfigure(kernel);
+            base.PreConfigure(kernel, Arguments);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");
             kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
             kernel.RebindForTests();
-          
         }
     }
 }

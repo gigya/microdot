@@ -14,7 +14,7 @@ namespace CalculatorService.Orleans
         {
         }
 
-        public override string ServiceName => nameof(CalculatorService);
+        public string ServiceName => nameof(CalculatorService);
 
         static void Main(string[] args)
         {

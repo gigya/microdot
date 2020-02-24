@@ -21,7 +21,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
 
     public class ServiceHostFake<TFake> : MicrodotServiceHost<IServiceFake> 
     {
-        public override string ServiceName => nameof(IServiceFake).Substring(1);
+        public string ServiceName => nameof(IServiceFake).Substring(1);
 
         private TFake _fake;
         public ServiceHostFake(TFake fake, HostConfiguration configuration)
@@ -30,14 +30,14 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             _fake = fake;
         }
 
-        protected override ILoggingModule GetLoggingModule()
+        public override ILoggingModule GetLoggingModule()
         {
             return new NLogModule();
         }
 
-        protected override void PreConfigure(IKernel kernel)
+        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
-            base.PreConfigure(kernel);
+            base.PreConfigure(kernel, Arguments);
        
             kernel.Rebind<TFake>().ToConstant(_fake);
             kernel.Rebind<IEventPublisher<CrashEvent>>().ToConstant(Substitute.For<IEventPublisher<CrashEvent>>());

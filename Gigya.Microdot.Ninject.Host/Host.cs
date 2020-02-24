@@ -6,6 +6,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using System;
@@ -36,9 +37,10 @@ namespace Gigya.Microdot.Ninject.Host
         ILoggingModule GetLoggingModule();
     }
 
-    public sealed class Host
+    public sealed class Host : IDisposable
     {
         private bool disposed;
+        private object SyncRoot = new object();
 
         private IKernel Kernel { get; set; }
 
@@ -100,13 +102,28 @@ namespace Gigya.Microdot.Ninject.Host
             CrashHandler.Init(OnCrash);
 
             this.kernelConfigurator.OnInitilize(Kernel);
+
+            this.kernelConfigurator.Warmup(Kernel);
+
             //don't move up the get should be after all the binding are done
             var log = Kernel.Get<ILog>();
             
-            this.requestListener = Kernel.Get<HttpServiceListener>();
+            this.requestListener = Kernel.Get<IRequestListener>();
             this.requestListener.Listen();
 
             log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostConfiguration.ApplicationInfo.HostName }));
+        }
+
+        private void OnStop()
+        {
+            if (Arguments.ServiceDrainTimeSec.HasValue)
+            {
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+            }
+            Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
+            Dispose();
         }
 
         /// <summary>
@@ -257,12 +274,15 @@ namespace Gigya.Microdot.Ninject.Host
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
             Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-            Kernel.Load(new ConfigVerificationModule(
-                this.kernelConfigurator.GetLoggingModule(),
-                Arguments,
-                this.HostConfiguration.ApplicationInfo.Name,
-                InfraVersion));
-            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
+            
+            Kernel.Load(
+                new ConfigVerificationModule(
+                    this.kernelConfigurator.GetLoggingModule(),
+                    Arguments,
+                    this.HostConfiguration.ApplicationInfo.Name,
+                    InfraVersion));
+            
+            ConfigurationVerificator = Kernel.Get<ConfigurationVerificator>();
 
             if (ConfigurationVerificator == null)
             {
@@ -390,14 +410,27 @@ namespace Gigya.Microdot.Ninject.Host
 
         protected void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
+            lock (this.SyncRoot)
+            {
+                try
+                {
+                    if (disposed)
+                        return;
 
-            disposed = true;
+                    disposed = true;
 
-            SafeDispose(StopEvent);
-            SafeDispose(WindowsService);
-            SafeDispose(MonitoredShutdownProcess);
+                    if (!Kernel.IsDisposed && !disposing)
+                        SafeDispose(Kernel);
+
+                    SafeDispose(StopEvent);
+                    SafeDispose(WindowsService);
+                    SafeDispose(MonitoredShutdownProcess);
+                }
+                finally
+                {
+                    disposed = true;
+                }
+            }
         }
 
 

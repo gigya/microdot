@@ -29,6 +29,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using Orleans;
@@ -37,9 +38,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        
 
-        public override string ServiceName => "TestService";
+
+        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
 
         public override ILoggingModule GetLoggingModule()
         {
@@ -52,9 +53,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
         }
 
-        protected override void PreConfigure(IKernel kernel)
+        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
-            base.PreConfigure(kernel);
+            base.PreConfigure(kernel, Arguments);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
             Func<GrainLoggingConfig> writeGrainLog = () => new GrainLoggingConfig{LogMicrodotGrains = true, LogRatio = 1, LogServiceGrains = true, LogOrleansGrains = true};

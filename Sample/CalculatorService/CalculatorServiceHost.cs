@@ -17,7 +17,7 @@ namespace CalculatorService
         {
         }
 
-        public override string ServiceName => nameof(ICalculatorService).Substring(1);
+        public string ServiceName => "CalculatorService";
 
         static void Main(string[] args)
         {
@@ -42,7 +42,7 @@ namespace CalculatorService
             }
         }
 
-        protected override ILoggingModule GetLoggingModule() => new NLogModule();
+        public override ILoggingModule GetLoggingModule() => new NLogModule();
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {

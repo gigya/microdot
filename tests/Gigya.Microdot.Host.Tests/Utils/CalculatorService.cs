@@ -3,6 +3,7 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
+using Gigya.Microdot.SharedLogic;
 using Ninject;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ namespace Gigya.Microdot.Host.Tests.Utils
 
     public class CalculatorKernelConfig : KernelConfigurator<ICalculatorService>
     {
-        public override void Configure(IKernel kernel)
+        protected override void Configure(IKernel kernel, BaseCommonConfig baseCommonConfig)
         {
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Bind<ICalculatorService>().To<CalculatorService>().InSingletonScope();

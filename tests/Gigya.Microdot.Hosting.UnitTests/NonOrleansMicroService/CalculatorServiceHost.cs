@@ -11,10 +11,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
     public class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        public override string ServiceName { get; } = "ICalculatorService";
+        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
+        
         public IKernel Kernel;
 
-        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource(appName: "ICalculatorService")))
+        public CalculatorServiceHost() : base(
+            new HostConfiguration(
+                new TestHostConfigurationSource(appName: "ICalculatorService")))
         {
         }
 
@@ -22,16 +25,17 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
         {
         }
 
-        protected override ILoggingModule GetLoggingModule()
+        public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();
         }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
-            Kernel = kernel;
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Bind<ICalculatorService>().To<CalculatorService>().InSingletonScope();
+
+            this.Kernel = kernel;
         }
 
         public class MockServiceValidator : ServiceValidator

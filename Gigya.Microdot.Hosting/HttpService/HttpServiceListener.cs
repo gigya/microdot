@@ -170,6 +170,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             this.listeningTask = this.Start();
 
+            this.StartGettingTraffic();
+
             return this.listeningTask;
         }
 
