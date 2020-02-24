@@ -16,13 +16,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
-            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<SmocoScpe>());
+            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<Dependency>());
 
             var serviceScopeFactory = kernel.Get<IServiceScopeFactory>();
             var serviceScope = serviceScopeFactory.CreateScope();
 
-            var object1 = serviceScope.ServiceProvider.GetService(typeof(SmocoScpe));
-            var object2 = serviceScope.ServiceProvider.GetService(typeof(SmocoScpe));
+            var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
+            var object2 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
             Assert.AreEqual(object1, object2);
 
         }
@@ -34,15 +34,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
-            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<SmocoScpe>());
+            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<Dependency>());
             var serviceScopeFactory = kernel.Get<IServiceScopeFactory>();
 
             //Scope 1
             var serviceScope = serviceScopeFactory.CreateScope();
-            var object1 = serviceScope.ServiceProvider.GetService(typeof(SmocoScpe));
+            var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
             //Scope 2
             var serviceScope2 = serviceScopeFactory.CreateScope();
-            var object2 = serviceScope2.ServiceProvider.GetService(typeof(SmocoScpe));
+            var object2 = serviceScope2.ServiceProvider.GetService(typeof(Dependency));
 
             Assert.AreNotEqual(object1, object2);
 
@@ -56,27 +56,133 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
-            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<SmocoScpe>());
-            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<DisposableSmocoScope>());
+            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<Dependency>().AddScoped<DisposableDependency>());
             var serviceScopeFactory = kernel.Get<IServiceScopeFactory>();
 
             //Scope 1
             var serviceScope = serviceScopeFactory.CreateScope();
-            DisposableSmocoScope object1 = (DisposableSmocoScope)serviceScope.ServiceProvider.GetService(typeof(DisposableSmocoScope));
+            DisposableDependency object1 = (DisposableDependency)serviceScope.ServiceProvider.GetService(typeof(DisposableDependency));
             serviceScope.Dispose();
 
 
             Assert.AreEqual(object1.DisposeCounter, 1);
         }
 
-        class SmocoScpe
+        /// <remarks>
+        /// This test doing some Tweaks to make sure gc is collecting the object event in debug mode
+        /// </remarks>
+        [Test]
+        public void Scope_should_not_be_Root()
+        {
+
+            IKernel kernel = new StandardKernel();
+            // kernel.Load<FuncModule>();
+            var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
+
+            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<Dependency>());
+            var serviceScopeFactory = kernel.Get<IServiceScopeFactory>();
+
+            WeakReference<object> holder = null;
+            Action notRootByDebuger = () =>
+            {
+                holder = new WeakReference<object>(serviceScopeFactory.CreateScope());
+
+            };
+            notRootByDebuger();
+            MakeSomeGarbage();
+
+            GC.WaitForFullGCComplete();
+            GC.WaitForPendingFinalizers();
+            GC.WaitForFullGCApproach();
+            GC.Collect(2);
+
+
+            Assert.False(holder.TryGetTarget(out _), "scope object in not rooted, it should be collected");
+        }
+
+        [Test]
+        public void Scope_Dependency_should_not_be_Root()
+        {
+
+            IKernel kernel = new StandardKernel();
+            // kernel.Load<FuncModule>();
+            var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
+
+            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<Dependency>());
+            var serviceScopeFactory = kernel.Get<IServiceScopeFactory>();
+
+            WeakReference<object> holder = null;
+            Action notRootByDebuger = () =>
+            {
+
+                holder = new WeakReference<object>(serviceScopeFactory.CreateScope().ServiceProvider.GetService(typeof(Dependency)));
+
+            };
+            notRootByDebuger();
+            MakeSomeGarbage();
+
+            GC.WaitForFullGCComplete();
+            GC.WaitForPendingFinalizers();
+            GC.WaitForFullGCApproach();
+            GC.Collect(2);
+
+
+            Assert.False(holder.TryGetTarget(out _), "scope object in not rooted, it should be collected");
+        }
+
+        [Test]
+        public void Scope_Dependency_should_be_Rooted_To_Scope()
+        {
+
+            IKernel kernel = new StandardKernel();
+            // kernel.Load<FuncModule>();
+            var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
+
+            registerBinding.ConfigureServices(new ServiceCollection().AddScoped<Dependency>());
+            var serviceScopeFactory = kernel.Get<IServiceScopeFactory>();
+            var scope = serviceScopeFactory.CreateScope();
+            WeakReference<object> holder = null;
+            Action notRootByDebuger = () =>
+            {
+
+                holder = new WeakReference<object>(scope.ServiceProvider.GetService(typeof(Dependency)));
+
+            };
+            notRootByDebuger();
+            MakeSomeGarbage();
+
+            GC.WaitForFullGCComplete();
+            GC.WaitForPendingFinalizers();
+            GC.WaitForFullGCApproach();
+            GC.Collect(2);
+
+
+            Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should bo be collected");
+        }
+
+
+        void MakeSomeGarbage()
+        {
+            Version vt;
+
+            for (int i = 0; i < 10000; i++)
+            {
+                // Create objects and release them to fill up memory
+                // with unused objects.
+
+                vt = new Version();
+
+            }
+        }
+
+        class Dependency
         {
 
         }
 
-        class DisposableSmocoScope : IDisposable
+        class DisposableDependency : IDisposable
         {
-            public int DisposeCounter = 0;
+            public int DisposeCounter;
             public void Dispose()
             {
                 Interlocked.Increment(ref DisposeCounter);
