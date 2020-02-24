@@ -52,13 +52,20 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// </summary>
     public abstract class MicrodotOrleansServiceHost : ServiceHostBase, IKernelConfigurator //ServiceHostBase
     {
-        private bool disposed;
+        private class OrleansConfigurator : IOrleansConfigurator
+        {
+            private readonly MicrodotOrleansServiceHost host;
 
-        //protected GigyaSiloHost SiloHost { get; set; }
+            public OrleansConfigurator(MicrodotOrleansServiceHost host)
+            {
+                this.host = host ?? throw new ArgumentNullException(nameof(host));
+            }
 
-        //private IKernel Kernel { get; set; }
-
-        //public abstract ILoggingModule GetLoggingModule();
+            public Task AfterOrleansStartup(IGrainFactory grainFactory)
+            {
+                return this.host.AfterOrleansStartup(grainFactory);
+            }
+        }
 
         public Microdot.Ninject.Host.Host Host { get; }
 
@@ -101,32 +108,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public abstract ILoggingModule GetLoggingModule();
 
-        /// <summary>
-        /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
-        /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
-        /// start silo using <see cref="GigyaSiloHost"/>. In most scenarios, you shouldn't override this method.
-        /// </summary>
-        //protected override void OnStart()
-        //{
-        //    Kernel = CreateKernel();
-
-        //    Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-        //    Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-
-
-        //    PreConfigure(Kernel);
-
-        //    Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
-
-        //    PreInitialize(Kernel);
-
-        //    OnInitilize(Kernel);
-
-        //    Warmup(Kernel);
-
-        //    SiloHost = Kernel.Get<GigyaSiloHost>();
-        //    SiloHost.Start(Arguments, AfterOrleansStartup);
-        //}
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -166,30 +147,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             warmup.Warmup();
         }
 
-        //protected override void OnVerifyConfiguration()
-        //{
-        //    // TODO: This kernel is replaced in OnStart
-        //    Kernel = CreateKernel();
-        //    Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-        //    Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-        //    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
-        //    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-        //    base.OnVerifyConfiguration();
-        //}
-
-        /// <summary>
-        /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
-        /// can be overridden to customize which kernel is used (e.g. MockingKernel);
-        /// </summary>
-        /// <returns>The kernel to use.</returns>
-        //protected virtual IKernel CreateKernel()
-        //{
-        //    return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
-
-
-        //}
-
-
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
         /// Should be overridden when creating a base-class that should include common behaviour for a family of services, without
@@ -204,6 +161,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
+
+            kernel.Bind<IOrleansConfigurator>().ToConstant(
+                new OrleansConfigurator(this));
 
             kernel.Bind<IRequestListener>().To<GigyaSiloHost>();
 
@@ -237,60 +197,5 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         protected virtual async Task AfterOrleansStartup(IGrainFactory grainFactory) { }
 
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-
-        /// <summary>
-        /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
-        /// method.
-        /// </summary>        
-        //protected override void OnStop()
-        //{
-        //    if (Arguments.ServiceDrainTimeSec.HasValue)
-        //    {
-        //        Kernel.Get<ServiceDrainController>().StartDrain();
-        //        Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
-        //    }
-
-        //    Kernel.Get<SystemInitializer>().Dispose();
-        //    Kernel.Get<IWorkloadMetrics>().Dispose();
-        //    SiloHost.Stop(); // This calls BeforeOrleansShutdown()
-           
-        //    try
-        //    {
-        //        Kernel.Get<ILog>().Info(x => x("Silo stopped gracefully, trying to dispose dependencies."));
-        //    }
-        //    catch
-        //    {
-        //        Console.WriteLine("Silo stopped gracefully, trying to dispose dependencies.");
-        //    }
-
-        //    Dispose();
-        //}
-
-        private readonly object lockHandale = new object();
-
-
-
-        //protected override void Dispose(bool disposing)
-        //{
-        //    lock (lockHandale)
-        //    {
-        //        try
-        //        {
-        //            if (disposed)
-        //                return;
-
-        //            disposed = true;
-
-        //            if (!Kernel.IsDisposed && !disposing)
-        //                SafeDispose(Kernel);
-
-        //            base.Dispose(disposing);
-        //        }
-        //        finally
-        //        {
-        //            disposed = true;
-        //        }
-        //    }
-        //}
     }
 }

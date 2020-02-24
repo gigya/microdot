@@ -102,33 +102,7 @@ namespace Gigya.Microdot.Ninject.Host
 
         public abstract ILoggingModule GetLoggingModule();
 
-        /// <summary>
-        /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
-        /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
-        /// start a <see cref="HttpServiceListener"/>. In most scenarios, you shouldn't override this method.
-        /// </summary>
-        //protected void OnStart()
-        //{
-        //    Kernel = CreateKernel();
-            
-        //    //Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-        //    //Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-        //    Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
-        //    Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
-        //    PreConfigure(Kernel);
-        //    Configure(Kernel, Kernel.Get<BaseCommonConfig>());
-
-        //    PreInitialize(Kernel);
-        //    OnInitilize(Kernel);
-        //    //don't move up the get should be after all the binding are done
-        //    var log = Kernel.Get<ILog>();
-        //    Listener = Kernel.Get<HttpServiceListener>();
-        //    Listener.Start();
-           
-        //    Listener.StartGettingTraffic();
-        //    log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostConfiguration.ApplicationInfo.HostName }));
-        //}
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -161,28 +135,6 @@ namespace Gigya.Microdot.Ninject.Host
         {
 
         }
-
-        // moved to Host
-        //protected override void OnVerifyConfiguration()
-        //{
-        //    Kernel = CreateKernel();
-        //    Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
-        //    Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-        //    Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-        //    ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-        //    base.OnVerifyConfiguration();
-        //}
-
-        /// <summary>
-        /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
-        /// can be overridden to customize which kernel is used (e.g. MockingKernel);
-        /// </summary>
-        /// <returns>The kernel to use.</returns>
-        //protected virtual IKernel CreateKernel()
-        //{
-        //    return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
-        //}
-
 
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
@@ -225,44 +177,5 @@ namespace Gigya.Microdot.Ninject.Host
         {
             
         }
-
-        /// <summary>
-        /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
-        /// method.
-        /// </summary>        
-        //protected override void OnStop()
-        //{
-        //    if (Arguments.ServiceDrainTimeSec.HasValue)
-        //    {
-        //        Kernel.Get<ServiceDrainController>().StartDrain();
-        //        Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
-        //    }
-        //    Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
-        //    Kernel.Get<IWorkloadMetrics>().Dispose();
-        //    Dispose();
-        //}
-
-        //protected override void Dispose(bool disposing)
-        //{
-        //    lock (disposeLockHandle)
-        //    {
-        //        try
-        //        {
-        //            if (disposed)
-        //                return;
-
-        //            SafeDispose(Listener);
-
-        //            if (!Kernel.IsDisposed)
-        //                SafeDispose(Kernel);
-
-        //            base.Dispose(disposing);
-        //        }
-        //        finally
-        //        {
-        //            disposed = true;
-        //        }
-        //    }
-        //}
     }
 }

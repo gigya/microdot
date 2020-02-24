@@ -39,6 +39,12 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
+
+    public interface IOrleansConfigurator
+    {
+        Task AfterOrleansStartup(IGrainFactory grainFactory);
+    }
+
     public class GigyaSiloHost : IRequestListener
     {
         private readonly IOrleansToNinjectBinding _serviceProvider;
@@ -61,13 +67,15 @@ namespace Gigya.Microdot.Orleans.Hosting
             OrleansConfigurationBuilder orleansConfigurationBuilder,
             OrleansConfig orleansConfig,
             Func<IServiceProvider> factoryServiceProvider,
-            ServiceArguments arguments)
+            ServiceArguments arguments,
+            IOrleansConfigurator orleansConfigurator)
         {
             _serviceProvider = serviceProvider;
             _logProvider = logProvider;
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
             _orleansConfig = orleansConfig;
             _factoryServiceProvider = factoryServiceProvider;
+            _orleansConfigurator = orleansConfigurator;
             
             Log = log;
             HttpServiceListener = httpServiceListener;
@@ -76,6 +84,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         private ISiloHost _siloHost;
         private readonly ServiceArguments arguments;
+        private readonly IOrleansConfigurator _orleansConfigurator;
 
         public Task Listen()
         {
@@ -130,8 +139,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
 
-            afterOrleansStartup?.Invoke(_siloHost.Services.GetService<IGrainFactory>());
-            if (afterOrleansStartup != null)
+            //afterOrleansStartup?.Invoke(_siloHost.Services.GetService<IGrainFactory>());
+            _orleansConfigurator.AfterOrleansStartup(_siloHost.Services.GetService<IGrainFactory>());
+            //if (afterOrleansStartup != null)
                 Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
 
             HttpServiceListener.StartGettingTraffic();

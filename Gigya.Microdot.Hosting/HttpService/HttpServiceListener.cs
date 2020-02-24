@@ -60,6 +60,7 @@ namespace Gigya.Microdot.Hosting.HttpService
     public interface IRequestListener : IDisposable
     {
         Task Listen();
+        void Stop();
     }
 
     public sealed class HttpServiceListener : IRequestListener
@@ -675,5 +676,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             Listener.Close();
         }
 
+        public void Stop()
+        {
+            
+        }
     }
 }

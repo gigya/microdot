@@ -20,13 +20,6 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Ninject.Host
 {
-    public class HandlingPipeline
-    {
-
-    }
-
-
-
     public interface IKernelConfigurator
     {
         void PreConfigure(IKernel kernel, ServiceArguments Arguments);
@@ -56,7 +49,6 @@ namespace Gigya.Microdot.Ninject.Host
         protected ConfigurationVerificator ConfigurationVerificator { get; set; }
 
         public HostConfiguration HostConfiguration { get; }
-        public HandlingPipeline HandlingPipeline { get; }
         public Version InfraVersion { get; }
 
         private IRequestListener requestListener;
@@ -65,7 +57,6 @@ namespace Gigya.Microdot.Ninject.Host
 
         public Host(
             HostConfiguration configuration,
-            //HandlingPipeline handlingPipeline,
             //IRequestListener requestListener, 
             IKernelConfigurator kernelConfigurator,
             Version infraVersion)
@@ -123,6 +114,18 @@ namespace Gigya.Microdot.Ninject.Host
             }
             Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
             Kernel.Get<IWorkloadMetrics>().Dispose();
+
+            this.requestListener.Stop();
+
+            try
+            {
+                Kernel.Get<ILog>().Info(x => x($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies."));
+            }
+            catch
+            {
+                Console.WriteLine($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies.");
+            }
+
             Dispose();
         }
 
@@ -272,6 +275,7 @@ namespace Gigya.Microdot.Ninject.Host
         protected void OnVerifyConfiguration()
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+            
             Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
             
@@ -416,8 +420,6 @@ namespace Gigya.Microdot.Ninject.Host
                 {
                     if (disposed)
                         return;
-
-                    disposed = true;
 
                     if (!Kernel.IsDisposed && !disposing)
                         SafeDispose(Kernel);
