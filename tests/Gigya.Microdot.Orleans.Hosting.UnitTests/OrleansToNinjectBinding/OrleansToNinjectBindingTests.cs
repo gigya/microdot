@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
+using Ninject.Extensions.Factory;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
@@ -24,7 +27,43 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
             var object2 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
             Assert.AreEqual(object1, object2);
+        }
 
+        [Test]
+        public void ServiceProvider_Should_Support_Multiple_Binding()
+        {
+            IKernel kernel = new StandardKernel();
+            // kernel.Load<FuncModule>();
+            
+            var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
+
+            registerBinding.ConfigureServices(
+                new ServiceCollection()
+                .AddSingleton(typeof(IDependency), typeof(Dependency))
+                .AddSingleton(typeof(IDependency), typeof(Dependency2)
+                ));
+
+            var serviceProvider = kernel.Get<IServiceProvider>();
+            var object1 = (IEnumerable<IDependency>)serviceProvider.GetService(typeof(IEnumerable<IDependency>));
+            Assert.AreEqual(2, object1.Count());
+        }
+
+        [Test]
+        public void ServiceProvider_Should_Support_Func()
+        {
+            IKernel kernel = new StandardKernel();
+          //  kernel.Load<FuncModule>();
+    
+
+            var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
+
+            registerBinding.ConfigureServices(new ServiceCollection().AddTransient(typeof(Dependency)));
+                 
+
+            var serviceProvider = kernel.Get<IServiceProvider>();
+            var factory = (Func<Dependency>)serviceProvider.GetService(typeof(Func<Dependency>));
+           
+            Assert.AreNotEqual(factory(), factory());
         }
 
         [Test]
@@ -158,6 +197,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
 
             Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should bo be collected");
+            scope.Dispose();
         }
 
 
@@ -175,11 +215,22 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             }
         }
 
-        class Dependency
+        interface IDependency
         {
 
         }
 
+
+
+       public class Dependency : IDependency
+        {
+
+        }
+
+        class Dependency2 : IDependency
+        {
+
+        }
         class DisposableDependency : IDisposable
         {
             public int DisposeCounter;
