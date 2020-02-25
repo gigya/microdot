@@ -39,7 +39,7 @@ nuget System.Diagnostics.PerformanceCounter 4.5.0
 nuget Microsoft.Extensions.Configuration ~> 2
 nuget Microsoft.AspNetCore.Connections.Abstractions ~> 2
 nuget Microsoft.AspNetCore.Hosting ~> 2
-nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
+nuget Microsoft.AspNetCore.Server.Kestrel.Core ~> 2.1.7
 nuget Microsoft.Extensions.Logging.Abstractions ~> 2
 nuget Microsoft.Extensions.ObjectPool ~> 2
 nuget Microsoft.Extensions.DependencyModel ~> 2
