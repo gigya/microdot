@@ -51,13 +51,15 @@
       <Link>Properties\SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="GrainsWarmup.cs" />
-    <Compile Include="Microsoft.DI\NinjectRegistration.cs" />
-    <Compile Include="Microsoft.DI\NinjectServiceScopeFactory.cs" />
-    <Compile Include="Microsoft.DI\ScopeParameter.cs" />
-    <Compile Include="NinjectOrleansServiceProvider.cs" />
+    <Compile Include="NinjectOrleansBinding\KeyedServiceCollection.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotServiceProvider.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotServiceScope.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotServiceScopeFactory.cs" />
+    <Compile Include="NinjectOrleansBinding\NonBlockingLoggerFactory.cs" />
+    <Compile Include="NinjectOrleansBinding\OrleansToNinjectBinding.cs" />
+    <Compile Include="NinjectOrleansBinding\RequestScopedType.cs" />
     <Compile Include="MicrodotOrleansHostModule.cs" />
     <Compile Include="MicrodotOrleansServiceHost.cs" />
-    <Compile Include="NinjectServiceProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -92,9 +94,6 @@
       <Project>{DD807780-01B0-4EF6-9E42-5D15CA26F353}</Project>
       <Name>Gigya.Microdot.Orleans.Hosting</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Microsoft.DI\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>

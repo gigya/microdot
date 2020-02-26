@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OrleansToNinjectBinding\OrleansToNinjectBindingTests.cs" />
     <Compile Include="ServerCallEventTests.cs" />
     <Compile Include="NonOrleansMicroService\CalculatorService.cs" />
     <Compile Include="NonOrleansMicroService\CalculatorServiceHost.cs" />
