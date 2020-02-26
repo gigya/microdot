@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
 
-        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             base.PreConfigure(kernel, Arguments);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");

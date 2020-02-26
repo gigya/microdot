@@ -35,7 +35,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             return new NLogModule();
         }
 
-        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             base.PreConfigure(kernel, Arguments);
        

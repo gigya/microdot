@@ -30,10 +30,27 @@ namespace Gigya.Microdot.Ninject.Host
         ILoggingModule GetLoggingModule();
     }
 
+    public sealed class HostEventArgs : EventArgs
+    {
+
+    }
+
+    public sealed class ConfigurationVerificationResult
+    {
+
+    }
+
     public sealed class Host : IDisposable
     {
         private bool disposed;
         private object SyncRoot = new object();
+        
+        public event EventHandler<HostEventArgs> OnStarting = (o, a) => { };
+        public event EventHandler<HostEventArgs> OnStarted  = (o, a) => { };
+        public event EventHandler<HostEventArgs> OnStopping = (o, a) => { };
+        public event EventHandler<HostEventArgs> OnStopped  = (o, a) => { };
+        public event EventHandler<HostEventArgs> OnCrashing = (o, a) => { };
+        public event EventHandler<HostEventArgs> OnCrashed  = (o, a) => { };
 
         private IKernel Kernel { get; set; }
 
@@ -77,9 +94,14 @@ namespace Gigya.Microdot.Ninject.Host
             this.InfraVersion = infraVersion ?? throw new ArgumentNullException(nameof(infraVersion));
         }
 
+        private HostEventArgs CreateEventArgs()
+            => new HostEventArgs();
+
         private void OnStart()
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
+            this.OnStarting(this, this.CreateEventArgs());
 
             Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
@@ -103,10 +125,14 @@ namespace Gigya.Microdot.Ninject.Host
             this.requestListener.Listen();
 
             log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostConfiguration.ApplicationInfo.HostName }));
+
+            this.OnStarted(this, this.CreateEventArgs());
         }
 
         private void OnStop()
         {
+            this.OnStopping(this, CreateEventArgs());
+            
             if (Arguments.ServiceDrainTimeSec.HasValue)
             {
                 Kernel.Get<ServiceDrainController>().StartDrain();
@@ -127,6 +153,8 @@ namespace Gigya.Microdot.Ninject.Host
             }
 
             Dispose();
+
+            this.OnStopped(this, this.CreateEventArgs());
         }
 
         /// <summary>
@@ -355,9 +383,11 @@ namespace Gigya.Microdot.Ninject.Host
 
         protected void OnCrash()
         {
+            this.OnCrashing(this, this.CreateEventArgs());
             Stop();
             WaitForServiceGracefullyStoppedAsync().Wait(5000);
             Dispose();
+            this.OnCrashed(this, this.CreateEventArgs());
         }
 
 

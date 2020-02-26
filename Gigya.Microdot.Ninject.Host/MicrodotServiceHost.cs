@@ -73,6 +73,10 @@ namespace Gigya.Microdot.Ninject.Host
                 this,
                 // TODO: what version should be passed?
                 new Version());
+
+            this.Host.OnStopped += (s, a) => this.OnStop();
+            this.Host.OnStarted += (s, a) => this.OnStart();
+            this.Host.OnCrashed += (s, a) => this.OnCrash();
         }
 
         public override void Run(ServiceArguments argsOverride = null)
@@ -111,10 +115,10 @@ namespace Gigya.Microdot.Ninject.Host
         /// to prevent concrete services from overriding the common behavior. 
         /// </summary>
         /// <param name="kernel"></param>
-        public virtual void PreInitialize(IKernel kernel)
+        protected virtual void PreInitialize(IKernel kernel)
         {
             kernel.Get<SystemInitializer.SystemInitializer>().Init();
-            
+
             // moved to Host
             //CrashHandler = kernel.Get<ICrashHandler>();
             //CrashHandler.Init(OnCrash);
@@ -131,7 +135,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// processing incoming request.
         /// </summary>
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
-        public virtual void OnInitilize(IKernel kernel)
+        protected virtual void OnInitilize(IKernel kernel)
         {
 
         }
@@ -144,7 +148,7 @@ namespace Gigya.Microdot.Ninject.Host
         /// mark this method as sealed to prevent confusion with Configure().
         /// </summary>
         /// <param name="kernel">Kernel that should contain bindings for the service.</param>
-        public virtual void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        protected virtual void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
             kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
@@ -168,14 +172,56 @@ namespace Gigya.Microdot.Ninject.Host
         /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
 
-        public void Configure(IKernel kernel)
+        protected void Configure(IKernel kernel)
         {
             this.Configure(kernel, kernel.Get<BaseCommonConfig>());
         }
 
-        public virtual void Warmup(IKernel kernel)
+        protected virtual void Warmup(IKernel kernel)
         {
-            
+
+        }
+
+        protected virtual void OnStop()
+        {
+        }
+
+        protected virtual void OnCrash()
+        {
+        }
+
+        protected virtual void OnStart()
+        {
+        }
+
+        void IKernelConfigurator.Configure(IKernel kernel)
+        {
+            this.Configure(kernel);
+        }
+
+        ILoggingModule IKernelConfigurator.GetLoggingModule()
+        {
+            return this.GetLoggingModule();
+        }
+
+        void IKernelConfigurator.OnInitilize(IKernel kernel)
+        {
+            this.OnInitilize(kernel);
+        }
+
+        void IKernelConfigurator.PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        {
+            this.PreConfigure(kernel, Arguments);
+        }
+
+        void IKernelConfigurator.PreInitialize(IKernel kernel)
+        {
+            this.PreInitialize(kernel);
+        }
+
+        void IKernelConfigurator.Warmup(IKernel kernel)
+        {
+            this.Warmup(kernel);
         }
     }
 }

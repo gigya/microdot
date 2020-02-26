@@ -8,14 +8,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestServic
 {
     public class WarmupTestServiceHostWithSiloHostFake : CalculatorServiceHost
     {
-        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             base.PreConfigure(kernel, Arguments);
             kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
         }
-
-
-
-
     }
 }

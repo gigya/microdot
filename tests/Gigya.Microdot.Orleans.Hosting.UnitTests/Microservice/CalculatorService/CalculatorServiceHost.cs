@@ -53,7 +53,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
         }
 
-        public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             base.PreConfigure(kernel, Arguments);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();

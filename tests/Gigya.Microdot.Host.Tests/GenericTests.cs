@@ -11,6 +11,7 @@ using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -28,8 +29,7 @@ namespace Gigya.Microdot.Host.Tests
             var buffer = new StringBuilder();
             var prOut = Console.Out;
             Console.SetOut(new StringWriter(buffer));
-            //ServiceStartupMode.VerifyConfigurations
-            //ConsoleOutputMode.Standard
+
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
             var config = new HostConfiguration(
@@ -55,69 +55,94 @@ namespace Gigya.Microdot.Host.Tests
             Console.WriteLine(buffer);
         }
 
-        //[Theory, Repeat(5)]
-        //public void HostShouldStartAndStopMultipleTimes(int count)
-        //{
-        //    count++;
-        //    Stopwatch sw = Stopwatch.StartNew();
-        //    Console.WriteLine($"-----------------------------Start run {count} time---------------");
-        //    try
-        //    {
-        //        //var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
+        [Fact]
+        public async Task HostShouldInvokeEventsInCorrectOrder()
+        {
+            string result = "";
+            
+            var config =
+                new HostConfiguration(
+                    new TestHostConfigurationSource());
 
-        //        var host = new Ninject.Host.Host(
-        //            new HostConfiguration(new TestHostConfigurationSource()),
-        //            )
+            var host = new Ninject.Host.Host(
+                config,
+                new CalculatorKernelConfig(),
+                new Version());
 
-        //        host.GetServiceProxy<ICalculatorService>();
-        //        Console.WriteLine($"-----------------------------Silo Is running {count} time took, {sw.ElapsedMilliseconds}ms---------------");
-        //        host.Dispose();
-        //    }
-        //    finally
-        //    {
-        //        Console.WriteLine(
-        //            $"-----------------------------End run {count} time, took {sw.ElapsedMilliseconds}ms  ---------------");
-        //    }
-        //}
+            host.OnStarting += (s, e) => result += "1";
+            host.OnStarted  += (s, e) => result += "2";
+            host.OnStopping += (s, e) => result += "3";
+            host.OnStopped  += (s, e) => result += "4";
 
-        //class TestOrleansKernelConfigurator : OrleansKernelConfigurator
-        //{
-        //    public override ILoggingModule GetLoggingModule()
-        //    {
-        //        return new FakesLoggersModules();
-        //    }
+            // TODO: create a correct async model for host tasks
+            var tcs = new TaskCompletionSource<bool>();
+            host.OnStarted += (s, e) => tcs.SetResult(true);
+            
+            var hostTask = Task.Run(() => host.Run());
+            await tcs.Task;
 
-        //    public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
-        //    {
-        //        base.PreConfigure(kernel, Arguments);
+            await Task.Delay(1000);
 
-        //        Console.WriteLine($"-----------------------------Silo is RebindForTests");
-        //        kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
-        //        kernel.RebindForTests();
-        //    }
-        //}
+            tcs = new TaskCompletionSource<bool>();
+            host.OnStopped += (s, e) => tcs.SetResult(true);
 
-        //internal class TestHost : MicrodotOrleansServiceHost
-        //{
-        //    public TestHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
-        //    {
-        //    }
+            host.Stop();
+            await tcs.Task;
 
-        //    public override string ServiceName => "TestService";
+            Assert.Equal("1234", result);
+        }
 
-        //    public override ILoggingModule GetLoggingModule()
-        //    {
-        //        return new FakesLoggersModules();
-        //    }
+        [Theory(Skip = "Enable when host has async model."), Repeat(5)]
+        public void HostShouldStartAndStopMultipleTimes(int count)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            Console.WriteLine($"-----------------------------Start run {count} time---------------");
+            try
+            {
+                //var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
 
+                var host = new Ninject.Host.Host(
+                    new HostConfiguration(new TestHostConfigurationSource()),
+                    new TestOrleansKernelConfigurator(),
+                    new Version()
+                    );
 
-        //    protected override void PreConfigure(IKernel kernel)
-        //    {
-        //        base.PreConfigure(kernel);
-        //        Console.WriteLine($"-----------------------------Silo is RebindForTests");
-        //        kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
-        //        kernel.RebindForTests();
-        //    }
-        //}
+                host.Run();
+
+                Console.WriteLine($"-----------------------------Silo Is running {count} time took, {sw.ElapsedMilliseconds}ms---------------");
+                host.Dispose();
+            }
+            finally
+            {
+                Console.WriteLine(
+                    $"-----------------------------End run {count} time, took {sw.ElapsedMilliseconds}ms  ---------------");
+            }
+        }
+
+        class TestOrleansKernelConfigurator : OrleansKernelConfigurator
+        {
+            public override ILoggingModule GetLoggingModule()
+            {
+                return new FakesLoggersModules();
+            }
+
+            public override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+            {
+                base.PreConfigure(kernel, Arguments);
+
+                Console.WriteLine($"-----------------------------Silo is RebindForTests");
+                kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
+                kernel.RebindForTests();
+            }
+
+            public class MockServiceValidator : ServiceValidator
+            {
+                public MockServiceValidator()
+                    : base(new List<IValidator>().ToArray())
+                {
+
+                }
+            }
+        }
     }
 }

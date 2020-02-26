@@ -63,7 +63,6 @@ namespace Gigya.Microdot.Ninject.Host
 
         public void Warmup(IKernel kernel)
         {
-            throw new NotImplementedException();
         }
     }
 }
