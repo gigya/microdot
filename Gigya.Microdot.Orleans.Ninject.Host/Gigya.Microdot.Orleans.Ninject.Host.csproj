@@ -52,9 +52,13 @@
     </Compile>
     <Compile Include="GrainsWarmup.cs" />
     <Compile Include="NinjectOrleansBinding\KeyedServiceCollection.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotKernel.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotNinectPipline.cs" />
+    <Compile Include="NinjectOrleansBinding\MicrodotNinectScopParameter.cs" />
     <Compile Include="NinjectOrleansBinding\MicrodotServiceProvider.cs" />
-    <Compile Include="NinjectOrleansBinding\MicrodotServiceScope.cs" />
+    <Compile Include="NinjectOrleansBinding\CacheItem.cs" />
     <Compile Include="NinjectOrleansBinding\MicrodotServiceScopeFactory.cs" />
+    <Compile Include="NinjectOrleansBinding\NinjectServiceProvider.cs" />
     <Compile Include="NinjectOrleansBinding\OrleansToNinjectBinding.cs" />
     <Compile Include="NinjectOrleansBinding\NonBlockingLoggerFactory.cs" />
     <Compile Include="NinjectOrleansBinding\RequestScopedType.cs" />

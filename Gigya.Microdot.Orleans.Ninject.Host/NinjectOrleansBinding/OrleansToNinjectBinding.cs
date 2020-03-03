@@ -91,7 +91,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             Kernel.Bind<IRequestScopedType>().ToConstant(_scopedType).InSingletonScope();
 
             // should be one per scope 
-            Kernel.Rebind<IServiceScope, MicrodotServiceScope>().To<MicrodotServiceScope>().InTransientScope();
+            Kernel.Rebind<IServiceScope, NinjectServiceProvider>().To<NinjectServiceProvider>().InTransientScope();
         }
 
 

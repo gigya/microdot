@@ -5,9 +5,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     internal class MicrodotServiceScopeFactory : IServiceScopeFactory
     {
-        private readonly Func<MicrodotServiceScope> _func;
+        private readonly Func<NinjectServiceProvider> _func;
 
-        public MicrodotServiceScopeFactory(Func<MicrodotServiceScope> func)
+        public MicrodotServiceScopeFactory(Func<NinjectServiceProvider> func)
         {
             _func = func;
         }

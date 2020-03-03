@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Extensions.Factory;
 using NUnit.Framework;
+using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 {
@@ -15,7 +16,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         [Test]
         public void When_Create_Same_Object_On_Scope_Should_create_one_object()
         {
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
@@ -32,7 +33,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         [Test]
         public void ServiceProvider_Should_Support_Multiple_Binding()
         {
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
@@ -51,7 +52,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         [Test]
         public void ServiceProvider_Should_Support_Func()
         {
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
           //  kernel.Load<FuncModule>();
     
 
@@ -69,7 +70,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         [Test]
         public void When_Create_Same_Object_On_Different_Scope_Should_create_Multiple_object()
         {
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
@@ -91,7 +92,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         public void Calling_dispose_on_Scope_should_call_Idisposable_scope_dependency()
         {
 
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
@@ -114,7 +115,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         public void Scope_should_not_be_Root()
         {
 
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
@@ -143,7 +144,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         public void Scope_Dependency_should_not_be_Root()
         {
 
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
@@ -173,7 +174,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         public void Scope_Dependency_should_be_Rooted_To_Scope()
         {
 
-            IKernel kernel = new StandardKernel();
+            IKernel kernel = new MicrodotKernel();
             // kernel.Load<FuncModule>();
             var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(kernel);
 
@@ -200,6 +201,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             scope.Dispose();
         }
 
+        [Test]
+        public void xxxx()
+        {
+            var testingkernal=new MicrodotKernel();
+            var registerBinding = new Ninject.Host.NinjectOrleansBinding.OrleansToNinjectBinding(testingkernal);
+
+        }
 
         void MakeSomeGarbage()
         {
