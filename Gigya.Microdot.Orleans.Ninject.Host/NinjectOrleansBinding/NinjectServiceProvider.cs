@@ -21,7 +21,6 @@ using Ninject.Planning.Targets;
 using Ninject.Selection;
 using Ninject.Selection.Heuristics;
 using Ninject.Syntax;
-using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
@@ -29,12 +28,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     {
         private readonly IResolutionRoot _resolver;
         private readonly MicrodotNinectScopParameter _microdotNinectScopParameter;
-        private CacheItem _cacheItem = new CacheItem();
+        private readonly CacheItem _cacheItem;
 
 
         public NinjectServiceProvider(IResolutionRoot resolver, IRequestScopedType requestScopedType)
         {
-            _microdotNinectScopParameter = new MicrodotNinectScopParameter(requestScopedType, _cacheItem);
+            _cacheItem = new CacheItem(requestScopedType);
+            _microdotNinectScopParameter = new MicrodotNinectScopParameter(_cacheItem);
             _resolver = resolver;
         }
 

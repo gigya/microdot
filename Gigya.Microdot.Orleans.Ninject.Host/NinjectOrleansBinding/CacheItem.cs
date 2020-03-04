@@ -35,12 +35,17 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     /// decorator on IServiceProvider that manage the life time of Service on Scope
 
 
-    public class CacheItem : IDisposable
+    internal class CacheItem : IDisposable
     {
+
         private Dictionary<Type, object> _scopeServices;
         private List<IDisposable> _disposables;
         private readonly object _locker = new object();
-
+        private readonly IRequestScopedType _requestScoped;
+        public CacheItem(IRequestScopedType requestScoped)
+        {
+            this._requestScoped = requestScoped;
+        }
         public void Dispose()
         {
             if (_disposables != null)
@@ -65,6 +70,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
         }
         public bool TryGet(Type key, out object instance)
         {
+            if (_requestScoped.Contains(key) == false)
+            {
+                instance = null;
+                return false;
+            }
             lock (_locker)
             {
                 EnsureScopeMapsInitialized();
@@ -74,6 +84,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public void Add(Type key, object instance)
         {
+            if (_requestScoped.Contains(key) == false)
+            {
+                // Should no manger this life time
+                return;
+            }
+
             lock (_locker)
             {
                 EnsureScopeMapsInitialized();
@@ -84,7 +100,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                 }
             }
         }
-     
+
     }
 
 }

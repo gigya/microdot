@@ -31,11 +31,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             }
             else
             {
-                var services = new ServiceCollection().AddScoped<Dependency>();
-                var serviceProvider = services.BuildServiceProvider();
-                return serviceProvider.GetService<IServiceProvider>();
+               
+                var services = binding.BuildServiceProvider();
+              //  var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateScopes = true }); ;
+                return services.GetService<IServiceProvider>();
             }
         }
+
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -47,6 +49,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             var object2 = serviceProvider.GetService(typeof(Dependency));
             Assert.AreEqual(object1, object2);
         }
+
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -63,6 +66,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreEqual(object1, object2);
         }
 
+
         [TestCase(ServiceProviderType.microdot)]
         public void When_request_to_resolve_serviceScope_Should_fail(ServiceProviderType serviceProviderType)
         {
@@ -71,14 +75,17 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.Throws<Exception>(() => serviceProvider.GetService(typeof(IServiceScope)));
         }
 
-        [TestCase(ServiceProviderType.microsoft)]
 
+        [TestCase(ServiceProviderType.microsoft)]
         public void When_request_to_resolve_serviceScope_Should_BeNull(ServiceProviderType serviceProviderType)
         {
             /// ServiceScope should be created by the scope factory alone!!
             var serviceProvider = CreateServiceProvider(new ServiceCollection(), serviceProviderType);
-            Assert.IsNull(serviceProvider.GetService(typeof(IServiceScope)));
+            var scopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
+
+            Assert.IsNull(scopeFactory.CreateScope().ServiceProvider.GetService(typeof(IServiceScope)));
         }
+
 
         [Repeat(100)]//Race Condion make sure it heappend
         [TestCase(ServiceProviderType.microdot)]
@@ -100,6 +107,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreEqual(1, groups.Count());
         }
 
+
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void When_Request_to_Resolve_ScopeDependcy_OnGlobalScope_Should_(ServiceProviderType serviceProviderType)
@@ -114,15 +122,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
         }
 
-
-        /// <summary>
-        /// It is reseble that it not working.
-        /// ServiceScope is the only facory and refercnce hoder !!
-        /// if func capcure the context and is the refercnce hoder (memory leak).
-        /// if it context it brake the service scope explisit mangment 
-        /// I think factory scope should alwase be the global scope
-            /// </summary>
-        [TestCase(ServiceProviderType.microsoft)]
+        // like When_request_ServiceProvider_Sholud_inherit_the_Scope
+        [TestCase(ServiceProviderType.microdot)]
         public void When_resolve_factory_on_scope_Should_Resolve_Same_Object(ServiceProviderType serviceProviderType)
         {
 
@@ -138,10 +139,37 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
+        public void When_resolve_innerTransientDependyOnScope__Should_resolve_new_object(ServiceProviderType serviceProviderType)
+        {
+            var binding = new ServiceCollection().AddTransient<DependencyDependedOn_Dependency>().AddTransient<Dependency>();
+            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
+
+            var continer2 = (DependencyDependedOn_Dependency)serviceProvider.GetService(typeof(DependencyDependedOn_Dependency));
+            Assert.IsNotNull(continer2);
+
+            var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
+            var serviceScope = serviceScopeFactory.CreateScope();
+
+            var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
+            Assert.IsNotNull(object1);
+
+            var continer = (DependencyDependedOn_Dependency)serviceScope.ServiceProvider.GetService(typeof(DependencyDependedOn_Dependency));
+            Assert.IsNotNull(continer);
+            Assert.AreNotEqual(object1, continer.Dependency);
+        }
+
+        [TestCase(ServiceProviderType.microdot)]
+        [TestCase(ServiceProviderType.microsoft)]
         public void When_resolve_innerScopeDependy_on_scope_Should_resolve_same_object(ServiceProviderType serviceProviderType)
         {
-            var binding = new ServiceCollection().AddScoped<Dependency>().AddTransient<DependencyDependedOn_Dependency>();
+            var binding = new ServiceCollection().AddTransient<DependencyDependedOn_Dependency>().AddScoped<Dependency>();
             var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
+            var Dependency1 = (Dependency)serviceProvider.GetService(typeof(Dependency));
+            Assert.IsNotNull(Dependency1);
+
+            var continer2 = (DependencyDependedOn_Dependency)serviceProvider.GetService(typeof(DependencyDependedOn_Dependency));
+            Assert.IsNotNull(continer2);
+
             var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
             var serviceScope = serviceScopeFactory.CreateScope();
 
@@ -152,7 +180,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.IsNotNull(continer);
             Assert.AreEqual(object1, continer.Dependency);
         }
-
+      
+        [TestCase(ServiceProviderType.microsoft)]
         [TestCase(ServiceProviderType.microdot)]
         public void ServiceProvider_Should_Support_IEnumerable_for_Multiple_Binding(ServiceProviderType serviceProviderType)
         {
@@ -167,18 +196,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreEqual(2, object1.Count());
         }
 
-        [TestCase(ServiceProviderType.microsoft)]
-        public void ServiceProvider_Should_Not_Support_IEnumerable_Multiple_Binding(ServiceProviderType serviceProviderType)
-        {
-            var binding = new ServiceCollection()
-                   .AddSingleton(typeof(IDependency), typeof(Dependency))
-                   .AddSingleton(typeof(IDependency), typeof(Dependency2)
-                   );
-            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
-
-            var object1 = (IEnumerable<IDependency>)serviceProvider.GetService(typeof(IEnumerable<IDependency>));
-            Assert.AreEqual(0, object1.Count());
-        }
 
         [TestCase(ServiceProviderType.microdot)]
         public void KeyedServiceCollection_Should_Support_Multiple_Named_Binding(ServiceProviderType serviceProviderType)
@@ -195,6 +212,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreEqual(typeof(Dependency), object1.GetService(serviceProvider, "B").GetType());
         }
 
+
         [TestCase(ServiceProviderType.microdot)]
         public void ServiceProvider_should_support_Func(ServiceProviderType serviceProviderType)
         {
@@ -206,6 +224,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreNotEqual(factory(), factory());
         }
 
+
         [TestCase(ServiceProviderType.microsoft)]
         public void ServiceProvider_should_Not_support_Func(ServiceProviderType serviceProviderType)
         {
@@ -216,6 +235,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.IsNull(factory);
         }
 
+
         [TestCase(ServiceProviderType.microsoft)]
         public void When_request_UnbindType_ShouldBeNull(ServiceProviderType serviceProviderType)
         {
@@ -225,6 +245,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             var factory = serviceProvider.GetService(typeof(DependencyDependedOn_Dependency));
             Assert.IsNull(factory);
         }
+
 
         [TestCase(ServiceProviderType.microdot)]
         public void When_request_UnbindType_ShouldNotBeNull(ServiceProviderType serviceProviderType)
@@ -276,6 +297,27 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreNotEqual(object1, object2);
         }
 
+
+
+        [TestCase(ServiceProviderType.microdot)]
+        [TestCase(ServiceProviderType.microsoft)]
+        public void When_request_ServiceProvider_Sholud_inherit_the_Scope(ServiceProviderType serviceProviderType)
+        {
+            var binding = new ServiceCollection().AddScoped<Dependency>();
+            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
+            var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
+
+            //Scope 1
+            var serviceScope = serviceScopeFactory.CreateScope();
+            var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
+
+            var serviceProviderNoScope = (IServiceProvider)serviceScope.ServiceProvider.GetService(typeof(IServiceProvider));
+            var object2 = serviceProviderNoScope.GetService(typeof(Dependency));
+            Assert.AreEqual(object1, object2);
+        }
+
+
+
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void When_disposeing_scope_should_dispose_of_all_scope_dependency(ServiceProviderType serviceProviderType)
@@ -290,6 +332,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
             Assert.AreEqual(object1.DisposeCounter, 1);
         }
+
 
         /// <remarks>
         /// This test doing some Tweaks to make sure gc is collecting the object event in debug mode
@@ -319,6 +362,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.False(holder.TryGetTarget(out _), "scope object in not rooted, it should be collected");
         }
 
+
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void Scope_Dependency_should_not_be_rootd(ServiceProviderType serviceProviderType)
@@ -343,6 +387,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
             Assert.False(holder.TryGetTarget(out _), "scope object in not rooted, it should be collected");
         }
+
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -369,6 +414,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should bo be collected");
             scope.Dispose();
         }
+
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -413,7 +459,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         internal class Dependency : IDependency { }
         internal class Dependency2 : IDependency { }
 
-        internal class DependencyDependedOn_Dependency : IDependency
+        internal class DependencyDependedOn_Dependency 
         {
             public DependencyDependedOn_Dependency(Dependency dependency)
             {
