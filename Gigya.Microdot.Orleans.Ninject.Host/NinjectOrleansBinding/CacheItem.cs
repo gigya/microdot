@@ -21,7 +21,6 @@ using Ninject.Planning.Targets;
 using Ninject.Selection;
 using Ninject.Selection.Heuristics;
 using Ninject.Syntax;
-using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {

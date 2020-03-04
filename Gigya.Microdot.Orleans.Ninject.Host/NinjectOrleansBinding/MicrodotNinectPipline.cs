@@ -54,6 +54,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             else
             {
                 _pipeline.Activate(context, reference);
+                // Missing a optimistic concurncy or lock on the referance 
                 scope?.Put(key, reference.Instance);
             }
         }
