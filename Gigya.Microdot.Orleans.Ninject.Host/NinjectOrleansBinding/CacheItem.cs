@@ -41,10 +41,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
         private Dictionary<Type, object> _scopeServices;
         private List<IDisposable> _disposables;
         private readonly object _locker = new object();
-        private readonly IRequestScopedType _requestScoped;
-        public CacheItem(IRequestScopedType requestScoped)
+        public CacheItem()
         {
-            this._requestScoped = requestScoped;
+            _scopeServices = new Dictionary<Type, object>();
+            _disposables = new List<IDisposable>();
         }
         public void Dispose()
         {
@@ -58,49 +58,31 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
         }
 
 
-        private void EnsureScopeMapsInitialized()
-        {
-            //Most of the time no one is creating service in scope
-            if (_scopeServices == null)
-            {
-                _scopeServices = new Dictionary<Type, object>();
-                _disposables = new List<IDisposable>();
-            }
 
-        }
-        public bool TryGet(Type key, out object instance)
+        public object GetORCreate(Type key, Func<object> instancefactory)
         {
-            if (_requestScoped.Contains(key) == false)
-            {
-                instance = null;
-                return false;
-            }
-            lock (_locker)
-            {
-                EnsureScopeMapsInitialized();
-                return _scopeServices.TryGetValue(key, out instance);
-            }
-        }
 
-        public void Add(Type key, object instance)
-        {
-            if (_requestScoped.Contains(key) == false)
+            if (_scopeServices.TryGetValue(key, out var result))
             {
-                // Should no manger this life time
-                return;
+                return result;
             }
 
             lock (_locker)
             {
-                EnsureScopeMapsInitialized();
+                if (_scopeServices.TryGetValue(key, out result))
+                {
+                    return result;
+                }
+
+                var instance = instancefactory();
                 _scopeServices.Add(key, instance);
                 if (instance is IDisposable disposable)
                 {
                     _disposables.Add(disposable);
                 }
+                return instance;
+
             }
         }
-
     }
-
 }

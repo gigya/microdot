@@ -21,10 +21,14 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Ninject;
+using Ninject.Activation;
+using Ninject.Parameters;
+using Ninject.Planning.Bindings;
 using Ninject.Syntax;
 using Orleans.Runtime;
 
@@ -84,16 +88,21 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                 }
             }
 
-            Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InSingletonScope();
-            Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
-            Kernel.Rebind<IServiceProvider, MicrodotServiceProvider>().To<MicrodotServiceProvider>().InSingletonScope();
-            Kernel.Rebind<IServiceScopeFactory, MicrodotServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
+            Kernel.Bind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InSingletonScope();
+            Kernel.Bind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
+            Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
             Kernel.Bind<IRequestScopedType>().ToConstant(_scopedType).InSingletonScope();
 
             // should be one per scope 
-            Kernel.Rebind<IServiceScope, NinjectServiceProvider>().To<NinjectServiceProvider>().InTransientScope();
-        }
+            Kernel.Bind<MicrodotServiceProvider>().To<MicrodotServiceProvider>().InTransientScope();
 
+            //IServiceProvider come for the piple this is only plase hoder !!
+            Kernel.Bind<IServiceProvider>().To<MicrodotServiceProvider>().InTransientScope();
+          //  Kernel.Rebind<Func<IContext, IResolutionRoot>>()
+            //    .ToMethod((c)=>(context)=>context.Kernel.Get<factoryResoltuinRoot>());
+
+
+        }
 
     }
 }

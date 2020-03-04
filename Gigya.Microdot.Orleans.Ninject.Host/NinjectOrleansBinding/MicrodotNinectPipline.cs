@@ -27,7 +27,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     public class MicrodotNinectPipline : IPipeline
     {
+
         IPipeline _pipeline;
+        MicrodotServiceProvider GlobalScope;
+        private IRequestScopedType requestScopedType;
+        private object _locker = new object();
         public MicrodotNinectPipline(IEnumerable<IActivationStrategy> strategies, IActivationCache activationCache)
         {
             _pipeline = new Pipeline(strategies, activationCache);
@@ -39,23 +43,51 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public void Activate(IContext context, InstanceReference reference)
         {
-            MicrodotNinectScopParameter scope =
+            EnsureGlobalContextExists(context);
+
+            MicrodotNinjectScopParameter scope =
                 context
                 .Parameters
-                .OfType<MicrodotNinectScopParameter>()
-                .LastOrDefault();
+                .OfType<MicrodotNinjectScopParameter>()
+                .LastOrDefault()
+                ?? GlobalScope._microdotNinectScopParameter;
 
             var key = context.Request.Service;
-
-            if (scope != null && scope.TryGet(key, out var r))
+            if (key == typeof(IServiceProvider))
             {
-                reference.Instance = r;
+                scope.ServiceProvider.TryGetTarget(out var s);
+                reference.Instance = s;
+                return;
             }
-            else
+
+            if (!requestScopedType.Contains(key))
             {
                 _pipeline.Activate(context, reference);
-                // Missing a optimistic concurncy or lock on the referance 
-                scope?.Put(key, reference.Instance);
+                return;
+            }
+
+            //Hendle the lock inside in the chace item scope
+            reference.Instance = scope.GetORCreate(key, () =>
+                {
+                    _pipeline.Activate(context, reference);
+                    return reference.Instance;
+                });
+
+        }
+
+        private void EnsureGlobalContextExists(IContext context)
+        {
+            if (GlobalScope == null)
+            {
+                lock (_locker)
+                {
+                    if (GlobalScope == null)
+                    {
+                        requestScopedType = context.Kernel.Get<IRequestScopedType>();
+                        var globalServiceProvider = new MicrodotServiceProvider(context.Kernel);
+                        GlobalScope = globalServiceProvider;
+                    }
+                }
             }
         }
 
@@ -69,6 +101,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             _pipeline.Dispose();
         }
     }
-
-
 }
+
+

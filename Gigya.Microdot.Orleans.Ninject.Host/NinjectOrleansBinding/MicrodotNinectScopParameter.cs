@@ -25,43 +25,31 @@ using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    internal class MicrodotNinectScopParameter : IParameter
+    internal class MicrodotNinjectScopParameter : IParameter
     {
-        public MicrodotNinectScopParameter(IRequestScopedType requestScoped, CacheItem cache)
+
+        public MicrodotNinjectScopParameter(CacheItem cache, IServiceProvider serviceProvider)
         {
-            RequestScoped = requestScoped;
             Cache = new WeakReference<CacheItem>(cache);
+            ServiceProvider = new WeakReference<IServiceProvider>(serviceProvider);
         }
 
         public string Name => "Scope";
 
-        private IRequestScopedType RequestScoped { get; }
         private WeakReference<CacheItem> Cache { get; }
-
-        public bool TryGet(Type key, out object instance)
-        {
-            if (RequestScoped.Contains(key) && Cache.TryGetTarget(out var chacheItem))
-            {
-                if (chacheItem.TryGet(key, out var result))
-                {
-                    instance = result;
-                    return true;
-                }
+        public WeakReference<IServiceProvider> ServiceProvider { get; }
 
 
-            }
-            instance = null;
-            return false;
-        }
-        public void Put(Type key, object instance)
+        public object GetORCreate(Type key, Func<object>  instanceFunc)
         {
             if (Cache.TryGetTarget(out var chacheItem))
             {
-                chacheItem.Add(key, instance);
+               return chacheItem.GetORCreate(key, instanceFunc);
             }
+            throw new Exception("Scope not exists");
         }
 
-        public bool ShouldInherit => false;
+        public bool ShouldInherit => true;
 
         public bool Equals(IParameter other)
         {

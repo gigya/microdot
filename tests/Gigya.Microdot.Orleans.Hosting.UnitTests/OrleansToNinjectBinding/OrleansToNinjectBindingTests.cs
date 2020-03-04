@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Extensions.Factory;
+using Ninject.Syntax;
 using NUnit.Framework;
 using Orleans.Runtime;
 
@@ -31,9 +33,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             }
             else
             {
-               
+
                 var services = binding.BuildServiceProvider();
-              //  var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateScopes = true }); ;
+                //  var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateScopes = true }); ;
                 return services.GetService<IServiceProvider>();
             }
         }
@@ -72,7 +74,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         {
             /// ServiceScope should be created by the scope factory alone!!
             var serviceProvider = CreateServiceProvider(new ServiceCollection(), serviceProviderType);
-            Assert.Throws<Exception>(() => serviceProvider.GetService(typeof(IServiceScope)));
+            Assert.Throws<ActivationException>(() => serviceProvider.GetService(typeof(IServiceScope)));
         }
 
 
@@ -86,7 +88,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.IsNull(scopeFactory.CreateScope().ServiceProvider.GetService(typeof(IServiceScope)));
         }
 
-
+        //Slow due to the time take to init ninject
         [Repeat(100)]//Race Condion make sure it heappend
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -97,6 +99,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
             var serviceScope = serviceScopeFactory.CreateScope();
             ConcurrentBag<Dependency> dependencies = new ConcurrentBag<Dependency>();
+
             Parallel.For(0, 100, (i) =>
             {
                 var object1 = (Dependency)serviceScope.ServiceProvider.GetService(typeof(Dependency));
@@ -108,6 +111,32 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         }
 
 
+
+        [TestCase(ServiceProviderType.microdot)]
+        [TestCase(ServiceProviderType.microsoft)]
+        public void SpeedWhen_request_same_scopeDepency_on_scope_HighParallelem_Should_create_one_object(ServiceProviderType serviceProviderType)
+        {
+            var binding = new ServiceCollection().AddScoped<Dependency>();
+           
+            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
+           var sw= Stopwatch.StartNew();
+            for (int i = 1; i < 1000; i++)
+            {
+                var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
+                var serviceScope = serviceScopeFactory.CreateScope();
+                ConcurrentBag<Dependency> dependencies = new ConcurrentBag<Dependency>();
+
+                Parallel.For(0, 100, (j) =>
+                {
+                    var object1 = (Dependency)serviceScope.ServiceProvider.GetService(typeof(Dependency));
+                    dependencies.Add(object1);
+                });
+
+                var groups = dependencies.ToArray().GroupBy(x => x);
+                Assert.AreEqual(1, groups.Count());
+            }
+            Assert.Greater(1500, sw.ElapsedMilliseconds);
+        }
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void When_Request_to_Resolve_ScopeDependcy_OnGlobalScope_Should_(ServiceProviderType serviceProviderType)
@@ -135,7 +164,29 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
             var factory = (Func<Dependency>)serviceScope.ServiceProvider.GetService(typeof(Func<Dependency>));
             Assert.AreEqual(object1, factory());
+
         }
+
+        [TestCase(ServiceProviderType.microdot,typeof(IResolutionRoot))]
+        [TestCase(ServiceProviderType.microdot, typeof(IKernel))]
+
+
+        public void When_resolve_IResolutionRoot_on_scope_Should_Resolve_Same_Object(ServiceProviderType serviceProviderType,Type resoltionRootType)
+        {
+
+            var binding = new ServiceCollection().AddScoped<Dependency>();
+            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
+            var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
+            var serviceScope = serviceScopeFactory.CreateScope();
+
+            var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
+            var resolutionRoot = (IResolutionRoot)serviceScope.ServiceProvider.GetService(resoltionRootType);
+            Assert.AreEqual(object1, resolutionRoot.Get<Dependency>());
+        }
+
+
+  
+
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -180,7 +231,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.IsNotNull(continer);
             Assert.AreEqual(object1, continer.Dependency);
         }
-      
+
         [TestCase(ServiceProviderType.microsoft)]
         [TestCase(ServiceProviderType.microdot)]
         public void ServiceProvider_Should_Support_IEnumerable_for_Multiple_Binding(ServiceProviderType serviceProviderType)
@@ -311,8 +362,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             var serviceScope = serviceScopeFactory.CreateScope();
             var object1 = serviceScope.ServiceProvider.GetService(typeof(Dependency));
 
-            var serviceProviderNoScope = (IServiceProvider)serviceScope.ServiceProvider.GetService(typeof(IServiceProvider));
-            var object2 = serviceProviderNoScope.GetService(typeof(Dependency));
+            var serviceProviderInheritScope = (IServiceProvider)serviceScope.ServiceProvider.GetService(typeof(IServiceProvider));
+            var object2 = serviceProviderInheritScope.GetService(typeof(Dependency));
             Assert.AreEqual(object1, object2);
         }
 
@@ -459,7 +510,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         internal class Dependency : IDependency { }
         internal class Dependency2 : IDependency { }
 
-        internal class DependencyDependedOn_Dependency 
+        internal class DependencyDependedOn_Dependency
         {
             public DependencyDependedOn_Dependency(Dependency dependency)
             {
