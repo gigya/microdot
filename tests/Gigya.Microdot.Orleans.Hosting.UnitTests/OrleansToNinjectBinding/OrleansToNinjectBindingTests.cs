@@ -111,7 +111,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         }
 
 
-
+        [Ignore("manual")]
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void SimpleSantyForPreforamce(ServiceProviderType serviceProviderType)
@@ -135,9 +135,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
                 var groups = dependencies.ToArray().GroupBy(x => x);
                 Assert.AreEqual(1, groups.Count());
             }
-            Assert.Greater(1500, sw.ElapsedMilliseconds);
+            Assert.Greater(1000, sw.ElapsedMilliseconds);
         }
         [TestCase(ServiceProviderType.microsoft)]
+        [TestCase(ServiceProviderType.microdot)]
+
         public void Wheen_resolve_scopeDependcy_with_no_scope_should_use_globalScope(ServiceProviderType serviceProviderType)
         {
             /// When reqesting a object register to a scope what is microsoft bhiverr?
@@ -148,15 +150,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
             Assert.AreEqual(a, b);
 
-        }
-        [TestCase(ServiceProviderType.microdot)]
-        public void Wheen_resolve_scopeDependcy_With_no_scope_should_throw(ServiceProviderType serviceProviderType)
-        {
-            /// When reqesting a object register to a scope what is microsoft bhiverr?
-            var binding = new ServiceCollection().AddScoped<Dependency>();
-            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
-
-            Assert.Throws<RequestScopDependencyOnGlobalScopeException>(() => serviceProvider.GetService<Dependency>());
         }
 
         [TestCase(ServiceProviderType.microdot)]
@@ -178,7 +171,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
         public void When_resolve_Scope_Depency_From_IResolutionRoot_on_scope_Should_Throw(ServiceProviderType serviceProviderType, Type resoltionRootType)
         {
-                        var binding = new ServiceCollection().AddScoped<Dependency>();
+            var binding = new ServiceCollection().AddScoped<Dependency>();
             var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
             var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
             var serviceScope = serviceScopeFactory.CreateScope();
@@ -214,7 +207,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         {
             var binding = new ServiceCollection().AddTransient<DependencyDependedOn_Dependency>().AddScoped<Dependency>();
             var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
-         
+
 
             var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
             var serviceScope = serviceScopeFactory.CreateScope();
@@ -435,7 +428,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         }
 
 
-     
+
 
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -528,6 +521,15 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should bo be collected");
         }
 
+        // posible deadlock
+        [TestCase(ServiceProviderType.microdot)]
+        public void WhenScopeServicePointToSingelToneShouldThrow(ServiceProviderType serviceProviderType)
+        {
+            var binding = new ServiceCollection()
+                .AddSingleton<DependencyDependedOn_Dependency>().AddScoped<Dependency>();
+            Assert.Throws<DeadlockDetectorExeption>(() => CreateServiceProvider(binding, serviceProviderType));
+        }
+
 
         void MakeSomeGarbage()
         {
@@ -557,6 +559,16 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             public Dependency Dependency { get; }
         }
 
+        internal class DependencyDependedOn_Dependency2
+        {
+
+            public DependencyDependedOn_Dependency2(Dependency2 dependency)
+            {
+                Dependency2 = dependency;
+            }
+
+            public Dependency2 Dependency2 { get; }
+        }
         internal class DisposableDependency : IDisposable
         {
             public int DisposeCounter;

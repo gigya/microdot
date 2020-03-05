@@ -35,17 +35,19 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
     /// decorator on IServiceProvider that manage the life time of Service on Scope
 
-
     internal class CacheItem : IDisposable
     {
         private Dictionary<Type, object> _scopeServices;
         private List<IDisposable> _disposables;
         private readonly object _locker = new object();
+
+        //Scope create explistly
         public CacheItem()
         {
             _scopeServices = new Dictionary<Type, object>();
             _disposables = new List<IDisposable>();
         }
+      
         public void Dispose()
         {
             if (_disposables != null)
@@ -70,7 +72,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             // Can be optimize with immutuble dic
             // Note that the we and ninject are counting one of the lock feature reantrend therad
             // changing the lock type can case deadlock!
-            
+
             lock (_locker)
             {
                 if (_scopeServices == null)
@@ -93,6 +95,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             }
         }
     }
+
 
 
 }

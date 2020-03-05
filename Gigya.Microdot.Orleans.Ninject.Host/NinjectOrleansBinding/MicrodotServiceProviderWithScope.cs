@@ -24,7 +24,11 @@ using Ninject.Syntax;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    internal class MicrodotServiceProviderWithScope : IServiceProvider, IServiceScope
+    internal interface IGlobalServiceProvider: IServiceProvider
+    {
+
+    }
+    internal class MicrodotServiceProviderWithScope : IServiceProvider, IServiceScope, IGlobalServiceProvider
     {
         private readonly IResolutionRoot _resolver;
         internal readonly MicrodotNinjectScopParameter _microdotNinectScopParameter;

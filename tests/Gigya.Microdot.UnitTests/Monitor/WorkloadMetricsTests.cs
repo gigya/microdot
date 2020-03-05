@@ -71,7 +71,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         [TearDown]
         public void TearDown()
         {
-            _kernel.Dispose();
+            _kernel?.Dispose();
         }
 
         private void SetupOrleansQueueLength()
