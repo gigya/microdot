@@ -5,6 +5,7 @@ using System.ComponentModel.Design;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Activation;
@@ -37,7 +38,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
     internal class CacheItem : IDisposable
     {
-
         private Dictionary<Type, object> _scopeServices;
         private List<IDisposable> _disposables;
         private readonly object _locker = new object();
@@ -50,9 +50,15 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
         {
             if (_disposables != null)
             {
-                foreach (var disposable in _disposables)
+                lock (_locker)
                 {
-                    disposable.Dispose();
+
+                    foreach (var disposable in _disposables)
+                    {
+                        disposable.Dispose();
+                    }
+                    _disposables = null;
+                    _scopeServices = null;
                 }
             }
         }
@@ -61,15 +67,18 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public object GetORCreate(Type key, Func<object> instancefactory)
         {
-
-            if (_scopeServices.TryGetValue(key, out var result))
-            {
-                return result;
-            }
-
+            // Can be optimize with immutuble dic
+            // Note that the we and ninject are counting one of the lock feature reantrend therad
+            // changing the lock type can case deadlock!
+            
             lock (_locker)
             {
-                if (_scopeServices.TryGetValue(key, out result))
+                if (_scopeServices == null)
+                {
+                    throw new ObjectDisposedException("cacheItem");
+                }
+
+                if (_scopeServices.TryGetValue(key, out var result))
                 {
                     return result;
                 }
@@ -81,8 +90,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                     _disposables.Add(disposable);
                 }
                 return instance;
-
             }
         }
     }
+
+
 }

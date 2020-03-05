@@ -1,18 +1,24 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     /// <summary>
     /// We are managing the RequestScopedType out side of ninject 
     /// </summary>
-    internal class RequestScopedType: IRequestScopedType
+    internal class RequestScopedType : IRequestScopedType
     {
-        private readonly HashSet<Type> _isRequestScope = new HashSet<Type>();
-
+        private HashSet<Type> _isRequestScope = new HashSet<Type>();
+        private object _locker = new object();
         public void Register(Type service)
         {
-            _isRequestScope.Add(service);
+            lock (_locker)
+            {
+                var isRequestScope = new HashSet<Type>(_isRequestScope);
+                isRequestScope.Add(service);
+                _isRequestScope = isRequestScope;
+            }
         }
 
         public bool Contains(Type service)
@@ -23,6 +29,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
     internal interface IRequestScopedType
     {
-         bool Contains(Type service);
+        bool Contains(Type service);
     }
 }

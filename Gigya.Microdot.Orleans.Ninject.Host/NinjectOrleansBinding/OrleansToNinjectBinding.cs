@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,7 @@ using Ninject;
 using Ninject.Activation;
 using Ninject.Parameters;
 using Ninject.Planning.Bindings;
+using Ninject.Planning.Targets;
 using Ninject.Syntax;
 using Orleans.Runtime;
 
@@ -38,7 +40,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
 
-    internal class OrleansToNinjectBinding : IOrleansToNinjectBinding
+    internal  class OrleansToNinjectBinding : IOrleansToNinjectBinding
     {
         private readonly RequestScopedType _scopedType;
 
@@ -79,7 +81,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        _scopedType.Register(descriptor.ServiceType);
+                        binding.When((r) => r.Parameters.Contains(ResolveReal.instance));
+                        Kernel.Bind(descriptor.ServiceType).ToMethod(BindPerScope).InTransientScope();
                         break;
 
                     case ServiceLifetime.Transient:
@@ -93,15 +96,42 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
             Kernel.Bind<IRequestScopedType>().ToConstant(_scopedType).InSingletonScope();
 
-            // should be one per scope 
-            Kernel.Bind<MicrodotServiceProvider>().To<MicrodotServiceProvider>().InTransientScope();
-
-            //IServiceProvider come for the piple this is only plase hoder !!
-            Kernel.Bind<IServiceProvider>().To<MicrodotServiceProvider>().InTransientScope();
-          //  Kernel.Rebind<Func<IContext, IResolutionRoot>>()
-            //    .ToMethod((c)=>(context)=>context.Kernel.Get<factoryResoltuinRoot>());
+            //one per scope
+            Kernel.Bind<MicrodotServiceProviderWithScope>().ToSelf().InTransientScope();
+            Kernel.Bind<MicrodotServiceProvider>().ToSelf().InSingletonScope();
 
 
+            Kernel.Bind<IServiceProvider>().ToMethod(context =>
+            {
+
+                MicrodotNinjectScopParameter scope =
+                   context.Parameters
+                    .OfType<MicrodotNinjectScopParameter>()
+                    .LastOrDefault();
+                bool hasScope = (scope != null);
+                if (hasScope) return scope.ServiceProvider;
+
+                return context.Kernel.Get<MicrodotServiceProvider>();
+
+            }).InTransientScope();
+
+
+        }
+        public object BindPerScope(IContext context)
+        {
+            var key = context.Request.Service;
+
+            MicrodotNinjectScopParameter scope =
+               context.Parameters
+               .OfType<MicrodotNinjectScopParameter>()
+               .LastOrDefault()
+               ?? throw new RequestScopDependencyOnGlobalScopeException($"request type {key.FullName}, on global scope");
+
+            return scope.GetORCreate(key, () =>
+            {
+                //Hendle the lock inside in the chace item scope
+                return context.Kernel.Get(key, ResolveReal.instance);
+            });
         }
 
     }

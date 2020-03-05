@@ -21,44 +21,35 @@ using Ninject.Planning.Targets;
 using Ninject.Selection;
 using Ninject.Selection.Heuristics;
 using Ninject.Syntax;
-using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    internal class MicrodotNinjectScopParameter : IParameter
+    internal class MicrodotServiceProviderWithScope : IServiceProvider, IServiceScope
     {
+        private readonly IResolutionRoot _resolver;
+        internal readonly MicrodotNinjectScopParameter _microdotNinectScopParameter;
+        private readonly CacheItem _cacheItem;
 
-        public MicrodotNinjectScopParameter(CacheItem cache, IServiceProvider serviceProvider)
+
+        public MicrodotServiceProviderWithScope(IResolutionRoot resolver)
         {
-            Cache = cache;
-            ServiceProvider = serviceProvider;
+            _cacheItem = new CacheItem();
+            _microdotNinectScopParameter = new MicrodotNinjectScopParameter(_cacheItem, this);
+            _resolver = resolver;
         }
 
-        public string Name => "Scope";
+        public IServiceProvider ServiceProvider => this;
 
-        private CacheItem Cache { get; }
-        public IServiceProvider ServiceProvider { get; }
-
-
-        public object GetORCreate(Type key, Func<object> instanceFunc)
+        public void Dispose()
         {
-            return Cache.GetORCreate(key, instanceFunc);
-
+            _cacheItem.Dispose();
         }
 
-        public bool ShouldInherit => true;
-
-        public bool Equals(IParameter other)
+        public object GetService(Type type)
         {
-            return ReferenceEquals(this, other);
-        }
+            return _resolver.Get(type, _microdotNinectScopParameter);
 
-        public object GetValue(IContext context, ITarget target)
-        {
-            return this;
         }
 
     }
-
-
 }

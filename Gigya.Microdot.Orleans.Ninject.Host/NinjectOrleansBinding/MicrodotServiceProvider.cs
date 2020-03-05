@@ -24,34 +24,24 @@ using Ninject.Syntax;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    internal class MicrodotServiceProvider : IServiceProvider, IServiceScope
+
+
+    internal class MicrodotServiceProvider : IServiceProvider
     {
         private readonly IResolutionRoot _resolver;
-        internal readonly MicrodotNinjectScopParameter _microdotNinectScopParameter;
-        private readonly CacheItem _cacheItem;
 
 
         public MicrodotServiceProvider(IResolutionRoot resolver)
         {
-            _cacheItem = new CacheItem();
-            _microdotNinectScopParameter = new MicrodotNinjectScopParameter(_cacheItem, this);
             _resolver = resolver;
         }
 
-        public IServiceProvider ServiceProvider => this;
-
-        public void Dispose()
-        {
-            _cacheItem.Dispose();
-        }
 
         public object GetService(Type type)
         {
-            return _resolver.Get(type, _microdotNinectScopParameter);
+            return _resolver.Get(type);
 
         }
 
     }
-
-
 }

@@ -5,6 +5,7 @@ using System.ComponentModel.Design;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Ninject.Activation;
@@ -25,27 +26,24 @@ using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    public class MicrodotKernel : StandardKernel
+    public class RequestScopDependencyOnGlobalScopeException : Exception
     {
-        protected override IKernel KernelInstance => this;
-
-        public MicrodotKernel(params INinjectModule[] modules)
-            : base(modules)
+        public RequestScopDependencyOnGlobalScopeException()
         {
         }
 
-        public MicrodotKernel(INinjectSettings settings, params INinjectModule[] modules)
-            : base(settings, modules)
+        public RequestScopDependencyOnGlobalScopeException(string message) : base(message)
         {
         }
 
-        protected override void AddComponents()
+        public RequestScopDependencyOnGlobalScopeException(string message, Exception innerException) : base(message, innerException)
         {
-            base.AddComponents();
-            base.Components.RemoveAll<IPipeline>();
-            base.Components.Add<IPipeline, MicrodotNinectPipline>();
+        }
 
+        protected RequestScopDependencyOnGlobalScopeException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
-
 }
+
+
