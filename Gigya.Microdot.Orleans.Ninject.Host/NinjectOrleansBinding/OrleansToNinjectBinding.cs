@@ -40,13 +40,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     /// Used to plug Ninject into Orleans so that grains can use dependency injection (DI).
     /// </summary>
 
-    internal  class OrleansToNinjectBinding : IOrleansToNinjectBinding
+    internal class OrleansToNinjectBinding : IOrleansToNinjectBinding
     {
-        private readonly RequestScopedType _scopedType;
-
         public OrleansToNinjectBinding(IKernel kernel)
         {
-            _scopedType = new RequestScopedType();
             Kernel = kernel;
         }
         private IKernel Kernel { get; set; }
@@ -81,7 +78,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        binding.When((r) => r.Parameters.Contains(ResolveReal.instance));
+                        binding.When((r) => r.Parameters.Contains(ResolveRealParameter.instance));
                         Kernel.Bind(descriptor.ServiceType).ToMethod(BindPerScope).InTransientScope();
                         break;
 
@@ -94,16 +91,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             Kernel.Bind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InSingletonScope();
             Kernel.Bind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
             Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
-            Kernel.Bind<IRequestScopedType>().ToConstant(_scopedType).InSingletonScope();
-
-            //one per scope
             Kernel.Bind<MicrodotServiceProviderWithScope>().ToSelf().InTransientScope();
             Kernel.Bind<MicrodotServiceProvider>().ToSelf().InSingletonScope();
 
-
+            //Support inhrit scope 
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
-
                 MicrodotNinjectScopParameter scope =
                    context.Parameters
                     .OfType<MicrodotNinjectScopParameter>()
@@ -112,26 +105,21 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                 if (hasScope) return scope.ServiceProvider;
 
                 return context.Kernel.Get<MicrodotServiceProvider>();
-
             }).InTransientScope();
-
-
         }
+
         public object BindPerScope(IContext context)
         {
             var key = context.Request.Service;
 
             MicrodotNinjectScopParameter scope =
-               context.Parameters
-               .OfType<MicrodotNinjectScopParameter>()
-               .LastOrDefault()
-               ?? throw new RequestScopDependencyOnGlobalScopeException($"request type {key.FullName}, on global scope");
+            context.Parameters
+            .OfType<MicrodotNinjectScopParameter>()
+            .LastOrDefault()
+            ?? throw new RequestScopDependencyOnGlobalScopeException($"request type {key.FullName}, on global scope");
 
-            return scope.GetORCreate(key, () =>
-            {
-                //Hendle the lock inside in the chace item scope
-                return context.Kernel.Get(key, ResolveReal.instance);
-            });
+            //Hendle the lock inside in the chace item scope
+            return scope.GetORCreate(key, () => context.Kernel.Get(key, ResolveRealParameter.instance));
         }
 
     }

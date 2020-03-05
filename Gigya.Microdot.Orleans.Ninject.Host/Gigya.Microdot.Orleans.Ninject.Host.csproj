@@ -60,10 +60,9 @@
     <Compile Include="NinjectOrleansBinding\OrleansToNinjectBinding.cs" />
     <Compile Include="NinjectOrleansBinding\NonBlockingLoggerFactory.cs" />
     <Compile Include="NinjectOrleansBinding\RequestScopDependencyOnGlobalScopeException.cs" />
-    <Compile Include="NinjectOrleansBinding\RequestScopedType.cs" />
     <Compile Include="MicrodotOrleansHostModule.cs" />
     <Compile Include="MicrodotOrleansServiceHost.cs" />
-    <Compile Include="NinjectOrleansBinding\ResolveReal.cs" />
+    <Compile Include="NinjectOrleansBinding\ResolveRealParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
