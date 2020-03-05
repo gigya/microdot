@@ -96,7 +96,8 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
             {
                 foreach (var k in cs.CustomKeys)
                 {
-                    customKeys[k.Key] = k.Value;
+                    if (k.Value != null)
+                        customKeys[k.Key] = k.Value;
                 }
             }
 
