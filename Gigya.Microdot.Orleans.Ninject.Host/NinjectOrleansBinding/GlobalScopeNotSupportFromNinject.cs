@@ -22,25 +22,29 @@ using Ninject.Planning.Targets;
 using Ninject.Selection;
 using Ninject.Selection.Heuristics;
 using Ninject.Syntax;
-using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem;
+using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.ScopeCache;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    public class RequestScopDependencyOnGlobalScopeException : Exception
+
+    /// <summary>
+    /// Thrown when you ask Ikeranl/ fun<T> / IResoltionRoot to resolve scope depedncy
+    /// </summary>
+    public class GlobalScopeNotSupportFromNinject : Exception
     {
-        public RequestScopDependencyOnGlobalScopeException()
+        public GlobalScopeNotSupportFromNinject()
         {
         }
 
-        public RequestScopDependencyOnGlobalScopeException(string message) : base(message)
+        public GlobalScopeNotSupportFromNinject(string message) : base(message)
         {
         }
 
-        public RequestScopDependencyOnGlobalScopeException(string message, Exception innerException) : base(message, innerException)
+        public GlobalScopeNotSupportFromNinject(string message, Exception innerException) : base(message, innerException)
         {
         }
 
-        protected RequestScopDependencyOnGlobalScopeException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected GlobalScopeNotSupportFromNinject(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

@@ -81,8 +81,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
+                        
+                        // Determent when to return the real instance
                         binding.When((r) => r.Parameters.Contains(ResolveRealParameter.instance));
-                        Kernel.Bind(descriptor.ServiceType).ToMethod(BindPerScope).InTransientScope();
+                       
+                        // Return instrance from scope cache or use the realBinding to create it
+                        Kernel.Bind(descriptor.ServiceType)
+                            .ToMethod(BindPerScope).InTransientScope();
                         break;
 
                     case ServiceLifetime.Transient:
@@ -95,13 +100,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
             Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
 
+            // Support uniqe scoping created by the IServiceScopeFactory
             Kernel.Bind<MicrodotServiceProviderWithScope>().ToSelf().InTransientScope();
+            
+            //Support Global scoping
             Kernel.Bind<IGlobalServiceProvider>().To< MicrodotServiceProviderWithScope>().InSingletonScope();
 
-
-            //Should 
-
-            //Support inhrit scope 
+            //Support inhrit scope and global scoping
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
                 MicrodotNinjectScopParameter scope =
@@ -115,6 +120,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             }).InTransientScope();
         }
 
+        // Create scope depency 
         public object BindPerScope(IContext context)
         {
             var key = context.Request.Service;
@@ -128,7 +134,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                 //Hendle the lock inside in the chace item scope
                 return scope.GetORCreate(key, () => context.Kernel.Get(key, ResolveRealParameter.instance));
             }
-            throw new RequestScopDependencyOnGlobalScopeException($"{key.FullName}");
+            
+            // Can heppend if resolve by Ikeranl/Fun<T>/IResoltionRoot 
+            // Scope only trasfar from the serviceProvider
+            throw new GlobalScopeNotSupportFromNinject($"{key.FullName}");
         }
 
     }

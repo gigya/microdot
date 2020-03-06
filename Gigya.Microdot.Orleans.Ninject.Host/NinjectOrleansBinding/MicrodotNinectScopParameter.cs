@@ -21,14 +21,16 @@ using Ninject.Planning.Targets;
 using Ninject.Selection;
 using Ninject.Selection.Heuristics;
 using Ninject.Syntax;
-using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.CacheItem;
+using static Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.ScopeCache;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
+    /// <summary>
+    /// Use to transfar the scope cahce into ninjet request
+    /// </summary>
     internal class MicrodotNinjectScopParameter : IParameter
     {
-
-        public MicrodotNinjectScopParameter(CacheItem cache, IServiceProvider serviceProvider)
+        public MicrodotNinjectScopParameter(ScopeCache cache, IServiceProvider serviceProvider)
         {
             Cache = cache;
             ServiceProvider = serviceProvider;
@@ -36,7 +38,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public string Name => "Scope";
 
-        private CacheItem Cache { get; }
+        private ScopeCache Cache { get; }
         public IServiceProvider ServiceProvider { get; }
 
 

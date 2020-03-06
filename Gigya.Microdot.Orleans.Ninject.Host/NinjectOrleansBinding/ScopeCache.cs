@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel.Design;
 using System.Linq;
 using System.Reflection;
@@ -25,29 +26,21 @@ using Ninject.Syntax;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-    /// <remarks>
-    /// Not using Ninject scope feature to prevent memory leak.
-    /// All dependency references should only be rooted through ServiceScope, so they would
-    /// be collected with the scope itself.
-    /// It prevents memory leak that was caused by lack of user scope cleanup
-    /// (not calling dispose at the end of the scope) and keeping dependencies rooted in Ninject cache.
-    /// </remarks>
-
-    /// decorator on IServiceProvider that manage the life time of Service on Scope
-
-    internal class CacheItem : IDisposable
+    /// <summary>
+    /// Hold direcet refrance to all scope depency and mange there life time.
+    /// </summary>
+    internal class ScopeCache : IDisposable
     {
-        private Dictionary<Type, object> _scopeServices;
+        private ImmutableDictionary<Type, object> _scopeServices;
         private List<IDisposable> _disposables;
         private readonly object _locker = new object();
 
-        //Scope create explistly
-        public CacheItem()
+        public ScopeCache()
         {
-            _scopeServices = new Dictionary<Type, object>();
+            _scopeServices = ImmutableDictionary.CreateBuilder<Type, object>().ToImmutable();
             _disposables = new List<IDisposable>();
         }
-      
+
         public void Dispose()
         {
             if (_disposables != null)
@@ -69,9 +62,18 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public object GetORCreate(Type key, Func<object> instancefactory)
         {
-            // Can be optimize with immutuble dic
-            // Note that the we and ninject are counting one of the lock feature reantrend therad
-            // changing the lock type can case deadlock!
+            var scopeService = _scopeServices;
+            if (scopeService == null)
+            {
+                throw new ObjectDisposedException("cacheItem");
+            }
+
+            // the assmption that you create few object on scope but resovle the many time
+            // scopeService mast be safe therad object !!(Out side the lock)
+            if (scopeService.TryGetValue(key, out var result))
+            {
+                return result;
+            }
 
             lock (_locker)
             {
@@ -80,22 +82,19 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                     throw new ObjectDisposedException("cacheItem");
                 }
 
-                if (_scopeServices.TryGetValue(key, out var result))
+                if (_scopeServices.TryGetValue(key, out result))
                 {
                     return result;
                 }
 
                 var instance = instancefactory();
-                _scopeServices.Add(key, instance);
+                _scopeServices = _scopeServices.Add(key, instance);
                 if (instance is IDisposable disposable)
                 {
-                    _disposables.Add(disposable);
+                    _disposables?.Add(disposable);
                 }
                 return instance;
             }
         }
     }
-
-
-
 }

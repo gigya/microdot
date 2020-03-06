@@ -41,6 +41,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     public class DeadlockDetector
     {
+        // Validate that Singleton dependcy not depenend on scope depency.
+        // This case in not logic and can cause dead lock when other Singleton dependcy dependent on the the same scope.
+
         public static void validate(IServiceCollection services)
         {
             var scope = services.Where(x => x.Lifetime == ServiceLifetime.Scoped).ToLookup(x => x.ServiceType);

@@ -3,6 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
+    /// <summary>
+    /// Create new scope
+    /// </summary>
     internal class MicrodotServiceScopeFactory : IServiceScopeFactory
     {
         private readonly Func<MicrodotServiceProviderWithScope> _func;

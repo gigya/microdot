@@ -39,6 +39,7 @@ using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
+    // Indecate that posible dead lock can occor 
     public class DeadlockDetectorExeption : Exception
     {
         public DeadlockDetectorExeption()

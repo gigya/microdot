@@ -24,6 +24,8 @@ using Ninject.Syntax;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
+    // Service locator abstraction with the notion.
+    // Every service provider has it's own scope.
     internal interface IGlobalServiceProvider: IServiceProvider
     {
 
@@ -32,12 +34,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     {
         private readonly IResolutionRoot _resolver;
         internal readonly MicrodotNinjectScopParameter _microdotNinectScopParameter;
-        private readonly CacheItem _cacheItem;
+        private readonly ScopeCache _cacheItem;
 
 
         public MicrodotServiceProviderWithScope(IResolutionRoot resolver)
         {
-            _cacheItem = new CacheItem();
+            _cacheItem = new ScopeCache();
             _microdotNinectScopParameter = new MicrodotNinjectScopParameter(_cacheItem, this);
             _resolver = resolver;
         }

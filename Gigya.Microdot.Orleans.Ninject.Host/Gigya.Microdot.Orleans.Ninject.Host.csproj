@@ -55,14 +55,14 @@
     <Compile Include="NinjectOrleansBinding\DeadlockDetectorExeption.cs" />
     <Compile Include="NinjectOrleansBinding\KeyedServiceCollection.cs" />
     <Compile Include="NinjectOrleansBinding\MicrodotNinectScopParameter.cs" />
-    <Compile Include="NinjectOrleansBinding\CacheItem.cs" />
+    <Compile Include="NinjectOrleansBinding\ScopeCache.cs" />
     <Compile Include="NinjectOrleansBinding\MicrodotServiceProviderWithScope.cs" />
     <Compile Include="NinjectOrleansBinding\MicrodotServiceScopeFactory.cs" />
     <Compile Include="NinjectOrleansBinding\OrleansToNinjectBinding.cs" />
     <Compile Include="NinjectOrleansBinding\NonBlockingLoggerFactory.cs" />
     <Compile Include="MicrodotOrleansHostModule.cs" />
     <Compile Include="MicrodotOrleansServiceHost.cs" />
-    <Compile Include="NinjectOrleansBinding\RequestScopDependencyOnGlobalScopeException.cs" />
+    <Compile Include="NinjectOrleansBinding\GlobalScopeNotSupportFromNinject.cs" />
     <Compile Include="NinjectOrleansBinding\ResolveRealParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
