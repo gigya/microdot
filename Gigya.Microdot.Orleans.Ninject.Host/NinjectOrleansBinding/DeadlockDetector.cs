@@ -41,8 +41,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     public class DeadlockDetector
     {
-        // Validate that Singleton dependcy not depenend on scope depency.
-        // This case in not logic and can cause dead lock when other Singleton dependcy dependent on the the same scope.
+        // Validate that Singleton dependency not depend on scoped dependency.
+        // This case in not logic and can cause dead lock when other Singleton dependency dependent on the  same scope.
 
         public static void validate(IServiceCollection services)
         {
@@ -62,7 +62,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                         if (visit.Contains(type)) break;
                         if (scope.Contains(pram.ParameterType))
                         {
-                            throw new DeadlockDetectorExeption("scope should not point to a singletone");
+                            throw new DeadlockDetectorExeption("scope should not point to a singleton");
                         }
                         serviceDescriptors.Push(pram.ParameterType);
 

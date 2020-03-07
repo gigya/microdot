@@ -85,7 +85,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                         // Determent when to return the real instance
                         binding.When((r) => r.Parameters.Contains(ResolveRealParameter.instance));
                        
-                        // Return instrance from scope cache or use the realBinding to create it
+                        // Return instance from scope cache or use the realBinding to create it
                         Kernel.Bind(descriptor.ServiceType)
                             .ToMethod(BindPerScope).InTransientScope();
                         break;
@@ -100,13 +100,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
             Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
 
-            // Support uniqe scoping created by the IServiceScopeFactory
+            // Support unique scoping created by the IServiceScopeFactory
             Kernel.Bind<MicrodotServiceProviderWithScope>().ToSelf().InTransientScope();
             
             //Support Global scoping
             Kernel.Bind<IGlobalServiceProvider>().To< MicrodotServiceProviderWithScope>().InSingletonScope();
 
-            //Support inhrit scope and global scoping
+            //Support inherit scope and global scoping
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
                 MicrodotNinjectScopParameter scope =
@@ -120,7 +120,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             }).InTransientScope();
         }
 
-        // Create scope depency 
+        // Create scope dependency 
         public object BindPerScope(IContext context)
         {
             var key = context.Request.Service;
@@ -131,12 +131,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             .LastOrDefault();
             if (scope != null)
             {
-                //Hendle the lock inside in the chace item scope
+                //Handle the lock inside in the cache item scope
                 return scope.GetORCreate(key, () => context.Kernel.Get(key, ResolveRealParameter.instance));
             }
-            
-            // Can heppend if resolve by Ikeranl/Fun<T>/IResoltionRoot 
-            // Scope only trasfar from the serviceProvider
+
+            // Can occur if resolve by Ikeranl/ Fun<T>/ IResoltionRoot 
+            // Scope only transfer from the serviceProvider
             throw new GlobalScopeNotSupportFromNinject($"{key.FullName}");
         }
 

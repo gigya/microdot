@@ -88,8 +88,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.IsNull(scopeFactory.CreateScope().ServiceProvider.GetService(typeof(IServiceScope)));
         }
 
-        //Slow due to the time take to init ninject
-        [Repeat(100)]//Race Condion make sure it heappend
+        //Slow due to the time take to initialization ninject
+        [Repeat(100)]//Race Condition make sure it happened
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void When_request_same_scopeDepency_on_scope_run_parallel_Should_create_one_object(ServiceProviderType serviceProviderType)
@@ -112,7 +112,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
 
         [Ignore("manual")]
-        //Convert to banchmark dot nets
+        //Convert to benchmark dot nets
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
         public void SimpleSantyForPreforamce(ServiceProviderType serviceProviderType)
@@ -143,7 +143,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
         public void Wheen_resolve_scopeDependcy_with_no_scope_should_use_globalScope(ServiceProviderType serviceProviderType)
         {
-            /// When reqesting a object register to a scope what is microsoft bhiverr?
             var binding = new ServiceCollection().AddScoped<Dependency>();
             var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
             var a = serviceProvider.GetService<Dependency>();
@@ -375,7 +374,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 
 
         /// <remarks>
-        /// This test doing some Tweaks to make sure gc is collecting the object event in debug mode
+        /// This test doing some Tweaks to make sure GC is collecting the object event in debug mode
         /// </remarks>
         [TestCase(ServiceProviderType.microdot)]
         [TestCase(ServiceProviderType.microsoft)]
@@ -493,7 +492,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             GC.WaitForFullGCApproach();
             GC.Collect(2);
 
-            Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should bo be collected");
+            Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should  be collected");
             scope.Dispose();
         }
 
@@ -519,10 +518,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             GC.Collect(2);
 
 
-            Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should bo be collected");
+            Assert.True(holder.TryGetTarget(out _), "Dependency is rooted to scoped, it should  be collected");
         }
 
-        // posible deadlock
+        //Test check we avoid possible deadlock
         [TestCase(ServiceProviderType.microdot)]
         public void WhenScopeServicePointToSingelToneShouldThrow(ServiceProviderType serviceProviderType)
         {
