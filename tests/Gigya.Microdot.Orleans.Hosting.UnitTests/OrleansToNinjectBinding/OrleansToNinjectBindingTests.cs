@@ -33,9 +33,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             }
             else
             {
-
                 var services = binding.BuildServiceProvider();
-                //  var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateScopes = true }); ;
                 return services.GetService<IServiceProvider>();
             }
         }

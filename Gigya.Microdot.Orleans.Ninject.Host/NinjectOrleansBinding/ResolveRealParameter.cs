@@ -37,7 +37,7 @@ using Orleans.Runtime;
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     /// <summary>
-    /// Use as marker, to indecate when to resolve real object
+    /// Use as marker, to indicate when to resolve real object
     /// </summary>
 
     public class ResolveRealParameter : IParameter
