@@ -96,7 +96,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                 }
             }
 
-            Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InTransientScope();
+            // note !! every thing that cache, ServiceProvider should be Transient to enable scope inheritance 
+            IBindingNamedWithOrOnSyntax<object> bindingNamedWithOrOnSyntax = Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InTransientScope();
             Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
             Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
 
