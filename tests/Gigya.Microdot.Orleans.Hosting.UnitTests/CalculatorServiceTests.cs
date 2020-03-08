@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
@@ -83,6 +84,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                         {
                             k.Rebind<ICacheRevoker>().ToConstant(_fakeRevokingManager);
                             k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
+                            k.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
                         }                    
                     ).Kernel
                 };

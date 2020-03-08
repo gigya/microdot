@@ -63,6 +63,7 @@
     <Compile Include="DelegatingDispatchProxy.cs" />
     <Compile Include="Caching\EmptyRevokeListener.cs" />
     <Compile Include="Caching\IRevokeListener.cs" />
+    <Compile Include="HttpsAuthenticator.cs" />
     <Compile Include="IServiceProxyProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rewrite\IMemoizer.cs" />
