@@ -249,6 +249,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreEqual(typeof(Dependency), object1.GetService(serviceProvider, "B").GetType());
         }
 
+        [TestCase(ServiceProviderType.microdot)]
+        [TestCase(ServiceProviderType.microsoft)]
+        public void GetServicesShouldReturnMultipleServices(ServiceProviderType serviceProviderType)
+        {
+            var binding = new ServiceCollection()
+                .AddSingleton<IDependency, Dependency2>()
+                .AddSingleton<IDependency, Dependency>();
+
+            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
+
+          Assert.AreEqual(2, serviceProvider.GetServices(typeof(IDependency)).Count());
+        }
 
         [TestCase(ServiceProviderType.microdot)]
         public void ServiceProvider_should_support_Func(ServiceProviderType serviceProviderType)

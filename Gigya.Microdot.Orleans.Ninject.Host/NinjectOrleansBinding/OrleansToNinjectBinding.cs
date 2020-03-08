@@ -81,10 +81,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
                         binding.InSingletonScope();
                         break;
                     case ServiceLifetime.Scoped:
-                        
+
                         // Determent when to return the real instance
                         binding.When((r) => r.Parameters.Contains(ResolveRealParameter.instance));
-                       
+
                         // Return instance from scope cache or use the realBinding to create it
                         Kernel.Bind(descriptor.ServiceType)
                             .ToMethod(BindPerScope).InTransientScope();
@@ -97,15 +97,15 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             }
 
             // note !! every thing that cache, ServiceProvider should be Transient to enable scope inheritance 
-            IBindingNamedWithOrOnSyntax<object> bindingNamedWithOrOnSyntax = Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InTransientScope();
+            Kernel.Rebind(typeof(IKeyedServiceCollection<,>)).To(typeof(KeyedServiceCollection<,>)).InTransientScope();
             Kernel.Rebind(typeof(ILoggerFactory)).To(typeof(NonBlockingLoggerFactory)).InSingletonScope();
             Kernel.Bind<IServiceScopeFactory>().To<MicrodotServiceScopeFactory>().InSingletonScope();
 
             // Support unique scoping created by the IServiceScopeFactory
             Kernel.Bind<MicrodotServiceProviderWithScope>().ToSelf().InTransientScope();
-            
+
             //Support Global scoping
-            Kernel.Bind<IGlobalServiceProvider>().To< MicrodotServiceProviderWithScope>().InSingletonScope();
+            Kernel.Bind<IGlobalServiceProvider>().To<MicrodotServiceProviderWithScope>().InSingletonScope();
 
             //Support inherit scope and global scoping
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
