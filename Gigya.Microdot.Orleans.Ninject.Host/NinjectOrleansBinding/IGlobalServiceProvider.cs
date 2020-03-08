@@ -21,56 +21,36 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using Gigya.Microdot.Orleans.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Activation.Caching;
+using Ninject.Activation.Strategies;
+using Ninject.Injection;
+using Ninject.Modules;
 using Ninject.Parameters;
+using Ninject.Planning;
 using Ninject.Planning.Bindings;
+using Ninject.Planning.Bindings.Resolvers;
+using Ninject.Planning.Strategies;
 using Ninject.Planning.Targets;
+using Ninject.Selection;
+using Ninject.Selection.Heuristics;
 using Ninject.Syntax;
-using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
     /// <summary>
-    /// Prevent form binding a Singleton dependency that depend on scoped dependency.
-    /// Can cause deadlock when other Singleton dependency dependent on the same scope.
+    /// Default ServiceProvider hold the global scope
     /// </summary>
-    public class DeadlockDetector
+    internal interface IGlobalServiceProvider : IServiceProvider
     {
-       
-        public static void validate(IServiceCollection services)
-        {
-            var scope = services.Where(x => x.Lifetime == ServiceLifetime.Scoped).ToLookup(x => x.ServiceType);
-            Stack<Type> serviceDescriptors = new Stack<Type>();
-            HashSet<Type> visit = new HashSet<Type>();
-            var singelTone = services.Where(x => x.Lifetime == ServiceLifetime.Singleton);
-            foreach (var service in singelTone)
-            {
-                foreach (var ctor in service.ServiceType.GetConstructors())
-                {
-                    if (visit.Contains(ctor.DeclaringType)) continue;
 
-                    foreach (var pram in ctor.GetParameters())
-                    {
-                        var type = pram.ParameterType;
-                        if (visit.Contains(type)) break;
-                        if (scope.Contains(pram.ParameterType))
-                        {
-                            throw new DeadlockDetectorExeption("scope should not point to a singleton");
-                        }
-                        serviceDescriptors.Push(pram.ParameterType);
-
-                    }
-                }
-            }
-        }
     }
 }

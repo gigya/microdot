@@ -28,8 +28,11 @@ using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {
-       public class KeyedServiceCollection<TKey, TService> : IKeyedServiceCollection<TKey, TService>
-        where TService : class
+    /// <summary>
+    /// Orleans abstraction on name service 
+    /// </summary>
+    public class KeyedServiceCollection<TKey, TService> : IKeyedServiceCollection<TKey, TService>
+     where TService : class
     {
         public TService GetService(IServiceProvider services, TKey key)
         {

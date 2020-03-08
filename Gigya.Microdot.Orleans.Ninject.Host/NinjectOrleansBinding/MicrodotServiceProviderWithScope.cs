@@ -50,10 +50,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     ///  Service locater abstraction .
     ///  Every service provider has it's own scope.
     /// </summary>
-    internal interface IGlobalServiceProvider : IServiceProvider
-    {
 
-    }
     internal class MicrodotServiceProviderWithScope : IServiceProvider, IServiceScope, IGlobalServiceProvider
     {
         private readonly IResolutionRoot _resolver;

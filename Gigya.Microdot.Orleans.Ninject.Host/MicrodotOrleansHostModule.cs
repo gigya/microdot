@@ -44,15 +44,21 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         public override void Load()
         {
 
+            // note this is not my Assembly
+            this.BindClassesAsSingleton(new[] { typeof(Grain) }, typeof(OrleansHostingAssembly));
+            this.BindInterfacesAsSingleton(new[] { typeof(Grain) }, new List<Type> { typeof(ILog) }, typeof(OrleansHostingAssembly));
+            // note this is not my Assembly
+
+
             Rebind<IActivator>().To<GrainActivator>().InSingletonScope();
             Rebind<IWorker>().To<ProcessingGrainWorker>().InSingletonScope();
             Rebind<IServiceInterfaceMapper>().To<OrleansServiceInterfaceMapper>().InSingletonScope();
             Bind<IOrleansToNinjectBinding>().To<OrleansToNinjectBinding>().InSingletonScope();
-                        Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
+            Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
 
             Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>().InSingletonScope();
-       
+
             // Register logger per category
             Kernel.BindPerString<OrleansLogAdapter>();
             Rebind<IMetricTelemetryConsumer>().To<MetricsStatisticsConsumer>().InSingletonScope();

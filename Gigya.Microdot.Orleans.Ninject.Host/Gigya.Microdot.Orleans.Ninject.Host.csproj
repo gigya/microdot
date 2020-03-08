@@ -53,6 +53,7 @@
     <Compile Include="GrainsWarmup.cs" />
     <Compile Include="NinjectOrleansBinding\DeadlockDetector.cs" />
     <Compile Include="NinjectOrleansBinding\DeadlockDetectorExeption.cs" />
+    <Compile Include="NinjectOrleansBinding\IGlobalServiceProvider.cs" />
     <Compile Include="NinjectOrleansBinding\KeyedServiceCollection.cs" />
     <Compile Include="NinjectOrleansBinding\MicrodotNinectScopParameter.cs" />
     <Compile Include="NinjectOrleansBinding\ScopeCache.cs" />
