@@ -233,5 +233,13 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>Whether exception stack traces should be excluded. Note: can be overridden by derived classes.</summary>                
         public virtual bool ShouldExcludeStackTrace => Configuration.ExcludeStackTraceRule?.IsMatch(ErrCode_.ToString()) == true;
+
+        [EventField(EventConsts.context, AppendTypeSuffix = true)]
+        public IEnumerable<KeyValuePair<string, object>> ContextTags => TracingContext.Tags().GetUnencryptedLog();
+        
+        [EventField(EventConsts.context, Encrypt = true)]
+        public IEnumerable<KeyValuePair<string, object>> EncryptedContextTags => TracingContext.Tags().GetEncryptedLog();
+
+
     }
 }

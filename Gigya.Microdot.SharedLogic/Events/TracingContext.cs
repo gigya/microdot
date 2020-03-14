@@ -1,4 +1,5 @@
-﻿#region Copyright 
+﻿#region Copyright
+
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -18,6 +19,7 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
+
 #endregion
 
 using System;
@@ -33,6 +35,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         static TracingContext()
         {
             Implementation = new TracingContextSourcev();
+            SetTags(new ContextTags());
         }
 
         internal static TracingContextSourcev Implementation;
@@ -42,6 +45,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         private const string OVERRIDES_KEY = "MD_SOverrides";
         private const string SPAN_START_TIME = "MD_SSpanStartTime";
         private const string REQUEST_DEATH_TIME = "MD_SRequestDeathTime";
+        private const string TAGS_KEY = "MD_Tags";
 
         public static void ClearContext()
         {
@@ -50,9 +54,21 @@ namespace Gigya.Microdot.SharedLogic.Events
             Implementation.Set(OVERRIDES_KEY, null);
             Implementation.Set(SPAN_START_TIME, null);
             Implementation.Set(REQUEST_DEATH_TIME, null);
-
+            Implementation.Set(REQUEST_DEATH_TIME, null);
+            SetTags(new ContextTags());
+        }
+  
+        public static ContextTags Tags()
+        {
+            return TryGetValue<ContextTags>(TAGS_KEY);
+        }
+        
+        internal static void SetTags(ContextTags ctxTags)
+        {
+            Implementation.Set(TAGS_KEY, ctxTags);
         }
 
+     
         private static T? TryGetNullableValue<T>(string key) where T : struct
         {
             object value = Implementation.Get(key);
@@ -64,7 +80,6 @@ namespace Gigya.Microdot.SharedLogic.Events
             object value = Implementation.Get(key); ;
             return value as T;
         }
-
 
 
         internal static void SetOverrides(RequestOverrides overrides)
@@ -224,7 +239,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             if (getter != null)
                 return getter(key);
-            
+
             return fallback.Get(key);
         }
     }

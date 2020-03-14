@@ -56,6 +56,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string exStackTraceUnclean = "ex.stackTraceUnclean";
         public const string exType = "ex.type";
         public const string tags = "tags";
+        public const string context = "ctx";
 
         public const string targetService="target.service";
         public const string targetHost = "target.host";
