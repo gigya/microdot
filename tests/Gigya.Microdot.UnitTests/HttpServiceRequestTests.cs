@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 
@@ -32,7 +33,13 @@ namespace Gigya.Microdot.UnitTests {
                 {
                     RequestID = "1",
                     HostName = "test",
-                    ServiceName = "test"
+                    ServiceName = "test",
+                    Tags = new ContextTags()
+                    {
+                        ["tag1"]= (1, false, true),
+                        ["tag2"]=  ("dsds", true, false),
+                        ["tag3"]=  (new Foo(), true, false),
+                    }
                 }
             };
             var requestDataReturned = SerializeDeserialize(requestData);
@@ -40,6 +47,10 @@ namespace Gigya.Microdot.UnitTests {
             requestDataReturned.TracingData.RequestID.ShouldBe(requestData.TracingData.RequestID);
             requestDataReturned.TracingData.HostName.ShouldBe(requestData.TracingData.HostName);
             requestDataReturned.TracingData.ServiceName.ShouldBe(requestData.TracingData.ServiceName);
+            requestDataReturned.TracingData.Tags["tag1"].value.ShouldBe(1);
+            requestDataReturned.TracingData.Tags["tag1"].unencryptedLog.ShouldBe(false);
+            requestDataReturned.TracingData.Tags["tag1"].encryptedLog.ShouldBe(true);
+            requestDataReturned.TracingData.Tags["tag3"].value.ShouldBeOfType<Foo>();
         }
 
         private HttpServiceRequest SerializeDeserialize(HttpServiceRequest requestData) {

@@ -258,6 +258,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                             SetCallEventRequestData(callEvent, requestData);
 
                             TracingContext.SetOverrides(requestData.Overrides);
+                            TracingContext.SetTags(requestData.TracingData.Tags);
 
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;

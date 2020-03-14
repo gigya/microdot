@@ -27,6 +27,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Gigya.Microdot.SharedLogic.Events;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
@@ -242,5 +243,10 @@ namespace Gigya.Microdot.SharedLogic.HttpService
         /// </summary>
         [JsonProperty]
         public DateTimeOffset? AbandonRequestBy { get; set; }
+        
+        
+        [JsonProperty]
+        public ContextTags Tags { get; set; }
+
     }
 }

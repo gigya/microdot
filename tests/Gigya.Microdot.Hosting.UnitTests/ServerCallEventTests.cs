@@ -46,16 +46,19 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             var requestId = nameof(SingleServerCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
             
             TracingContext.SetRequestID(requestId);
-            TracingContext.TryGetRequestID();
-
+            TracingContext.Tags().Tag("string", "IAmTag", true);
+            TracingContext.Tags().Tag("int", 1, true);
+            TracingContext.Tags().Tag("encrypted", "IAmEncryptedTag", encryptedLog: true);
+            
             await _serviceProxy.Add(5, 3);
             await Task.Delay(100);
             var events = _flumeQueue.Events;
-            var serverReq = (ServiceCallEvent) events.Single();
-            Assert.AreEqual("serverReq", serverReq.EventType);
-            Assert.AreEqual(nameof(ICalculatorService), serverReq.ServiceName);
-            Assert.AreEqual("Add", serverReq.ServiceMethod);
-            Assert.AreEqual(requestId, serverReq.RequestId);
+            var serverReq = (ServiceCallEvent) events.Single(); 
+            
+            Assert.AreEqual("IAmTag", serverReq.ContextTags.FirstOrDefault(e=> e.Key== "string").Value);
+            Assert.AreEqual(1, serverReq.ContextTags.FirstOrDefault(e=> e.Key== "int").Value);
+            Assert.AreEqual("IAmEncryptedTag", serverReq.EncryptedContextTags.FirstOrDefault(e=> e.Key== "encrypted").Value);
         }
+         
     }
 }
