@@ -352,6 +352,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             callEvent.RequestId = requestData.TracingData?.RequestID;
             callEvent.SpanId = requestData.TracingData?.SpanID;
             callEvent.ParentSpanId = requestData.TracingData?.ParentSpanID;
+            callEvent.ContextTags = requestData.TracingData?.Tags.GetUnencryptedLog();
+            callEvent.ContextTagsEncrypted = requestData.TracingData?.Tags.GetEncryptedLog();
         }
 
         private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)

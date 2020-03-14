@@ -235,10 +235,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         public virtual bool ShouldExcludeStackTrace => Configuration.ExcludeStackTraceRule?.IsMatch(ErrCode_.ToString()) == true;
 
         [EventField(EventConsts.context, AppendTypeSuffix = true)]
-        public IEnumerable<KeyValuePair<string, object>> ContextTags => TracingContext.Tags().GetUnencryptedLog();
+        public IEnumerable<KeyValuePair<string, object>> ContextTags { get; set; } = TracingContext.Tags()?.GetUnencryptedLog().ToArray();
         
         [EventField(EventConsts.context, Encrypt = true)]
-        public IEnumerable<KeyValuePair<string, object>> EncryptedContextTags => TracingContext.Tags().GetEncryptedLog();
+        public IEnumerable<KeyValuePair<string, object>> ContextTagsEncrypted{ get; set; } = TracingContext.Tags()?.GetEncryptedLog().ToArray();
 
 
     }

@@ -65,7 +65,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         
         internal static void SetTags(ContextTags ctxTags)
         {
-            Implementation.Set(TAGS_KEY, ctxTags);
+            if (ctxTags != null)
+            {
+                Implementation.Set(TAGS_KEY, ctxTags); 
+            }
         }
 
      

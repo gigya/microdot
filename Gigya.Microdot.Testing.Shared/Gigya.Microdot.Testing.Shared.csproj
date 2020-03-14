@@ -63,6 +63,10 @@
     <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj">
+      <Project>{47cbf637-ab8f-4568-86d6-eab6ef08b9ce}</Project>
+      <Name>Gigya.Microdot.Common.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj">
       <Project>{2865f69b-d847-4901-8945-4941e463f94e}</Project>
       <Name>Gigya.Microdot.Fakes</Name>

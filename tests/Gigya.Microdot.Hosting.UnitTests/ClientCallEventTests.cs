@@ -13,7 +13,7 @@ using Ninject;
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
-    public class ServerCallEventTests
+    public class ClientCallEventTests
     {
         private const int REPEAT = 1;
 
@@ -27,8 +27,8 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>();
 
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
-            
-            _flumeQueue = (SpyEventPublisher)_serviceTester.Host.Kernel.Get<IEventPublisher>();
+
+            _flumeQueue = (SpyEventPublisher) _serviceTester.CommunicationKernel.Get<IEventPublisher>();
         }
 
         [OneTimeTearDown]
@@ -39,11 +39,11 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 
         [Test]
         [Repeat(REPEAT)]
-        public async Task SingleServerCall_CallSucceeds_PublishesEvent()
+        public async Task SingleServerCall_CallSucceeds_PublishesCallEvent()
         {
             _flumeQueue.Clear();
 
-            var requestId = nameof(SingleServerCall_CallSucceeds_PublishesEvent) + Guid.NewGuid();
+            var requestId = nameof(SingleServerCall_CallSucceeds_PublishesCallEvent) + Guid.NewGuid();
 
             TracingContext.SetRequestID(requestId);
             TracingContext.TryGetRequestID();
@@ -51,21 +51,21 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             await _serviceProxy.Add(5, 3);
             await Task.Delay(100);
             var events = _flumeQueue.Events;
-            var serverReq = (ServiceCallEvent) events.Single();
-            Assert.AreEqual("serverReq", serverReq.EventType);
-            Assert.AreEqual(nameof(ICalculatorService), serverReq.ServiceName);
-            Assert.AreEqual("Add", serverReq.ServiceMethod);
-            Assert.AreEqual(requestId, serverReq.RequestId);
+            var clientCallEvent = (ClientCallEvent ) events.Single();
+            Assert.AreEqual("clientReq", clientCallEvent.EventType);
+            Assert.AreEqual(nameof(CalculatorService), clientCallEvent.TargetService);
+            Assert.AreEqual("Add", clientCallEvent.TargetMethod);
+            Assert.AreEqual(requestId, clientCallEvent.RequestId);
         }
 
 
         [Test]
         [Repeat(REPEAT)]
-        public async Task SingleServerCall_CallSucceeds_PublishesEvent_WithTags()
+        public async Task SingleServerCall_CallSucceeds_PublishesCallEvent_WithTags()
         {
             _flumeQueue.Clear();
 
-            var requestId = nameof(SingleServerCall_CallSucceeds_PublishesEvent_WithTags) + Guid.NewGuid();
+            var requestId = nameof(SingleServerCall_CallSucceeds_PublishesCallEvent_WithTags) + Guid.NewGuid();
 
             TracingContext.SetRequestID(requestId);
             TracingContext.TryGetRequestID();
@@ -87,12 +87,12 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 
 
             var events = _flumeQueue.Events;
-            var serverReq = (ServiceCallEvent) events.Single();
+            var clientCallEvent = (ClientCallEvent) events.Single();
 
             Assert.Multiple(() =>
             {
-                var tags = serverReq.ContextTags.ToDictionary(x => x.Key, x => x.Value);
-                var encryptedTags = serverReq.ContextTagsEncrypted.ToDictionary(x => x.Key, x => x.Value);
+                var tags = clientCallEvent.ContextTags.ToDictionary(x => x.Key, x => x.Value);
+                var encryptedTags = clientCallEvent.ContextTagsEncrypted.ToDictionary(x => x.Key, x => x.Value);
 
                 CollectionAssert.DoesNotContain(tags.Keys, "outsideOfScope");
                 CollectionAssert.Contains(tags.Keys, "scopedTag");
