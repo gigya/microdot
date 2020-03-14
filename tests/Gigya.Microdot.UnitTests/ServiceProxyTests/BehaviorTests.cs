@@ -153,6 +153,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             
             [JsonRequired]
             public DateTime SpanStartTime { get; set; }
+            
+            [JsonRequired]
+            public ContextTags Tags { get; set; }
+
         }
 
         public class Host1
