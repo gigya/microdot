@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces;
@@ -16,7 +17,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
     {
         public TConfig GetConfig<TConfig>(string configFile)
         {
-            var nameOfConfigFile = nameof(TConfig) + ".config";
+            var nameOfConfigFile = typeof(TConfig).Name + ".config";
             var (k, providerMock, fileSystemMock) = Setup();
 
             providerMock.GetAllTypes().Returns(info => new[]
@@ -42,7 +43,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
                 return Task.FromResult(content);
             });
 
-            var creator = k.Get<Func<Type, IConfigObjectCreator>>()(typeof(IntArrayConfig));
+            var creator = k.Get<Func<Type, IConfigObjectCreator>>()(typeof(TConfig));
             return ((TConfig) creator.GetLatest());
 
         }
@@ -51,7 +52,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [Description("Checks that we can read an array property")]
         public void CanUseArrayProperyInConfigObject()
         {
-            var config = "<configuration>\r\n\t<IntArrayConfig IntArray=\"1,2,3,4\"/>\r\n</configuration>";
+            var config = @"<configuration>
+                            <IntArrayConfig IntArray-list=""1,2,3,4""/>
+                          </configuration>";
             var configObject = GetConfig<IntArrayConfig>(config);
             configObject.IntArray.GetType().ShouldBe(typeof(int[]));
             foreach (var i in Enumerable.Range(0,4))
@@ -62,16 +65,16 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
         [Test]
         [Description("Checks that we can read an array property in node format")]
-        public void CanUseArrayProperyInConfigObjectInNodeStructure()
+        public void CanUseArrayPropertyInConfigObjectInNodeStructure()
         {
             var config = @"<configuration>
 	                        <IntArrayConfig>
-		                        <IntArray_list_>
+		                        <IntArray-list>
 			                        <Item>1</Item>
 			                        <Item>2</Item>
 			                        <Item>3</Item>  
 			                        <Item>4</Item>
-		                        </IntArray_list_>
+		                        </IntArray-list>
 	                        </IntArrayConfig>
                         </configuration>";
             var configObject = GetConfig<IntArrayConfig>(config);
@@ -88,12 +91,12 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray_list_>
+		                        <PersonArray-list>
 			                        <Item><Person Name='Bob' Age='35'/></Item>
 			                        <Item><Person Name='John' Age='21'/></Item>
 			                        <Item><Person Name='Sarah' Age='45'/></Item>  
 			                        <Item><Person Name='Mira' Age='27'/></Item>
-		                        </PersonArray_list_>
+		                        </PersonArray-list>
 	                        </PersonArrayConfig>
                         </configuration>";
             var configObject = GetConfig<PersonArrayConfig>(config);
@@ -105,17 +108,74 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
+        [Description("Checks that we can read nested complex object")]
+        public void CanUseListOfComplexObjectsInsideListOfComplexObjects()
+        {
+            var config = @"<configuration>
+	                        <PersonArrayConfig>
+		                        <PersonArray-list>
+			                        <Item>
+                                        <Person Name='Bob' Age='35'>
+                                            <Pets-list>
+	                                            <Item>
+                                                    <Pet Name='Smelly' Type='Cat' />                                            
+                                                </Item>
+                                                <Item>
+                                                    <Pet Name='Hairy' Type='Dog' />                                            
+                                                </Item>
+                                            </Pets-list>
+                                        </Person>
+                                    </Item>
+		                        </PersonArray-list>
+	                        </PersonArrayConfig>
+                        </configuration>";
+            var configObject = GetConfig<PersonArrayConfig>(config);
+            configObject.PersonArray.GetType().ShouldBe(typeof(Person[]));
+            var person = configObject.PersonArray.Single();
+            person.Name.ShouldBe("Bob");
+            person.Pets.GetType().ShouldBe(typeof(Pet[]));
+            person.Pets.Length.ShouldBe(2);
+            person.Pets[0].Name.ShouldBe("Smelly");
+            person.Pets[1].Name.ShouldBe("Hairy");
+        }
+
+        [Test]
+        [Description("Checks that we can read nested simple object")]
+        public void CanUseListOfSimpleValuesInsideListOfComplexObjects()
+        {
+            var config = @"<configuration>
+	                    <PersonArrayConfig>
+		                    <PersonArray-list>
+			                    <Item><Person Name='Bob' Age='35' FavoriteLotteryNumbers-list='3,7,13,28,31,42'/></Item>
+		                    </PersonArray-list>
+	                    </PersonArrayConfig>
+                    </configuration>";
+            var configObject = GetConfig<PersonArrayConfig>(config);
+            configObject.PersonArray.GetType().ShouldBe(typeof(Person[]));
+            var person = configObject.PersonArray[0];
+            person.Name.ShouldBe("Bob");
+            person.FavoriteLotteryNumbers.GetType().ShouldBe(typeof(int[]));
+            person.FavoriteLotteryNumbers.Length.ShouldBe(6);
+            person.FavoriteLotteryNumbers[0].ShouldBe(3);
+            person.FavoriteLotteryNumbers[1].ShouldBe(7);
+            person.FavoriteLotteryNumbers[2].ShouldBe(13);
+            person.FavoriteLotteryNumbers[3].ShouldBe(28);
+            person.FavoriteLotteryNumbers[4].ShouldBe(31);
+            person.FavoriteLotteryNumbers[5].ShouldBe(42);
+        }
+
+        [Test]
         [Description("Checks that we throw if one of the elements in the list is not of the same type")]
         public void HavingAnElementWithDifferentXMLTypeInTheListShouldThrow()
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray_list_>
+		                        <PersonArray-list>
 			                        <Item><Person Name='Bob' Age='35'/></Item>
 			                        <Item><Person Name='John' Age='21'/></Item>
 			                        <Item><Person Name='Sarah' Age='45'/></Item>  
 			                        <Item><Person2 Name='Mira' Age='27'/></Item>
-		                        </PersonArray_list_>
+		                        </PersonArray-list>
 	                        </PersonArrayConfig>
                         </configuration>";
             Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
@@ -127,15 +187,68 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray_list_>
+		                        <PersonArray-list>
 			                        <Item><Person Name='Bob' Age='35'/></Item>
 			                        <Item><Person Name='John' Age='21'/></Item>
 			                        <Item><Person Name='Sarah' Age='45'/></Item>  
 			                        <Item2><Person Name='Mira' Age='27'/></Item>
-		                        </PersonArray_list_>
+		                        </PersonArray-list>
 	                        </PersonArrayConfig>
                         </configuration>";
             Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
+        }
+
+        [Test]
+        [Description("Checks that we throw if a list is empty")]
+        public void HavingNoItemElementOnAListShouldThrow()
+        {
+            var config = @"<configuration>
+	                        <PersonArrayConfig>
+		                        <PersonArray-list>
+		                        </PersonArray-list>
+	                        </PersonArrayConfig>
+                        </configuration>";
+            Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
+        }
+
+        [Test]
+        [Description("Checks that we throw if one of the elements has no content and no attributes")]
+        public void ListItemsMustContainEitherAttributesOrContent()
+        {
+            var config = @"<configuration>
+	                        <PersonArrayConfig>
+		                        <PersonArray-list>
+			                        <Item><Person Name='Bob' Age='35'/></Item>
+			                        <Item><Person/></Item>
+			                        <Item><Person Name='Sarah' Age='45'/></Item>  
+			                        <Item2><Person Name='Mira' Age='27'/></Item>
+		                        </PersonArray-list>
+	                        </PersonArrayConfig>
+                        </configuration>";
+            Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
+        }
+
+        [Test]
+        [Description("Checks that we support shortcuts inside lists")]
+        public void ShortcutPathsInsideListsShouldWork()
+        {
+            var expectedValue = "expectedValue";
+            var config = $@"<configuration>
+	                        <NestedConfig>
+		                        <Internals-list>
+			                        <Item><InternalConfig.Value>{expectedValue}</InternalConfig.Value></Item>
+		                        </Internals-list>
+	                        </NestedConfig>
+                        </configuration>";
+            var nestedConfig = GetConfig<NestedConfig>(config);
+            nestedConfig.Internals.Single().Value.ShouldBe(expectedValue);
+        }
+
+        [Test]
+        [Description("Checks that we override lists atomically")]
+        public void OverridingListsShouldBeAtomic()
+        {
+            throw new NotImplementedException("TODO:Write this test");
         }
     }
 
@@ -154,5 +267,23 @@ namespace Gigya.Microdot.UnitTests.Configuration
     {
         public string Name { get; set; }
         public int Age { get; set; }
+        public Pet[] Pets {get; set;}
+        public int[] FavoriteLotteryNumbers { get; set; }
+    }
+
+    internal class Pet
+    {
+        public string Name { get; set; }
+        public string Type { get; set; }
+    }
+
+    internal class NestedConfig
+    {
+        public InternalConfig[] Internals { get; set; }
+    }
+
+    internal class InternalConfig
+    {
+        public string Value { get; set; }
     }
 }
