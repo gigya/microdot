@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Newtonsoft.Json;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,6 +17,42 @@ namespace Gigya.Microdot.UnitTests.Configuration
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class ConfigListProperties: ConfigTestBase
     {
+        public TConfig GetConfig<TConfig>(string configFile1,string configFile1Name, string configFile2, string configFile2Name)
+        {
+            var (k, providerMock, fileSystemMock) = Setup();
+            providerMock.GetAllTypes().Returns(info => new[]
+            {
+                typeof(TConfig),
+            });
+            fileSystemMock.GetFilesInFolder(Arg.Any<string>(), Arg.Any<string>() ).Returns(info =>
+            {
+                if(info.ArgAt<string>(1) == $"{configFile1Name}.config")
+                    return new[] { $@"{configFile1Name}.config" };
+                if (info.ArgAt<string>(1) == $"{configFile2Name}.config")
+                    return new[] { $@"{configFile2Name}.config" };
+                throw new ArgumentException("Invalid pattern ...");
+            });
+
+            fileSystemMock.ReadAllTextFromFileAsync(Arg.Any<string>()).Returns(callinfo =>
+            {
+                string content;
+                if (callinfo.ArgAt<string>(0) == $@"{configFile1Name}.config")
+                {
+                    content = configFile1;
+                }
+                else if (callinfo.ArgAt<string>(0) == $@"{configFile2Name}.config")
+                {
+                    content = configFile2;
+                }
+                else 
+                    throw new ArgumentException("Invalid config file name...");
+
+                return Task.FromResult(content);
+            });
+
+            var creator = k.Get<Func<Type, IConfigObjectCreator>>()(typeof(TConfig));
+            return ((TConfig)creator.GetLatest());
+        }
         public TConfig GetConfig<TConfig>(string configFile)
         {
             var nameOfConfigFile = typeof(TConfig).Name + ".config";
@@ -248,7 +286,30 @@ namespace Gigya.Microdot.UnitTests.Configuration
         [Description("Checks that we override lists atomically")]
         public void OverridingListsShouldBeAtomic()
         {
-            throw new NotImplementedException("TODO:Write this test");
+            LoadPaths =
+                @"[{ ""Pattern"": "".\\Config1.config"", ""Priority"": 1 },{ ""Pattern"": "".\\Config2.config"", ""Priority"": 2 }]";
+            var config1 = @"<configuration>
+	                        <PersonArrayConfig>
+		                        <PersonArray-list>
+			                        <Item><Person Name='Bob' Age='35'/></Item>
+			                        <Item><Person Name='John' Age='21'/></Item>
+		                        </PersonArray-list>
+	                        </PersonArrayConfig>
+                        </configuration>";
+
+            var config2 = @"<configuration>
+	                        <PersonArrayConfig>
+		                        <PersonArray-list>
+			                        <Item><Person Name='Sarah' Age='45'/></Item>  
+			                        <Item><Person Name='Mira' Age='27'/></Item>
+		                        </PersonArray-list>
+	                        </PersonArrayConfig>
+                        </configuration>";
+
+            var configObject = GetConfig<PersonArrayConfig>(config1, "Config1", config2, "Config2");
+            configObject.PersonArray.Length.ShouldBe(2);
+            configObject.PersonArray[0].Name.ShouldBe("Sarah");
+            configObject.PersonArray[1].Name.ShouldBe("Mira");
         }
     }
 

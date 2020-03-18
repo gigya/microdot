@@ -15,7 +15,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 {
     public abstract class ConfigTestBase
     {
-        private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";
+        protected string LoadPaths { get; set; } = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";
 
         /// <summary>
         /// Initial common kernel setup for mocks
@@ -29,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             providerMock.GetAssemblies().Returns(info => new[] { GetType().Assembly });
 
             IFileSystem fileSystemMock = Substitute.For<IFileSystem>();
-            fileSystemMock.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => _loadPaths);
+            fileSystemMock.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => LoadPaths);
             fileSystemMock.Exists(Arg.Any<string>()).Returns(a => true);
 
             k.Rebind<IAssemblyProvider>().ToConstant(providerMock);
