@@ -229,7 +229,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 			                        <Item><Person Name='Bob' Age='35'/></Item>
 			                        <Item><Person Name='John' Age='21'/></Item>
 			                        <Item><Person Name='Sarah' Age='45'/></Item>  
-			                        <Item2><Person Name='Mira' Age='27'/></Item>
+			                        <Item2><Person Name='Mira' Age='27'/></Item2>
 		                        </PersonArray-list>
 	                        </PersonArrayConfig>
                         </configuration>";
@@ -259,7 +259,24 @@ namespace Gigya.Microdot.UnitTests.Configuration
 			                        <Item><Person Name='Bob' Age='35'/></Item>
 			                        <Item><Person/></Item>
 			                        <Item><Person Name='Sarah' Age='45'/></Item>  
-			                        <Item2><Person Name='Mira' Age='27'/></Item>
+			                        <Item><Person Name='Mira' Age='27'/></Item>
+		                        </PersonArray-list>
+	                        </PersonArrayConfig>
+                        </configuration>";
+            Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
+        }
+
+        [Test]
+        [Description("Checks that we throw if one of the elements has no content and no attributes")]
+        public void ListItemsMustContainASingleChildElement()
+        {
+            var config = @"<configuration>
+	                        <PersonArrayConfig>
+		                        <PersonArray-list>
+			                        <Item>
+                                        <Person Name='Bob' Age='35'/>
+                                        <Person Name='Sarah' Age='45'/>
+                                    </Item>
 		                        </PersonArray-list>
 	                        </PersonArrayConfig>
                         </configuration>";
@@ -319,6 +336,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public int[] IntArray { get; set; }
     }
 
+    [ConfigurationRoot("PersonArrayConfig", RootStrategy.ReplaceClassNameWithPath)]
     internal class PersonArrayConfig : IConfigObject
     {
         public Person[] PersonArray { get; set; }
@@ -337,8 +355,8 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public string Name { get; set; }
         public string Type { get; set; }
     }
-
-    internal class NestedConfig
+    [ConfigurationRoot("NestedConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class NestedConfig : IConfigObject
     {
         public InternalConfig[] Internals { get; set; }
     }

@@ -430,7 +430,8 @@ namespace Gigya.Microdot.Configuration
                     $"Node {node.Name} is marked as a list but contains a child element that is not a node of type <{ListItemElementName}/>");
             }
             //All nodes are primitive e.g. <Item>4</Item> this is valid
-            if(nodes.All(n => n.HasChildNodes == false && string.IsNullOrEmpty(n.InnerText) == false) )
+            if(nodes.All(n => n.HasChildNodes && n.ChildNodes.Count == 1 &&
+                              n.ChildNodes[0].NodeType == XmlNodeType.Text && string.IsNullOrEmpty(n.InnerText) == false) )
                 return;
             //All nodes contain a single XML element 
             if (nodes.All(n => n.HasChildNodes && n.ChildNodes.Count == 1) == false)
