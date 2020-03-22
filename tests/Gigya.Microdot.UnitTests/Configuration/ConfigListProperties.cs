@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
-using Newtonsoft.Json;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
@@ -88,7 +86,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
         [Test]
         [Description("Checks that we can read an array property")]
-        public void CanUseArrayProperyInConfigObject()
+        public void CanUseArrayPropertyInConfigObject()
         {
             var config = @"<configuration>
                             <IntArrayConfig IntArray-list=""1,2,3,4""/>
@@ -98,6 +96,36 @@ namespace Gigya.Microdot.UnitTests.Configuration
             foreach (var i in Enumerable.Range(0,4))
             {
                 configObject.IntArray[i].ShouldBe(i+1); 
+            }
+        }
+
+        [Test]
+        [Description("Checks that we can parse array of strings containing whitespaces")]
+        public void CanProperlyParseStringArrayInConfigObject()
+        {
+            var config = @"<configuration>
+                            <StringArrayConfig StringArray-list=""a b , c d""/>
+                          </configuration>";
+            var configObject = GetConfig<StringArrayConfig>(config);
+            configObject.StringArray.GetType().ShouldBe(typeof(string[]));
+            configObject.StringArray.Length.ShouldBe(2);
+            configObject.StringArray[0].ShouldBe("a b");
+            configObject.StringArray[1].ShouldBe("c d");
+        }
+
+        [Test]
+        [Description("Checks that we can deserialise to an IEnumerable")]
+        public void CanUseIEnumerablePropertyInConfigObject()
+        {
+            var config = @"<configuration>
+                            <IEnumerableConfig IntEnumerable-list=""1,2,3,4""/>
+                          </configuration>";
+            var configObject = GetConfig<IEnumerableConfig>(config);
+            configObject.IntEnumerable.GetType().ShouldBe(typeof(List<int>));
+            var value = 1;
+            foreach (var i in configObject.IntEnumerable)
+            {
+                i.ShouldBe(value++);   
             }
         }
 
@@ -237,7 +265,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        [Description("Checks that we throw if a list is empty")]
+        [Description("Checks that we can parse an empty array")]
         public void HavingNoItemElementOnAListShouldThrow()
         {
             var config = @"<configuration>
@@ -246,7 +274,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
 		                        </PersonArray-list>
 	                        </PersonArrayConfig>
                         </configuration>";
-            Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
+            var configObject = GetConfig<PersonArrayConfig>(config);
+            configObject.PersonArray.GetType().ShouldBe(typeof(Person[]));
+            configObject.PersonArray.Length.ShouldBe(0);
         }
 
         [Test]
@@ -328,6 +358,18 @@ namespace Gigya.Microdot.UnitTests.Configuration
             configObject.PersonArray[0].Name.ShouldBe("Sarah");
             configObject.PersonArray[1].Name.ShouldBe("Mira");
         }
+    }
+
+    [ConfigurationRoot("StringArrayConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class StringArrayConfig : IConfigObject
+    {
+        public string[] StringArray { get; set; }
+    }
+
+    [ConfigurationRoot("IEnumerableConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class IEnumerableConfig : IConfigObject
+    {
+        public IEnumerable<int> IntEnumerable { get; set; }
     }
 
     [ConfigurationRoot("IntArrayConfig", RootStrategy.ReplaceClassNameWithPath)]

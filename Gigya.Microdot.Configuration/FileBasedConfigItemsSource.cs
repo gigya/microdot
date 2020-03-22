@@ -187,24 +187,7 @@ namespace Gigya.Microdot.Configuration
                             PutOrUpdateEntry(conf, parentName + "." + attr.Name, attr.Value, priority, fileName, element);
                     foreach (XmlNode child in element.ChildNodes)
                     {
-                        if (child.NodeType == XmlNodeType.Text || child.NodeType == XmlNodeType.CDATA)
-                            PutOrUpdateEntry(conf, parentName, child.Value, priority, fileName);
-                        else
-                        {
-                            string name = child.Name;
-                            if (name.EndsWith(ListMarker))
-                            {
-                                name = RemoveListMarker(name);
-                                name = ToFullName(parentName, name);
-                                var arrayString = ToValidJsonArrayString(child);
-                                PutOrUpdateEntry(conf, name, arrayString, priority, fileName, true);
-                            }
-                            else
-                            {
-                                name = ToFullName(parentName, name);
-                                ParseConfiguration(child, name, conf, priority, fileName);
-                            }
-                        }
+                        ParseConfigurationNode(parentName, conf, priority, fileName, child);
                     }
                 }
             }
@@ -212,6 +195,34 @@ namespace Gigya.Microdot.Configuration
             {
                 throw new Exception("parentName=" + parentName, e);
             }
+        }
+
+        private void ParseConfigurationNode(string parentName, Dictionary<string, ConfigItem> conf, uint priority, string fileName, XmlNode child)
+        {
+            if (child.NodeType == XmlNodeType.Text || child.NodeType == XmlNodeType.CDATA)
+                PutOrUpdateEntry(conf, parentName, child.Value, priority, fileName);
+            else
+            {
+                string name = child.Name;
+                if (name.EndsWith(ListMarker))
+                {
+                    ParseConfigurationListNode(parentName, conf, priority, fileName, child, name);
+                }
+                else
+                {
+                    name = ToFullName(parentName, name);
+                    ParseConfiguration(child, name, conf, priority, fileName);
+                }
+            }
+        }
+
+        private void ParseConfigurationListNode(string parentName, Dictionary<string, ConfigItem> conf, uint priority, string fileName,
+            XmlNode child, string name)
+        {
+            name = RemoveListMarker(name);
+            name = ToFullName(parentName, name);
+            var arrayString = ToValidJsonArrayString(child);
+            PutOrUpdateEntry(conf, name, arrayString, priority, fileName, true);
         }
 
         private const string ListMarker = "-list";
@@ -285,7 +296,8 @@ namespace Gigya.Microdot.Configuration
             return (string.IsNullOrEmpty(parentName) ? string.Empty : parentName + ".") + childName;
         }
 
-        private readonly char[] _splitArrayBy = new[] {','};
+        private const string delimiter = ",";
+        private static readonly string[] _splitArrayBy = { delimiter };
         private string ToValidJsonArrayString(string value)
         {
             var array = SplitArrayElements(value);
@@ -313,8 +325,7 @@ namespace Gigya.Microdot.Configuration
         private JArray ToValidJsonArray(XmlNode node)
         {
             ValidateListStructure(node);
-            var res = new JArray(node.ChildNodes.Cast<XmlNode>().Select(ParseXmlToJToken));
-            return res;
+            return new JArray(node.ChildNodes.Cast<XmlNode>().Select(ParseXmlToJToken));
         }
 
         private JToken ParseXmlToJToken(XmlNode xmlNode)
@@ -417,12 +428,7 @@ namespace Gigya.Microdot.Configuration
         private static void ValidateListStructure(XmlNode node)
         {
             var nodes = node.ChildNodes.Cast<XmlNode>().ToArray();
-            //There should be at least one item in the list, an empty list is probably a configuration error.
-            if (nodes.Any() == false)
-            {
-                throw new ConfigurationException(
-                    $"Node {node.Name} is marked as a list but contains no child elements");
-            }
+
             //All nodes should be of type 'Item'
             if (nodes.All(n => n.Name == ListItemElementName) == false)
             {
