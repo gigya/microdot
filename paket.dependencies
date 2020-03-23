@@ -33,6 +33,7 @@ nuget Microsoft.AspNetCore.Http.Features ~> 3
 nuget Microsoft.Extensions.Primitives ~> 3
 nuget Microsoft.Orleans.Server  ~> 3
 nuget Microsoft.Orleans.Core.Abstractions ~> 3
+nuget Microsoft.Orleans.Connections.Security ~> 3
 nuget OrleansDashboard ~> 3
 nuget System.Diagnostics.PerformanceCounter 4.5.0 
 

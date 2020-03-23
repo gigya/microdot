@@ -6,6 +6,7 @@ Microsoft.CodeAnalysis.CSharp
 Microsoft.CodeAnalysis.Common
 
 Microsoft.Orleans.Core
+Microsoft.Orleans.Connections.Security
 Microsoft.Orleans.OrleansRuntime
 Microsoft.Orleans.OrleansProviders
 Microsoft.Orleans.OrleansSqlUtils

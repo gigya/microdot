@@ -32,8 +32,11 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Security.Authentication;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
+using Orleans.Connections.Security;
 
 
 namespace Gigya.Microdot.Orleans.Hosting
@@ -49,12 +52,14 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly ServiceArguments _serviceArguments;
         private readonly CurrentApplicationInfo _appInfo;
         private readonly ISiloHostBuilder _siloHostBuilder;
+        private readonly ICertificateLocator _certificateLocator;
 
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
             OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
             ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
             ServiceArguments serviceArguments,
-            CurrentApplicationInfo appInfo)
+            CurrentApplicationInfo appInfo,
+            ICertificateLocator certificateLocator)
         {
             _orleansConfig = orleansConfig;
             _commonConfig = commonConfig;
@@ -63,6 +68,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             _endPointDefinition = endPointDefinition;
             _serviceArguments = serviceArguments;
             _appInfo = appInfo;
+            _certificateLocator = certificateLocator;
             _siloHostBuilder = InitBuilder();
         }
 
@@ -149,6 +155,25 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                
             });
+
+            if (_endPointDefinition.UseSecureChannel)
+            {
+                var localCertificate = _certificateLocator.GetCertificate("Service");
+                var localCertificateHash = localCertificate.GetCertHash();
+                hostBuilder.UseTls(localCertificate, tlsOptions =>
+                {
+                    tlsOptions.LocalCertificate = localCertificate;
+                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.RequireCertificate;
+                    tlsOptions.RemoteCertificateMode = RemoteCertificateMode.RequireCertificate;
+                    
+                    tlsOptions.SslProtocols = SslProtocols.Tls12;
+
+                    // Verify that remote certificate is exactly the same as the local certificate;
+                    tlsOptions.RemoteCertificateValidation = (certificate, chain, errors) =>
+                        certificate.GetCertHash().SequenceEqual(localCertificateHash);
+                });
+
+            }
 
             SetReminder(hostBuilder);
             SetSiloSource(hostBuilder);
