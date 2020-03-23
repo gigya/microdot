@@ -121,7 +121,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
                             <IEnumerableConfig IntEnumerable-list=""1,2,3,4""/>
                           </configuration>";
             var configObject = GetConfig<IEnumerableConfig>(config);
-            configObject.IntEnumerable.GetType().ShouldBe(typeof(List<int>));
             var value = 1;
             foreach (var i in configObject.IntEnumerable)
             {
