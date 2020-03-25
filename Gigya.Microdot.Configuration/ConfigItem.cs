@@ -38,6 +38,7 @@ namespace Gigya.Microdot.Configuration
         private string DecryptedValue { get; set; }
         public string Key { get; set; }
         public uint Priority { get; set; }
+        public bool isArray { get; set; }
 
         public  ConfigItem(ConfigDecryptor configDecryptor)
         {
