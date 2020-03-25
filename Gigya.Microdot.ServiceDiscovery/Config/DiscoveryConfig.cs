@@ -74,7 +74,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         [Obsolete("To be deleted after discovery refactoring")]
         public double DelayMultiplier { get; set; } = 2;
 
-        public bool UseHttpsOverride { get; set; } = true;
+        public bool UseHttpsOverride { get; set; } = false;
 
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.
