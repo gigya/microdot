@@ -93,6 +93,7 @@ namespace Gigya.Microdot.Configuration
                 {
                     switch (key)
                     {
+                        // TODO: this exists only because legacy configs. Should not be hardcoded.
                         case "GIGYA_CONFIG_ROOT": return environment.ConfigRoot.FullName;
                         case "DC": case "ZONE": return environment.Zone;
                         case "REGION": return environment.Region;

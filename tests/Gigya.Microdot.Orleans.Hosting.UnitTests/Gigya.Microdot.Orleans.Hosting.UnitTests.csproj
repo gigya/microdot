@@ -4,13 +4,9 @@
     <TargetFramework>net472</TargetFramework>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Hosting.FunctionalTests</Product>
     <Copyright>Copyright ©  2017</Copyright>
-    <AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Hosting.FunctionalTests</Product>
-    <Copyright>Copyright ©  2017</Copyright>
+    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />

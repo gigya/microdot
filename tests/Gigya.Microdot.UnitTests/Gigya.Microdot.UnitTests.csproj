@@ -4,19 +4,15 @@
     <TargetFramework>net472</TargetFramework>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
     <Product>Gigya.Microdot.UnitTests</Product>
     <Copyright>Copyright ©  2017</Copyright>
-    <AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
-    <Product>Gigya.Microdot.UnitTests</Product>
-    <Copyright>Copyright ©  2017</Copyright>
+    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <None Include="loadpaths.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />

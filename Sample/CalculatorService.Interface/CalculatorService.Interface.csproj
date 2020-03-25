@@ -3,7 +3,6 @@
   <PropertyGroup>
     <ProjectGuid>{1FB8E464-6A36-44A2-A343-8E95B51B4542}</ProjectGuid>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <noWarn>1591</noWarn>
     <AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Interface</AssemblyTitle>
     <Product>Gigya.Microdot.Sample.CalculatorService.Interface</Product>
     <Copyright>Copyright ©  2018</Copyright>
@@ -12,6 +11,7 @@
     <Copyright>Copyright ©  2018</Copyright>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\$(Configuration)\</OutputPath>
+    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
