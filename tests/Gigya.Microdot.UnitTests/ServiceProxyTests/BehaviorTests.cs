@@ -698,6 +698,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     {
                         k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
                         k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                        var getConfig = k.Get<Func<DiscoveryConfig>>();
+                        k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
+                        {
+                            var config = getConfig();
+                            config.UseHttpsOverride = true;
+                            return () => config;
+                        });
                     }, dict)
             )
             {
@@ -770,6 +777,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                  {
                      k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
                      k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                     var getConfig = k.Get<Func<DiscoveryConfig>>();
+                     k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
+                     {
+                         var config = getConfig();
+                         config.UseHttpsOverride = true;
+                         return () => config;
+                     });
                  }, dict)
             )
             {
@@ -853,6 +867,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                  {
                      k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
                      k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                     var getConfig = k.Get<Func<DiscoveryConfig>>();
+                     k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
+                     {
+                         var config = getConfig();
+                         config.UseHttpsOverride = true;
+                         return () => config;
+                     });
                  }, dict)
             )
             {
