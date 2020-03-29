@@ -24,8 +24,15 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Configuration
 {
+    /// <summary>
+    /// Encapsulate the fetching of configuration values behavior.
+    /// </summary>
     public interface IConfigItemsSource
     {
+        /// <summary>
+        /// Gets the collection of config items.
+        /// </summary>
+        /// <returns></returns>
         Task<ConfigItemsCollection> GetConfiguration();
     }
 }
