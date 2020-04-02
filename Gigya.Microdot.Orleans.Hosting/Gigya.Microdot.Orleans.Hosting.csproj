@@ -614,7 +614,7 @@
       <ItemGroup>
         <Reference Include="System.Data.Common">
           <HintPath>..\packages\System.Data.Common\lib\net451\System.Data.Common.dll</HintPath>
-          <Private>True</Private>
+          <Private>False</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -717,7 +717,7 @@
         </Reference>
         <Reference Include="System.Runtime">
           <HintPath>..\packages\System.Runtime\lib\net462\System.Runtime.dll</HintPath>
-          <Private>True</Private>
+          <Private>False</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
@@ -739,7 +739,7 @@
       <ItemGroup>
         <Reference Include="System.Runtime.InteropServices.RuntimeInformation">
           <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
-          <Private>True</Private>
+          <Private>False</Private>
           <Paket>True</Paket>
         </Reference>
       </ItemGroup>
