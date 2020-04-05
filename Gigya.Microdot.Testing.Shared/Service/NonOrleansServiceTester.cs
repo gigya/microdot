@@ -23,9 +23,9 @@
 #endregion Copyright
 
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using System;
 using System.Threading.Tasks;
 

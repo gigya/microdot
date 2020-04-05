@@ -1,11 +1,11 @@
 ﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Service;
 using Ninject;
 using NUnit.Framework;

@@ -1,9 +1,9 @@
 ﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 
 namespace Gigya.Microdot.UnitTests.Caching.Host

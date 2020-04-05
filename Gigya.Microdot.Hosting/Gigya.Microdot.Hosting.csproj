@@ -6,6 +6,7 @@
     <AssemblyTitle>Gigya.Microdot.Hosting</AssemblyTitle>
     <DefineConstants>CODE_ANALYSIS;DEBUG;TRACE</DefineConstants>
     <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />

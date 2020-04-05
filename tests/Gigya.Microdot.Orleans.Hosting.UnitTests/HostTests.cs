@@ -9,8 +9,8 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Hosting.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {

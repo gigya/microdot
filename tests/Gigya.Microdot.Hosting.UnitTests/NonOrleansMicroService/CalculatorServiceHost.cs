@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 
 namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService

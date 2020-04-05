@@ -1,13 +1,13 @@
 ﻿using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using NSubstitute;
 

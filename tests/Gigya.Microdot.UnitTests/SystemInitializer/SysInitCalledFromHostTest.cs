@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared.Service;
 using NSubstitute;
 using NUnit.Framework;

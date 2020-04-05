@@ -1,6 +1,7 @@
 ﻿using System;
 using CalculatorService.Interface;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;

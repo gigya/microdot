@@ -3,10 +3,10 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using NUnit.Framework;
 

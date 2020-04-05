@@ -7,16 +7,17 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
+using System.ServiceProcess;
+
 using Ninject;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Hosting.Configuration;
 
 namespace Gigya.Microdot.Ninject.Host
 {

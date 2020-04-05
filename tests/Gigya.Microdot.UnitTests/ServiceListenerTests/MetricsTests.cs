@@ -6,11 +6,11 @@ using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Metrics.MetricData;

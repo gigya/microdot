@@ -32,8 +32,8 @@ using System;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {

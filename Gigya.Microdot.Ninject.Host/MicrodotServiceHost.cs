@@ -24,6 +24,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
@@ -33,7 +34,6 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using Ninject.Syntax;
 

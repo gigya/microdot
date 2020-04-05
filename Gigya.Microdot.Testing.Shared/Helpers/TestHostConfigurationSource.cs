@@ -1,6 +1,6 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
+﻿using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using System;
 using System.Collections.Generic;
 using System.IO;

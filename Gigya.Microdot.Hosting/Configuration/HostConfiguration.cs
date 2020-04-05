@@ -30,7 +30,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic.Utils;
 
-namespace Gigya.Microdot.SharedLogic.SystemWrappers
+namespace Gigya.Microdot.Hosting.Configuration
 {
     [ConfigurationRoot("dataCenters", RootStrategy.ReplaceClassNameWithPath)]
     public class DataCentersConfig : IConfigObject
@@ -49,29 +49,29 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         // TODO: Add doc
         public HostConfiguration(params IHostConfigurationSource[] sources)
             : this(sources as IEnumerable<IHostConfigurationSource>) { }
-        
+
         public HostConfiguration(IEnumerable<IHostConfigurationSource> sources)
         {
             customKeys = new Dictionary<string, string>();
 
             foreach (var s in sources)
             {
-                Zone                  = pipeParameter(nameof(Zone),                  Zone,                  s.Zone);
-                Region                = pipeParameter(nameof(Region),                Region,                s.Region);
+                Zone = pipeParameter(nameof(Zone), Zone, s.Zone);
+                Region = pipeParameter(nameof(Region), Region, s.Region);
                 DeploymentEnvironment = pipeParameter(nameof(DeploymentEnvironment), DeploymentEnvironment, s.DeploymentEnvironment);
-                ConsulAddress         = pipeParameter(nameof(ConsulAddress),         ConsulAddress,         s.ConsulAddress);
-                ApplicationInfo       = pipeParameter(nameof(ApplicationInfo),       ApplicationInfo,       s.ApplicationInfo);
-                ConfigRoot            = pipeFsiParameter(nameof(ConfigRoot),         ConfigRoot,            s.ConfigRoot);
-                LoadPathsFile         = pipeFsiParameter(nameof(LoadPathsFile),      LoadPathsFile,         s.LoadPathsFile);
+                ConsulAddress = pipeParameter(nameof(ConsulAddress), ConsulAddress, s.ConsulAddress);
+                ApplicationInfo = pipeParameter(nameof(ApplicationInfo), ApplicationInfo, s.ApplicationInfo);
+                ConfigRoot = pipeFsiParameter(nameof(ConfigRoot), ConfigRoot, s.ConfigRoot);
+                LoadPathsFile = pipeFsiParameter(nameof(LoadPathsFile), LoadPathsFile, s.LoadPathsFile);
 
                 consumeCustomKeys(s);
             }
 
-            if (Zone                  == null) throw new ArgumentNullException($"{ nameof(Zone)                  } wasn't supplied.");
-         // if (Region                == null) throw new ArgumentNullException($"{ nameof(Region)                } wasn't supplied.");
+            if (Zone == null) throw new ArgumentNullException($"{ nameof(Zone)                  } wasn't supplied.");
+            // if (Region                == null) throw new ArgumentNullException($"{ nameof(Region)                } wasn't supplied.");
             if (DeploymentEnvironment == null) throw new ArgumentNullException($"{ nameof(DeploymentEnvironment) } wasn't supplied.");
-            if (ConsulAddress         == null) throw new ArgumentNullException($"{ nameof(ConsulAddress)         } wasn't supplied.");
-            if (ApplicationInfo       == null) throw new ArgumentNullException($"{ nameof(ApplicationInfo)       } wasn't supplied.");
+            if (ConsulAddress == null) throw new ArgumentNullException($"{ nameof(ConsulAddress)         } wasn't supplied.");
+            if (ApplicationInfo == null) throw new ArgumentNullException($"{ nameof(ApplicationInfo)       } wasn't supplied.");
 
             ConfigRoot ??= GetDefaultConfigRoot();
             LoadPathsFile ??= GetDefaultPathsFile();
@@ -147,7 +147,7 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
 
 
         private readonly Dictionary<string, string> customKeys;
-        
+
         public string this[string key]
         {
             get

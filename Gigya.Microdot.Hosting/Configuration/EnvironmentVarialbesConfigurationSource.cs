@@ -1,12 +1,11 @@
 ﻿using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Gigya.Microdot.Configuration
+namespace Gigya.Microdot.Hosting.Configuration
 {
 
     public sealed class EnvironmentVarialbesConfigurationSource : IHostConfigurationSource
@@ -30,13 +29,13 @@ namespace Gigya.Microdot.Configuration
         public EnvironmentVarialbesConfigurationSource()
         {
             this.ApplicationInfo = null;
-            
-            this.Zone                  = Environment.GetEnvironmentVariable("ZONE") ?? Environment.GetEnvironmentVariable("DC");
-            this.Region                = Environment.GetEnvironmentVariable("REGION");
+
+            this.Zone = Environment.GetEnvironmentVariable("ZONE") ?? Environment.GetEnvironmentVariable("DC");
+            this.Region = Environment.GetEnvironmentVariable("REGION");
             this.DeploymentEnvironment = Environment.GetEnvironmentVariable("ENV");
-            this.ConsulAddress         = Environment.GetEnvironmentVariable("CONSUL");
-            this.ConfigRoot            = Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT")      ?.To(x => new DirectoryInfo(x));
-            this.LoadPathsFile         = Environment.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
+            this.ConsulAddress = Environment.GetEnvironmentVariable("CONSUL");
+            this.ConfigRoot = Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
+            this.LoadPathsFile = Environment.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
 
             var d = new Dictionary<string, string>();
 

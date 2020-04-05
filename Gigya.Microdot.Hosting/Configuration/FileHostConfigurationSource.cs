@@ -1,6 +1,5 @@
 ﻿using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -8,54 +7,37 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 
-namespace Gigya.Microdot.Configuration
+namespace Gigya.Microdot.Hosting.Configuration
 {
-    public sealed class LegacyFileHostConfigurationSource : IHostConfigurationSource
+
+    public sealed class FileHostConfigurationSource : IHostConfigurationSource
     {
-        // TODO: Do we need Zone and Region, or can it be abstracted away in favor of generic configuration properties
-        public string Zone { get; }
-
-        public string Region { get; }
-
-        public string DeploymentEnvironment { get; }
-
-        public string ConsulAddress { get; }
-
         public CurrentApplicationInfo ApplicationInfo { get; }
 
-        public DirectoryInfo ConfigRoot { get; }
+        public string Zone => GetOrNull(nameof(Zone));
+        public string Region => GetOrNull(nameof(Region));
+        public string DeploymentEnvironment => GetOrNull(nameof(DeploymentEnvironment));
+        public string ConsulAddress => GetOrNull(nameof(ConsulAddress));
 
-        public FileInfo LoadPathsFile { get; }
+        public DirectoryInfo ConfigRoot => GetOrNull(nameof(ConfigRoot))?.To(x => new DirectoryInfo(x));
+        public FileInfo LoadPathsFile => GetOrNull(nameof(LoadPathsFile))?.To(x => new FileInfo(x));
 
-        public IDictionary<string, string> CustomKeys { get; }
+        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
 
-        public LegacyFileHostConfigurationSource(string path)
-        {
-            var entries =
-                ReadFromJsonFile(path)
-                .ToDictionary(x => x.Key);
+        #region Entries
+        private readonly Dictionary<string, Entry> entries;
 
-            Zone                  = get("ZONE") ?? get("DC");
-            Region                = get("REGION");
-            DeploymentEnvironment = get("ENV");
-            ConsulAddress         = get("CONSUL");
-
-            ConfigRoot =    get("GIGYA_CONFIG_ROOT")      ?.To(x => new DirectoryInfo(x));
-            LoadPathsFile = get("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
-
-            CustomKeys = entries.ToDictionary(x => x.Key, x => x.Value.Value);
-
-            string get(string key)
-            {
-                return GetOrNull(entries, key);
-            }
-        }
-
-        private string GetOrNull(Dictionary<string, Entry> entries, string key)
+        private string GetOrNull(string key)
         {
             if (entries.TryGetValue(key, out var val))
                 return val.Value;
             return null;
+        }
+        #endregion
+
+        public FileHostConfigurationSource(string path)
+        {
+            entries = ReadFromJsonFile(path).ToDictionary(x => x.Key);
         }
 
         private sealed class Entry
@@ -95,7 +77,7 @@ namespace Gigya.Microdot.Configuration
                 envVarsObject
                 .Properties()
                 .Where(a => a.HasValues)
-                .Select(x => new Entry(x.Name.ToUpperInvariant(), x.Value.Value<string>()))
+                .Select(x => new Entry(x.Name, x.Value.Value<string>()))
                 .ToArray();
         }
     }

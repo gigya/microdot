@@ -6,10 +6,10 @@ using System.Net;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using NSubstitute;
 
 using NUnit.Framework;

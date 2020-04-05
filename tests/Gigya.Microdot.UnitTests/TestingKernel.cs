@@ -30,6 +30,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
@@ -41,7 +42,6 @@ using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 using NSubstitute;
 

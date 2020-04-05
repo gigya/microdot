@@ -24,7 +24,7 @@ using System.Collections.Generic;
 using System.IO;
 using Gigya.Microdot.Interfaces.Configuration;
 
-namespace Gigya.Microdot.SharedLogic.SystemWrappers
+namespace Gigya.Microdot.Hosting.Configuration
 {
     public interface IHostConfigurationSource
     {

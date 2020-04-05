@@ -1,7 +1,7 @@
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using NUnit.Framework;
 using Shouldly;
 using System;

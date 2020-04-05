@@ -9,7 +9,7 @@ using Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
+using Gigya.Microdot.Hosting.Configuration;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {

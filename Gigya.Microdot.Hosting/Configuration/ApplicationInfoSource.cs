@@ -1,9 +1,8 @@
 ﻿using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Gigya.Microdot.Configuration
+namespace Gigya.Microdot.Hosting.Configuration
 {
     public sealed class ApplicationInfoSource : IHostConfigurationSource
     {

@@ -2,6 +2,7 @@
 using System.Net;
 using CalculatorService.Interface;
 using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;

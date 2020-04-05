@@ -3,12 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.UnitTests.Caching.Host;
 
 using Ninject;
