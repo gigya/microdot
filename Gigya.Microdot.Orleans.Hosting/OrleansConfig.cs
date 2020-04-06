@@ -61,6 +61,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class MySqlConfig
     {
         public string ConnectionString { get; set; }
+        public string Invariant { get; set; }
     }
 
     public class OrleansLogLevel
