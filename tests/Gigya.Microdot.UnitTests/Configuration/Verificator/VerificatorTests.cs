@@ -22,41 +22,14 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
     /// The tests to ensure Verificator recognizing the configuration failures in major cases we expect
     /// </summary>
     [TestFixture,Parallelizable(ParallelScope.Fixtures)]
-    public class VerificatorTests
+    public class VerificatorTests: ConfigTestBase
     {
-        private readonly string _loadPaths = @"[{ ""Pattern"": "".\\*.config"", ""Priority"": 1 }]";
-
-        /// <summary>
-        /// Initial common kernel setup for mocks
-        /// </summary>
-        public (StandardKernel k, IAssemblyProvider providerMock, IFileSystem fileSystemMock) Setup()
-        {
-            var k = new StandardKernel();
-
-            var config = new HostConfiguration(new TestHostConfigurationSource());
-            k.Bind<IEnvironment>().ToConstant(config);
-            k.Bind<CurrentApplicationInfo>().ToConstant(config.ApplicationInfo);
-
-            k.Load(new ConfigVerificationModule(new ConsoleLogLoggersModules(), new ServiceArguments(), "InfraTests", infraVersion: null));
-
-            IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
-            providerMock.GetAssemblies().Returns(info => new[] {GetType().Assembly} );
-
-            IFileSystem fileSystemMock = Substitute.For<IFileSystem>();
-            fileSystemMock.ReadAllTextFromFile(Arg.Any<string>()).Returns(a => _loadPaths);
-            fileSystemMock.Exists(Arg.Any<string>()).Returns(a => true);
-            
-            k.Rebind<IAssemblyProvider>().ToConstant(providerMock);
-            k.Rebind<IFileSystem>().ToConstant(fileSystemMock);
-
-            return (k, providerMock, fileSystemMock);
-        }
-
         [Test]
         [Description("check we recognize a broken XML file")]
         public void WhenConfigIsNotValidXmlShouldAddFailure()
         {
             var (k, providerMock, fileSystemMock) = Setup();
+
 
             providerMock.GetAllTypes().Returns(info => new[]
             {

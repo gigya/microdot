@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
+using Gigya.Microdot.LanguageExtensions;
 
 namespace Gigya.Microdot.Host.Tests
 {
@@ -36,7 +37,8 @@ namespace Gigya.Microdot.Host.Tests
                 new TestHostConfigurationSource(
                     region: "us1",
                     zone: "zone",
-                    deploymentEnvironment: "_Test"));
+                    deploymentEnvironment: "_Test",
+                    loadPathsFile: Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json").To(p => new FileInfo(p))));
 
             var x = new Ninject.Host.Host(
                 config,
@@ -62,7 +64,8 @@ namespace Gigya.Microdot.Host.Tests
             
             var config =
                 new HostConfiguration(
-                    new TestHostConfigurationSource());
+                    new TestHostConfigurationSource(
+                        loadPathsFile: Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json").To(p => new FileInfo(p))));
 
             var host = new Ninject.Host.Host(
                 config,

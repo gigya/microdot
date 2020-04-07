@@ -32,6 +32,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.Hosting.Configuration
 {
+    // TODO: This should not be part of Microdot
     [ConfigurationRoot("dataCenters", RootStrategy.ReplaceClassNameWithPath)]
     public class DataCentersConfig : IConfigObject
     {

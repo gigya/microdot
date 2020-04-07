@@ -23,8 +23,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -84,8 +82,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             Formatting = Formatting.Indented,
             DateParseHandling = DateParseHandling.None
         };
-
-        private string Prefix { get; }
         private byte[] ServerRootCertHash { get; }
 
         private IActivator Activator { get; }
@@ -144,17 +140,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            if (serviceEndPointDefinition.UseSecureChannel)
+            if (ServiceEndPointDefinition.HttpsPort != null)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
-            var urlPrefixTemplate = ServiceEndPointDefinition.UseSecureChannel ? "https://+:{0}/" : "http://+:{0}/";
-            Prefix = string.Format(urlPrefixTemplate, ServiceEndPointDefinition.HttpPort);
-
-            Listener = new HttpListener
-            {
-                IgnoreWriteExceptions = true,
-                Prefixes = { Prefix }
-            };
+            Listener = new HttpListener {IgnoreWriteExceptions = true};
+            if (ServiceEndPointDefinition.HttpsPort != null)
+                Listener.Prefixes.Add($"https://+:{ServiceEndPointDefinition.HttpsPort}/");
+            if (ServiceEndPointDefinition.HttpPort != null)
+                Listener.Prefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/");
+            if (!Listener.Prefixes.Any())
+                Log.Warn(_ => _("HttpServiceListener is not listening on any ports, no HTTP or HTTPS ports in ServiceEndPointDefinition"));
 
             var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
@@ -181,14 +176,18 @@ namespace Gigya.Microdot.Hosting.HttpService
             try
             {
                 Listener.Start();
-                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefix = Prefix }));
+                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefixes = string.Join(",", Listener.Prefixes) }));
             }
             catch (HttpListenerException ex)
             {
                 if (ex.ErrorCode != 5)
                 {
-                    ex.Data["HttpPort"] = ServiceEndPointDefinition.HttpPort;
-                    ex.Data["Prefix"] = Prefix;
+                    if (ServiceEndPointDefinition.HttpPort != null)
+                        ex.Data["HttpPort"] = $"{ServiceEndPointDefinition.HttpPort}";
+                    if (ServiceEndPointDefinition.HttpsPort != null)
+                        ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpsPort}";
+
+                    ex.Data["Prefixes"] = Listener.Prefixes;
                     ex.Data["User"] = AppInfo.OsUser;
                     throw;
                 }
@@ -196,7 +195,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new Exception(
                     "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +
                     "To configure them, run the following commands in an elevated (administrator) command prompt:\n" +
-                    $"netsh http add urlacl url={Prefix} user={AppInfo.OsUser}");
+                    string.Join("\n", Listener.Prefixes.Select(prefix => $"netsh http add urlacl url={prefix} user={AppInfo.OsUser}")));
             }
 
             StartListening();
@@ -230,7 +229,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(_ => _("An error has occured during HttpListener.GetContextAsync(). Stopped listening to additional requests.", exception: ex));
+                    Log.Error(_ => _( "An error has occured during HttpListener.GetContextAsync(). Stopped listening to additional requests.", exception: ex));
                     throw;
                 }
             }
@@ -245,6 +244,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 var sw = Stopwatch.StartNew();
 
                 // Special endpoints should not be logged/measured/traced like regular endpoints
+                // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
                 if (await TryHandleSpecialEndpoints(context)) return;
 
                 // Regular endpoint handling
@@ -263,8 +263,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                     {
                         try
                         {
-                            ValidateRequest(context);
                             await CheckSecureConnection(context);
+
+                            ValidateRequest(context);
 
                             requestData = await ParseRequest(context);
                            
@@ -508,14 +509,18 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async Task CheckSecureConnection(HttpListenerContext context)
         {
-            if (context.Request.IsSecureConnection != ServiceEndPointDefinition.UseSecureChannel)
-            {
-                _failureCounter.Increment("IncorrectSecurityType");
-                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", unencrypted: new Tags { { "serviceIsSecure", ServiceEndPointDefinition.UseSecureChannel.ToString() }, { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
-            }
-
             if (!context.Request.IsSecureConnection)
-                return;
+            {
+                // If a non-secure request reaches the HTTP port, we are safe
+                if (context.Request.LocalEndPoint?.Port == ServiceEndPointDefinition.HttpPort)
+                {
+                    return;
+                }
+
+                _failureCounter.Increment("IncorrectSecurityType");
+                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", 
+                    unencrypted: new Tags { { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
+            }
 
             var clientCertificate = await context.Request.GetClientCertificateAsync();
 

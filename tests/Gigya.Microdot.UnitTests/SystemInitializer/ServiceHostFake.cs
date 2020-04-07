@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces;
@@ -8,6 +9,7 @@ using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 using NSubstitute;
 
@@ -30,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             _fake = fake;
         }
 
-        public override ILoggingModule GetLoggingModule()
+        protected override ILoggingModule GetLoggingModule()
         {
             return new NLogModule();
         }
@@ -41,6 +43,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
        
             kernel.Rebind<TFake>().ToConstant(_fake);
             kernel.Rebind<IEventPublisher<CrashEvent>>().ToConstant(Substitute.For<IEventPublisher<CrashEvent>>());
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.Rebind<IMetricsInitializer>().ToConstant(Substitute.For<IMetricsInitializer>());
         }
 

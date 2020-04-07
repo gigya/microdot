@@ -12,6 +12,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 using Ninject.Syntax;
 using NSubstitute;
@@ -36,7 +37,7 @@ namespace Gigya.Microdot.UnitTests
         public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
 
 
-        public override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
+        protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
@@ -50,6 +51,7 @@ namespace Gigya.Microdot.UnitTests
             kernel.Rebind<IEventPublisher>().To<NullEventPublisher>();
             kernel.Rebind<IWorker>().To<WaitingWorker>();
             kernel.Rebind<IMetricsInitializer>().To<MetricsInitializerFake>().InSingletonScope();
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
 
             kernel.Bind<T>().ToConstant(Substitute.For<T>());
 

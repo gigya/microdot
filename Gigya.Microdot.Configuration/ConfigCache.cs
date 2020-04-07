@@ -88,7 +88,8 @@ namespace Gigya.Microdot.Configuration
                     currentObj = (JObject)existing;
                 }
 
-                currentObj[pathParts.Last()] = configItem.Value;
+                JToken value = configItem.isArray ? (JToken)JArray.Parse(configItem.Value) : configItem.Value;
+                currentObj[pathParts.Last()] = value;
             }
 
             return root;

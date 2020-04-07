@@ -88,6 +88,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                         {
                             k.Rebind<ICacheRevoker>().ToConstant(_fakeRevokingManager);
                             k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
+                            k.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
                         }                    
                     ).Kernel
                 };

@@ -31,6 +31,7 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 using Orleans;
 
@@ -60,6 +61,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
             kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
             Func<GrainLoggingConfig> writeGrainLog = () => new GrainLoggingConfig{LogMicrodotGrains = true, LogRatio = 1, LogServiceGrains = true, LogOrleansGrains = true};
             kernel.Rebind<Func<GrainLoggingConfig>>().ToConstant(writeGrainLog);
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.RebindForTests();
             Kernel = kernel;
 

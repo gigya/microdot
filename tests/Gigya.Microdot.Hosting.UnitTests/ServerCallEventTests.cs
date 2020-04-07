@@ -7,6 +7,7 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 using Gigya.Microdot.Hosting.Configuration;
@@ -34,6 +35,8 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
                 appName: "ICalculatorService"));
 
             _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>(config);
+
+            _serviceTester.CommunicationKernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>();
 
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
             

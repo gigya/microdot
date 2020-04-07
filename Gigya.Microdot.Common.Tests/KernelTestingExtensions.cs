@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 
 
@@ -21,7 +23,7 @@ namespace Gigya.Microdot.Fakes.KernelUtils
 
         public static IKernel RebindForTests(this IKernel kernel)
         {
-            return kernel.WithNoMetrics().WithLogForTests().WithNoCrashHandler();
+            return kernel.WithNoMetrics().WithLogForTests().WithNoCrashHandler().WithNoCertificateStore();
         }
         public class NoCrashHandler : ICrashHandler
         {
@@ -33,6 +35,12 @@ namespace Gigya.Microdot.Fakes.KernelUtils
         public static IKernel WithNoCrashHandler(this IKernel kernel)
         {
             kernel.Rebind<ICrashHandler>().To<NoCrashHandler>().InSingletonScope();
+            return kernel;
+        }
+
+        public static IKernel WithNoCertificateStore(this IKernel kernel)
+        {
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             return kernel;
         }
 

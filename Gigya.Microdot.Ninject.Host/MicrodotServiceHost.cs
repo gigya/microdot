@@ -104,7 +104,7 @@ namespace Gigya.Microdot.Ninject.Host
             this.Host.Dispose();
         }
 
-        public abstract ILoggingModule GetLoggingModule();
+        protected abstract ILoggingModule GetLoggingModule();
 
 
 

@@ -43,7 +43,7 @@ namespace CalculatorService
             }
         }
 
-        public override ILoggingModule GetLoggingModule() => new NLogModule();
+        protected override ILoggingModule GetLoggingModule() => new NLogModule();
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
