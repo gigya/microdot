@@ -265,14 +265,14 @@ namespace Gigya.Microdot.ServiceProxy
             try
             {
                 clientInfo = clientFactory(true);
-                var uri = BuildUri(hostname, port, clientInfo.Value.isHttps);
+                var uri = BuildUri(hostname, port, clientInfo.Value.isHttps, out int _);
 
                 response = await clientInfo.Value.httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
                 when (fallbackOnProtocolError && !UseHttpsDefault && (clientInfo?.isHttps ?? false) && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
             {
-                var uri = BuildUri(hostname, port, false);
+                var uri = BuildUri(hostname, port, false, out int _);
                 response = await clientFactory(false)
                     .httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
             }
@@ -285,21 +285,20 @@ namespace Gigya.Microdot.ServiceProxy
             }
         }
 
-        private string BuildUri(string hostName, int basePort, bool useHttps)
+        private string BuildUri(string hostName, int basePort, bool useHttps, out int effectivePort)
         {
             string urlTemplate;
-            int port;
             if (useHttps)
             {
                 urlTemplate = "https://{0}:{1}/";
-                port = UseHttpsDefault ? basePort : basePort + (int)PortOffsets.Https;
+                effectivePort = UseHttpsDefault ? basePort : basePort + (int)PortOffsets.Https;
             }
             else
             {
                 urlTemplate = "http://{0}:{1}/";
-                port = basePort;
+                effectivePort = basePort;
             }
-            return string.Format(urlTemplate, hostName, port);
+            return string.Format(urlTemplate, hostName, effectivePort);
         }
 
         private int? GetEffectivePort(Node node, ServiceDiscoveryConfig config)
@@ -362,21 +361,8 @@ namespace Gigya.Microdot.ServiceProxy
                 string uri = null;
                 try
                 {
-                    Log.Debug(_ => _("ServiceProxy: Calling remote service. See tags for details.",
-                                  unencryptedTags: new
-                                  {
-                                      remoteEndpoint = nodeAndLoadBalancer.Node.Hostname,
-                                      remotePort = effectivePort,
-                                      remoteServiceName = ServiceName,
-                                      remoteMethodName = request.Target.MethodName
-                                  }));
-
-                    clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
-                    clientCallEvent.TargetPort = effectivePort.Value;
-                    clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
-
                     request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
-                        ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
+                                        ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
@@ -388,11 +374,24 @@ namespace Gigya.Microdot.ServiceProxy
                         var (httpClient, isHttps) = GetHttpClient(config, discoveryConfig, tryHttps, nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
 
                         // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
-                        uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, isHttps) + ServiceName;
+                        uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, isHttps, out int actualPort) + ServiceName;
                         if (request.Target.MethodName != null)
                             uri += $".{request.Target.MethodName}";
                         if (request.Target.Endpoint != null)
                             uri += $"/{request.Target.Endpoint}";
+
+                        Log.Debug(_ => _("ServiceProxy: Calling remote service. See tags for details.",
+                            unencryptedTags: new
+                            {
+                                remoteEndpoint = nodeAndLoadBalancer.Node.Hostname,
+                                remotePort = actualPort,
+                                remoteServiceName = ServiceName,
+                                remoteMethodName = request.Target.MethodName
+                            }));
+
+                        clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
+                        clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
+                        clientCallEvent.TargetPort = actualPort;
 
                         response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
 
