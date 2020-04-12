@@ -1,4 +1,6 @@
-﻿using Gigya.Microdot.SharedLogic;
+﻿using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
@@ -37,7 +39,8 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             try
             {
                 var serviceTester = new NonOrleansServiceTester<SlowServiceHost>(
-                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port));
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port),
+                        new HostConfiguration(new TestHostConfigurationSource()));
                 serviceTester.CommunicationKernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
                 Service = serviceTester.GetServiceProxyWithCaching<ISlowService>();
             }

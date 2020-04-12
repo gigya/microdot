@@ -21,6 +21,7 @@
 #endregion
 
 using System.Threading.Tasks;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;
@@ -34,7 +35,7 @@ namespace Gigya.Microdot.Fakes.Discovery
         {
             return new NodeAndLoadBalancer
             {
-                Node = new Node(CurrentApplicationInfo.HostName),
+                Node = new Node(CurrentApplicationInfo.s_HostName),
                 LoadBalancer = null
             };
         }

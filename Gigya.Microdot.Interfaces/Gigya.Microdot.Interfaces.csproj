@@ -1,97 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Gigya.Microdot.Interfaces</RootNamespace>
-    <AssemblyName>Gigya.Microdot.Interfaces</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <noWarn>1591</noWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Gigya.Microdot.Interfaces.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyTitle>Gigya.Microdot.Interfaces</AssemblyTitle>
+    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\SolutionVersion.cs">
-      <Link>Properties\SolutionVersion.cs</Link>
-    </Compile>
-    <Compile Include="Configuration\ConfigItemInfo.cs" />
-    <Compile Include="Configuration\ConfigurationRootAttribute.cs" />
-    <Compile Include="Configuration\IConfigFuncFactory.cs" />
-    <Compile Include="Configuration\IConfigItem.cs" />
-    <Compile Include="Configuration\IConfigObject.cs" />
-    <Compile Include="Configuration\IEnvironmentVariableProvider.cs" />
-    <Compile Include="Events\EventConfiguration.cs" />
-    <Compile Include="Events\EventFieldAttribute.cs" />
-    <Compile Include="Events\IEventSerializer.cs" />
-    <Compile Include="Events\PublishingTasks.cs" />
-    <Compile Include="Events\IEvent.cs" />
-    <Compile Include="Events\IEventConfiguration.cs" />
-    <Compile Include="Events\IEventPublisher.cs" />
-    <Compile Include="Events\SerializedEventField.cs" />
-    <Compile Include="IApplicationDirectoryProvider.cs" />
-    <Compile Include="IAssemblyProvider.cs" />
-    <Compile Include="ICacheRevoker.cs" />
-    <Compile Include="IConfigObjectCreator.cs" />
-    <Compile Include="IMetricsInitializer.cs" />
-    <Compile Include="IMetricsSettings.cs" />
-    <Compile Include="Logging\ILog.cs" />
-    <Compile Include="Logging\IStackTraceEnhancer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SystemWrappers\IDateTime.cs" />
-    <Compile Include="SystemWrappers\IDirectories.cs" />
-    <Compile Include="SystemWrappers\IEnvironment.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="paket.references">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="paket.template" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="Newtonsoft.Json">
-          <HintPath>..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

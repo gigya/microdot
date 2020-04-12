@@ -23,12 +23,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Microdot.ServiceProxy")]
-[assembly: AssemblyProduct("Gigya.Microdot.ServiceProxy")]
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.TestingTools")]
 [assembly: InternalsVisibleTo("Gigya.Common.Application.UnitTests")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Testing")]

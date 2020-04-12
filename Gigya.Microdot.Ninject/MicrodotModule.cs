@@ -32,6 +32,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -61,7 +62,9 @@ namespace Gigya.Microdot.Ninject
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
             typeof(LoadBalancer),
-            typeof(ConfigDiscoverySource)
+            typeof(ConfigDiscoverySource),
+            typeof(HttpServiceListener),
+            typeof(GigyaSiloHost)
         };
 
         public override void Load()
@@ -72,12 +75,18 @@ namespace Gigya.Microdot.Ninject
             if (Kernel.CanResolve<Func<long, DateTime>>() == false)
                 Kernel.Load<FuncModule>();
 
-            this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes,new List<Type>{typeof(ILog)}, 
-                                                                typeof(ConfigurationAssembly), 
-                                                                typeof(ServiceProxyAssembly), 
-                                                                typeof(SharedLogicAssembly), 
-                                                                typeof(ServiceDiscoveryAssembly));
+            this.BindClassesAsSingleton(
+                NonSingletonBaseTypes,
+                typeof(ConfigurationAssembly),
+                typeof(ServiceProxyAssembly));
+            
+            this.BindInterfacesAsSingleton(
+                NonSingletonBaseTypes,
+                new List<Type>{typeof(ILog)}, 
+                typeof(ConfigurationAssembly), 
+                typeof(ServiceProxyAssembly), 
+                typeof(SharedLogicAssembly), 
+                typeof(ServiceDiscoveryAssembly));
 
 
             Bind<IRemoteHostPoolFactory>().ToFactory();

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;

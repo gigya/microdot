@@ -57,7 +57,7 @@ namespace Gigya.Microdot.Configuration.Objects
         private string ValidationErrors { get; set; }
         private JObject LatestNode { get; set; }
         private JObject Empty { get; } = new JObject();
-        private DataAnnotationsValidator.DataAnnotationsValidator Validator { get; }
+        private DataAnnotationsValidator Validator { get; }
         private bool isCreated = false;
 
         private readonly AggregatingHealthStatus healthStatus;
@@ -70,7 +70,7 @@ namespace Gigya.Microdot.Configuration.Objects
             ConfigCache = configCache;
             ConfigPath = GetConfigPath();
             healthStatus = getAggregatedHealthCheck("Configuration");
-            Validator = new DataAnnotationsValidator.DataAnnotationsValidator();
+            Validator = new DataAnnotationsValidator();
 
             Init();
         }

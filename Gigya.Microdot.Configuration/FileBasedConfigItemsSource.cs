@@ -39,11 +39,13 @@ namespace Gigya.Microdot.Configuration
     public class FileBasedConfigItemsSource : IConfigItemsSource
     {
         private readonly IConfigurationLocationsParser _configurationLocations;
-        private readonly IEnvironmentVariableProvider _environmentVariableProvider;
         private readonly IFileSystem _fileSystem;
+        private readonly IEnvironment _environment;
         private readonly ConfigDecryptor _configDecryptor;
 
         private readonly Regex paramMatcher = new Regex(@"([^\\]|^)%(?<envName>[^%]+)%", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+
+
         /// <summary>
         /// Constructor for the 'FileBasedConfigItemsSource' class
         /// </summary>
@@ -51,11 +53,15 @@ namespace Gigya.Microdot.Configuration
         /// <param name="environmentVariableProvider">Encapsulates the retrieval of all environment variables</param>
         /// <param name="fileSystem">Encapsulates the file system behavior</param>
         /// <param name="configDecryptor">Encapsulates the decryption behavior for a config item</param>
-        public FileBasedConfigItemsSource(IConfigurationLocationsParser configurationLocations, IEnvironmentVariableProvider environmentVariableProvider, IFileSystem fileSystem, ConfigDecryptor configDecryptor)
+        public FileBasedConfigItemsSource(
+            IConfigurationLocationsParser configurationLocations,
+            IFileSystem fileSystem,
+                IEnvironment environment,
+                ConfigDecryptor configDecryptor)
         {
             _configurationLocations = configurationLocations;
-            _environmentVariableProvider = environmentVariableProvider;
             _fileSystem = fileSystem;
+            _environment = environment;
             _configDecryptor = configDecryptor;
         }
 
@@ -79,7 +85,7 @@ namespace Gigya.Microdot.Configuration
                                        .Select(match => new
                                        {
                                            Placehodler = "%" + match.Groups[1].Value + "%",
-                                           Value = _environmentVariableProvider.GetEnvironmentVariable(match.Groups[1].Value)
+                                           Value = _environment[match.Groups[1].Value.ToUpperInvariant()]
                                        }).ToList();
 
                 if (list.Any())

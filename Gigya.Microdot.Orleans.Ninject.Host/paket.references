@@ -9,3 +9,5 @@ Ninject.Extensions.Conventions
 Ninject.Extensions.Factory
 Microsoft.Orleans.Server
 
+Microsoft.CSharp
+System.Net.Http

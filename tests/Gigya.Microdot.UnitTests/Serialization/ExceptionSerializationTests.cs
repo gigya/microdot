@@ -37,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     {
                         // Configure the same, but pointless for exceptions
                         options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
-                        options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
+                        options.SerializationProviders.Add(typeof(NonSerializedExceptionsSerializer));
                         options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                     })
                 .Build();

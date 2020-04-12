@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
@@ -24,6 +27,15 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var k = new StandardKernel();
             k.Load(new ConfigVerificationModule(new ConsoleLogLoggersModules(), new ServiceArguments(), "InfraTests", infraVersion: null));
+
+            var cfg =
+                new HostConfiguration(
+                    new TestHostConfigurationSource(
+                        "InfraTests"));
+
+
+            k.Bind<IEnvironment>().ToConstant(cfg);
+            k.Bind<CurrentApplicationInfo>().ToConstant(cfg.ApplicationInfo);
 
             IAssemblyProvider providerMock = Substitute.For<IAssemblyProvider>();
             providerMock.GetAssemblies().Returns(info => new[] { GetType().Assembly });
