@@ -156,7 +156,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                
             });
 
-            if (_endPointDefinition.UseSecureChannel)
+            if (_orleansConfig.EnableEncryption)
             {
                 var localCertificate = _certificateLocator.GetCertificate("Service");
                 var localCertificateHash = localCertificate.GetCertHash();
