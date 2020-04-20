@@ -11,6 +11,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
@@ -38,6 +39,7 @@ using NUnit.Framework;
 using RichardSzalay.MockHttp;
 
 using Shouldly;
+using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -54,7 +56,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [SetUp]
         public virtual void SetUp()
         {
-            _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>();
+            _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
+                new HostConfiguration(new TestHostConfigurationSource()));
             _insecureClient = _testinghost.GetServiceProxy<IDemoService>();
             Metric.ShutdownContext("Service");
             TracingContext.SetRequestID("1");
@@ -99,7 +102,12 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TestCase(typeof(RequestException))]
         public async Task RequestWithException_ShouldNotWrap(Type exceptionType)
         {
-            var _kernel = new MicrodotInitializer("", new FakesLoggersModules(), k => k.RebindForTests());
+            var _kernel = new MicrodotInitializer(
+                new HostConfiguration(
+                    new TestHostConfigurationSource()),
+                new FakesLoggersModules(), 
+                k => k.RebindForTests());
+
             var _exceptionSerializer = _kernel.Kernel.Get<JsonExceptionSerializer>();
             _testinghost.Host.Instance.When(a => a.DoSomething()).Throw(i =>
                 (Exception) Activator.CreateInstance(exceptionType, "MyEx", null, null, null));
@@ -275,7 +283,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
-                    new CurrentApplicationInfo(nameof(HttpServiceListenerTests))
+                    new CurrentApplicationInfo(
+                        nameof(HttpServiceListenerTests),
+                        Environment.UserName,
+                        System.Net.Dns.GetHostName())
                 ))
                 {
                     listener.Start();
@@ -310,7 +321,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
-                    new CurrentApplicationInfo(nameof(HttpServiceListenerTests))));
+                    new CurrentApplicationInfo(
+                        nameof(HttpServiceListenerTests),
+                        Environment.UserName,
+                        System.Net.Dns.GetHostName())));
 
                 certificateLocator.Received(1).GetCertificate("Service");
             }
@@ -321,7 +335,9 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TestCase(false)]
         public async Task CallService_ClientHttpsConfiguration_ShouldSucceed(bool httpsEnabledInClient)
         {
-            var testingHost = new NonOrleansServiceTester<SlowServiceHost>();
+            var testingHost = new NonOrleansServiceTester<SlowServiceHost>(
+                new HostConfiguration(
+                    new TestHostConfigurationSource()));
             if (!httpsEnabledInClient)
                 testingHost.CommunicationKernel.DisableHttps();
 
@@ -331,7 +347,13 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
         public class SlowServiceHost : MicrodotServiceHost<ISlowService>
         {
-            public override string ServiceName => nameof(ISlowService).Substring(1);
+            public SlowServiceHost() : base(
+                new HostConfiguration(
+                    new TestHostConfigurationSource()))
+            {
+            }
+
+            public string ServiceName => nameof(ISlowService).Substring(1);
 
             protected override ILoggingModule GetLoggingModule()
             {

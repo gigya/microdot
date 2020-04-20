@@ -22,12 +22,16 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
@@ -40,56 +44,69 @@ namespace Gigya.Microdot.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. 
     /// </summary>
     /// <typeparam name="TInterface">The interface of the service.</typeparam>
-    public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase
+    public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase, IKernelConfigurator
     {
         private bool disposed;
 
         private readonly object disposeLockHandle = new object();
 
-        private IKernel Kernel { get; set; }
+        //private IKernel Kernel { get; set; }
 
-        private HttpServiceListener Listener { get; set; }
+        //private HttpServiceListener Listener { get; set; }
 
+        public Host Host { get; }
+
+        public ServiceArguments Arguments => this.Host.Arguments;
 
         /// <summary>
         /// Creates a new instance of <see cref="MicrodotServiceHost{TInterface}"/>
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when the provided type provided for the <typeparamref name="TInterface" />
         /// generic argument is not an interface.</exception>
-        protected MicrodotServiceHost()
+        protected MicrodotServiceHost(HostConfiguration configuration)
         {
             if (typeof(TInterface).IsInterface == false)
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
+
+            this.Host = new Host(
+                configuration,
+                this,
+                // TODO: what version should be passed?
+                new Version());
+
+            this.Host.OnStopped += (s, a) => this.OnStop();
+            this.Host.OnStarted += (s, a) => this.OnStart();
+            this.Host.OnCrashed += (s, a) => this.OnCrash();
+        }
+
+        public override void Run(ServiceArguments argsOverride = null)
+        {
+            this.Host.Run(argsOverride);
+        }
+
+        public override Task WaitForServiceStartedAsync()
+        {
+            return this.Host.WaitForServiceStartedAsync();
+        }
+
+        public override Task<StopResult> WaitForServiceGracefullyStoppedAsync()
+        {
+            return this.Host.WaitForServiceGracefullyStoppedAsync();
+        }
+
+        public override void Stop()
+        {
+            this.Host.Stop();
+        }
+
+        public override void Dispose()
+        {
+            this.Host.Dispose();
         }
 
         protected abstract ILoggingModule GetLoggingModule();
 
-        /// <summary>
-        /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
-        /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
-        /// start a <see cref="HttpServiceListener"/>. In most scenarios, you shouldn't override this method.
-        /// </summary>
-        protected override void OnStart()
-        {
-            Kernel = CreateKernel();
-            
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName)).InSingletonScope();
-            Kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
-            Kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
 
-            PreConfigure(Kernel);
-            Configure(Kernel, Kernel.Get<BaseCommonConfig>());
-
-            PreInitialize(Kernel);
-            OnInitilize(Kernel);
-            //don't move up the get should be after all the binding are done
-            var log = Kernel.Get<ILog>();
-            Listener = Kernel.Get<HttpServiceListener>();
-            Listener.Start();
-           
-            Listener.StartGettingTraffic();
-            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
-        }
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -100,9 +117,11 @@ namespace Gigya.Microdot.Ninject.Host
         /// <param name="kernel"></param>
         protected virtual void PreInitialize(IKernel kernel)
         {
-            Kernel.Get<SystemInitializer.SystemInitializer>().Init();
-            CrashHandler = kernel.Get<ICrashHandler>();
-            CrashHandler.Init(OnCrash);
+            kernel.Get<SystemInitializer.SystemInitializer>().Init();
+
+            // moved to Host
+            //CrashHandler = kernel.Get<ICrashHandler>();
+            //CrashHandler.Init(OnCrash);
 
             IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
@@ -116,29 +135,10 @@ namespace Gigya.Microdot.Ninject.Host
         /// processing incoming request.
         /// </summary>
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
-        protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
+        protected virtual void OnInitilize(IKernel kernel)
         {
 
         }
-
-        protected override void OnVerifyConfiguration()
-        {
-            Kernel = CreateKernel();
-            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
-            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-            base.OnVerifyConfiguration();
-        }
-
-        /// <summary>
-        /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
-        /// can be overridden to customize which kernel is used (e.g. MockingKernel);
-        /// </summary>
-        /// <returns>The kernel to use.</returns>
-        protected virtual IKernel CreateKernel()
-        {
-            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
-        }
-
 
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
@@ -148,10 +148,16 @@ namespace Gigya.Microdot.Ninject.Host
         /// mark this method as sealed to prevent confusion with Configure().
         /// </summary>
         /// <param name="kernel">Kernel that should contain bindings for the service.</param>
-        protected virtual void PreConfigure(IKernel kernel)
+        protected virtual void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
+            kernel.Rebind<IActivator>().To<InstanceBasedActivator<TInterface>>().InSingletonScope();
+            kernel.Rebind<IServiceInterfaceMapper>().To<IdentityServiceInterfaceMapper>().InSingletonScope().WithConstructorArgument(typeof(TInterface));
+
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
+
+            kernel.Bind<IRequestListener>().To<HttpServiceListener>();
+
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments).InSingletonScope();
         }
@@ -166,45 +172,56 @@ namespace Gigya.Microdot.Ninject.Host
         /// infrastructure features you'd like to enable.</param>
         protected abstract void Configure(IKernel kernel, BaseCommonConfig commonConfig);
 
-
-
-        /// <summary>
-        /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
-        /// method.
-        /// </summary>        
-        protected override void OnStop()
+        protected void Configure(IKernel kernel)
         {
-            if (Arguments.ServiceDrainTimeSec.HasValue)
-            {
-                Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
-            }
-            Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
-            Kernel.Get<IWorkloadMetrics>().Dispose();
-            Dispose();
+            this.Configure(kernel, kernel.Get<BaseCommonConfig>());
         }
 
-        protected override void Dispose(bool disposing)
+        protected virtual void Warmup(IKernel kernel)
         {
-            lock (disposeLockHandle)
-            {
-                try
-                {
-                    if (disposed)
-                        return;
 
-                    SafeDispose(Listener);
+        }
 
-                    if (!Kernel.IsDisposed)
-                        SafeDispose(Kernel);
+        protected virtual void OnStop()
+        {
+        }
 
-                    base.Dispose(disposing);
-                }
-                finally
-                {
-                    disposed = true;
-                }
-            }
+        protected virtual void OnCrash()
+        {
+        }
+
+        protected virtual void OnStart()
+        {
+        }
+
+        void IKernelConfigurator.Configure(IKernel kernel)
+        {
+            this.Configure(kernel);
+        }
+
+        ILoggingModule IKernelConfigurator.GetLoggingModule()
+        {
+            return this.GetLoggingModule();
+        }
+
+        void IKernelConfigurator.OnInitilize(IKernel kernel)
+        {
+            this.OnInitilize(kernel);
+        }
+
+        void IKernelConfigurator.PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        {
+            this.PreConfigure(kernel, Arguments);
+        }
+
+        void IKernelConfigurator.PreInitialize(IKernel kernel)
+        {
+            this.PreInitialize(kernel);
+        }
+
+        void IKernelConfigurator.Warmup(IKernel kernel)
+        {
+            this.Warmup(kernel);
         }
     }
 }

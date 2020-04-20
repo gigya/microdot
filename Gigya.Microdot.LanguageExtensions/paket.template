@@ -1,0 +1,10 @@
+type
+	project
+description
+	Language and system library extensions for Microdot
+projectUrl
+	https://github.com/gigya/microdot
+licenseUrl
+	https://github.com/gigya/microdot/blob/master/LICENSE.md
+tags
+	gigya microdot microservice microservices

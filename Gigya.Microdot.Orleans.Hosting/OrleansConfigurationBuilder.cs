@@ -37,7 +37,7 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
-
+using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -115,7 +115,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                     // A workaround for an Orleans issue
                     // to ensure the stack trace properly de/serialized
                     // Gigya.Microdot.UnitTests.Serialization.ExceptionSerializationTests
-                    options.SerializationProviders.Add(typeof(HttpRequestExceptionSerializer));
+                    options.SerializationProviders.Add(typeof(NonSerializedExceptionsSerializer));
 
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
@@ -190,7 +190,11 @@ namespace Gigya.Microdot.Orleans.Hosting
         private void SetReminder(ISiloHostBuilder silo)
         {
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.Sql)
-                silo.UseAdoNetReminderService(options => options.ConnectionString = _orleansConfig.MySql_v4_0.ConnectionString);
+                silo.UseAdoNetReminderService(options =>
+                    {
+                        options.ConnectionString = _orleansConfig.MySql_v4_0.ConnectionString;
+                        options.Invariant = _orleansConfig.MySql_v4_0.Invariant;
+                    });
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.InMemory)
                 silo.UseInMemoryReminderService();
         }

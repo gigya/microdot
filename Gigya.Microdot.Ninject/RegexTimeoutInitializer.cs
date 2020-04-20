@@ -12,7 +12,7 @@ namespace Gigya.Microdot.Ninject
         static RegexTimeoutInitializer()
         {
             int regexDefaultMachTimeOutMs = (int)TimeSpan.FromSeconds(10).TotalMilliseconds;
-            try
+            /*try
             {
                 if (ConfigurationManager.AppSettings["regexDefaultMachTimeOutMs"] != null)
                 {
@@ -21,8 +21,8 @@ namespace Gigya.Microdot.Ninject
             }
             catch (Exception e)
             {
-            }
-
+            } 
+            */
             AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromMilliseconds(regexDefaultMachTimeOutMs));
         }
         public void Init()

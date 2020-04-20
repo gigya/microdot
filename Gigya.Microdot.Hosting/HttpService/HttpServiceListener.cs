@@ -33,8 +33,10 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -53,9 +55,17 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-    public sealed class HttpServiceListener : IDisposable
+    public interface IRequestListener : IDisposable
+    {
+        Task Listen();
+        void Stop();
+    }
+
+    public sealed class HttpServiceListener : IRequestListener
     {
         private readonly IServerRequestPublisher _serverRequestPublisher;
+
+        private Task listeningTask;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -95,7 +105,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
-        private DataAnnotationsValidator.DataAnnotationsValidator _validator = new DataAnnotationsValidator.DataAnnotationsValidator();
+        private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
         private TaskCompletionSource<int> _ReadyToGetTraffic=new TaskCompletionSource<int>();
 
         public void StartGettingTraffic()
@@ -103,15 +113,19 @@ namespace Gigya.Microdot.Hosting.HttpService
             _ReadyToGetTraffic.TrySetResult(1);
         }
 
-        public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
-                                   ICertificateLocator certificateLocator, ILog log,
-                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
-                                   JsonExceptionSerializer exceptionSerializer, 
-                                   ServiceSchema serviceSchema,                                   
-                                   Func<LoadShedding> loadSheddingConfig,
-                                   IServerRequestPublisher serverRequestPublisher,
-                                   CurrentApplicationInfo appInfo
-                                   )
+        public HttpServiceListener(
+            IActivator activator,
+            IWorker worker,
+            IServiceEndPointDefinition serviceEndPointDefinition,
+            ICertificateLocator certificateLocator,
+            ILog log,
+            IEnumerable<ICustomEndpoint> customEndpoints,
+            IEnvironment environment,
+            JsonExceptionSerializer exceptionSerializer,
+            ServiceSchema serviceSchema,
+            Func<LoadShedding> loadSheddingConfig,
+            IServerRequestPublisher serverRequestPublisher,
+            CurrentApplicationInfo appInfo)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -148,7 +162,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             _endpointContext = context.Context("Endpoints");
         }
 
-        public void Start()
+        public Task Listen()
+        {
+            this.listeningTask = this.Start();
+
+            this.StartGettingTraffic();
+
+            return this.listeningTask;
+        }
+
+        public async Task Start()
         {
             try
             {
@@ -179,7 +202,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
 
-        private async void StartListening()
+        private async Task StartListening()
         {
 
             await _ReadyToGetTraffic.Task;
@@ -536,7 +559,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, AppInfo.Version.ToString());
-            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.s_HostName);
             context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
 
             try
@@ -656,6 +679,11 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             Worker.Dispose();
             Listener.Close();
+        }
+
+        public void Stop()
+        {
+            
         }
     }
 }

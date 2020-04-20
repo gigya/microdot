@@ -22,7 +22,7 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Runtime.Remoting.Messaging;
+using System.Threading;
 
 namespace Gigya.Microdot.SharedLogic.Measurement
 {
@@ -32,6 +32,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement
     [Serializable]
     public class RequestTimings
     {
+        private static AsyncLocal<RequestTimings> timings = new AsyncLocal<RequestTimings>();
+        
         internal readonly ConcurrentDictionary<string, Aggregator> UserStats = new ConcurrentDictionary<string, Aggregator>();
 
         /// <summary>Time of the ongoing request.</summary>
@@ -47,20 +49,18 @@ namespace Gigya.Microdot.SharedLogic.Measurement
 
         public static RequestTimings GetOrCreate()
         {
-            RequestTimings timings = (RequestTimings)CallContext.LogicalGetData("request timings");            
-            if (timings==null)
+            if (timings.Value == null)
             {
-                timings = new RequestTimings();
-                CallContext.LogicalSetData("request timings", timings);
+                timings.Value = new RequestTimings();
             }
 
-            return timings;
+            return timings.Value;
         }
 
         /// <summary>Clears all timings for the request currently being processed. BEWARE!</summary>
         public static void ClearCurrentTimings()
         {
-            CallContext.FreeNamedDataSlot("request timings");
+            timings.Value = null;
         }
 
 

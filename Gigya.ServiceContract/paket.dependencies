@@ -1,8 +1,8 @@
 source https://api.nuget.org/v3/index.json
 
-framework: net451
+framework: auto-detect
 redirects: on
 content: once
 copy_content_to_output_dir: always
 
-nuget Newtonsoft.Json >= 9 lowest_matching: true
+nuget Newtonsoft.Json 12.0.3

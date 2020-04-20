@@ -1,21 +1,35 @@
 Gigya.ServiceContract
 Metrics.NET
-Microsoft.Orleans.OrleansCodeGenerator
-Microsoft.Orleans.OrleansCodeGenerator.Build
 Microsoft.CodeAnalysis.CSharp
 Microsoft.CodeAnalysis.Common
+Microsoft.CSharp
+System.Net.Http
 
-Microsoft.Orleans.Core
 Microsoft.Orleans.Connections.Security
+Microsoft.Orleans.Core
+Microsoft.Orleans.Core.Abstractions 
+Microsoft.Orleans.OrleansCodeGenerator
+Microsoft.Orleans.CodeGenerator.MSBuild
 Microsoft.Orleans.OrleansRuntime
 Microsoft.Orleans.OrleansProviders
 Microsoft.Orleans.OrleansSqlUtils
 Microsoft.Orleans.OrleansZooKeeperUtils
-System.Threading.Tasks.Dataflow
 Microsoft.Orleans.Server
 Microsoft.Orleans.OrleansTelemetryConsumers.Counters
-OrleansDashboard
+Gigya.OrleansDashboard
 
 
 
 # lock dependcy in nuspac 
+Microsoft.Extensions.Configuration 
+Microsoft.AspNetCore.Connections.Abstractions 
+Microsoft.AspNetCore.Hosting 
+Microsoft.AspNetCore.Server.Kestrel 
+Microsoft.Extensions.Logging.Abstractions
+Microsoft.Extensions.ObjectPool 
+Microsoft.Extensions.DependencyModel 
+Microsoft.Extensions.FileSystemGlobbing 
+Microsoft.Extensions.Primitives 
+System.Diagnostics.PerformanceCounter 
+System.Threading.Tasks.Dataflow
+Microsoft.AspNetCore.Http.Features 

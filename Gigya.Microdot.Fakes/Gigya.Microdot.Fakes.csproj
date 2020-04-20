@@ -1,137 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2865F69B-D847-4901-8945-4941E463F94E}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Gigya.Microdot.Fakes</RootNamespace>
-    <AssemblyName>Gigya.Microdot.Fakes</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <noWarn>1591</noWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Gigya.Microdot.Fakes.xml</DocumentationFile>
-    <NoWarn>
-    </NoWarn>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Gigya.Microdot.Fakes.xml</DocumentationFile>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyTitle>Gigya.Microdot.Fakes</AssemblyTitle>
+    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Net.Http" />
+    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
+    <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
+    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
+    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\SolutionVersion.cs">
-      <Link>Properties\SolutionVersion.cs</Link>
-    </Compile>
-    <Compile Include="ConsoleLogLoggersModules.cs" />
-    <Compile Include="Discovery\AlwaysLocalHost.cs" />
-    <Compile Include="Discovery\AlwaysLocalHostDiscovery.cs" />
-    <Compile Include="MetricsInitializerFake.cs" />
-    <Compile Include="ConsoleLog.cs" />
-    <Compile Include="DateTimeFake.cs" />
-    <Compile Include="Discovery\LocalhostServiceDiscovery.cs" />
-    <Compile Include="Discovery\LocalhostEndPointHandle.cs" />
-    <Compile Include="FakeHealthMonitor.cs" />
-    <Compile Include="FakeLog.cs" />
-    <Compile Include="ManualConfigurationEvents.cs" />
-    <Compile Include="MockConfigItemsCollection.cs" />
-    <Compile Include="NullEventPublisher.cs" />
-    <Compile Include="NullLog.cs" />
-    <Compile Include="OverridableConfigItems.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="LogSpy.cs" />
-    <Compile Include="SynchronousSourceBlock.cs" />
-    <Compile Include="TraceLog.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj">
-      <Project>{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}</Project>
-      <Name>Gigya.Microdot.Ninject</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj">
-      <Project>{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}</Project>
-      <Name>Gigya.Microdot.ServiceDiscovery</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj">
-      <Project>{c88db2a8-a1d2-46f8-8b65-06b9ee3f1662}</Project>
-      <Name>Gigya.Microdot.SharedLogic</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj">
-      <Project>{0E3A2422-DD99-4D75-A18C-96329A842742}</Project>
-      <Name>Gigya.Microdot.Configuration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj">
-      <Project>{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}</Project>
-      <Name>Gigya.Microdot.Interfaces</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="paket.references">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="paket.template" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="Metrics">
-          <HintPath>..\packages\Metrics.NET\lib\net45\Metrics.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="Ninject">
-          <HintPath>..\packages\Ninject\lib\net45\Ninject.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.7.2'">
-      <ItemGroup>
-        <Reference Include="System.Threading.Tasks.Dataflow">
-          <HintPath>..\packages\System.Threading.Tasks.Dataflow\lib\netstandard2.0\System.Threading.Tasks.Dataflow.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
+  <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
