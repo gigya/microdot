@@ -5,6 +5,7 @@ Microsoft.CodeAnalysis.Common
 Microsoft.CSharp
 System.Net.Http
 
+Microsoft.Orleans.Connections.Security
 Microsoft.Orleans.Core
 Microsoft.Orleans.Core.Abstractions 
 Microsoft.Orleans.OrleansCodeGenerator
@@ -15,7 +16,7 @@ Microsoft.Orleans.OrleansSqlUtils
 Microsoft.Orleans.OrleansZooKeeperUtils
 Microsoft.Orleans.Server
 Microsoft.Orleans.OrleansTelemetryConsumers.Counters
-OrleansDashboard
+Gigya.OrleansDashboard
 
 
 
