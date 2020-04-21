@@ -34,8 +34,8 @@ nuget Microsoft.Orleans.OrleansProviders ~> 3
 nuget Microsoft.Orleans.OrleansSqlUtils 
 nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3
 nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3
-nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.3
-nuget Microsoft.Orleans.CodeGenerator.MSBuild 2.4.3
+nuget Microsoft.Orleans.OrleansCodeGenerator.Build ~> 3
+nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3
 nuget Microsoft.Orleans.Client ~> 3
 nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  ~> 3
 nuget Microsoft.AspNetCore.Http.Features ~> 3
