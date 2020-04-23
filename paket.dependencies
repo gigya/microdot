@@ -28,36 +28,38 @@ nuget ZooKeeperNetEx ~> 3.0
 nuget DataAnnotationsValidator ~> 2.1.0 # Shouldn't it be removed?
 
 # Orleans
-nuget Microsoft.Orleans.Core 2.4.3
-nuget Microsoft.Orleans.OrleansRuntime 2.4.3
-nuget Microsoft.Orleans.OrleansProviders 2.4.3
-nuget Microsoft.Orleans.OrleansSqlUtils 2.4.3
-nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.3
-nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.3
-#nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.3
-nuget Microsoft.Orleans.CodeGenerator.MSBuild 2.4.3
-nuget Microsoft.Orleans.Client 2.4.3
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.3
-nuget Microsoft.AspNetCore.Http.Features 2.2
-nuget Microsoft.Extensions.Primitives 2.2
-nuget Microsoft.Orleans.Server  2.4.3
-nuget Microsoft.Orleans.Core.Abstractions 2.4.3
-nuget OrleansDashboard 2.4.5 
+nuget Microsoft.Orleans.Core ~> 3
+nuget Microsoft.Orleans.OrleansRuntime ~> 3
+nuget Microsoft.Orleans.OrleansProviders ~> 3
+nuget Microsoft.Orleans.OrleansSqlUtils 
+nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3
+nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3
+#nuget Microsoft.Orleans.OrleansCodeGenerator.Build ~> 3
+nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3
+nuget Microsoft.Orleans.Client ~> 3
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  ~> 3
+nuget Microsoft.AspNetCore.Http.Features ~> 3
+nuget Microsoft.Extensions.Primitives ~> 3
+nuget Microsoft.Orleans.Server  ~> 3
+nuget Microsoft.Orleans.Core.Abstractions ~> 3
+nuget Microsoft.Orleans.Connections.Security ~> 3
+nuget Gigya.OrleansDashboard ~> 3
+#nuget OrleansDashboard 2.4.5
 
-nuget Microsoft.Extensions.Configuration ~> 2
-nuget Microsoft.AspNetCore.Connections.Abstractions ~> 2
+#nuget Microsoft.Extensions.Configuration ~> 3
+#nuget Microsoft.AspNetCore.Connections.Abstractions ~> 3
 nuget Microsoft.AspNetCore.Hosting ~> 2
 nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
-nuget Microsoft.Extensions.Logging.Abstractions ~> 2
-nuget Microsoft.Extensions.ObjectPool ~> 2
-nuget Microsoft.Extensions.DependencyModel ~> 2
-nuget Microsoft.Extensions.FileSystemGlobbing ~> 2
+#nuget Microsoft.Extensions.Logging.Abstractions ~> 3
+#nuget Microsoft.Extensions.ObjectPool ~> 3
+#nuget Microsoft.Extensions.DependencyModel ~> 3
+#nuget Microsoft.Extensions.FileSystemGlobbing ~> 3
 
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 
-nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 2
-nuget Microsoft.Extensions.DependencyInjection ~> 2
+#nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 3
+#nuget Microsoft.Extensions.DependencyInjection ~> 3
 
 # Ninject
 nuget Ninject ~> 3.3
