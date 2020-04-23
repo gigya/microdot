@@ -21,7 +21,7 @@ nuget System.Configuration.ConfigurationManager ~> 4.7 # For some reason Infra t
 
 #
 nuget Metrics.NET ~> 0.0
-nuget Newtonsoft.Json 12.0.3
+nuget Newtonsoft.Json ~> 12.0.3
 nuget Nito.AsyncEx ~> 4.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
