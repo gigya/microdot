@@ -454,7 +454,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
         }
 
         [TestCase(ServiceProviderType.microdot)]
+        /*
+         The behavior of Microsoft.Extensions.DependencyInjection.Abstractions seems to have changed between (2.2) => (3.1.3)
+         Since we are not using it anymore for Scopes it is not an issue but if we decide to go back to it, this is a strong 
+         indication that scoped object will leak.
+         
         [TestCase(ServiceProviderType.microsoft)]
+        */
         public void When_scope_dispose_should_realece_referaces_to_scope_dependency(ServiceProviderType serviceProviderType)
         {
             var binding = new ServiceCollection().AddScoped<Dependency>();

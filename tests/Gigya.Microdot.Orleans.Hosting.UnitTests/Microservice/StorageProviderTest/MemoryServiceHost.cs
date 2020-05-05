@@ -10,13 +10,19 @@ using Orleans;
 using Orleans.Hosting;
 using Orleans.Providers;
 using System.Threading.Tasks;
+using Gigya.Microdot.Hosting.Configuration;
 using static Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.CalculatorServiceHost;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderTest
 {
     public class MemoryServiceHost : MicrodotOrleansServiceHost
     {
-        public override string ServiceName => "MemoryServiceHost";
+        public MemoryServiceHost() : base(
+            new HostConfiguration(
+                new TestHostConfigurationSource(appName: "IMemoryService")))
+        {
+        }
+        public string ServiceName => nameof(MemoryServiceHost);
 
         public override ILoggingModule GetLoggingModule()
         {
@@ -30,10 +36,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
             kernel.RebindForTests();
         }
         public const string MemoryStorageProvider = "MemoryStorageProvider";
-        protected override void OnInitilize(IResolutionRoot resolutionRoot)
+        protected override void OnInitilize(IKernel kerenl)
        {
-            base.OnInitilize(resolutionRoot);
-            var siloHostBuilder = resolutionRoot.Get<OrleansConfigurationBuilder>().GetBuilder();
+            base.OnInitilize(kerenl);
+            var siloHostBuilder = kerenl.Get<OrleansConfigurationBuilder>().GetBuilder();
 
             siloHostBuilder.AddMemoryGrainStorage(MemoryStorageProvider,
                 options => options.NumStorageGrains = 10);
