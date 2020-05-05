@@ -2,3 +2,5 @@ Ninject
 Ninject.Extensions.Conventions
 Ninject.Extensions.Factory
 System.Threading.Tasks.Dataflow
+Microsoft.CSharp
+System.Net.Http

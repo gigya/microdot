@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             occupied.AddRange(ipGlobal.GetActiveTcpConnections().Select(x => x.LocalEndPoint.Port));
             occupied.AddRange(ipGlobal.GetActiveTcpListeners().Select(x => x.Port));
             occupied.AddRange(ipGlobal.GetActiveUdpListeners().Select(x => x.Port));
-            return occupied.Distinct().ToHashSet();
+            return new HashSet<int>(occupied.Distinct());
         }
 
         public static DisposablePort GetPort()

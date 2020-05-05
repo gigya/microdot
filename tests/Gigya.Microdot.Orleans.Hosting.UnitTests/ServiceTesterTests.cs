@@ -24,6 +24,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
@@ -50,7 +52,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 DisposablePort.GetPort().Port, 
                 onStopWaitTimeSec: 0);
 
-            _tester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
+            _tester = new ServiceTester<CalculatorServiceHost>(
+                new HostConfiguration(new TestHostConfigurationSource()),
+                serviceArguments: serviceArguments);
 
             Action act = () => _tester.Dispose();
 

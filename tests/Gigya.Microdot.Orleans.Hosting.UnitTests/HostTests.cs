@@ -9,6 +9,10 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.SharedLogic.HttpService;
+
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Hosting.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
@@ -25,7 +29,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
             try
             {
-                var host = new ServiceTester<TestHost>();
+                var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
                 host.GetServiceProxy<ICalculatorService>();
                 Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
                  host.Dispose();
@@ -40,7 +44,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
-        public override string ServiceName => "TestService";
+        public TestHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        {
+        }
+
+        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
 
         public override ILoggingModule GetLoggingModule()
         {
@@ -48,13 +56,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         }
 
 
-        protected override void PreConfigure(IKernel kernel)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
-            base.PreConfigure(kernel);
+            base.PreConfigure(kernel, Arguments);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");
             kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.RebindForTests();
-          
         }
     }
 }

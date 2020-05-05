@@ -23,7 +23,9 @@
 #endregion Copyright
 
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
@@ -51,7 +53,14 @@ namespace Gigya.Microdot.Testing.Service
 
         public ServiceArguments ServiceArguments{ get; private set; }
 
+        [Obsolete("Use constructor with explicit configuration.")]
         public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
+            : this(new HostConfiguration(new TestHostConfigurationSource()), serviceArguments, customSerializer)
+        {
+
+        }
+
+        public ServiceTester(HostConfiguration hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
         {
             _customSerializer = customSerializer;
 

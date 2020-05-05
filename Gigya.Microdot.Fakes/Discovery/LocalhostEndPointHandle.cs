@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
 
@@ -28,7 +29,7 @@ namespace Gigya.Microdot.Fakes.Discovery
 {
     public class LocalhostEndPointHandle : IEndPointHandle
     {
-        public string HostName => CurrentApplicationInfo.HostName;
+        public string HostName => CurrentApplicationInfo.s_HostName;
         public int? Port { get; set; }
         public bool? UseHttps { get; set; }
         public string SecurityRole { get; set; }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Utils;
 using Ninject;
@@ -35,7 +37,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IDiscoverySourceLoader>().To<DiscoverySourceLoader>().InSingletonScope();
-                k.Rebind<IEnvironment>().To<EnvironmentInstance>();
+                k.Rebind<IEnvironment>().ToConstant(new HostConfiguration(new TestHostConfigurationSource()));
                 _consulClientMock = new ConsulClientMock();
                 _consulClientMock.SetResult(new EndPointsResult { EndPoints = new[] { new ConsulEndPoint { HostName = "dumy", Version = ServiceVersion } }, ActiveVersion = ServiceVersion, IsQueryDefined = true });
                 k.Rebind<Func<string,IConsulClient>>().ToMethod(c=>s=>_consulClientMock);
@@ -106,7 +108,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.{serviceName}.Source"] = "Local"
             );
             var remoteHostPull = _serviceDiscovery.GetNextHost();
-            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.HostName);
+            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.s_HostName);
         }
 
 

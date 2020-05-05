@@ -20,16 +20,14 @@ namespace Gigya.Microdot.Hosting.Metrics
         public HealthMonitor HealthMonitor { get; set; }
         private IConfiguration Configuration { get; }
         private ILog Log { get; }
-        private IEnvironmentVariableProvider EnvProvider { get; }
         public CurrentApplicationInfo AppInfo { get; }
 
-        public MetricsInitializer(ILog log, IConfiguration configuration, IMetricsSettings metricsSettings, HealthMonitor healthMonitor, IEnvironmentVariableProvider envProvider, CurrentApplicationInfo appInfo)
+        public MetricsInitializer(ILog log, IConfiguration configuration, IMetricsSettings metricsSettings, HealthMonitor healthMonitor, CurrentApplicationInfo appInfo)
         {
             Configuration = configuration;
             MetricsSettings = metricsSettings;
             HealthMonitor = healthMonitor;
             Log = log;
-            EnvProvider = envProvider;
             AppInfo = appInfo;
         }
 

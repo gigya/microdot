@@ -23,8 +23,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -35,8 +33,10 @@ using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -55,9 +55,17 @@ using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-    public sealed class HttpServiceListener : IDisposable
+    public interface IRequestListener : IDisposable
+    {
+        Task Listen();
+        void Stop();
+    }
+
+    public sealed class HttpServiceListener : IRequestListener
     {
         private readonly IServerRequestPublisher _serverRequestPublisher;
+
+        private Task listeningTask;
 
         private static JsonSerializerSettings JsonSettings { get; } = new JsonSerializerSettings
         {
@@ -74,8 +82,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             Formatting = Formatting.Indented,
             DateParseHandling = DateParseHandling.None
         };
-
-        private string Prefix { get; }
         private byte[] ServerRootCertHash { get; }
 
         private IActivator Activator { get; }
@@ -99,7 +105,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _activeRequestsCounter;
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
-        private DataAnnotationsValidator.DataAnnotationsValidator _validator = new DataAnnotationsValidator.DataAnnotationsValidator();
+        private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
         private TaskCompletionSource<int> _ReadyToGetTraffic=new TaskCompletionSource<int>();
 
         public void StartGettingTraffic()
@@ -107,15 +113,19 @@ namespace Gigya.Microdot.Hosting.HttpService
             _ReadyToGetTraffic.TrySetResult(1);
         }
 
-        public HttpServiceListener(IActivator activator, IWorker worker, IServiceEndPointDefinition serviceEndPointDefinition,
-                                   ICertificateLocator certificateLocator, ILog log,
-                                   IEnumerable<ICustomEndpoint> customEndpoints, IEnvironment environment,
-                                   JsonExceptionSerializer exceptionSerializer, 
-                                   ServiceSchema serviceSchema,                                   
-                                   Func<LoadShedding> loadSheddingConfig,
-                                   IServerRequestPublisher serverRequestPublisher,
-                                   CurrentApplicationInfo appInfo
-                                   )
+        public HttpServiceListener(
+            IActivator activator,
+            IWorker worker,
+            IServiceEndPointDefinition serviceEndPointDefinition,
+            ICertificateLocator certificateLocator,
+            ILog log,
+            IEnumerable<ICustomEndpoint> customEndpoints,
+            IEnvironment environment,
+            JsonExceptionSerializer exceptionSerializer,
+            ServiceSchema serviceSchema,
+            Func<LoadShedding> loadSheddingConfig,
+            IServerRequestPublisher serverRequestPublisher,
+            CurrentApplicationInfo appInfo)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -130,17 +140,16 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            if (serviceEndPointDefinition.UseSecureChannel)
+            if (ServiceEndPointDefinition.HttpsPort != null)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
-            var urlPrefixTemplate = ServiceEndPointDefinition.UseSecureChannel ? "https://+:{0}/" : "http://+:{0}/";
-            Prefix = string.Format(urlPrefixTemplate, ServiceEndPointDefinition.HttpPort);
-
-            Listener = new HttpListener
-            {
-                IgnoreWriteExceptions = true,
-                Prefixes = { Prefix }
-            };
+            Listener = new HttpListener {IgnoreWriteExceptions = true};
+            if (ServiceEndPointDefinition.HttpsPort != null)
+                Listener.Prefixes.Add($"https://+:{ServiceEndPointDefinition.HttpsPort}/");
+            if (ServiceEndPointDefinition.HttpPort != null)
+                Listener.Prefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/");
+            if (!Listener.Prefixes.Any())
+                Log.Warn(_ => _("HttpServiceListener is not listening on any ports, no HTTP or HTTPS ports in ServiceEndPointDefinition"));
 
             var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
@@ -153,20 +162,32 @@ namespace Gigya.Microdot.Hosting.HttpService
             _endpointContext = context.Context("Endpoints");
         }
 
+        public Task Listen()
+        {
+            this.listeningTask = this.Start();
 
-        public void Start()
+            this.StartGettingTraffic();
+
+            return this.listeningTask;
+        }
+
+        public async Task Start()
         {
             try
             {
                 Listener.Start();
-                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefix = Prefix }));
+                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefixes = string.Join(",", Listener.Prefixes) }));
             }
             catch (HttpListenerException ex)
             {
                 if (ex.ErrorCode != 5)
                 {
-                    ex.Data["HttpPort"] = ServiceEndPointDefinition.HttpPort;
-                    ex.Data["Prefix"] = Prefix;
+                    if (ServiceEndPointDefinition.HttpPort != null)
+                        ex.Data["HttpPort"] = $"{ServiceEndPointDefinition.HttpPort}";
+                    if (ServiceEndPointDefinition.HttpsPort != null)
+                        ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpsPort}";
+
+                    ex.Data["Prefixes"] = Listener.Prefixes;
                     ex.Data["User"] = AppInfo.OsUser;
                     throw;
                 }
@@ -174,14 +195,14 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new Exception(
                     "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +
                     "To configure them, run the following commands in an elevated (administrator) command prompt:\n" +
-                    $"netsh http add urlacl url={Prefix} user={AppInfo.OsUser}");
+                    string.Join("\n", Listener.Prefixes.Select(prefix => $"netsh http add urlacl url={prefix} user={AppInfo.OsUser}")));
             }
 
             StartListening();
         }
 
 
-        private async void StartListening()
+        private async Task StartListening()
         {
 
             await _ReadyToGetTraffic.Task;
@@ -208,7 +229,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(_ => _("An error has occured during HttpListener.GetContextAsync(). Stopped listening to additional requests.", exception: ex));
+                    Log.Error(_ => _( "An error has occured during HttpListener.GetContextAsync(). Stopped listening to additional requests.", exception: ex));
                     throw;
                 }
             }
@@ -223,6 +244,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 var sw = Stopwatch.StartNew();
 
                 // Special endpoints should not be logged/measured/traced like regular endpoints
+                // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
                 if (await TryHandleSpecialEndpoints(context)) return;
 
                 // Regular endpoint handling
@@ -241,8 +263,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                     {
                         try
                         {
-                            ValidateRequest(context);
                             await CheckSecureConnection(context);
+
+                            ValidateRequest(context);
 
                             requestData = await ParseRequest(context);
                            
@@ -486,14 +509,18 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async Task CheckSecureConnection(HttpListenerContext context)
         {
-            if (context.Request.IsSecureConnection != ServiceEndPointDefinition.UseSecureChannel)
-            {
-                _failureCounter.Increment("IncorrectSecurityType");
-                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", unencrypted: new Tags { { "serviceIsSecure", ServiceEndPointDefinition.UseSecureChannel.ToString() }, { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
-            }
-
             if (!context.Request.IsSecureConnection)
-                return;
+            {
+                // If a non-secure request reaches the HTTP port, we are safe
+                if (context.Request.LocalEndPoint?.Port == ServiceEndPointDefinition.HttpPort)
+                {
+                    return;
+                }
+
+                _failureCounter.Increment("IncorrectSecurityType");
+                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", 
+                    unencrypted: new Tags { { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
+            }
 
             var clientCertificate = await context.Request.GetClientCertificateAsync();
 
@@ -532,7 +559,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             context.Response.Headers.Add(GigyaHttpHeaders.DataCenter, Environment.Zone);
             context.Response.Headers.Add(GigyaHttpHeaders.Environment, Environment.DeploymentEnvironment);
             context.Response.Headers.Add(GigyaHttpHeaders.ServiceVersion, AppInfo.Version.ToString());
-            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.HostName);
+            context.Response.Headers.Add(GigyaHttpHeaders.ServerHostname, CurrentApplicationInfo.s_HostName);
             context.Response.Headers.Add(GigyaHttpHeaders.SchemaHash, ServiceSchema.Hash);
 
             try
@@ -652,6 +679,11 @@ namespace Gigya.Microdot.Hosting.HttpService
         {
             Worker.Dispose();
             Listener.Close();
+        }
+
+        public void Stop()
+        {
+            
         }
     }
 }

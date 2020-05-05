@@ -24,6 +24,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
@@ -31,6 +32,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -60,7 +62,9 @@ namespace Gigya.Microdot.Ninject
             typeof(ConsulDiscoverySource),
             typeof(RemoteHostPool),
             typeof(LoadBalancer),
-            typeof(ConfigDiscoverySource)
+            typeof(ConfigDiscoverySource),
+            typeof(HttpServiceListener),
+            typeof(GigyaSiloHost)
         };
 
         public override void Load()
@@ -71,12 +75,18 @@ namespace Gigya.Microdot.Ninject
             if (Kernel.CanResolve<Func<long, DateTime>>() == false)
                 Kernel.Load<FuncModule>();
 
-            this.BindClassesAsSingleton(NonSingletonBaseTypes, typeof(ConfigurationAssembly), typeof(ServiceProxyAssembly));
-            this.BindInterfacesAsSingleton(NonSingletonBaseTypes,new List<Type>{typeof(ILog)}, 
-                                                                typeof(ConfigurationAssembly), 
-                                                                typeof(ServiceProxyAssembly), 
-                                                                typeof(SharedLogicAssembly), 
-                                                                typeof(ServiceDiscoveryAssembly));
+            this.BindClassesAsSingleton(
+                NonSingletonBaseTypes,
+                typeof(ConfigurationAssembly),
+                typeof(ServiceProxyAssembly));
+            
+            this.BindInterfacesAsSingleton(
+                NonSingletonBaseTypes,
+                new List<Type>{typeof(ILog)}, 
+                typeof(ConfigurationAssembly), 
+                typeof(ServiceProxyAssembly), 
+                typeof(SharedLogicAssembly), 
+                typeof(ServiceDiscoveryAssembly));
 
 
             Bind<IRemoteHostPoolFactory>().ToFactory();
@@ -85,6 +95,16 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
+            Kernel.Bind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => (useHttps, securityRole) =>
+            {
+                var clientHandler = new HttpClientHandler();
+                if (useHttps)
+                {
+                    var httpAuthenticator = c.Kernel.Get<IHttpsAuthenticator>();
+                    httpAuthenticator.AddHttpMessageHandlerAuthentication(clientHandler, securityRole);
+                }
+                return clientHandler;
+            });
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
             Kernel.BindPerString<AggregatingHealthStatus>();
 

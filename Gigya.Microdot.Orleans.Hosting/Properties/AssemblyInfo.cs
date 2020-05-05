@@ -24,9 +24,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Gigya.Microdot.Orleans.Host")]
-[assembly: AssemblyProduct("Gigya.Microdot.Orleans.Host")]
-
 [assembly: InternalsVisibleTo("Gigya.Common.OrleansInfra.UnitTests")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.UnitTests")]
 
