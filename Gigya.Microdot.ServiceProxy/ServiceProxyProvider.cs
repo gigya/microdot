@@ -170,7 +170,7 @@ namespace Gigya.Microdot.ServiceProxy
 
         private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig config, DiscoveryConfig discoveryConfig, bool tryHttps, string hostname, int basePort)
         {
-            var forceHttps = UseHttpsDefault && (config.UseHttpsOverride ?? discoveryConfig.UseHttpsOverride);
+            var forceHttps = discoveryConfig.UseHttpsOverride && (config.UseHttpsOverride ?? false) || UseHttpsDefault;
             var useHttps = tryHttps || forceHttps;
             string securityRole = config.SecurityRole;
             (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, config.RequestTimeout);
