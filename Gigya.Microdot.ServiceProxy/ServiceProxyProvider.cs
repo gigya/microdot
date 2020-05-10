@@ -48,6 +48,8 @@ using Metrics;
 using Newtonsoft.Json;
 using Timer = Metrics.Timer;
 
+using static Gigya.Microdot.LanguageExtensions.MiscExtensions;
+
 namespace Gigya.Microdot.ServiceProxy
 {
     public class ServiceProxyProvider : IDisposable, IServiceProxyProvider
@@ -181,7 +183,7 @@ namespace Gigya.Microdot.ServiceProxy
                     return ( httpClient: LastHttpClient, isHttps: useHttps);
 
                 // In case we're trying HTTPs and the previous request on this instance was HTTP (or if this is the first request)
-                if (!forceHttps && httpKey.useHttps && !(LastHttpClientKey?.useHttps ?? false))
+                if (Not(forceHttps) && httpKey.useHttps && Not(LastHttpClientKey?.useHttps ?? false))
                 {
                     var now = DateTime.Now;
                     if (now - _lastHttpsTestTime > _httpsTestInterval)
@@ -335,8 +337,16 @@ namespace Gigya.Microdot.ServiceProxy
             PrepareRequest?.Invoke(request);
 
             var discoveryConfig = GetDiscoveryConfig();
-            // Use service configuration if exists, if not use global configuration
-            bool tryHttps = GetConfig().UseHttpsOverride ?? discoveryConfig.UseHttpsOverride;
+
+            // Using non https connection only allowed if the service was configured to use http.
+            // This will be important to decide whether downgrading from https to http is allowed
+            // (in cases when the service contellation is transitioning to https and rollbacks are expected).
+            var allowNonHttps = Not(GetConfig().UseHttpsOverride ?? discoveryConfig.UseHttpsOverride || ServiceInterfaceRequiresHttps);
+            
+            // If non secure connection is allowed, try https, it may already be available.
+            // TODO: This should be optin.
+            bool tryHttps = allowNonHttps;
+
             while (true)
             {
                 var config = GetConfig();
@@ -411,7 +421,7 @@ namespace Gigya.Microdot.ServiceProxy
                     }
                 }
                 catch (HttpRequestException ex) 
-                    when (!ServiceInterfaceRequiresHttps && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
+                    when (allowNonHttps && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
                 {
                     tryHttps = false;
                     continue;

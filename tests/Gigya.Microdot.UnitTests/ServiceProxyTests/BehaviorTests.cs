@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -702,7 +703,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                         k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
                         {
                             var config = getConfig();
-                            config.UseHttpsOverride = true;
                             return () => config;
                         });
                     }, dict)
@@ -781,7 +781,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                      k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
                      {
                          var config = getConfig();
-                         config.UseHttpsOverride = true;
                          return () => config;
                      });
                  }, dict)
@@ -871,7 +870,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                      k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
                      {
                          var config = getConfig();
-                         config.UseHttpsOverride = true;
+                         config.UseHttpsOverride = false;
+                         
                          return () => config;
                      });
                  }, dict)

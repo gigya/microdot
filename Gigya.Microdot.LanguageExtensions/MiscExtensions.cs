@@ -41,6 +41,21 @@ namespace Gigya.Microdot.LanguageExtensions
             };
         }
 
+        /// <summary>
+        /// Pipe value into function.
+        /// </summary>
+        /// <typeparam name="T">The type of the value.</typeparam>
+        /// <typeparam name="U">The type of the result.</typeparam>
+        /// <param name="obj">The value.</param>
+        /// <param name="fn">The result of the application.</param>
+        /// <returns></returns>
         public static U To<T, U>(this T obj, Func<T, U> fn) => fn(obj);
+
+        /// <summary>
+        /// Like `not` operator but more visible.
+        /// </summary>
+        /// <param name="b">the boolean to invert.</param>
+        /// <returns>Inverted boolean.</returns>
+        public static bool Not(bool b) => !b;
     }
 }
