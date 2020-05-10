@@ -16,7 +16,7 @@ using Gigya.Microdot.Hosting.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     internal class HostTests
     {
         private static int _counter = 0;

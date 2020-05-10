@@ -41,7 +41,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             var elapsed = sw.Elapsed;
         }
     }
-
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class TypedConfigTest
     {
         private DateTime dateTime = new DateTime(2016, 11, 8, 15, 57, 20);
