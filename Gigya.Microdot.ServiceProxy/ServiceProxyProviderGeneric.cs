@@ -72,7 +72,7 @@ namespace Gigya.Microdot.ServiceProxy
                 throw new ProgrammaticException("The specified service interface type is not decorated with HttpServiceAttribute.", unencrypted: new Tags { { "interfaceName", typeof(TInterface).Name } });
 
             InnerProvider = serviceProxyFactory(typeof(TInterface).GetServiceName());
-            InnerProvider.UseHttpsDefault = attribute.UseHttps;
+            InnerProvider.ServiceInterfaceRequiresHttps = attribute.UseHttps;
 
             if (InnerProvider.DefaultPort==null)
             {

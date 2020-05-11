@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,11 +20,37 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using Gigya.Microdot.Orleans.Hosting.Logging;
+using Microsoft.Extensions.Logging;
 
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
+{
+    /// <summary>
+    /// Replacing the original Microsoft Logger factory to avoid blocking code.
+    /// Ninject using lock by scope which leading to deadlock in this scenario.
+    /// </summary>
+    public class NonBlockingLoggerFactory : ILoggerFactory
+    {
+        // ReSharper disable once InconsistentNaming
+        private ILoggerProvider LoggerProvider;
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ae847e21-f7d8-47fb-84c3-c7144a9b7a1d")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
+        public ILogger CreateLogger(string categoryName)
+        {
+            return LoggerProvider.CreateLogger(categoryName);
+        }
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+
+        public NonBlockingLoggerFactory(OrleansLogProvider provider)
+        {
+            LoggerProvider = provider;
+        }
+    }
+}

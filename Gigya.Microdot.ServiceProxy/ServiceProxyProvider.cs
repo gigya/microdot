@@ -48,6 +48,8 @@ using Metrics;
 using Newtonsoft.Json;
 using Timer = Metrics.Timer;
 
+using static Gigya.Microdot.LanguageExtensions.MiscExtensions;
+
 namespace Gigya.Microdot.ServiceProxy
 {
     public class ServiceProxyProvider : IDisposable, IServiceProxyProvider
@@ -76,7 +78,7 @@ namespace Gigya.Microdot.ServiceProxy
         /// value that was specified in the <see cref="HttpServiceAttribute"/> decorating <i>TInterface</i>, overridden
         /// by service discovery.
         /// </summary>
-        public bool UseHttpsDefault { get; set; }
+        public bool ServiceInterfaceRequiresHttps { get; set; }
 
 
         /// <summary>
@@ -168,12 +170,12 @@ namespace Gigya.Microdot.ServiceProxy
             Timeout = timeout;
         }
 
-        private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig config, DiscoveryConfig discoveryConfig, bool tryHttps, string hostname, int basePort)
+        private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig serviceConfig, DiscoveryConfig defaultConfig, bool tryHttps, string hostname, int basePort)
         {
-            var forceHttps = discoveryConfig.UseHttpsOverride && (config.UseHttpsOverride ?? false) || UseHttpsDefault;
+            var forceHttps = serviceConfig.UseHttpsOverride ?? (ServiceInterfaceRequiresHttps || defaultConfig.UseHttpsOverride);
             var useHttps = tryHttps || forceHttps;
-            string securityRole = config.SecurityRole;
-            (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, config.RequestTimeout);
+            string securityRole = serviceConfig.SecurityRole;
+            (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, serviceConfig.RequestTimeout);
 
             lock (HttpClientLock)
             {
@@ -181,7 +183,7 @@ namespace Gigya.Microdot.ServiceProxy
                     return ( httpClient: LastHttpClient, isHttps: useHttps);
 
                 // In case we're trying HTTPs and the previous request on this instance was HTTP (or if this is the first request)
-                if (!forceHttps && httpKey.useHttps && !(LastHttpClientKey?.useHttps ?? false))
+                if (Not(forceHttps) && httpKey.useHttps && Not(LastHttpClientKey?.useHttps ?? false))
                 {
                     var now = DateTime.Now;
                     if (now - _lastHttpsTestTime > _httpsTestInterval)
@@ -270,7 +272,7 @@ namespace Gigya.Microdot.ServiceProxy
                 response = await clientInfo.Value.httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
-                when (fallbackOnProtocolError && !UseHttpsDefault && (clientInfo?.isHttps ?? false) && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
+                when (fallbackOnProtocolError && !ServiceInterfaceRequiresHttps && (clientInfo?.isHttps ?? false) && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
             {
                 var uri = BuildUri(hostname, port, false, out int _);
                 response = await clientFactory(false)
@@ -291,7 +293,7 @@ namespace Gigya.Microdot.ServiceProxy
             if (useHttps)
             {
                 urlTemplate = "https://{0}:{1}/";
-                effectivePort = UseHttpsDefault ? basePort : basePort + (int)PortOffsets.Https;
+                effectivePort = ServiceInterfaceRequiresHttps ? basePort : basePort + (int)PortOffsets.Https;
             }
             else
             {
@@ -335,8 +337,16 @@ namespace Gigya.Microdot.ServiceProxy
             PrepareRequest?.Invoke(request);
 
             var discoveryConfig = GetDiscoveryConfig();
-            // Use service configuration if exists, if not use global configuration
-            bool tryHttps = GetConfig().UseHttpsOverride ?? discoveryConfig.UseHttpsOverride;
+
+            // Using non https connection only allowed if the service was configured to use http.
+            // This will be important to decide whether downgrading from https to http is allowed
+            // (in cases when the service contellation is transitioning to https and rollbacks are expected).
+            var allowNonHttps = Not(GetConfig().UseHttpsOverride ?? discoveryConfig.UseHttpsOverride || ServiceInterfaceRequiresHttps);
+            
+            // If non secure connection is allowed, try https, it may already be available.
+            // TODO: This should be optin.
+            bool tryHttps = allowNonHttps;
+
             while (true)
             {
                 var config = GetConfig();
@@ -411,7 +421,7 @@ namespace Gigya.Microdot.ServiceProxy
                     }
                 }
                 catch (HttpRequestException ex) 
-                    when (!UseHttpsDefault && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
+                    when (allowNonHttps && (ex.InnerException as WebException)?.Status == WebExceptionStatus.ProtocolError)
                 {
                     tryHttps = false;
                     continue;

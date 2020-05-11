@@ -1,4 +1,4 @@
-﻿#region Copyright 
+#region Copyright 
 // Copyright 2017 Gigya Inc.  All rights reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License"); 
@@ -20,11 +20,26 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System;
+using Microsoft.Extensions.DependencyInjection;
 
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
+{
+    /// <summary>
+    /// Create new scope
+    /// </summary>
+    internal class MicrodotServiceScopeFactory : IServiceScopeFactory
+    {
+        private readonly Func<MicrodotServiceProviderWithScope> _func;
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ae847e21-f7d8-47fb-84c3-c7144a9b7a1d")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
+        public MicrodotServiceScopeFactory(Func<MicrodotServiceProviderWithScope> func)
+        {
+            _func = func;
+        }
+
+        public IServiceScope CreateScope()
+        {
+            return _func();
+        }
+    }
+}

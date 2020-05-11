@@ -20,11 +20,43 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Gigya.Microdot.Orleans.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Ninject;
+using Ninject.Activation;
+using Ninject.Parameters;
+using Ninject.Planning.Bindings;
+using Ninject.Planning.Targets;
+using Ninject.Syntax;
+using Orleans.Runtime;
 
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
+{
+    /// <summary>
+    /// Use as marker, to indicate when to resolve real object
+    /// </summary>
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ae847e21-f7d8-47fb-84c3-c7144a9b7a1d")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
+    public class ResolveRealParameter : IParameter
+    {
+        private ResolveRealParameter()
+        { }
+        public static ResolveRealParameter instance = new ResolveRealParameter();
+        public string Name => "ResolveReal";
+
+        public bool ShouldInherit => false;
+
+        public bool Equals(IParameter other)
+        {
+            return ReferenceEquals(this, other);
+        }
+
+        public object GetValue(IContext context, ITarget target)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

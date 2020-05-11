@@ -20,11 +20,44 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using Gigya.Microdot.Orleans.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Ninject;
+using Ninject.Activation;
+using Ninject.Activation.Caching;
+using Ninject.Parameters;
+using Ninject.Planning.Bindings;
+using Ninject.Planning.Targets;
+using Ninject.Syntax;
+using Orleans.Runtime;
 
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ae847e21-f7d8-47fb-84c3-c7144a9b7a1d")]
-[assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
+
+namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
+{
+    // Indicate that possible deadlock can occur
+    public class DeadlockDetectorExeption : Exception
+    {
+        public DeadlockDetectorExeption()
+        {
+        }
+
+        public DeadlockDetectorExeption(string message) : base(message)
+        {
+        }
+
+        public DeadlockDetectorExeption(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected DeadlockDetectorExeption(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
+}
