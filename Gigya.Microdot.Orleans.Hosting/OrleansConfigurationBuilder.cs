@@ -127,13 +127,13 @@ namespace Gigya.Microdot.Orleans.Hosting
             if (_orleansConfig.Dashboard.Enable)
             {
 
-                //    hostBuilder.UseDashboard(o =>
-                //        {
-                //            o.Port = _endPointDefinition.SiloDashboardPort;
-                //            o.CounterUpdateIntervalMs = (int)TimeSpan.Parse(_orleansConfig.Dashboard.WriteInterval).TotalMilliseconds;
-                //            o.HideTrace = _orleansConfig.Dashboard.HideTrace;
-                //        });
-                //}
+                    hostBuilder.UseDashboard(o =>
+                        {
+                            o.Port = _endPointDefinition.SiloDashboardPort;
+                            o.CounterUpdateIntervalMs = (int)TimeSpan.Parse(_orleansConfig.Dashboard.WriteInterval).TotalMilliseconds;
+                            o.HideTrace = _orleansConfig.Dashboard.HideTrace;
+                        });
+                
             }
 
             SetGrainCollectionOptions(hostBuilder);
