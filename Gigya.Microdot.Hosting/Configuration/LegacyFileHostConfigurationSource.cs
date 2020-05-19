@@ -90,12 +90,17 @@ namespace Gigya.Microdot.Hosting.Configuration
             if (envVarsObject == null)
                 return Enumerable.Empty<Entry>();
 
-            return
+            var r =
                 envVarsObject
                 .Properties()
                 .Where(a => a.HasValues)
                 .Select(x => new Entry(x.Name.ToUpperInvariant(), x.Value.Value<string>()))
                 .ToArray();
+
+            foreach (var i in r)
+                Environment.SetEnvironmentVariable(i.Key, i.Value);
+
+            return r;
         }
     }
 }
