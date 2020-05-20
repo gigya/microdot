@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
@@ -21,7 +21,7 @@ namespace Gigya.Microdot.UnitTests
 {
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
-        public TestingHost() : base(new HostConfiguration(new TestHostEnvironmentSource(appName: GenerateServiceName())))
+        public TestingHost() : base(new HostEnvironment(new TestHostEnvironmentSource(appName: GenerateServiceName())))
         {
             
         }
@@ -34,7 +34,7 @@ namespace Gigya.Microdot.UnitTests
 
         public T Instance { get; private set; }
 
-        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
+        public string ServiceName => this.Host.HostEnvironment.ApplicationInfo.Name;
 
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }

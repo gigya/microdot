@@ -9,7 +9,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Ninject;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
@@ -26,7 +26,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         public void TestFixtureSetUp()
         {
             _serviceTester = new ServiceTester<CalculatorServiceHost>(
-                new HostConfiguration(new TestHostEnvironmentSource()));
+                new HostEnvironment(new TestHostEnvironmentSource()));
             
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
             

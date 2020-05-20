@@ -2,7 +2,6 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Host.Tests.Utils;
 using Gigya.Microdot.Hosting;
-using Gigya.Microdot.Hosting.Configuration;
 using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
@@ -19,6 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
 using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.Host.Tests
 {
@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Host.Tests
 
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
-            var config = new HostConfiguration(
+            var config = new HostEnvironment(
                 new TestHostEnvironmentSource(
                     region: "us1",
                     zone: "zone",
@@ -63,7 +63,7 @@ namespace Gigya.Microdot.Host.Tests
             string result = "";
             
             var config =
-                new HostConfiguration(
+                new HostEnvironment(
                     new TestHostEnvironmentSource(
                         loadPathsFile: Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json").To(p => new FileInfo(p))));
 
@@ -105,7 +105,7 @@ namespace Gigya.Microdot.Host.Tests
                 //var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
 
                 var host = new Ninject.Host.Host(
-                    new HostConfiguration(new TestHostEnvironmentSource()),
+                    new HostEnvironment(new TestHostEnvironmentSource()),
                     new TestOrleansKernelConfigurator(),
                     new Version()
                     );

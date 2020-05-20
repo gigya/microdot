@@ -10,7 +10,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
@@ -29,7 +29,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             //Environment.SetEnvironmentVariable("ZONE", "zone");
             //Environment.SetEnvironmentVariable("ENV", "env");
 
-            var config = new HostConfiguration(new TestHostEnvironmentSource(
+            var config = new HostEnvironment(new TestHostEnvironmentSource(
                 zone: "zone",
                 deploymentEnvironment: "env",
                 appName: "ICalculatorService"));

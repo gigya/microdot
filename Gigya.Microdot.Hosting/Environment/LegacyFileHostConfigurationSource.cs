@@ -98,7 +98,7 @@ namespace Gigya.Microdot.Hosting.Environment
                 .ToArray();
 
             foreach (var i in r)
-                Environment.SetEnvironmentVariable(i.Key, i.Value);
+                System.Environment.SetEnvironmentVariable(i.Key, i.Value);
 
             return r;
         }

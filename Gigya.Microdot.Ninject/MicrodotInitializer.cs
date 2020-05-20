@@ -1,5 +1,5 @@
 ﻿using System;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -11,7 +11,7 @@ namespace Gigya.Microdot.Ninject
 {
     public class MicrodotInitializer : IDisposable
     {
-        public MicrodotInitializer(HostConfiguration hostConfiguration, ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
+        public MicrodotInitializer(HostEnvironment hostConfiguration, ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
         {
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();

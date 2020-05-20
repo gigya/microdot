@@ -1,5 +1,5 @@
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Metrics;
 using Gigya.Microdot.SharedLogic;
 using NUnit.Framework;
@@ -41,7 +41,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             //ConsoleOutputMode.Standard
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
-            var config = new HostConfiguration(
+            var config = new HostEnvironment(
                 new TestHostEnvironmentSource(
                     region: "us1",
                     zone: "zone",

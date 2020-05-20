@@ -6,7 +6,7 @@ using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
@@ -57,7 +57,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void TestMetricsOnSuccess()
         {
             using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
-                new HostConfiguration(new TestHostEnvironmentSource())))
+                new HostEnvironment(new TestHostEnvironmentSource())))
             {
                 testinghost.Host.Instance.Increment(0).Returns((ulong)1);
 
@@ -74,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void TestMetricsOnFailure()
         {
             using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
-                new HostConfiguration(new TestHostEnvironmentSource())))
+                new HostEnvironment(new TestHostEnvironmentSource())))
             {
                 testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
 

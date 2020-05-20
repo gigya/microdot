@@ -24,7 +24,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
@@ -71,7 +71,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         public ServiceArguments Arguments => this.Host.Arguments;
 
-        protected MicrodotOrleansServiceHost(HostConfiguration configuration)
+        protected MicrodotOrleansServiceHost(HostEnvironment configuration)
         {
             this.Host = new Microdot.Ninject.Host.Host(
                 configuration,

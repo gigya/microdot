@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;
@@ -17,7 +17,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
             ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>(
-                new HostConfiguration(new TestHostEnvironmentSource()));
+                new HostEnvironment(new TestHostEnvironmentSource()));
             var beforeGrainCreated = DateTime.Now;
 
             IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);

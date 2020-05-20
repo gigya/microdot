@@ -25,7 +25,7 @@
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
@@ -55,12 +55,12 @@ namespace Gigya.Microdot.Testing.Service
 
         [Obsolete("Use constructor with explicit configuration.")]
         public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
-            : this(new HostConfiguration(new TestHostEnvironmentSource()), serviceArguments, customSerializer)
+            : this(new HostEnvironment(new TestHostEnvironmentSource()), serviceArguments, customSerializer)
         {
 
         }
 
-        public ServiceTester(HostConfiguration hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
+        public ServiceTester(HostEnvironment hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
         {
             _customSerializer = customSerializer;
 

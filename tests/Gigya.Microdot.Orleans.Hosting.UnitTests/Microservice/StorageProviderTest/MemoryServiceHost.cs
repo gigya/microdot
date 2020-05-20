@@ -1,5 +1,6 @@
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
@@ -10,7 +11,6 @@ using Orleans;
 using Orleans.Hosting;
 using Orleans.Providers;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Configuration;
 using static Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.CalculatorServiceHost;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderTest
@@ -18,7 +18,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
     public class MemoryServiceHost : MicrodotOrleansServiceHost
     {
         public MemoryServiceHost() : base(
-            new HostConfiguration(
+            new HostEnvironment(
                 new TestHostEnvironmentSource(appName: "IMemoryService")))
         {
         }

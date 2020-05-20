@@ -9,7 +9,7 @@ namespace CalculatorService.Orleans
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        protected CalculatorServiceHost(HostConfiguration configuration) : base(configuration)
+        protected CalculatorServiceHost(HostEnvironment configuration) : base(configuration)
         {
         }
 
@@ -25,7 +25,7 @@ namespace CalculatorService.Orleans
             Environment.SetEnvironmentVariable("ENV", "dev");
 
             var config = 
-                new HostConfiguration(
+                new HostEnvironment(
                     new EnvironmentVarialbesConfigurationSource());
 
             try

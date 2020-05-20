@@ -126,7 +126,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             try
             {
-                var config = new HostConfiguration(
+                var config = new HostEnvironment(
                     new TestHostEnvironmentSource(),
                     new EnvironmentVarialbesConfigurationSource(),
                     new ApplicationInfoSource(

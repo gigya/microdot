@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -29,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             k.Load(new ConfigVerificationModule(new ConsoleLogLoggersModules(), new ServiceArguments(), "InfraTests", infraVersion: null));
 
             var cfg =
-                new HostConfiguration(
+                new HostEnvironment(
                     new TestHostEnvironmentSource(
                         "InfraTests"));
 

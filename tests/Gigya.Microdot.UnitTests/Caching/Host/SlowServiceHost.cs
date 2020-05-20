@@ -1,6 +1,6 @@
 ﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
@@ -11,7 +11,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
 {
     public class SlowServiceHost : MicrodotServiceHost<ISlowService>
     {
-        public SlowServiceHost() : base(new HostConfiguration(new TestHostEnvironmentSource()))
+        public SlowServiceHost() : base(new HostEnvironment(new TestHostEnvironmentSource()))
         {
         }
 

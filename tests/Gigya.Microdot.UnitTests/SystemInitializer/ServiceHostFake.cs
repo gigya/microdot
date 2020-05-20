@@ -2,7 +2,7 @@
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Logging.NLog;
@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
         public string ServiceName => nameof(IServiceFake).Substring(1);
 
         private TFake _fake;
-        public ServiceHostFake(TFake fake, HostConfiguration configuration)
+        public ServiceHostFake(TFake fake, HostEnvironment configuration)
             : base(configuration)
         {
             _fake = fake;
