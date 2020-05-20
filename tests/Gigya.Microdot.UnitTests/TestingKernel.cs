@@ -63,7 +63,7 @@ namespace Gigya.Microdot.Testing.Shared
         {
             ServicePointManager.DefaultConnectionLimit = 200;
 
-            var config = new HostConfiguration(new TestHostConfigurationSource());
+            var config = new HostConfiguration(new TestHostEnvironmentSource());
             Bind<IEnvironment>().ToConstant(config).InSingletonScope();
             Bind<CurrentApplicationInfo>().ToConstant(config.ApplicationInfo).InSingletonScope();
             this.Load<MicrodotModule>();

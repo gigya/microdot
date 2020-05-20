@@ -2,7 +2,7 @@
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace CalculatorService.Orleans
 {

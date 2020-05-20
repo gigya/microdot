@@ -19,7 +19,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
     {
         public MemoryServiceHost() : base(
             new HostConfiguration(
-                new TestHostConfigurationSource(appName: "IMemoryService")))
+                new TestHostEnvironmentSource(appName: "IMemoryService")))
         {
         }
         public string ServiceName => nameof(MemoryServiceHost);

@@ -17,7 +17,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.Ninject.Host
 {
@@ -66,7 +66,7 @@ namespace Gigya.Microdot.Ninject.Host
 
         protected ConfigurationVerificator ConfigurationVerificator { get; set; }
 
-        public HostConfiguration HostConfiguration { get; }
+        public HostEnvironment HostEnvironment { get; }
         public Version InfraVersion { get; }
 
         private IRequestListener requestListener;
@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Ninject.Host
         private IKernelConfigurator kernelConfigurator;
 
         public Host(
-            HostConfiguration configuration,
+            HostEnvironment environment,
             //IRequestListener requestListener, 
             IKernelConfigurator kernelConfigurator,
             Version infraVersion)
@@ -88,7 +88,7 @@ namespace Gigya.Microdot.Ninject.Host
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
 
-            this.HostConfiguration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
             //this.HandlingPipeline = handlingPipeline ?? throw new ArgumentNullException(nameof(handlingPipeline));
             //this.RequestListener = requestListener ?? throw new ArgumentNullException(nameof(requestListener));
             this.kernelConfigurator = kernelConfigurator ?? throw new ArgumentNullException(nameof(kernelConfigurator));
@@ -104,8 +104,8 @@ namespace Gigya.Microdot.Ninject.Host
 
             this.OnStarting(this, this.CreateEventArgs());
 
-            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
+            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
             
             this.kernelConfigurator.PreConfigure(Kernel, Arguments);
             this.kernelConfigurator.Configure(Kernel);
@@ -125,7 +125,7 @@ namespace Gigya.Microdot.Ninject.Host
             this.requestListener = Kernel.Get<IRequestListener>();
             this.requestListener.Listen();
 
-            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostConfiguration.ApplicationInfo.HostName }));
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostEnvironment.ApplicationInfo.HostName }));
 
             this.OnStarted(this, this.CreateEventArgs());
         }
@@ -171,7 +171,7 @@ namespace Gigya.Microdot.Ninject.Host
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
                 Trace.WriteLine("Service starting as a Windows service...");
-                WindowsService = new DelegatingServiceBase(this.HostConfiguration.ApplicationInfo.Name, OnWindowsServiceStart, OnWindowsServiceStop);
+                WindowsService = new DelegatingServiceBase(this.HostEnvironment.ApplicationInfo.Name, OnWindowsServiceStart, OnWindowsServiceStop);
 
                 if (argumentsOverride == null)
                     Arguments = null; // Ensures OnWindowsServiceStart reloads parameters passed from Windows Service Manager.
@@ -223,7 +223,7 @@ namespace Gigya.Microdot.Ninject.Host
                 {
                     Thread.Sleep(10); // Allow any startup log messages to flush to Console.
 
-                    Console.Title = this.HostConfiguration.ApplicationInfo.Name;
+                    Console.Title = this.HostEnvironment.ApplicationInfo.Name;
 
                     if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Color)
                     {
@@ -305,14 +305,14 @@ namespace Gigya.Microdot.Ninject.Host
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
             
-            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
+            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
             
             Kernel.Load(
                 new ConfigVerificationModule(
                     this.kernelConfigurator.GetLoggingModule(),
                     Arguments,
-                    this.HostConfiguration.ApplicationInfo.Name,
+                    this.HostEnvironment.ApplicationInfo.Name,
                     InfraVersion));
             
             ConfigurationVerificator = Kernel.Get<ConfigurationVerificator>();

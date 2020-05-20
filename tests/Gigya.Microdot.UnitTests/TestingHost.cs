@@ -21,7 +21,7 @@ namespace Gigya.Microdot.UnitTests
 {
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
-        public TestingHost() : base(new HostConfiguration(new TestHostConfigurationSource(appName: GenerateServiceName())))
+        public TestingHost() : base(new HostConfiguration(new TestHostEnvironmentSource(appName: GenerateServiceName())))
         {
             
         }

@@ -55,7 +55,7 @@ namespace Gigya.Microdot.Testing.Service
 
         [Obsolete("Use constructor with explicit configuration.")]
         public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
-            : this(new HostConfiguration(new TestHostConfigurationSource()), serviceArguments, customSerializer)
+            : this(new HostConfiguration(new TestHostEnvironmentSource()), serviceArguments, customSerializer)
         {
 
         }

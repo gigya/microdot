@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             try
             {
-                _tester = new ServiceTester<CalculatorServiceHost>(new HostConfiguration(new TestHostConfigurationSource()));
+                _tester = new ServiceTester<CalculatorServiceHost>(new HostConfiguration(new TestHostEnvironmentSource()));
                 _serviceProxyProvider = _tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)

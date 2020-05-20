@@ -11,7 +11,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
 {
     public class SlowServiceHost : MicrodotServiceHost<ISlowService>
     {
-        public SlowServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        public SlowServiceHost() : base(new HostConfiguration(new TestHostEnvironmentSource()))
         {
         }
 

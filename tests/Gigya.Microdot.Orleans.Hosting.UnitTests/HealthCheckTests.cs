@@ -47,7 +47,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void SetUp()
         {
             _tester = new ServiceTester<CalculatorServiceHost>(
-                new HostConfiguration(new TestHostConfigurationSource()));
+                new HostConfiguration(new TestHostEnvironmentSource()));
         }
 
         [OneTimeTearDown]
@@ -67,7 +67,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 1, instanceName: "test", initTimeOutSec: 10);
 
             var customServiceTester = new ServiceTester<CalculatorServiceHost>(
-                new HostConfiguration(new TestHostConfigurationSource()),
+                new HostConfiguration(new TestHostEnvironmentSource()),
                 serviceArguments: serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());

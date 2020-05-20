@@ -57,7 +57,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public virtual void SetUp()
         {
             _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
-                new HostConfiguration(new TestHostConfigurationSource()));
+                new HostConfiguration(new TestHostEnvironmentSource()));
             _insecureClient = _testinghost.GetServiceProxy<IDemoService>();
             Metric.ShutdownContext("Service");
             TracingContext.SetRequestID("1");
@@ -104,7 +104,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             var _kernel = new MicrodotInitializer(
                 new HostConfiguration(
-                    new TestHostConfigurationSource()),
+                    new TestHostEnvironmentSource()),
                 new FakesLoggersModules(), 
                 k => k.RebindForTests());
 
@@ -337,7 +337,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             var testingHost = new NonOrleansServiceTester<SlowServiceHost>(
                 new HostConfiguration(
-                    new TestHostConfigurationSource()));
+                    new TestHostEnvironmentSource()));
             if (!httpsEnabledInClient)
                 testingHost.CommunicationKernel.DisableHttps();
 
@@ -349,7 +349,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             public SlowServiceHost() : base(
                 new HostConfiguration(
-                    new TestHostConfigurationSource()))
+                    new TestHostEnvironmentSource()))
             {
             }
 

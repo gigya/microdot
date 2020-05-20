@@ -50,7 +50,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public IKernel Kernel;
 
-        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostEnvironmentSource()))
         {
         }
 

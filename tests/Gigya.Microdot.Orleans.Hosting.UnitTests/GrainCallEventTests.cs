@@ -26,7 +26,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         public void TestFixtureSetUp()
         {
             _serviceTester = new ServiceTester<CalculatorServiceHost>(
-                new HostConfiguration(new TestHostConfigurationSource()));
+                new HostConfiguration(new TestHostEnvironmentSource()));
             
             _serviceProxy = _serviceTester.GetServiceProxy<ICalculatorService>();
             

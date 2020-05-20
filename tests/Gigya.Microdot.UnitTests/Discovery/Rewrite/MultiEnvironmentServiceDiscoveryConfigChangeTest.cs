@@ -36,7 +36,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _configDic = new Dictionary<string, string>();
             _unitTestingKernel = new TestingKernel<ConsoleLog>(k =>
             {
-                k.Rebind<IEnvironment>().ToConstant(new HostConfiguration(new TestHostConfigurationSource()));
+                k.Rebind<IEnvironment>().ToConstant(new HostConfiguration(new TestHostEnvironmentSource()));
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>();
                 k.Rebind<Func<DiscoveryConfig>>().ToMethod(_ => () => _discoveryConfig);
                 _consulClientMock = new ConsulClientMock();

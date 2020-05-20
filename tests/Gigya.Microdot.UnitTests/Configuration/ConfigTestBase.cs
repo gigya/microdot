@@ -30,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             var cfg =
                 new HostConfiguration(
-                    new TestHostConfigurationSource(
+                    new TestHostEnvironmentSource(
                         "InfraTests"));
 
 

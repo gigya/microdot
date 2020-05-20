@@ -27,7 +27,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             
             public TestHost() : base(
                 new HostConfiguration(
-                    new TestHostConfigurationSource()))
+                    new TestHostEnvironmentSource()))
             {
             }
 
@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         {
             var host = new ServiceTester<TestHost>(
                 new HostConfiguration(
-                    new TestHostConfigurationSource()));
+                    new TestHostEnvironmentSource()));
 
             Assert.IsTrue(host.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
 

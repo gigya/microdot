@@ -61,7 +61,7 @@ namespace Gigya.Common.Application.UnitTests.Validation
             _serviceInterfaceMapper.ServiceInterfaceTypes.Returns(_ => _typesToValidate);
             _unitTesting = new MicrodotInitializer(
                 new HostConfiguration(
-                    new TestHostConfigurationSource()),
+                    new TestHostEnvironmentSource()),
                 new ConsoleLogLoggersModules(),
                 kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
             _serviceValidator = _unitTesting.Kernel.Get<SensitivityAttributesValidator>();

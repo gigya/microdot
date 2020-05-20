@@ -17,7 +17,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
         public async Task ValidatorCalledOnce()
         {
             IValidator validatorFake = Substitute.For<IValidator>();
-            ServiceHostFake<IValidator> srvHost = new ServiceHostFake<IValidator>(validatorFake, new HostConfiguration(new TestHostConfigurationSource()));
+            ServiceHostFake<IValidator> srvHost = new ServiceHostFake<IValidator>(validatorFake, new HostConfiguration(new TestHostEnvironmentSource()));
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
                 SiloClusterMode.PrimaryNode,
@@ -38,7 +38,7 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
                 SiloClusterMode.PrimaryNode,
                 DisposablePort.GetPort().Port, initTimeOutSec: 10);
             IWorkloadMetrics workloadMetricsFake = Substitute.For<IWorkloadMetrics>();
-            ServiceHostFake<IWorkloadMetrics> srvHost = new ServiceHostFake<IWorkloadMetrics>(workloadMetricsFake, new HostConfiguration(new TestHostConfigurationSource()));
+            ServiceHostFake<IWorkloadMetrics> srvHost = new ServiceHostFake<IWorkloadMetrics>(workloadMetricsFake, new HostConfiguration(new TestHostEnvironmentSource()));
             Task.Run(() => srvHost.Run(args));
             await srvHost.WaitForServiceStartedAsync();
             srvHost.Dispose();

@@ -17,7 +17,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public async Task InstanceReadyBeforeCallingMethod_Warmup()
         {
             ServiceTester<WarmupTestServiceHostWithSiloHostFake> tester = new ServiceTester<WarmupTestServiceHostWithSiloHostFake>(
-                new HostConfiguration(new TestHostConfigurationSource()));
+                new HostConfiguration(new TestHostEnvironmentSource()));
             var beforeGrainCreated = DateTime.Now;
 
             IWarmupTestServiceGrain grain = tester.GrainClient.GetGrain<IWarmupTestServiceGrain>(0);

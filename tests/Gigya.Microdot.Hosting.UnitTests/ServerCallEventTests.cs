@@ -29,7 +29,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             //Environment.SetEnvironmentVariable("ZONE", "zone");
             //Environment.SetEnvironmentVariable("ENV", "env");
 
-            var config = new HostConfiguration(new TestHostConfigurationSource(
+            var config = new HostConfiguration(new TestHostEnvironmentSource(
                 zone: "zone",
                 deploymentEnvironment: "env",
                 appName: "ICalculatorService"));

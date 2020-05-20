@@ -24,9 +24,9 @@ using System.Collections.Generic;
 using System.IO;
 using Gigya.Microdot.Interfaces.Configuration;
 
-namespace Gigya.Microdot.Hosting.Configuration
+namespace Gigya.Microdot.Hosting.Environment
 {
-    public interface IHostConfigurationSource
+    public interface IHostEnvironmentSource
     {
         string Zone { get; }
         string Region { get; }
@@ -35,6 +35,6 @@ namespace Gigya.Microdot.Hosting.Configuration
         CurrentApplicationInfo ApplicationInfo { get; }
         DirectoryInfo ConfigRoot { get; }
         FileInfo LoadPathsFile { get; }
-        IDictionary<string, string> CustomKeys { get; }
+        IDictionary<string, string> CustomVariables { get; }
     }
 }

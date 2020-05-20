@@ -30,7 +30,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic.Utils;
 
-namespace Gigya.Microdot.Hosting.Configuration
+namespace Gigya.Microdot.Hosting.Environment
 {
     // TODO: This should not be part of Microdot
     [ConfigurationRoot("dataCenters", RootStrategy.ReplaceClassNameWithPath)]
@@ -39,7 +39,7 @@ namespace Gigya.Microdot.Hosting.Configuration
         public string Current { get; set; }
     }
 
-    public class HostConfiguration : IEnvironment
+    public class HostEnvironment : IEnvironment
     {
         private const string GIGYA_CONFIG_ROOT_DEFAULT = "config";
         private const string LOADPATHS_JSON = "loadPaths.json";
@@ -48,22 +48,22 @@ namespace Gigya.Microdot.Hosting.Configuration
         private const string GIGYA_CONFIG_PATHS_FILE_KEY = "GIGYA_CONFIG_PATHS_FILE";
 
         // TODO: Add doc
-        public HostConfiguration(params IHostConfigurationSource[] sources)
-            : this(sources as IEnumerable<IHostConfigurationSource>) { }
+        public HostEnvironment(params IHostEnvironmentSource[] sources)
+            : this(sources as IEnumerable<IHostEnvironmentSource>) { }
 
-        public HostConfiguration(IEnumerable<IHostConfigurationSource> sources)
+        public HostEnvironment(IEnumerable<IHostEnvironmentSource> sources)
         {
-            customKeys = new Dictionary<string, string>();
+            customVariables = new Dictionary<string, string>();
 
             foreach (var s in sources)
             {
-                Zone = pipeParameter(nameof(Zone), Zone, s.Zone);
-                Region = pipeParameter(nameof(Region), Region, s.Region);
+                Zone                  = pipeParameter(nameof(Zone),                  Zone,                  s.Zone);
+                Region                = pipeParameter(nameof(Region),                Region,                s.Region);
                 DeploymentEnvironment = pipeParameter(nameof(DeploymentEnvironment), DeploymentEnvironment, s.DeploymentEnvironment);
-                ConsulAddress = pipeParameter(nameof(ConsulAddress), ConsulAddress, s.ConsulAddress);
-                ApplicationInfo = pipeParameter(nameof(ApplicationInfo), ApplicationInfo, s.ApplicationInfo);
-                ConfigRoot = pipeFsiParameter(nameof(ConfigRoot), ConfigRoot, s.ConfigRoot);
-                LoadPathsFile = pipeFsiParameter(nameof(LoadPathsFile), LoadPathsFile, s.LoadPathsFile);
+                ConsulAddress         = pipeParameter(nameof(ConsulAddress),         ConsulAddress,         s.ConsulAddress);
+                ApplicationInfo       = pipeParameter(nameof(ApplicationInfo),       ApplicationInfo,       s.ApplicationInfo);
+                ConfigRoot            = pipeFsiParameter(nameof(ConfigRoot),         ConfigRoot,            s.ConfigRoot);
+                LoadPathsFile         = pipeFsiParameter(nameof(LoadPathsFile),      LoadPathsFile,         s.LoadPathsFile);
 
                 consumeCustomKeys(s);
             }
@@ -93,12 +93,12 @@ namespace Gigya.Microdot.Hosting.Configuration
                     $"to the file or place a 'loadPaths.json' at your config root.");
             }
 
-            void consumeCustomKeys(IHostConfigurationSource cs)
+            void consumeCustomKeys(IHostEnvironmentSource cs)
             {
-                foreach (var k in cs.CustomKeys)
+                foreach (var k in cs.CustomVariables)
                 {
                     if (k.Value != null)
-                        customKeys[k.Key] = k.Value;
+                        customVariables[k.Key] = k.Value;
                 }
             }
 
@@ -127,7 +127,7 @@ namespace Gigya.Microdot.Hosting.Configuration
         }
 
         private DirectoryInfo GetDefaultConfigRoot() =>
-            Path.Combine(Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT)
+            Path.Combine(System.Environment.CurrentDirectory, GIGYA_CONFIG_ROOT_DEFAULT)
                 .To(x => new DirectoryInfo(x));
 
         private FileInfo GetDefaultPathsFile() =>
@@ -135,7 +135,7 @@ namespace Gigya.Microdot.Hosting.Configuration
                 .To(x => new FileInfo(x));
 
 
-        [Obsolete("Use the ApplicationInfo property instead. Will be removed in 4.0.")]
+        [Obsolete("Use the ApplicationInfo property instead. Will be removed in 3.0.")]
         public string InstanceName => ApplicationInfo.Name;
 
         public string Zone { get; }
@@ -147,13 +147,13 @@ namespace Gigya.Microdot.Hosting.Configuration
         public CurrentApplicationInfo ApplicationInfo { get; }
 
 
-        private readonly Dictionary<string, string> customKeys;
+        private readonly Dictionary<string, string> customVariables;
 
         public string this[string key]
         {
             get
             {
-                if (customKeys.TryGetValue(key, out var val))
+                if (customVariables.TryGetValue(key, out var val))
                     return val;
                 return null;
             }

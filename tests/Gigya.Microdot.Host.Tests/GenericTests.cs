@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Host.Tests
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
             var config = new HostConfiguration(
-                new TestHostConfigurationSource(
+                new TestHostEnvironmentSource(
                     region: "us1",
                     zone: "zone",
                     deploymentEnvironment: "_Test",
@@ -64,7 +64,7 @@ namespace Gigya.Microdot.Host.Tests
             
             var config =
                 new HostConfiguration(
-                    new TestHostConfigurationSource(
+                    new TestHostEnvironmentSource(
                         loadPathsFile: Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json").To(p => new FileInfo(p))));
 
             var host = new Ninject.Host.Host(
@@ -105,7 +105,7 @@ namespace Gigya.Microdot.Host.Tests
                 //var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
 
                 var host = new Ninject.Host.Host(
-                    new HostConfiguration(new TestHostConfigurationSource()),
+                    new HostConfiguration(new TestHostEnvironmentSource()),
                     new TestOrleansKernelConfigurator(),
                     new Version()
                     );

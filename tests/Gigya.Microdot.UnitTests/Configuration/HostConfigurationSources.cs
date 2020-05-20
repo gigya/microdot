@@ -1,4 +1,4 @@
-﻿using Gigya.Microdot.Hosting.Configuration;
+﻿using Gigya.Microdot.Hosting.Environment;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;

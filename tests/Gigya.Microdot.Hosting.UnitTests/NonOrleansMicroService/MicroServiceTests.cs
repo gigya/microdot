@@ -42,7 +42,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
             var config = new HostConfiguration(
-                new TestHostConfigurationSource(
+                new TestHostEnvironmentSource(
                     region: "us1",
                     zone: "zone",
                     deploymentEnvironment: "_Test"));

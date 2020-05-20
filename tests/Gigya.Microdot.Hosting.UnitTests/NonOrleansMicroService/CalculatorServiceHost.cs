@@ -18,7 +18,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 
         public CalculatorServiceHost() : base(
             new HostConfiguration(
-                new TestHostConfigurationSource(appName: "ICalculatorService")))
+                new TestHostEnvironmentSource(appName: "ICalculatorService")))
         {
         }
 

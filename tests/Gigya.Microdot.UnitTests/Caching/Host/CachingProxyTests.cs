@@ -40,7 +40,7 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
             {
                 var serviceTester = new NonOrleansServiceTester<SlowServiceHost>(
                         new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port),
-                        new HostConfiguration(new TestHostConfigurationSource()));
+                        new HostConfiguration(new TestHostEnvironmentSource()));
                 serviceTester.CommunicationKernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
                 Service = serviceTester.GetServiceProxyWithCaching<ISlowService>();
             }
