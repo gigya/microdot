@@ -44,12 +44,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
-        public TestHost() : base(new HostEnvironment(new TestHostEnvironmentSource()))
-        {
-        }
-
-        public string ServiceName => this.Host.HostEnvironment.ApplicationInfo.Name;
-
         public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();

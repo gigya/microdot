@@ -3,16 +3,13 @@ using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Ninject.Host;
 
 namespace CalculatorService.Orleans
 {
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        protected CalculatorServiceHost(HostEnvironment configuration) : base(configuration)
-        {
-        }
-
         public string ServiceName => nameof(CalculatorService);
 
         static void Main(string[] args)
@@ -30,7 +27,7 @@ namespace CalculatorService.Orleans
 
             try
             {
-                new CalculatorServiceHost(config).Run();
+                new Host(config, new CalculatorServiceHost(), new Version()).Run();
             }
             catch (Exception ex)
             {

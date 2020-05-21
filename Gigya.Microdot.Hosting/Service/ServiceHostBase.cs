@@ -33,22 +33,7 @@ using Gigya.Microdot.SharedLogic.SystemWrappers;
 
 namespace Gigya.Microdot.Hosting.Service
 {
-    [Obsolete("Use Gigya.Microdot.Ninject.Host.Host")]
-    public abstract class ServiceHostBase : IDisposable
-    {
-        public abstract void Run(ServiceArguments argsOverride = null);
-
-        /// <summary>
-        /// Waits for the service to finish starting.Mainly used from tests.
-        /// </summary>
-        public abstract Task WaitForServiceStartedAsync();
-
-        public abstract Task<StopResult> WaitForServiceGracefullyStoppedAsync();
-
-        public abstract void Stop();
-
-        public abstract void Dispose();
-    }
+    
     public enum StopResult { None, Graceful, Force}
 
 }

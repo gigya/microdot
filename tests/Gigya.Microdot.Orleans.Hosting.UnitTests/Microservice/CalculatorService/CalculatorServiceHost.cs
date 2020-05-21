@@ -39,20 +39,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-
-
-        public string ServiceName => this.Host.HostEnvironment.ApplicationInfo.Name;
-
         public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();
         }
 
         public IKernel Kernel;
-
-        public CalculatorServiceHost() : base(new HostEnvironment(new TestHostEnvironmentSource()))
-        {
-        }
 
         protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {

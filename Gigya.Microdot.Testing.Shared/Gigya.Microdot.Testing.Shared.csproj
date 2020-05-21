@@ -11,6 +11,7 @@
     <ProjectReference Include="..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
+    <ProjectReference Include="..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
     <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />

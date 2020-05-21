@@ -50,7 +50,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. Override
     /// <see cref="AfterOrleansStartup"/> to run initialization code after the silo starts.
     /// </summary>
-    public abstract class MicrodotOrleansServiceHost : ServiceHostBase, IKernelConfigurator //ServiceHostBase
+    public abstract class MicrodotOrleansServiceHost : IKernelConfigurator //ServiceHostBase
     {
         protected class OrleansConfigurator : IOrleansConfigurator
         {
@@ -67,49 +67,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             }
         }
 
-        public Microdot.Ninject.Host.Host Host { get; }
-
-        public ServiceArguments Arguments => this.Host.Arguments;
-
-        protected MicrodotOrleansServiceHost(HostEnvironment configuration)
-        {
-            this.Host = new Microdot.Ninject.Host.Host(
-                configuration,
-                this,
-                new Version());
-
-            this.Host.OnStopped += (s, a) => this.OnStop();
-            this.Host.OnStarted += (s, a) => this.OnStart();
-            this.Host.OnCrashed += (s, a) => this.OnCrash();
-        }
-
-        public override void Run(ServiceArguments argsOverride = null)
-        {
-            this.Host.Run(argsOverride);
-        }
-
-        public override Task WaitForServiceStartedAsync()
-        {
-            return this.Host.WaitForServiceStartedAsync();
-        }
-
-        public override void Stop()
-        {
-            this.Host.Stop();
-        }
-
-        public override Task<StopResult> WaitForServiceGracefullyStoppedAsync()
-        {
-            return this.Host.WaitForServiceGracefullyStoppedAsync();
-        }
-
-        public override void Dispose()
-        {
-            this.Host.Dispose();
-        }
-
         public abstract ILoggingModule GetLoggingModule();
-
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -118,36 +76,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// to prevent concrete services from overriding the common behaviour. 
         /// </summary>
         /// <param name="kernel"></param>
-        protected virtual void PreInitialize(IKernel kernel)
-        {
-            kernel.Get<SystemInitializer>().Init();
-            
-            // moved to Host
-            //CrashHandler = kernel.Get<ICrashHandler>();
-            //CrashHandler.Init(OnCrash);
-
-            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
-
-            var metricsInitializer = kernel.Get<IMetricsInitializer>();
-            metricsInitializer.Init();
-        }
+        protected virtual void PreInitialize(IKernel kernel) { }
 
         /// <summary>
         /// Extensibility point - this method is called after the Kernel is configured and before service starts
         /// processing incoming request.
         /// </summary>
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
-        protected virtual void OnInitilize(IKernel kernel)
-        {
-
-        }
-
-        protected virtual void Warmup(IKernel kernel)
-        {
-            IWarmup warmup = kernel.Get<IWarmup>();
-            warmup.Warmup();
-        }
+        protected virtual void OnInitilize(IKernel kernel) { }
 
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
@@ -170,14 +106,12 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             kernel.Bind<IRequestListener>().To<GigyaSiloHost>();
 
             GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
-
         }
 
         protected void Configure(IKernel kernel)
         {
             this.Configure(kernel, kernel.Get<OrleansCodeConfig>());
         }
-
 
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
@@ -188,19 +122,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         ///     infrastructure features you'd like to enable.</param>
         protected virtual void Configure(IKernel kernel, OrleansCodeConfig commonConfig) { }
 
-        protected virtual void OnStop()
+        protected virtual void Warmup(IKernel kernel)
         {
+            IWarmup warmup = kernel.Get<IWarmup>();
+            warmup.Warmup();
         }
-
-        protected virtual void OnCrash()
-        {
-        }
-
-        protected virtual void OnStart()
-        {
-        }
-
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
         /// <summary>
         /// When overridden, allows running startup code after the silo has started, i.e. IBootstrapProvider.Init().
@@ -208,8 +134,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>        
         protected virtual async Task AfterOrleansStartup(IGrainFactory grainFactory) { }
 
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-
+        #region IKernelConfigurator implementation
         void IKernelConfigurator.Configure(IKernel kernel)
         {
             this.Configure(kernel);
@@ -238,6 +163,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         void IKernelConfigurator.Warmup(IKernel kernel)
         {
             this.Warmup(kernel);
-        }
+        } 
+        #endregion
     }
 }

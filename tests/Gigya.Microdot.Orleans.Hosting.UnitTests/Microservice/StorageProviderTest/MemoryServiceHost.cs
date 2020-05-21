@@ -17,11 +17,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
 {
     public class MemoryServiceHost : MicrodotOrleansServiceHost
     {
-        public MemoryServiceHost() : base(
-            new HostEnvironment(
-                new TestHostEnvironmentSource(appName: "IMemoryService")))
-        {
-        }
         public string ServiceName => nameof(MemoryServiceHost);
 
         public override ILoggingModule GetLoggingModule()

@@ -27,10 +27,12 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
+using Ninject;
 using Orleans;
 using Orleans.Configuration;
 using System;
@@ -44,8 +46,12 @@ namespace Gigya.Microdot.Testing.Service
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
         private readonly Type _customSerializer;
-        public TServiceHost Host { get; private set; }
+        public Host Host { get; private set; }
         public Task SiloStopped { get; private set; }
+
+        public IOrleansConfigurator OrleansConfigurator { get; private set; }
+
+        public TServiceHost KernelConfigurator { get; private set; }
 
         private IClusterClient _clusterClient;
         
@@ -75,7 +81,11 @@ namespace Gigya.Microdot.Testing.Service
 
         private void Initialize()
         {
-            Host = new TServiceHost();
+            KernelConfigurator = new TServiceHost();
+            Host = new Host(this.HostEnvironment, KernelConfigurator, new Version());
+
+            Host.OnStarted += (sender, args) => { OrleansConfigurator = Host.Kernel.Get<IOrleansConfigurator>(); };
+            
 
             BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 

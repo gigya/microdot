@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Interfaces;
 
 namespace Gigya.Microdot.Ninject.Host
 {
@@ -53,7 +54,7 @@ namespace Gigya.Microdot.Ninject.Host
         public event EventHandler<HostEventArgs> OnCrashing = (o, a) => { };
         public event EventHandler<HostEventArgs> OnCrashed  = (o, a) => { };
 
-        private IKernel Kernel { get; set; }
+        public IKernel Kernel { get; set; }
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -112,8 +113,16 @@ namespace Gigya.Microdot.Ninject.Host
 
             this.kernelConfigurator.PreInitialize(Kernel);
 
+            Kernel.Get<SystemInitializer.SystemInitializer>().Init();
+
             CrashHandler = Kernel.Get<ICrashHandler>();
             CrashHandler.Init(OnCrash);
+
+            IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
+
+            var metricsInitializer = Kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
 
             this.kernelConfigurator.OnInitilize(Kernel);
 

@@ -21,11 +21,6 @@ namespace Gigya.Microdot.UnitTests
 {
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
-        public TestingHost() : base(new HostEnvironment(new TestHostEnvironmentSource(appName: GenerateServiceName())))
-        {
-            
-        }
-
         private static string GenerateServiceName()
         {
             // Last word is good enought for randomization, but easier to follow
@@ -34,7 +29,6 @@ namespace Gigya.Microdot.UnitTests
 
         public T Instance { get; private set; }
 
-        public string ServiceName => this.Host.HostEnvironment.ApplicationInfo.Name;
 
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }

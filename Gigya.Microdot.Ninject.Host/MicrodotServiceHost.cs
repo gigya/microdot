@@ -44,69 +44,20 @@ namespace Gigya.Microdot.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. 
     /// </summary>
     /// <typeparam name="TInterface">The interface of the service.</typeparam>
-    public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase, IKernelConfigurator
+    public abstract class MicrodotServiceHost<TInterface> : IKernelConfigurator
     {
-        private bool disposed;
-
-        private readonly object disposeLockHandle = new object();
-
-        //private IKernel Kernel { get; set; }
-
-        //private HttpServiceListener Listener { get; set; }
-
-        public Host Host { get; }
-
-        public ServiceArguments Arguments => this.Host.Arguments;
-
         /// <summary>
         /// Creates a new instance of <see cref="MicrodotServiceHost{TInterface}"/>
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when the provided type provided for the <typeparamref name="TInterface" />
         /// generic argument is not an interface.</exception>
-        protected MicrodotServiceHost(HostEnvironment configuration)
+        protected MicrodotServiceHost()
         {
             if (typeof(TInterface).IsInterface == false)
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
-
-            this.Host = new Host(
-                configuration,
-                this,
-                // TODO: what version should be passed?
-                new Version());
-
-            this.Host.OnStopped += (s, a) => this.OnStop();
-            this.Host.OnStarted += (s, a) => this.OnStart();
-            this.Host.OnCrashed += (s, a) => this.OnCrash();
-        }
-
-        public override void Run(ServiceArguments argsOverride = null)
-        {
-            this.Host.Run(argsOverride);
-        }
-
-        public override Task WaitForServiceStartedAsync()
-        {
-            return this.Host.WaitForServiceStartedAsync();
-        }
-
-        public override Task<StopResult> WaitForServiceGracefullyStoppedAsync()
-        {
-            return this.Host.WaitForServiceGracefullyStoppedAsync();
-        }
-
-        public override void Stop()
-        {
-            this.Host.Stop();
-        }
-
-        public override void Dispose()
-        {
-            this.Host.Dispose();
         }
 
         protected abstract ILoggingModule GetLoggingModule();
-
-
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -115,30 +66,14 @@ namespace Gigya.Microdot.Ninject.Host
         /// to prevent concrete services from overriding the common behavior. 
         /// </summary>
         /// <param name="kernel"></param>
-        protected virtual void PreInitialize(IKernel kernel)
-        {
-            kernel.Get<SystemInitializer.SystemInitializer>().Init();
-
-            // moved to Host
-            //CrashHandler = kernel.Get<ICrashHandler>();
-            //CrashHandler.Init(OnCrash);
-
-            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
-
-            var metricsInitializer = kernel.Get<IMetricsInitializer>();
-            metricsInitializer.Init();
-        }
+        protected virtual void PreInitialize(IKernel kernel) { }
 
         /// <summary>
         /// Extensibility point - this method is called after the Kernel is configured and before service starts
         /// processing incoming request.
         /// </summary>
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
-        protected virtual void OnInitilize(IKernel kernel)
-        {
-
-        }
+        protected virtual void OnInitilize(IKernel kernel) { }
 
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
@@ -177,23 +112,9 @@ namespace Gigya.Microdot.Ninject.Host
             this.Configure(kernel, kernel.Get<BaseCommonConfig>());
         }
 
-        protected virtual void Warmup(IKernel kernel)
-        {
+        protected virtual void Warmup(IKernel kernel) { }
 
-        }
-
-        protected virtual void OnStop()
-        {
-        }
-
-        protected virtual void OnCrash()
-        {
-        }
-
-        protected virtual void OnStart()
-        {
-        }
-
+        #region IKernelConfiguration implementation
         void IKernelConfigurator.Configure(IKernel kernel)
         {
             this.Configure(kernel);
@@ -222,6 +143,7 @@ namespace Gigya.Microdot.Ninject.Host
         void IKernelConfigurator.Warmup(IKernel kernel)
         {
             this.Warmup(kernel);
-        }
+        } 
+        #endregion
     }
 }

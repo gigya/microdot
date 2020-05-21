@@ -14,10 +14,6 @@ namespace CalculatorService
 
     class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        protected CalculatorServiceHost(HostEnvironment configuration) : base(configuration)
-        {
-        }
-
         public string ServiceName => "CalculatorService";
 
         static void Main(string[] args)
@@ -35,7 +31,7 @@ namespace CalculatorService
 
             try
             {
-                new CalculatorServiceHost(config).Run();
+                new Host(config, new CalculatorServiceHost(), new Version()).Run();
             }
             catch (Exception ex)
             {

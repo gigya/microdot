@@ -25,16 +25,18 @@
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using System;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
-    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
+    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : IKernelConfigurator, new()
     {
-        public TServiceHost Host = new TServiceHost();
+        public Host Host;
         private Task _hostStopped;
+        public TServiceHost KernelConfigurator;
 
         public NonOrleansServiceTester(HostEnvironment config) : base(config)
         {
@@ -58,7 +60,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             BasePort = serviceArguments.BasePortOverride.Value;
 
-            Host = new TServiceHost();
+            KernelConfigurator = new TServiceHost();
+            Host = new Host(this.HostEnvironment, KernelConfigurator, new Version());
 
             _hostStopped = Task.Run(() => Host.Run(serviceArguments));
 
