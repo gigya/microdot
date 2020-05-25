@@ -17,6 +17,8 @@ Microsoft.Orleans.OrleansZooKeeperUtils
 Microsoft.Orleans.Server
 Microsoft.Orleans.OrleansTelemetryConsumers.Counters
 Gigya.OrleansDashboard
+# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
+System.Text.Json
 
 
 
