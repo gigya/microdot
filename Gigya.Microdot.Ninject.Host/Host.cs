@@ -111,7 +111,6 @@ namespace Gigya.Microdot.Ninject.Host
             this.kernelConfigurator.PreConfigure(Kernel, Arguments);
             this.kernelConfigurator.Configure(Kernel);
 
-            this.kernelConfigurator.PreInitialize(Kernel);
 
             Kernel.Get<SystemInitializer.SystemInitializer>().Init();
 
@@ -123,6 +122,8 @@ namespace Gigya.Microdot.Ninject.Host
 
             var metricsInitializer = Kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
+            
+            this.kernelConfigurator.PreInitialize(Kernel);
 
             this.kernelConfigurator.OnInitilize(Kernel);
 

@@ -54,16 +54,16 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     {
         protected class OrleansConfigurator : IOrleansConfigurator
         {
-            private readonly MicrodotOrleansServiceHost host;
+            private readonly MicrodotOrleansServiceHost configurator;
 
-            public OrleansConfigurator(MicrodotOrleansServiceHost host)
+            public OrleansConfigurator(MicrodotOrleansServiceHost onfigurator)
             {
-                this.host = host ?? throw new ArgumentNullException(nameof(host));
+                this.configurator = onfigurator ?? throw new ArgumentNullException(nameof(onfigurator));
             }
 
             public Task AfterOrleansStartup(IGrainFactory grainFactory)
             {
-                return this.host.AfterOrleansStartup(grainFactory);
+                return this.configurator.AfterOrleansStartup(grainFactory);
             }
         }
 
