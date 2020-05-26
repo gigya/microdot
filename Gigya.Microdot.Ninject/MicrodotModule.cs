@@ -39,6 +39,7 @@ using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Ninject;
@@ -95,13 +96,13 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.BindPerKey<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery, MultiEnvironmentServiceDiscovery>();
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
-            Kernel.Bind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => (useHttps, securityRole) =>
+            Kernel.Bind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => HttpClientConfiguration =>
             {
                 var clientHandler = new HttpClientHandler();
-                if (useHttps)
+                if (HttpClientConfiguration.UseHttps)
                 {
                     var httpAuthenticator = c.Kernel.Get<IHttpsAuthenticator>();
-                    httpAuthenticator.AddHttpMessageHandlerAuthentication(clientHandler, securityRole);
+                    httpAuthenticator.AddHttpMessageHandlerAuthentication(clientHandler, HttpClientConfiguration);
                 }
                 return clientHandler;
             });

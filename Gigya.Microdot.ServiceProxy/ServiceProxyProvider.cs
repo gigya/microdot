@@ -110,7 +110,7 @@ namespace Gigya.Microdot.ServiceProxy
         private DateTime _lastHttpsTestTime = DateTime.MinValue;
         private readonly TimeSpan _httpsTestInterval = TimeSpan.FromMinutes(1);
 
-        private readonly Func<bool, string, HttpMessageHandler> _httpMessageHandlerFactory;
+        private readonly Func<HttpClientConfiguration, HttpMessageHandler> _httpMessageHandlerFactory;
 
         public const string METRICS_CONTEXT_NAME = "ServiceProxy";
 
@@ -123,7 +123,7 @@ namespace Gigya.Microdot.ServiceProxy
 
         private object HttpClientLock { get; } = new object();
         private HttpClient LastHttpClient { get; set; }
-        private (bool useHttps, string securityRole, TimeSpan? timeout)? LastHttpClientKey { get; set; }
+        private HttpClientConfiguration? LastHttpClientKey { get; set; }
 
         private bool Disposed { get; set; }
 
@@ -135,7 +135,7 @@ namespace Gigya.Microdot.ServiceProxy
             Func<DiscoveryConfig> getConfig,
             JsonExceptionSerializer exceptionSerializer, 
             CurrentApplicationInfo appInfo,
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory)
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory)
         {
             EventPublisher = eventPublisher;
 
@@ -175,7 +175,9 @@ namespace Gigya.Microdot.ServiceProxy
             var forceHttps = serviceConfig.UseHttpsOverride ?? (ServiceInterfaceRequiresHttps || defaultConfig.UseHttpsOverride);
             var useHttps = tryHttps || forceHttps;
             string securityRole = serviceConfig.SecurityRole;
-            (bool useHttps, string securityRole, TimeSpan? requestTimeout) httpKey = (useHttps, securityRole, serviceConfig.RequestTimeout);
+            var verificationMode = serviceConfig.PerformClientCertificateVerification ??
+                                   defaultConfig.PerformClientCertificateVerification;
+            var httpKey = new HttpClientConfiguration(useHttps, securityRole, serviceConfig.RequestTimeout, verificationMode);
 
             lock (HttpClientLock)
             {
@@ -183,29 +185,33 @@ namespace Gigya.Microdot.ServiceProxy
                     return ( httpClient: LastHttpClient, isHttps: useHttps);
 
                 // In case we're trying HTTPs and the previous request on this instance was HTTP (or if this is the first request)
-                if (Not(forceHttps) && httpKey.useHttps && Not(LastHttpClientKey?.useHttps ?? false))
+                if (Not(forceHttps) && httpKey.UseHttps && Not(LastHttpClientKey?.UseHttps ?? false))
                 {
                     var now = DateTime.Now;
                     if (now - _lastHttpsTestTime > _httpsTestInterval)
                     {
                         _lastHttpsTestTime = now;
-                        RunHttpsAvailabilityTest(httpKey.securityRole, httpKey.requestTimeout, hostname, basePort);
+                        RunHttpsAvailabilityTest(httpKey, hostname, basePort);
                     }
 
-                    httpKey = (useHttps: false, securityRole: null, httpKey.requestTimeout);
+                    httpKey = new HttpClientConfiguration(
+                        useHttps: false, 
+                        securityRole: null, 
+                        timeout:httpKey.Timeout, 
+                        verificationMode:httpKey.VerificationMode);
                 }
 
                 if (!(LastHttpClientKey?.Equals(httpKey) ?? false))
                 {
-                    var messageHandler = _httpMessageHandlerFactory(httpKey.useHttps, httpKey.securityRole);
-                    var httpClient = CreateHttpClient(messageHandler, httpKey.requestTimeout);
+                    var messageHandler = _httpMessageHandlerFactory(httpKey);
+                    var httpClient = CreateHttpClient(messageHandler, httpKey.Timeout);
 
                     LastHttpClient = httpClient;
                     LastHttpClientKey = httpKey;
                     _httpMessageHandler = messageHandler;
                 }
 
-                return (httpClient: LastHttpClient, isHttps: httpKey.useHttps);
+                return (httpClient: LastHttpClient, isHttps: httpKey.UseHttps);
             }
         }
 
@@ -219,23 +225,33 @@ namespace Gigya.Microdot.ServiceProxy
             return httpClient;
         }
 
-        private async Task RunHttpsAvailabilityTest(string securityRole, TimeSpan? requestTimeout, string hostname, int basePort)
+        private async Task RunHttpsAvailabilityTest(HttpClientConfiguration configuration, string hostname, int basePort)
         {
             try
             {
-                HttpMessageHandler messageHandler = _httpMessageHandlerFactory(true, securityRole);
+                var clientConfiguration = new HttpClientConfiguration(
+                    useHttps:true,
+                    configuration.SecurityRole,
+                    configuration.Timeout,
+                    configuration.VerificationMode
+                    );
+                HttpMessageHandler messageHandler = null;
                 HttpClient httpsClient = null;
                 await ValidateReachability(hostname, basePort, fallbackOnProtocolError: false, clientFactory: _ =>
                 {
-                    messageHandler = _httpMessageHandlerFactory(true, securityRole);
-                    httpsClient = CreateHttpClient(messageHandler, requestTimeout);
+                    messageHandler = _httpMessageHandlerFactory(clientConfiguration);
+                    httpsClient = CreateHttpClient(messageHandler, configuration.Timeout);
                     return (httpsClient, isHttps: true);
                 }, cancellationToken: CancellationToken.None);
 
                 lock (HttpClientLock)
                 {
                     LastHttpClient = httpsClient;
-                    LastHttpClientKey = (useHttps: true, securityRole, requestTimeout);
+                    LastHttpClientKey = new HttpClientConfiguration(
+                        useHttps: true, 
+                        configuration.SecurityRole, 
+                        configuration.Timeout,
+                        configuration.VerificationMode);
                     _httpMessageHandler = messageHandler;
                 }
             }
@@ -591,4 +607,5 @@ namespace Gigya.Microdot.ServiceProxy
             Disposed = true;
         }
     }
+
 }

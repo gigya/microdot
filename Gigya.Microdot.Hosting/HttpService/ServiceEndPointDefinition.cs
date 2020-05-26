@@ -108,6 +108,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             // Use service configuration if exists, if not use global configuration
             UseSecureChannel = serviceConfig.UseHttpsOverride ?? config.UseHttpsOverride;
 
+            ClientCertificateVerification = serviceConfig.PerformServerClientCertificateVerification ??
+                                            config.PerformServerClientCertificateVerification;
+
             if (config.PortAllocation.IsSlotMode == false && serviceArguments.SlotNumber == null)
             {
                 if (interfacePorts.Select(x => x.BasePort).Distinct().Count() > 1)
@@ -174,6 +177,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                 GetMetaData(method);
             }
         }
+
+        public ServerClientCertificateVerificationMode ClientCertificateVerification { get;}
 
 
         public ServiceMethod Resolve(InvocationTarget target)
