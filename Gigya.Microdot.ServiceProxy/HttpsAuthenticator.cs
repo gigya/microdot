@@ -54,6 +54,11 @@ namespace Gigya.Microdot.ServiceProxy
 
             clientHandler.ServerCertificateCustomValidationCallback = (sender, serverCertificate, serverChain, errors) =>
             {
+                //This is the case we intentionally ignore SSL errors, should only be used as an hotfix to prevent production downtime 
+                if (configuration.VerificationMode == ClientCertificateVerificationMode.Disable)
+                {
+                    return true;
+                }
                 switch (errors)
                 {
                     case SslPolicyErrors.RemoteCertificateNotAvailable:
