@@ -75,9 +75,8 @@ namespace Gigya.Microdot.ServiceProxy
                             log(sb.ToString());
                         });
                         return false;
-                    case SslPolicyErrors.RemoteCertificateNameMismatch: // by design domain name do not match name of certificate, so RemoteCertificateNameMismatch is not an error.
-                        //TODO: verify we get here when not supplying with client certificate
-                        Console.WriteLine("!!! DELETE THIS !!!");
+                    case SslPolicyErrors.RemoteCertificateNameMismatch: 
+                        //We are now using wildcard certificates and expected cert name to match host name e.g. foo.gigya.net matches *.gigya.net
                         if (configuration.VerificationMode.HasFlag(ClientCertificateVerificationMode
                             .VerifyDomain))
                         {
