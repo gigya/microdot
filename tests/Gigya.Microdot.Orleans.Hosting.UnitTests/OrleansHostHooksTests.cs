@@ -24,7 +24,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         private class TestHost : MicrodotOrleansServiceHost
         {
             public bool AfterOrleansCalled = false;
-            
+
+            public TestHost() : base(
+                new HostEnvironment(
+                    new TestHostEnvironmentSource()), new Version())
+            {
+            }
+
             public override ILoggingModule GetLoggingModule()
             {
                 return new FakesLoggersModules();
@@ -52,7 +58,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 new HostEnvironment(
                     new TestHostEnvironmentSource()));
 
-            Assert.IsTrue(tester.KernelConfigurator.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
+            Assert.IsTrue(tester.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
 
             tester.Dispose();
         }

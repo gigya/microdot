@@ -21,6 +21,13 @@ namespace Gigya.Microdot.UnitTests
 {
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
+        public TestingHost() : base(
+            new HostEnvironment(
+                new TestHostEnvironmentSource()),
+            new Version())
+        {
+        }
+
         private static string GenerateServiceName()
         {
             // Last word is good enought for randomization, but easier to follow

@@ -32,11 +32,10 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
-    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : IKernelConfigurator, new()
+    public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
-        public Host Host;
+        public TServiceHost Host;
         private Task _hostStopped;
-        public TServiceHost KernelConfigurator;
 
         public NonOrleansServiceTester(HostEnvironment config) : base(config)
         {
@@ -60,10 +59,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             BasePort = serviceArguments.BasePortOverride.Value;
 
-            KernelConfigurator = new TServiceHost();
-            Host = new Host(this.HostEnvironment, KernelConfigurator, new Version());
+            Host = new TServiceHost();
 
-            _hostStopped = Task.Run(() => Host.Run(serviceArguments));
+            this._hostStopped = Task.Run(() => this.Host.Run((ServiceArguments)serviceArguments));
 
             Task.WaitAny(_hostStopped, Host.WaitForServiceStartedAsync());
 

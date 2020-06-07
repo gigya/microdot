@@ -26,8 +26,8 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
         public string ServiceName => nameof(IServiceFake).Substring(1);
 
         private TFake _fake;
-        public ServiceHostFake(TFake fake)
-            : base()
+        public ServiceHostFake(TFake fake, HostEnvironment environment)
+            : base(environment, new System.Version())
         {
             _fake = fake;
         }

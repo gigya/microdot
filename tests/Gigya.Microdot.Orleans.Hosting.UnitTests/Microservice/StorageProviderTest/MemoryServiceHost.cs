@@ -31,6 +31,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
             kernel.RebindForTests();
         }
         public const string MemoryStorageProvider = "MemoryStorageProvider";
+
+        public MemoryServiceHost() : base(
+            new HostEnvironment(
+                    new TestHostEnvironmentSource(appName: "IMemoryService")), 
+            new System.Version())
+        {
+        }
+
         protected override void OnInitilize(IKernel kerenl)
        {
             base.OnInitilize(kerenl);

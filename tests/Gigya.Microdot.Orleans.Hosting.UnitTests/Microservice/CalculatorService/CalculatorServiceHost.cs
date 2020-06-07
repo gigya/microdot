@@ -46,6 +46,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public IKernel Kernel;
 
+        public CalculatorServiceHost() : base(new HostEnvironment(new TestHostEnvironmentSource()), new Version())
+        {
+        }
+
         protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             base.PreConfigure(kernel, Arguments);

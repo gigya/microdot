@@ -14,6 +14,18 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
     {
         public IKernel Kernel;
 
+        public CalculatorServiceHost() : base(
+            new HostEnvironment(new TestHostEnvironmentSource(
+                zone: "zone",
+                deploymentEnvironment: "env",
+                appName: "ICalculatorService")), 
+            new System.Version())
+        {
+        }
+
+        public CalculatorServiceHost(HostEnvironment environment, System.Version version)
+            : base(environment, version) { }
+
         protected override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();

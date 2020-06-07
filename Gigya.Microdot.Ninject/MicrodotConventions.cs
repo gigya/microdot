@@ -53,11 +53,15 @@ namespace Gigya.Microdot.Ninject
                 list.AddRange(conventionIgnore);
             }
 
+            
+
             bindingRoot.Bind(x =>
                 {
-                    x.FromAssemblyContaining(assemblies)
-                    .SelectAllClasses()
-                    .Where(t => list.All(nonSingletonType => nonSingletonType.IsAssignableFrom(t) == false))
+                    var types = x.FromAssemblyContaining(assemblies)
+                        .SelectAllClasses()
+                        .Where(t => list.All(nonSingletonType => nonSingletonType.IsAssignableFrom(t) == false));
+
+                    types
                     .BindToSelf()
                     .Configure(c => c.InSingletonScope());
                 });

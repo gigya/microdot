@@ -347,6 +347,12 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
         public class SlowServiceHost : MicrodotServiceHost<ISlowService>
         {
+            public SlowServiceHost() : base(
+                new HostEnvironment(
+                    new TestHostEnvironmentSource()), 
+                new Version())
+            {
+            }
 
             public string ServiceName => nameof(ISlowService).Substring(1);
 

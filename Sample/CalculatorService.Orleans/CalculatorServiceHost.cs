@@ -10,6 +10,10 @@ namespace CalculatorService.Orleans
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
+        public CalculatorServiceHost(HostEnvironment environment, Version infraVersion) : base(environment, infraVersion)
+        {
+        }
+
         public string ServiceName => nameof(CalculatorService);
 
         static void Main(string[] args)
@@ -20,14 +24,16 @@ namespace CalculatorService.Orleans
             Environment.SetEnvironmentVariable("REGION", "us1");
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
+            Environment.SetEnvironmentVariable("CONSUL", "addr");
 
-            var config = 
+            var config =
                 new HostEnvironment(
-                    new EnvironmentVarialbesConfigurationSource());
+                    new EnvironmentVarialbesConfigurationSource(),
+                    new ApplicationInfoSource(new Gigya.Microdot.Interfaces.Configuration.CurrentApplicationInfo(nameof(CalculatorService), Environment.UserName, System.Net.Dns.GetHostName())));
 
             try
             {
-                new Host(config, new CalculatorServiceHost(), new Version()).Run();
+                new CalculatorServiceHost(config, new Version()).Run();
             }
             catch (Exception ex)
             {

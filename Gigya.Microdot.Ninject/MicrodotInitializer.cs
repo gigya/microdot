@@ -39,6 +39,5 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel?.Dispose();
         }
-
     }
 }

@@ -46,25 +46,15 @@ namespace Gigya.Microdot.Testing.Service
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
         private readonly Type _customSerializer;
-        public Host Host { get; private set; }
+        public TServiceHost Host { get; private set; }
         public Task SiloStopped { get; private set; }
 
-        public IOrleansConfigurator OrleansConfigurator { get; private set; }
-
-        public TServiceHost KernelConfigurator { get; private set; }
 
         private IClusterClient _clusterClient;
         
         private readonly object _locker = new object();
 
         public ServiceArguments ServiceArguments{ get; private set; }
-
-        [Obsolete("Use constructor with explicit configuration.")]
-        public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
-            : this(new HostEnvironment(new TestHostEnvironmentSource()), serviceArguments, customSerializer)
-        {
-
-        }
 
         public ServiceTester(HostEnvironment hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
         {
@@ -81,15 +71,11 @@ namespace Gigya.Microdot.Testing.Service
 
         private void Initialize()
         {
-            KernelConfigurator = new TServiceHost();
-            Host = new Host(this.HostEnvironment, KernelConfigurator, new Version());
-
-            Host.OnStarted += (sender, args) => { OrleansConfigurator = Host.Kernel.Get<IOrleansConfigurator>(); };
-            
+            Host = new TServiceHost();
 
             BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
+            this.SiloStopped = Task.Run(() => this.Host.Run((ServiceArguments)this.ServiceArguments));
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());

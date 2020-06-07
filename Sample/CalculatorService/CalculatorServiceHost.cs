@@ -14,6 +14,10 @@ namespace CalculatorService
 
     class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
+        protected CalculatorServiceHost(HostEnvironment environment) : base(environment, new Version())
+        {
+        }
+
         public string ServiceName => "CalculatorService";
 
         static void Main(string[] args)
@@ -25,13 +29,13 @@ namespace CalculatorService
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
 
-            var config =
+            var env =
                 new HostEnvironment(
                     new EnvironmentVarialbesConfigurationSource());
 
             try
             {
-                new Host(config, new CalculatorServiceHost(), new Version()).Run();
+                new CalculatorServiceHost(env);
             }
             catch (Exception ex)
             {
@@ -45,5 +49,6 @@ namespace CalculatorService
         {
             kernel.Bind<ICalculatorService>().To<CalculatorService>();
         }
+
     }
 }

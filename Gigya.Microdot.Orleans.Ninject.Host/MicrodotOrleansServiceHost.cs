@@ -23,6 +23,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
@@ -50,21 +51,94 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. Override
     /// <see cref="AfterOrleansStartup"/> to run initialization code after the silo starts.
     /// </summary>
-    public abstract class MicrodotOrleansServiceHost : IKernelConfigurator //ServiceHostBase
+    public abstract class MicrodotOrleansServiceHost : ServiceHostBase
     {
-        protected class OrleansConfigurator : IOrleansConfigurator
+        public IKernel Kernel;
+
+        private IRequestListener requestListener;
+
+        public MicrodotOrleansServiceHost(HostEnvironment environment, Version infraVersion) : base(environment, infraVersion)
         {
-            private readonly MicrodotOrleansServiceHost configurator;
+        }
 
-            public OrleansConfigurator(MicrodotOrleansServiceHost onfigurator)
+        protected override void OnStart()
+        {
+            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
+            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
+
+            this.PreConfigure(Kernel, Arguments);
+            this.Configure(Kernel);
+
+            Kernel.Get<SystemInitializer>().Init();
+
+            CrashHandler = Kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
+
+            IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
+
+            var metricsInitializer = Kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
+
+            this.PreInitialize(Kernel);
+
+            this.OnInitilize(Kernel);
+
+            this.Warmup(Kernel);
+
+            //don't move up the get should be after all the binding are done
+            var log = Kernel.Get<ILog>();
+
+            this.requestListener = Kernel.Get<IRequestListener>();
+            this.requestListener.Listen();
+
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostEnvironment.ApplicationInfo.HostName }));
+        }
+
+        protected override void OnStop()
+        {
+            if (Arguments.ServiceDrainTimeSec.HasValue)
             {
-                this.configurator = onfigurator ?? throw new ArgumentNullException(nameof(onfigurator));
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+            }
+            Kernel.Get<SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
+
+            this.requestListener.Stop();
+
+            try
+            {
+                Kernel.Get<ILog>().Info(x => x($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies."));
+            }
+            catch
+            {
+                Console.WriteLine($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies.");
             }
 
-            public Task AfterOrleansStartup(IGrainFactory grainFactory)
-            {
-                return this.configurator.AfterOrleansStartup(grainFactory);
-            }
+            Dispose();
+        }
+
+        /// <summary>
+        /// An extensibility point - this method is called in process of configuration objects verification.
+        /// </summary>
+        protected override void OnVerifyConfiguration()
+        {
+            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
+            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
+
+            Kernel.Load(
+                new ConfigVerificationModule(
+                    this.GetLoggingModule(),
+                    Arguments,
+                    this.HostEnvironment.ApplicationInfo.Name,
+                    InfraVersion));
+
+            VerifyConfiguration(Kernel.Get<ConfigurationVerificator>());
         }
 
         public abstract ILoggingModule GetLoggingModule();
@@ -128,42 +202,33 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             warmup.Warmup();
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (!Kernel.IsDisposed && !disposing)
+                SafeDispose(Kernel);
+
+            base.Dispose(disposing);
+        }
+
         /// <summary>
         /// When overridden, allows running startup code after the silo has started, i.e. IBootstrapProvider.Init().
         /// </summary>
         /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>        
         protected virtual async Task AfterOrleansStartup(IGrainFactory grainFactory) { }
 
-        #region IKernelConfigurator implementation
-        void IKernelConfigurator.Configure(IKernel kernel)
+        protected class OrleansConfigurator : IOrleansConfigurator
         {
-            this.Configure(kernel);
-        }
+            private readonly MicrodotOrleansServiceHost configurator;
 
-        ILoggingModule IKernelConfigurator.GetLoggingModule()
-        {
-            return this.GetLoggingModule();
-        }
+            public OrleansConfigurator(MicrodotOrleansServiceHost onfigurator)
+            {
+                this.configurator = onfigurator ?? throw new ArgumentNullException(nameof(onfigurator));
+            }
 
-        void IKernelConfigurator.OnInitilize(IKernel kernel)
-        {
-            this.OnInitilize(kernel);
+            public Task AfterOrleansStartup(IGrainFactory grainFactory)
+            {
+                return this.configurator.AfterOrleansStartup(grainFactory);
+            }
         }
-
-        void IKernelConfigurator.PreConfigure(IKernel kernel, ServiceArguments Arguments)
-        {
-            this.PreConfigure(kernel, Arguments);
-        }
-
-        void IKernelConfigurator.PreInitialize(IKernel kernel)
-        {
-            this.PreInitialize(kernel);
-        }
-
-        void IKernelConfigurator.Warmup(IKernel kernel)
-        {
-            this.Warmup(kernel);
-        } 
-        #endregion
     }
 }
