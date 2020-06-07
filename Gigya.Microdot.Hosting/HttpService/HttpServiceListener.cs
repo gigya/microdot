@@ -522,6 +522,11 @@ namespace Gigya.Microdot.Hosting.HttpService
                     unencrypted: new Tags { { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
             }
 
+            if (ServiceEndPointDefinition.ClientCertificateVerification == ServerClientCertificateVerificationMode.Disable)
+            {
+                return; 
+            }
+
             var clientCertificate = await context.Request.GetClientCertificateAsync();
 
             if (clientCertificate == null)

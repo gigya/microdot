@@ -44,6 +44,8 @@ nuget Microsoft.Orleans.Server  ~> 3
 nuget Microsoft.Orleans.Core.Abstractions ~> 3
 nuget Microsoft.Orleans.Connections.Security ~> 3
 nuget Gigya.OrleansDashboard ~> 3
+# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
+nuget System.Text.Json >= 4.7.1
 #nuget OrleansDashboard 2.4.5
 
 #nuget Microsoft.Extensions.Configuration ~> 3

@@ -24,10 +24,12 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("ZONE", "us1a");
                 Environment.SetEnvironmentVariable("ENV", "dev");
                 Environment.SetEnvironmentVariable("GIGYA_BASE_PATH", Environment.CurrentDirectory);
-
+                Environment.SetEnvironmentVariable("Consul", "not-real-url");
                 using (var microdotInitializer = new MicrodotInitializer(
                     // TODO: make correct config
-                    new HostEnvironment(null),
+                    new HostEnvironment(new EnvironmentVarialbesConfigurationSource(),
+                        new ApplicationInfoSource(
+                            new CurrentApplicationInfo("test-client", Environment.UserName, Dns.GetHostName()))),
                     new NLogModule()))
                 {
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
@@ -41,8 +43,8 @@ namespace CalculatorService.Client
                         }
                         catch (Exception e)
                         {
-                          ////  Console.WriteLine(e);
-                          //  throw;
+                            Console.WriteLine(e);
+                            throw;
                         }
                     }
              

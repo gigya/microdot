@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Net;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Ninject.Host;
+
+using Gigya.Microdot.Interfaces.Configuration;
 
 namespace CalculatorService.Orleans
 {
@@ -24,12 +27,12 @@ namespace CalculatorService.Orleans
             Environment.SetEnvironmentVariable("REGION", "us1");
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
-            Environment.SetEnvironmentVariable("CONSUL", "addr");
-
-            var config =
+            Environment.SetEnvironmentVariable("Consul", "not-real-url");
+            var config = 
                 new HostEnvironment(
                     new EnvironmentVarialbesConfigurationSource(),
-                    new ApplicationInfoSource(new Gigya.Microdot.Interfaces.Configuration.CurrentApplicationInfo(nameof(CalculatorService), Environment.UserName, System.Net.Dns.GetHostName())));
+                    new ApplicationInfoSource(
+                        new CurrentApplicationInfo(nameof(CalculatorService), Environment.UserName, Dns.GetHostName())));
 
             try
             {
