@@ -163,14 +163,10 @@ namespace Gigya.Microdot.Orleans.Hosting
                 hostBuilder.UseTls(localCertificate, tlsOptions =>
                 {
                     tlsOptions.LocalCertificate = localCertificate;
-                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.RequireCertificate;
+                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.NoCertificate;
                     tlsOptions.RemoteCertificateMode = RemoteCertificateMode.RequireCertificate;
                     
                     tlsOptions.SslProtocols = SslProtocols.Tls12;
-
-                    // Verify that remote certificate is exactly the same as the local certificate;
-                    tlsOptions.RemoteCertificateValidation = (certificate, chain, errors) =>
-                        certificate.GetCertHash().SequenceEqual(localCertificateHash);
                 });
 
             }
