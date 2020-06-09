@@ -25,12 +25,14 @@
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
+using Ninject;
 using Orleans;
 using Orleans.Configuration;
 using System;
@@ -47,20 +49,14 @@ namespace Gigya.Microdot.Testing.Service
         public TServiceHost Host { get; private set; }
         public Task SiloStopped { get; private set; }
 
+
         private IClusterClient _clusterClient;
         
         private readonly object _locker = new object();
 
         public ServiceArguments ServiceArguments{ get; private set; }
 
-        [Obsolete("Use constructor with explicit configuration.")]
-        public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
-            : this(new HostConfiguration(new TestHostConfigurationSource()), serviceArguments, customSerializer)
-        {
-
-        }
-
-        public ServiceTester(HostConfiguration hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
+        public ServiceTester(HostEnvironment hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
         {
             _customSerializer = customSerializer;
 
@@ -79,7 +75,7 @@ namespace Gigya.Microdot.Testing.Service
 
             BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
+            this.SiloStopped = Task.Run(() => this.Host.Run((ServiceArguments)this.ServiceArguments));
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());

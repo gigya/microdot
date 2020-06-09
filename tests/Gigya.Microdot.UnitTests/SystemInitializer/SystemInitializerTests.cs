@@ -5,7 +5,7 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;

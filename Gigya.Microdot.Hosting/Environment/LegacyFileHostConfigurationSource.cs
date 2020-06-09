@@ -7,9 +7,9 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 
-namespace Gigya.Microdot.Hosting.Configuration
+namespace Gigya.Microdot.Hosting.Environment
 {
-    public sealed class LegacyFileHostConfigurationSource : IHostConfigurationSource
+    public sealed class LegacyFileHostConfigurationSource : IHostEnvironmentSource
     {
         // TODO: Do we need Zone and Region, or can it be abstracted away in favor of generic configuration properties
         public string Zone { get; }
@@ -26,7 +26,7 @@ namespace Gigya.Microdot.Hosting.Configuration
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomKeys { get; }
+        public IDictionary<string, string> CustomVariables { get; }
 
         public LegacyFileHostConfigurationSource(string path)
         {
@@ -42,7 +42,7 @@ namespace Gigya.Microdot.Hosting.Configuration
             ConfigRoot = get("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
             LoadPathsFile = get("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
 
-            CustomKeys = entries.ToDictionary(x => x.Key, x => x.Value.Value);
+            CustomVariables = entries.ToDictionary(x => x.Key, x => x.Value.Value);
 
             string get(string key)
             {
@@ -90,12 +90,17 @@ namespace Gigya.Microdot.Hosting.Configuration
             if (envVarsObject == null)
                 return Enumerable.Empty<Entry>();
 
-            return
+            var r =
                 envVarsObject
                 .Properties()
                 .Where(a => a.HasValues)
                 .Select(x => new Entry(x.Name.ToUpperInvariant(), x.Value.Value<string>()))
                 .ToArray();
+
+            foreach (var i in r)
+                System.Environment.SetEnvironmentVariable(i.Key, i.Value);
+
+            return r;
         }
     }
 }

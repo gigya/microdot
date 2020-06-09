@@ -9,7 +9,6 @@ using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using System.ServiceProcess;
 
-using Ninject;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,20 +16,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Interfaces;
 
 namespace Gigya.Microdot.Ninject.Host
 {
-    public interface IKernelConfigurator
-    {
-        void PreConfigure(IKernel kernel, ServiceArguments Arguments);
-        void Configure(IKernel kernel);
-        void PreInitialize(IKernel kernel);
-        void OnInitilize(IKernel kernel);
-        void Warmup(IKernel kernel);
-        ILoggingModule GetLoggingModule();
-    }
-
     public sealed class HostEventArgs : EventArgs
     {
 
@@ -41,10 +31,10 @@ namespace Gigya.Microdot.Ninject.Host
 
     }
 
-    public sealed class Host : IDisposable
+    public abstract class ServiceHostBase : IDisposable
     {
         private bool disposed;
-        private object SyncRoot = new object();
+        private object syncRoot = new object();
         
         public event EventHandler<HostEventArgs> OnStarting = (o, a) => { };
         public event EventHandler<HostEventArgs> OnStarted  = (o, a) => { };
@@ -52,8 +42,6 @@ namespace Gigya.Microdot.Ninject.Host
         public event EventHandler<HostEventArgs> OnStopped  = (o, a) => { };
         public event EventHandler<HostEventArgs> OnCrashing = (o, a) => { };
         public event EventHandler<HostEventArgs> OnCrashed  = (o, a) => { };
-
-        private IKernel Kernel { get; set; }
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -64,19 +52,14 @@ namespace Gigya.Microdot.Ninject.Host
         private Process MonitoredShutdownProcess { get; set; }
         protected ICrashHandler CrashHandler { get; set; }
 
-        protected ConfigurationVerificator ConfigurationVerificator { get; set; }
-
-        public HostConfiguration HostConfiguration { get; }
+        public HostEnvironment HostEnvironment { get; }
         public Version InfraVersion { get; }
 
         private IRequestListener requestListener;
 
-        private IKernelConfigurator kernelConfigurator;
 
-        public Host(
-            HostConfiguration configuration,
-            //IRequestListener requestListener, 
-            IKernelConfigurator kernelConfigurator,
+        public ServiceHostBase(
+            HostEnvironment environment,
             Version infraVersion)
         {
             if (IntPtr.Size != 8)
@@ -88,74 +71,20 @@ namespace Gigya.Microdot.Ninject.Host
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
 
-            this.HostConfiguration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
             //this.HandlingPipeline = handlingPipeline ?? throw new ArgumentNullException(nameof(handlingPipeline));
             //this.RequestListener = requestListener ?? throw new ArgumentNullException(nameof(requestListener));
-            this.kernelConfigurator = kernelConfigurator ?? throw new ArgumentNullException(nameof(kernelConfigurator));
             this.InfraVersion = infraVersion ?? throw new ArgumentNullException(nameof(infraVersion));
         }
 
         private HostEventArgs CreateEventArgs()
             => new HostEventArgs();
 
-        private void OnStart()
+
+
+        protected virtual void OnStop()
         {
-            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
-
-            this.OnStarting(this, this.CreateEventArgs());
-
-            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-            
-            this.kernelConfigurator.PreConfigure(Kernel, Arguments);
-            this.kernelConfigurator.Configure(Kernel);
-
-            this.kernelConfigurator.PreInitialize(Kernel);
-
-            CrashHandler = Kernel.Get<ICrashHandler>();
-            CrashHandler.Init(OnCrash);
-
-            this.kernelConfigurator.OnInitilize(Kernel);
-
-            this.kernelConfigurator.Warmup(Kernel);
-
-            //don't move up the get should be after all the binding are done
-            var log = Kernel.Get<ILog>();
-            
-            this.requestListener = Kernel.Get<IRequestListener>();
-            this.requestListener.Listen();
-
-            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostConfiguration.ApplicationInfo.HostName }));
-
-            this.OnStarted(this, this.CreateEventArgs());
-        }
-
-        private void OnStop()
-        {
-            this.OnStopping(this, CreateEventArgs());
-            
-            if (Arguments.ServiceDrainTimeSec.HasValue)
-            {
-                Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
-            }
-            Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
-            Kernel.Get<IWorkloadMetrics>().Dispose();
-
-            this.requestListener.Stop();
-
-            try
-            {
-                Kernel.Get<ILog>().Info(x => x($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies."));
-            }
-            catch
-            {
-                Console.WriteLine($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies.");
-            }
-
-            Dispose();
-
-            this.OnStopped(this, this.CreateEventArgs());
+           
         }
 
         /// <summary>
@@ -171,7 +100,7 @@ namespace Gigya.Microdot.Ninject.Host
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
                 Trace.WriteLine("Service starting as a Windows service...");
-                WindowsService = new DelegatingServiceBase(this.HostConfiguration.ApplicationInfo.Name, OnWindowsServiceStart, OnWindowsServiceStop);
+                WindowsService = new DelegatingServiceBase(this.HostEnvironment.ApplicationInfo.Name, OnWindowsServiceStart, OnWindowsServiceStop);
 
                 if (argumentsOverride == null)
                     Arguments = null; // Ensures OnWindowsServiceStart reloads parameters passed from Windows Service Manager.
@@ -223,7 +152,7 @@ namespace Gigya.Microdot.Ninject.Host
                 {
                     Thread.Sleep(10); // Allow any startup log messages to flush to Console.
 
-                    Console.Title = this.HostConfiguration.ApplicationInfo.Name;
+                    Console.Title = this.HostEnvironment.ApplicationInfo.Name;
 
                     if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Color)
                     {
@@ -298,25 +227,10 @@ namespace Gigya.Microdot.Ninject.Host
             }
         }
 
-        /// <summary>
-        /// An extensibility point - this method is called in process of configuration objects verification.
-        /// </summary>
-        protected void OnVerifyConfiguration()
-        {
-            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
-            
-            Kernel.Bind<IEnvironment>().ToConstant(HostConfiguration).InSingletonScope();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostConfiguration.ApplicationInfo).InSingletonScope();
-            
-            Kernel.Load(
-                new ConfigVerificationModule(
-                    this.kernelConfigurator.GetLoggingModule(),
-                    Arguments,
-                    this.HostConfiguration.ApplicationInfo.Name,
-                    InfraVersion));
-            
-            ConfigurationVerificator = Kernel.Get<ConfigurationVerificator>();
+        protected abstract void OnVerifyConfiguration();
 
+        protected void VerifyConfiguration(ConfigurationVerificator ConfigurationVerificator)
+        { 
             if (ConfigurationVerificator == null)
             {
                 Environment.ExitCode = 2;
@@ -377,10 +291,12 @@ namespace Gigya.Microdot.Ninject.Host
         /// <summary>
         /// Signals the service to stop.
         /// </summary>
-        public void Stop()
+        public virtual void Stop()
         {
             StopEvent.Set();
         }
+
+        protected abstract void OnStart();
 
         protected void OnCrash()
         {
@@ -443,31 +359,32 @@ namespace Gigya.Microdot.Ninject.Host
         }
 
 
-        protected void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            lock (this.SyncRoot)
-            {
-                try
-                {
-                    if (disposed)
-                        return;
-
-                    if (!Kernel.IsDisposed && !disposing)
-                        SafeDispose(Kernel);
-
-                    SafeDispose(StopEvent);
-                    SafeDispose(WindowsService);
-                    SafeDispose(MonitoredShutdownProcess);
-                }
-                finally
-                {
-                    disposed = true;
-                }
-            }
+            SafeDispose(StopEvent);
+            SafeDispose(WindowsService);
+            SafeDispose(MonitoredShutdownProcess);
         }
 
 
-        public void Dispose() => Dispose(false);
+        public void Dispose()
+        {
+            lock (this.syncRoot)
+            {
+                try
+                {
+                    if (this.disposed)
+                        return;
+                    
+                    Dispose(false);
+                }
+
+                finally
+                {
+                    this.disposed = true;
+                }
+            }
+        }
 
         protected void SafeDispose(IDisposable disposable)
         {

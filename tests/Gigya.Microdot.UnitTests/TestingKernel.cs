@@ -30,7 +30,7 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
@@ -63,7 +63,7 @@ namespace Gigya.Microdot.Testing.Shared
         {
             ServicePointManager.DefaultConnectionLimit = 200;
 
-            var config = new HostConfiguration(new TestHostConfigurationSource());
+            var config = new HostEnvironment(new TestHostEnvironmentSource());
             Bind<IEnvironment>().ToConstant(config).InSingletonScope();
             Bind<CurrentApplicationInfo>().ToConstant(config.ApplicationInfo).InSingletonScope();
             this.Load<MicrodotModule>();

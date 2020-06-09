@@ -33,7 +33,7 @@ using Gigya.Microdot.Ninject;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
@@ -45,12 +45,16 @@ namespace Gigya.Microdot.Testing.Shared.Service
         
         protected DisposablePort _port;
 
-        protected ServiceTesterBase(HostConfiguration hostConfiguration)
+        protected HostEnvironment HostEnvironment { get; }
+
+        protected ServiceTesterBase(HostEnvironment hostEnvironment)
         {
             _port = DisposablePort.GetPort();
 
+            this.HostEnvironment = hostEnvironment;
+
             CommunicationKernel = new MicrodotInitializer(
-                hostConfiguration,
+                hostEnvironment,
                 new ConsoleLogLoggersModules()).Kernel;
         }
 

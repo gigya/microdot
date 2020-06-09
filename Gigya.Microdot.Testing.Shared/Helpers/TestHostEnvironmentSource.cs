@@ -1,4 +1,4 @@
-﻿using Gigya.Microdot.Hosting.Configuration;
+﻿using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.LanguageExtensions;
 using System;
@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Gigya.Microdot.Common.Tests
 {
-    public sealed class TestHostConfigurationSource : IHostConfigurationSource
+    public sealed class TestHostEnvironmentSource : IHostEnvironmentSource
     {
         public string Zone { get; }
 
@@ -26,9 +26,9 @@ namespace Gigya.Microdot.Common.Tests
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomKeys { get; }
+        public IDictionary<string, string> CustomVariables { get; }
 
-        public TestHostConfigurationSource(
+        public TestHostEnvironmentSource(
             string                     zone                  = null,
             string                     region                = null,
             string                     deploymentEnvironment = null,
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Common.Tests
             this.ApplicationInfo       = applicationInfo       ?? new CurrentApplicationInfo(appName ?? "test", Environment.UserName, Dns.GetHostName());
             this.ConfigRoot            = configRoot            ?? new DirectoryInfo(this.GetType().Assembly.Location.To(Path.GetDirectoryName));
             this.LoadPathsFile         = loadPathsFile;
-            this.CustomKeys            = customKeys            ?? new Dictionary<string, string>();
+            this.CustomVariables       = customKeys            ?? new Dictionary<string, string>();
         }
     }
 }

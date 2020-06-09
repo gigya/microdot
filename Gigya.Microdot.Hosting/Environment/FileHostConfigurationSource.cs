@@ -7,10 +7,10 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 
-namespace Gigya.Microdot.Hosting.Configuration
+namespace Gigya.Microdot.Hosting.Environment
 {
 
-    public sealed class FileHostConfigurationSource : IHostConfigurationSource
+    public sealed class FileHostConfigurationSource : IHostEnvironmentSource
     {
         public CurrentApplicationInfo ApplicationInfo { get; }
 
@@ -22,7 +22,7 @@ namespace Gigya.Microdot.Hosting.Configuration
         public DirectoryInfo ConfigRoot => GetOrNull(nameof(ConfigRoot))?.To(x => new DirectoryInfo(x));
         public FileInfo LoadPathsFile => GetOrNull(nameof(LoadPathsFile))?.To(x => new FileInfo(x));
 
-        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
+        public IDictionary<string, string> CustomVariables => new Dictionary<string, string>();
 
         #region Entries
         private readonly Dictionary<string, Entry> entries;

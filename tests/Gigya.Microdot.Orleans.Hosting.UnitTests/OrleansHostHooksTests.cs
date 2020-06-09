@@ -1,6 +1,6 @@
 ﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
@@ -24,10 +24,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         private class TestHost : MicrodotOrleansServiceHost
         {
             public bool AfterOrleansCalled = false;
-            
+
             public TestHost() : base(
-                new HostConfiguration(
-                    new TestHostConfigurationSource()))
+                new HostEnvironment(
+                    new TestHostEnvironmentSource()), new Version())
             {
             }
 
@@ -54,13 +54,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void AfterOrleansStartup_ShouldBeCalled()
         {
-            var host = new ServiceTester<TestHost>(
-                new HostConfiguration(
-                    new TestHostConfigurationSource()));
+            var tester = new ServiceTester<TestHost>(
+                new HostEnvironment(
+                    new TestHostEnvironmentSource()));
 
-            Assert.IsTrue(host.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
+            Assert.IsTrue(tester.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
 
-            host.Dispose();
+            tester.Dispose();
         }
     }
 }

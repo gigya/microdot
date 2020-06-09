@@ -23,8 +23,9 @@
 #endregion Copyright
 
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using System;
 using System.Threading.Tasks;
@@ -33,10 +34,10 @@ namespace Gigya.Microdot.Testing.Shared.Service
 {
     public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
-        public TServiceHost Host = new TServiceHost();
+        public TServiceHost Host;
         private Task _hostStopped;
 
-        public NonOrleansServiceTester(HostConfiguration config) : base(config)
+        public NonOrleansServiceTester(HostEnvironment config) : base(config)
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
@@ -46,7 +47,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             Initialize(args);
         }
 
-        public NonOrleansServiceTester(ServiceArguments serviceArguments, HostConfiguration config) : base(config)
+        public NonOrleansServiceTester(ServiceArguments serviceArguments, HostEnvironment config) : base(config)
         {
             Initialize(serviceArguments);
         }
@@ -60,7 +61,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             Host = new TServiceHost();
 
-            _hostStopped = Task.Run(() => Host.Run(serviceArguments));
+            this._hostStopped = Task.Run(() => this.Host.Run((ServiceArguments)serviceArguments));
 
             Task.WaitAny(_hostStopped, Host.WaitForServiceStartedAsync());
 

@@ -28,7 +28,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces.Configuration;
@@ -60,8 +60,8 @@ namespace Gigya.Common.Application.UnitTests.Validation
             _serviceInterfaceMapper = Substitute.For<IServiceInterfaceMapper>();
             _serviceInterfaceMapper.ServiceInterfaceTypes.Returns(_ => _typesToValidate);
             _unitTesting = new MicrodotInitializer(
-                new HostConfiguration(
-                    new TestHostConfigurationSource()),
+                new HostEnvironment(
+                    new TestHostEnvironmentSource()),
                 new ConsoleLogLoggersModules(),
                 kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
             _serviceValidator = _unitTesting.Kernel.Get<SensitivityAttributesValidator>();

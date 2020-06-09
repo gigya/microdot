@@ -162,7 +162,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
         private Dictionary<string, string> GetEnvironmentVariables()
         {
-            return Environment.GetEnvironmentVariables()
+            return System.Environment.GetEnvironmentVariables()
                        .OfType<DictionaryEntry>()
                        .Select(x => new { Name = (string)x.Key, Value = (string)x.Value })
                        .Where(x => x.Name.ToUpper() == "DC" || x.Name.ToUpper() == "ZONE" || x.Name.ToUpper() == "REGION" || x.Name.ToUpper() == "ENV" || x.Name.ToUpper().Contains("GIGYA"))
@@ -204,6 +204,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         }
 
 
+        // TODO: Check this on Linux windows for discrepancies
         private Dictionary<string, string> GetRuntimeInfo()
         {
             return new Dictionary<string, string>
@@ -212,14 +213,14 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 { "HostName", CurrentApplicationInfo.s_HostName},
                 { "InstanceName", Envs.InstanceName },
                 { "OSUser", AppInfo.OsUser },
-                { "OSVersion", Environment.OSVersion.ToString() },
-                { "CommandLine", Environment.CommandLine },
-                { "CurrentDirectory", Environment.CurrentDirectory },
-                { "Is64BitOperatingSystem", Environment.Is64BitOperatingSystem.ToString() },
-                { "Is64BitProcess", Environment.Is64BitProcess.ToString() },
-                { "ProcessorCount", Environment.ProcessorCount.ToString() },
-                { "UserInteractive", Environment.UserInteractive.ToString() },
-                { "ClrVersion", Environment.Version.ToString() },
+                { "OSVersion", System.Environment.OSVersion.ToString() },
+                { "CommandLine", System.Environment.CommandLine },
+                { "CurrentDirectory", System.Environment.CurrentDirectory },
+                { "Is64BitOperatingSystem", System.Environment.Is64BitOperatingSystem.ToString() },
+                { "Is64BitProcess", System.Environment.Is64BitProcess.ToString() },
+                { "ProcessorCount", System.Environment.ProcessorCount.ToString() },
+                { "UserInteractive", System.Environment.UserInteractive.ToString() },
+                { "ClrVersion", System.Environment.Version.ToString() },
                 { "CurrentProcessId", Process.GetCurrentProcess().Id.ToString() },
                 { "CurrentCulture", CultureInfo.CurrentCulture.ToString() },
                 { "CurrentUICulture", CultureInfo.CurrentUICulture.ToString() },

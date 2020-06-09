@@ -1,7 +1,7 @@
 ﻿using System;
 using CalculatorService.Interface;
 using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
@@ -14,7 +14,7 @@ namespace CalculatorService
 
     class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        protected CalculatorServiceHost(HostConfiguration configuration) : base(configuration)
+        protected CalculatorServiceHost(HostEnvironment environment) : base(environment, new Version())
         {
         }
 
@@ -29,13 +29,13 @@ namespace CalculatorService
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
 
-            var config =
-                new HostConfiguration(
+            var env =
+                new HostEnvironment(
                     new EnvironmentVarialbesConfigurationSource());
 
             try
             {
-                new CalculatorServiceHost(config).Run();
+                new CalculatorServiceHost(env);
             }
             catch (Exception ex)
             {
@@ -49,5 +49,6 @@ namespace CalculatorService
         {
             kernel.Bind<ICalculatorService>().To<CalculatorService>();
         }
+
     }
 }

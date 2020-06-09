@@ -3,7 +3,9 @@ using System.Net;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Ninject.Host;
+
 using Gigya.Microdot.Interfaces.Configuration;
 
 namespace CalculatorService.Orleans
@@ -11,7 +13,7 @@ namespace CalculatorService.Orleans
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        protected CalculatorServiceHost(HostConfiguration configuration) : base(configuration)
+        public CalculatorServiceHost(HostEnvironment environment, Version infraVersion) : base(environment, infraVersion)
         {
         }
 
@@ -27,14 +29,14 @@ namespace CalculatorService.Orleans
             Environment.SetEnvironmentVariable("ENV", "dev");
             Environment.SetEnvironmentVariable("Consul", "not-real-url");
             var config = 
-                new HostConfiguration(
+                new HostEnvironment(
                     new EnvironmentVarialbesConfigurationSource(),
                     new ApplicationInfoSource(
                         new CurrentApplicationInfo(nameof(CalculatorService), Environment.UserName, Dns.GetHostName())));
 
             try
             {
-                new CalculatorServiceHost(config).Run();
+                new CalculatorServiceHost(config, new Version()).Run();
             }
             catch (Exception ex)
             {

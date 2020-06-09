@@ -98,7 +98,7 @@ namespace Gigya.Microdot.Configuration
                         case "DC": case "ZONE": return environment.Zone;
                         case "REGION": return environment.Region;
                         case "ENV": return environment.DeploymentEnvironment;
-                        default: return environment[key];
+                        default: return environment[key].ToLower();
                     }
                 }
                 

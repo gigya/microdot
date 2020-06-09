@@ -2,7 +2,7 @@
 using System.Net;
 using CalculatorService.Interface;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
@@ -27,7 +27,7 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("Consul", "not-real-url");
                 using (var microdotInitializer = new MicrodotInitializer(
                     // TODO: make correct config
-                    new HostConfiguration(new EnvironmentVarialbesConfigurationSource(),
+                    new HostEnvironment(new EnvironmentVarialbesConfigurationSource(),
                         new ApplicationInfoSource(
                             new CurrentApplicationInfo("test-client", Environment.UserName, Dns.GetHostName()))),
                     new NLogModule()))

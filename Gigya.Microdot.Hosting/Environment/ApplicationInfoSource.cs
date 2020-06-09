@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Gigya.Microdot.Hosting.Configuration
+namespace Gigya.Microdot.Hosting.Environment
 {
-    public sealed class ApplicationInfoSource : IHostConfigurationSource
+    public sealed class ApplicationInfoSource : IHostEnvironmentSource
     {
         public string Zone { get; }
 
@@ -20,7 +20,7 @@ namespace Gigya.Microdot.Hosting.Configuration
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomKeys => new Dictionary<string, string>();
+        public IDictionary<string, string> CustomVariables => new Dictionary<string, string>();
 
         public ApplicationInfoSource(CurrentApplicationInfo applicationInfo)
         {

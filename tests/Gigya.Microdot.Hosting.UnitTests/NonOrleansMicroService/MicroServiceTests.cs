@@ -1,6 +1,7 @@
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Metrics;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using NUnit.Framework;
 using Shouldly;
@@ -41,13 +42,18 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
             //ConsoleOutputMode.Standard
             var serviceArguments = new ServiceArguments(ServiceStartupMode.VerifyConfigurations, ConsoleOutputMode.Standard, SiloClusterMode.PrimaryNode, 8555);
 
-            var config = new HostConfiguration(
-                new TestHostConfigurationSource(
+            var config = new HostEnvironment(
+                new TestHostEnvironmentSource(
                     region: "us1",
                     zone: "zone",
-                    deploymentEnvironment: "_Test"));
+                    deploymentEnvironment: "_Test",
+                    appName: "ICalculatorService"));
 
-            var x = new CalculatorServiceHost(config);
+            var x = new 
+                CalculatorServiceHost(
+                    config,
+                    new Version());
+
             await Task.Run(() => x.Run(serviceArguments));
             var canaryType = typeof(MetricsConfiguration);
 

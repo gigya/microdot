@@ -12,7 +12,7 @@ using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.SharedLogic.HttpService;
 
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
@@ -29,7 +29,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
             try
             {
-                var host = new ServiceTester<TestHost>(new HostConfiguration(new TestHostConfigurationSource()));
+                var host = new ServiceTester<TestHost>(new HostEnvironment(new TestHostEnvironmentSource()));
                 host.GetServiceProxy<ICalculatorService>();
                 Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
                  host.Dispose();
@@ -44,11 +44,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
-        public TestHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        public TestHost() : base(new HostEnvironment(new TestHostEnvironmentSource()), new Version())
         {
         }
-
-        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
 
         public override ILoggingModule GetLoggingModule()
         {

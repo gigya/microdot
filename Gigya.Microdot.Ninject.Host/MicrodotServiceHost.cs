@@ -23,8 +23,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
@@ -44,69 +45,104 @@ namespace Gigya.Microdot.Ninject.Host
     /// bindings and choose which infrastructure features you'd like to enable. 
     /// </summary>
     /// <typeparam name="TInterface">The interface of the service.</typeparam>
-    public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase, IKernelConfigurator
+    public abstract class MicrodotServiceHost<TInterface> : ServiceHostBase
     {
-        private bool disposed;
+        public IKernel Kernel;
 
-        private readonly object disposeLockHandle = new object();
-
-        //private IKernel Kernel { get; set; }
-
-        //private HttpServiceListener Listener { get; set; }
-
-        public Host Host { get; }
-
-        public ServiceArguments Arguments => this.Host.Arguments;
+        private IRequestListener requestListener;
 
         /// <summary>
         /// Creates a new instance of <see cref="MicrodotServiceHost{TInterface}"/>
         /// </summary>
         /// <exception cref="ArgumentException">Thrown when the provided type provided for the <typeparamref name="TInterface" />
         /// generic argument is not an interface.</exception>
-        protected MicrodotServiceHost(HostConfiguration configuration)
+        protected MicrodotServiceHost(HostEnvironment environment, Version version) : base(environment, version)
         {
             if (typeof(TInterface).IsInterface == false)
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
-
-            this.Host = new Host(
-                configuration,
-                this,
-                // TODO: what version should be passed?
-                new Version());
-
-            this.Host.OnStopped += (s, a) => this.OnStop();
-            this.Host.OnStarted += (s, a) => this.OnStart();
-            this.Host.OnCrashed += (s, a) => this.OnCrash();
         }
 
-        public override void Run(ServiceArguments argsOverride = null)
+        protected override void OnStart()
         {
-            this.Host.Run(argsOverride);
+            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
+            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
+
+            this.PreConfigure(Kernel, Arguments);
+            this.Configure(Kernel);
+
+            Kernel.Get<SystemInitializer.SystemInitializer>().Init();
+
+            CrashHandler = Kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
+
+            IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
+
+            var metricsInitializer = Kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
+
+            this.PreInitialize(Kernel);
+
+            this.OnInitilize(Kernel);
+
+            this.Warmup(Kernel);
+
+            //don't move up the get should be after all the binding are done
+            var log = Kernel.Get<ILog>();
+
+            this.requestListener = Kernel.Get<IRequestListener>();
+            this.requestListener.Listen();
+
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostEnvironment.ApplicationInfo.HostName }));
         }
 
-        public override Task WaitForServiceStartedAsync()
+        protected override void OnStop()
         {
-            return this.Host.WaitForServiceStartedAsync();
+            if (Arguments.ServiceDrainTimeSec.HasValue)
+            {
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+            }
+            Kernel.Get<SystemInitializer.SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
+
+            this.requestListener.Stop();
+
+            try
+            {
+                Kernel.Get<ILog>().Info(x => x($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies."));
+            }
+            catch
+            {
+                Console.WriteLine($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies.");
+            }
+
+            Dispose();
         }
 
-        public override Task<StopResult> WaitForServiceGracefullyStoppedAsync()
+        /// <summary>
+        /// An extensibility point - this method is called in process of configuration objects verification.
+        /// </summary>
+        protected override void OnVerifyConfiguration()
         {
-            return this.Host.WaitForServiceGracefullyStoppedAsync();
-        }
+            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
-        public override void Stop()
-        {
-            this.Host.Stop();
-        }
+            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
 
-        public override void Dispose()
-        {
-            this.Host.Dispose();
+            Kernel.Load(
+                new ConfigVerificationModule(
+                    this.GetLoggingModule(),
+                    Arguments,
+                    this.HostEnvironment.ApplicationInfo.Name,
+                    InfraVersion));
+
+            VerifyConfiguration(Kernel.Get<ConfigurationVerificator>());
         }
 
         protected abstract ILoggingModule GetLoggingModule();
-
-
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -115,30 +151,14 @@ namespace Gigya.Microdot.Ninject.Host
         /// to prevent concrete services from overriding the common behavior. 
         /// </summary>
         /// <param name="kernel"></param>
-        protected virtual void PreInitialize(IKernel kernel)
-        {
-            kernel.Get<SystemInitializer.SystemInitializer>().Init();
-
-            // moved to Host
-            //CrashHandler = kernel.Get<ICrashHandler>();
-            //CrashHandler.Init(OnCrash);
-
-            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
-
-            var metricsInitializer = kernel.Get<IMetricsInitializer>();
-            metricsInitializer.Init();
-        }
+        protected virtual void PreInitialize(IKernel kernel) { }
 
         /// <summary>
         /// Extensibility point - this method is called after the Kernel is configured and before service starts
         /// processing incoming request.
         /// </summary>
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
-        protected virtual void OnInitilize(IKernel kernel)
-        {
-
-        }
+        protected virtual void OnInitilize(IKernel kernel) { }
 
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
@@ -177,51 +197,13 @@ namespace Gigya.Microdot.Ninject.Host
             this.Configure(kernel, kernel.Get<BaseCommonConfig>());
         }
 
-        protected virtual void Warmup(IKernel kernel)
+        protected virtual void Warmup(IKernel kernel) { }
+        protected override void Dispose(bool disposing)
         {
+            if (!Kernel.IsDisposed && !disposing)
+                SafeDispose(Kernel);
 
-        }
-
-        protected virtual void OnStop()
-        {
-        }
-
-        protected virtual void OnCrash()
-        {
-        }
-
-        protected virtual void OnStart()
-        {
-        }
-
-        void IKernelConfigurator.Configure(IKernel kernel)
-        {
-            this.Configure(kernel);
-        }
-
-        ILoggingModule IKernelConfigurator.GetLoggingModule()
-        {
-            return this.GetLoggingModule();
-        }
-
-        void IKernelConfigurator.OnInitilize(IKernel kernel)
-        {
-            this.OnInitilize(kernel);
-        }
-
-        void IKernelConfigurator.PreConfigure(IKernel kernel, ServiceArguments Arguments)
-        {
-            this.PreConfigure(kernel, Arguments);
-        }
-
-        void IKernelConfigurator.PreInitialize(IKernel kernel)
-        {
-            this.PreInitialize(kernel);
-        }
-
-        void IKernelConfigurator.Warmup(IKernel kernel)
-        {
-            this.Warmup(kernel);
+            base.Dispose(disposing);
         }
     }
 }

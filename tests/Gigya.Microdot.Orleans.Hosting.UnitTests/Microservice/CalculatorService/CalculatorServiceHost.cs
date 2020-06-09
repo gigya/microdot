@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
@@ -39,10 +39,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-
-
-        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
-
         public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();
@@ -50,7 +46,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 
         public IKernel Kernel;
 
-        public CalculatorServiceHost() : base(new HostConfiguration(new TestHostConfigurationSource()))
+        public CalculatorServiceHost() : base(new HostEnvironment(new TestHostEnvironmentSource()), new Version())
         {
         }
 

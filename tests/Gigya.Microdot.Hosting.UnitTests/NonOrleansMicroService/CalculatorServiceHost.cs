@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Configuration;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
@@ -12,19 +12,19 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
     public class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        public string ServiceName => this.Host.HostConfiguration.ApplicationInfo.Name;
-        
         public IKernel Kernel;
 
         public CalculatorServiceHost() : base(
-            new HostConfiguration(
-                new TestHostConfigurationSource(appName: "ICalculatorService")))
+            new HostEnvironment(new TestHostEnvironmentSource(
+                zone: "zone",
+                deploymentEnvironment: "env",
+                appName: "ICalculatorService")), 
+            new System.Version())
         {
         }
 
-        public CalculatorServiceHost(HostConfiguration hostConfiguration) : base(hostConfiguration)
-        {
-        }
+        public CalculatorServiceHost(HostEnvironment environment, System.Version version)
+            : base(environment, version) { }
 
         protected override ILoggingModule GetLoggingModule()
         {
