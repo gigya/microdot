@@ -159,14 +159,17 @@ namespace Gigya.Microdot.Orleans.Hosting
             if (_orleansConfig.EnableEncryption)
             {
                 var localCertificate = _certificateLocator.GetCertificate("Service");
-                var localCertificateHash = localCertificate.GetCertHash();
                 hostBuilder.UseTls(localCertificate, tlsOptions =>
                 {
-                    tlsOptions.LocalCertificate = localCertificate;
-                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.NoCertificate;
+                   tlsOptions.LocalCertificate = localCertificate;
+                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.RequireCertificate;
                     tlsOptions.RemoteCertificateMode = RemoteCertificateMode.RequireCertificate;
                     
                     tlsOptions.SslProtocols = SslProtocols.Tls12;
+
+                    // Verify that remote certificate is exactly the same as the local certificate;
+                    tlsOptions.RemoteCertificateValidation = (certificate, chain, errors) =>
+                        true;
                 });
 
             }
