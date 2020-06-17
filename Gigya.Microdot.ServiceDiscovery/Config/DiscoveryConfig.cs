@@ -87,6 +87,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public bool ServiceHttpsOverride { get; set; } = false;
 
         /// <summary>
+        /// Indicates whether the client should try and elevate to HTTPs traffic even if not explicitly configured to 
+        /// </summary>
+        public bool TryHttps { get; set; }
+
+        /// <summary>
         /// Controls the client certificate verification logic.
         /// Default behavior is to validate that the server domain matches the certificate domain.
         /// </summary>

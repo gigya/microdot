@@ -358,10 +358,9 @@ namespace Gigya.Microdot.ServiceProxy
             // This will be important to decide whether downgrading from https to http is allowed
             // (in cases when the service contellation is transitioning to https and rollbacks are expected).
             var allowNonHttps = Not(GetConfig().UseHttpsOverride ?? discoveryConfig.UseHttpsOverride || ServiceInterfaceRequiresHttps);
-            
-            // If non secure connection is allowed, try https, it may already be available.
-            // TODO: This should be optin.
-            bool tryHttps = allowNonHttps;
+
+            //will try using HTTPs only in-case we configured to try HTTPs explicitly
+            bool tryHttps = GetConfig().TryHttps ?? discoveryConfig.TryHttps;
 
             while (true)
             {
