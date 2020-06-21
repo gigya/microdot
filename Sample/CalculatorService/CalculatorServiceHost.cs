@@ -2,6 +2,8 @@
 using CalculatorService.Interface;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
@@ -14,11 +16,7 @@ namespace CalculatorService
 
     class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        protected CalculatorServiceHost(HostEnvironment environment) : base(environment, new Version())
-        {
-        }
-
-        public string ServiceName => "CalculatorService";
+        public override string ServiceName => "CalculatorService";
 
         static void Main(string[] args)
         {
@@ -29,13 +27,11 @@ namespace CalculatorService
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
 
-            var env =
-                new HostEnvironment(
-                    new EnvironmentVarialbesConfigurationSource());
+            
 
             try
             {
-                new CalculatorServiceHost(env);
+                new CalculatorServiceHost();
             }
             catch (Exception ex)
             {
@@ -44,6 +40,18 @@ namespace CalculatorService
         }
 
         protected override ILoggingModule GetLoggingModule() => new NLogModule();
+
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        {
+            var env =
+                new HostEnvironment(
+                    new EnvironmentVarialbesConfigurationSource());
+
+            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            base.PreConfigure(kernel, Arguments);
+        }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {

@@ -27,9 +27,7 @@ namespace CalculatorService.Client
                 Environment.SetEnvironmentVariable("Consul", "not-real-url");
                 using (var microdotInitializer = new MicrodotInitializer(
                     // TODO: make correct config
-                    new HostEnvironment(new EnvironmentVarialbesConfigurationSource(),
-                        new ApplicationInfoSource(
-                            new CurrentApplicationInfo("test-client", Environment.UserName, Dns.GetHostName()))),
+                    "test-client",
                     new NLogModule()))
                 {
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();

@@ -53,7 +53,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 onStopWaitTimeSec: 0);
 
             _tester = new ServiceTester<CalculatorServiceHost>(
-                new HostEnvironment(new TestHostEnvironmentSource()),
                 serviceArguments: serviceArguments);
 
             Action act = () => _tester.Dispose();

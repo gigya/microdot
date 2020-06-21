@@ -54,7 +54,7 @@ namespace Gigya.Microdot.Interfaces.Configuration
             string hostName,
             string instanceName = null, Version infraVersion = null)
         {
-            Name     = name.NullWhenEmpty()     ?? throw new ArgumentNullException(nameof(name));
+            Name     = name                     ?? throw new ArgumentNullException(nameof(name));
             OsUser   = osUser.NullWhenEmpty()   ?? throw new ArgumentNullException(nameof(osUser));
             HostName = hostName.NullWhenEmpty() ?? throw new ArgumentNullException(nameof(hostName));
 

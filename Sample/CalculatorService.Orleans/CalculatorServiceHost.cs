@@ -13,11 +13,7 @@ namespace CalculatorService.Orleans
 
     class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        public CalculatorServiceHost(HostEnvironment environment, Version infraVersion) : base(environment, infraVersion)
-        {
-        }
-
-        public string ServiceName => nameof(CalculatorService);
+        public override string ServiceName => nameof(CalculatorService);
 
         static void Main(string[] args)
         {
@@ -28,15 +24,10 @@ namespace CalculatorService.Orleans
             Environment.SetEnvironmentVariable("ZONE", "us1a");
             Environment.SetEnvironmentVariable("ENV", "dev");
             Environment.SetEnvironmentVariable("Consul", "not-real-url");
-            var config = 
-                new HostEnvironment(
-                    new EnvironmentVarialbesConfigurationSource(),
-                    new ApplicationInfoSource(
-                        new CurrentApplicationInfo(nameof(CalculatorService), Environment.UserName, Dns.GetHostName())));
 
             try
             {
-                new CalculatorServiceHost(config, new Version()).Run();
+                new CalculatorServiceHost().Run();
             }
             catch (Exception ex)
             {

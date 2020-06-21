@@ -37,7 +37,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public TServiceHost Host;
         private Task _hostStopped;
 
-        public NonOrleansServiceTester(HostEnvironment config) : base(config)
+        public NonOrleansServiceTester()
         {
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
@@ -47,7 +47,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             Initialize(args);
         }
 
-        public NonOrleansServiceTester(ServiceArguments serviceArguments, HostEnvironment config) : base(config)
+        public NonOrleansServiceTester(ServiceArguments serviceArguments)
         {
             Initialize(serviceArguments);
         }

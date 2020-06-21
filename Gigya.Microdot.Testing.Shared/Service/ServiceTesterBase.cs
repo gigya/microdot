@@ -45,16 +45,12 @@ namespace Gigya.Microdot.Testing.Shared.Service
         
         protected DisposablePort _port;
 
-        protected HostEnvironment HostEnvironment { get; }
-
-        protected ServiceTesterBase(HostEnvironment hostEnvironment)
+        protected ServiceTesterBase()
         {
             _port = DisposablePort.GetPort();
 
-            this.HostEnvironment = hostEnvironment;
-
             CommunicationKernel = new MicrodotInitializer(
-                hostEnvironment,
+                "",
                 new ConsoleLogLoggersModules()).Kernel;
         }
 

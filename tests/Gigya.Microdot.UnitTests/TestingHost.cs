@@ -7,8 +7,10 @@ using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
@@ -21,13 +23,6 @@ namespace Gigya.Microdot.UnitTests
 {
     public class TestingHost<T> : MicrodotServiceHost<T> where T : class
     {
-        public TestingHost() : base(
-            new HostEnvironment(
-                new TestHostEnvironmentSource()),
-            new Version())
-        {
-        }
-
         private static string GenerateServiceName()
         {
             // Last word is good enought for randomization, but easier to follow
@@ -36,9 +31,19 @@ namespace Gigya.Microdot.UnitTests
 
         public T Instance { get; private set; }
 
-
+        public override string ServiceName => "test";
 
         protected override ILoggingModule GetLoggingModule() { return new FakesLoggersModules(); }
+
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        {
+            var env = new HostEnvironment(new TestHostEnvironmentSource());
+
+            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            base.PreConfigure(kernel, Arguments);
+        }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {

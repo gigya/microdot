@@ -56,8 +56,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [SetUp]
         public virtual void SetUp()
         {
-            _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
-                new HostEnvironment(new TestHostEnvironmentSource()));
+            _testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>();
             _insecureClient = _testinghost.GetServiceProxy<IDemoService>();
             Metric.ShutdownContext("Service");
             TracingContext.SetRequestID("1");
@@ -103,8 +102,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public async Task RequestWithException_ShouldNotWrap(Type exceptionType)
         {
             var _kernel = new MicrodotInitializer(
-                new HostEnvironment(
-                    new TestHostEnvironmentSource()),
+                "",
                 new FakesLoggersModules(), 
                 k => k.RebindForTests());
 
@@ -335,9 +333,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TestCase(false)]
         public async Task CallService_ClientHttpsConfiguration_ShouldSucceed(bool httpsEnabledInClient)
         {
-            var testingHost = new NonOrleansServiceTester<SlowServiceHost>(
-                new HostEnvironment(
-                    new TestHostEnvironmentSource()));
+            var testingHost = new NonOrleansServiceTester<SlowServiceHost>();
             if (!httpsEnabledInClient)
                 testingHost.CommunicationKernel.DisableHttps();
 
@@ -347,18 +343,20 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
         public class SlowServiceHost : MicrodotServiceHost<ISlowService>
         {
-            public SlowServiceHost() : base(
-                new HostEnvironment(
-                    new TestHostEnvironmentSource()), 
-                new Version())
-            {
-            }
-
-            public string ServiceName => nameof(ISlowService).Substring(1);
+            public override string ServiceName => nameof(ISlowService).Substring(1);
 
             protected override ILoggingModule GetLoggingModule()
             {
                 return new ConsoleLogLoggersModules();
+            }
+
+            protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+            {
+                var env = new HostEnvironment(new TestHostEnvironmentSource(this.ServiceName));
+                kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+                kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+                base.PreConfigure(kernel, Arguments);
             }
 
             protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)

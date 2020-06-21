@@ -11,19 +11,19 @@ namespace Gigya.Microdot.Ninject
 {
     public class MicrodotInitializer : IDisposable
     {
-        public MicrodotInitializer(HostEnvironment hostConfiguration, ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
+        public MicrodotInitializer(string appName, ILoggingModule loggingModule, Action<IKernel> additionalBindings = null)
         {
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();
 
             Kernel
                 .Bind<IEnvironment>()
-                .ToConstant(hostConfiguration)
+                .ToConstant(new HostEnvironment(new TestHostEnvironmentSource(appName: appName)))
                 .InSingletonScope();
 
             Kernel
                 .Bind<CurrentApplicationInfo>()
-                .ToConstant(hostConfiguration.ApplicationInfo)
+                .ToConstant(new CurrentApplicationInfo(appName, Environment.UserName, System.Net.Dns.GetHostName()))
                 .InSingletonScope();
 
             loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
