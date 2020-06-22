@@ -76,7 +76,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         [Obsolete("To be deleted after discovery refactoring")]
         public double DelayMultiplier { get; set; } = 2;
 
+        /// <summary>
+        /// Indicate wheather clients should use secure channel to communicate with target service
+        /// </summary>
         public bool UseHttpsOverride { get; set; } = false;
+
+        /// <summary>
+        /// Indicates whether the service should listen for HTTPs traffic
+        /// </summary>
+        public bool ServiceHttpsOverride { get; set; } = false;
 
         /// <summary>
         /// Controls the client certificate verification logic.

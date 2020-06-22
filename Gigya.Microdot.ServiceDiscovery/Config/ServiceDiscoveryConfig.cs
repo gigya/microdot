@@ -84,6 +84,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// </summary>
         public bool? UseHttpsOverride { get; set; }
 
+        /// <summary>
+        /// Indicates whether the service should listen for HTTPs traffic
+        /// </summary>
+        public bool? ServiceHttpsOverride { get; set; } = null;
 
         /// /// <summary>
         /// Controls the client certificate verification logic server side.
