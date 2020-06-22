@@ -38,6 +38,7 @@ using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
 using Gigya.Microdot.Interfaces.Configuration;
+using Microsoft.AspNetCore.Connections;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -162,14 +163,12 @@ namespace Gigya.Microdot.Orleans.Hosting
                 hostBuilder.UseTls(localCertificate, tlsOptions =>
                 {
                    tlsOptions.LocalCertificate = localCertificate;
-                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.RequireCertificate;
-                    tlsOptions.RemoteCertificateMode = RemoteCertificateMode.RequireCertificate;
+                    tlsOptions.ClientCertificateMode = RemoteCertificateMode.AllowCertificate;
+                    tlsOptions.RemoteCertificateMode = RemoteCertificateMode.AllowCertificate;
                     
                     tlsOptions.SslProtocols = SslProtocols.Tls12;
 
-                    // Verify that remote certificate is exactly the same as the local certificate;
-                    tlsOptions.RemoteCertificateValidation = (certificate, chain, errors) =>
-                        true;
+                    tlsOptions.OnAuthenticateAsClient = OnAuthenticateAsClient;
                 });
 
             }
@@ -184,6 +183,12 @@ namespace Gigya.Microdot.Orleans.Hosting
             });
 
             return hostBuilder;
+        }
+
+        private void OnAuthenticateAsClient(ConnectionContext context, TlsClientAuthenticationOptions options)
+        {
+            //See us/#115757
+            options.TargetHost = "workaround.gigya.net";
         }
 
         private void SetReminder(ISiloHostBuilder silo)
