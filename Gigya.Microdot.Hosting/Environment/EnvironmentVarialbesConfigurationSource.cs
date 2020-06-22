@@ -1,5 +1,5 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.LanguageExtensions;
+﻿using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.SharedLogic;
 using System;
 using System.Collections.Generic;
 using System.IO;

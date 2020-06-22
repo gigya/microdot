@@ -30,7 +30,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;

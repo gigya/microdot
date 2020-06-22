@@ -1,7 +1,6 @@
 ﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;

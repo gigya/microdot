@@ -26,7 +26,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;

@@ -23,7 +23,6 @@
 using System;
 using System.Net;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic;
 

@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;

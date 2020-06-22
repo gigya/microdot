@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
 

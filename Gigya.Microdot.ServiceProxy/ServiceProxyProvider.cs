@@ -34,7 +34,6 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceDiscovery.Config;

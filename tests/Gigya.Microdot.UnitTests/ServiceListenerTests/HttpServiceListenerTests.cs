@@ -38,7 +38,6 @@ using NUnit.Framework;
 using RichardSzalay.MockHttp;
 
 using Shouldly;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests

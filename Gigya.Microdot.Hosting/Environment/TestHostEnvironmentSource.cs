@@ -22,8 +22,8 @@
 
 using System.Collections.Generic;
 using System.IO;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.Environment
 {

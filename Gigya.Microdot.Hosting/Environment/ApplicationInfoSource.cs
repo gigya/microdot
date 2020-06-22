@@ -1,4 +1,4 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
+﻿using Gigya.Microdot.SharedLogic;
 using System.Collections.Generic;
 using System.IO;
 

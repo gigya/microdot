@@ -37,7 +37,6 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
-using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

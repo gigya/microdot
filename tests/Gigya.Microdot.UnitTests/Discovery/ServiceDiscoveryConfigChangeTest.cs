@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;

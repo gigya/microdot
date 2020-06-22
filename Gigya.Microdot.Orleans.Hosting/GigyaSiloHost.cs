@@ -24,7 +24,6 @@
 
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting.Logging;
 using Gigya.Microdot.SharedLogic;

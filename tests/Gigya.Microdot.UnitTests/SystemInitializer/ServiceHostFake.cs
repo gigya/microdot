@@ -4,7 +4,6 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Logging.NLog;

@@ -28,6 +28,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.Hosting.Environment

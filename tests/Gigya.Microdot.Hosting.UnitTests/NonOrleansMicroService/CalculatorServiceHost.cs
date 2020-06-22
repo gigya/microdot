@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;

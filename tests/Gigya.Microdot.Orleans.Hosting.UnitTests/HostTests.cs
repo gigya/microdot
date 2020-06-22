@@ -14,7 +14,6 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {

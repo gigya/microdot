@@ -21,7 +21,6 @@
 #endregion
 
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Rewrite;

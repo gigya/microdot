@@ -32,7 +32,6 @@ using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;

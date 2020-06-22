@@ -28,7 +28,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;

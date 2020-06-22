@@ -32,7 +32,6 @@ using System.Runtime;
 using System.Text;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Newtonsoft.Json;
