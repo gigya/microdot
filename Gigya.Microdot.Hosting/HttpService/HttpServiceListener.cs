@@ -139,7 +139,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            if (ServiceEndPointDefinition.HttpsPort != null)
+            if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ServerClientCertificateVerificationMode.Disable)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
             Listener = new HttpListener {IgnoreWriteExceptions = true};

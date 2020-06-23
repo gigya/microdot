@@ -32,6 +32,7 @@ namespace Gigya.Microdot.Hosting.Environment
         string Region { get; }
         string DeploymentEnvironment { get; }
         string ConsulAddress { get; }
+        string InstanceName { get; }
         CurrentApplicationInfo ApplicationInfo { get; }
         DirectoryInfo ConfigRoot { get; }
         FileInfo LoadPathsFile { get; }

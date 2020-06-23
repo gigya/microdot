@@ -20,6 +20,8 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public string ConsulAddress { get; }
 
+        public string InstanceName { get; }
+
         public CurrentApplicationInfo ApplicationInfo { get; }
 
         public DirectoryInfo ConfigRoot { get; }
@@ -34,12 +36,13 @@ namespace Gigya.Microdot.Hosting.Environment
                 ReadFromJsonFile(path)
                 .ToDictionary(x => x.Key);
 
-            Zone = get("ZONE") ?? get("DC");
-            Region = get("REGION");
+            Zone                  = get("ZONE") ?? get("DC");
+            Region                = get("REGION");
             DeploymentEnvironment = get("ENV");
-            ConsulAddress = get("CONSUL");
+            ConsulAddress         = get("CONSUL");
+            InstanceName          = get("GIGYA_SERVICE_INSTANCE_NAME");
 
-            ConfigRoot = get("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
+            ConfigRoot    = get("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
             LoadPathsFile = get("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
 
             CustomVariables = entries.ToDictionary(x => x.Key, x => x.Value.Value);

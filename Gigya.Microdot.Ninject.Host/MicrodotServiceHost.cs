@@ -62,32 +62,11 @@ namespace Gigya.Microdot.Ninject.Host
                 throw new ArgumentException($"The specified type provided for the {nameof(TInterface)} generic argument must be an interface.");
         }
 
-        private static HostEnvironment CreateEnvironment(string serviceName, Version infraVersion)
-        {
-            var l = new List<IHostEnvironmentSource>(3);
-
-            l.Add(new EnvironmentVarialbesConfigurationSource());
-
-            if (Environment.GetEnvironmentVariable("GIGYA_ENVVARS_FILE") is string path)
-            {
-                l.Add(new LegacyFileHostConfigurationSource(path));
-            }
-
-            l.Add(
-                new ApplicationInfoSource(
-                    new CurrentApplicationInfo(
-                        serviceName,
-                        Environment.UserName,
-                        System.Net.Dns.GetHostName(),
-                        infraVersion: infraVersion)));
-
-            return new HostEnvironment(l);
-        }
         protected override void OnStart()
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
-            var env = CreateEnvironment(ServiceName, InfraVersion);
+            var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
             Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
@@ -151,7 +130,7 @@ namespace Gigya.Microdot.Ninject.Host
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
-            var env = CreateEnvironment(ServiceName, InfraVersion);
+            var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
             Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 

@@ -22,12 +22,11 @@
 
 using System.Collections.Generic;
 using System.IO;
-using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.Environment
 {
-    public sealed class TestHostEnvironmentSource : IHostEnvironmentSource
+    public sealed class FreeHostEnvironmentSource : IHostEnvironmentSource
     {
         public string Zone { get; }
 
@@ -47,7 +46,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public IDictionary<string, string> CustomVariables { get; }
 
-        public TestHostEnvironmentSource(
+        public FreeHostEnvironmentSource(
             string zone = null,
             string region = null,
             string deploymentEnvironment = null,
@@ -59,13 +58,13 @@ namespace Gigya.Microdot.Hosting.Environment
             Dictionary<string, string> customKeys = null,
             string appName = null)
         {
-            this.Zone = zone ?? "zone";
-            this.Region = region ?? "region";
-            this.DeploymentEnvironment = deploymentEnvironment ?? "env";
-            this.ConsulAddress = consulAddress ?? "addr";
-            this.InstanceName = instanceName ?? "test-instance";
-            this.ApplicationInfo = applicationInfo ?? new CurrentApplicationInfo(appName ?? "test", System.Environment.UserName, System.Net.Dns.GetHostName());
-            this.ConfigRoot = configRoot ?? new DirectoryInfo(this.GetType().Assembly.Location.To(Path.GetDirectoryName));
+            this.Zone = zone;
+            this.Region = region;
+            this.DeploymentEnvironment = deploymentEnvironment;
+            this.ConsulAddress = consulAddress;
+            this.InstanceName = instanceName;
+            this.ApplicationInfo = applicationInfo;
+            this.ConfigRoot = configRoot;
             this.LoadPathsFile = loadPathsFile;
             this.CustomVariables = customKeys ?? new Dictionary<string, string>();
         }
