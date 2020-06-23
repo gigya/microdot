@@ -5,6 +5,7 @@ using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
@@ -23,13 +24,15 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
 
     public class ServiceHostFake<TFake> : MicrodotServiceHost<IServiceFake> 
     {
-        public string ServiceName => nameof(IServiceFake).Substring(1);
+        public override string ServiceName => nameof(IServiceFake).Substring(1);
 
         private TFake _fake;
+        private readonly HostEnvironment environment;
+
         public ServiceHostFake(TFake fake, HostEnvironment environment)
-            : base(environment, new System.Version())
         {
             _fake = fake;
+            this.environment = environment;
         }
 
         protected override ILoggingModule GetLoggingModule()
@@ -39,6 +42,9 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
 
         protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
+            kernel.Rebind<IEnvironment>().ToConstant(environment).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(environment.ApplicationInfo).InSingletonScope();
+
             base.PreConfigure(kernel, Arguments);
        
             kernel.Rebind<TFake>().ToConstant(_fake);

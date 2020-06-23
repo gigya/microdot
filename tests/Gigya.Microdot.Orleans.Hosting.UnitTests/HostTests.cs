@@ -13,6 +13,7 @@ using Gigya.Microdot.SharedLogic.HttpService;
 
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
@@ -29,7 +30,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
             try
             {
-                var host = new ServiceTester<TestHost>(new HostEnvironment(new TestHostEnvironmentSource()));
+                var host = new ServiceTester<TestHost>();
                 host.GetServiceProxy<ICalculatorService>();
                 Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
                  host.Dispose();
@@ -44,18 +45,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
-        public TestHost() : base(new HostEnvironment(new TestHostEnvironmentSource()), new Version())
-        {
-        }
+        public override string ServiceName => "test";
 
         public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();
         }
 
-
         protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
+            var env = new HostEnvironment(new TestHostEnvironmentSource());
+            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
             base.PreConfigure(kernel, Arguments);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");
             kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();

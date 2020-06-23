@@ -2,9 +2,11 @@ using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Gigya.Microdot.SharedLogic;
 using Ninject;
 using Ninject.Syntax;
 using Orleans;
@@ -17,12 +19,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
 {
     public class MemoryServiceHost : MicrodotOrleansServiceHost
     {
-        public string ServiceName => nameof(MemoryServiceHost);
+        public override string ServiceName => nameof(MemoryServiceHost);
 
         public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();
         }
+
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        {
+            var env = new HostEnvironment(
+                    new TestHostEnvironmentSource(appName: "IMemoryService"));
+
+            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            base.PreConfigure(kernel, Arguments);
+        }
+
         protected override void Configure(IKernel kernel, OrleansCodeConfig commonConfig)
         {
             base.Configure(kernel, commonConfig);
@@ -31,13 +45,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderT
             kernel.RebindForTests();
         }
         public const string MemoryStorageProvider = "MemoryStorageProvider";
-
-        public MemoryServiceHost() : base(
-            new HostEnvironment(
-                    new TestHostEnvironmentSource(appName: "IMemoryService")), 
-            new System.Version())
-        {
-        }
 
         protected override void OnInitilize(IKernel kerenl)
        {

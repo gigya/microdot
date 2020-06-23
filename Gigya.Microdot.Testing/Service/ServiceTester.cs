@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Testing.Service
 
         public ServiceArguments ServiceArguments{ get; private set; }
 
-        public ServiceTester(HostEnvironment hostConfiguration, ServiceArguments serviceArguments = null, Type customSerializer = null) : base(hostConfiguration)
+        public ServiceTester(ServiceArguments serviceArguments = null, Type customSerializer = null)
         {
             _customSerializer = customSerializer;
 

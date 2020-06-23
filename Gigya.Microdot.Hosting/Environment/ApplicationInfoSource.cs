@@ -1,4 +1,4 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
+﻿using Gigya.Microdot.SharedLogic;
 using System.Collections.Generic;
 using System.IO;
 
@@ -13,6 +13,8 @@ namespace Gigya.Microdot.Hosting.Environment
         public string DeploymentEnvironment { get; }
 
         public string ConsulAddress { get; }
+
+        public string InstanceName { get; }
 
         public CurrentApplicationInfo ApplicationInfo { get; }
 

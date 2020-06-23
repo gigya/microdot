@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
@@ -29,7 +30,6 @@ using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -57,16 +57,13 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
         private IRequestListener requestListener;
 
-        public MicrodotOrleansServiceHost(HostEnvironment environment, Version infraVersion) : base(environment, infraVersion)
-        {
-        }
-
         protected override void OnStart()
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
-            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
+            var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
+            Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
@@ -94,7 +91,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             this.requestListener = Kernel.Get<IRequestListener>();
             this.requestListener.Listen();
 
-            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = HostEnvironment.ApplicationInfo.HostName }));
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = env.ApplicationInfo.HostName }));
         }
 
         protected override void OnStop()
@@ -128,14 +125,15 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         {
             Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
-            Kernel.Bind<IEnvironment>().ToConstant(HostEnvironment).InSingletonScope();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(HostEnvironment.ApplicationInfo).InSingletonScope();
+            var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
+            Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
             Kernel.Load(
                 new ConfigVerificationModule(
                     this.GetLoggingModule(),
                     Arguments,
-                    this.HostEnvironment.ApplicationInfo.Name,
+                    env.ApplicationInfo.Name,
                     InfraVersion));
 
             VerifyConfiguration(Kernel.Get<ConfigurationVerificator>());

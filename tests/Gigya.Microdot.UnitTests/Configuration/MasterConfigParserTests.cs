@@ -7,7 +7,6 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using NSubstitute;

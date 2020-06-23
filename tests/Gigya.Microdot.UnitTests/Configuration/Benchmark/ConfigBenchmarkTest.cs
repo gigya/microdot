@@ -23,7 +23,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
 
  
             MicrodotInitializer microdotInitializer = new MicrodotInitializer(
-                new HostEnvironment(new TestHostEnvironmentSource()),
+                "",
                 new NLogModule(), kernel =>
             {
             });

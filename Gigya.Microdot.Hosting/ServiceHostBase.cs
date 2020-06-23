@@ -21,11 +21,6 @@ using Gigya.Microdot.Interfaces;
 
 namespace Gigya.Microdot.Ninject.Host
 {
-    public sealed class HostEventArgs : EventArgs
-    {
-
-    }
-
     public sealed class ConfigurationVerificationResult
     {
 
@@ -35,14 +30,9 @@ namespace Gigya.Microdot.Ninject.Host
     {
         private bool disposed;
         private object syncRoot = new object();
-        
-        public event EventHandler<HostEventArgs> OnStarting = (o, a) => { };
-        public event EventHandler<HostEventArgs> OnStarted  = (o, a) => { };
-        public event EventHandler<HostEventArgs> OnStopping = (o, a) => { };
-        public event EventHandler<HostEventArgs> OnStopped  = (o, a) => { };
-        public event EventHandler<HostEventArgs> OnCrashing = (o, a) => { };
-        public event EventHandler<HostEventArgs> OnCrashed  = (o, a) => { };
 
+        public abstract string ServiceName { get; }
+        
         public ServiceArguments Arguments { get; private set; }
 
         private DelegatingServiceBase WindowsService { get; set; }
@@ -52,15 +42,12 @@ namespace Gigya.Microdot.Ninject.Host
         private Process MonitoredShutdownProcess { get; set; }
         protected ICrashHandler CrashHandler { get; set; }
 
-        public HostEnvironment HostEnvironment { get; }
-        public Version InfraVersion { get; }
+        public virtual Version InfraVersion { get; }
 
         private IRequestListener requestListener;
 
 
-        public ServiceHostBase(
-            HostEnvironment environment,
-            Version infraVersion)
+        public ServiceHostBase()
         {
             if (IntPtr.Size != 8)
                 throw new Exception("You must run in 64-bit mode. Please make sure you unchecked the 'Prefer 32-bit' checkbox from the build section of the project properties.");
@@ -70,17 +57,9 @@ namespace Gigya.Microdot.Ninject.Host
             ServiceStartedEvent = new TaskCompletionSource<object>();
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
-
-            this.HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
-            //this.HandlingPipeline = handlingPipeline ?? throw new ArgumentNullException(nameof(handlingPipeline));
-            //this.RequestListener = requestListener ?? throw new ArgumentNullException(nameof(requestListener));
-            this.InfraVersion = infraVersion ?? throw new ArgumentNullException(nameof(infraVersion));
         }
 
-        private HostEventArgs CreateEventArgs()
-            => new HostEventArgs();
-
-
+        
 
         protected virtual void OnStop()
         {
@@ -100,7 +79,7 @@ namespace Gigya.Microdot.Ninject.Host
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
                 Trace.WriteLine("Service starting as a Windows service...");
-                WindowsService = new DelegatingServiceBase(this.HostEnvironment.ApplicationInfo.Name, OnWindowsServiceStart, OnWindowsServiceStop);
+                WindowsService = new DelegatingServiceBase(ServiceName, OnWindowsServiceStart, OnWindowsServiceStop);
 
                 if (argumentsOverride == null)
                     Arguments = null; // Ensures OnWindowsServiceStart reloads parameters passed from Windows Service Manager.
@@ -152,7 +131,7 @@ namespace Gigya.Microdot.Ninject.Host
                 {
                     Thread.Sleep(10); // Allow any startup log messages to flush to Console.
 
-                    Console.Title = this.HostEnvironment.ApplicationInfo.Name;
+                    Console.Title = ServiceName;
 
                     if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Color)
                     {
@@ -300,11 +279,9 @@ namespace Gigya.Microdot.Ninject.Host
 
         protected void OnCrash()
         {
-            this.OnCrashing(this, this.CreateEventArgs());
             Stop();
             WaitForServiceGracefullyStoppedAsync().Wait(5000);
             Dispose();
-            this.OnCrashed(this, this.CreateEventArgs());
         }
 
 

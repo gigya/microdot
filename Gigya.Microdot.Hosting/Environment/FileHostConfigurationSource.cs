@@ -1,5 +1,5 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.LanguageExtensions;
+﻿using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.SharedLogic;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -18,6 +18,7 @@ namespace Gigya.Microdot.Hosting.Environment
         public string Region => GetOrNull(nameof(Region));
         public string DeploymentEnvironment => GetOrNull(nameof(DeploymentEnvironment));
         public string ConsulAddress => GetOrNull(nameof(ConsulAddress));
+        public string InstanceName => GetOrNull(nameof(InstanceName));
 
         public DirectoryInfo ConfigRoot => GetOrNull(nameof(ConfigRoot))?.To(x => new DirectoryInfo(x));
         public FileInfo LoadPathsFile => GetOrNull(nameof(LoadPathsFile))?.To(x => new FileInfo(x));

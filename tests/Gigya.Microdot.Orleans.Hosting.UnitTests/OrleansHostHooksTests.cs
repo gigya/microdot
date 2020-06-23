@@ -2,6 +2,7 @@
 using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.Orleans.Ninject.Host;
@@ -24,12 +25,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         private class TestHost : MicrodotOrleansServiceHost
         {
             public bool AfterOrleansCalled = false;
-
-            public TestHost() : base(
-                new HostEnvironment(
-                    new TestHostEnvironmentSource()), new Version())
-            {
-            }
+            public override string ServiceName => "test";
 
             public override ILoggingModule GetLoggingModule()
             {
@@ -44,6 +40,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
             {
+                var env = new HostEnvironment(new TestHostEnvironmentSource());
+                kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+                kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
                 base.PreConfigure(kernel, Arguments);
                 Console.WriteLine($"-----------------------------Silo is RebindForTests");
                 kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
@@ -54,9 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         [Test]
         public void AfterOrleansStartup_ShouldBeCalled()
         {
-            var tester = new ServiceTester<TestHost>(
-                new HostEnvironment(
-                    new TestHostEnvironmentSource()));
+            var tester = new ServiceTester<TestHost>();
 
             Assert.IsTrue(tester.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
 

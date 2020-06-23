@@ -34,7 +34,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
                 deploymentEnvironment: "env",
                 appName: "ICalculatorService"));
 
-            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>(config);
+            _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>();
 
             _serviceTester.CommunicationKernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>();
 

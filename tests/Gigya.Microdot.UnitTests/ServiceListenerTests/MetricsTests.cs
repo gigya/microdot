@@ -57,8 +57,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public void TestMetricsOnSuccess()
         {
-            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
-                new HostEnvironment(new TestHostEnvironmentSource())))
+            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
                 testinghost.Host.Kernel.Get<IDemoService>().Increment(0).Returns((ulong)1);
 
@@ -67,15 +66,14 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 
                 testinghost.Host.Kernel.Get<IDemoService>().Received().Increment(0);
                 Thread.Sleep(100);
-                GetMetricsData(testinghost.Host.HostEnvironment.ApplicationInfo.Name).AssertEquals(DefaultExpected());
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected());
             }
         }
 
         [Test]
         public void TestMetricsOnFailure()
         {
-            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>(
-                new HostEnvironment(new TestHostEnvironmentSource())))
+            using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
                 testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
 
@@ -88,7 +86,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
                 };
 
-                GetMetricsData(testinghost.Host.HostEnvironment.ApplicationInfo.Name).AssertEquals(metricsExpected);
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(metricsExpected);
             }
         }
 

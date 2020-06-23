@@ -50,9 +50,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
                     appName: "ICalculatorService"));
 
             var x = new 
-                CalculatorServiceHost(
-                    config,
-                    new Version());
+                CalculatorServiceHost(config);
 
             await Task.Run(() => x.Run(serviceArguments));
             var canaryType = typeof(MetricsConfiguration);

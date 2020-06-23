@@ -1,5 +1,5 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.LanguageExtensions;
+﻿using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.SharedLogic;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +18,8 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public string ConsulAddress { get; }
 
+        public string InstanceName { get; }
+
         public CurrentApplicationInfo ApplicationInfo { get; }
 
         public DirectoryInfo ConfigRoot { get; }
@@ -34,6 +36,7 @@ namespace Gigya.Microdot.Hosting.Environment
             this.Region = System.Environment.GetEnvironmentVariable("REGION");
             this.DeploymentEnvironment = System.Environment.GetEnvironmentVariable("ENV");
             this.ConsulAddress = System.Environment.GetEnvironmentVariable("CONSUL");
+            this.InstanceName = System.Environment.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME");
             this.ConfigRoot = System.Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
             this.LoadPathsFile = System.Environment.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
 

@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text;
 using Gigya.Microdot.LanguageExtensions;
 
-namespace Gigya.Microdot.Interfaces.Configuration
+namespace Gigya.Microdot.SharedLogic
 {
     /// <summary>
     /// Provides info about the current application.
@@ -49,13 +49,13 @@ namespace Gigya.Microdot.Interfaces.Configuration
         internal string InstanceName { get; }
 
         public CurrentApplicationInfo(
-            string name, 
+            string name,
             string osUser,
             string hostName,
             string instanceName = null, Version infraVersion = null)
         {
-            Name     = name.NullWhenEmpty()     ?? throw new ArgumentNullException(nameof(name));
-            OsUser   = osUser.NullWhenEmpty()   ?? throw new ArgumentNullException(nameof(osUser));
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            OsUser = osUser.NullWhenEmpty() ?? throw new ArgumentNullException(nameof(osUser));
             HostName = hostName.NullWhenEmpty() ?? throw new ArgumentNullException(nameof(hostName));
 
             s_HostName = HostName;
