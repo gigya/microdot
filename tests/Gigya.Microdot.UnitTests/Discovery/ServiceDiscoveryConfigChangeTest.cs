@@ -107,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _configDic[$"Discovery.{serviceName}.Source"] = "Local"
             );
             var remoteHostPull = _serviceDiscovery.GetNextHost();
-            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.s_HostName);
+            remoteHostPull.Result.HostName.ShouldContain(CurrentApplicationInfo.HostName);
         }
 
 

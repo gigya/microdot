@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Fakes.Discovery
         {
             return new NodeAndLoadBalancer
             {
-                Node = new Node(CurrentApplicationInfo.s_HostName),
+                Node = new Node(CurrentApplicationInfo.HostName),
                 LoadBalancer = null
             };
         }

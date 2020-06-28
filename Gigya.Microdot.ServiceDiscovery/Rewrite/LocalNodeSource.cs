@@ -34,7 +34,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         static LocalNodeSource()
         {
-            _nodes = new []{new Node(CurrentApplicationInfo.s_HostName)};
+            _nodes = new []{new Node(CurrentApplicationInfo.HostName)};
         }
 
         public Node[] GetNodes() => _nodes;

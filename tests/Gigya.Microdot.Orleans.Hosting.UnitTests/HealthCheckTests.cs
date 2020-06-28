@@ -70,7 +70,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var dispose = Task.Run(() => customServiceTester.Dispose());
             await Task.Delay(200);
 
-            var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.s_HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
+            var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
             await dispose;
         }
@@ -79,7 +79,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void HealthCheck_NotHealthy_ShouldReturn500()
         {
             _tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(false);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.s_HostName}:{BasePort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{BasePort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         }
 
@@ -88,14 +88,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
         public void HealthCheck_Healthy_ShouldReturn200()
         {
             _tester.GrainClient.GetGrain<IProgrammableHealthGrain>(0).SetHealth(true);
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.s_HostName}:{BasePort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{BasePort}/{nameof(IProgrammableHealth).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Test]
         public void HealthCheck_NotImplemented_ShouldReturn200()
         {
-            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.s_HostName}:{BasePort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
+            var httpResponseMessage = new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{BasePort}/{nameof(ICalculatorService).Substring(1)}.status")).Result;
             httpResponseMessage.StatusCode.ShouldBe(HttpStatusCode.OK);
             httpResponseMessage.Content.ShouldNotBeNull();
         }

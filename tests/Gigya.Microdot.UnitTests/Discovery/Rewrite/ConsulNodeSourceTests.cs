@@ -62,7 +62,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _testingKernel = new TestingKernel<ConsoleLog>(k =>
             {
                 _environment = Substitute.For<IEnvironment>();
-                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.s_HostName}:{ConsulPort}");
+                _environment.ConsulAddress.Returns($"{CurrentApplicationInfo.HostName}:{ConsulPort}");
                 _environment.Zone.Returns(Zone);
                 k.Rebind<IEnvironment>().ToMethod(_ => _environment);
                 k.Rebind<Func<ConsulConfig>>().ToMethod(_ => () => _consulConfig);
