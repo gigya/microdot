@@ -130,19 +130,19 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
             catch (Exception e)
             {
-                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.s_HostName } }, innerException: e);
+                throw new ProgrammaticException("Failed to start Orleans silo", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: e);
             }
 
             if (_startupTaskExceptions != null)
-                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.s_HostName } }, innerException: _startupTaskExceptions);
+                throw new ProgrammaticException("Failed to start Orleans silo due to an exception thrown in the bootstrap method.", unencrypted: new Tags { { "siloName", CurrentApplicationInfo.HostName } }, innerException: _startupTaskExceptions);
 
-            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
+            Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
 
             _orleansConfigurator.AfterOrleansStartup(_siloHost.Services.GetService<IGrainFactory>());
-            Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
+            Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
 
             HttpServiceListener.StartGettingTraffic();
-            Log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.s_HostName }));
+            Log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
 
         public void Stop()

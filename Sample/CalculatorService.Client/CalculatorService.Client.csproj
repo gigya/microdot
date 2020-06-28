@@ -1,34 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <ProjectGuid>{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <noWarn>1591</noWarn>
-    <AssemblyTitle>CalculatorService.Client</AssemblyTitle>
-    <Product>CalculatorService.Client</Product>
-    <Copyright>Copyright ©  2018</Copyright>
-    <AssemblyTitle>CalculatorService.Client</AssemblyTitle>
-    <Product>CalculatorService.Client</Product>
-    <Copyright>Copyright ©  2018</Copyright>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-    <WarningLevel>3</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <Import Project="..\..\packages\NETStandard.Library\build\$(__paket__NETStandard_Library_targets).targets" Condition="Exists('..\..\packages\NETStandard.Library\build\$(__paket__NETStandard_Library_targets).targets')" Label="Paket" />
   <ItemGroup>
     <None Include="loadPaths.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
@@ -38,13 +20,6 @@
     <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
     <ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
     <ProjectReference Include="..\CalculatorService\CalculatorService.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.6.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Threading.Tasks.Dataflow\lib\netstandard1.1\System.Threading.Tasks.Dataflow.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

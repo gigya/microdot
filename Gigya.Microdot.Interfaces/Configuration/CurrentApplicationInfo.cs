@@ -29,9 +29,7 @@ namespace Gigya.Microdot.SharedLogic
         /// <summary>
         /// Name of host, the current process is running on.
         /// </summary>
-        public string HostName { get; }
-        // TODO: Some components require this to be static. Resolve
-        public static string s_HostName { get; private set; }
+        public static string HostName { get; private set; }
 
         /// <summary>
         /// Indicates if the current process is running as a Windows service.
@@ -57,8 +55,6 @@ namespace Gigya.Microdot.SharedLogic
             Name = name ?? throw new ArgumentNullException(nameof(name));
             OsUser = osUser.NullWhenEmpty() ?? throw new ArgumentNullException(nameof(osUser));
             HostName = hostName.NullWhenEmpty() ?? throw new ArgumentNullException(nameof(hostName));
-
-            s_HostName = HostName;
 
             Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
 

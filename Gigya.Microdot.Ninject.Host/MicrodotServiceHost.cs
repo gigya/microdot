@@ -96,7 +96,7 @@ namespace Gigya.Microdot.Ninject.Host
             this.requestListener = Kernel.Get<IRequestListener>();
             this.requestListener.Listen();
 
-            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = env.ApplicationInfo.HostName }));
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
 
         protected override void OnStop()

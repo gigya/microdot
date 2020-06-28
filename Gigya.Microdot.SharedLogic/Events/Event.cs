@@ -90,7 +90,7 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
-        public string HostName  { get; set; } = CurrentApplicationInfo.s_HostName;
+        public string HostName  { get; set; } = CurrentApplicationInfo.HostName;
 
         /// <summary>The value of the %REGION% environment variable. .</summary>
         [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]

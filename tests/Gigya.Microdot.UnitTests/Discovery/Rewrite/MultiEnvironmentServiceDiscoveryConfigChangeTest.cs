@@ -71,7 +71,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         {
             _discoveryConfig.Services[ServiceName].Source = "Local";
             var node = await _serviceDiscovery.GetNode();
-            node.Node.Hostname.ShouldContain(CurrentApplicationInfo.s_HostName);
+            node.Node.Hostname.ShouldContain(CurrentApplicationInfo.HostName);
         }
 
     }
