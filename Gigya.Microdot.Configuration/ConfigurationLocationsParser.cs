@@ -48,7 +48,6 @@ namespace Gigya.Microdot.Configuration
     /// </remarks>
     public class ConfigurationLocationsParser: IConfigurationLocationsParser
     {
-        // TODO: this class isn't a service, can be simplified.
         private string AppName { get; }
 
         private class ErrorAggregator
@@ -87,12 +86,10 @@ namespace Gigya.Microdot.Configuration
 
             foreach (var configPath in configPathsSet)
             {
-                // TODO: provide an explicit abstraction
                 string getReplacement(string key)
                 {
                     switch (key)
                     {
-                        // TODO: this exists only because legacy configs. Should not be hardcoded.
                         case "GIGYA_CONFIG_ROOT": return environment.ConfigRoot.FullName;
                         case "DC": case "ZONE": return environment.Zone;
                         case "REGION": return environment.Region;
@@ -101,7 +98,6 @@ namespace Gigya.Microdot.Configuration
                     }
                 }
                 
-                // TODO: should be taken from host config. The parser should also be injectable.
                 var list = Regex.Matches(configPath.Pattern, "%([^%]+)%")
                                 .Cast<Match>()
                                 .Select(match => new

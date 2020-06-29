@@ -163,6 +163,11 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public static HostEnvironment CreateDefaultEnvironment(string serviceName, Version infraVersion, ServiceArguments arguments = null)
         {
+            return new HostEnvironment(GetDefaultSources(serviceName, infraVersion, arguments));
+        }
+
+        public static IEnumerable<IHostEnvironmentSource> GetDefaultSources(string serviceName, Version infraVersion, ServiceArguments arguments = null)
+        {
             var l = new List<IHostEnvironmentSource>(3);
 
             l.Add(new EnvironmentVarialbesConfigurationSource());
@@ -186,7 +191,7 @@ namespace Gigya.Microdot.Hosting.Environment
                         System.Net.Dns.GetHostName(),
                         infraVersion: infraVersion)));
 
-            return new HostEnvironment(l);
+            return l;
         }
 
     }
