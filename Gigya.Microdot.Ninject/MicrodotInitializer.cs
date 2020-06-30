@@ -15,7 +15,7 @@ namespace Gigya.Microdot.Ninject
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();
 
-            var env = HostEnvironment.CreateDefaultEnvironment(appName, new Version());
+            var env = HostEnvironment.CreateDefaultEnvironment(appName, typeof(MicrodotInitializer).Assembly.GetName().Version);
 
             Kernel
                 .Bind<IEnvironment>()
