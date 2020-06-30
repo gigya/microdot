@@ -15,14 +15,16 @@ namespace Gigya.Microdot.Ninject
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();
 
+            var env = HostEnvironment.CreateDefaultEnvironment(appName, new Version());
+
             Kernel
                 .Bind<IEnvironment>()
-                .ToConstant(new HostEnvironment(new TestHostEnvironmentSource(appName: appName)))
+                .ToConstant(env)
                 .InSingletonScope();
 
             Kernel
                 .Bind<CurrentApplicationInfo>()
-                .ToConstant(new CurrentApplicationInfo(appName, Environment.UserName, System.Net.Dns.GetHostName()))
+                .ToConstant(env.ApplicationInfo)
                 .InSingletonScope();
 
             loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
