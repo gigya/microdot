@@ -78,6 +78,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
             InstanceName ??= "DefaultInstance";
             ConfigRoot ??= GetDefaultConfigRoot();
+            LoadPathsFile ??= GetDefaultPathsFile();
 
             // TODO: Fix error messages.
             if (ConfigRoot.Exists == false)
@@ -87,7 +88,7 @@ namespace Gigya.Microdot.Hosting.Environment
                     $"Use '{GIGYA_CONFIG_ROOT_KEY}' environment variable to override default path.");
             }
 
-            if (LoadPathsFile != null && LoadPathsFile.Exists == false)
+            if (LoadPathsFile.Exists == false)
             {
                 throw new EnvironmentException(
                     $"LoadPaths file isn't found at '{ LoadPathsFile.FullName }'. " +
@@ -95,7 +96,6 @@ namespace Gigya.Microdot.Hosting.Environment
                     $"to the file or place a 'loadPaths.json' at your config root.");
             }
             
-            LoadPathsFile ??= GetDefaultPathsFile();
 
             void consumeCustomKeys(IHostEnvironmentSource cs)
             {
