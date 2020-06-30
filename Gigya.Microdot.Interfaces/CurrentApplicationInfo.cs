@@ -46,6 +46,10 @@ namespace Gigya.Microdot.SharedLogic
         /// </summary>
         internal string InstanceName { get; }
 
+        public CurrentApplicationInfo(string name, string instanceName = null, Version infraVersion = null)
+            : this(name, Environment.UserName, System.Net.Dns.GetHostName(), instanceName, infraVersion)
+        { }
+
         public CurrentApplicationInfo(
             string name,
             string osUser,

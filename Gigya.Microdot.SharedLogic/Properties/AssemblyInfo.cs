@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.SharedLogic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -44,3 +45,5 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Microdot.Ninject.Host")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Ninject")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
+
+[assembly: TypeForwardedToAttribute(typeof(CurrentApplicationInfo))]
