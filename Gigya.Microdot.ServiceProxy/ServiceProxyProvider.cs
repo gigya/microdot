@@ -175,9 +175,11 @@ namespace Gigya.Microdot.ServiceProxy
             var forceHttps = serviceConfig.UseHttpsOverride ?? (ServiceInterfaceRequiresHttps || defaultConfig.UseHttpsOverride);
             var useHttps = tryHttps || forceHttps;
             string securityRole = serviceConfig.SecurityRole;
-            var verificationMode = serviceConfig.PerformClientCertificateVerification ??
-                                   defaultConfig.PerformClientCertificateVerification;
-            var httpKey = new HttpClientConfiguration(useHttps, securityRole, serviceConfig.RequestTimeout, verificationMode);
+            var verificationMode = serviceConfig.ServerCertificateVerification ??
+                                   defaultConfig.ServerCertificateVerification;
+            var supplyClientCertificate = (serviceConfig.ClientCertificateVerification ?? defaultConfig.ClientCertificateVerification)
+                                          == ClientCertificateVerificationMode.VerifyIdenticalRootCertificate;
+            var httpKey = new HttpClientConfiguration(useHttps, securityRole, serviceConfig.RequestTimeout, verificationMode, supplyClientCertificate);
 
             lock (HttpClientLock)
             {
@@ -198,7 +200,8 @@ namespace Gigya.Microdot.ServiceProxy
                         useHttps: false, 
                         securityRole: null, 
                         timeout:httpKey.Timeout, 
-                        verificationMode:httpKey.VerificationMode);
+                        verificationMode:httpKey.VerificationMode,
+                        supplyClientCertificate: httpKey.SupplyClientCertificate);
                 }
 
                 if (!(LastHttpClientKey?.Equals(httpKey) ?? false))
@@ -233,7 +236,8 @@ namespace Gigya.Microdot.ServiceProxy
                     useHttps:true,
                     configuration.SecurityRole,
                     configuration.Timeout,
-                    configuration.VerificationMode
+                    configuration.VerificationMode,
+                    configuration.SupplyClientCertificate
                     );
                 HttpMessageHandler messageHandler = null;
                 HttpClient httpsClient = null;
@@ -251,7 +255,8 @@ namespace Gigya.Microdot.ServiceProxy
                         useHttps: true, 
                         configuration.SecurityRole, 
                         configuration.Timeout,
-                        configuration.VerificationMode);
+                        configuration.VerificationMode,
+                        configuration.SupplyClientCertificate);
                     _httpMessageHandler = messageHandler;
                 }
             }

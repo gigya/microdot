@@ -40,7 +40,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         /// <summary>
         /// Controls the client certificate verification logic
         /// </summary>
-        ServerClientCertificateVerificationMode ClientCertificateVerification { get; }
+        ClientCertificateVerificationMode ClientCertificateVerification { get; }
 
         int SiloGatewayPort { get; }
 
