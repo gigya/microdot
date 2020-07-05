@@ -22,7 +22,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomVariables => new Dictionary<string, string>();
+        public IDictionary<string, string> EnvironmentVariables => new Dictionary<string, string>();
 
         public ApplicationInfoSource(CurrentApplicationInfo applicationInfo)
         {

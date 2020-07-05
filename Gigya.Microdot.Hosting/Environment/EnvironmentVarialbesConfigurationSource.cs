@@ -1,6 +1,7 @@
 ﻿using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -26,7 +27,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomVariables { get; }
+        public IDictionary<string, string> EnvironmentVariables { get; }
 
         public EnvironmentVarialbesConfigurationSource()
         {
@@ -42,12 +43,10 @@ namespace Gigya.Microdot.Hosting.Environment
 
             var d = new Dictionary<string, string>();
 
-            d.Add("DC", System.Environment.GetEnvironmentVariable("DC"));
-            d.Add("ENV", System.Environment.GetEnvironmentVariable("ENV"));
-            d.Add("GIGYA_CONFIG_ROOT", System.Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT"));
-            d.Add("GIGYA_BASE_PATH", System.Environment.GetEnvironmentVariable("GIGYA_BASE_PATH"));
+            foreach (DictionaryEntry env in System.Environment.GetEnvironmentVariables())
+                d.Add((string)env.Key, (string)env.Value);
 
-            this.CustomVariables = d;
+            this.EnvironmentVariables = d;
         }
     }
 }

@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using Gigya.Common.Contracts.Exceptions;
@@ -40,6 +41,7 @@ namespace Gigya.Microdot.Hosting.Environment
         public string Current { get; set; }
     }
 
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public class HostEnvironment : IEnvironment
     {
         private const string GIGYA_CONFIG_ROOT_DEFAULT = "config";
@@ -54,7 +56,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public HostEnvironment(IEnumerable<IHostEnvironmentSource> sources)
         {
-            customVariables = new Dictionary<string, string>();
+            environmentVariables = new Dictionary<string, string>();
 
             foreach (var s in sources)
             {
@@ -99,10 +101,10 @@ namespace Gigya.Microdot.Hosting.Environment
 
             void consumeCustomKeys(IHostEnvironmentSource cs)
             {
-                foreach (var k in cs.CustomVariables)
+                foreach (var k in cs.EnvironmentVariables)
                 {
                     if (k.Value != null)
-                        customVariables[k.Key] = k.Value;
+                        environmentVariables[k.Key] = k.Value;
                 }
             }
 
@@ -150,13 +152,13 @@ namespace Gigya.Microdot.Hosting.Environment
         public CurrentApplicationInfo ApplicationInfo { get; }
 
 
-        private readonly Dictionary<string, string> customVariables;
+        private readonly Dictionary<string, string> environmentVariables;
 
         public string this[string key]
         {
             get
             {
-                if (customVariables.TryGetValue(key, out var val))
+                if (environmentVariables.TryGetValue(key, out var val))
                     return val;
                 return null;
             }
