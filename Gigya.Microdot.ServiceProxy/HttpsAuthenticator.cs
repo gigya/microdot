@@ -91,7 +91,8 @@ namespace Gigya.Microdot.ServiceProxy
                     if (hasSameRootCertificateHash == false)
                         Log.Error(_ => _("Server root certificate does not match client root certificate"));
 
-                    return hasSameRootCertificateHash;
+                    if (hasSameRootCertificateHash == false)
+                        return false;
                 }
 
                 if (configuration.SecurityRole != null)
