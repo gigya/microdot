@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{1FB8E464-6A36-44A2-A343-8E95B51B4542}</ProjectGuid>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Interface</AssemblyTitle>
     <Product>Gigya.Microdot.Sample.CalculatorService.Interface</Product>
     <Copyright>Copyright ©  2018</Copyright>
