@@ -70,11 +70,10 @@ namespace Gigya.Microdot.Hosting.Environment
                 consumeCustomKeys(s);
             }
 
-            if (Zone == null) throw new ArgumentNullException($"{ nameof(Zone)                  } wasn't supplied.");
-            // if (Region                == null) throw new ArgumentNullException($"{ nameof(Region)                } wasn't supplied.");
-            if (DeploymentEnvironment == null) throw new ArgumentNullException($"{ nameof(DeploymentEnvironment) } wasn't supplied.");
-            if (ConsulAddress == null) throw new ArgumentNullException($"{ nameof(ConsulAddress)         } wasn't supplied.");
-            if (ApplicationInfo == null) throw new ArgumentNullException($"{ nameof(ApplicationInfo)       } wasn't supplied.");
+            if (Zone == null) throw MakeException(nameof(Zone));
+            if (DeploymentEnvironment == null) throw MakeException(nameof(DeploymentEnvironment));
+            if (ConsulAddress == null) throw MakeException(nameof(ConsulAddress));
+            if (ApplicationInfo == null) throw MakeException(nameof(ApplicationInfo));
 
             InstanceName ??= "DefaultInstance";
             ConfigRoot ??= GetDefaultConfigRoot();
@@ -128,6 +127,14 @@ namespace Gigya.Microdot.Hosting.Environment
 
                 return @new ?? orig;
             }
+
+            Exception MakeException(string arg)
+            {
+                throw new ArgumentNullException(
+                    $"{ arg } environement variable wasn't supplied. If you're using " +
+                    $"local variables file make sure it's path is defined under " +
+                    $"GIGYA_ENVVARS_FILE environemnt variable.");
+            }
         }
 
         private DirectoryInfo GetDefaultConfigRoot() =>
@@ -176,6 +183,11 @@ namespace Gigya.Microdot.Hosting.Environment
             if (System.Environment.GetEnvironmentVariable("GIGYA_ENVVARS_FILE") is string path)
             {
                 l.Add(new LegacyFileHostConfigurationSource(path));
+            }
+
+            else if (File.Exists(@"D:\gigya\environmentVariables.json"))
+            {
+                l.Add(new LegacyFileHostConfigurationSource(@"D:\gigya\environmentVariables.json"));
             }
 
             if (arguments != null)

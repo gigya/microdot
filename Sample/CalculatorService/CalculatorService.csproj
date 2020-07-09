@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ProjectGuid>{5B1BA713-F5BA-466B-B79E-95261DB27FA9}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
