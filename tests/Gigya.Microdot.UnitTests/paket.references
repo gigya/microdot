@@ -1,6 +1,5 @@
 Gigya.ServiceContract
 FluentAssertions
-Metrics.NET
 NSubstitute
 NUnit
 NUnit3TestAdapter
