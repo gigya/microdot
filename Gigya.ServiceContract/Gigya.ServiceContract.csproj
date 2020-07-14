@@ -5,9 +5,9 @@
     <Company>Gigya</Company>
     <Product>Gigya.ServiceContract</Product>
     <Copyright>© 2017 Gigya Inc.</Copyright>
-    <Version>2.7.1</Version>
-    <AssemblyVersion>2.7.1</AssemblyVersion>
-    <FileVersion>2.7.1</FileVersion>
+    <Version>2.7.2</Version>
+    <AssemblyVersion>2.7.2</AssemblyVersion>
+    <FileVersion>2.7.2</FileVersion>
   </PropertyGroup>
   <Import Project=".paket\Paket.Restore.targets" />
 </Project>

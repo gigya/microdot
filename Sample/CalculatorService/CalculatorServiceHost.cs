@@ -20,18 +20,9 @@ namespace CalculatorService
 
         static void Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
-            Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
-            Environment.SetEnvironmentVariable("REGION", "us1");
-            Environment.SetEnvironmentVariable("ZONE", "us1a");
-            Environment.SetEnvironmentVariable("ENV", "dev");
-
-            
-
             try
             {
-                new CalculatorServiceHost();
+                new CalculatorServiceHost().Run();
             }
             catch (Exception ex)
             {
@@ -41,17 +32,6 @@ namespace CalculatorService
 
         protected override ILoggingModule GetLoggingModule() => new NLogModule();
 
-        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
-        {
-            var env =
-                new HostEnvironment(
-                    new EnvironmentVarialbesConfigurationSource());
-
-            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
-            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
-
-            base.PreConfigure(kernel, Arguments);
-        }
 
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {

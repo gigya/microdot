@@ -75,7 +75,7 @@ namespace Gigya.Microdot.Hosting.Environment
             if (Zone == null) throw MakeException(nameof(Zone));
             if (DeploymentEnvironment == null) throw MakeException(nameof(DeploymentEnvironment));
             if (ConsulAddress == null) throw MakeException(nameof(ConsulAddress));
-            if (ApplicationInfo == null) throw MakeException(nameof(ApplicationInfo));
+            if (ApplicationInfo == null) throw new ArgumentNullException(nameof(ApplicationInfo));
 
             InstanceName ??= "DefaultInstance";
             ConfigRoot ??= GetDefaultConfigRoot();
