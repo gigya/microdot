@@ -43,7 +43,7 @@ using Gigya.Microdot.Hosting.Environment;
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
 
-    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class HttpServiceListenerTests
     {
         private IDemoService _insecureClient;
