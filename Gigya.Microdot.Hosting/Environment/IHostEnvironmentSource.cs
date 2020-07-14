@@ -36,6 +36,6 @@ namespace Gigya.Microdot.Hosting.Environment
         CurrentApplicationInfo ApplicationInfo { get; }
         DirectoryInfo ConfigRoot { get; }
         FileInfo LoadPathsFile { get; }
-        IDictionary<string, string> CustomVariables { get; }
+        IDictionary<string, string> EnvironmentVariables { get; }
     }
 }

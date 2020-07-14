@@ -28,7 +28,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomVariables { get; }
+        public IDictionary<string, string> EnvironmentVariables { get; }
 
         public LegacyFileHostConfigurationSource(string path)
         {
@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Hosting.Environment
             ConfigRoot    = get("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
             LoadPathsFile = get("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
 
-            CustomVariables = entries.ToDictionary(x => x.Key, x => x.Value.Value);
+            EnvironmentVariables = entries.ToDictionary(x => x.Key, x => x.Value.Value);
 
             string get(string key)
             {

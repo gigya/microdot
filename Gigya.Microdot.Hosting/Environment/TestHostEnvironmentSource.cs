@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public FileInfo LoadPathsFile { get; }
 
-        public IDictionary<string, string> CustomVariables { get; }
+        public IDictionary<string, string> EnvironmentVariables { get; }
 
         public TestHostEnvironmentSource(
             string zone = null,
@@ -67,7 +67,7 @@ namespace Gigya.Microdot.Hosting.Environment
             this.ApplicationInfo = applicationInfo ?? new CurrentApplicationInfo(appName ?? "test", System.Environment.UserName, System.Net.Dns.GetHostName());
             this.ConfigRoot = configRoot ?? new DirectoryInfo(this.GetType().Assembly.Location.To(Path.GetDirectoryName));
             this.LoadPathsFile = loadPathsFile;
-            this.CustomVariables = customKeys ?? new Dictionary<string, string>();
+            this.EnvironmentVariables = customKeys ?? new Dictionary<string, string>();
         }
     }
 }
