@@ -92,16 +92,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public bool TryHttps { get; set; }
 
         /// <summary>
-        /// Controls the client certificate verification logic.
+        /// Controls the client verification logic for the server certificate.
         /// Default behavior is to validate that the server domain matches the certificate domain.
         /// </summary>
-        public ClientCertificateVerificationMode PerformClientCertificateVerification { get; set; } = ClientCertificateVerificationMode.VerifyDomain;
+        public ServerCertificateVerificationMode ServerCertificateVerification { get; set; } = ServerCertificateVerificationMode.VerifyDomain;
 
         /// <summary>
-        /// Controls the client certificate verification logic server side.
+        /// Controls the verification logic of the client certificate.
         /// Default behavior is that no verification is been made.
         /// </summary>
-        public ServerClientCertificateVerificationMode PerformServerClientCertificateVerification { get; set; } = ServerClientCertificateVerificationMode.Disable;
+        public ClientCertificateVerificationMode ClientCertificateVerification { get; set; } = ClientCertificateVerificationMode.Disable;
 
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.

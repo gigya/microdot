@@ -64,8 +64,15 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TearDown]
         public virtual void TearDown()
         {
-            _testinghost.Dispose();
-            Metric.ShutdownContext("Service");
+            try
+            {
+                _testinghost.Dispose();
+                Metric.ShutdownContext("Service");
+            }
+            catch
+            {
+                //should not fail tests
+            }
         }
 
 
@@ -303,6 +310,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             {
                 endpointDefinition.HttpPort.Returns(ci => httpPort.Port);
                 endpointDefinition.HttpsPort.Returns(ci => httpsPort.Port); // HTTPS enabled by a non-null HTTPS port
+                endpointDefinition.ClientCertificateVerification.Returns(ci =>
+                    ClientCertificateVerificationMode.VerifyIdenticalRootCertificate);
 
                 var certificateLocator = Substitute.For<ICertificateLocator>();
                 certificateLocator.GetCertificate(Arg.Any<string>()).Throws<Exception>();

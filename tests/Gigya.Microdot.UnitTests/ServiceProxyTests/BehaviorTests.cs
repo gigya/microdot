@@ -663,7 +663,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", host},
-                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
             int httpsTestCount = 0;
@@ -738,7 +739,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", host},
-                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
             int httpsTestCount = 0;
@@ -817,7 +819,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", host},
-                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
             int httpsTestCount = 0;

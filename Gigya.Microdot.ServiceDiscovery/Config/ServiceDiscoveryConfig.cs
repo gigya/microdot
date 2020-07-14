@@ -94,17 +94,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// </summary>
         public bool? TryHttps { get; set; }
 
-        /// /// <summary>
-        /// Controls the client certificate verification logic server side.
-        /// Defaults to null, will override the global settings for this service if set to anything but null.
-        /// </summary>
-        public ServerClientCertificateVerificationMode? PerformServerClientCertificateVerification { get; set; } = null;
-        
         /// <summary>
-        /// Controls the client certificate verification logic for a specific service.
+        /// Controls the client verification logic for the server certificate.
         /// Defaults to null, will override the global settings for this service if set to anything but null.
         /// </summary>
-        public ClientCertificateVerificationMode? PerformClientCertificateVerification { get; set; } = null;
+        public ServerCertificateVerificationMode? ServerCertificateVerification { get; set; } = null;
+
+        /// /// <summary>
+        /// Controls the verification logic of the client certificate.
+        /// Defaults to null, will override the global settings for this service if set to anything but null.
+        /// </summary>
+        public ClientCertificateVerificationMode? ClientCertificateVerification { get; set; } = null;
 
         /// <summary>
         /// Gets or sets the name of server certificate to trust. Defaults to null, which means it will trust a
@@ -139,8 +139,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                    DefaultPort == other.DefaultPort &&
                    DefaultSlotNumber == other.DefaultSlotNumber &&
                    UseHttpsOverride == other.UseHttpsOverride &&
-                   PerformServerClientCertificateVerification == other.PerformServerClientCertificateVerification &&
-                   PerformClientCertificateVerification == other.PerformClientCertificateVerification &&
+                   ClientCertificateVerification == other.ClientCertificateVerification &&
+                   ServerCertificateVerification == other.ServerCertificateVerification &&
                    string.Equals(SecurityRole, other.SecurityRole) &&
                    Equals(CachingPolicy, other.CachingPolicy) &&
                    SuppressHealthCheckAfterServiceUnused.Equals(other.SuppressHealthCheckAfterServiceUnused);
@@ -164,8 +164,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                 hashCode = (hashCode * 397) ^ (SecurityRole != null ? SecurityRole.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (CachingPolicy != null ? CachingPolicy.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ SuppressHealthCheckAfterServiceUnused.GetHashCode();
-                hashCode = (hashCode * 397) ^ PerformClientCertificateVerification.GetHashCode();
-                hashCode = (hashCode * 397) ^ PerformServerClientCertificateVerification.GetHashCode();
+                hashCode = (hashCode * 397) ^ ServerCertificateVerification.GetHashCode();
+                hashCode = (hashCode * 397) ^ ClientCertificateVerification.GetHashCode();
                 return hashCode;
             }
         }

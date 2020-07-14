@@ -1,0 +1,13 @@
+type
+	project
+description
+	Infrastructure used for hosting Orleans Microdot services, part of the
+	Microdot framework.
+projectUrl
+	https://github.com/gigya/microdot
+licenseUrl
+	https://github.com/gigya/microdot/blob/master/LICENSE.md
+tags
+	gigya microdot microservice microservices
+authors
+	metrics.net

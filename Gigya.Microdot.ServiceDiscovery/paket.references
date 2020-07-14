@@ -1,7 +1,6 @@
 Gigya.ServiceContract
 Nito.AsyncEx
 Newtonsoft.Json
-Metrics.NET
 Microsoft.CSharp
 System.Collections.Immutable
 System.ComponentModel.Annotations

@@ -139,7 +139,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ServerClientCertificateVerificationMode.Disable)
+            if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ClientCertificateVerificationMode.Disable)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
             Listener = new HttpListener {IgnoreWriteExceptions = true};
@@ -521,7 +521,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     unencrypted: new Tags { { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
             }
 
-            if (ServiceEndPointDefinition.ClientCertificateVerification == ServerClientCertificateVerificationMode.Disable)
+            if (ServiceEndPointDefinition.ClientCertificateVerification == ClientCertificateVerificationMode.Disable)
             {
                 return; 
             }
