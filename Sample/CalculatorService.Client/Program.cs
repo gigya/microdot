@@ -17,16 +17,7 @@ namespace CalculatorService.Client
         {
             try
             {
-                Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
-                Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
-                Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
-                Environment.SetEnvironmentVariable("REGION", "us1");
-                Environment.SetEnvironmentVariable("ZONE", "us1a");
-                Environment.SetEnvironmentVariable("ENV", "dev");
-                Environment.SetEnvironmentVariable("GIGYA_BASE_PATH", Environment.CurrentDirectory);
-                Environment.SetEnvironmentVariable("Consul", "not-real-url");
                 using (var microdotInitializer = new MicrodotInitializer(
-                    // TODO: make correct config
                     "test-client",
                     new NLogModule()))
                 {
