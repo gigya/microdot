@@ -88,6 +88,8 @@ namespace Gigya.Microdot.Ninject.Host
 
             this.OnInitilize(Kernel);
 
+            VerifyConfigurationsIfNeeded(Kernel.Get<MicrodotHostingConfig>(), Kernel.Get<ConfigurationVerificator>());
+
             this.Warmup(Kernel);
 
             //don't move up the get should be after all the binding are done
