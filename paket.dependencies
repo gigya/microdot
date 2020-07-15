@@ -5,13 +5,13 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
-nuget Gigya.ServiceContract ~> 2.0
+nuget Gigya.ServiceContract ~> 2.7.3
 
 # .Net
 nuget Microsoft.CSharp ~> 4.7
 nuget System.ComponentModel.Annotations ~> 4.0
 nuget System.Data.DataSetExtensions ~> 4.5
-nuget System.Diagnostics.PerformanceCounter 4.5.0 
+nuget System.Diagnostics.PerformanceCounter ~> 4.7.0 
 nuget System.Net.Http ~> 4.3
 nuget System.Runtime.Caching ~> 4.7
 nuget System.ServiceProcess.ServiceController ~> 4.7
