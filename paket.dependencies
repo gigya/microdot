@@ -5,7 +5,7 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
-nuget Gigya.ServiceContract ~> 2.7.2
+nuget Gigya.ServiceContract ~> 2.7.3
 
 # .Net
 nuget Microsoft.CSharp ~> 4.7
