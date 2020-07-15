@@ -1,16 +1,41 @@
 ﻿using Gigya.Microdot.Hosting.Environment;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
+    /// <summary>
+    /// This test is modifying the environment variables it must not run in parallel with other tests!
+    /// </summary>
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class HostConfigurationSources
     {
+        private IDictionary _envs;
+
+        [SetUp]
+        public void Setup()
+        {
+            _envs = Environment.GetEnvironmentVariables();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            //Remove current variables
+            foreach (DictionaryEntry keyPair in Environment.GetEnvironmentVariables())
+            {
+                Environment.SetEnvironmentVariable(keyPair.Key.ToString(),null);
+            }
+
+            //Restore old variables
+            foreach (DictionaryEntry keyPair in _envs)
+            {
+                Environment.SetEnvironmentVariable(keyPair.Key.ToString(), keyPair.Value.ToString());
+            }
+        }
+
         [Test]
         public void LegacyConfigSource_HappyPath()
         {
