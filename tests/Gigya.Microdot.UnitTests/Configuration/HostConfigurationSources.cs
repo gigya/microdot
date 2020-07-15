@@ -2,7 +2,9 @@
 using NUnit.Framework;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {
@@ -12,27 +14,32 @@ namespace Gigya.Microdot.UnitTests.Configuration
     [TestFixture, Parallelizable(ParallelScope.None)]
     public class HostConfigurationSources
     {
-        private IDictionary _envs;
+        private Dictionary<string,string> envs = new Dictionary<string, string>
+        {
+            {"ENV",null},
+            {"DC",null},
+            {"GIGYA_CONFIG_PATHS_FILE",null},
+            {"GIGYA_CONFIG_ROOT",null},
+            {"Consul",null},
+        };
 
         [SetUp]
         public void Setup()
         {
-            _envs = Environment.GetEnvironmentVariables();
+            //storing old values
+            foreach (var key in envs.Keys.ToList())
+            {
+                envs[key] = Environment.GetEnvironmentVariable(key);
+            }
         }
 
         [TearDown]
         public void TearDown()
         {
-            //Remove current variables
-            foreach (DictionaryEntry keyPair in Environment.GetEnvironmentVariables())
+            //restoring old values
+            foreach (var keyValue in envs)
             {
-                Environment.SetEnvironmentVariable(keyPair.Key.ToString(),null);
-            }
-
-            //Restore old variables
-            foreach (DictionaryEntry keyPair in _envs)
-            {
-                Environment.SetEnvironmentVariable(keyPair.Key.ToString(), keyPair.Value.ToString());
+                Environment.SetEnvironmentVariable(keyValue.Key, keyValue.Value);
             }
         }
 
