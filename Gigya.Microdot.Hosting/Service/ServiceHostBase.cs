@@ -63,6 +63,7 @@ namespace Gigya.Microdot.Hosting.Service
 
         private IRequestListener requestListener;
 
+        public bool? FailServiceStartOnConfigError { get; set; } = null;
 
         public ServiceHostBase()
         {
@@ -271,10 +272,10 @@ namespace Gigya.Microdot.Hosting.Service
         }
 
 
-        static protected void VerifyConfigurationsIfNeeded(
+        protected void VerifyConfigurationsIfNeeded(
             MicrodotHostingConfig hostingConfig, ConfigurationVerificator configurationVerificator)
         {
-            if (hostingConfig.FailServiceStartOnConfigError)
+            if (FailServiceStartOnConfigError??hostingConfig.FailServiceStartOnConfigError)
             {
                 var badConfigs = configurationVerificator.Verify().Where(c => !c.Success).ToList();
                 if (badConfigs.Any())

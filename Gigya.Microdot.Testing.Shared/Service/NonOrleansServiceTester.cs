@@ -59,8 +59,11 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             BasePort = serviceArguments.BasePortOverride.Value;
 
-            Host = new TServiceHost();
-
+            Host = new TServiceHost()
+            {
+                FailServiceStartOnConfigError = false
+            };
+            //Host
             this._hostStopped = Task.Run(() => this.Host.Run((ServiceArguments)serviceArguments));
 
             Task.WaitAny(_hostStopped, Host.WaitForServiceStartedAsync());
