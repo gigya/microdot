@@ -22,7 +22,10 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             var srvHost =
                 new ServiceHostFake<IValidator>(
                     validatorFake,
-                    new HostEnvironment(new TestHostEnvironmentSource()));
+                    new HostEnvironment(new TestHostEnvironmentSource()))
+                {
+                    FailServiceStartOnConfigError = false
+                };
 
             var args = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
@@ -49,7 +52,10 @@ namespace Gigya.Microdot.UnitTests.SystemInitializer
             var srvHost =
                 new ServiceHostFake<IWorkloadMetrics>(
                     workloadMetricsFake,
-                    new HostEnvironment(new TestHostEnvironmentSource()));
+                    new HostEnvironment(new TestHostEnvironmentSource()))
+                {
+                    FailServiceStartOnConfigError = false
+                }; ;
 
             Task.Run(() => srvHost.Run(args));
             await srvHost.WaitForServiceStartedAsync();
