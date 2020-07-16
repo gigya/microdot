@@ -24,16 +24,25 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 
 namespace Gigya.Microdot.Hosting.Service
 {
+    [ConfigurationRoot("Microdot.Hosting", RootStrategy.ReplaceClassNameWithPath)]
+    public class MicrodotHostingConfig : IConfigObject
+    {
+        public bool FailServiceStartOnConfigError = true;
+    }
+
     public abstract class ServiceHostBase : IDisposable
     {
         private bool disposed;
@@ -260,6 +269,20 @@ namespace Gigya.Microdot.Hosting.Service
                 }
             }
         }
+
+
+        static protected void VerifyConfigurationsIfNeeded(
+            MicrodotHostingConfig hostingConfig, ConfigurationVerificator configurationVerificator)
+        {
+            if (hostingConfig.FailServiceStartOnConfigError)
+            {
+                var badConfigs = configurationVerificator.Verify().Where(c => !c.Success).ToList();
+                if (badConfigs.Any())
+                    throw new EnvironmentException("Bad configuration(s) detected. Stopping service startup. You can disable this behavior through the Microdot.Hosting.FailServiceStartOnConfigError configuration. Errors:\n"
+                        + badConfigs.Aggregate(new StringBuilder(), (sb, bc) => sb.Append(bc).Append("\n")));
+            }
+        }
+
 
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
