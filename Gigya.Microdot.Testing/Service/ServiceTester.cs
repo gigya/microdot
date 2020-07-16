@@ -71,7 +71,10 @@ namespace Gigya.Microdot.Testing.Service
 
         private void Initialize()
         {
-            Host = new TServiceHost();
+            Host = new TServiceHost()
+            {
+                FailServiceStartOnConfigError = false
+            };
 
             BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
