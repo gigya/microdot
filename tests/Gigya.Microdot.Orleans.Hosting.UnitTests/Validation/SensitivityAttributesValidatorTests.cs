@@ -21,13 +21,17 @@
 #endregion
 
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.Caching.Host;
@@ -55,7 +59,10 @@ namespace Gigya.Common.Application.UnitTests.Validation
         {
             _serviceInterfaceMapper = Substitute.For<IServiceInterfaceMapper>();
             _serviceInterfaceMapper.ServiceInterfaceTypes.Returns(_ => _typesToValidate);
-            _unitTesting = new MicrodotInitializer("",new ConsoleLogLoggersModules(),kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
+            _unitTesting = new MicrodotInitializer(
+                "",
+                new ConsoleLogLoggersModules(),
+                kernel => kernel.Rebind<IServiceInterfaceMapper>().ToConstant(_serviceInterfaceMapper));
             _serviceValidator = _unitTesting.Kernel.Get<SensitivityAttributesValidator>();
         }
 

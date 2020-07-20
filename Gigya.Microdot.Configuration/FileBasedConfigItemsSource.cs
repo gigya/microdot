@@ -31,23 +31,37 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration
 {
+    ///<inheritdoc cref="IConfigItemsSource"/>
     public class FileBasedConfigItemsSource : IConfigItemsSource
     {
         private readonly IConfigurationLocationsParser _configurationLocations;
-        private readonly IEnvironmentVariableProvider _environmentVariableProvider;
         private readonly IFileSystem _fileSystem;
+        private readonly IEnvironment _environment;
         private readonly ConfigDecryptor _configDecryptor;
 
         private readonly Regex paramMatcher = new Regex(@"([^\\]|^)%(?<envName>[^%]+)%", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
-        public FileBasedConfigItemsSource(IConfigurationLocationsParser configurationLocations, IEnvironmentVariableProvider environmentVariableProvider, IFileSystem fileSystem, ConfigDecryptor configDecryptor)
+
+        /// <summary>
+        /// Constructor for the 'FileBasedConfigItemsSource' class
+        /// </summary>
+        /// <param name="configurationLocations">Encapsulates the retrieval of all configuration location behavior</param>
+        /// <param name="environmentVariableProvider">Encapsulates the retrieval of all environment variables</param>
+        /// <param name="fileSystem">Encapsulates the file system behavior</param>
+        /// <param name="configDecryptor">Encapsulates the decryption behavior for a config item</param>
+        public FileBasedConfigItemsSource(
+            IConfigurationLocationsParser configurationLocations,
+            IFileSystem fileSystem,
+                IEnvironment environment,
+                ConfigDecryptor configDecryptor)
         {
             _configurationLocations = configurationLocations;
-            _environmentVariableProvider = environmentVariableProvider;
             _fileSystem = fileSystem;
+            _environment = environment;
             _configDecryptor = configDecryptor;
         }
 
@@ -71,7 +85,7 @@ namespace Gigya.Microdot.Configuration
                                        .Select(match => new
                                        {
                                            Placehodler = "%" + match.Groups[1].Value + "%",
-                                           Value = _environmentVariableProvider.GetEnvironmentVariable(match.Groups[1].Value)
+                                           Value = _environment[match.Groups[1].Value.ToUpperInvariant()]
                                        }).ToList();
 
                 if (list.Any())
@@ -127,6 +141,11 @@ namespace Gigya.Microdot.Configuration
             }
         }
 
+        /// <summary>
+        /// Reads a single configuration file and populates the configuration items found in it. 
+        /// </summary>
+        /// <param name="configFile"> The configuration file</param>
+        /// <param name="conf">The configuration items collection</param>
         private async Task ReadConfiguration(ConfigFile configFile, Dictionary<string, ConfigItem> conf)
         {
             try
@@ -154,7 +173,13 @@ namespace Gigya.Microdot.Configuration
             }
         }
 
-
+        /// <summary>
+        /// Parses a single XML document and populate the configuration collection accordingly.
+        /// </summary>
+        /// <param name="fileName">The name of the original file that was parsed into an XML document</param>
+        /// <param name="xml">The XML document been parsed</param>
+        /// <param name="priority">The priority that each config item in this document will get</param>
+        /// <param name="data">The configuration collection to be populated</param>
         private void ParseConfigXml(string fileName, XmlDocument xml, uint priority, Dictionary<string, ConfigItem> data)
         {
             if (xml.DocumentElement.Name == "Configuration")
@@ -170,6 +195,14 @@ namespace Gigya.Microdot.Configuration
             }
         }
 
+        /// <summary>
+        /// This method is been invoked recursively on each XML node and populate configuration items.
+        /// </summary>
+        /// <param name="element">The current XML node in the recursion</param>
+        /// <param name="parentName">The XML path for this node's parent</param>
+        /// <param name="conf">The configuration collection to be populated</param>
+        /// <param name="priority">The priority that config items will get</param>
+        /// <param name="fileName">The name of the file that this node reside in</param>
         private void ParseConfiguration(XmlNode element, string parentName, Dictionary<string, ConfigItem> conf, uint priority, string fileName)
         {
             try
@@ -186,13 +219,7 @@ namespace Gigya.Microdot.Configuration
                             PutOrUpdateEntry(conf, parentName + "." + attr.Name, attr.Value, priority, fileName, element);
                     foreach (XmlNode child in element.ChildNodes)
                     {
-                        if (child.NodeType == XmlNodeType.Text || child.NodeType == XmlNodeType.CDATA)
-                            PutOrUpdateEntry(conf, parentName, child.Value, priority, fileName);
-                        else
-                        {
-                            string childName = (string.IsNullOrEmpty(parentName) ? string.Empty : parentName + ".") + child.Name;
-                            ParseConfiguration(child, childName, conf, priority, fileName);
-                        }
+                        ParseConfigurationNode(parentName, conf, priority, fileName, child);
                     }
                 }
             }
@@ -201,8 +228,97 @@ namespace Gigya.Microdot.Configuration
                 throw new Exception("parentName=" + parentName, e);
             }
         }
+        /// <summary>
+        /// Parses a single child node and populate a config item if this node has any attributes.
+        /// </summary>
+        /// <param name="parentName">The full path of the parent node</param>
+        /// <param name="conf">The configuration collection</param>
+        /// <param name="priority">The priority for the config items</param>
+        /// <param name="fileName">the name of the file been parsed</param>
+        /// <param name="child">The child node been parsed</param>
+        private void ParseConfigurationNode(string parentName, Dictionary<string, ConfigItem> conf, uint priority, string fileName, XmlNode child)
+        {
+            if (child.NodeType == XmlNodeType.Text || child.NodeType == XmlNodeType.CDATA)
+                PutOrUpdateEntry(conf, parentName, child.Value, priority, fileName);
+            else
+            {
+                string name = child.Name;
+                if (name.EndsWith(ListMarker))
+                {
+                    ParseConfigurationListNode(parentName, conf, priority, fileName, child, name);
+                }
+                else
+                {
+                    name = ToFullName(parentName, name);
+                    ParseConfiguration(child, name, conf, priority, fileName);
+                }
+            }
+        }
+        /// <summary>
+        /// Parses an XML node that is marked as a list by the '-list' suffix 
+        /// </summary>
+        /// <param name="parentName">The parent path</param>
+        /// <param name="conf">The configuration collection</param>
+        /// <param name="priority">The priority of the config item</param>
+        /// <param name="fileName">The file been parsed</param>
+        /// <param name="child">The child XML node been parsed</param>
+        /// <param name="name">The name of the child node</param>
+        private void ParseConfigurationListNode(string parentName, Dictionary<string, ConfigItem> conf, uint priority, string fileName,
+            XmlNode child, string name)
+        {
+            name = RemoveListMarker(name);
+            name = ToFullName(parentName, name);
+            var arrayString = ToValidJsonArrayString(child);
+            PutOrUpdateEntry(conf, name, arrayString, priority, fileName, true);
+        }
 
-        private void PutOrUpdateEntry(Dictionary<string, ConfigItem> conf, string key, string value, uint priority, string fileName, XmlNode node = null)
+        private const string ListMarker = "-list";
+
+        private (string Key, string Value, bool IsArray) ParseStringEntry(string key, string value)
+        {
+            (string Key, string Value, bool IsArray) res = (key, value, false);
+
+            if (key.EndsWith(ListMarker))
+            {
+                res.Key = RemoveListMarker(key);
+                res.Value = ToValidJsonArrayString(value);
+                res.IsArray = true;
+                return res;
+            }
+
+            return res;
+        }
+        /// <summary>
+        /// This method is a wrapper method that deals with the parsing of simple lists e.g. MyList-list="1,2,3"
+        /// and then invokes the actual overload that populates the value.
+        /// </summary>
+        /// <param name="conf">The configuration collection</param>
+        /// <param name="key">The key for this configuration item</param>
+        /// <param name="value">The Value of this configuration item</param>
+        /// <param name="priority">The priority of this config item</param>
+        /// <param name="fileName">The file name where this config item was found at</param>
+        /// <param name="node">The XML node where this config item was found at</param>
+        private void PutOrUpdateEntry(Dictionary<string, ConfigItem> conf, string key, string value, uint priority,
+            string fileName, XmlNode node = null)
+        {
+            (string Key, string Value, bool IsArray) = ParseStringEntry(key, value);
+            PutOrUpdateEntry(conf, Key, Value, priority, fileName, IsArray, node);
+        }
+        /// <summary>
+        /// Populates the config item in the configuration collection according to the following rules:
+        /// 1) If there is no config item under the given key will populate the config value under the given key.
+        /// 2) If there is already a value for the given key will check if the new item has higher priority and will
+        /// populate the new value under the given key and add the old value to the override list.
+        /// 3)If the new value has lower priority than the old value it shall be added to the override list.
+        /// </summary>
+        /// <param name="conf">The configuration collection</param>
+        /// <param name="key">The key for this configuration item</param>
+        /// <param name="value">The Value of this configuration item</param>
+        /// <param name="priority">The priority of this config item</param>
+        /// <param name="fileName">The file name where this config item was found at</param>
+        /// <param name="node">The XML node where this config item was found at</param>
+        private void PutOrUpdateEntry(Dictionary<string, ConfigItem> conf, string key, string value, uint priority, 
+            string fileName, bool isArray, XmlNode node = null)
         {
             var configItemInfo = new ConfigItemInfo
             {
@@ -214,7 +330,7 @@ namespace Gigya.Microdot.Configuration
             conf.TryGetValue(key, out ConfigItem old);
             if (old == null)
             {
-                var configItem = new ConfigItem(_configDecryptor) { Key = key, Value = value, Priority = priority, Node = node ,};
+                var configItem = new ConfigItem(_configDecryptor) { Key = key, Value = value, Priority = priority, Node = node ,isArray = isArray};
                 configItem.Overrides.Add(configItemInfo);
                 conf[key] = configItem;
             }
@@ -226,7 +342,8 @@ namespace Gigya.Microdot.Configuration
                     Value = value,
                     Priority = priority,
                     Node = node,
-                    Overrides = old.Overrides
+                    Overrides = old.Overrides,
+                    isArray = isArray
                 };
                 configItem.Overrides.Add(configItemInfo);
                 conf[key] = configItem;
@@ -234,6 +351,248 @@ namespace Gigya.Microdot.Configuration
             else
             {
                 old.Overrides.Add(configItemInfo);
+            }
+        }
+        /// <summary>
+        /// Removes the list suffix from the given string
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private static string RemoveListMarker(string key)
+        {
+            return key.Substring(0, key.Length - ListMarker.Length);
+        }
+        /// <summary>
+        /// Combines the parent path with the child path to generate the complete path for the child node
+        /// </summary>
+        /// <param name="parentName">Parent Path</param>
+        /// <param name="childName">Child name</param>
+        /// <returns></returns>
+        private static string ToFullName(string parentName, string childName)
+        {
+            return (string.IsNullOrEmpty(parentName) ? string.Empty : parentName + ".") + childName;
+        }
+
+        private const string delimiter = ",";
+        private static readonly string[] _splitArrayBy = { delimiter };
+        private string ToValidJsonArrayString(string value)
+        {
+            var array = SplitArrayElements(value);
+            return array.ToString();
+        }
+
+        /// <summary>
+        /// Splits a comma separated list into tokens and populates a JArray.
+        /// </summary>
+        /// <param name="value">The list been split</param>
+        /// <returns>The constructed JArray</returns>
+        private JArray SplitArrayElements(string value)
+        {
+            var elements = value.Split(_splitArrayBy, StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim());
+            var array = new JArray(elements);
+            return array;
+        }
+        /// <summary>
+        /// Converts a simple list into a valid JArray object
+        /// </summary>
+        /// <param name="value">simple list of items delimited by commas</param>
+        /// <returns>a JArray containing the values in the list</returns>
+        private JArray ToValidJsonArray(string value)
+        {
+            return SplitArrayElements(value);
+        }
+
+        /// <summary>
+        /// A special XML element to mark a list item
+        /// </summary>
+        private const string ListItemElementName = "Item";
+
+        /// <summary>
+        /// Transform a single xml node marked as a list into a single valid json array string
+        /// </summary>
+        /// <param name="node">The XML node marked as a list</param>
+        /// <returns>Json array string containing the list items</returns>
+        private string ToValidJsonArrayString(XmlNode node)
+        {
+            return ToValidJsonArray(node).ToString();
+        }
+
+        /// <summary>
+        /// Transform a single xml node marked as a list into a single valid json array
+        /// </summary>
+        /// <param name="node">The XML node marked as a list</param>
+        /// <returns>Json array containing the list items</returns>
+        private JArray ToValidJsonArray(XmlNode node)
+        {
+            ValidateListStructure(node);
+            return new JArray(node.ChildNodes.Cast<XmlNode>().Select(ParseXmlToJToken));
+        }
+
+        /// <summary>
+        /// Parses a single XML node to JToken and extracts its value to be returned.
+        /// If we have an array of objects e.g. <MyArray-list><Item><Person Name='Bob'/></Item></MyArray-list>
+        /// The result of the recursive call will be [{'Person':{'Name':'Bob'}}] where it should be [{'Name':'Bob'}]
+        /// We need to unwrap one layer of JObject to construct the correct array structure for a json
+        /// </summary>
+        /// <param name="xmlNode">The node been parsed</param>
+        /// <returns>The JToken value</returns>
+        private JToken ParseXmlToJToken(XmlNode xmlNode)
+        {
+            
+            var node = ParseXmlToJToken_Recursive(xmlNode);
+            //Primitive type
+            if (node is JValue)
+                return node;
+            //Complex object
+            var prop = (JProperty)node.Single(p => p is JProperty);
+            return prop.Value;
+        }
+
+        /// <summary>
+        /// Recursively parses XML node into a JToken
+        /// </summary>
+        /// <param name="xmlNode">The node been parsed</param>
+        /// <returns>The constructed JToken value</returns>
+        /// <exception cref="ConfigurationException"> Throws if an element has no attributes or value</exception>
+        private JToken ParseXmlToJToken_Recursive(XmlNode xmlNode)
+        {
+            //This is a leaf element
+            if (xmlNode.ChildNodes.OfType<XmlNode>().Any(x => x.NodeType != XmlNodeType.Text) == false)
+            {
+                //This element is an object
+                if (xmlNode.Attributes?.Count > 0)
+                {
+                    return ConstructJObjectFromAttributes(xmlNode);
+                }
+                //This is just a value node so it should contain 'InnerText'
+                if (string.IsNullOrEmpty(xmlNode.InnerText))
+                    throw new ConfigurationException($"Unexpected empty configuration node of type {xmlNode.Name}");
+
+                return xmlNode.InnerText;
+            }
+
+            //If we got to here we have children need to construct the JObject recursively
+            var jObject = ConstructJObjectFromAttributes(xmlNode);
+            foreach (XmlNode node in xmlNode.ChildNodes)
+            {
+                string name = node.Name;
+                if (name.EndsWith(ListMarker))
+                {
+                    name = RemoveListMarker(name);
+                    PopulateChildNodeInPlace(jObject, name, ToValidJsonArray(node));
+                }
+                else
+                {
+                    PopulateChildNodeInPlace(jObject, node.Name, ParseXmlToJToken_Recursive(node));
+                }
+            }
+
+            return jObject;
+        }
+
+        private static readonly char pathDelimiter = '.';
+        private static readonly char[] pathDelimiters = { pathDelimiter };
+
+        /// <summary>
+        /// Populates a JToken value into the JObject according to its name.
+        /// If the name contains dots it will construct a JObject hierarchy e.g.
+        /// if name ="X.Y.Z" and the value is "Foo" than the structure of the JObject will be
+        /// { "X":{ "Y":{"Z":"Foo"}}}
+        /// </summary>
+        /// <param name="jObject">The object that should be populated with the given value</param>
+        /// <param name="name">The name of the property been populated</param>
+        /// <param name="value">The value of the property been populated</param>
+        private void PopulateChildNodeInPlace(JToken jObject, string name, JToken value)
+        {
+            if(name.IndexOf(pathDelimiter) < 0)
+            {
+                jObject[name] = value;
+                return;
+            }
+
+            var tokens = name.Split(pathDelimiters);
+            foreach (var token in tokens.Take(tokens.Length - 1))
+            {
+                if (jObject[token] == null || jObject[token] is JObject == false)
+                {
+                    jObject[token] = new JObject();
+                    jObject = jObject[token];
+                }
+            }
+
+            jObject[tokens.Last()] = value;
+        }
+
+        /// <summary>
+        /// Creates a new JObject and populates its properties according to the nodes attributes
+        /// </summary>
+        /// <param name="xmlNode">The node been parsed</param>
+        /// <returns>The constructed JObject as JToken</returns>
+        private JToken ConstructJObjectFromAttributes(XmlNode xmlNode)
+        {
+            var jObject = new JObject();
+
+            if (xmlNode.Attributes == null)
+                return jObject;
+
+            foreach (XmlAttribute attribute in xmlNode.Attributes)
+            {
+                //Dealing with nested lists
+                string name = attribute.Name;
+                JToken value = attribute.Value;
+                if (attribute.Name.EndsWith(ListMarker))
+                {
+                    name = RemoveListMarker(attribute.Name);
+                    value = ToValidJsonArray(attribute.Value);
+                }
+
+                jObject[name] = value;
+            }
+
+            return jObject;
+        }
+
+        /// <summary>
+        /// Validates the structure of an XML node marked as a list node.
+        /// </summary>
+        /// <exception cref="ConfigurationException">will throw if:
+        /// 1) Any of the child node is not called 'Item'
+        /// 2) Any of 'Item' nodes doesn't have a single value
+        /// 3) Not all child elements of 'Item' are of the same type
+        /// </exception>
+        /// <param name="node">The node to be validated</param>
+        private static void ValidateListStructure(XmlNode node)
+        {
+            var nodes = node.ChildNodes.Cast<XmlNode>().ToArray();
+
+            //All nodes should be of type 'Item'
+            if (nodes.All(n => n.Name == ListItemElementName) == false)
+            {
+                throw new ConfigurationException(
+                    $"Node {node.Name} is marked as a list but contains a child element that is not a node of type <{ListItemElementName}/>");
+            }
+            //All nodes are primitive e.g. <Item>4</Item> this is valid
+            if(nodes.All(n => n.HasChildNodes && n.ChildNodes.Count == 1 &&
+                              n.ChildNodes[0].NodeType == XmlNodeType.Text && string.IsNullOrEmpty(n.InnerText) == false) )
+                return;
+            //All nodes contain a single XML element 
+            if (nodes.All(n => n.HasChildNodes && n.ChildNodes.Count == 1) == false)
+            {
+                throw new ConfigurationException(
+                    $"Node {node.Name} contains  an <{ListItemElementName}/> element that does not have one child element");
+            }
+
+            //Validate all Item elements contain one child element of the same type.
+            string innerType = null;
+            foreach (XmlNode childNode in nodes)
+            {
+                var innerNode = childNode.ChildNodes.Cast<XmlNode>().Single();
+                if (innerType != null && innerType != innerNode.Name)
+                {
+                    throw new ConfigurationException($"Node {node.Name} contains <{ListItemElementName}/> of more than one type {innerType} and {innerNode.Name}");
+                }
+
+                innerType = innerNode.Name;
             }
         }
     }

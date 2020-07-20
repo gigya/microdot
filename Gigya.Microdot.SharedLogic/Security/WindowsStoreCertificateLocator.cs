@@ -33,16 +33,16 @@ using Gigya.Microdot.SharedLogic.Utils;
 namespace Gigya.Microdot.SharedLogic.Security
 {
 
-	public class CertificateConfig
+    public class CertificateConfig
 	{
-		[Required]
+        [Required]
 		public string CertificatePath { get; set; }
 	}
 
 	[ConfigurationRoot("Https",RootStrategy.ReplaceClassNameWithPath)]
 	public class HttpsConfiguration : IConfigObject
 	{
-		public Dictionary<string, CertificateConfig>  Certificates { get; set; }    
+        public Dictionary<string, CertificateConfig>  Certificates { get; set; }    
 	}
 
 	public class WindowsStoreCertificateLocator : ICertificateLocator
@@ -56,16 +56,15 @@ namespace Gigya.Microdot.SharedLogic.Security
 			AppInfo = appInfo;
 		}
 
-
 		public X509Certificate2 GetCertificate(string certName)
 		{
 			var config = HttpsConfigurationFactory();
-			if (!config.Certificates.TryGetValue(certName, out CertificateConfig certificateConfigconfig))
+			if (!config.Certificates.TryGetValue(certName, out CertificateConfig certificateConfig))
 			{
-				throw new ConfigurationException($"No configuration is found for {certName}" );
+				throw new ConfigurationException($"No certificate configuration is found for {certName}" );
 			}
 
-			string certPath = certificateConfigconfig.CertificatePath;
+			string certPath = certificateConfig.CertificatePath;
 			string errorPrefix = $"Config entry '{certName}.CertificatePath' specifies '{certPath}'";
 			var parts = certPath.Split('\\');
 			var storeLocation = StoreLocation.CurrentUser;

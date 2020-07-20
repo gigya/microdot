@@ -24,11 +24,12 @@ using System;
 using NUnit.Framework;
 
 [SetUpFixture]
+[NonParallelizable]
 public class AssemblyInitialize
 {
     [OneTimeSetUp]
     public void SetUp()
-    {        
+    {
         try
         {
             Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", AppDomain.CurrentDomain.BaseDirectory, EnvironmentVariableTarget.Process);

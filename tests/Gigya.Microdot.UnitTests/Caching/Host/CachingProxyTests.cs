@@ -1,4 +1,5 @@
-﻿using Gigya.Microdot.SharedLogic;
+﻿using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
@@ -6,6 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.UnitTests.Caching.Host
 {
@@ -34,9 +38,10 @@ namespace Gigya.Microdot.UnitTests.Caching.Host
         {
             try
             {
-                Service = new NonOrleansServiceTester<SlowServiceHost>(
-                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port))
-                    .GetServiceProxyWithCaching<ISlowService>();
+                var serviceTester = new NonOrleansServiceTester<SlowServiceHost>(
+                        new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive, basePortOverride: DisposablePort.GetPort().Port));
+                serviceTester.CommunicationKernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
+                Service = serviceTester.GetServiceProxyWithCaching<ISlowService>();
             }
             catch (Exception ex)
             {

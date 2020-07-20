@@ -37,6 +37,11 @@ namespace Gigya.Microdot.Hosting.HttpService
 		/// </summary>
         bool UseSecureChannel { get; }
 
+        /// <summary>
+        /// Controls the client certificate verification logic
+        /// </summary>
+        ClientCertificateVerificationMode ClientCertificateVerification { get; }
+
         int SiloGatewayPort { get; }
 
         int SiloNetworkingPort { get; }
@@ -48,7 +53,9 @@ namespace Gigya.Microdot.Hosting.HttpService
         ///</summary> 
         int? SiloNetworkingPortOfPrimaryNode { get; }
 
-        int HttpPort { get; }
+        int? HttpPort { get; }
+
+        int? HttpsPort { get; }
 
         /// <summary>
         /// Provides a friendly name for each service, keyed by the type of the service interface (the one decorated

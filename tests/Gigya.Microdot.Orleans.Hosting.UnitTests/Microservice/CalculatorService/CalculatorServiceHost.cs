@@ -25,10 +25,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Orleans.Ninject.Host;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 using Orleans;
 
@@ -36,10 +40,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
 {
     public class CalculatorServiceHost : MicrodotOrleansServiceHost
     {
-        public CalculatorServiceHost()
-        { }
-
-        public override string ServiceName => "TestService";
+        public override string ServiceName => "test";
 
         public override ILoggingModule GetLoggingModule()
         {
@@ -47,13 +48,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         }
 
         public IKernel Kernel;
-        protected override void PreConfigure(IKernel kernel)
+
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
-            base.PreConfigure(kernel);
+            var env = new HostEnvironment(new TestHostEnvironmentSource());
+            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            base.PreConfigure(kernel, Arguments);
             kernel.Rebind<ServiceValidator>().To<MockServiceValidator>().InSingletonScope();
             kernel.Rebind<ISingletonDependency>().To<SingletonDependency>().InSingletonScope();
             Func<GrainLoggingConfig> writeGrainLog = () => new GrainLoggingConfig{LogMicrodotGrains = true, LogRatio = 1, LogServiceGrains = true, LogOrleansGrains = true};
             kernel.Rebind<Func<GrainLoggingConfig>>().ToConstant(writeGrainLog);
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.RebindForTests();
             Kernel = kernel;
 

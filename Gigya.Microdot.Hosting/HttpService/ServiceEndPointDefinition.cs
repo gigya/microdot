@@ -44,7 +44,9 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public int MetricsPort { get; }
 
-        public int HttpPort { get; }
+        public int? HttpPort { get; }
+
+        public int? HttpsPort { get; }
 
         public int SiloGatewayPort { get; }
 
@@ -100,7 +102,13 @@ namespace Gigya.Microdot.Hosting.HttpService
             var config = getConfig();
             var serviceConfig = config.Services[appInfo.Name];
 
-            UseSecureChannel = serviceConfig.UseHttpsOverride ?? interfacePorts.First().UseHttps;
+            bool originallyHttpsSupporting = interfacePorts.First().UseHttps;
+
+            // Use service configuration if exists, if not use global configuration or original port binding.
+            UseSecureChannel = serviceConfig.ServiceHttpsOverride ?? (config.ServiceHttpsOverride || originallyHttpsSupporting);
+
+            ClientCertificateVerification = serviceConfig.ClientCertificateVerification ??
+                                            config.ClientCertificateVerification;
 
             if (config.PortAllocation.IsSlotMode == false && serviceArguments.SlotNumber == null)
             {
@@ -112,7 +120,16 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                 var basePort = interfacePorts.First().BasePort;
 
-                HttpPort = basePort + (int)PortOffsets.Http;
+                if (originallyHttpsSupporting)
+                {
+                    HttpPort = UseSecureChannel ? (int?)null : basePort + (int)PortOffsets.Http;
+                    HttpsPort = UseSecureChannel ? basePort + (int)PortOffsets.Http : (int?)null;
+                }
+                else
+                {
+                    HttpPort = basePort + (int)PortOffsets.Http;
+                    HttpsPort = UseSecureChannel ? basePort + (int)PortOffsets.Https : (int?)null;
+                }
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
                 SiloNetworkingPort = basePort + (int)PortOffsets.SiloNetworking;
@@ -135,7 +152,18 @@ namespace Gigya.Microdot.Hosting.HttpService
                                                      "Either disable this mode via Service.IsSlotMode config value or set it via " +
                                                      $"Discovery.{appInfo.Name}.DefaultSlotNumber.");
 
-                HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
+                if (originallyHttpsSupporting)
+                {
+                    int? port = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
+                    HttpPort = UseSecureChannel ? null : port;
+                    HttpsPort = UseSecureChannel ? port : null;
+                }
+                else
+                {
+                    HttpPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Http).Value;
+                    HttpsPort = UseSecureChannel ? config.PortAllocation.GetPort(slotNumber, PortOffsets.Https).Value : (int?)null;
+                }
+
                 MetricsPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Metrics).Value;
                 SiloGatewayPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloGateway).Value;
                 SiloNetworkingPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloNetworking).Value;
@@ -148,6 +176,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                 GetMetaData(method);
             }
         }
+
+        public ClientCertificateVerificationMode ClientCertificateVerification { get;}
 
 
         public ServiceMethod Resolve(InvocationTarget target)

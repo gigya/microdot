@@ -9,10 +9,15 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using Gigya.Microdot.Hosting.Validators;
+using Gigya.Microdot.SharedLogic.HttpService;
+
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     internal class HostTests
     {
         private static int _counter = 0;
@@ -40,21 +45,24 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
-        public override string ServiceName => "TestService";
+        public override string ServiceName => "test";
 
         public override ILoggingModule GetLoggingModule()
         {
             return new FakesLoggersModules();
         }
 
-
-        protected override void PreConfigure(IKernel kernel)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
-            base.PreConfigure(kernel);
+            var env = new HostEnvironment(new TestHostEnvironmentSource());
+            kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+            kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            base.PreConfigure(kernel, Arguments);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");
             kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
+            kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
             kernel.RebindForTests();
-          
         }
     }
 }

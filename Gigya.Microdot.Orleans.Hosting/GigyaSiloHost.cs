@@ -38,7 +38,13 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
-    public class GigyaSiloHost
+
+    public interface IOrleansConfigurator
+    {
+        Task AfterOrleansStartup(IGrainFactory grainFactory);
+    }
+
+    public class GigyaSiloHost : IRequestListener
     {
         private readonly IOrleansToNinjectBinding _serviceProvider;
         private readonly OrleansLogProvider _logProvider;
@@ -52,24 +58,39 @@ namespace Gigya.Microdot.Orleans.Hosting
         private HttpServiceListener HttpServiceListener { get; }
         private ServiceArguments _serviceArguments = new ServiceArguments();
 
-        public GigyaSiloHost(ILog log, HttpServiceListener httpServiceListener,
-            IOrleansToNinjectBinding serviceProvider, OrleansLogProvider logProvider, 
-            OrleansConfigurationBuilder orleansConfigurationBuilder, OrleansConfig orleansConfig,
-            Func<IServiceProvider> factoryServiceProvider
-            )
-
+        public GigyaSiloHost(
+            ILog log,
+            HttpServiceListener httpServiceListener,
+            IOrleansToNinjectBinding serviceProvider,
+            OrleansLogProvider logProvider,
+            OrleansConfigurationBuilder orleansConfigurationBuilder,
+            OrleansConfig orleansConfig,
+            Func<IServiceProvider> factoryServiceProvider,
+            ServiceArguments arguments,
+            IOrleansConfigurator orleansConfigurator)
         {
             _serviceProvider = serviceProvider;
             _logProvider = logProvider;
             _orleansConfigurationBuilder = orleansConfigurationBuilder;
             _orleansConfig = orleansConfig;
             _factoryServiceProvider = factoryServiceProvider;
+            _orleansConfigurator = orleansConfigurator;
             
             Log = log;
             HttpServiceListener = httpServiceListener;
+            this.arguments = arguments;
         }
 
         private ISiloHost _siloHost;
+        private readonly ServiceArguments arguments;
+        private readonly IOrleansConfigurator _orleansConfigurator;
+
+        public Task Listen()
+        {
+            this.Start(this.arguments);
+            
+            return null;
+        }
 
         public void Start(ServiceArguments serviceArguments, Func<IGrainFactory, Task> afterOrleansStartup = null)
         {
@@ -117,9 +138,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             Log.Info(_ => _("Successfully started Orleans silo", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
 
-            afterOrleansStartup?.Invoke(_siloHost.Services.GetService<IGrainFactory>());
-            if (afterOrleansStartup != null)
-                Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
+            _orleansConfigurator.AfterOrleansStartup(_siloHost.Services.GetService<IGrainFactory>());
+            Log.Info(_ => _("afterOrleansStartup done", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
 
             HttpServiceListener.StartGettingTraffic();
             Log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
@@ -168,5 +188,9 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
         }
 
+        public void Dispose()
+        {
+            // TODO: implement
+        }
     }
 }

@@ -23,11 +23,11 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.DispatchProxy;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.System_Reflection.DispatchProxy;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -72,7 +72,7 @@ namespace Gigya.Microdot.ServiceProxy
                 throw new ProgrammaticException("The specified service interface type is not decorated with HttpServiceAttribute.", unencrypted: new Tags { { "interfaceName", typeof(TInterface).Name } });
 
             InnerProvider = serviceProxyFactory(typeof(TInterface).GetServiceName());
-            InnerProvider.UseHttpsDefault = attribute.UseHttps;
+            InnerProvider.ServiceInterfaceRequiresHttps = attribute.UseHttps;
 
             if (InnerProvider.DefaultPort==null)
             {

@@ -1,6 +1,8 @@
 Gigya.ServiceContract
 System.Threading.Tasks.Dataflow
-Metrics.NET
 Newtonsoft.Json
 System.ComponentModel.Annotations
-DataAnnotationsValidator
+System.Configuration.ConfigurationManager
+
+Microsoft.CSharp
+System.Net.Http

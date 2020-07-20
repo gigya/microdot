@@ -1,55 +1,66 @@
 source https://api.nuget.org/v3/index.json
 
-framework: net472
+framework: auto-detect
 redirects: off
 content: once
 copy_content_to_output_dir: always
 
-nuget Gigya.ServiceContract ~> 2.0
+nuget Gigya.ServiceContract ~> 2.7.3
 
 # .Net
+nuget Microsoft.CSharp ~> 4.7
+nuget System.ComponentModel.Annotations ~> 4.0
+nuget System.Data.DataSetExtensions ~> 4.5
+nuget System.Diagnostics.PerformanceCounter ~> 4.7.0 
+nuget System.Net.Http ~> 4.3
+nuget System.Runtime.Caching ~> 4.7
+nuget System.ServiceProcess.ServiceController ~> 4.7
 nuget System.ValueTuple
+nuget System.Reflection.Emit ~> 4.7
+nuget System.Configuration.ConfigurationManager ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
 
-# Misc
-nuget Metrics.NET ~> 0.0
-nuget Newtonsoft.Json >= 9 lowest_matching: true
-nuget Nito.AsyncEx ~> 4.0
+#
+nuget Newtonsoft.Json ~> 12.0.3
+nuget Nito.AsyncEx ~> 5.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
-nuget System.ComponentModel.Annotations ~> 4.0
-nuget DataAnnotationsValidator ~> 2.1.0
+nuget DataAnnotationsValidator ~> 2.1.0 # Shouldn't it be removed?
 
 # Orleans
-nuget Microsoft.Orleans.Core 2.4.3
-nuget Microsoft.Orleans.OrleansRuntime 2.4.3
-nuget Microsoft.Orleans.OrleansProviders 2.4.3
-nuget Microsoft.Orleans.OrleansSqlUtils 2.4.3
-nuget Microsoft.Orleans.OrleansZooKeeperUtils 2.4.3
-nuget Microsoft.Orleans.OrleansCodeGenerator 2.4.3
-nuget Microsoft.Orleans.OrleansCodeGenerator.Build 2.4.3
-nuget Microsoft.Orleans.Client 2.4.3
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  2.4.3
-nuget Microsoft.AspNetCore.Http.Features 2.2
-nuget Microsoft.Extensions.Primitives 2.2
-nuget Microsoft.Orleans.Server  2.4.3
-nuget Microsoft.Orleans.Core.Abstractions 2.4.3
-nuget OrleansDashboard 2.4.5 
-nuget System.Diagnostics.PerformanceCounter 4.5.0 
+nuget Microsoft.Orleans.Core ~> 3
+nuget Microsoft.Orleans.OrleansRuntime ~> 3
+nuget Microsoft.Orleans.OrleansProviders ~> 3
+nuget Microsoft.Orleans.OrleansSqlUtils 
+nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3
+nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3
+#nuget Microsoft.Orleans.OrleansCodeGenerator.Build ~> 3
+nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3
+nuget Microsoft.Orleans.Client ~> 3
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  ~> 3
+nuget Microsoft.AspNetCore.Http.Features ~> 3
+nuget Microsoft.Extensions.Primitives ~> 3
+nuget Microsoft.Orleans.Server  ~> 3
+nuget Microsoft.Orleans.Core.Abstractions ~> 3
+nuget Microsoft.Orleans.Connections.Security ~> 3
+nuget Gigya.OrleansDashboard ~> 3
+# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
+nuget System.Text.Json >= 4.7.1
+#nuget OrleansDashboard 2.4.5
 
-nuget Microsoft.Extensions.Configuration ~> 2
-nuget Microsoft.AspNetCore.Connections.Abstractions ~> 2
+#nuget Microsoft.Extensions.Configuration ~> 3
+#nuget Microsoft.AspNetCore.Connections.Abstractions ~> 3
 nuget Microsoft.AspNetCore.Hosting ~> 2
 nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
-nuget Microsoft.Extensions.Logging.Abstractions ~> 2
-nuget Microsoft.Extensions.ObjectPool ~> 2
-nuget Microsoft.Extensions.DependencyModel ~> 2
-nuget Microsoft.Extensions.FileSystemGlobbing ~> 2
+#nuget Microsoft.Extensions.Logging.Abstractions ~> 3
+#nuget Microsoft.Extensions.ObjectPool ~> 3
+#nuget Microsoft.Extensions.DependencyModel ~> 3
+#nuget Microsoft.Extensions.FileSystemGlobbing ~> 3
 
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 
-nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 2
-nuget Microsoft.Extensions.DependencyInjection ~> 2
+#nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 3
+#nuget Microsoft.Extensions.DependencyInjection ~> 3
 
 # Ninject
 nuget Ninject ~> 3.3
@@ -59,9 +70,11 @@ nuget Castle.Core ~> 4.0
 
 # Tests only dependencies
 nuget NUnit ~> 3.0
+nuget NUnit3TestAdapter ~> 3.15
 nuget RichardSzalay.MockHttp ~> 5.0
 nuget NSubstitute ~> 4.0
 nuget FluentAssertions ~> 5.0
 nuget Nuget.CommandLine ~> 5.0
 nuget Shouldly ~> 3.0
 nuget NLog ~> 4.0
+nuget Microsoft.NET.Test.Sdk ~> 16.2

@@ -23,12 +23,16 @@
 #endregion Copyright
 
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
+using Ninject;
 using Orleans;
 using Orleans.Configuration;
 using System;
@@ -44,6 +48,7 @@ namespace Gigya.Microdot.Testing.Service
         private readonly Type _customSerializer;
         public TServiceHost Host { get; private set; }
         public Task SiloStopped { get; private set; }
+
 
         private IClusterClient _clusterClient;
         
@@ -66,11 +71,14 @@ namespace Gigya.Microdot.Testing.Service
 
         private void Initialize()
         {
-            Host = new TServiceHost();
+            Host = new TServiceHost()
+            {
+                FailServiceStartOnConfigError = false
+            };
 
             BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
+            this.SiloStopped = Task.Run(() => this.Host.Run((ServiceArguments)this.ServiceArguments));
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());

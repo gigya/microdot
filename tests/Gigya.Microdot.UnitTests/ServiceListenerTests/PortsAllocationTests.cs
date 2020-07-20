@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 using FluentAssertions;
@@ -31,17 +32,21 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public async Task For_ServiceProxy_TakeDefaultSlot()
         {
-            var kernel = SetUpKernel(new ServiceArguments(slotNumber: 5));
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _ =>
+            {
+                var handlerMock = new MockHttpMessageHandler();
+                handlerMock.When("*").Respond(req =>
+                {
+                    req.RequestUri.Port.ShouldBe(40001);
+                    return HttpResponseFactory.GetResponse(content: "null");
+                });
+                return handlerMock;
+            };
+
+            var kernel = SetUpKernel(new ServiceArguments(slotNumber: 5), messageHandlerFactory: messageHandlerFactory);
             var serviceProxyFunc = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = serviceProxyFunc(TestingKernel<ConsoleLog>.APPNAME);
-            var handlerMock = new MockHttpMessageHandler();
-            handlerMock.When("*").Respond(req =>
-            {
-                req.RequestUri.Port.ShouldBe(40001);
-                return HttpResponseFactory.GetResponse(content: "null");
-            });
 
-            serviceProxy.HttpMessageHandler = handlerMock;
             await serviceProxy.Invoke(new HttpServiceRequest("myMethod", null, new Dictionary<string, object>()), typeof(int?));
         }
 
@@ -57,9 +62,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             args.SlotNumber.Should().Be(5);
         }
 
-        private TestingKernel<ConsoleLog> SetUpKernel(ServiceArguments serviceArguments, 
+        private TestingKernel<ConsoleLog> SetUpKernel(ServiceArguments serviceArguments,
             bool isSlotMode=true,
-            bool withDefault=true)
+            bool withDefault=true,
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = null)
         {
             var mockConfig = new Dictionary<string, string>
             {
@@ -77,6 +83,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     k.Load<MicrodotHostingModule>();
                     k.Rebind<ServiceArguments>().ToConstant(serviceArguments);
                     k.Rebind<IServiceInterfaceMapper>().ToConstant(new IdentityServiceInterfaceMapper(typeof(IDemoService)));
+                    k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory ?? (_ => new MockHttpMessageHandler()));
                 },
                 mockConfig);
         }
