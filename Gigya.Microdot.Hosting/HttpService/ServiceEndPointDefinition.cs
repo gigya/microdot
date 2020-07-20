@@ -104,8 +104,8 @@ namespace Gigya.Microdot.Hosting.HttpService
 
             bool originallyHttpsSupporting = interfacePorts.First().UseHttps;
 
-            // Use service configuration if exists, if not use global configuration
-            UseSecureChannel = serviceConfig.ServiceHttpsOverride ?? config.ServiceHttpsOverride;
+            // Use service configuration if exists, if not use global configuration or original port binding.
+            UseSecureChannel = serviceConfig.ServiceHttpsOverride ?? (config.ServiceHttpsOverride || originallyHttpsSupporting);
 
             ClientCertificateVerification = serviceConfig.ClientCertificateVerification ??
                                             config.ClientCertificateVerification;
