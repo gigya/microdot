@@ -38,11 +38,12 @@ using NUnit.Framework;
 using RichardSzalay.MockHttp;
 
 using Shouldly;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
 
-    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class HttpServiceListenerTests
     {
         private IDemoService _insecureClient;
@@ -63,8 +64,15 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TearDown]
         public virtual void TearDown()
         {
-            _testinghost.Dispose();
-            Metric.ShutdownContext("Service");
+            try
+            {
+                _testinghost.Dispose();
+                Metric.ShutdownContext("Service");
+            }
+            catch
+            {
+                //should not fail tests
+            }
         }
 
 
@@ -72,7 +80,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public void RequestWithException_ShouldWrapAndThrow()
         {
-            _testinghost.Host.Instance.When(a => a.DoSomething()).Throw(x => new ArgumentException("MyEx"));
+            _testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Throw(x => new ArgumentException("MyEx"));
 
             var actual = _insecureClient.DoSomething().ShouldThrow<RemoteServiceException>();
 
@@ -86,7 +94,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             var _kernel = new TestingKernel<ConsoleLog>();
             var _exceptionSerializer = _kernel.Get<JsonExceptionSerializer>();
-            _testinghost.Host.Instance.When(a => a.DoSomething()).Throw(x => new ArgumentException("MyEx"));
+            _testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Throw(x => new ArgumentException("MyEx"));
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
@@ -99,9 +107,13 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [TestCase(typeof(RequestException))]
         public async Task RequestWithException_ShouldNotWrap(Type exceptionType)
         {
-            var _kernel = new MicrodotInitializer("", new FakesLoggersModules(), k => k.RebindForTests());
+            var _kernel = new MicrodotInitializer(
+                "",
+                new FakesLoggersModules(), 
+                k => k.RebindForTests());
+
             var _exceptionSerializer = _kernel.Kernel.Get<JsonExceptionSerializer>();
-            _testinghost.Host.Instance.When(a => a.DoSomething()).Throw(i =>
+            _testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Throw(i =>
                 (Exception) Activator.CreateInstance(exceptionType, "MyEx", null, null, null));
 
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
@@ -115,20 +127,20 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         [Test]
         public async Task SendRequestWithInt32Parameter_ShouldSucceed()
         {
-            _testinghost.Host.Instance.IncrementInt(Arg.Any<int>())
+            _testinghost.Host.Kernel.Get<IDemoService>().IncrementInt(Arg.Any<int>())
                 .Returns(info => info.Arg<int>() + 1);
 
             var res = await _insecureClient.IncrementInt(0);
             res.Should().Be(1);
 
-            await _testinghost.Host.Instance.Received().IncrementInt(0);
+            await _testinghost.Host.Kernel.Get<IDemoService>().Received().IncrementInt(0);
         }
 
 
         [Test]
         public async Task SendRequestWithInt64Parameter_ShouldSucceed()
         {
-            _testinghost.Host.Instance
+            _testinghost.Host.Kernel.Get<IDemoService>()
                 .Increment(Arg.Any<ulong>())
                 .Returns(info => info.Arg<ulong>() + 1);
 
@@ -140,17 +152,17 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             res = await _insecureClient.Increment(maxLongPlusOne);
             res.Should().Be(maxLongPlusOne + 1);
 
-            await _testinghost.Host.Instance.Received().Increment(0);
+            await _testinghost.Host.Kernel.Get<IDemoService>().Received().Increment(0);
         }
 
 
         [Test]
         public async Task SendRequestWithNullParameter()
         {
-            _testinghost.Host.Instance.ToUpper(null).Returns((string) null);
+            _testinghost.Host.Kernel.Get<IDemoService>().ToUpper(null).Returns((string) null);
             var res = await _insecureClient.ToUpper(null);
             res.Should().BeNullOrEmpty();
-            await _testinghost.Host.Instance.Received().ToUpper(null);
+            await _testinghost.Host.Kernel.Get<IDemoService>().Received().ToUpper(null);
         }
 
         [Test]
@@ -188,7 +200,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public async Task SendRequestWithNoParameters()
         {
             await _insecureClient.DoSomething();
-            await _testinghost.Host.Instance.Received().DoSomething();
+            await _testinghost.Host.Kernel.Get<IDemoService>().Received().DoSomething();
         }
 
 
@@ -196,7 +208,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public async Task SendRequestWithEnumParameter()
         {
             await _insecureClient.SendEnum(TestEnum.Enval1);
-            await _testinghost.Host.Instance.Received().SendEnum(TestEnum.Enval1);
+            await _testinghost.Host.Kernel.Get<IDemoService>().Received().SendEnum(TestEnum.Enval1);
         }
 
 
@@ -204,7 +216,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             HttpRequestMessage request = null;
             string requestContent = null;
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _ =>
             {
                 var mockHandler = new MockHttpMessageHandler();
                 mockHandler.When("*").Respond(async r =>
@@ -221,7 +233,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 return mockHandler;
             };
             var kernel = new TestingKernel<ConsoleLog>();
-            kernel.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            kernel.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
             var client = kernel.Get<ServiceProxyProviderSpy<T>>();
 
             client.DefaultPort = _testinghost.BasePort;
@@ -275,7 +287,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
-                    new CurrentApplicationInfo(nameof(HttpServiceListenerTests))
+                    new CurrentApplicationInfo(
+                        nameof(HttpServiceListenerTests),
+                        Environment.UserName,
+                        System.Net.Dns.GetHostName())
                 ))
                 {
                     listener.Start();
@@ -295,6 +310,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             {
                 endpointDefinition.HttpPort.Returns(ci => httpPort.Port);
                 endpointDefinition.HttpsPort.Returns(ci => httpsPort.Port); // HTTPS enabled by a non-null HTTPS port
+                endpointDefinition.ClientCertificateVerification.Returns(ci =>
+                    ClientCertificateVerificationMode.VerifyIdenticalRootCertificate);
 
                 var certificateLocator = Substitute.For<ICertificateLocator>();
                 certificateLocator.GetCertificate(Arg.Any<string>()).Throws<Exception>();
@@ -310,7 +327,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
-                    new CurrentApplicationInfo(nameof(HttpServiceListenerTests))));
+                    new CurrentApplicationInfo(
+                        nameof(HttpServiceListenerTests),
+                        Environment.UserName,
+                        System.Net.Dns.GetHostName())));
 
                 certificateLocator.Received(1).GetCertificate("Service");
             }
@@ -336,6 +356,15 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             protected override ILoggingModule GetLoggingModule()
             {
                 return new ConsoleLogLoggersModules();
+            }
+
+            protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+            {
+                var env = new HostEnvironment(new TestHostEnvironmentSource(this.ServiceName));
+                kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
+                kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+                base.PreConfigure(kernel, Arguments);
             }
 
             protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)

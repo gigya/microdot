@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
@@ -27,6 +28,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         public void WhenConfigIsNotValidXmlShouldAddFailure()
         {
             var (k, providerMock, fileSystemMock) = Setup();
+
 
             providerMock.GetAllTypes().Returns(info => new[]
             {

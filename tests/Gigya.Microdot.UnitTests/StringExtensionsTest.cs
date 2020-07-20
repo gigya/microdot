@@ -3,6 +3,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 using NUnit.Framework;
 
 using Shouldly;
+using Gigya.Microdot.LanguageExtensions;
 
 namespace Gigya.Microdot.UnitTests
 {

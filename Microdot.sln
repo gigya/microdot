@@ -3,72 +3,84 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{0F8FE343-E0B1-4762-AF4F-1BD949761AA1}"
-	ProjectSection(SolutionItems) = preProject
-		.paket\install.bat = .paket\install.bat
-		paket.dependencies = paket.dependencies
-		paket.lock = paket.lock
-		.paket\restore.bat = .paket\restore.bat
-		.paket\set.copy.local.false.libs.linq = .paket\set.copy.local.false.libs.linq
-		.paket\update.bat = .paket\update.bat
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Hosting", "Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj", "{33C1B76E-47B2-40BC-A434-81EE22996BEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Hosting", "Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj", "{33C1B76E-47B2-40BC-A434-81EE22996BEF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Solution Items", ".Solution Items", "{2E2E6FD0-E228-44D7-9794-FEA76E00FD34}"
 	ProjectSection(SolutionItems) = preProject
+		Changelog.md = Changelog.md
+		Directory.Build.props = Directory.Build.props
 		LICENSE.md = LICENSE.md
+		main.ruleset = main.ruleset
+		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
 		README.md = README.md
 		SolutionVersion.cs = SolutionVersion.cs
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Fakes", "Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj", "{2865F69B-D847-4901-8945-4941E463F94E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Fakes", "Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj", "{2865F69B-D847-4901-8945-4941E463F94E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceProxy", "Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj", "{1FCB2569-A640-4292-9CDC-821AEEF14813}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.ServiceProxy", "Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj", "{1FCB2569-A640-4292-9CDC-821AEEF14813}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.SharedLogic", "Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj", "{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.SharedLogic", "Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj", "{C88DB2A8-A1D2-46F8-8B65-06B9EE3F1662}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting", "Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj", "{DD807780-01B0-4EF6-9E42-5D15CA26F353}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Orleans.Hosting", "Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj", "{DD807780-01B0-4EF6-9E42-5D15CA26F353}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Configuration", "Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj", "{0E3A2422-DD99-4D75-A18C-96329A842742}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Configuration", "Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj", "{0E3A2422-DD99-4D75-A18C-96329A842742}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Interfaces", "Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj", "{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Interfaces", "Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj", "{A90D7C71-EC7C-4328-9DB1-D2C3A30727DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Ninject", "Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj", "{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Ninject", "Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj", "{63E40F38-DF99-4DF5-9B45-ADDB0C2FC9FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Ninject.Host", "Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj", "{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Orleans.Ninject.Host", "Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj", "{AE847E21-F7D8-47FB-84C3-C7144A9B7A1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Ninject.Host", "Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj", "{4E6A024F-DDC9-4A27-A859-77EBC3241009}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Ninject.Host", "Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj", "{4E6A024F-DDC9-4A27-A859-77EBC3241009}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F8A1B754-3C63-4051-A1A5-C51E916F90EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing.Shared", "Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj", "{6D6A62A1-15B5-44C2-AD37-698AB31863E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Testing.Shared", "Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj", "{6D6A62A1-15B5-44C2-AD37-698AB31863E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceDiscovery", "Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj", "{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.ServiceDiscovery", "Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj", "{37E6909E-51E2-4BBA-8EFC-DBDF086D860E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.ServiceContract.UnitTests", "tests\Gigya.Microdot.ServiceContract.UnitTests\Gigya.Microdot.ServiceContract.UnitTests.csproj", "{C224F79A-EAB5-48B8-B587-65772B0966EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.ServiceContract.UnitTests", "tests\Gigya.Microdot.ServiceContract.UnitTests\Gigya.Microdot.ServiceContract.UnitTests.csproj", "{C224F79A-EAB5-48B8-B587-65772B0966EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Logging.NLog", "Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj", "{06E45085-5A54-4BFE-BD24-E9C3983A2689}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Logging.NLog", "Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj", "{06E45085-5A54-4BFE-BD24-E9C3983A2689}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Orleans.Hosting.UnitTests", "tests\Gigya.Microdot.Orleans.Hosting.UnitTests\Gigya.Microdot.Orleans.Hosting.UnitTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Orleans.Hosting.UnitTests", "tests\Gigya.Microdot.Orleans.Hosting.UnitTests\Gigya.Microdot.Orleans.Hosting.UnitTests.csproj", "{8E548D57-5880-4283-BDF5-7386886D481D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.UnitTests", "tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj", "{0A24AE97-EE88-4E8B-8B92-092884D41399}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.UnitTests", "tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj", "{0A24AE97-EE88-4E8B-8B92-092884D41399}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Testing", "Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj", "{D37E359C-170E-4D67-AD49-45002B48987E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Testing", "Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj", "{D37E359C-170E-4D67-AD49-45002B48987E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Hosting.UnitTests", "tests\Gigya.Microdot.Hosting.UnitTests\Gigya.Microdot.Hosting.UnitTests.csproj", "{A17C9A6D-317D-441C-B33A-3807B67B4FA2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Hosting.UnitTests", "tests\Gigya.Microdot.Hosting.UnitTests\Gigya.Microdot.Hosting.UnitTests.csproj", "{A17C9A6D-317D-441C-B33A-3807B67B4FA2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sample", "Sample", "{79538186-DFAD-463C-B4D1-CD0917CF5954}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Interface", "Sample\CalculatorService.Interface\CalculatorService.Interface.csproj", "{1FB8E464-6A36-44A2-A343-8E95B51B4542}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CalculatorService.Interface", "Sample\CalculatorService.Interface\CalculatorService.Interface.csproj", "{1FB8E464-6A36-44A2-A343-8E95B51B4542}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService", "Sample\CalculatorService\CalculatorService.csproj", "{5B1BA713-F5BA-466B-B79E-95261DB27FA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CalculatorService", "Sample\CalculatorService\CalculatorService.csproj", "{5B1BA713-F5BA-466B-B79E-95261DB27FA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Client", "Sample\CalculatorService.Client\CalculatorService.Client.csproj", "{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CalculatorService.Client", "Sample\CalculatorService.Client\CalculatorService.Client.csproj", "{BCD894C2-29B3-4C76-8E5D-5781A5A10C67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorService.Orleans", "Sample\CalculatorService.Orleans\CalculatorService.Orleans.csproj", "{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CalculatorService.Orleans", "Sample\CalculatorService.Orleans\CalculatorService.Orleans.csproj", "{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gigya.Microdot.Common.Tests", "Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj", "{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Common.Tests", "Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj", "{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ServiceContract", "ServiceContract", "{A14C7201-FAAC-487C-AED3-8A0CA86A8A88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.ServiceContract", "Gigya.ServiceContract\Gigya.ServiceContract.csproj", "{DB6D3561-835E-40D5-B9D4-83951CF426DF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.LanguageExtensions", "Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj", "{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9E13FD47-A463-4D69-A078-59EECAEC294F}"
+	ProjectSection(SolutionItems) = preProject
+		Changelog.md = Changelog.md
+		Directory.Build.props = Directory.Build.props
+		paket.dependencies = paket.dependencies
+		README.md = README.md
+		test.runsettings = test.runsettings
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metrics", "Metrics\Metrics.csproj", "{C4AB90EF-198B-47E8-B5EE-0B517C7250D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -168,6 +180,18 @@ Global
 		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4AB90EF-198B-47E8-B5EE-0B517C7250D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4AB90EF-198B-47E8-B5EE-0B517C7250D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4AB90EF-198B-47E8-B5EE-0B517C7250D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4AB90EF-198B-47E8-B5EE-0B517C7250D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -182,6 +206,7 @@ Global
 		{BCD894C2-29B3-4C76-8E5D-5781A5A10C67} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
 		{10E10FDE-8A2C-4D5D-8FC1-15FACF844E80} = {79538186-DFAD-463C-B4D1-CD0917CF5954}
 		{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE} = {F8A1B754-3C63-4051-A1A5-C51E916F90EB}
+		{DB6D3561-835E-40D5-B9D4-83951CF426DF} = {A14C7201-FAAC-487C-AED3-8A0CA86A8A88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8

@@ -1,12 +1,19 @@
 Gigya.ServiceContract
 Microsoft.Extensions.DependencyInjection
 Microsoft.Orleans.OrleansCodeGenerator
-Microsoft.Orleans.OrleansCodeGenerator.Build
+Microsoft.Orleans.CodeGenerator.MsBuild
 NSubstitute
 NUnit
+NUnit3TestAdapter
 Ninject
 Shouldly
 Castle.Core
 ZooKeeperNetEx
 System.Threading.Tasks.Dataflow
 Microsoft.AspNetCore.Hosting # Solve binding redirect issue, related to project vs nuget references. OrleansDashboard depends on.
+Microsoft.CSharp
+System.Net.Http
+Microsoft.NET.Test.Sdk
+
+# Remove after the transition to netcore completed
+System.ServiceProcess.ServiceController

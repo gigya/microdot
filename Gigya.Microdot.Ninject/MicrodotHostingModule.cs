@@ -40,7 +40,7 @@ namespace Gigya.Microdot.Ninject
             this.BindClassesAsSingleton(assemblies: new[] { typeof(HostingAssembly) });
 
             this.BindInterfacesAsSingleton(
-                nonSingletonBaseTypes: new List<Type> { typeof(IServiceInterfaceMapper) },
+                conventionIgnore: new List<Type> { typeof(IServiceInterfaceMapper) },
                 bindInterfacesInAssemblies: new List<Type>{typeof(ILog)},
                 assemblies: new[] { typeof(HostingAssembly) });
 

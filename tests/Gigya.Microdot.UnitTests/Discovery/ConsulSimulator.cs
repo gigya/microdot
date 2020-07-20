@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private TaskCompletionSource<bool> _waitForKeyValueIndexModification;
         private TaskCompletionSource<bool> _waitForHealthIndexModification;
         private Exception _httpErrorFake;
-        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo("");
+        private CurrentApplicationInfo AppInfo = new CurrentApplicationInfo("test", Environment.UserName, Dns.GetHostName());
 
         private int _requestsCounter = 0;
         private int _healthRequestsCounter = 0;

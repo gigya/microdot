@@ -158,7 +158,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 
         private string GetConfiguredSourceType(DeploymentIdentifier deploymentIdentifier)
         {
-            var serviceConfig = GetConfig().Services[deploymentIdentifier.ServiceName];
+            var config = GetConfig();
+            var serviceConfig = config.Services[deploymentIdentifier.ServiceName];
             return serviceConfig.Source;
         }
 

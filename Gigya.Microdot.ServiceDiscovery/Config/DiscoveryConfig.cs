@@ -26,6 +26,8 @@ using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
@@ -74,7 +76,32 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         [Obsolete("To be deleted after discovery refactoring")]
         public double DelayMultiplier { get; set; } = 2;
 
+        /// <summary>
+        /// Indicate wheather clients should use secure channel to communicate with target service
+        /// </summary>
         public bool UseHttpsOverride { get; set; } = false;
+
+        /// <summary>
+        /// Indicates whether the service should listen for HTTPs traffic
+        /// </summary>
+        public bool ServiceHttpsOverride { get; set; } = false;
+
+        /// <summary>
+        /// Indicates whether the client should try and elevate to HTTPs traffic even if not explicitly configured to 
+        /// </summary>
+        public bool TryHttps { get; set; }
+
+        /// <summary>
+        /// Controls the client verification logic for the server certificate.
+        /// Default behavior is to validate that the server domain matches the certificate domain.
+        /// </summary>
+        public ServerCertificateVerificationMode ServerCertificateVerification { get; set; } = ServerCertificateVerificationMode.VerifyDomain;
+
+        /// <summary>
+        /// Controls the verification logic of the client certificate.
+        /// Default behavior is that no verification is been made.
+        /// </summary>
+        public ClientCertificateVerificationMode ClientCertificateVerification { get; set; } = ClientCertificateVerificationMode.Disable;
 
         /// <summary>
         /// The discovery mode to use, e.g. whether to use DNS resolving, Consul, etc.

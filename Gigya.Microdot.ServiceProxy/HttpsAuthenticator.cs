@@ -11,7 +11,7 @@ namespace Gigya.Microdot.ServiceProxy
 {
     public interface IHttpsAuthenticator
     {
-        void AddHttpMessageHandlerAuthentication(HttpClientHandler clientHandler, string securityRole);
+        void AddHttpMessageHandlerAuthentication(HttpClientHandler clientHandler, HttpClientConfiguration configuration);
     }
 
     public class HttpsAuthenticator : IHttpsAuthenticator
@@ -25,15 +25,28 @@ namespace Gigya.Microdot.ServiceProxy
             CertificateLocator = certificateLocator;
         }
 
-        public void AddHttpMessageHandlerAuthentication(HttpClientHandler clientHandler, string securityRole)
+        public void AddHttpMessageHandlerAuthentication(HttpClientHandler clientHandler, HttpClientConfiguration configuration)
         {
-            var clientCert = CertificateLocator.GetCertificate("Client");
-            var clientRootCertHash = clientCert.GetHashOfRootCertificate();
+            X509Certificate2 clientCert = null;
 
-            clientHandler.ClientCertificates.Add(clientCert);
+            if (configuration.SupplyClientCertificate || 
+                configuration.VerificationMode.HasFlag(ServerCertificateVerificationMode.VerifyIdenticalRootCertificate))
+            {
+                clientCert = CertificateLocator.GetCertificate("Client");
+                if (configuration.SupplyClientCertificate)
+                {
+                    clientHandler.ClientCertificates.Add(clientCert);
+                }
+            }
+
 
             clientHandler.ServerCertificateCustomValidationCallback = (sender, serverCertificate, serverChain, errors) =>
             {
+                //This is the case we intentionally ignore SSL errors, should only be used as an hotfix to prevent production downtime 
+                if (configuration.VerificationMode == ServerCertificateVerificationMode.Disable)
+                {
+                    return true;
+                }
                 switch (errors)
                 {
                     case SslPolicyErrors.RemoteCertificateNotAvailable:
@@ -50,29 +63,51 @@ namespace Gigya.Microdot.ServiceProxy
                             log(sb.ToString());
                         });
                         return false;
-                    case SslPolicyErrors.RemoteCertificateNameMismatch: // by design domain name do not match name of certificate, so RemoteCertificateNameMismatch is not an error.
-                    case SslPolicyErrors.None:
-                        //Check if security role of a server is as expected
-                        if (securityRole != null)
+                    case SslPolicyErrors.RemoteCertificateNameMismatch: 
+                        //We are now using wildcard certificates and expected cert name to match host name e.g. foo.gigya.net matches *.gigya.net
+                        if (configuration.VerificationMode.HasFlag(ServerCertificateVerificationMode
+                            .VerifyDomain))
                         {
-                            var name = ((X509Certificate2)serverCertificate).GetNameInfo(X509NameType.SimpleName, false);
-
-                            if (name == null || !name.Contains(securityRole))
-                            {
-                                return false;
-                            }
+                            Log.Error(_ => _("Server certificate name does not match host name"));
+                            return false;
                         }
-
-                        bool hasSameRootCertificateHash = serverChain.HasSameRootCertificateHash(clientRootCertHash);
-
-                        if (!hasSameRootCertificateHash)
-                            Log.Error(_ => _("Server root certificate do not match client root certificate"));
-
-                        return hasSameRootCertificateHash;
+                        return AdditionalVerifications(serverCertificate, serverChain);
+                    case SslPolicyErrors.None:
+                        return AdditionalVerifications(serverCertificate, serverChain);
+                        
                     default:
                         throw new ArgumentOutOfRangeException(nameof(errors), errors, "The supplied value of SslPolicyErrors is invalid.");
                 }
             };
+
+            bool AdditionalVerifications(X509Certificate2 serverCertificate, X509Chain serverChain)
+            {
+                if (configuration.VerificationMode.HasFlag(ServerCertificateVerificationMode
+                    .VerifyIdenticalRootCertificate))
+                {
+                    var clientRootCertHash = clientCert.GetHashOfRootCertificate();
+                    bool hasSameRootCertificateHash = serverChain.HasSameRootCertificateHash(clientRootCertHash);
+
+                    if (hasSameRootCertificateHash == false)
+                        Log.Error(_ => _("Server root certificate does not match client root certificate"));
+
+                    if (hasSameRootCertificateHash == false)
+                        return false;
+                }
+
+                if (configuration.SecurityRole != null)
+                {
+                    var name = ((X509Certificate2)serverCertificate).GetNameInfo(X509NameType.SimpleName, false);
+
+                    if (name == null || !name.Contains(configuration.SecurityRole))
+                    {
+                        Log.Error(_ => _("Server certificate doesn't contain required security role"));
+                        return false;
+                    }
+                }
+
+                return true;
+            }
         }
     }
 

@@ -1,6 +1,8 @@
 ﻿using System;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 
@@ -12,7 +14,18 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel = new StandardKernel();
             Kernel.Load<MicrodotModule>();
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(appName)).InSingletonScope();
+
+            var env = HostEnvironment.CreateDefaultEnvironment(appName, typeof(MicrodotInitializer).Assembly.GetName().Version);
+
+            Kernel
+                .Bind<IEnvironment>()
+                .ToConstant(env)
+                .InSingletonScope();
+
+            Kernel
+                .Bind<CurrentApplicationInfo>()
+                .ToConstant(env.ApplicationInfo)
+                .InSingletonScope();
 
             loggingModule.Bind(Kernel.Rebind<ILog>(), Kernel.Rebind<IEventPublisher>(), Kernel.Rebind<Func<string, ILog>>());
             // Set custom Binding 
@@ -27,6 +40,5 @@ namespace Gigya.Microdot.Ninject
         {
             Kernel?.Dispose();
         }
-
     }
 }

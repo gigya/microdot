@@ -1,9 +1,14 @@
 ﻿using System;
 using CalculatorService.Interface;
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
 
 namespace CalculatorService
@@ -11,18 +16,10 @@ namespace CalculatorService
 
     class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        public override string ServiceName => nameof(ICalculatorService).Substring(1);
+        public override string ServiceName => "CalculatorService";
 
         static void Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_ROOT", Environment.CurrentDirectory);
-            Environment.SetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE", "");
-            Environment.SetEnvironmentVariable("GIGYA_ENVVARS_FILE", Environment.CurrentDirectory);
-            Environment.SetEnvironmentVariable("REGION", "us1");
-            Environment.SetEnvironmentVariable("ZONE", "us1a");
-            Environment.SetEnvironmentVariable("ENV", "dev");
-
-
             try
             {
                 new CalculatorServiceHost().Run();
@@ -35,9 +32,11 @@ namespace CalculatorService
 
         protected override ILoggingModule GetLoggingModule() => new NLogModule();
 
+
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
             kernel.Bind<ICalculatorService>().To<CalculatorService>();
         }
+
     }
 }

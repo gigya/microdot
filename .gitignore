@@ -256,3 +256,5 @@ OrleansAdoNetContent/
 .nuget/
 .nuget-packages/
 
+
+/.paket/

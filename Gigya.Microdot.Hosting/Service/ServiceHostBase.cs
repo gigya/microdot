@@ -24,16 +24,31 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
 
 namespace Gigya.Microdot.Hosting.Service
 {
+    [ConfigurationRoot("Microdot.Hosting", RootStrategy.ReplaceClassNameWithPath)]
+    public class MicrodotHostingConfig : IConfigObject
+    {
+        public bool FailServiceStartOnConfigError = true;
+    }
+
     public abstract class ServiceHostBase : IDisposable
     {
         private bool disposed;
+        private object syncRoot = new object();
+
+        public abstract string ServiceName { get; }
 
         public ServiceArguments Arguments { get; private set; }
 
@@ -44,20 +59,13 @@ namespace Gigya.Microdot.Hosting.Service
         private Process MonitoredShutdownProcess { get; set; }
         protected ICrashHandler CrashHandler { get; set; }
 
-        /// <summary>
-        /// The name of the service. This will be globally accessible from <see cref="CurrentApplicationInfo.Name"/>.
-        /// </summary>
-        public abstract string ServiceName { get; }
+        public virtual Version InfraVersion { get; }
 
-         
-        protected virtual ConfigurationVerificator ConfigurationVerificator { get; set; }
+        private IRequestListener requestListener;
 
-        /// <summary>
-        /// Version of wrapping infrastructure framework. This will be globally accessible from <see cref="CurrentApplicationInfo.InfraVersion"/>.
-        /// </summary>
-        protected virtual Version InfraVersion => null;
+        public bool? FailServiceStartOnConfigError { get; set; } = null;
 
-        protected ServiceHostBase()
+        public ServiceHostBase()
         {
             if (IntPtr.Size != 8)
                 throw new Exception("You must run in 64-bit mode. Please make sure you unchecked the 'Prefer 32-bit' checkbox from the build section of the project properties.");
@@ -67,10 +75,14 @@ namespace Gigya.Microdot.Hosting.Service
             ServiceStartedEvent = new TaskCompletionSource<object>();
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
             ServiceGracefullyStopped.SetResult(StopResult.None);
-
-         
         }
 
+
+
+        protected virtual void OnStop()
+        {
+
+        }
 
         /// <summary>
         /// Start the service, auto detecting between Windows service and command line. Always blocks until service is stopped.
@@ -78,9 +90,9 @@ namespace Gigya.Microdot.Hosting.Service
         public void Run(ServiceArguments argumentsOverride = null)
         {
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
-            Arguments = argumentsOverride ?? new ServiceArguments(Environment.GetCommandLineArgs().Skip(1).ToArray());
-            
-            
+            Arguments = argumentsOverride ?? new ServiceArguments(System.Environment.GetCommandLineArgs().Skip(1).ToArray());
+
+
 
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
@@ -107,7 +119,7 @@ namespace Gigya.Microdot.Hosting.Service
                     catch (ArgumentException e)
                     {
                         Console.WriteLine($"Service cannot start because monitored PID {Arguments.ShutdownWhenPidExits} is not running. Exception: {e}");
-                        Environment.ExitCode = 1;
+                        System.Environment.ExitCode = 1;
                         ServiceGracefullyStopped.SetResult(StopResult.None);
                         return;
                     }
@@ -157,18 +169,18 @@ namespace Gigya.Microdot.Hosting.Service
                     }
 
                     Task.Factory.StartNew(() =>
-                             {
-                                 while (true)
-                                 {
-                                     var key = Console.ReadKey(true);
+                    {
+                        while (true)
+                        {
+                            var key = Console.ReadKey(true);
 
-                                     if (key.Key == ConsoleKey.S && key.Modifiers == ConsoleModifiers.Alt)
-                                     {
-                                         Stop();
-                                         break;
-                                     }
-                                 }
-                             }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                            if (key.Key == ConsoleKey.S && key.Modifiers == ConsoleModifiers.Alt)
+                            {
+                                Stop();
+                                break;
+                            }
+                        }
+                    }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                 }
                 else
                 {
@@ -182,9 +194,9 @@ namespace Gigya.Microdot.Hosting.Service
                 Console.WriteLine("   ***   Shutting down...   ***   ");
 
                 var maxShutdownTime = TimeSpan.FromSeconds((Arguments.OnStopWaitTimeSec ?? 0) + (Arguments.ServiceDrainTimeSec ?? 0));
-                bool isServiceGracefullyStopped =  Task.Run(() => OnStop()).Wait(maxShutdownTime);
+                bool isServiceGracefullyStopped = Task.Run(() => OnStop()).Wait(maxShutdownTime);
 
-                if( isServiceGracefullyStopped ==false )
+                if (isServiceGracefullyStopped == false)
                     Console.WriteLine($"   ***  Service failed to stop gracefully in the allotted time ({maxShutdownTime}), continuing with forced shutdown.   ***   ");
 
                 ServiceStartedEvent = new TaskCompletionSource<object>();
@@ -212,14 +224,13 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
 
-        /// <summary>
-        /// An extensibility point - this method is called in process of configuration objects verification.
-        /// </summary>
-        protected virtual void OnVerifyConfiguration()
+        protected abstract void OnVerifyConfiguration();
+
+        protected void VerifyConfiguration(ConfigurationVerificator ConfigurationVerificator)
         {
             if (ConfigurationVerificator == null)
             {
-                Environment.ExitCode = 2;
+                System.Environment.ExitCode = 2;
                 Console.Error.WriteLine("ERROR: The configuration verification is not properly implemented. " +
                                         "To implement you need to override OnVerifyConfiguration base method and call to base.");
             }
@@ -228,7 +239,7 @@ namespace Gigya.Microdot.Hosting.Service
                 try
                 {
                     var results = ConfigurationVerificator.Verify();
-                    Environment.ExitCode = results.All(r => r.Success) ? 0 : 1;
+                    System.Environment.ExitCode = results.All(r => r.Success) ? 0 : 1;
 
                     if (Arguments.ConsoleOutputMode == ConsoleOutputMode.Color)
                     {
@@ -242,7 +253,7 @@ namespace Gigya.Microdot.Hosting.Service
                         Console.BackgroundColor = restoreBack;
                         Console.ForegroundColor = restoreFore;
                     }
-                    else  
+                    else
                     {
                         foreach (var result in results)
                             Console.WriteLine(result);
@@ -253,12 +264,26 @@ namespace Gigya.Microdot.Hosting.Service
                 }
                 catch (Exception ex)
                 {
-                    Environment.ExitCode = 3;
+                    System.Environment.ExitCode = 3;
                     Console.Error.WriteLine(ex.Message);
                     Console.Error.WriteLine(ex.StackTrace);
                 }
             }
         }
+
+
+        protected void VerifyConfigurationsIfNeeded(
+            MicrodotHostingConfig hostingConfig, ConfigurationVerificator configurationVerificator)
+        {
+            if (FailServiceStartOnConfigError??hostingConfig.FailServiceStartOnConfigError)
+            {
+                var badConfigs = configurationVerificator.Verify().Where(c => !c.Success).ToList();
+                if (badConfigs.Any())
+                    throw new EnvironmentException("Bad configuration(s) detected. Stopping service startup. You can disable this behavior through the Microdot.Hosting.FailServiceStartOnConfigError configuration. Errors:\n"
+                        + badConfigs.Aggregate(new StringBuilder(), (sb, bc) => sb.Append(bc).Append("\n")));
+            }
+        }
+
 
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
@@ -277,12 +302,14 @@ namespace Gigya.Microdot.Hosting.Service
         /// <summary>
         /// Signals the service to stop.
         /// </summary>
-        public void Stop()
+        public virtual void Stop()
         {
-                StopEvent.Set();
+            StopEvent.Set();
         }
 
-        protected virtual void OnCrash()
+        protected abstract void OnStart();
+
+        protected void OnCrash()
         {
             Stop();
             WaitForServiceGracefullyStoppedAsync().Wait(5000);
@@ -302,7 +329,7 @@ namespace Gigya.Microdot.Hosting.Service
                 if (Arguments.ServiceStartupMode != ServiceStartupMode.WindowsService)
                     throw new InvalidOperationException($"Cannot start in {Arguments.ServiceStartupMode} mode when starting as a Windows service.");
 
-                if (Environment.UserInteractive == false)
+                if (System.Environment.UserInteractive == false)
                 {
                     throw new InvalidOperationException(
                         "This Windows service requires to be run with 'user interactive' enabled to correctly read certificates. " +
@@ -329,7 +356,7 @@ namespace Gigya.Microdot.Hosting.Service
             WindowsService.RequestAdditionalTime(60000);
 
             try
-            {                
+            {
                 OnStop();
             }
             catch
@@ -339,26 +366,34 @@ namespace Gigya.Microdot.Hosting.Service
             }
 
         }
-        
-
-        protected abstract void OnStart();
-        protected abstract void OnStop();
 
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
-
-            disposed = true;
-
             SafeDispose(StopEvent);
             SafeDispose(WindowsService);
             SafeDispose(MonitoredShutdownProcess);
         }
 
 
-        public void Dispose() => Dispose(false);
+        public void Dispose()
+        {
+            lock (this.syncRoot)
+            {
+                try
+                {
+                    if (this.disposed)
+                        return;
+
+                    Dispose(false);
+                }
+
+                finally
+                {
+                    this.disposed = true;
+                }
+            }
+        }
 
         protected void SafeDispose(IDisposable disposable)
         {
@@ -399,6 +434,7 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
     }
+
     public enum StopResult { None, Graceful, Force}
 
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -60,7 +61,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -74,7 +75,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     k =>
                     {
                         k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                        k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                        k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                     },
                     dict))
             {
@@ -115,7 +116,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Uri uri = null;
             string requestMessage = null;
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -132,7 +133,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
             }, dict))
             {
 
@@ -241,7 +242,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {$"Discovery.Services.{serviceName}.DefaultPort", defaultPort.ToString()}
             };
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -259,7 +260,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var kernel = new TestingKernel<ConsoleLog>(k =>
             {
                 k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
             }, dict);
             var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = providerFactory(serviceName);
@@ -290,7 +291,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
 
             int counter = 0;
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -312,7 +313,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     k =>
                     {
                         k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                        k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                        k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                     }, dict)
             )
             {
@@ -342,7 +343,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
 
             int counter = 0;
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -366,7 +367,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                  k =>
                  {
                      k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                     k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                     k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                  }, dict)
             )
             {
@@ -401,7 +402,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
 
             int counter = 0;
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -423,7 +424,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     k =>
                     {
                         k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                        k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                        k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                     }, dict)
             )
             {
@@ -463,7 +464,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
 
             int counter = 0;
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -484,7 +485,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     k =>
                     {
                         k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                        k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                        k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                     }, dict)
             )
             {
@@ -516,7 +517,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallSucceeds_ResultIsCorrect()
         {
             var expected = "AAAA";
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(content: $"'{expected}'"));
@@ -524,7 +525,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 return messageHandler;
             };
 
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
             var actual = await CreateClient().ToUpper("aaaa");
 
@@ -535,7 +536,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithRequestException_CorrectExceptionIsThrown()
         {
             var expected = new RequestException("You request is invalid.").ThrowAndCatch();
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(unitTesting.Get<JsonExceptionSerializer>(), expected));
@@ -543,7 +544,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 return messageHandler;
             };
 
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
             Func<Task> action = async () => await CreateClient().ToUpper("aaaa");
 
@@ -554,7 +555,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithCustomerFacingException_CorrectExceptionIsThrown()
         {
             var expected = new RequestException("You action is invalid, Mr. Customer.", 30000).ThrowAndCatch();
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(req =>
@@ -564,7 +565,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 
                 return messageHandler;
             };
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
             var actual = CreateClient().ToUpper("aaaa").ShouldThrow<RequestException>();
 
             actual.Message.ShouldBe(expected.Message);
@@ -575,14 +576,14 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithEnvironmentException_CorrectExceptionIsThrown()
         {
             var expected = new EnvironmentException("You environment is invalid.").ThrowAndCatch();
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
                 return messageHandler;
             };
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
             var actual = CreateClient().ToUpper("aaaa").ShouldThrow<EnvironmentException>();
 
@@ -596,7 +597,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithRemoteServiceException_CorrectExceptionIsThrown()
         {
             var expected = new RemoteServiceException("A service is invalid.", "someUri").ThrowAndCatch();
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             { 
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
@@ -604,7 +605,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 return messageHandler;
             };
 
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
             var actual = CreateClient().ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
@@ -617,14 +618,14 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithProgrammaticException_CorrectExceptionIsThrown()
         {
             var expected = new ProgrammaticException("You code is invalid.").ThrowAndCatch();
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(HttpResponseFactory.GetResponseWithException(ExceptionSerializer, expected));
 
                 return messageHandler;
             };
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
             var actual = CreateClient().ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
@@ -636,7 +637,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public async Task ToUpper_MethodCallFailsWithInvalidJson_CorrectExceptionIsThrown()
         {
             string badJson = "not JSON!";
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler.When("*").Respond(HttpResponseFactory.GetResponse(HttpStatusCode.InternalServerError, content: badJson));
@@ -644,7 +645,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 return messageHandler;
             };
 
-            unitTesting.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+            unitTesting.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
             var actual = CreateClient().ToUpper("aaaa").ShouldThrow<RemoteServiceException>();
 
@@ -662,12 +663,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", host},
-                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
             int httpsTestCount = 0;
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -697,12 +699,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     k =>
                     {
                         k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                        k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                        k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                         var getConfig = k.Get<Func<DiscoveryConfig>>();
                         k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
                         {
                             var config = getConfig();
-                            config.UseHttpsOverride = true;
                             return () => config;
                         });
                     }, dict)
@@ -738,12 +739,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", host},
-                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
             int httpsTestCount = 0;
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -776,12 +778,11 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                  k =>
                  {
                      k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                     k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                     k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                      var getConfig = k.Get<Func<DiscoveryConfig>>();
                      k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
                      {
                          var config = getConfig();
-                         config.UseHttpsOverride = true;
                          return () => config;
                      });
                  }, dict)
@@ -818,13 +819,14 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
                 {"Discovery.Services.DemoService.Hosts", host},
-                {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+                {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
             int httpsTestCount = 0;
             bool httpsMethodCalled = false;
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -866,12 +868,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                  k =>
                  {
                      k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                     k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                     k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
                      var getConfig = k.Get<Func<DiscoveryConfig>>();
                      k.Rebind<Func<DiscoveryConfig>>().ToMethod(c =>
                      {
                          var config = getConfig();
-                         config.UseHttpsOverride = true;
+                         config.UseHttpsOverride = false;
+                         
                          return () => config;
                      });
                  }, dict)
@@ -918,7 +921,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             int httpsTestCount = 0;
             bool httpsMethodCalled = false;
 
-            Func<bool, string, HttpMessageHandler> messageHandlerFactory = (_, __) =>
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
                 var messageHandler = new MockHttpMessageHandler();
                 messageHandler
@@ -938,7 +941,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                  k =>
                  {
                      k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
-                     k.Rebind<Func<bool, string, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                     k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
 
                      var certificateLocator = Substitute.For<ICertificateLocator>();
                      certificateLocator
@@ -948,7 +951,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                      var httpsAuthenticator = Substitute.For<IHttpsAuthenticator>();
                      httpsAuthenticator
-                         .When(a => a.AddHttpMessageHandlerAuthentication(Arg.Any<HttpClientHandler>(), Arg.Any<string>()))
+                         .When(a => a.AddHttpMessageHandlerAuthentication(Arg.Any<HttpClientHandler>(), Arg.Any<HttpClientConfiguration>()))
                          .Do(x => throw new Exception());
                      k.Rebind<IHttpsAuthenticator>().ToConstant(httpsAuthenticator);
                  }, dict)

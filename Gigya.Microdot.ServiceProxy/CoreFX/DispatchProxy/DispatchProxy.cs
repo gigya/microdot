@@ -1,7 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace System.Reflection.DispatchProxy
+using System.Reflection;
+
+namespace Gigya.Microdot.System_Reflection.DispatchProxy
 {
 	/// <summary>
 	/// DispatchProxy provides a mechanism for the instantiation of proxy objects and handling of

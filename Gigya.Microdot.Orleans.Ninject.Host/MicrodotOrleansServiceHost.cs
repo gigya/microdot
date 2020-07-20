@@ -21,15 +21,20 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Logging;
@@ -48,39 +53,95 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     /// </summary>
     public abstract class MicrodotOrleansServiceHost : ServiceHostBase
     {
-        private bool disposed;
+        public IKernel Kernel;
 
-        protected GigyaSiloHost SiloHost { get; set; }
+        private IRequestListener requestListener;
 
-        private IKernel Kernel { get; set; }
-
-        public abstract ILoggingModule GetLoggingModule();
-
-
-        /// <summary>
-        /// Called when the service is started. This method first calls <see cref="CreateKernel"/>, configures it with
-        /// infrastructure binding, calls <see cref="Configure"/> to configure additional bindings and settings, then
-        /// start silo using <see cref="GigyaSiloHost"/>. In most scenarios, you shouldn't override this method.
-        /// </summary>
         protected override void OnStart()
         {
-            Kernel = CreateKernel();
+            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
 
-            Kernel.Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(ServiceName, Arguments.InstanceName, InfraVersion)).InSingletonScope();
+            var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
+            Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
-            PreConfigure(Kernel);
+            this.PreConfigure(Kernel, Arguments);
+            this.Configure(Kernel);
 
-            Configure(Kernel, Kernel.Get<OrleansCodeConfig>());
+            Kernel.Get<SystemInitializer>().Init();
 
-            PreInitialize(Kernel);
+            CrashHandler = Kernel.Get<ICrashHandler>();
+            CrashHandler.Init(OnCrash);
 
-            OnInitilize(Kernel);
+            IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
+            workloadMetrics.Init();
 
-            Warmup(Kernel);
+            var metricsInitializer = Kernel.Get<IMetricsInitializer>();
+            metricsInitializer.Init();
 
-            SiloHost = Kernel.Get<GigyaSiloHost>();
-            SiloHost.Start(Arguments, AfterOrleansStartup);
+            this.PreInitialize(Kernel);
+
+            this.OnInitilize(Kernel);
+
+            VerifyConfigurationsIfNeeded(Kernel.Get<MicrodotHostingConfig>(), Kernel.Get<ConfigurationVerificator>());
+
+            this.Warmup(Kernel);
+
+            //don't move up the get should be after all the binding are done
+            var log = Kernel.Get<ILog>();
+
+            this.requestListener = Kernel.Get<IRequestListener>();
+            this.requestListener.Listen();
+
+            log.Info(_ => _("start getting traffic", unencryptedTags: new { siloName = CurrentApplicationInfo.HostName }));
         }
+
+        protected override void OnStop()
+        {
+            if (Arguments.ServiceDrainTimeSec.HasValue)
+            {
+                Kernel.Get<ServiceDrainController>().StartDrain();
+                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+            }
+            Kernel.Get<SystemInitializer>().Dispose();
+            Kernel.Get<IWorkloadMetrics>().Dispose();
+
+            this.requestListener.Stop();
+
+            try
+            {
+                Kernel.Get<ILog>().Info(x => x($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies."));
+            }
+            catch
+            {
+                Console.WriteLine($"{ this.requestListener.GetType().Name } stopped gracefully, trying to dispose dependencies.");
+            }
+
+            Dispose();
+        }
+
+        /// <summary>
+        /// An extensibility point - this method is called in process of configuration objects verification.
+        /// </summary>
+        protected override void OnVerifyConfiguration()
+        {
+            Kernel = new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
+
+            var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
+            Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
+            Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            Kernel.Load(
+                new ConfigVerificationModule(
+                    this.GetLoggingModule(),
+                    Arguments,
+                    env.ApplicationInfo.Name,
+                    InfraVersion));
+
+            VerifyConfiguration(Kernel.Get<ConfigurationVerificator>());
+        }
+
+        public abstract ILoggingModule GetLoggingModule();
 
         /// <summary>
         /// Used to initialize service dependencies. This method is called before OnInitialize(), 
@@ -89,55 +150,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// to prevent concrete services from overriding the common behaviour. 
         /// </summary>
         /// <param name="kernel"></param>
-        protected virtual void PreInitialize(IKernel kernel)
-        {
-            Kernel.Get<SystemInitializer>().Init();
-            CrashHandler = kernel.Get<ICrashHandler>();
-            CrashHandler.Init(OnCrash);
-
-            IWorkloadMetrics workloadMetrics = kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
-
-            var metricsInitializer = kernel.Get<IMetricsInitializer>();
-            metricsInitializer.Init();
-        }
+        protected virtual void PreInitialize(IKernel kernel) { }
 
         /// <summary>
         /// Extensibility point - this method is called after the Kernel is configured and before service starts
         /// processing incoming request.
         /// </summary>
         /// <param name="resolutionRoot">Used to retrieve dependencies from Ninject.</param>
-        protected virtual void OnInitilize(IResolutionRoot resolutionRoot)
-        {
-
-        }
-
-        protected virtual void Warmup(IKernel kernel)
-        {
-            IWarmup warmup = kernel.Get<IWarmup>();
-            warmup.Warmup();
-        }
-
-        protected override void OnVerifyConfiguration()
-        {
-            Kernel = CreateKernel();
-            Kernel.Load(new ConfigVerificationModule(GetLoggingModule(), Arguments, ServiceName, InfraVersion));
-            ConfigurationVerificator = Kernel.Get<Configuration.ConfigurationVerificator>();
-            base.OnVerifyConfiguration();
-        }
-
-        /// <summary>
-        /// Creates the <see cref="IKernel"/> used by this instance. Defaults to using <see cref="StandardKernel"/>, but
-        /// can be overridden to customize which kernel is used (e.g. MockingKernel);
-        /// </summary>
-        /// <returns>The kernel to use.</returns>
-        protected virtual IKernel CreateKernel()
-        {
-            return new StandardKernel(new NinjectSettings { ActivationCacheDisabled = true });
-
-
-        }
-
+        protected virtual void OnInitilize(IKernel kernel) { }
 
         /// <summary>
         /// Used to configure Kernel in abstract base-classes, which should apply to any concrete service that inherits from it.
@@ -147,16 +167,25 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// mark this method as sealed to prevent confusion with Configure().
         /// </summary>
         /// <param name="kernel"></param>
-        protected virtual void PreConfigure(IKernel kernel)
+        protected virtual void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             kernel.Load<MicrodotModule>();
             kernel.Load<MicrodotHostingModule>();
             kernel.Load<MicrodotOrleansHostModule>();
             kernel.Rebind<ServiceArguments>().ToConstant(Arguments);
-            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
 
+            kernel.Bind<IOrleansConfigurator>().ToConstant(
+                new OrleansConfigurator(this));
+
+            kernel.Bind<IRequestListener>().To<GigyaSiloHost>();
+
+            GetLoggingModule().Bind(kernel.Rebind<ILog>(), kernel.Rebind<IEventPublisher>(), kernel.Rebind<Func<string, ILog>>());
         }
 
+        protected void Configure(IKernel kernel)
+        {
+            this.Configure(kernel, kernel.Get<OrleansCodeConfig>());
+        }
 
         /// <summary>
         /// When overridden, allows a service to configure its Ninject bindings and infrastructure features. Called
@@ -167,9 +196,19 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         ///     infrastructure features you'd like to enable.</param>
         protected virtual void Configure(IKernel kernel, OrleansCodeConfig commonConfig) { }
 
+        protected virtual void Warmup(IKernel kernel)
+        {
+            IWarmup warmup = kernel.Get<IWarmup>();
+            warmup.Warmup();
+        }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (!Kernel.IsDisposed && !disposing)
+                SafeDispose(Kernel);
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+            base.Dispose(disposing);
+        }
 
         /// <summary>
         /// When overridden, allows running startup code after the silo has started, i.e. IBootstrapProvider.Init().
@@ -177,57 +216,18 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
         /// <param name="grainFactory">A <see cref="GrainFactory"/> used to access grains.</param>        
         protected virtual async Task AfterOrleansStartup(IGrainFactory grainFactory) { }
 
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-
-        /// <summary>
-        /// Called when the service stops. This methods stops the silo. In most scenarios, you shouldn't override this
-        /// method.
-        /// </summary>        
-        protected override void OnStop()
+        protected class OrleansConfigurator : IOrleansConfigurator
         {
-            if (Arguments.ServiceDrainTimeSec.HasValue)
+            private readonly MicrodotOrleansServiceHost configurator;
+
+            public OrleansConfigurator(MicrodotOrleansServiceHost onfigurator)
             {
-                Kernel.Get<ServiceDrainController>().StartDrain();
-                Thread.Sleep(Arguments.ServiceDrainTimeSec.Value * 1000);
+                this.configurator = onfigurator ?? throw new ArgumentNullException(nameof(onfigurator));
             }
 
-            Kernel.Get<SystemInitializer>().Dispose();
-            Kernel.Get<IWorkloadMetrics>().Dispose();
-            SiloHost.Stop(); // This calls BeforeOrleansShutdown()
-           
-            try
+            public Task AfterOrleansStartup(IGrainFactory grainFactory)
             {
-                Kernel.Get<ILog>().Info(x => x("Silo stopped gracefully, trying to dispose dependencies."));
-            }
-            catch
-            {
-                Console.WriteLine("Silo stopped gracefully, trying to dispose dependencies.");
-            }
-
-            Dispose();
-        }
-
-        private readonly object lockHandale = new object();
-        protected override void Dispose(bool disposing)
-        {
-            lock (lockHandale)
-            {
-                try
-                {
-                    if (disposed)
-                        return;
-
-                    disposed = true;
-
-                    if (!Kernel.IsDisposed && !disposing)
-                        SafeDispose(Kernel);
-
-                    base.Dispose(disposing);
-                }
-                finally
-                {
-                    disposed = true;
-                }
+                return this.configurator.AfterOrleansStartup(grainFactory);
             }
         }
     }

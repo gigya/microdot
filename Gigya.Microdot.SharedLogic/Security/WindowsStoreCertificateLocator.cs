@@ -33,7 +33,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 namespace Gigya.Microdot.SharedLogic.Security
 {
 
-	public class CertificateConfig
+    public class CertificateConfig
 	{
         [Required]
 		public string CertificatePath { get; set; }

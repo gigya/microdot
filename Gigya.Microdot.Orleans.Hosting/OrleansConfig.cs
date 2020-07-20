@@ -21,6 +21,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         public double DefaultGrainAgeLimitInMins { get; set; } = 30;
         public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
 
+        public bool EnableEncryption { get; set; } = false;
+
         public ZooKeeperConfig ZooKeeper { get; set; }
 
         public MySqlConfig MySql_v4_0 { get; set; }
@@ -61,6 +63,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     public class MySqlConfig
     {
         public string ConnectionString { get; set; }
+        public string Invariant { get; set; }
     }
 
     public class OrleansLogLevel

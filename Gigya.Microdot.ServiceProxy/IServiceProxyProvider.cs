@@ -43,7 +43,7 @@ namespace Gigya.Microdot.ServiceProxy
         ISourceBlock<string> EndPointsChanged { get; }
         ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged { get; }
         int? DefaultPort { get; set; }
-        bool UseHttpsDefault { get; set; }
+        bool ServiceInterfaceRequiresHttps { get; set; }
         string ServiceName { get;  }
         Action<HttpServiceRequest> PrepareRequest { get; set; }
         void SetHttpTimeout(TimeSpan timeout);

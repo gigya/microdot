@@ -29,9 +29,12 @@ using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Fakes.KernelUtils;
+using Gigya.Microdot.Hosting;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.ServiceDiscovery;
@@ -47,7 +50,7 @@ namespace Gigya.Microdot.Testing.Shared
 
     public class TestingKernel<T> : StandardKernel where T : ILog, new()
     {
-        public const string APPNAME = "InfraTests";
+        public const string APPNAME = "test";
 
         /// <summary>
         /// Construction of TestingKernel should always be ended by SystemInitializer.Init(), which performs IConfigObjects rebinding.
@@ -58,7 +61,10 @@ namespace Gigya.Microdot.Testing.Shared
         public TestingKernel(Action<IKernel> additionalBindings = null, Dictionary<string, string> mockConfig = null)
         {
             ServicePointManager.DefaultConnectionLimit = 200;
-               Bind<CurrentApplicationInfo>().ToConstant(new CurrentApplicationInfo(APPNAME)).InSingletonScope();
+
+            var config = new HostEnvironment(new TestHostEnvironmentSource());
+            Bind<IEnvironment>().ToConstant(config).InSingletonScope();
+            Bind<CurrentApplicationInfo>().ToConstant(config.ApplicationInfo).InSingletonScope();
             this.Load<MicrodotModule>();
             Rebind<IEventPublisher>().To<NullEventPublisher>();
             Rebind<ILog>().To<T>().InSingletonScope();

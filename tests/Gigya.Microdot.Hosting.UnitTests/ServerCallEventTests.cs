@@ -10,6 +10,7 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
+using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
@@ -25,6 +26,14 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
+            //Environment.SetEnvironmentVariable("ZONE", "zone");
+            //Environment.SetEnvironmentVariable("ENV", "env");
+
+            var config = new HostEnvironment(new TestHostEnvironmentSource(
+                zone: "zone",
+                deploymentEnvironment: "env",
+                appName: "ICalculatorService"));
+
             _serviceTester = new NonOrleansServiceTester<CalculatorServiceHost>();
 
             _serviceTester.CommunicationKernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>();
@@ -38,6 +47,9 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
         public void TestFixtureTearDown()
         {
             _serviceTester?.Dispose();
+
+            //Environment.SetEnvironmentVariable("ZONE", null);
+            //Environment.SetEnvironmentVariable("ENV", null);
         }
 
         [Test]

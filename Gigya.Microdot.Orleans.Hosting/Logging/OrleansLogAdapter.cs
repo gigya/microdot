@@ -24,7 +24,7 @@ using System;
 using System.Diagnostics;
 using Gigya.Microdot.Interfaces.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
+
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging
 {
@@ -100,6 +100,7 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
             return logLevel >= config.DefaultCategoryLogLevel;
         }
 
+
         public IDisposable BeginScope<TState>(TState state)
         {
             return NullScope.Instance;
@@ -108,6 +109,15 @@ namespace Gigya.Microdot.Orleans.Hosting.Logging
         public void Write(TraceEventType level, Action<LogDelegate> log, string file = "", int line = 0, string method = null)
         {
             _logImplementation.Write(level, log, file, line, method);
+        }
+    }
+
+    class NullScope:IDisposable
+    {
+        public  static NullScope Instance =new NullScope();
+        public void Dispose()
+        {
+            
         }
     }
 }

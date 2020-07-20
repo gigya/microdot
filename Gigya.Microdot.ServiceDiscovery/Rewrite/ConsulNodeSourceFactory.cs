@@ -165,7 +165,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             _shutdownToken.Dispose();
             _serviceListHealthMonitor.Dispose();
         }
-        
     }
 
 }

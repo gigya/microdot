@@ -28,30 +28,27 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Configuration
 {
-    ///<remarks>    
-    ///If the environment variable "GIGYA_CONFIG_PATHS_FILE" is present, the path contained in it will be used. 
-    ///If GIGYA_CONFIG_PATHS_FILE is not presented we will try to take folder from GIGYA_CONFIG_ROOT + loadPaths.json    
-    ///If it not present as well it will be assumed that the list can be read from c:/gigya/config/loadPaths.json (by default). 
-    ///In Linux, the path will be /etc/gigya/config/loadPaths.
-    /// 
-    ///Beware! This class is used during the logger initialization and shouldn't log anything at this stage.
-    ///</remarks>
+    /// <summary>
+    /// Loads configurations paths.
+    /// </summary>
+    /// <remarks>    
+    /// <para>
+    /// Establishes a config root with GIGYA_CONFIG_ROOT or fallbacks to current/Working/Directory/config.
+    /// Establishes a load paths file with GIGYA_CONFIG_PATHS_FILE or fallbacks to config-root/loadPaths.json
+    /// </para>
+    /// <para>Beware! This class is used during the logger initialization and shouldn't log anything at this stage.</para>
+    /// </remarks>
     public class ConfigurationLocationsParser: IConfigurationLocationsParser
     {
-        internal const string GIGYA_CONFIG_PATHS_FILE = "GIGYA_CONFIG_PATHS_FILE";
-        internal const string GIGYA_CONFIG_ROOT = "GIGYA_CONFIG_ROOT";
-        internal const string GIGYA_CONFIG_ROOT_DEFAULT = "/gigya/config/";
-        internal const string LOADPATHS_JSON = "loadPaths.json";
         private string AppName { get; }
-
 
         private class ErrorAggregator
         {
@@ -62,32 +59,23 @@ namespace Gigya.Microdot.Configuration
         public string ConfigRoot { get; }
         public string LoadPathsFilePath { get; }
 
-        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, IEnvironmentVariableProvider environmentVariableProvider, CurrentApplicationInfo appInfo)
+        public ConfigurationLocationsParser(IFileSystem fileSystemInstance, IEnvironment environment, CurrentApplicationInfo appInfo)
         {
             AppName = appInfo.Name;
 
-            ConfigRoot = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_ROOT);
+            ConfigRoot = environment.ConfigRoot.FullName;
 
-            if (string.IsNullOrEmpty(ConfigRoot))
-                ConfigRoot = environmentVariableProvider.PlatformSpecificPathPrefix + GIGYA_CONFIG_ROOT_DEFAULT;
-
-            LoadPathsFilePath = environmentVariableProvider.GetEnvironmentVariable(GIGYA_CONFIG_PATHS_FILE);
+            LoadPathsFilePath = environment.LoadPathsFile.FullName;
             
-            if (string.IsNullOrEmpty(LoadPathsFilePath))
-                LoadPathsFilePath = Path.Combine(ConfigRoot, LOADPATHS_JSON);
-
-            //Normalize slashes
-            LoadPathsFilePath = LoadPathsFilePath.Replace("\\", "/");
-
             Trace.WriteLine("Started parsing configurations from location " + LoadPathsFilePath +"\n");
 
             var configPathDeclarations = ParseAndValidateConfigLines(LoadPathsFilePath, fileSystemInstance);
 
-            ConfigFileDeclarations = ExpandConfigPathDeclarations(environmentVariableProvider, configPathDeclarations, environmentVariableProvider.PlatformSpecificPathPrefix).ToArray();
+            ConfigFileDeclarations = ExpandConfigPathDeclarations(configPathDeclarations, environment).ToArray();
         }
 
 
-        private List<ConfigFileDeclaration> ExpandConfigPathDeclarations(IEnvironmentVariableProvider environmentVariableProvider, ConfigFileDeclaration[] configs, string prefix)
+        private List<ConfigFileDeclaration> ExpandConfigPathDeclarations(ConfigFileDeclaration[] configs, IEnvironment environment)
         {
 
             var configPathsSet = new SortedSet<ConfigFileDeclaration>(configs);
@@ -98,14 +86,24 @@ namespace Gigya.Microdot.Configuration
 
             foreach (var configPath in configPathsSet)
             {
-                configPath.Pattern = configPath.Pattern.Replace("$(prefix)", prefix);
-
+                string getReplacement(string key)
+                {
+                    switch (key)
+                    {
+                        case "GIGYA_CONFIG_ROOT": return environment.ConfigRoot.FullName;
+                        case "DC": case "ZONE": return environment.Zone;
+                        case "REGION": return environment.Region;
+                        case "ENV": return environment.DeploymentEnvironment;
+                        default: return environment[key].ToLower();
+                    }
+                }
+                
                 var list = Regex.Matches(configPath.Pattern, "%([^%]+)%")
                                 .Cast<Match>()
                                 .Select(match => new
                                 {
                                     Placehodler = match.Groups[0].Value,
-                                    Value = environmentVariableProvider.GetEnvironmentVariable(match.Groups[1].Value)
+                                    Value = getReplacement(match.Groups[1].Value)
                                 }).ToList();
 
                 var missingEnvVariables = list.Where(a => string.IsNullOrEmpty(a.Value)).Select(a => a.Placehodler.Trim('%')).ToList();

@@ -20,15 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.SharedLogic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[assembly: AssemblyTitle("Gigya.Microdot.SharedLogic")]
-[assembly: AssemblyProduct("Gigya.Microdot.SharedLogic")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("c88db2a8-a1d2-46f8-8b65-06b9ee3f1662")]
@@ -49,6 +44,6 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Ninject.Host")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Ninject.Host")]
 [assembly: InternalsVisibleTo("Gigya.Microdot.Ninject")]
-
-
 [assembly: InternalsVisibleTo("Gigya.Microdot.Orleans.Hosting.UnitTests")]
+
+[assembly: TypeForwardedToAttribute(typeof(CurrentApplicationInfo))]

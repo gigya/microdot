@@ -20,12 +20,17 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.SharedLogic;
 using System;
+using System.IO;
 
 namespace Gigya.Microdot.Interfaces.SystemWrappers
 {
+    // TODO: Remove in favor of property in app instance
     public interface IEnvironment
     {
+        string this[string key] { get; }
+
         /// <summary>
         /// The current Region this application runs in, e.g. "us1", "eu2".
         /// Initialized from the environment variable "REGION".
@@ -42,6 +47,7 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         /// </summary>        
         string DeploymentEnvironment { get; }
 
+        // TODO: Abstract away
         string ConsulAddress { get; }
 
         /// <summary>
@@ -49,11 +55,20 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         /// multiple identical applications running on the same host.
         /// </summary>
         string InstanceName { get; }
+        
+        /// <summary>
+        /// The configuration root directory.
+        /// </summary>
+        DirectoryInfo ConfigRoot { get; }
 
-        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironmentVariableProvider.SetEnvironmentVariableForProcess instead")]
-        void SetEnvironmentVariableForProcess(string name, string value);
+        /// <summary>
+        /// Gets the current application information.
+        /// </summary>
+        CurrentApplicationInfo ApplicationInfo { get; }
 
-        [Obsolete("To be removed on Microdot version 2.0. Use IEnvironmentVariableProvider.SetEnvironmentVariableForProcess instead")]
-        string GetEnvironmentVariable(string name);
+        /// <summary>
+        /// The load paths file.
+        /// </summary>
+        FileInfo LoadPathsFile { get; }
     }
 }

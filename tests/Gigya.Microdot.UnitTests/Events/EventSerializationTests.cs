@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Events;
@@ -18,7 +20,7 @@ namespace Gigya.Microdot.UnitTests.Events
 
     public class EventSerializationTests
     {
-        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests));
+        private static readonly CurrentApplicationInfo AppInfo = new CurrentApplicationInfo(nameof(EventSerializationTests), Environment.UserName, Dns.GetHostName());
 
 
         EventSerializer SerializerWithStackTrace { get; } = new EventSerializer(() => new EventConfiguration(), new NullEnvironment(),
@@ -191,7 +193,7 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent[EventConsts.srvVersion].ShouldBe(AppInfo.Version.ToString(4));
 
             serializedEvent.ShouldContainKey(EventConsts.infrVersion);
-            serializedEvent[EventConsts.infrVersion].ShouldBe(AppInfo.Version.ToString(4));
+            serializedEvent[EventConsts.infrVersion].ShouldBe(AppInfo.InfraVersion.ToString(4));
 
             serializedEvent.ShouldContainKey(EventConsts.srvSystemInstance);
                     
@@ -205,19 +207,5 @@ namespace Gigya.Microdot.UnitTests.Events
             serializedEvent[EventConsts.tags + ".EncryptedTag"].ShouldNotBeNull();
         }
 
-    }
-
-    internal class NullEnvironment : IEnvironment
-    {
-        public string Zone => nameof(Zone);
-        public string Region => nameof(Region);
-        public string DeploymentEnvironment => nameof(DeploymentEnvironment);
-        public string ConsulAddress => nameof(ConsulAddress);
-        public string InstanceName => nameof(InstanceName);
-
-        [Obsolete("To be deleted on version 2.0")]
-        public string GetEnvironmentVariable(string name) => name;
-        [Obsolete("To be deleted on version 2.0")]
-        public void SetEnvironmentVariableForProcess(string name, string value) {}
     }
 }

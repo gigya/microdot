@@ -1,6 +1,8 @@
 ﻿
 using System;
 using System.Threading.Tasks;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;

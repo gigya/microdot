@@ -1,0 +1,590 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DirectedGraph DataVirtualized="True" Layout="Sugiyama" ZoomLevel="-1" xmlns="http://schemas.microsoft.com/vs/2009/dgml">
+  <Nodes>
+    <Node Id="@10" Category="CodeSchema_Assembly" AssemblyTimestamp="01/12/2020 13:08:06" Bounds="388.488333333333,172.9425,353.023333333333,261.92" CodeSchemaProperty_StrongName="Gigya.Microdot.Orleans.Ninject.Host, Version=2.1.0.0, Culture=neutral, PublicKeyToken=null" CommonLabel="Gigya.Microdot.Orleans.Ninject.Host" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" FilePath="$(ae847e21-f7d8-47fb-84c3-c7144a9b7a1d.OutputPath)" Group="Expanded" Label="Gigya.Microdot.Orleans.Ninject.Host.dll" />
+    <Node Id="@11" Category="CodeSchema_Namespace" Bounds="246.828333333334,1032.805,256.343333333333,85" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="Gigya‎.Microdot‎.Configuration‎.Objects" />
+    <Node Id="@12" Category="CodeSchema_Namespace" Bounds="51.8066666666666,856.1175,182.386666666667,85" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="Gigya.Microdot.Hosting" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="Gigya.Microdot.Hosting" />
+    <Node Id="@13" Category="CodeSchema_Namespace" Bounds="268.338333333333,1386.18,213.323333333333,140" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="Gigya.Microdot.Interfaces" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="Gigya.Microdot.Interfaces" />
+    <Node Id="@16" Category="CodeSchema_Namespace" Bounds="248.02,466.55,253.96,317.88" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="Gigya.Microdot.Ninject" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="Gigya.Microdot.Ninject" />
+    <Node Id="@18" Category="CodeSchema_Namespace" Bounds="408.488333333333,212.9425,313.023333333333,201.92" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="Gigya.Microdot.Orleans.Ninject.Host" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="Gigya.Microdot.Orleans.Ninject.Host" />
+    <Node Id="@2" Category="CodeSchema_Assembly" AssemblyTimestamp="01/12/2020 13:07:58" Bounds="66.0516666666667,1169.4925,245.896666666667,145" CodeSchemaProperty_StrongName="Gigya.Microdot.SharedLogic, Version=2.1.0.0, Culture=neutral, PublicKeyToken=null" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" FilePath="$(c88db2a8-a1d2-46f8-8b65-06b9ee3f1662.OutputPath)" Group="Expanded" Label="Gigya.Microdot.SharedLogic.dll">
+      <Category Ref="FileSystem.Category.FileOfType.dll" />
+    </Node>
+    <Node Id="@20" Category="CodeSchema_Namespace" Bounds="86.0516666666667,1209.4925,205.896666666667,85" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="Gigya‎.Microdot‎.SharedLogic" />
+    <Node Id="@22" Category="CodeSchema_Class" Bounds="68.78,582.51,148.44,85.96" CodeSchemaProperty_IsPublic="True" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Label="NoCrashHandler" />
+    <Node Id="@23" Category="CodeSchema_Class" Bounds="111.3,1249.4925,155.4,25" CodeSchemaProperty_IsPublic="True" DelayedChildNodesState="NotFetched" DelayedCrossGroupLinksState="Fetched" Group="Collapsed" Label="AssemblyProvider" />
+    <Node Id="@25" Category="CodeSchema_Class" Bounds="895.966666666667,582.51,176.066666666667,85.96" CodeSchemaProperty_IsPublic="True" CommonLabel="CalculatorServiceHost" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="CalculatorServiceHost" />
+    <Node Id="@26" Category="CodeSchema_Class" Bounds="289.935,1072.805,170.13,25" CodeSchemaProperty_IsPublic="True" DelayedChildNodesState="NotFetched" DelayedCrossGroupLinksState="Fetched" Group="Collapsed" Label="ConfigObjectCreator" />
+    <Node Id="@27" Category="CodeSchema_Class" Bounds="802.403333333333,1022.325,231.193333333333,85.96" CodeSchemaProperty_IsPublic="True" CommonLabel="ConfigurationLocationsParser" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="ConfigurationLocationsParser" />
+    <Node Id="@28" Category="CodeSchema_Class" Bounds="584.581666666667,1022.325,186.836666666667,85.96" CodeSchemaProperty_IsPublic="True" CommonLabel="EnvironmentInstance" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="EnvironmentInstance" />
+    <Node Id="@29" Category="CodeSchema_Interface" Bounds="288.338333333333,1426.18,158.593333333333,25" CodeSchemaProperty_IsAbstract="True" CodeSchemaProperty_IsPublic="True" CommonLabel="IAssemblyProvider" DelayedChildNodesState="NotFetched" DelayedCrossGroupLinksState="Fetched" Group="Collapsed" Icon="CodeSchema_Interface" Label="IAssemblyProvider" />
+    <Node Id="@30" Category="CodeSchema_Interface" Bounds="288.338333333333,1481.18,173.323333333333,25" CodeSchemaProperty_IsAbstract="True" CodeSchemaProperty_IsPublic="True" CommonLabel="IConfigObjectCreator" DelayedChildNodesState="NotFetched" DelayedCrossGroupLinksState="Fetched" Group="Collapsed" Icon="CodeSchema_Interface" Label="IConfigObjectCreator" />
+    <Node Id="@31" Category="CodeSchema_Interface" Bounds="75.1866666666667,896.1175,135.626666666667,25" CodeSchemaProperty_IsAbstract="True" CodeSchemaProperty_IsPublic="True" CommonLabel="ICrashHandler" DelayedChildNodesState="NotFetched" DelayedCrossGroupLinksState="Fetched" Group="Collapsed" Icon="CodeSchema_Interface" Label="ICrashHandler" />
+    <Node Id="@32" Category="CodeSchema_Class" Bounds="268.02,622.51,213.96,141.92" CodeSchemaProperty_IsAbstract="True" CodeSchemaProperty_IsFinal="True" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="MicrodotConventions" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="MicrodotConventions" />
+    <Node Id="@33" Category="CodeSchema_Class" Bounds="299.78,506.55,150.44,85.96" CodeSchemaProperty_IsPublic="True" CommonLabel="MicrodotModule" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="MicrodotModule" />
+    <Node Id="@35" Category="CodeSchema_Class" Bounds="428.488333333333,252.9425,273.023333333333,141.92" CodeSchemaProperty_IsAbstract="True" CodeSchemaProperty_IsPublic="True" CommonLabel="MicrodotOrleansServiceHost" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="MicrodotOrleansServiceHost" />
+    <Node Id="@36" Category="CodeSchema_Class" Bounds="520.635,817.6575,266.73,141.92" CodeSchemaProperty_IsPublic="True" CommonLabel="SystemInitializer" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" Group="Expanded" Icon="CodeSchema_Class" Label="SystemInitializer" />
+    <Node Id="@39" Category="CodeSchema_Method" Bounds="116.521666666667,622.51,52.9566666666666,25.96" CodeSchemaProperty_IsFinal="True" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsVirtual="True" CommonLabel="Init" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="Init" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Common.Tests/KernelTestingExtensions.cs StartLineNumber=28 StartCharacterOffset=0 EndLineNumber=28 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@4" Category="CodeSchema_Assembly" AssemblyTimestamp="01/12/2020 13:07:59" Bounds="31.8066666666666,816.1175,222.386666666667,145" CodeSchemaProperty_StrongName="Gigya.Microdot.Hosting, Version=2.1.0.0, Culture=neutral, PublicKeyToken=null" CommonLabel="Gigya.Microdot.Hosting" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" FilePath="$(33c1b76e-47b2-40bc-a434-81ee22996bef.OutputPath)" Group="Expanded" Label="Gigya.Microdot.Hosting.dll" />
+    <Node Id="@41" Category="CodeSchema_Method" Bounds="448.488333333333,348.9025,105.39,25.96" CodeSchemaProperty_IsProtected="True" CodeSchemaProperty_IsVirtual="True" CommonLabel="PreConfigure" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="PreConfigure" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Orleans.Ninject.Host/MicrodotOrleansServiceHost.cs StartLineNumber=151 StartCharacterOffset=0 EndLineNumber=151 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@42" Category="CodeSchema_Method" Bounds="584.855,348.9025,96.6566666666668,25.96" CodeSchemaProperty_IsProtected="True" CodeSchemaProperty_IsVirtual="True" CommonLabel="PreInitialize" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="PreInitialize" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Orleans.Ninject.Host/MicrodotOrleansServiceHost.cs StartLineNumber=95 StartCharacterOffset=0 EndLineNumber=95 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@44" Category="CodeSchema_Method" Bounds="931.305,622.51,105.39,25.96" CodeSchemaProperty_IsProtected="True" CodeSchemaProperty_IsVirtual="True" CommonLabel="PreConfigure" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" IsOverloaded="True" Label="PreConfigure" SourceLocation="(Assembly=file:///C:/Dev/microdot/tests/Gigya.Microdot.Orleans.Hosting.UnitTests/Microservice/CalculatorService/CalculatorServiceHost.cs StartLineNumber=51 StartCharacterOffset=0 EndLineNumber=51 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@45" Category="CodeSchema_Method" Bounds="536.621666666667,115.295,56.7566666666667,25.96" CodeSchemaProperty_IsPublic="True" CommonLabel="Run" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="Run" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Hosting/Service/ServiceHostBase.cs StartLineNumber=126 StartCharacterOffset=0 EndLineNumber=126 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@48" Category="CodeSchema_Method" Bounds="774.8,421.882846337891,60.4,25.96" CodeSchemaProperty_IsPublic="True" CommonLabel="Start" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="Start" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Orleans.Hosting/GigyaSiloHost.cs StartLineNumber=74 StartCharacterOffset=0 EndLineNumber=74 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@49" Category="CodeSchema_Method" Bounds="604.581666666667,1062.325,146.836666666667,25.96" CodeSchemaProperty_IsConstructor="True" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsSpecialName="True" CommonLabel="EnvironmentInstance" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="EnvironmentInstance" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.SharedLogic/SystemWrappers/EnvironmentInstance.cs StartLineNumber=51 StartCharacterOffset=0 EndLineNumber=51 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@50" Category="CodeSchema_Method" Bounds="288.02,662.51,160.683333333333,25.96" CodeSchemaProperty_IsExtension="True" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="BindClassesAsSingleton" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="BindClassesAsSingleton" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Ninject/MicrodotConventions.cs StartLineNumber=35 StartCharacterOffset=0 EndLineNumber=35 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@51" Category="CodeSchema_Method" Bounds="822.403333333333,1062.325,191.193333333333,25.96" CodeSchemaProperty_IsConstructor="True" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsSpecialName="True" CommonLabel="ConfigurationLocationsParser" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="ConfigurationLocationsParser" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Configuration/ConfigurationLocationsParser.cs StartLineNumber=63 StartCharacterOffset=0 EndLineNumber=63 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@52" Category="CodeSchema_Method" Bounds="288.02,718.47,173.96,25.96" CodeSchemaProperty_IsExtension="True" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsStatic="True" CommonLabel="BindInterfacesAsSingleton" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="BindInterfacesAsSingleton" />
+    <Node Id="@54" Category="CodeSchema_Method" Bounds="477.118333333333,57.6475,175.763333333333,25.96" CodeSchemaProperty_IsAnonymous="True" Label="AnonymousMethod__16_0" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Testing/Service/ServiceTester.cs StartLineNumber=72 StartCharacterOffset=0 EndLineNumber=72 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@55" Category="CodeSchema_Method" Bounds="627.521666666667,857.6575,52.9566666666667,25.96" CodeSchemaProperty_IsPublic="True" CommonLabel="Init" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="Init" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Ninject/SystemInitializer/SystemInitializer.cs StartLineNumber=49 StartCharacterOffset=0 EndLineNumber=49 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@56" Category="CodeSchema_Method" Bounds="344.073333333333,546.55,61.8533333333334,25.96" CodeSchemaProperty_IsPublic="True" CodeSchemaProperty_IsVirtual="True" CommonLabel="Load" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" IsOverloaded="True" Label="Load" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Ninject/MicrodotModule.cs StartLineNumber=74 StartCharacterOffset=0 EndLineNumber=74 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@57" Category="CodeSchema_Method" Bounds="595.065,292.9425,76.2366666666667,25.96" CodeSchemaProperty_IsProtected="True" CodeSchemaProperty_IsVirtual="True" CommonLabel="OnStart" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" IsOverloaded="True" Label="OnStart" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Orleans.Ninject.Host/MicrodotOrleansServiceHost.cs StartLineNumber=81 StartCharacterOffset=0 EndLineNumber=81 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@58" Category="CodeSchema_Method" Bounds="540.635,913.6175,226.73,25.96" CodeSchemaProperty_IsPrivate="True" CommonLabel="SearchAssembliesAndRebindIConfig" DelayedCrossGroupLinksState="Fetched" Icon="CodeSchema_Method" Label="SearchAssembliesAndRebindIConfig" SourceLocation="(Assembly=file:///C:/Dev/microdot/Gigya.Microdot.Ninject/SystemInitializer/SystemInitializer.cs StartLineNumber=63 StartCharacterOffset=0 EndLineNumber=63 EndCharacterOffset=0)">
+      <Category Ref="CallStackEntry" />
+      <Category Ref="CodeSchema_SourceLocation" />
+    </Node>
+    <Node Id="@6" Category="CodeSchema_Assembly" AssemblyTimestamp="01/12/2020 13:07:58" Bounds="226.828333333334,992.805,296.343333333333,145" CodeSchemaProperty_StrongName="Gigya.Microdot.Configuration, Version=2.1.0.0, Culture=neutral, PublicKeyToken=null" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" FilePath="$(0e3a2422-dd99-4d75-a18c-96329a842742.OutputPath)" Group="Expanded" Label="Gigya.Microdot.Configuration.dll">
+      <Category Ref="FileSystem.Category.FileOfType.dll" />
+    </Node>
+    <Node Id="@8" Category="CodeSchema_Assembly" AssemblyTimestamp="01/12/2020 13:07:57" Bounds="248.338333333333,1346.18,253.323333333333,200" CodeSchemaProperty_StrongName="Gigya.Microdot.Interfaces, Version=2.1.0.0, Culture=neutral, PublicKeyToken=null" CommonLabel="Gigya.Microdot.Interfaces" DelayedChildNodesState="Incomplete" DelayedCrossGroupLinksState="Fetched" FilePath="$(a90d7c71-ec7c-4328-9db1-d2c3a30727db.OutputPathUri)" Group="Expanded" Label="Gigya.Microdot.Interfaces.dll" />
+    <Node Id="ExternalCodeRootNode" Category="ExternalCallStackEntry" Bounds="518.506666666667,0,92.9866666666667,25.96" Label="External Code">
+      <Category Ref="CallStackEntry" />
+    </Node>
+    <Node Id="a16d1f76-da21-4dfa-ab38-592a6d17e46d1" Category="Comment" Bounds="595.643333333333,596.55,238.713333333333,57.8800000000001" Label="Why the method is generated? If for casting only, it probably performse worse that a cast" />
+  </Nodes>
+  <Links>
+    <Link Source="@10" Target="@18" Category="Contains" FetchingParent="@10" />
+    <Link Source="@10" Target="@2" Category="CodeMap_ProjectReference" Bounds="320.634887695313,434.862487792969,232.030578613281,771.449768066406" />
+    <Link Source="@10" Target="@4" Category="CodeMap_ProjectReference" />
+    <Link Source="@10" Target="@6" Category="CodeMap_ProjectReference" Bounds="417.030334472656,434.862487792969,133.632751464844,549.964965820313" />
+    <Link Source="@10" Target="@8" Category="CodeMap_ProjectReference" Bounds="430.663299560547,434.862487792969,122.002166748047,903.317565917969" />
+    <Link Source="@11" Target="@26" Category="Contains" FetchingParent="@11" />
+    <Link Source="@12" Target="@31" Category="Contains" FetchingParent="@12" />
+    <Link Source="@13" Target="@29" Category="Contains" FetchingParent="@13" />
+    <Link Source="@13" Target="@30" Category="Contains" FetchingParent="@13" />
+    <Link Source="@16" Target="@32" Category="Contains" FetchingParent="@16" />
+    <Link Source="@16" Target="@33" Category="Contains" FetchingParent="@16" />
+    <Link Source="@18" Target="@35" Category="Contains" FetchingParent="@18" />
+    <Link Source="@2" Target="@20" Category="Contains" FetchingParent="@2" />
+    <Link Source="@2" Target="@8" Category="CodeMap_ProjectReference" />
+    <Link Source="@20" Target="@23" Category="Contains" FetchingParent="@20" />
+    <Link Source="@22" Target="@31" Category="Implements" Bounds="160.684023045687,658.470120751953,120.454057056435,229.676994083736" Weight="1" />
+    <Link Source="@22" Target="@39" Category="Contains" FetchingParent="@22" />
+    <Link Source="@23" Target="@29" Category="Implements" Bounds="611.03060492361,981.974732675345,268.321516151012,140.280168866769" Weight="1" />
+    <Link Source="@25" Target="@35" Category="InheritsFrom" Weight="1" />
+    <Link Source="@25" Target="@44" Category="Contains" FetchingParent="@25" />
+    <Link Source="@26" Target="@30" Category="Implements" Bounds="641.005197611088,949.314281002094,205.684651481684,56.1216954627913" Weight="1" />
+    <Link Source="@27" Target="@51" Category="Contains" FetchingParent="@27" />
+    <Link Source="@28" Target="@49" Category="Contains" FetchingParent="@28" />
+    <Link Source="@32" Target="@50" Category="Contains" FetchingParent="@32" />
+    <Link Source="@32" Target="@52" Category="Contains" FetchingParent="@32" />
+    <Link Source="@33" Target="@56" Category="Contains" FetchingParent="@33" />
+    <Link Source="@35" Target="@41" Category="Contains" FetchingParent="@35" />
+    <Link Source="@35" Target="@42" Category="Contains" />
+    <Link Source="@35" Target="@57" Category="Contains" FetchingParent="@35" />
+    <Link Source="@36" Target="@55" Category="Contains" FetchingParent="@36" />
+    <Link Source="@36" Target="@58" Category="Contains" FetchingParent="@36" />
+    <Link Source="@4" Target="@12" Category="Contains" FetchingParent="@4" />
+    <Link Source="@4" Target="@2" Category="CodeMap_ProjectReference" Bounds="152.437566324726,961.1175,25.963109096988,199.450297329307" />
+    <Link Source="@4" Target="@6" Category="CodeMap_ProjectReference" Bounds="238.196321188539,961.1175,34.4473653303846,26.2345640595358" />
+    <Link Source="@4" Target="@8" Category="CodeMap_ProjectReference" Bounds="55.3450660705566,961.117492675781,184.575954437256,433.938659667969" />
+    <Link Source="@41" Target="@33" Category="References" Weight="1" />
+    <Link Source="@41" Target="@56" Category="CallStackIndirectCall" Bounds="274.610830270039,614.862537841797,155.152928154193,332.62311589069" Label="External Code" />
+    <Link Source="@42" Target="@31" Category="References" IsTargetVirtualized="True" Weight="2">
+      <Category Ref="CodeSchema_Calls" />
+    </Link>
+    <Link Source="@42" Target="@36" Category="References" Weight="1" />
+    <Link Source="@42" Target="@39" Category="CallStackDirectCall" Bounds="309.311666800809,374.862546337891,59.4494147141937,228.936386098042" />
+    <Link Source="@42" Target="@55" Category="CodeSchema_Calls" Weight="1" />
+    <Link Source="@44" Target="@41" Category="CodeSchema_Calls" Bounds="344.501397079667,322.450328393863,11.1443697471449,241.010436986997" Weight="1" />
+    <Link Source="@45" Target="@57" Category="CallStackDirectCall" />
+    <Link Source="@54" Target="@45" Category="CallStackDirectCall" Bounds="564.999992754076,83.607498626709,2.40207332353748E-05,22.6875028991749" />
+    <Link Source="@55" Target="@58" Category="CodeSchema_Calls" Bounds="654,883.617492675781,0,21" Weight="1" />
+    <Link Source="@56" Target="@26" Category="References" Bounds="523.486760862767,452.509761987392,354.036335057485,464.64578578041" Weight="2" />
+    <Link Source="@56" Target="@30" Category="References" Bounds="515.675162977712,452.509983520508,87.4968195662482,546.408232286596" Weight="2" />
+    <Link Source="@56" Target="@36" Category="References" Bounds="138.369329768007,452.509983520508,252.555701702955,287.828620215512" Weight="3" />
+    <Link Source="@56" Target="@50" Category="CodeSchema_Calls" Weight="1" />
+    <Link Source="@56" Target="@52" Category="CodeSchema_Calls" Weight="1" />
+    <Link Source="@57" Target="@41" Category="CodeSchema_Calls" Bounds="540.0870387105,318.902446337891,62.4787284903651,26.4872220579182" Weight="1" />
+    <Link Source="@57" Target="@42" Category="CodeSchema_Calls" Bounds="633.183319091797,318.902446337891,1.13686837721616E-13,21.0001000000001" Weight="1" />
+    <Link Source="@57" Target="@44" Category="CallStackDirectCall" Bounds="353.16003636072,257.499844055176,129.840685744682,297.711358845236" />
+    <Link Source="@57" Target="@48" Category="CodeSchema_Calls" Weight="1">
+      <Category Ref="CallStackDirectCall" />
+    </Link>
+    <Link Source="@58" Target="@26" Category="CodeSchema_FunctionPointer" Bounds="409.115381240679,819.577542675781,423.100640351486,102.615447861933" IsTargetVirtualized="True" Weight="1" />
+    <Link Source="@58" Target="@29" Category="References" Bounds="373.879766655385,819.577542675781,180.32001529073,128.017376162454" IsTargetVirtualized="True" Weight="2">
+      <Category Ref="CodeSchema_Calls" />
+    </Link>
+    <Link Source="@58" Target="@30" Category="References" Bounds="369.621730320801,819.577542675781,196.776968348247,182.114398480173" IsTargetVirtualized="True" Weight="7">
+      <Category Ref="CodeSchema_Calls" />
+    </Link>
+    <Link Source="@58" Target="@49" Category="CallStackIndirectCall" Bounds="338.815464955937,819.577542675781,15.3693603860273,141.300252732728" Label="External Code" LabelBounds="40.3783333333334,1157.0775,72.9866666666667,15.96" />
+    <Link Source="@58" Target="@51" Category="CallStackIndirectCall" Bounds="123.867554656609,819.577542675781,212.710669061745,145.174013941533" Label="External Code" />
+    <Link Source="@6" Target="@11" Category="Contains" FetchingParent="@6" />
+    <Link Source="@6" Target="@2" Category="CodeMap_ProjectReference" Bounds="271.846402410462,1137.805,26.8324090504504,25.4889853446316" />
+    <Link Source="@6" Target="@8" Category="CodeMap_ProjectReference" />
+    <Link Source="@8" Target="@13" Category="Contains" FetchingParent="@8" />
+    <Link Source="ExternalCodeRootNode" Target="@54" Category="CallStackIndirectCall" Bounds="564.999983225192,25.9599995422363,2.40207307342644E-05,22.6874990844777" />
+    <Link Source="a16d1f76-da21-4dfa-ab38-592a6d17e46d1" Target="@58" Bounds="116.360818629169,704.53130859375,243.888048703069,125.833693987248" />
+  </Links>
+  <Categories>
+    <Category Id="CallStackDirectCall" Label="Call Stack direct call" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Call Stack direct call" OutgoingActionLabel="Call Stack direct call" />
+    <Category Id="CallStackEntry" Label="Call Stack Entry" CanBeDataDriven="True" IsProviderRoot="False" NavigationActionLabel="Call Stack Entry" />
+    <Category Id="CallStackIndirectCall" Label="Call Stack indirect call" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Call Stack indirect call" OutgoingActionLabel="Call Stack indirect call" />
+    <Category Id="CodeMap_ProjectReference" Label="Project Reference" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Referenced By" OutgoingActionLabel="References" />
+    <Category Id="CodeSchema_Assembly" Label="Assembly" BasedOn="File" CanBeDataDriven="True" DefaultAction="Microsoft.Contains" Icon="CodeSchema_Assembly" NavigationActionLabel="Assemblies" />
+    <Category Id="CodeSchema_Calls" Label="Calls" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Called By" OutgoingActionLabel="Calls" />
+    <Category Id="CodeSchema_Class" Label="Class" BasedOn="CodeSchema_Type" CanBeDataDriven="True" DefaultAction="Node:Both:CodeSchema_Member" Icon="CodeSchema_Class" NavigationActionLabel="Classes" />
+    <Category Id="CodeSchema_FunctionPointer" Label="Function Pointer" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Function Pointers" OutgoingActionLabel="Function Pointers" />
+    <Category Id="CodeSchema_Interface" Label="Interface" BasedOn="CodeSchema_Type" CanBeDataDriven="True" DefaultAction="Node:Both:CodeSchema_Member" Icon="CodeSchema_Interface" NavigationActionLabel="Interfaces" />
+    <Category Id="CodeSchema_Member" Label="Member" CanBeDataDriven="True" DefaultAction="Microsoft.Contains" Icon="CodeSchema_Field" NavigationActionLabel="Members" />
+    <Category Id="CodeSchema_Method" Label="Method" BasedOn="CodeSchema_Member" CanBeDataDriven="True" DefaultAction="Link:Forward:CodeSchema_Calls" Icon="CodeSchema_Method" NavigationActionLabel="Methods" />
+    <Category Id="CodeSchema_Namespace" Label="Namespace" CanBeDataDriven="True" DefaultAction="Node:Both:CodeSchema_Type" Icon="CodeSchema_Namespace" NavigationActionLabel="Namespaces" />
+    <Category Id="CodeSchema_SourceLocation" Label="Source Location" Icon="File" />
+    <Category Id="CodeSchema_Type" Label="Type" CanBeDataDriven="True" DefaultAction="Node:Both:CodeSchema_Member" Icon="CodeSchema_Class" NavigationActionLabel="Types" />
+    <Category Id="Comment" Label="Comment" Description="Represents a user defined comment on the diagram" CanBeDataDriven="True" IsProviderRoot="False" NavigationActionLabel="Comments" />
+    <Category Id="Contains" Label="Contains" Description="Whether the source of the link contains the target object" CanBeDataDriven="False" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Contained By" IsContainment="True" OutgoingActionLabel="Contains" />
+    <Category Id="ExternalCallStackEntry" Label="External Call Stack Entry" CanBeDataDriven="True" IsProviderRoot="False" NavigationActionLabel="External Call Stack Entry" />
+    <Category Id="File" Label="File" CanBeDataDriven="True" DefaultAction="Microsoft.Contains" Icon="File" NavigationActionLabel="Files" />
+    <Category Id="FileSystem.Category.FileOfType.dll" BasedOn="CodeSchema_Assembly" CanBeDataDriven="True" IsProviderRoot="False" />
+    <Category Id="Implements" Label="Implements" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Implemented by" OutgoingActionLabel="Implements" />
+    <Category Id="InheritsFrom" Label="Inherits From" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Inherited By" OutgoingActionLabel="Inherits From" />
+    <Category Id="References" Label="References" CanBeDataDriven="True" CanLinkedNodesBeDataDriven="True" IncomingActionLabel="Referenced By" OutgoingActionLabel="References" />
+  </Categories>
+  <Properties>
+    <Property Id="AssemblyTimestamp" DataType="System.DateTime" />
+    <Property Id="Bounds" DataType="System.Windows.Rect" />
+    <Property Id="CanBeDataDriven" Label="CanBeDataDriven" Description="CanBeDataDriven" DataType="System.Boolean" />
+    <Property Id="CanLinkedNodesBeDataDriven" Label="CanLinkedNodesBeDataDriven" Description="CanLinkedNodesBeDataDriven" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsAbstract" Label="Is Abstract" Description="Flag to indicate member is 'Abstract' does not provide a full implementation" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsAnonymous" Label="Is Anonymous" Description="Flag indicating if this delegate, type, or method is anonymous" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsConstructor" Label="Is Constructor" Description="Flag to indicate the method is a constructor" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsExtension" Label="Is Extension" Description="Flag indicating if the method is an extension method" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsFinal" Label="Is Final" Description="Flag to indicate the member is 'Final' and cannot be derived from" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsPrivate" Label="Is Private" Description="Flag to indicate the scope is Private" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsProtected" Label="Is Protected" Description="Flag to indicate the scope is Protected" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsPublic" Label="Is Public" Description="Flag to indicate the scope is Public" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsSpecialName" Label="Is Special Name" Description="Flag to indicate the method is treated in a special way by some compilers" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsStatic" Label="Is Static" Description="Flag to indicate the member is a static member" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_IsVirtual" Label="Is Virtual" Description="Flag to indicate the method can be overridden" DataType="System.Boolean" />
+    <Property Id="CodeSchemaProperty_StrongName" Label="StrongName" Description="StrongName" DataType="System.String" />
+    <Property Id="CommonLabel" DataType="System.String" />
+    <Property Id="DataVirtualized" Label="Data Virtualized" Description="If true, the graph can contain nodes and links that represent data for virtualized nodes/links (i.e. not actually created in the graph)." DataType="System.Boolean" />
+    <Property Id="DefaultAction" Label="DefaultAction" Description="DefaultAction" DataType="System.String" />
+    <Property Id="DelayedChildNodesState" Label="Delayed Child Nodes State" Description="Unspecified if the delayed child nodes state is not specified. NotFetched if the group contains child nodes that are not fetched into the graph yet. Fetched if the group has all its delayed child nodes already fetched." DataType="Microsoft.VisualStudio.GraphModel.DelayedDataState" />
+    <Property Id="DelayedCrossGroupLinksState" Label="Delayed Cross-Group Links State" Description="Unspecified if the delayed cross-group links state is not specified. NotFetched if delayed cross-group links on this node are not fetched into the graph yet. Fetched if all delayed cross-group links have already fetched." DataType="Microsoft.VisualStudio.GraphModel.DelayedDataState" />
+    <Property Id="Expression" DataType="System.String" />
+    <Property Id="FetchingParent" DataType="Microsoft.VisualStudio.GraphModel.GraphNodeId" />
+    <Property Id="FilePath" Label="File Path" Description="File Path" DataType="System.String" />
+    <Property Id="Group" Label="Group" Description="Display the node as a group" DataType="Microsoft.VisualStudio.GraphModel.GraphGroupStyle" />
+    <Property Id="GroupLabel" DataType="System.String" />
+    <Property Id="Icon" Label="Icon" DataType="System.String" />
+    <Property Id="IncomingActionLabel" Label="IncomingActionLabel" Description="IncomingActionLabel" DataType="System.String" />
+    <Property Id="IsContainment" DataType="System.Boolean" />
+    <Property Id="IsEnabled" DataType="System.Boolean" />
+    <Property Id="IsOverloaded" Label="IsOverloaded" Description="IsOverloaded" DataType="System.Boolean" />
+    <Property Id="IsProviderRoot" Label="IsProviderRoot" Description="IsProviderRoot" DataType="System.Boolean" />
+    <Property Id="IsTargetVirtualized" Label="Link Target Virtualized" Description="If true, the link target end contains data for virtualized nodes/links (i.e. not actually created in the graph)." DataType="System.Boolean" />
+    <Property Id="Label" Label="Label" Description="Displayable label of an Annotatable object" DataType="System.String" />
+    <Property Id="LabelBounds" DataType="System.Windows.Rect" />
+    <Property Id="Layout" DataType="System.String" />
+    <Property Id="NavigationActionLabel" Label="NavigationActionLabel" Description="NavigationActionLabel" DataType="System.String" />
+    <Property Id="OutgoingActionLabel" Label="OutgoingActionLabel" Description="OutgoingActionLabel" DataType="System.String" />
+    <Property Id="SourceLocation" Label="Start Line Number" DataType="Microsoft.VisualStudio.GraphModel.CodeSchema.SourceLocation" />
+    <Property Id="TargetType" DataType="System.Type" />
+    <Property Id="Value" DataType="System.String" />
+    <Property Id="ValueLabel" DataType="System.String" />
+    <Property Id="Visibility" Label="Visibility" Description="Defines whether a node in the graph is visible or not" DataType="System.Windows.Visibility" />
+    <Property Id="Weight" Label="Weight" Description="Weight" DataType="System.Double" />
+    <Property Id="ZoomLevel" DataType="System.String" />
+  </Properties>
+  <QualifiedNames>
+    <Name Id="ArrayRank" Label="Array Rank" ValueType="System.String" />
+    <Name Id="Assembly" Label="Assembly" ValueType="Uri" />
+    <Name Id="GenericArguments" Label="Generic Arguments" ValueType="Microsoft.VisualStudio.GraphModel.GraphNodeIdCollection" />
+    <Name Id="GenericParameterCount" Label="Generic Parameter Count" ValueType="System.String" />
+    <Name Id="Member" Label="Member" ValueType="System.Object" />
+    <Name Id="Name" Label="Name" ValueType="System.String" />
+    <Name Id="Namespace" Label="Namespace" ValueType="System.String" />
+    <Name Id="OverloadingParameters" Label="Parameter" ValueType="Microsoft.VisualStudio.GraphModel.GraphNodeIdCollection" Formatter="NameValueNoEscape" />
+    <Name Id="ParentType" Label="Parent Type" ValueType="System.Object" />
+    <Name Id="Type" Label="Type" ValueType="System.Object" />
+  </QualifiedNames>
+  <IdentifierAliases>
+    <Alias n="1" Uri="Assembly=$(c88db2a8-a1d2-46f8-8b65-06b9ee3f1662.OutputPathUri)" />
+    <Alias n="2" Id="(@1)" />
+    <Alias n="3" Uri="Assembly=$(33c1b76e-47b2-40bc-a434-81ee22996bef.OutputPathUri)" />
+    <Alias n="4" Id="(@3)" />
+    <Alias n="5" Uri="Assembly=$(0e3a2422-dd99-4d75-a18c-96329a842742.OutputPathUri)" />
+    <Alias n="6" Id="(@5)" />
+    <Alias n="7" Uri="Assembly=$(a90d7c71-ec7c-4328-9db1-d2c3a30727db.OutputPathUri)" />
+    <Alias n="8" Id="(@7)" />
+    <Alias n="9" Uri="Assembly=$(ae847e21-f7d8-47fb-84c3-c7144a9b7a1d.OutputPathUri)" />
+    <Alias n="10" Id="(@9)" />
+    <Alias n="11" Id="(@5 Namespace=Gigya.Microdot.Configuration.Objects)" />
+    <Alias n="12" Id="(@3 Namespace=Gigya.Microdot.Hosting)" />
+    <Alias n="13" Id="(@7 Namespace=Gigya.Microdot.Interfaces)" />
+    <Alias n="14" Uri="Assembly=$(63e40f38-df99-4df5-9b45-addb0c2fc9ff.OutputPathUri)" />
+    <Alias n="15" Id="Namespace=Gigya.Microdot.Ninject" />
+    <Alias n="16" Id="(@14 @15)" />
+    <Alias n="17" Id="Namespace=Gigya.Microdot.Orleans.Ninject.Host" />
+    <Alias n="18" Id="(@9 @17)" />
+    <Alias n="19" Id="Namespace=Gigya.Microdot.SharedLogic" />
+    <Alias n="20" Id="(@1 @19)" />
+    <Alias n="21" Uri="Assembly=$(47cbf637-ab8f-4568-86d6-eab6ef08b9ce.OutputPathUri)" />
+    <Alias n="22" Id="(@21 Namespace=Gigya.Microdot.Fakes.KernelUtils Type=(Name=NoCrashHandler ParentType=KernelTestingExtensions))" />
+    <Alias n="23" Id="(@1 @19 Type=AssemblyProvider)" />
+    <Alias n="24" Uri="Assembly=$(8e548d57-5880-4283-bdf5-7386886d481d.OutputPathUri)" />
+    <Alias n="25" Id="(@24 Namespace=Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService Type=CalculatorServiceHost)" />
+    <Alias n="26" Id="(@5 Namespace=Gigya.Microdot.Configuration.Objects Type=ConfigObjectCreator)" />
+    <Alias n="27" Id="(@5 Namespace=Gigya.Microdot.Configuration Type=ConfigurationLocationsParser)" />
+    <Alias n="28" Id="(@1 Namespace=Gigya.Microdot.SharedLogic.SystemWrappers Type=EnvironmentInstance)" />
+    <Alias n="29" Id="(@7 Namespace=Gigya.Microdot.Interfaces Type=IAssemblyProvider)" />
+    <Alias n="30" Id="(@7 Namespace=Gigya.Microdot.Interfaces Type=IConfigObjectCreator)" />
+    <Alias n="31" Id="(@3 Namespace=Gigya.Microdot.Hosting Type=ICrashHandler)" />
+    <Alias n="32" Id="(@14 @15 Type=MicrodotConventions)" />
+    <Alias n="33" Id="(@14 @15 Type=MicrodotModule)" />
+    <Alias n="34" Id="Type=MicrodotOrleansServiceHost" />
+    <Alias n="35" Id="(@9 @17 @34)" />
+    <Alias n="36" Id="(@14 Namespace=Gigya.Microdot.Ninject.SystemInitializer Type=SystemInitializer)" />
+    <Alias n="37" Uri="Assembly=file:///C:/Users/C5302804/.nuget/packages/netstandard.library/2.0.3/build/netstandard2.0/ref/netstandard.dll" />
+    <Alias n="38" Id="Namespace=System" />
+    <Alias n="39" Id="(@21 Namespace=Gigya.Microdot.Fakes.KernelUtils Type=(Name=NoCrashHandler ParentType=KernelTestingExtensions) Member=(Name=Init OverloadingParameters=[(@37 @38 Type=Action)]))" />
+    <Alias n="40" Uri="Assembly=file:///C:/Users/C5302804/.nuget/packages/ninject/3.3.4/lib/netstandard2.0/Ninject.dll" />
+    <Alias n="41" Id="(@9 @17 @34 Member=(Name=PreConfigure OverloadingParameters=[(@40 Namespace=Ninject Type=IKernel)]))" />
+    <Alias n="42" Id="(@9 @17 @34 Member=(Name=PreInitialize OverloadingParameters=[(@40 Namespace=Ninject Type=IKernel)]))" />
+    <Alias n="43" Uri="Assembly=file:///C:/Users/C5302804/.nuget/packages/ninject/3.3.4/lib/net45/Ninject.dll" />
+    <Alias n="44" Id="(@24 Namespace=Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService Type=CalculatorServiceHost Member=(Name=PreConfigure OverloadingParameters=[(@43 Namespace=Ninject Type=IKernel)]))" />
+    <Alias n="45" Id="(@3 Namespace=Gigya.Microdot.Hosting.Service Type=ServiceHostBase Member=(Name=Run OverloadingParameters=[(@1 @19 Type=ServiceArguments)]))" />
+    <Alias n="46" Uri="Assembly=$(dd807780-01b0-4ef6-9e42-5d15ca26f353.OutputPathUri)" />
+    <Alias n="47" Uri="Assembly=file:///C:/Users/C5302804/.nuget/packages/microsoft.orleans.core.abstractions/2.4.3/lib/netstandard2.0/Orleans.Core.Abstractions.dll" />
+    <Alias n="48" Id="(@46 Namespace=Gigya.Microdot.Orleans.Hosting Type=GigyaSiloHost Member=(Name=Start OverloadingParameters=[(@1 @19 Type=ServiceArguments),(@37 @38 Type=(Name=Func GenericParameterCount=2 GenericArguments=[(@47 Namespace=Orleans Type=IGrainFactory),(@37 Namespace=System.Threading.Tasks Type=Task)]))]))" />
+    <Alias n="49" Id="(@1 Namespace=Gigya.Microdot.SharedLogic.SystemWrappers Type=EnvironmentInstance Member=(Name=.ctor OverloadingParameters=[(@37 @38 Type=(Name=Func GenericParameterCount=1 GenericArguments=[(@1 Namespace=Gigya.Microdot.SharedLogic.SystemWrappers Type=DataCentersConfig)])),(@1 @19 Type=CurrentApplicationInfo)]))" />
+    <Alias n="50" Id="(@14 @15 Type=MicrodotConventions Member=(Name=BindClassesAsSingleton OverloadingParameters=[(@40 Namespace=Ninject.Syntax Type=IBindingRoot),(@37 Namespace=System.Collections.Generic Type=(Name=IList GenericParameterCount=1 GenericArguments=[(@37 @38 Type=Type)])),(@37 @38 Type=(Name=Type ArrayRank=1 ParentType=Type))]))" />
+    <Alias n="51" Id="(@5 Namespace=Gigya.Microdot.Configuration Type=ConfigurationLocationsParser Member=(Name=.ctor OverloadingParameters=[(@7 Namespace=Gigya.Microdot.Interfaces.SystemWrappers Type=IFileSystem),(@7 Namespace=Gigya.Microdot.Interfaces.SystemWrappers Type=IEnvironment),(@1 @19 Type=CurrentApplicationInfo)]))" />
+    <Alias n="52" Id="(@14 @15 Type=MicrodotConventions Member=(Name=BindInterfacesAsSingleton OverloadingParameters=[(@40 Namespace=Ninject.Syntax Type=IBindingRoot),(@37 Namespace=System.Collections.Generic Type=(Name=IList GenericParameterCount=1 GenericArguments=[(@37 @38 Type=Type)])),(@37 Namespace=System.Collections.Generic Type=(Name=IList GenericParameterCount=1 GenericArguments=[(@37 @38 Type=Type)])),(@37 @38 Type=(Name=Type ArrayRank=1 ParentType=Type))]))" />
+    <Alias n="53" Uri="Assembly=$(d37e359c-170e-4d67-ad49-45002b48987e.OutputPathUri)" />
+    <Alias n="54" Id="(@53 Namespace=Gigya.Microdot.Testing.Service Type=(Name=ServiceTester GenericParameterCount=1) Member=AnonymousMethod__16_0)" />
+    <Alias n="55" Id="(@14 Namespace=Gigya.Microdot.Ninject.SystemInitializer Type=SystemInitializer Member=Init)" />
+    <Alias n="56" Id="(@14 @15 Type=MicrodotModule Member=Load)" />
+    <Alias n="57" Id="(@9 @17 @34 Member=OnStart)" />
+    <Alias n="58" Id="(@14 Namespace=Gigya.Microdot.Ninject.SystemInitializer Type=SystemInitializer Member=SearchAssembliesAndRebindIConfig)" />
+  </IdentifierAliases>
+  <Styles>
+    <Style TargetType="Link" GroupLabel="Current Call Stack Link" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CurrentCallStackCall')" />
+      <Setter Property="Stroke" Value="#FFD93701" />
+      <Setter Property="Weight" Value="1" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Call Stack Indirect Link" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CallStackIndirectCall')" />
+      <Setter Property="Stroke" Value="#FFB8B8B8" />
+      <Setter Property="StrokeDashArray" Value="4 1" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Call Stack Direct Link" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CallStackDirectCall')" />
+      <Setter Property="Stroke" Value="#FFB8B8B8" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Current Call Stack (no source)" ValueLabel="True">
+      <Condition Expression="HasCategory('CurrentCallStackEntry') And !HasCategory('CodeSchema_SourceLocation')" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#FFA5A5A5" />
+      <Setter Property="Stroke" Value="#FF0072C6" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="External And Current" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('ExternalCallStackEntry') And HasCategory('CurrentCallStackEntry')" />
+      <Setter Property="Background" Value="#FFFFF8F0" />
+      <Setter Property="Stroke" Value="#FFCE5100" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Current Call Stack (source)" ValueLabel="True">
+      <Condition Expression="HasCategory('CurrentCallStackEntry') And !HasCategory('QueryResult')" />
+      <Setter Property="Background" Value="#FFFFE3C6" />
+      <Setter Property="Stroke" Value="#FFD93701" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="External Call Stack" ValueLabel="True">
+      <Condition Expression="HasCategory('ExternalCallStackEntry')" />
+      <Setter Property="Background" Value="#FFF7F7F7" />
+      <Setter Property="StrokeDashArray" Value="1 3" />
+      <Setter Property="Foreground" Value="#FF717171" />
+      <Setter Property="Stroke" Value="#FFA5A5A5" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Results" ValueLabel="True">
+      <Condition Expression="HasCategory('QueryResult')" />
+      <Setter Property="Background" Value="#FFBCFFBE" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Test Project" ValueLabel="Test Project">
+      <Condition Expression="HasCategory('CodeMap_TestProject')" />
+      <Setter Property="Icon" Value="CodeMap_TestProject" />
+      <Setter Property="Background" Value="#FF307A69" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Web Project" ValueLabel="Web Project">
+      <Condition Expression="HasCategory('CodeMap_WebProject')" />
+      <Setter Property="Icon" Value="CodeMap_WebProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Windows Store Project" ValueLabel="Windows Store Project">
+      <Condition Expression="HasCategory('CodeMap_WindowsStoreProject')" />
+      <Setter Property="Icon" Value="CodeMap_WindowsStoreProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Phone Project" ValueLabel="Phone Project">
+      <Condition Expression="HasCategory('CodeMap_PhoneProject')" />
+      <Setter Property="Icon" Value="CodeMap_PhoneProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Portable Library" ValueLabel="Portable Library">
+      <Condition Expression="HasCategory('CodeMap_PortableLibraryProject')" />
+      <Setter Property="Icon" Value="CodeMap_PortableLibraryProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="WPF Project" ValueLabel="WPF Project">
+      <Condition Expression="HasCategory('CodeMap_WpfProject')" />
+      <Setter Property="Icon" Value="CodeMap_WpfProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="VSIX Project" ValueLabel="VSIX Project">
+      <Condition Expression="HasCategory('CodeMap_VsixProject')" />
+      <Setter Property="Icon" Value="CodeMap_VsixProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Modeling Project" ValueLabel="Modeling Project">
+      <Condition Expression="HasCategory('CodeMap_ModelingProject')" />
+      <Setter Property="Icon" Value="CodeMap_ModelingProject" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Assembly" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Assembly')" />
+      <Setter Property="Background" Value="#FF094167" />
+      <Setter Property="Stroke" Value="#FF094167" />
+      <Setter Property="Icon" Value="CodeSchema_Assembly" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Namespace" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Namespace')" />
+      <Setter Property="Background" Value="#FF0E619A" />
+      <Setter Property="Stroke" Value="#FF0E619A" />
+      <Setter Property="Icon" Value="CodeSchema_Namespace" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Interface" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Interface')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Interface" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Struct" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Struct')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Struct" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Enumeration" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Enum')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Enum" />
+      <Setter Property="LayoutSettings" Value="List" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Delegate" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Delegate')" />
+      <Setter Property="Background" Value="#FF1382CE" />
+      <Setter Property="Stroke" Value="#FF1382CE" />
+      <Setter Property="Icon" Value="CodeSchema_Delegate" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Class" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Type')" />
+      <Setter Property="Background" Value="#FF0E70C0" />
+      <Setter Property="Stroke" Value="#FF0E70C0" />
+      <Setter Property="Icon" Value="CodeSchema_Class" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Property" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Property')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Property" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Method" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Method') Or HasCategory('CodeSchema_CallStackUnresolvedMethod')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Method" />
+      <Setter Property="LayoutSettings" Value="List" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Event" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Event')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Event" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Field" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Field')" />
+      <Setter Property="Background" Value="#FFE0E0E0" />
+      <Setter Property="Stroke" Value="#FFE0E0E0" />
+      <Setter Property="Icon" Value="CodeSchema_Field" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Out Parameter" ValueLabel="Has category">
+      <Condition Expression="CodeSchemaProperty_IsOut = 'True'" />
+      <Setter Property="Icon" Value="CodeSchema_OutParameter" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Parameter" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_Parameter')" />
+      <Setter Property="Icon" Value="CodeSchema_Parameter" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Local Variable" ValueLabel="Has category">
+      <Condition Expression="HasCategory('CodeSchema_LocalExpression')" />
+      <Setter Property="Icon" Value="CodeSchema_LocalExpression" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Externals" ValueLabel="Has category">
+      <Condition Expression="HasCategory('Externals')" />
+      <Setter Property="Background" Value="#FF424242" />
+      <Setter Property="Stroke" Value="#FF424242" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Inherits From" ValueLabel="True">
+      <Condition Expression="HasCategory('InheritsFrom')" />
+      <Setter Property="Stroke" Value="#FF00A600" />
+      <Setter Property="StrokeDashArray" Value="2 0" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Implements" ValueLabel="True">
+      <Condition Expression="HasCategory('Implements')" />
+      <Setter Property="Stroke" Value="#8000A600" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Calls" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_Calls')" />
+      <Setter Property="Stroke" Value="#FFFF00FF" />
+      <Setter Property="StrokeDashArray" Value="2 0" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Function Pointer" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_FunctionPointer')" />
+      <Setter Property="Stroke" Value="#FFFF00FF" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Field Read" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_FieldRead')" />
+      <Setter Property="Stroke" Value="#FF00AEEF" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Field Write" ValueLabel="True">
+      <Condition Expression="HasCategory('CodeSchema_FieldWrite')" />
+      <Setter Property="Stroke" Value="#FF00AEEF" />
+      <Setter Property="DrawArrow" Value="true" />
+      <Setter Property="IsHidden" Value="false" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Inherits From" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('InheritsFrom') And Target.HasCategory('CodeSchema_Class')" />
+      <Setter Property="TargetDecorator" Value="OpenArrow" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Implements" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('Implements') And Target.HasCategory('CodeSchema_Interface')" />
+      <Setter Property="TargetDecorator" Value="OpenArrow" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Comment Link" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="Source.HasCategory('Comment')" />
+      <Setter Property="Stroke" Value="#FFE5C365" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Cursor Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="IsCursorLocation" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Disabled Breakpoint Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="DisabledBreakpointCount" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Enabled Breakpoint Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="EnabledBreakpointCount" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Instruction Pointer Location Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="IsInstructionPointerLocation" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Current Callstack Changed" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="IsCurrentCallstackFrame" />
+      <Setter Property="IndicatorWest" Value="WestIndicator" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Return" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CodeSchema_ReturnTypeLink')" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="References" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('References')" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Uses Attribute" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CodeSchema_AttributeUse')" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Solution Folder" ValueLabel="True" Visibility="Hidden">
+      <Condition Expression="HasCategory('CodeMap_SolutionFolder')" />
+      <Setter Property="Background" Value="#FFDEBA83" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Project Reference" ValueLabel="Project Reference">
+      <Condition Expression="HasCategory('CodeMap_ProjectReference')" />
+      <Setter Property="Stroke" Value="#9A9A9A" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="External Reference" ValueLabel="External Reference">
+      <Condition Expression="HasCategory('CodeMap_ExternalReference')" />
+      <Setter Property="Stroke" Value="#9A9A9A" />
+      <Setter Property="StrokeDashArray" Value="2 2" />
+      <Setter Property="DrawArrow" Value="true" />
+    </Style>
+    <Style TargetType="Node" GroupLabel="Comment" ValueLabel="Has comment">
+      <Condition Expression="HasCategory('Comment')" />
+      <Setter Property="Background" Value="#FFFFFACD" />
+      <Setter Property="Stroke" Value="#FFE5C365" />
+      <Setter Property="StrokeThickness" Value="1" />
+      <Setter Property="NodeRadius" Value="2" />
+      <Setter Property="MaxWidth" Value="250" />
+    </Style>
+  </Styles>
+  <Paths>
+    <Path Id="0e3a2422-dd99-4d75-a18c-96329a842742.OutputPath" Value="C:\Dev\microdot\Gigya.Microdot.Configuration\bin\Debug\netstandard2.0\Gigya.Microdot.Configuration.dll" />
+    <Path Id="0e3a2422-dd99-4d75-a18c-96329a842742.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Configuration/bin/Debug/netstandard2.0/Gigya.Microdot.Configuration.dll" />
+    <Path Id="33c1b76e-47b2-40bc-a434-81ee22996bef.OutputPath" Value="C:\Dev\microdot\Gigya.Microdot.Hosting\bin\Debug\netstandard2.0\Gigya.Microdot.Hosting.dll" />
+    <Path Id="33c1b76e-47b2-40bc-a434-81ee22996bef.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Hosting/bin/Debug/netstandard2.0/Gigya.Microdot.Hosting.dll" />
+    <Path Id="47cbf637-ab8f-4568-86d6-eab6ef08b9ce.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Common.Tests/bin/Debug/netstandard2.0/Gigya.Microdot.Common.Tests.dll" />
+    <Path Id="63e40f38-df99-4df5-9b45-addb0c2fc9ff.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Ninject/bin/Debug/netstandard2.0/Gigya.Microdot.Ninject.dll" />
+    <Path Id="8e548d57-5880-4283-bdf5-7386886d481d.OutputPathUri" Value="file:///C:/Dev/microdot/tests/Gigya.Microdot.Orleans.Hosting.UnitTests/bin/Debug/net472/Gigya.Microdot.Orleans.Hosting.UnitTests.dll" />
+    <Path Id="a90d7c71-ec7c-4328-9db1-d2c3a30727db.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Interfaces/bin/Debug/netstandard2.0/Gigya.Microdot.Interfaces.dll" />
+    <Path Id="ae847e21-f7d8-47fb-84c3-c7144a9b7a1d.OutputPath" Value="C:\Dev\microdot\Gigya.Microdot.Orleans.Ninject.Host\bin\Debug\netstandard2.0\Gigya.Microdot.Orleans.Ninject.Host.dll" />
+    <Path Id="ae847e21-f7d8-47fb-84c3-c7144a9b7a1d.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Orleans.Ninject.Host/bin/Debug/netstandard2.0/Gigya.Microdot.Orleans.Ninject.Host.dll" />
+    <Path Id="c88db2a8-a1d2-46f8-8b65-06b9ee3f1662.OutputPath" Value="C:\Dev\microdot\Gigya.Microdot.SharedLogic\bin\Debug\netstandard2.0\Gigya.Microdot.SharedLogic.dll" />
+    <Path Id="c88db2a8-a1d2-46f8-8b65-06b9ee3f1662.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.SharedLogic/bin/Debug/netstandard2.0/Gigya.Microdot.SharedLogic.dll" />
+    <Path Id="d37e359c-170e-4d67-ad49-45002b48987e.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Testing/bin/Debug/netstandard2.0/Gigya.Microdot.Testing.dll" />
+    <Path Id="dd807780-01b0-4ef6-9e42-5d15ca26f353.OutputPathUri" Value="file:///C:/Dev/microdot/Gigya.Microdot.Orleans.Hosting/bin/Debug/netstandard2.0/Gigya.Microdot.Orleans.Hosting.dll" />
+  </Paths>
+</DirectedGraph>

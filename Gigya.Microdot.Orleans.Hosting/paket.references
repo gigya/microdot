@@ -1,19 +1,23 @@
 Gigya.ServiceContract
-Metrics.NET
-Microsoft.Orleans.OrleansCodeGenerator
-Microsoft.Orleans.OrleansCodeGenerator.Build
 Microsoft.CodeAnalysis.CSharp
 Microsoft.CodeAnalysis.Common
+Microsoft.CSharp
+System.Net.Http
 
+Microsoft.Orleans.Connections.Security
 Microsoft.Orleans.Core
+Microsoft.Orleans.Core.Abstractions 
+Microsoft.Orleans.OrleansCodeGenerator
+Microsoft.Orleans.CodeGenerator.MSBuild
 Microsoft.Orleans.OrleansRuntime
 Microsoft.Orleans.OrleansProviders
 Microsoft.Orleans.OrleansSqlUtils
 Microsoft.Orleans.OrleansZooKeeperUtils
-System.Threading.Tasks.Dataflow
 Microsoft.Orleans.Server
 Microsoft.Orleans.OrleansTelemetryConsumers.Counters
-OrleansDashboard
+Gigya.OrleansDashboard
+# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
+System.Text.Json
 
 
 
@@ -26,11 +30,7 @@ Microsoft.Extensions.Logging.Abstractions
 Microsoft.Extensions.ObjectPool 
 Microsoft.Extensions.DependencyModel 
 Microsoft.Extensions.FileSystemGlobbing 
-Microsoft.AspNetCore.Http.Features 
 Microsoft.Extensions.Primitives 
-Microsoft.Orleans.Core.Abstractions 
 System.Diagnostics.PerformanceCounter 
+System.Threading.Tasks.Dataflow
 Microsoft.AspNetCore.Http.Features 
-Microsoft.Extensions.Primitives 
-Microsoft.Orleans.Core.Abstractions 
-System.Diagnostics.PerformanceCounter 

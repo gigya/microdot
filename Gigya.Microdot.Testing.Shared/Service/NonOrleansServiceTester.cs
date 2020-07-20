@@ -22,7 +22,10 @@
 
 #endregion Copyright
 
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using System;
 using System.Threading.Tasks;
@@ -31,7 +34,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
 {
     public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
-        public TServiceHost Host = new TServiceHost();
+        public TServiceHost Host;
         private Task _hostStopped;
 
         public NonOrleansServiceTester()
@@ -56,9 +59,12 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
             BasePort = serviceArguments.BasePortOverride.Value;
 
-            Host = new TServiceHost();
-
-            _hostStopped = Task.Run(() => Host.Run(serviceArguments));
+            Host = new TServiceHost()
+            {
+                FailServiceStartOnConfigError = false
+            };
+            //Host
+            this._hostStopped = Task.Run(() => this.Host.Run((ServiceArguments)serviceArguments));
 
             Task.WaitAny(_hostStopped, Host.WaitForServiceStartedAsync());
 

@@ -5,6 +5,8 @@ using System.Threading;
 using FluentAssertions;
 
 using Gigya.Common.Application.HttpService.Client;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
@@ -12,13 +14,14 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Metrics.MetricData;
+using Ninject;
 using NSubstitute;
 
 using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
-    [TestFixture,Parallelizable(ParallelScope.None)]
+    [TestFixture] // there is static in the test don't run in ParallelScope
     public class MetricsTests
     {
 
@@ -56,12 +59,12 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
-                testinghost.Host.Instance.Increment(0).Returns((ulong)1);
+                testinghost.Host.Kernel.Get<IDemoService>().Increment(0).Returns((ulong)1);
 
                 var res = testinghost.GetServiceProxy<IDemoService>().Increment(0).Result;
                 res.Should().Be(1);
 
-                testinghost.Host.Instance.Received().Increment(0);
+                testinghost.Host.Kernel.Get<IDemoService>().Received().Increment(0);
                 Thread.Sleep(100);
                 GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected());
             }
@@ -72,7 +75,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             using (var testinghost = new NonOrleansServiceTester<TestingHost<IDemoService>>())
             {
-                testinghost.Host.Instance.When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
+                testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
 
                 Assert.Throws<RemoteServiceException>(() => testinghost.GetServiceProxy<IDemoService>().DoSomething().GetAwaiter().GetResult());
 
