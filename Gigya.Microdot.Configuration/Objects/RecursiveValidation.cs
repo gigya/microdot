@@ -44,7 +44,16 @@ namespace Gigya.Microdot.Configuration.Objects
             {
                 if (property.PropertyType == typeof(string) || property.PropertyType.IsValueType) continue;
 
-                var value = obj.GetPropertyValue(property.Name);
+                object value = null;
+                try
+                {
+                    value = obj.GetPropertyValue(property.Name);
+                }
+                catch
+                {
+                    //Getting a property shouldn't throw if it does it is probably NotImplementedException, to be safe we ignore all exceptions.
+                    continue;
+                }
 
                 List<ValidationResult> nestedResults;
                 switch (value)
