@@ -9,7 +9,6 @@ Ninject
 System.Threading.Tasks.Dataflow
 Castle.Core
 Microsoft.Orleans.Core
-DataAnnotationsValidator
 System.ComponentModel.Annotations
 System.Net.Http
 System.Runtime.Caching
