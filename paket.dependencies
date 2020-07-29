@@ -24,7 +24,6 @@ nuget Newtonsoft.Json ~> 12.0.3
 nuget Nito.AsyncEx ~> 5.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
-nuget DataAnnotationsValidator ~> 2.1.0 # Shouldn't it be removed?
 
 # Orleans
 nuget Microsoft.Orleans.Core ~> 3
@@ -33,7 +32,6 @@ nuget Microsoft.Orleans.OrleansProviders ~> 3
 nuget Microsoft.Orleans.OrleansSqlUtils 
 nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3
 nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3
-#nuget Microsoft.Orleans.OrleansCodeGenerator.Build ~> 3
 nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3
 nuget Microsoft.Orleans.Client ~> 3
 nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  ~> 3
