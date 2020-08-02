@@ -15,8 +15,17 @@ namespace Gigya.Microdot.Configuration.Objects
 
     public class DataAnnotationsValidator : IDataAnnotationsValidator
     {
+        private const string JObject = "Newtonsoft.Json.Linq.JObject";
+        private static readonly HashSet<string> IgnoredTypeNames = new HashSet<string>{ JObject };
+
+        private bool ShouldIgnoreType(Type type)
+        {
+            return IgnoredTypeNames.Contains(type.FullName);
+        }
         public bool TryValidateObject(object obj, ICollection<ValidationResult> results, IDictionary<object, object> validationContextItems = null)
         {
+            if (ShouldIgnoreType(obj.GetType()))
+                return true;
             return Validator.TryValidateObject(obj, new ValidationContext(obj, null, validationContextItems), results, true);
         }
 
@@ -42,9 +51,18 @@ namespace Gigya.Microdot.Configuration.Objects
 
             foreach (var property in properties)
             {
-                if (property.PropertyType == typeof(string) || property.PropertyType.IsValueType) continue;
+                if (property.PropertyType == typeof(string) || property.PropertyType.IsValueType || ShouldIgnoreType(property.PropertyType)) continue;
 
-                var value = obj.GetPropertyValue(property.Name);
+                object value = null;
+                try
+                {
+                    value = obj.GetPropertyValue(property.Name);
+                }
+                catch
+                {
+                    //Getting a property shouldn't throw if it does it is probably NotImplementedException, to be safe we ignore all exceptions.
+                    continue;
+                }
 
                 List<ValidationResult> nestedResults;
                 switch (value)
