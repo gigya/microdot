@@ -188,7 +188,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private void OnAuthenticateAsClient(ConnectionContext context, TlsClientAuthenticationOptions options)
         {
             //See us/#115757
-            options.TargetHost = "workaround.gigya.net";
+            options.TargetHost = _orleansConfig.OverrideHostNameToUseDuringTlsHandshake??options.TargetHost;
         }
 
         private void SetReminder(ISiloHostBuilder silo)

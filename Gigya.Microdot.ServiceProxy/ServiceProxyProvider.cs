@@ -406,6 +406,8 @@ namespace Gigya.Microdot.ServiceProxy
                         (httpClient, isHttps) = GetHttpClient(config, discoveryConfig, tryHttps,
                             nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
 
+                        clientCallEvent.ProtocolSchema = isHttps ? "HTTPS" : "HTTP";
+
                         // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
                         uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, isHttps,
                             out int actualPort) + ServiceName;

@@ -277,6 +277,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                             TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
                             TracingContext.SetParentSpan(requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
 
+                            callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
+
                             SetCallEventRequestData(callEvent, requestData);
 
                             TracingContext.SetOverrides(requestData.Overrides);
