@@ -62,6 +62,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.protocolParams)]
         public string ProtocolParams { get; set; }
 
+        [EventField(EventConsts.protocolSchema)]
+
+        public string ProtocolSchema { get; set; }
+
         /// <summary>Total time in milliseconds from sending the request till we got a response.</summary>
         [EventField(EventConsts.statsTotalTime, OmitFromAudit = true)]
         public double? TotalTimeMS => (ResponseEndTimestamp - RequestStartTimestamp) / (Stopwatch.Frequency / 1000.0);

@@ -60,6 +60,9 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.targetMethod)]
         public string ServiceMethod { get; set; }
 
+        [EventField(EventConsts.protocolSchema)]
+        public string ServiceMethodSchema { get; set; }
+
         /// <summary>  Sensitive Service method arguments </summary>
         [EventField("params", Encrypt = true)]
         public IEnumerable<KeyValuePair<string, object>> EncryptedServiceMethodArguments => LazyEncryptedRequestParams.GetValue(this);
