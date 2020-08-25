@@ -23,6 +23,8 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public bool EnableEncryption { get; set; } = false;
 
+        public string OverrideHostNameToUseDuringTlsHandshake { get; set; }
+
         public ZooKeeperConfig ZooKeeper { get; set; }
 
         public MySqlConfig MySql_v4_0 { get; set; }

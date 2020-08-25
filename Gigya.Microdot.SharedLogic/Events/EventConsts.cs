@@ -62,10 +62,12 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string targetPort = "target.port";
         public const string targetType = "target.type";
         public const string targetMethod = "target.method";
+
         public const string targetEnvironment = "target.env";
 
         public const string protocolMethod = "protocol.Method";
         public const string protocolParams = "protocol.Params";
+        public const string protocolSchema = "protocol.Schema";
         public const string clnSendTimestamp = "cln.sendTimestamp";
 
         public const string runtimeHost = "runtime.host";
