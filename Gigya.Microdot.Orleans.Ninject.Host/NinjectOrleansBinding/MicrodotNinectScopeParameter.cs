@@ -50,9 +50,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     /// <summary>
     /// Use to transfer the scope cache into Ninject request
     /// /// </summary>
-    internal class MicrodotNinjectScopParameter : IParameter
+    internal class MicrodotNinjectScopeParameter : IParameter //Note! If you remove/rename this file, you need to update the change in InfraBaseModule
     {
-        public MicrodotNinjectScopParameter(ScopeCache cache, IServiceProvider serviceProvider)
+        public MicrodotNinjectScopeParameter(ScopeCache cache, IServiceProvider serviceProvider)
         {
             Cache = cache;
             ServiceProvider = serviceProvider;

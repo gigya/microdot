@@ -54,14 +54,14 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
     internal class MicrodotServiceProviderWithScope : IServiceProvider, IServiceScope, IGlobalServiceProvider
     {
         private readonly IResolutionRoot _resolver;
-        internal readonly MicrodotNinjectScopParameter _microdotNinectScopParameter;
+        internal readonly MicrodotNinjectScopeParameter _microdotNinectScopParameter;
         private readonly ScopeCache _cacheItem;
 
 
         public MicrodotServiceProviderWithScope(IResolutionRoot resolver)
         {
             _cacheItem = new ScopeCache();
-            _microdotNinectScopParameter = new MicrodotNinjectScopParameter(_cacheItem, this);
+            _microdotNinectScopParameter = new MicrodotNinjectScopeParameter(_cacheItem, this);
             _resolver = resolver;
         }
 
