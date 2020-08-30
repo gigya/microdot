@@ -110,9 +110,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
             //Support inherit scope and global scoping
             Kernel.Bind<IServiceProvider>().ToMethod(context =>
             {
-                MicrodotNinjectScopParameter scope =
+                MicrodotNinjectScopeParameter scope =
                    context.Parameters
-                    .OfType<MicrodotNinjectScopParameter>()
+                    .OfType<MicrodotNinjectScopeParameter>()
                     .LastOrDefault();
                 bool hasScope = (scope != null);
                 if (hasScope) return scope.ServiceProvider;
@@ -126,9 +126,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
         {
             var key = context.Request.Service;
 
-            MicrodotNinjectScopParameter scope =
+            MicrodotNinjectScopeParameter scope =
             context.Parameters
-            .OfType<MicrodotNinjectScopParameter>()
+            .OfType<MicrodotNinjectScopeParameter>()
             .LastOrDefault();
             if (scope != null)
             {
