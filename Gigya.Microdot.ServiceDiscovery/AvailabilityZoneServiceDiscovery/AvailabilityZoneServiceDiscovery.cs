@@ -7,18 +7,19 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
 {
-    public class AvailabilityZoneServiceDiscovery
+    public class AvailabilityZoneServiceDiscovery : IAvailabilityZoneServiceDiscovery
     {
-        public AvailabilityZoneInfo Info { get; } = new AvailabilityZoneInfo();
         public TimeSpan DiscoveryGetNodeTimeoutInMs { get; set; } = TimeSpan.FromMilliseconds(1000);
+        public AvailabilityZoneInfo Info { get; } = new AvailabilityZoneInfo();
 
         private readonly string _serviceName;
         private readonly CancellationToken _disposeCancellationToken;
-        private readonly Rewrite.IDiscovery _discovery;
+        private readonly IDiscovery _discovery;
         private readonly Rewrite.IConsulClient _consulClient;
         private readonly ILog _log;
         private readonly ReaderWriterLockSlim _readerWriterLock = new ReaderWriterLockSlim();
