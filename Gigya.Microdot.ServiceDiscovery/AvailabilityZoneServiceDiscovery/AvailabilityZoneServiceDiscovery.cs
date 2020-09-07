@@ -107,7 +107,7 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                     if (response == null)
                     {
                         Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul;
-                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service Unavailable");
+                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service Unavailable{Environment.NewLine}Keeping activity on cluster {Info.DeploymentIdentifier?.ServiceName} Zone:{Info.DeploymentIdentifier?.Zone}");
                         _log.Warn(Info.Exception.Message, Info.Exception);
                     }
                     else if (response.StatusCode == null ||
@@ -115,7 +115,7 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                              response.StatusCode < HttpStatusCode.OK)
                     {
                         Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul;
-                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'");
+                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'{Environment.NewLine}Keeping activity on cluster {Info.DeploymentIdentifier?.ServiceName} Zone:{Info.DeploymentIdentifier?.Zone}");
                         _log.Warn(Info.Exception.Message, Info.Exception);
                     }
                     else if (response.Error != null)
@@ -177,9 +177,11 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                         throw Info.Exception;
                     }
                 }
-
-                Info.DeploymentIdentifier = tempDeploymentIdentifier;
-                Info.StatusCode = AvailabilityZoneInfo.StatusCodes.Ok;
+                else
+                {
+                    Info.DeploymentIdentifier = tempDeploymentIdentifier;
+                    Info.StatusCode = AvailabilityZoneInfo.StatusCodes.Ok;
+                }
             }
         }
     }
