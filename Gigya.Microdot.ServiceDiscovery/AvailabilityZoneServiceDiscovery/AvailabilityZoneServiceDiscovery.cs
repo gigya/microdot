@@ -17,7 +17,6 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
         public TimeSpan DiscoveryGetNodeTimeoutInMs { get; set; } = TimeSpan.FromMilliseconds(1000);
         public AvailabilityZoneInfo Info { get; } = new AvailabilityZoneInfo();
 
-        private readonly string _serviceName;
         private readonly CancellationToken _disposeCancellationToken;
         private readonly IDiscovery _discovery;
         private readonly Rewrite.IConsulClient _consulClient;
@@ -32,7 +31,7 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             Rewrite.IConsulClient consulClient,
             ILog log)
         {
-            _serviceName = serviceName;
+            Info.ServiceName = serviceName;
             _disposeCancellationToken = ctk;
             _discovery = discovery;
             _consulClient = consulClient;
@@ -68,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                 if (Info.Nodes == null || Info.Nodes.Select(x => x.ToString()).SequenceEqual(nodesNames) == false)
                 {
                     changeOccured = true;
-                    _log.Info(x => x($"{_serviceName} nodes change applied according to Zone: {Info.ServiceZone}"));
+                    _log.Info(x => x($"{Info.ServiceName} nodes change applied according to Zone: {Info.ServiceZone}"));
                 }
             }
 
@@ -94,11 +93,22 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             {
                 try
                 {
-                    var response = await _consulClient.GetKey<DbKeyValue>(modifyIndex, folder, _serviceName, _disposeCancellationToken);
+                    ConsulResponse<DbKeyValue> response = null;
+                    try
+                    {
+                        response = await _consulClient.GetKey<DbKeyValue>(modifyIndex, folder, Info.ServiceName, _disposeCancellationToken);
+                    }
+                    catch (Exception e)
+                    {
+                        Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedOrInvalidKeyFromConsul;
+                        Info.Exception = new EnvironmentException($"Failed to get key or Invalid key {folder}/{Info.ServiceName} key", e);
+                        _log.Warn(Info.Exception.Message, Info.Exception);
+                    }
+                     
                     if (response == null)
                     {
                         Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul;
-                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{_serviceName} key. Service Unavailable");
+                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service Unavailable");
                         _log.Warn(Info.Exception.Message, Info.Exception);
                     }
                     else if (response.StatusCode == null ||
@@ -106,7 +116,7 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                              response.StatusCode < HttpStatusCode.OK)
                     {
                         Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul;
-                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{_serviceName} key. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'");
+                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'");
                         _log.Warn(Info.Exception.Message, Info.Exception);
                     }
                     else if (response.Error != null)
@@ -126,6 +136,8 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                 }
                 catch (Exception e)
                 {
+                    Info.StatusCode = AvailabilityZoneInfo.StatusCodes.CriticalError;
+                    Info.Exception = new EnvironmentException(e.Message, e);
                     _log.Critical("", exception: e);
                 }
 
@@ -139,11 +151,11 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             var activeConsulZone = keyValueFromConsul.ConsulZone.ToLower();
 
             Info.ServiceZone = activeZone;
-            var componentNameCandidate = $"{_serviceName}_{activeZone}";
+            var componentNameCandidate = $"{Info.ServiceName}_{activeZone}";
 
             if (Info.DeploymentIdentifier?.ServiceName != componentNameCandidate ||
                 Info.DeploymentIdentifier?.Zone != activeConsulZone ||
-                Info.StatusCode == AvailabilityZoneInfo.StatusCodes.Ok)
+                Info.StatusCode != AvailabilityZoneInfo.StatusCodes.Ok)
             {
                 var tempDeploymentIdentifier = new DeploymentIdentifier(componentNameCandidate,
                     deploymentEnvironment: null, activeConsulZone); // null because of microdot discovery bug
@@ -156,14 +168,15 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                         Info.Exception = new EnvironmentException($"Cannot get healthy nodes from {componentNameCandidate}\nKeeping activity on cluster {Info.DeploymentIdentifier?.ServiceName} Zone:{Info.DeploymentIdentifier?.Zone}");
                         _log.Error(Info.Exception.Message);
                         Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes;
-                        return;
                     }
-
-                    // Can't init DeploymentIdentifier on startup.. throw
-                    Info.Exception = new EnvironmentException(
-                        $"Cannot get healthy nodes from {componentNameCandidate}. Probably bad consul configuration. Check consul->KeyValue->ZoneSettings->{_serviceName} for correct settings");
-                    _log.Critical(Info.Exception.Message);
-                    throw Info.Exception;
+                    else
+                    {
+                        // Can't init DeploymentIdentifier on startup.. throw
+                        Info.Exception = new EnvironmentException(
+                            $"Cannot get healthy nodes from {componentNameCandidate}. Probably bad consul configuration. Check consul->KeyValue->ZoneSettings->{Info.ServiceName} for correct settings");
+                        _log.Critical(Info.Exception.Message);
+                        throw Info.Exception;
+                    }
                 }
 
                 Info.DeploymentIdentifier = tempDeploymentIdentifier;

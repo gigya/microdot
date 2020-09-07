@@ -13,7 +13,9 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             Ok = 0,
             FailedConnectToConsul,
             MissingOrInvalidKeyValue,
-            FailedGetHealthyNodes
+            FailedGetHealthyNodes,
+            CriticalError,
+            FailedOrInvalidKeyFromConsul
         }
 
         public StatusCodes StatusCode;
