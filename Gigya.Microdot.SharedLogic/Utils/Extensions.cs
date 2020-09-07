@@ -22,7 +22,8 @@
 
 using System;
 using System.IO;
-
+using System.Threading;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.SharedLogic.Utils
@@ -30,5 +31,29 @@ namespace Gigya.Microdot.SharedLogic.Utils
     public static class Extensions
     {
         public static string RawMessage(this Exception ex) => (ex as SerializableException)?.RawMessage ?? ex.Message;
+
+        public static async Task<T> WithTimeout<T>(this Task<T> task, TimeSpan timeout)
+        {
+            if (task == null)
+                throw new ArgumentNullException(nameof(task));
+
+            using (var timerCancellation = new CancellationTokenSource())
+            {
+                Task timeoutTask = Task.Delay(timeout, timerCancellation.Token);
+                Task firstCompletedTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
+                if (firstCompletedTask == timeoutTask)
+                {
+                    throw new TimeoutException();
+                }
+
+                // The timeout did not elapse, so cancel the timer to recover system resources.
+                timerCancellation.Cancel();
+
+                // re-throw any exceptions from the completed task.
+                await task.ConfigureAwait(false);
+            }
+
+            return task.GetAwaiter().GetResult();
+        }
     }
 }
