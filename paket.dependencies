@@ -27,20 +27,20 @@ nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
 
 # Orleans
-nuget Microsoft.Orleans.Core ~> 3.2.2
-nuget Microsoft.Orleans.OrleansRuntime ~> 3.2.2
-nuget Microsoft.Orleans.OrleansProviders ~> 3.2.2
+nuget Microsoft.Orleans.Core >= 3.2.2
+nuget Microsoft.Orleans.OrleansRuntime >= 3.2.2
+nuget Microsoft.Orleans.OrleansProviders >= 3.2.2
 nuget Microsoft.Orleans.OrleansSqlUtils 
-nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3.2.2
-nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3.2.2
-nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3.2.2
-nuget Microsoft.Orleans.Client ~> 3.2.2
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  ~> 3.2.2
+nuget Microsoft.Orleans.OrleansZooKeeperUtils >= 3.2.2
+nuget Microsoft.Orleans.OrleansCodeGenerator >= 3.2.2
+nuget Microsoft.Orleans.CodeGenerator.MSBuild >= 3.2.2
+nuget Microsoft.Orleans.Client >= 3.2.2
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  >= 3.2.2
 nuget Microsoft.AspNetCore.Http.Features ~> 3.1.0
 nuget Microsoft.Extensions.Primitives ~> 3.1.0
-nuget Microsoft.Orleans.Server  ~> 3.2.2
-nuget Microsoft.Orleans.Core.Abstractions ~> 3.2.2
-nuget Microsoft.Orleans.Connections.Security ~> 3.2.2
+nuget Microsoft.Orleans.Server  >= 3.2.2
+nuget Microsoft.Orleans.Core.Abstractions >= 3.2.2
+nuget Microsoft.Orleans.Connections.Security >= 3.2.2
 nuget Gigya.OrleansDashboard.NetStandard == 3.0.8.0
 # TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
 nuget System.Text.Json >= 4.7.1

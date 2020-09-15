@@ -305,7 +305,7 @@ NUGET
     NSubstitute (4.2.2)
       Castle.Core (>= 4.4)
       System.Threading.Tasks.Extensions (>= 4.3)
-    NuGet.CommandLine (5.7)
+    Nuget.CommandLine (5.7)
     NUnit (3.12)
       NETStandard.Library (>= 2.0) - restriction: || (&& (== net472) (< net35)) (== netstandard2.0)
     NUnit3TestAdapter (3.17)
