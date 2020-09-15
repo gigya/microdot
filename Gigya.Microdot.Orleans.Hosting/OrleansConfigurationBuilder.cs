@@ -157,7 +157,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                
             });
 
-            if (_orleansConfig.EnableEncryption)
+            if (_orleansConfig.EnableTls)
             {
                 var localCertificate = _certificateLocator.GetCertificate("Service");
                 hostBuilder.UseTls(localCertificate, tlsOptions =>
