@@ -1,1 +1,4 @@
 ﻿System.Diagnostics.PerformanceCounter
+LibLog
+Microsoft.CSharp
+System.Configuration.ConfigurationManager
