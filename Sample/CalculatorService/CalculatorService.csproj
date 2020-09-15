@@ -24,9 +24,6 @@
     <AssemblyTitle>CalculatorService</AssemblyTitle>
     <Product>CalculatorService</Product>
     <Copyright>Copyright ©  2018</Copyright>
-    <AssemblyTitle>CalculatorService</AssemblyTitle>
-    <Product>CalculatorService</Product>
-    <Copyright>Copyright ©  2018</Copyright>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>

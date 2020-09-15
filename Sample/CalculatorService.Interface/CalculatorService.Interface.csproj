@@ -6,9 +6,6 @@
     <AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Interface</AssemblyTitle>
     <Product>Gigya.Microdot.Sample.CalculatorService.Interface</Product>
     <Copyright>Copyright ©  2018</Copyright>
-    <AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Interface</AssemblyTitle>
-    <Product>Gigya.Microdot.Sample.CalculatorService.Interface</Product>
-    <Copyright>Copyright ©  2018</Copyright>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>

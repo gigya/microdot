@@ -1,4 +1,5 @@
 source https://api.nuget.org/v3/index.json
+source http://nuget.gigya.net/nugetForVS/nuget/
 
 framework: auto-detect
 redirects: off
@@ -26,39 +27,29 @@ nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
 
 # Orleans
-nuget Microsoft.Orleans.Core ~> 3.1.0
-nuget Microsoft.Orleans.OrleansRuntime ~> 3.1.0
-nuget Microsoft.Orleans.OrleansProviders ~> 3.1.0
+nuget Microsoft.Orleans.Core >= 3.2.2
+nuget Microsoft.Orleans.OrleansRuntime >= 3.2.2
+nuget Microsoft.Orleans.OrleansProviders >= 3.2.2
 nuget Microsoft.Orleans.OrleansSqlUtils 
-nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3.1.0
-nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3.1.0
-nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3.1.0
-nuget Microsoft.Orleans.Client ~> 3.1.0
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  ~> 3.1.0
+nuget Microsoft.Orleans.OrleansZooKeeperUtils >= 3.2.2
+nuget Microsoft.Orleans.OrleansCodeGenerator >= 3.2.2
+nuget Microsoft.Orleans.CodeGenerator.MSBuild >= 3.2.2
+nuget Microsoft.Orleans.Client >= 3.2.2
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  >= 3.2.2
 nuget Microsoft.AspNetCore.Http.Features ~> 3.1.0
 nuget Microsoft.Extensions.Primitives ~> 3.1.0
-nuget Microsoft.Orleans.Server  ~> 3.1.0
-nuget Microsoft.Orleans.Core.Abstractions ~> 3.1.0
-nuget Microsoft.Orleans.Connections.Security ~> 3.1.0
-nuget Gigya.OrleansDashboard ~> 3
+nuget Microsoft.Orleans.Server  >= 3.2.2
+nuget Microsoft.Orleans.Core.Abstractions >= 3.2.2
+nuget Microsoft.Orleans.Connections.Security >= 3.2.2
+nuget Gigya.OrleansDashboard.NetStandard == 3.0.8.0
 # TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
 nuget System.Text.Json >= 4.7.1
-#nuget OrleansDashboard 2.4.5
+nuget LibLog ~> 4.2.3
 
-#nuget Microsoft.Extensions.Configuration ~> 3
-#nuget Microsoft.AspNetCore.Connections.Abstractions ~> 3
 nuget Microsoft.AspNetCore.Hosting ~> 2
 nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
-#nuget Microsoft.Extensions.Logging.Abstractions ~> 3
-#nuget Microsoft.Extensions.ObjectPool ~> 3
-#nuget Microsoft.Extensions.DependencyModel ~> 3
-#nuget Microsoft.Extensions.FileSystemGlobbing ~> 3
-
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
-
-#nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 3
-#nuget Microsoft.Extensions.DependencyInjection ~> 3
 
 # Ninject
 nuget Ninject ~> 3.3
@@ -75,4 +66,4 @@ nuget FluentAssertions ~> 5.0
 nuget Nuget.CommandLine ~> 5.0
 nuget Shouldly ~> 3.0
 nuget NLog ~> 4.0
-nuget Microsoft.NET.Test.Sdk ~> 16.2
+nuget Microsoft.NET.Test.Sdk ~> 16.3

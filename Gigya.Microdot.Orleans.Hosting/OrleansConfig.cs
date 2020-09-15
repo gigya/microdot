@@ -21,7 +21,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         public double DefaultGrainAgeLimitInMins { get; set; } = 30;
         public IDictionary<string, GrainAgeLimitConfig> GrainAgeLimits { get; set; } = new ConcurrentDictionary<string, GrainAgeLimitConfig>();
 
-        public bool EnableEncryption { get; set; } = false;
+        public bool EnableTls { get; set; } = false;
 
         public string OverrideHostNameToUseDuringTlsHandshake { get; set; }
 
