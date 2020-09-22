@@ -192,8 +192,8 @@ namespace Gigya.Common.Contracts.HttpService
 
         private IEnumerable<FieldSchema> GetFields(Type type)
         {
-            var properties = type.GetProperties().Select(_ => new FieldSchema(_));
-            var fields = type.GetFields().Select(_ => new FieldSchema(_));
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(_ => new FieldSchema(_));
+            var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance).Select(_ => new FieldSchema(_));
             return properties.Concat(fields);
         }
 
