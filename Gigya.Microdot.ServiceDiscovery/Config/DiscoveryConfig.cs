@@ -92,6 +92,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public bool TryHttps { get; set; }
 
         /// <summary>
+        /// The frequency in which the service proxy will try to send an HTTPS request in minutes
+        /// </summary>
+        public int TryHttpsIntervalInMinutes { get; set; } = 1;
+
+        /// <summary>
         /// Controls the client verification logic for the server certificate.
         /// Default behavior is to validate that the server domain matches the certificate domain.
         /// </summary>

@@ -108,7 +108,7 @@ namespace Gigya.Microdot.ServiceProxy
 
 
         private DateTime _lastHttpsTestTime = DateTime.MinValue;
-        private readonly TimeSpan _httpsTestInterval = TimeSpan.FromMinutes(1);
+        private readonly TimeSpan _httpsTestInterval;
 
         private readonly Func<HttpClientConfiguration, HttpMessageHandler> _httpMessageHandlerFactory;
 
@@ -159,6 +159,10 @@ namespace Gigya.Microdot.ServiceProxy
             _httpMessageHandlerFactory = messageHandlerFactory;
 
             ServiceDiscovery = serviceDiscoveryFactory(serviceName, ValidateReachability);
+
+            var globalConfig = GetDiscoveryConfig();
+            var serviceConfig = GetConfig();
+            _httpsTestInterval = TimeSpan.FromMinutes(serviceConfig.TryHttpsIntervalInMinutes?? globalConfig.TryHttpsIntervalInMinutes);
         }
 
         /// <summary>
