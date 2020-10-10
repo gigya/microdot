@@ -1,6 +1,6 @@
 ﻿using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -14,78 +14,60 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
     public class AvailabilityZoneServiceDiscovery : IAvailabilityZoneServiceDiscovery
     {
         public TimeSpan DiscoveryGetNodeTimeoutInMs { get; set; } = TimeSpan.FromMilliseconds(1000);
-        public AvailabilityZoneInfo Info { get; } = new AvailabilityZoneInfo();
+        public AvailabilityZoneInfo Info { get; private set; } = new AvailabilityZoneInfo();
+        public Task GetInitialReadZonesTcs() => _initialReadZonesTask.Task;
+
 
         private readonly CancellationToken _disposeCancellationToken;
         private readonly IDiscovery _discovery;
         private readonly Rewrite.IConsulClient _consulClient;
-        private readonly ILog _log;
-        private readonly ReaderWriterLockSlim _readerWriterLock = new ReaderWriterLockSlim();
-
         private readonly TaskCompletionSource<bool> _initialReadZonesTask = new TaskCompletionSource<bool>();
+        private bool _alreadyInit;
 
         public AvailabilityZoneServiceDiscovery(
             string serviceName,
             CancellationToken ctk, IDiscovery discovery,
-            Rewrite.IConsulClient consulClient,
-            ILog log)
+            Rewrite.IConsulClient consulClient)
         {
             Info.ServiceName = serviceName;
             _disposeCancellationToken = ctk;
             _discovery = discovery;
             _consulClient = consulClient;
-            _log = log;
 
             Task.Run(UpdateAndMonitorAvailabilityZoneAsync, _disposeCancellationToken);
         }
 
-        public async Task<bool> HandleEnvironmentChangesAsync()
+        private Tags GetUnencryptedTags(Dictionary<string, string> additionalKeys = null)
         {
-            await _initialReadZonesTask.Task;
-
-            bool changeOccured = false;
-            if (Info.DeploymentIdentifier == null)
-                throw new EnvironmentException("Failed to define deployment identifier. Missing or invalid zone information.");
-
-            var nodes = await _discovery.GetNodes(Info.DeploymentIdentifier).WithTimeout(DiscoveryGetNodeTimeoutInMs);
-            if (nodes == null)
+            var tags = new Tags
             {
-                using (new ReaderWriterLocker(_readerWriterLock, ReaderWriterLocker.LockType.WriteLock))
-                {
-                    Info.Nodes = Array.Empty<Node>();
-                }
+                {"AvailabilityInfoServiceName", Info.ServiceName},
+                {"AvailabilityInfoServiceZone", Info.ServiceZone},
+                {"AvailabilityInfoStatusCode", Info.StatusCode.ToString()},
+                {"AvailabilityDeploymentServiceName", Info.DeploymentIdentifier?.ServiceName},
+                {"AvailabilityDeploymentZone", Info.DeploymentIdentifier?.Zone},
+            };
 
-                throw new EnvironmentException(
-                        $"Failed to GetNodes via IDiscovery for service {Info.DeploymentIdentifier.ServiceName}");
-            }
-
-            var nodesNames = nodes.Select(x => x.ToString());
-
-            using (new ReaderWriterLocker(_readerWriterLock, ReaderWriterLocker.LockType.ReadLock))
+            if (additionalKeys != null)
             {
-                if (Info.Nodes == null || Info.Nodes.Select(x => x.ToString()).SequenceEqual(nodesNames) == false)
+                foreach (var k in additionalKeys)
                 {
-                    changeOccured = true;
-                    _log.Info(x => x($"{Info.ServiceName} nodes change applied according to Zone: {Info.ServiceZone}"));
+                    tags.Add(k.Key, k.Value);
                 }
             }
 
-            if (changeOccured)
-            {
-                using (new ReaderWriterLocker(_readerWriterLock, ReaderWriterLocker.LockType.WriteLock))
-                {
-                    Info.Nodes = nodes;
-
-                    if (Info.Nodes.Length < 1)
-                        throw new EnvironmentException($"Failed to CreateConnection. No nodes discovered for Service: {Info.DeploymentIdentifier?.ServiceName} Zone: {Info.DeploymentIdentifier?.Zone} (Service Zone: {Info.ServiceZone})");
-                }
-            }
-
-            return changeOccured;
+            return tags;
         }
 
         private async Task UpdateAndMonitorAvailabilityZoneAsync()
         {
+            void SetInfoStatus(AvailabilityZoneInfo.StatusCodes statusCode, string errorMessage, string consulZoneSettingsKey, Exception innerException)
+            {
+                var tags = GetUnencryptedTags(new Dictionary<string, string> { { "ConsulZoneSettingsKey", consulZoneSettingsKey } });
+                Info.StatusCode = statusCode;
+                Info.Exception = new EnvironmentException(errorMessage, innerException, unencrypted: tags);
+            }
+
             const string folder = "ZoneSettings";
             ulong modifyIndex = 0;
             while (_disposeCancellationToken.IsCancellationRequested == false)
@@ -93,36 +75,49 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                 try
                 {
                     ConsulResponse<DbKeyValue> response = null;
+                    bool exceptionThrown = false;
                     try
                     {
                         response = await _consulClient.GetKey<DbKeyValue>(modifyIndex, folder, Info.ServiceName, _disposeCancellationToken);
                     }
                     catch (Exception e)
                     {
-                        Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedOrInvalidKeyFromConsul;
-                        Info.Exception = new EnvironmentException($"Failed to get key or Invalid key {folder}/{Info.ServiceName} key", e);
-                        _log.Warn(Info.Exception.Message, Info.Exception);
+                        SetInfoStatus(AvailabilityZoneInfo.StatusCodes.FailedOrInvalidKeyFromConsul, 
+                            "Failed to get key or Invalid key", 
+                            $"{folder}/{Info.ServiceName}", e);
+                        exceptionThrown = true;
+                    }
+
+                    if (exceptionThrown)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(1), _disposeCancellationToken);
+                        continue;
                     }
 
                     if (response == null)
                     {
-                        Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul;
-                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service Unavailable{Environment.NewLine}Keeping activity on cluster {Info.DeploymentIdentifier?.ServiceName} Zone:{Info.DeploymentIdentifier?.Zone}");
-                        _log.Warn(Info.Exception.Message, Info.Exception);
+                        SetInfoStatus(AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul,
+                            $"Failed to connect to consul. Service Unavailable{Environment.NewLine}Keeping activity on previous valid deployment identifier cluster",
+                            $"{folder}/{Info.ServiceName}", null);
                     }
                     else if (response.StatusCode == null ||
                              response.StatusCode >= HttpStatusCode.InternalServerError ||
                              response.StatusCode < HttpStatusCode.OK)
                     {
-                        Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul;
-                        Info.Exception = new EnvironmentException($"Failed to connect to consul with {folder}/{Info.ServiceName} key. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'{Environment.NewLine}Keeping activity on cluster {Info.DeploymentIdentifier?.ServiceName} Zone:{Info.DeploymentIdentifier?.Zone}");
-                        _log.Warn(Info.Exception.Message, Info.Exception);
+                        if (response.StatusCode == HttpStatusCode.Continue)
+                        {
+                            // TODO: handle continue
+                        }
+
+                        SetInfoStatus(AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul,
+                            $"Failed to connect to consul. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'{Environment.NewLine}Keeping activity on previous valid cluster",
+                            $"{folder}/{Info.ServiceName}", null);
                     }
                     else if (response.Error != null)
                     {
-                        Info.StatusCode = AvailabilityZoneInfo.StatusCodes.MissingOrInvalidKeyValue;
-                        Info.Exception = response.Error;
-                        _log.Warn(Info.Exception.Message, Info.Exception);
+                        SetInfoStatus(AvailabilityZoneInfo.StatusCodes.MissingOrInvalidKeyValue,
+                            $"Missing or invalid key in consul. Error: {response.Error.Message}",
+                            $"{folder}/{Info.ServiceName}", response.Error);
                     }
                     else
                     {
@@ -130,14 +125,12 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                         await SetDeploymentIdentifierAsync(response.ResponseObject, _disposeCancellationToken);
                         _initialReadZonesTask.TrySetResult(default);
                     }
-
-                    _initialReadZonesTask.TrySetResult(default);
                 }
                 catch (Exception e)
                 {
-                    Info.StatusCode = AvailabilityZoneInfo.StatusCodes.CriticalError;
-                    Info.Exception = new EnvironmentException(e.Message, e);
-                    _log.Critical("", exception: e);
+                    SetInfoStatus(AvailabilityZoneInfo.StatusCodes.MissingOrInvalidKeyValue,
+                        $"Critical error while connecting to consul: {e.Message}",
+                        $"{folder}/{Info.ServiceName}", e);
                 }
 
                 await Task.Delay(TimeSpan.FromSeconds(1), _disposeCancellationToken);
@@ -159,13 +152,11 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                 var tempDeploymentIdentifier = new DeploymentIdentifier(componentNameCandidate,
                     deploymentEnvironment: null, activeConsulZone); // null because of microdot discovery bug
                 var respNodes = await _consulClient.GetHealthyNodes(tempDeploymentIdentifier, modifyIndex: 0, ctk);
-
                 if (respNodes.StatusCode != HttpStatusCode.OK || respNodes.ResponseObject.Length <= 0)
                 {
                     if (Info.DeploymentIdentifier != null)
                     {
                         Info.Exception = new EnvironmentException($"Cannot get healthy nodes from {componentNameCandidate}\nKeeping activity on cluster {Info.DeploymentIdentifier?.ServiceName} Zone:{Info.DeploymentIdentifier?.Zone}");
-                        _log.Error(Info.Exception.Message);
                         Info.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes;
                     }
                     else
@@ -173,7 +164,6 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                         // Can't init DeploymentIdentifier on startup.. throw
                         Info.Exception = new EnvironmentException(
                             $"Cannot get healthy nodes from {componentNameCandidate}. Probably bad consul configuration. Check consul->KeyValue->ZoneSettings->{Info.ServiceName} for correct settings");
-                        _log.Critical(Info.Exception.Message);
                         throw Info.Exception;
                     }
                 }
@@ -183,6 +173,70 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                     Info.StatusCode = AvailabilityZoneInfo.StatusCodes.Ok;
                 }
             }
+        }
+
+        public async Task<bool> HandleEnvironmentChangesAsync()
+        {
+            if (_alreadyInit == false)
+            {
+                try
+                {
+                    await _initialReadZonesTask.Task.WithTimeout(TimeSpan.FromSeconds(60));
+                    _alreadyInit = true;
+                }
+                catch (TimeoutException e)
+                {
+                    throw new EnvironmentException("Waited more then 60 seconds for healthy nodes",
+                        unencrypted: GetUnencryptedTags());
+                }
+            }
+
+            if (Info.DeploymentIdentifier == null)
+                throw new EnvironmentException("Failed to define deployment identifier. Missing or invalid zone information.", unencrypted: GetUnencryptedTags());
+
+            var nodes = await _discovery.GetNodes(Info.DeploymentIdentifier).WithTimeout(DiscoveryGetNodeTimeoutInMs);
+            var tempInfo = new AvailabilityZoneInfo()
+            {
+                DeploymentIdentifier = Info.DeploymentIdentifier,
+                Exception = Info.Exception,
+                Nodes = nodes,
+                ServiceName = Info.ServiceName,
+                StatusCode = Info.StatusCode,
+                ServiceZone = Info.ServiceZone
+            };
+
+            if (nodes == null)
+            {
+                tempInfo.Nodes = Array.Empty<Node>();
+                tempInfo.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes; // Set failed so next polling iteration will try SetDeploymentIdentifier
+                tempInfo.Exception = new EnvironmentException($"Discovery GetNodes retuned null"); // This exception will be changed on next polling iteration
+                Info = tempInfo;
+                throw new EnvironmentException(
+                    $"Failed to GetNodes via IDiscovery for service", unencrypted: GetUnencryptedTags());
+            }
+
+            var oldNodes = Info.Nodes?.Select(x => x.ToString()).ToArray() ?? Array.Empty<string>();
+            var newNodes = tempInfo.Nodes?.Select(x => x.ToString()).ToArray() ?? Array.Empty<string>();
+
+            if (newNodes.SequenceEqual(oldNodes) == false)
+            {
+                Info = tempInfo;
+
+                if (tempInfo.Nodes.Length < 1)
+                {
+                    tempInfo.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes; // Set failed so next polling iteration will try SetDeploymentIdentifier
+                    tempInfo.Exception = new EnvironmentException($"No nodes discovered"); // This exception will be changed on next polling iteration
+
+                    Info = tempInfo;
+
+                    throw new EnvironmentException($"Failed to CreateConnection. No nodes discovered",
+                        unencrypted: GetUnencryptedTags());
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -104,7 +104,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 	    }
 
         /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
-		private async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken) where T: class
+        private async Task<ConsulResponse<T>> GetKey<T>(ulong modifyIndex, string folder, string key, string zone, CancellationToken cancellationToken) where T: class
         {
 			if (folder==null)
 				throw new ArgumentNullException(nameof(folder));

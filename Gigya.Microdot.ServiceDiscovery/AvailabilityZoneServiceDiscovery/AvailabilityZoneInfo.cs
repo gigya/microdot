@@ -7,7 +7,8 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
     {
         public enum StatusCodes
         {
-            Ok = 0,
+            InitializingConnectionToConsul = 0, // default before polling thread first (successful or failed) read
+            Ok,
             FailedConnectToConsul,
             MissingOrInvalidKeyValue,
             FailedGetHealthyNodes,

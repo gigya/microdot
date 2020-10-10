@@ -43,6 +43,13 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 		/// <summary>
 		/// Get the value of a key on Consul's key-value store, for Consul which is located on other Zone
 		/// </summary>
+		/// <exception cref="ArgumentNullException">
+		/// Throws if given folder or key are null, or if consul Zone is not set
+		/// </exception>
+        /// <exception cref="Exception">
+        /// Throws if failed to deserialize consul json value
+        /// </exception>
+        /// <returns>Deserialized T of read key value from consul</returns>
 		/// <typeparam name="T">Type to be deserialized (Json) when reading the key value from Consul</typeparam>
 		/// <param name="modifyIndex">The modifyIndex of last response from Consul, to be used for long-polling. Should be zero (0) When calling Consul for the first time</param>
 		/// <param name="folder">folder of key-value store (e.g. "service", "flags")</param>
