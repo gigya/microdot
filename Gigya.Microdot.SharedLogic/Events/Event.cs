@@ -72,6 +72,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.parentSpanID)]
         public string ParentSpanId { get; set; } = TracingContext.TryGetParentSpanID();
 
+        [EventField(EventConsts.unknownTracingData, Encrypt = true)]
+        public Dictionary<string, object> UnknownTracingData { get; set; } = TracingContext.AdditionalProperties;
+
+
         //============ PUBLISHER INFO ===============
 
         /// <summary>The name of the reporting system (comments/socialize/hades/mongo etc)</summary>
@@ -233,5 +237,11 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         /// <summary>Whether exception stack traces should be excluded. Note: can be overridden by derived classes.</summary>                
         public virtual bool ShouldExcludeStackTrace => Configuration.ExcludeStackTraceRule?.IsMatch(ErrCode_.ToString()) == true;
+
+        [EventField(EventConsts.context, AppendTypeSuffix = true)]
+        public IEnumerable<KeyValuePair<string, object>> ContextUnencryptedTags { get; set; } = TracingContext.TagsOrNull?.GetUnencryptedTags();
+
+        [EventField(EventConsts.context, Encrypt = true)]
+        public IEnumerable<KeyValuePair<string, object>> ContextTagsEncrypted { get; set; } = TracingContext.TagsOrNull?.GetEncryptedTags();
     }
 }

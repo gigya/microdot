@@ -74,7 +74,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             var infraKernel = new TestingKernel<ConsoleLog>(mockConfig: new Dictionary<string, string>
             {
                 {"BusSettings.TopicName", "il3-_env_func-infraTest"},
-                {"BusSettings.MessageFormatNullable", "Json"},
+                {"BusSettings.MessageFormatNullable", "Avro"},
             });
 
             var notifications = infraKernel.Get<ISourceBlock<BusSettings>>();
@@ -95,12 +95,14 @@ namespace Gigya.Microdot.UnitTests.Configuration
             configItems.SetValue("BusSettings.MessageFormatNullable", "Invalid");
             eventSource.RaiseChangeEvent();
             await Task.Delay(100);
+            // Since the config is invalid, the config object isn't updated and the event wasn't triggered
             configFromNotification.ShouldBeNull();
 
             configFromNotification = null;
             configItems.SetValue("BusSettings.MessageFormatNullable", "Json");
             eventSource.RaiseChangeEvent();
             await Task.Delay(100);
+            // Since the config is valid AND a property changed (Avro --> Json), the config object was updated and an event was triggered
             configFromNotification.ShouldNotBeNull();
         }
 

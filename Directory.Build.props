@@ -1,11 +1,11 @@
 <Project>
  <PropertyGroup>
    <Company>Gigya Inc.</Company>
-   <Copyright>© 2018 Gigya Inc.</Copyright>
+   <Copyright>© 2020 Gigya Inc.</Copyright>
    <Product>Microdot Framework</Product>
    <Description>Microdot Framework</Description>
    <AssemblyVersion></AssemblyVersion>
-   <Version>3.0.8</Version>
+   <Version>3.1.0</Version>
    <RunSettingsFilePath>$(SolutionDir)\test.runsettings</RunSettingsFilePath>
  </PropertyGroup>
 </Project>

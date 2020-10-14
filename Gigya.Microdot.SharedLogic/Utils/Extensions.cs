@@ -21,14 +21,28 @@
 #endregion
 
 using System;
-using System.IO;
-
+using System.Collections.Generic;
+using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.SharedLogic.Utils
 {
     public static class Extensions
     {
         public static string RawMessage(this Exception ex) => (ex as SerializableException)?.RawMessage ?? ex.Message;
+
+        public static IEnumerable<KeyValuePair<string, object>> GetUnencryptedTags(this Dictionary<string, ContextTag> tags)
+        {
+            return tags.Where(e => !e.Value.IsEncrypted)
+                       .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
+        }
+
+        public static IEnumerable<KeyValuePair<string, object>> GetEncryptedTags(this Dictionary<string, ContextTag> tags)
+        {
+            return tags.Where(e => e.Value.IsEncrypted)
+                       .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
+        }
+
     }
 }
