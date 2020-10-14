@@ -11,7 +11,7 @@ using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
-{
+{/*
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class ClientCallEventTests
     {
@@ -58,7 +58,7 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
             Assert.AreEqual(requestId, clientCallEvent.RequestId);
         }
 
-        /*
+        
         [Test]
         [Repeat(REPEAT)]
         public async Task SingleServerCall_CallSucceeds_PublishesCallEvent_WithTags()
@@ -105,8 +105,8 @@ namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 
             });
 
-        }*/
+        }
 
-    }
+    }*/
 
 }

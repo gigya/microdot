@@ -149,7 +149,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 TracingContext.SetHostOverride(serviceName, expectedHost, expectedPort);
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
-                await serviceProxy.Invoke(request, typeof(string));
+                using (TracingContext.Tags.SetUnencryptedTag("test", 1))
+                    await serviceProxy.Invoke(request, typeof(string));
                 var body = requestMessage;
                 Console.WriteLine($"error: {body}");
              
@@ -187,7 +188,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             public DateTime SpanStartTime { get; set; }
 
             [JsonRequired]
-            public ContextTags Tags { get; set; }
+            public Dictionary<string, ContextTag> Tags { get; set; }
         }
 
         public class Host1
