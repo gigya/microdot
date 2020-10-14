@@ -33,6 +33,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string callID = "callID";
         public const string spanID = "spanID";
         public const string parentSpanID = "pspanID";
+        public const string unknownTracingData = "unknownTracingData";
         public const string statsTotalTime = "stats.total.time";
         public const string statsServerTime = "stats.server.time";
         public const string statsNetworkTime = "stats.network.time";
@@ -56,6 +57,7 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string exStackTraceUnclean = "ex.stackTraceUnclean";
         public const string exType = "ex.type";
         public const string tags = "tags";
+        public const string context = "ctx";
 
         public const string targetService="target.service";
         public const string targetHost = "target.host";

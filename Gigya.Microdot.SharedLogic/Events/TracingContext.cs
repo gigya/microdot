@@ -37,11 +37,13 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         internal static TracingContextSourcev Implementation;
 
-        private const string PARENT_SPAN_ID_KEY = "MD_SParentSpanID";
-        private const string REQUEST_ID_KEY = "MD_SServiceTraceRequestID";
-        private const string OVERRIDES_KEY = "MD_SOverrides";
-        private const string SPAN_START_TIME = "MD_SSpanStartTime";
-        private const string REQUEST_DEATH_TIME = "MD_SRequestDeathTime";
+        private const string PARENT_SPAN_ID_KEY    = "MD_SParentSpanID";
+        private const string REQUEST_ID_KEY        = "MD_SServiceTraceRequestID";
+        private const string OVERRIDES_KEY         = "MD_SOverrides";
+        private const string SPAN_START_TIME       = "MD_SSpanStartTime";
+        private const string REQUEST_DEATH_TIME    = "MD_SRequestDeathTime";
+        private const string ADDITIONAL_PROPERTIES = "AdditionalProperties";
+        private const string TAGS_KEY              = "MD_Tags";
 
         public static void ClearContext()
         {
@@ -50,8 +52,10 @@ namespace Gigya.Microdot.SharedLogic.Events
             Implementation.Set(OVERRIDES_KEY, null);
             Implementation.Set(SPAN_START_TIME, null);
             Implementation.Set(REQUEST_DEATH_TIME, null);
-
+            Implementation.Set(ADDITIONAL_PROPERTIES, null);
+            Implementation.Set(TAGS_KEY, null);
         }
+
 
         private static T? TryGetNullableValue<T>(string key) where T : struct
         {
@@ -65,7 +69,13 @@ namespace Gigya.Microdot.SharedLogic.Events
             return value as T;
         }
 
-
+        private static T GetOrCreateValue<T>(string key) where T : class, new()
+        {
+            object value = Implementation.Get(key);
+            if (value == null)
+                Implementation.Set(key, value = new T());
+            return value as T;
+        }
 
         internal static void SetOverrides(RequestOverrides overrides)
         {
@@ -163,6 +173,23 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             get => TryGetNullableValue<DateTimeOffset>(REQUEST_DEATH_TIME);
             set => Implementation.Set(REQUEST_DEATH_TIME, value);
+        }
+
+        public static Dictionary<string, object> AdditionalProperties
+        {
+            get => TryGetValue<Dictionary<string, object>>(ADDITIONAL_PROPERTIES);
+            set => Implementation.Set(ADDITIONAL_PROPERTIES, value);
+        }
+
+        public static ContextTags Tags
+        {
+            get => GetOrCreateValue<ContextTags>(TAGS_KEY);
+            set => Implementation.Set(TAGS_KEY, value);
+        }
+
+        internal static ContextTags TagsOrNull
+        {
+            get => TryGetValue<ContextTags>(TAGS_KEY);
         }
 
         /// <summary>

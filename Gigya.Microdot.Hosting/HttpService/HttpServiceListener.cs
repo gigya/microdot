@@ -45,6 +45,7 @@ using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Gigya.Microdot.SharedLogic.Security;
+using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
@@ -276,12 +277,12 @@ namespace Gigya.Microdot.Hosting.HttpService
                             TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
                             TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
                             TracingContext.SetParentSpan(requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
+                            TracingContext.SetOverrides(requestData.Overrides);
+                            TracingContext.Tags = new ContextTags(requestData.TracingData.Tags);
+                            TracingContext.AdditionalProperties = requestData.TracingData.AdditionalProperties;
 
                             callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
-
                             SetCallEventRequestData(callEvent, requestData);
-
-                            TracingContext.SetOverrides(requestData.Overrides);
 
                             serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
                             callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
@@ -370,11 +371,14 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private void SetCallEventRequestData(ServiceCallEvent callEvent, HttpServiceRequest requestData)
         {
-            callEvent.ClientMetadata = requestData.TracingData;
-            callEvent.ServiceMethod = requestData.Target?.MethodName;
-            callEvent.RequestId = requestData.TracingData?.RequestID;
-            callEvent.SpanId = requestData.TracingData?.SpanID;
-            callEvent.ParentSpanId = requestData.TracingData?.ParentSpanID;
+            callEvent.ClientMetadata         = requestData.TracingData;
+            callEvent.ServiceMethod          = requestData.Target?.MethodName;
+            callEvent.RequestId              = requestData.TracingData?.RequestID;
+            callEvent.SpanId                 = requestData.TracingData?.SpanID;
+            callEvent.ParentSpanId           = requestData.TracingData?.ParentSpanID;
+            callEvent.ContextUnencryptedTags = requestData.TracingData?.Tags?.GetUnencryptedTags();
+            callEvent.ContextTagsEncrypted   = requestData.TracingData?.Tags?.GetEncryptedTags();
+            callEvent.UnknownTracingData     = requestData.TracingData?.AdditionalProperties;
         }
 
         private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)
