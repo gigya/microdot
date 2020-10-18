@@ -231,12 +231,15 @@ namespace Gigya.Microdot.Configuration.Objects
                 UsageTracking.AddConfigObject(Latest, ConfigPath);
                 if (isCreated)
                 {
-                    Log.Info(_ => _("A config object has been updated", unencryptedTags: new
-                    {
-                        ConfigObjectType = ObjectType.FullName,
-                        ConfigObjectPath = ConfigPath,
-                        Changes          = DiffJObjects(LatestNode, config, new StringBuilder(), new Stack<string>()).ToString(),
-                    }));
+                    Log.Info(_ => _("A config object has been updated",
+                        unencryptedTags: new {
+                            ConfigObjectType  = ObjectType.FullName,
+                            ConfigObjectPath  = ConfigPath,
+                            OverallModifyTime = ConfigCache.LatestConfigFileModifyTime,
+                        },
+                        encryptedTags: new {
+                            Changes = DiffJObjects(LatestNode, config, new StringBuilder(), new Stack<string>()).ToString(),
+                        }));
                 }
                 else//It mean we are first time not need to send update messsage 
                 {

@@ -44,13 +44,13 @@ namespace Gigya.Microdot.Fakes
         }
 
 
-        public async Task<ConfigItemsCollection> GetConfiguration()
+        public async Task<(ConfigItemsCollection Configs, DateTime? LastModified)> GetConfiguration()
         {
             ConfigItemsCollection configItemCollection = null;
 
             if (FileBasedConfigItemsSource != null)
-                configItemCollection = await FileBasedConfigItemsSource.GetConfiguration().ConfigureAwait(false);
-            return new MockConfigItemsCollection(GetConfigItemsOverrides, configItemCollection);
+                configItemCollection = (await FileBasedConfigItemsSource.GetConfiguration().ConfigureAwait(false)).Configs;
+            return (new MockConfigItemsCollection(GetConfigItemsOverrides, configItemCollection), null);
         }
 
 
