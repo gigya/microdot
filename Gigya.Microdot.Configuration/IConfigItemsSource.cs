@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Configuration
@@ -33,6 +34,6 @@ namespace Gigya.Microdot.Configuration
         /// Gets the collection of config items.
         /// </summary>
         /// <returns></returns>
-        Task<ConfigItemsCollection> GetConfiguration();
+        Task<(ConfigItemsCollection Configs, DateTime? LastModified)> GetConfiguration();
     }
 }

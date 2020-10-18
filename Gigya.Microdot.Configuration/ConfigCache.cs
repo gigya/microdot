@@ -33,6 +33,7 @@ namespace Gigya.Microdot.Configuration
     {
         public ISourceBlock<ConfigItemsCollection> ConfigChanged => ConfigChangedBroadcastBlock;
         public ConfigItemsCollection LatestConfig { get; private set; }
+        public DateTime? LatestConfigFileModifyTime { get; private set; }
 
         private ILog Log { get; }
 
@@ -55,7 +56,7 @@ namespace Gigya.Microdot.Configuration
             //Prevents faulting of action block
             try
             {
-                LatestConfig = await Source.GetConfiguration().ConfigureAwait(false);
+                (LatestConfig, LatestConfigFileModifyTime) = await Source.GetConfiguration().ConfigureAwait(false);
                 ConfigChangedBroadcastBlock.Post(LatestConfig);
             }
             catch(Exception ex) when(catchExceptions)
