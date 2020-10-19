@@ -428,6 +428,11 @@ namespace Gigya.Microdot.Configuration
         /// <returns>Json array containing the list items</returns>
         private JArray ToValidJsonArray(XmlNode node)
         {
+            //This is the case where we have a single text child as a child element and we want to treat it just as a simple array
+            if (node.ChildNodes.Count == 1 && node.ChildNodes[0].NodeType == XmlNodeType.Text)
+            {
+                return ToValidJsonArray(node.ChildNodes[0].Value);
+            }
             ValidateListStructure(node);
             return new JArray(node.ChildNodes.Cast<XmlNode>().Select(ParseXmlToJToken));
         }
