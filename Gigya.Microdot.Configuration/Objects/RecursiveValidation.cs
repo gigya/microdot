@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Gigya.Microdot.Configuration.Objects
@@ -22,6 +23,7 @@ namespace Gigya.Microdot.Configuration.Objects
         {
             return IgnoredTypeNames.Contains(type.FullName);
         }
+
         public bool TryValidateObject(object obj, ICollection<ValidationResult> results, IDictionary<object, object> validationContextItems = null)
         {
             if (ShouldIgnoreType(obj.GetType()))
@@ -31,10 +33,11 @@ namespace Gigya.Microdot.Configuration.Objects
 
         public bool TryValidateObjectRecursive<T>(T obj, List<ValidationResult> results, IDictionary<object, object> validationContextItems = null)
         {
-            return TryValidateObjectRecursive(obj, results, new HashSet<object>(), validationContextItems);
+            return TryValidateObjectRecursive(obj, results, new HashSet<object>(), validationContextItems, 500);
         }
 
-        private bool TryValidateObjectRecursive<T>(T obj, ICollection<ValidationResult> results, ISet<object> validatedObjects, IDictionary<object, object> validationContextItems = null)
+        //max recursion is hard code to 100, 
+        private bool TryValidateObjectRecursive<T>(T obj, ICollection<ValidationResult> results, ISet<object> validatedObjects, IDictionary<object, object> validationContextItems = null, int recursionLevels = 100)
         {
             //short-circuit to avoid infinit loops on cyclical object graphs
             if (validatedObjects.Contains(obj))
@@ -42,10 +45,17 @@ namespace Gigya.Microdot.Configuration.Objects
                 return true;
             }
 
+            var remainingRecursionLevels = --recursionLevels;
+            //TODO: consider enlarging or making the max recursion level lower as needed
+            if (remainingRecursionLevels <= 0)
+                throw new InvalidOperationException("There is something wrong with the validated object, it is too deep!");
+
             validatedObjects.Add(obj);
             bool result = TryValidateObject(obj, results, validationContextItems);
 
-            var properties = obj.GetType().GetProperties().Where(prop => prop.CanRead
+            //prevent static fields from being picked up for the 
+            var properties = obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(
+                prop => prop.CanRead
                 && !prop.GetCustomAttributes(typeof(SkipRecursiveValidation), false).Any()
                 && prop.GetIndexParameters().Length == 0).ToList();
 
@@ -74,7 +84,7 @@ namespace Gigya.Microdot.Configuration.Objects
                         {
                             if (enumObj == null) continue;
                             nestedResults = new List<ValidationResult>();
-                            if (!TryValidateObjectRecursive(enumObj, nestedResults, validatedObjects, validationContextItems))
+                            if (!TryValidateObjectRecursive(enumObj, nestedResults, validatedObjects, validationContextItems, remainingRecursionLevels))
                             {
                                 result = false;
                                 foreach (var validationResult in nestedResults)
@@ -88,7 +98,7 @@ namespace Gigya.Microdot.Configuration.Objects
                         break;
                     default:
                         nestedResults = new List<ValidationResult>();
-                        if (!TryValidateObjectRecursive(value, nestedResults, validatedObjects, validationContextItems))
+                        if (!TryValidateObjectRecursive(value, nestedResults, validatedObjects, validationContextItems, remainingRecursionLevels))
                         {
                             result = false;
                             foreach (var validationResult in nestedResults)
