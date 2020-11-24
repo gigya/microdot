@@ -23,6 +23,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Events;
 
@@ -42,6 +44,30 @@ namespace Gigya.Microdot.SharedLogic.Utils
         {
             return tags.Where(e => e.Value.IsEncrypted)
                        .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
+        }
+
+        public static async Task<T> WithTimeout<T>(this Task<T> task, TimeSpan timeout)
+        {
+            if (task == null)
+                throw new ArgumentNullException(nameof(task));
+
+            using (var timerCancellation = new CancellationTokenSource())
+            {
+                Task timeoutTask = Task.Delay(timeout, timerCancellation.Token);
+                Task firstCompletedTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
+                if (firstCompletedTask == timeoutTask)
+                {
+                    throw new TimeoutException();
+                }
+
+                // The timeout did not elapse, so cancel the timer to recover system resources.
+                timerCancellation.Cancel();
+
+                // re-throw any exceptions from the completed task.
+                await task.ConfigureAwait(false);
+            }
+
+            return task.GetAwaiter().GetResult();
         }
 
     }
