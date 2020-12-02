@@ -24,7 +24,6 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
         /// </returns>
         Task<bool> HandleEnvironmentChangesAsync();
         AvailabilityZoneInfo Info { get; }
-        TimeSpan DiscoveryGetNodeTimeoutInMs { get; set; }
         /// <summary>
         /// Task Cancellation Source which will be set upon first SUCCESSFUL connection with consul.
         /// Upon initiating AvailabilityZoneServiceDiscovery instance - this task should be awaited before use

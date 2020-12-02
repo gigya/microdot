@@ -1,19 +1,15 @@
 ﻿using Gigya.Common.Contracts.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.SharedLogic.Rewrite;
-using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
 {
     public class AvailabilityZoneServiceDiscovery : IAvailabilityZoneServiceDiscovery
     {
-        public TimeSpan DiscoveryGetNodeTimeoutInMs { get; set; } = TimeSpan.FromMilliseconds(1000);
         public AvailabilityZoneInfo Info { get; private set; } = new AvailabilityZoneInfo();
         public Task GetInitialReadZonesTcs() => _initialReadZonesTask.Task;
 
@@ -22,7 +18,6 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
         private readonly IDiscovery _discovery;
         private readonly Rewrite.IConsulClient _consulClient;
         private readonly TaskCompletionSource<bool> _initialReadZonesTask = new TaskCompletionSource<bool>();
-        private bool _alreadyInit;
 
         public AvailabilityZoneServiceDiscovery(
             string serviceName,
@@ -180,26 +175,23 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             }
         }
 
+
         public async Task<bool> HandleEnvironmentChangesAsync()
         {
-            if (_alreadyInit == false)
+            await _initialReadZonesTask.Task;
+
+            var nodes = await _discovery.GetNodes(Info.DeploymentIdentifier);
+
+            if (ReferenceEquals(nodes, Info.Nodes))
             {
-                try
-                {
-                    await _initialReadZonesTask.Task.WithTimeout(TimeSpan.FromSeconds(60));
-                    _alreadyInit = true;
-                }
-                catch (TimeoutException e)
-                {
-                    throw new EnvironmentException("Waited more then 60 seconds for healthy nodes",
-                        unencrypted: GetUnencryptedTags());
-                }
+                if (Info.StatusCode != AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes)
+                    return false;
+
+                // will throw to avoid pointing to unhealthy node
+                throw new EnvironmentException(
+                    $"Failed to GetNodes via IDiscovery for service", unencrypted: GetUnencryptedTags());
             }
-
-            if (Info.DeploymentIdentifier == null)
-                throw new EnvironmentException("Failed to define deployment identifier. Missing or invalid zone information.", unencrypted: GetUnencryptedTags());
-
-            var nodes = await _discovery.GetNodes(Info.DeploymentIdentifier).WithTimeout(DiscoveryGetNodeTimeoutInMs);
+                
             var tempInfo = new AvailabilityZoneInfo()
             {
                 DeploymentIdentifier = Info.DeploymentIdentifier,
@@ -210,38 +202,32 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                 ServiceZone = Info.ServiceZone
             };
 
-            if (nodes == null)
+            try
             {
-                tempInfo.Nodes = Array.Empty<Node>();
-                tempInfo.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes; // Set failed so next polling iteration will try SetDeploymentIdentifier
-                tempInfo.Exception = new EnvironmentException($"Discovery GetNodes retuned null"); // This exception will be changed on next polling iteration
-                Info = tempInfo;
-                throw new EnvironmentException(
-                    $"Failed to GetNodes via IDiscovery for service", unencrypted: GetUnencryptedTags());
-            }
+                if (nodes == null)
+                {
+                    // will throw to avoid pointing to unhealthy node
+                    tempInfo.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes; // Set failed so next polling iteration will try SetDeploymentIdentifier
+                    tempInfo.Exception = new EnvironmentException($"Discovery GetNodes returned null"); // This exception will be changed on next polling iteration
 
-            var oldNodes = Info.Nodes?.Select(x => x.ToString()).ToArray() ?? Array.Empty<string>();
-            var newNodes = tempInfo.Nodes?.Select(x => x.ToString()).ToArray() ?? Array.Empty<string>();
+                    throw new EnvironmentException($"Failed to GetNodes via IDiscovery for service", unencrypted: GetUnencryptedTags());
+                }
 
-            if (newNodes.SequenceEqual(oldNodes) == false)
-            {
-                Info = tempInfo;
 
                 if (tempInfo.Nodes.Length < 1)
                 {
                     tempInfo.StatusCode = AvailabilityZoneInfo.StatusCodes.FailedGetHealthyNodes; // Set failed so next polling iteration will try SetDeploymentIdentifier
-                    tempInfo.Exception = new EnvironmentException($"No nodes discovered"); // This exception will be changed on next polling iteration
+                    tempInfo.Exception = new EnvironmentException($"Discovery GetNodes returned zero nodes (empty list)"); // This exception will be changed on next polling iteration
 
-                    Info = tempInfo;
-
-                    throw new EnvironmentException($"Failed to CreateConnection. No nodes discovered",
-                        unencrypted: GetUnencryptedTags());
+                    throw new EnvironmentException($"Failed to discover nodes. No nodes discovered - empty list returned", unencrypted: GetUnencryptedTags());
                 }
-
-                return true;
+            }
+            finally
+            {
+                Info = tempInfo;
             }
 
-            return false;
+            return true;
         }
     }
 }
