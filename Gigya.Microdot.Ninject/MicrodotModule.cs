@@ -34,6 +34,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
@@ -139,6 +140,7 @@ namespace Gigya.Microdot.Ninject
                 .ToMethod(c =>new ServiceSchema(c.Kernel.Get<IServiceInterfaceMapper>().ServiceInterfaceTypes.ToArray())).InSingletonScope();
 
             Kernel.Rebind<SystemInitializer.SystemInitializer>().ToSelf().InSingletonScope();
+            Kernel.Rebind<IAvailabilityZoneServiceDiscovery>().To<AvailabilityZoneServiceDiscovery>().InTransientScope();
         }
 
 

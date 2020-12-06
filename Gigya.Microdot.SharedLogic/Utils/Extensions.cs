@@ -23,6 +23,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Events;
 
@@ -43,6 +45,5 @@ namespace Gigya.Microdot.SharedLogic.Utils
             return tags.Where(e => e.Value.IsEncrypted)
                        .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
         }
-
     }
 }
