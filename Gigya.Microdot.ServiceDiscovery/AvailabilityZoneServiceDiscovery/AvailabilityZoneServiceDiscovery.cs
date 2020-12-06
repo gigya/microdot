@@ -28,7 +28,6 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             _disposeCancellationToken = ctk;
             _discovery = discovery;
             _consulClient = consulClient;
-            
             Task.Run(UpdateAndMonitorAvailabilityZoneAsync, _disposeCancellationToken);
         }
 
@@ -109,8 +108,8 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                             // TODO: handle continue
                         }
 
-                        SetInfoStatus(AvailabilityZoneInfo.StatusCodes.FailedConnectToConsul,
-                            $"Failed to connect to consul. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}'{Environment.NewLine}Keeping activity on previous valid cluster",
+                        SetInfoStatus(AvailabilityZoneInfo.StatusCodes.ConsulInternalError,
+                            $"Consul internal error. Service returned error status: '{(response.StatusCode?.ToString() ?? "NULL")}', error: '{response.ResponseContent}'{Environment.NewLine}Keeping activity on previous valid cluster",
                             $"{folder}/{Info.ServiceName}", null);
                     }
                     else if (response.Error != null)

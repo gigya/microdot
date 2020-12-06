@@ -10,6 +10,7 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
             InitializingConnectionToConsul = 0, // default before polling thread first (successful or failed) read
             Ok,
             FailedConnectToConsul,
+            ConsulInternalError,
             MissingOrInvalidKeyValue,
             FailedGetHealthyNodes,
             FailedOrInvalidKeyFromConsul,
