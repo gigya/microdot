@@ -21,6 +21,7 @@ namespace CalculatorService.Client
                     "test-client",
                     new NLogModule()))
                 {
+                    //NLog.LogManager.GlobalThreshold = NLog.LogLevel.Info;
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
                     while (true)
                     {

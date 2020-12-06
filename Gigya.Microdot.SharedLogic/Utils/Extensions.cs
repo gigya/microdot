@@ -21,9 +21,10 @@
 #endregion
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.SharedLogic.Utils
 {
@@ -31,28 +32,17 @@ namespace Gigya.Microdot.SharedLogic.Utils
     {
         public static string RawMessage(this Exception ex) => (ex as SerializableException)?.RawMessage ?? ex.Message;
 
-        public static async Task<T> WithTimeout<T>(this Task<T> task, TimeSpan timeout)
+        public static IEnumerable<KeyValuePair<string, object>> GetUnencryptedTags(this Dictionary<string, ContextTag> tags)
         {
-            if (task == null)
-                throw new ArgumentNullException(nameof(task));
-
-            using (var timerCancellation = new CancellationTokenSource())
-            {
-                Task timeoutTask = Task.Delay(timeout, timerCancellation.Token);
-                Task firstCompletedTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
-                if (firstCompletedTask == timeoutTask)
-                {
-                    throw new TimeoutException();
-                }
-
-                // The timeout did not elapse, so cancel the timer to recover system resources.
-                timerCancellation.Cancel();
-
-                // re-throw any exceptions from the completed task.
-                await task.ConfigureAwait(false);
-            }
-
-            return task.GetAwaiter().GetResult();
+            return tags.Where(e => !e.Value.IsEncrypted)
+                       .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
         }
+
+        public static IEnumerable<KeyValuePair<string, object>> GetEncryptedTags(this Dictionary<string, ContextTag> tags)
+        {
+            return tags.Where(e => e.Value.IsEncrypted)
+                       .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
+        }
+
     }
 }

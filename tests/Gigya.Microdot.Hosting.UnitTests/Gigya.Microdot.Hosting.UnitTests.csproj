@@ -8,9 +8,6 @@
     <AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
     <Product>Gigya.Microdot.Orleans.Hosting.FunctionalTests</Product>
     <Copyright>Copyright ©  2017</Copyright>
-    <AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
-    <Product>Gigya.Microdot.Orleans.Hosting.FunctionalTests</Product>
-    <Copyright>Copyright ©  2017</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />

@@ -26,6 +26,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces;
@@ -210,11 +211,9 @@ namespace Gigya.Microdot.Configuration.Objects
 
             if (config != null && errors.Any() == false)
             {
-                LatestNode = config;
-
                 try
                 {
-                    updatedConfig = LatestNode.ToObject(ObjectType);
+                    updatedConfig = config.ToObject(ObjectType);
                 }
                 catch (Exception ex)
                 {
@@ -228,22 +227,27 @@ namespace Gigya.Microdot.Configuration.Objects
 
             if (errors.Any() == false)
             {
-                Latest = updatedConfig;
                 ValidationErrors = null;
                 UsageTracking.AddConfigObject(Latest, ConfigPath);
                 if (isCreated)
                 {
-                    Log.Info(_ => _("A config object has been updated", unencryptedTags: new
-                    {
-                        ConfigObjectType = ObjectType.FullName,
-                        ConfigObjectPath = ConfigPath
-                    }));
+                    Log.Info(_ => _("A config object has been updated",
+                        unencryptedTags: new {
+                            ConfigObjectType  = ObjectType.FullName,
+                            ConfigObjectPath  = ConfigPath,
+                            OverallModifyTime = ConfigCache.LatestConfigFileModifyTime,
+                        },
+                        encryptedTags: new {
+                            Changes = DiffJObjects(LatestNode, config, new StringBuilder(), new Stack<string>()).ToString(),
+                        }));
                 }
                 else//It mean we are first time not need to send update messsage 
                 {
                     isCreated = true;
                 }
 
+                LatestNode = config;
+                Latest = updatedConfig;
                 SendChangeNotification?.Invoke(Latest);
             }
             else
@@ -257,6 +261,53 @@ namespace Gigya.Microdot.Configuration.Objects
                     ValidationErrors
                 }));
             }
+        }
+
+
+        static StringBuilder DiffJObjects(JObject left, JObject right, StringBuilder sb, Stack<string> path)
+        {
+            var leftEnum = ((IEnumerable<KeyValuePair<string, JToken>>)left).OrderBy(_ => _.Key).GetEnumerator();
+            var rightEnum = ((IEnumerable<KeyValuePair<string, JToken>>)right).OrderBy(_ => _.Key).GetEnumerator();
+            bool moreLeft = leftEnum.MoveNext();
+            bool moreRight = rightEnum.MoveNext();
+            while (moreLeft || moreRight)
+            {
+                if (moreLeft && (!moreRight || leftEnum.Current.Key.CompareTo(rightEnum.Current.Key) < 0))
+                {
+                    sb.Append(string.Join(".", path.Append(leftEnum.Current.Key))).Append(":\t").Append(JsonConvert.SerializeObject(leftEnum.Current.Value)).AppendLine("\t-->\tnull");
+                    moreLeft = leftEnum.MoveNext();
+                }
+                else if (moreRight && (!moreLeft || leftEnum.Current.Key.CompareTo(rightEnum.Current.Key) > 0))
+                {
+                    sb.Append(string.Join(".", path.Append(rightEnum.Current.Key))).Append(":\tnull\t-->\t").AppendLine(JsonConvert.SerializeObject(rightEnum.Current.Value));
+                    moreRight = rightEnum.MoveNext();
+                }
+                else if (leftEnum.Current.Value.Type != rightEnum.Current.Value.Type)
+                {
+                    sb.Append(string.Join(".", path.Append(leftEnum.Current.Key))).Append(":\t").Append(JsonConvert.SerializeObject(leftEnum.Current.Value))
+                        .Append("\t-->\t").AppendLine(JsonConvert.SerializeObject(rightEnum.Current.Value));
+                    moreLeft = leftEnum.MoveNext();
+                    moreRight = rightEnum.MoveNext();
+                }
+                else if (leftEnum.Current.Value.Type != JTokenType.Object)
+                {
+                    if (!JToken.DeepEquals(leftEnum.Current.Value, rightEnum.Current.Value))
+                        sb.Append(string.Join(".", path.Append(leftEnum.Current.Key))).Append(":\t").Append(JsonConvert.SerializeObject(leftEnum.Current.Value))
+                            .Append("\t-->\t").AppendLine(JsonConvert.SerializeObject(rightEnum.Current.Value));
+                    moreLeft = leftEnum.MoveNext();
+                    moreRight = rightEnum.MoveNext();
+                }
+                else
+                {
+                    path.Push(leftEnum.Current.Key);
+                    DiffJObjects((JObject)leftEnum.Current.Value, (JObject)rightEnum.Current.Value, sb, path);
+                    path.Pop();
+                    moreLeft = leftEnum.MoveNext();
+                    moreRight = rightEnum.MoveNext();
+                }
+            }
+
+            return sb;
         }
     }
 }

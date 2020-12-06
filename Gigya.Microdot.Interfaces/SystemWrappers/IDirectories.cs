@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -38,5 +39,7 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         Task<IEnumerable<string>> GetFilesInFolderAsync(string folderPath, string searchPatern = null);
 
         Task<string> ReadAllTextFromFileAsync(string filePath);
+
+        Task<DateTime> GetFileLastModified(string filePath);
     }
 }

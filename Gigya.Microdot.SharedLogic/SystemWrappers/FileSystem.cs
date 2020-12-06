@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -68,6 +69,11 @@ namespace Gigya.Microdot.SharedLogic.SystemWrappers
         {
             using (var streamer = File.OpenText(filePath))
                 return await streamer.ReadToEndAsync().ConfigureAwait(false);
+        }
+
+        public Task<DateTime> GetFileLastModified(string filePath)
+        {
+            return Task.FromResult(File.GetLastWriteTimeUtc(filePath)); // no async equivalent
         }
     }
 }

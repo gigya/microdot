@@ -65,13 +65,16 @@ namespace Gigya.Microdot.Configuration
             _configDecryptor = configDecryptor;
         }
 
-        public async Task<ConfigItemsCollection> GetConfiguration()
+        public async Task<(ConfigItemsCollection Configs, DateTime? LastModified)> GetConfiguration()
         {
             var conf = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
+            DateTime? latestConfigFileModifyTime = null;
 
-            foreach(var configFile in _configurationLocations.ConfigFileDeclarations.SelectMany(FindConfigFiles))
+            foreach (var configFile in _configurationLocations.ConfigFileDeclarations.SelectMany(FindConfigFiles))
             {
-                await ReadConfiguration(configFile, conf).ConfigureAwait(false);
+                var modifyTime = await ReadConfiguration(configFile, conf).ConfigureAwait(false);
+                if (latestConfigFileModifyTime == null || modifyTime > latestConfigFileModifyTime)
+                    latestConfigFileModifyTime = modifyTime;
             }
 
             var collection = new ConfigItemsCollection(conf.Values);
@@ -112,7 +115,7 @@ namespace Gigya.Microdot.Configuration
             }
 
             // return merged configuration
-            return collection;
+            return (collection, latestConfigFileModifyTime);
         }
 
         // Note: files and folders my change concurrently; handle exceptions and try to return the maximum amount of information.
@@ -146,7 +149,7 @@ namespace Gigya.Microdot.Configuration
         /// </summary>
         /// <param name="configFile"> The configuration file</param>
         /// <param name="conf">The configuration items collection</param>
-        private async Task ReadConfiguration(ConfigFile configFile, Dictionary<string, ConfigItem> conf)
+        private async Task<DateTime> ReadConfiguration(ConfigFile configFile, Dictionary<string, ConfigItem> conf)
         {
             try
             {
@@ -154,6 +157,7 @@ namespace Gigya.Microdot.Configuration
                 var xmlString = await _fileSystem.ReadAllTextFromFileAsync(configFile.FullName).ConfigureAwait(false);
                 xmlDocument.LoadXml(xmlString);
                 ParseConfigXml(configFile.FullName, xmlDocument, configFile.Priority, conf);
+                return await _fileSystem.GetFileLastModified(configFile.FullName);
             }
             catch (FileNotFoundException ex)
             {
@@ -424,6 +428,11 @@ namespace Gigya.Microdot.Configuration
         /// <returns>Json array containing the list items</returns>
         private JArray ToValidJsonArray(XmlNode node)
         {
+            //This is the case where we have a single text child as a child element and we want to treat it just as a simple array
+            if (node.ChildNodes.Count == 1 && node.ChildNodes[0].NodeType == XmlNodeType.Text)
+            {
+                return ToValidJsonArray(node.ChildNodes[0].Value);
+            }
             ValidateListStructure(node);
             return new JArray(node.ChildNodes.Cast<XmlNode>().Select(ParseXmlToJToken));
         }
