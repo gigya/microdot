@@ -100,6 +100,24 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
+        [Description("Checks that we can read an array property as child element")]
+        public void CanUseArrayPropertyInConfigObjectAsChildElement()
+        {
+            var config = @"<configuration>
+                            <IntArrayConfig>
+                                <IntArray-list>
+                                    1,2,3,4
+                                </IntArray-list>
+                            </IntArrayConfig>
+                          </configuration>";
+            var configObject = GetConfig<IntArrayConfig>(config);
+            configObject.IntArray.GetType().ShouldBe(typeof(int[]));
+            foreach (var i in Enumerable.Range(0, 4))
+            {
+                configObject.IntArray[i].ShouldBe(i + 1);
+            }
+        }
+        [Test]
         [Description("Checks that we can parse array of strings containing whitespaces")]
         public void CanProperlyParseStringArrayInConfigObject()
         {
