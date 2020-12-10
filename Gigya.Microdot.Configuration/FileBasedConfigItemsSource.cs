@@ -249,7 +249,31 @@ namespace Gigya.Microdot.Configuration
                 string name = child.Name;
                 if (name.EndsWith(ListMarker))
                 {
-                    ParseConfigurationListNode(parentName, conf, priority, fileName, child, name);
+                    try
+                    {
+                        ParseConfigurationListNode(parentName, conf, priority, fileName, child, name);
+                    }
+                    //We must not throw during parsing of config (as one bad config will affect all services) so we deffer the throwing to when the config object is actually been requested
+                    catch (Exception e)
+                    {
+                        name = RemoveListMarker(name);
+                        name = ToFullName(parentName, name);
+                        PutOrUpdateEntry(conf, name, string.Empty, priority, fileName, exception:e);
+                    }
+                }
+                else if (name.EndsWith(CollectionMarker))
+                {
+                    try
+                    {
+                        ParseConfigurationCollectionNode(parentName, conf, priority, fileName, child, name);
+                    }
+                    //We must not throw during parsing of config (as one bad config will affect all services) so we deffer the throwing to when the config object is actually been requested
+                    catch (Exception e)
+                    {
+                        name = RemoveListMarker(name);
+                        name = ToFullName(parentName, name);
+                        PutOrUpdateEntry(conf, name, string.Empty, priority, fileName, exception: e);
+                    }
                 }
                 else
                 {
@@ -258,6 +282,25 @@ namespace Gigya.Microdot.Configuration
                 }
             }
         }
+
+        /// <summary>
+        /// Parses an XML node that is marked as a collection by the '-collection' suffix 
+        /// </summary>
+        /// <param name="parentName">The parent path</param>
+        /// <param name="conf">The configuration collection</param>
+        /// <param name="priority">The priority of the config item</param>
+        /// <param name="fileName">The file been parsed</param>
+        /// <param name="child">The child XML node been parsed</param>
+        /// <param name="name">The name of the child node</param>
+        private void ParseConfigurationCollectionNode(string parentName, Dictionary<string, ConfigItem> conf, uint priority, string fileName,
+            XmlNode child, string name)
+        {
+            name = RemoveCollectionMarker(name);
+            name = ToFullName(parentName, name);
+            var arrayString = CollectionToValidJsonArrayString(child);
+            PutOrUpdateEntry(conf, name, arrayString, priority, fileName, ArrayType.Collection);
+        }
+
         /// <summary>
         /// Parses an XML node that is marked as a list by the '-list' suffix 
         /// </summary>
@@ -273,20 +316,29 @@ namespace Gigya.Microdot.Configuration
             name = RemoveListMarker(name);
             name = ToFullName(parentName, name);
             var arrayString = ToValidJsonArrayString(child);
-            PutOrUpdateEntry(conf, name, arrayString, priority, fileName, true);
+            PutOrUpdateEntry(conf, name, arrayString, priority, fileName, ArrayType.List);
         }
 
         private const string ListMarker = "-list";
+        private const string CollectionMarker = "-collection";
 
-        private (string Key, string Value, bool IsArray) ParseStringEntry(string key, string value)
+        private (string Key, string Value, ArrayType IsArray) ParseStringEntry(string key, string value)
         {
-            (string Key, string Value, bool IsArray) res = (key, value, false);
+            (string Key, string Value, ArrayType IsArray) res = (key, value, ArrayType.None);
 
             if (key.EndsWith(ListMarker))
             {
                 res.Key = RemoveListMarker(key);
                 res.Value = ToValidJsonArrayString(value);
-                res.IsArray = true;
+                res.IsArray = ArrayType.List;
+                return res;
+            }
+            
+            if (key.EndsWith(CollectionMarker))
+            {
+                res.Key = RemoveCollectionMarker(key);
+                res.Value = ToValidJsonArrayString(value);
+                res.IsArray = ArrayType.Collection;
                 return res;
             }
 
@@ -303,11 +355,12 @@ namespace Gigya.Microdot.Configuration
         /// <param name="fileName">The file name where this config item was found at</param>
         /// <param name="node">The XML node where this config item was found at</param>
         private void PutOrUpdateEntry(Dictionary<string, ConfigItem> conf, string key, string value, uint priority,
-            string fileName, XmlNode node = null)
+            string fileName, XmlNode node = null, Exception exception = null)
         {
-            (string Key, string Value, bool IsArray) = ParseStringEntry(key, value);
-            PutOrUpdateEntry(conf, Key, Value, priority, fileName, IsArray, node);
+            (string Key, string Value, ArrayType IsArray) = ParseStringEntry(key, value);
+            PutOrUpdateEntry(conf, Key, Value, priority, fileName, IsArray, node, exception);
         }
+
         /// <summary>
         /// Populates the config item in the configuration collection according to the following rules:
         /// 1) If there is no config item under the given key will populate the config value under the given key.
@@ -320,9 +373,10 @@ namespace Gigya.Microdot.Configuration
         /// <param name="value">The Value of this configuration item</param>
         /// <param name="priority">The priority of this config item</param>
         /// <param name="fileName">The file name where this config item was found at</param>
+        /// <param name="isArray">Indicates whether or not this entry is of array type and which kind</param>
         /// <param name="node">The XML node where this config item was found at</param>
         private void PutOrUpdateEntry(Dictionary<string, ConfigItem> conf, string key, string value, uint priority, 
-            string fileName, bool isArray, XmlNode node = null)
+            string fileName, ArrayType isArray, XmlNode node = null, Exception exception = null)
         {
             var configItemInfo = new ConfigItemInfo
             {
@@ -334,7 +388,7 @@ namespace Gigya.Microdot.Configuration
             conf.TryGetValue(key, out ConfigItem old);
             if (old == null)
             {
-                var configItem = new ConfigItem(_configDecryptor) { Key = key, Value = value, Priority = priority, Node = node ,isArray = isArray};
+                var configItem = new ConfigItem(_configDecryptor) { Key = key, Value = value, Priority = priority, Node = node ,isArray = isArray, ParsingException = exception};
                 configItem.Overrides.Add(configItemInfo);
                 conf[key] = configItem;
             }
@@ -347,7 +401,8 @@ namespace Gigya.Microdot.Configuration
                     Priority = priority,
                     Node = node,
                     Overrides = old.Overrides,
-                    isArray = isArray
+                    isArray = isArray,
+                    ParsingException = exception
                 };
                 configItem.Overrides.Add(configItemInfo);
                 conf[key] = configItem;
@@ -357,6 +412,17 @@ namespace Gigya.Microdot.Configuration
                 old.Overrides.Add(configItemInfo);
             }
         }
+
+        /// <summary>
+        /// Removes the collection suffix from the given string
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private static string RemoveCollectionMarker(string key)
+        {
+            return key.Substring(0, key.Length - CollectionMarker.Length);
+        }
+
         /// <summary>
         /// Removes the list suffix from the given string
         /// </summary>
@@ -366,6 +432,7 @@ namespace Gigya.Microdot.Configuration
         {
             return key.Substring(0, key.Length - ListMarker.Length);
         }
+
         /// <summary>
         /// Combines the parent path with the child path to generate the complete path for the child node
         /// </summary>
@@ -412,6 +479,16 @@ namespace Gigya.Microdot.Configuration
         private const string ListItemElementName = "Item";
 
         /// <summary>
+        /// Transform a single xml node marked as a collection into a single valid json array string
+        /// </summary>
+        /// <param name="node">The XML node marked as a collection</param>
+        /// <returns>Json array string containing the collection items</returns>
+        private string CollectionToValidJsonArrayString(XmlNode node)
+        {
+            return CollectionToValidJsonArray(node).ToString();
+        }
+
+        /// <summary>
         /// Transform a single xml node marked as a list into a single valid json array string
         /// </summary>
         /// <param name="node">The XML node marked as a list</param>
@@ -419,6 +496,23 @@ namespace Gigya.Microdot.Configuration
         private string ToValidJsonArrayString(XmlNode node)
         {
             return ToValidJsonArray(node).ToString();
+        }
+
+
+        /// <summary>
+        /// Transform a single xml node marked as a collection into a single valid json array
+        /// </summary>
+        /// <param name="node">The XML node marked as a collection</param>
+        /// <returns>Json array containing the collection items</returns>
+        private JArray CollectionToValidJsonArray(XmlNode node)
+        {
+            //This is the case where we have a single text child as a child element and we want to treat it just as a simple array
+            if (node.ChildNodes.Count == 1 && node.ChildNodes[0].NodeType == XmlNodeType.Text)
+            {
+                return ToValidJsonArray(node.ChildNodes[0].Value);
+            }
+            ValidateCollectionStructure(node);
+            return new JArray(node.ChildNodes.Cast<XmlNode>().Select(CollectionParseXmlToJToken));
         }
 
         /// <summary>
@@ -435,6 +529,17 @@ namespace Gigya.Microdot.Configuration
             }
             ValidateListStructure(node);
             return new JArray(node.ChildNodes.Cast<XmlNode>().Select(ParseXmlToJToken));
+        }
+
+        /// <summary>
+        /// Parses a single XML node to JToken and extracts its value to be returned.
+        /// </summary>
+        /// <param name="xmlNode">The node been parsed</param>
+        /// <returns>The JToken value</returns>
+        private JToken CollectionParseXmlToJToken(XmlNode xmlNode)
+        {
+            //Leaving this wrapper method so it will keep the structure of the -list path
+            return ParseXmlToJToken_Recursive(xmlNode);
         }
 
         /// <summary>
@@ -462,7 +567,6 @@ namespace Gigya.Microdot.Configuration
         /// </summary>
         /// <param name="xmlNode">The node been parsed</param>
         /// <returns>The constructed JToken value</returns>
-        /// <exception cref="ConfigurationException"> Throws if an element has no attributes or value</exception>
         private JToken ParseXmlToJToken_Recursive(XmlNode xmlNode)
         {
             //This is a leaf element
@@ -473,9 +577,10 @@ namespace Gigya.Microdot.Configuration
                 {
                     return ConstructJObjectFromAttributes(xmlNode);
                 }
-                //This is just a value node so it should contain 'InnerText'
+
+                //Empty XML node should be translated to an empty object
                 if (string.IsNullOrEmpty(xmlNode.InnerText))
-                    throw new ConfigurationException($"Unexpected empty configuration node of type {xmlNode.Name}");
+                    return new JObject();
 
                 return xmlNode.InnerText;
             }
@@ -489,6 +594,11 @@ namespace Gigya.Microdot.Configuration
                 {
                     name = RemoveListMarker(name);
                     PopulateChildNodeInPlace(jObject, name, ToValidJsonArray(node));
+                }
+                else if (name.EndsWith(CollectionMarker))
+                {
+                    name = RemoveCollectionMarker(name);
+                    PopulateChildNodeInPlace(jObject, name, CollectionToValidJsonArray(node));
                 }
                 else
                 {
@@ -555,10 +665,47 @@ namespace Gigya.Microdot.Configuration
                     value = ToValidJsonArray(attribute.Value);
                 }
 
+                else if (attribute.Name.EndsWith(CollectionMarker))
+                {
+                    name = RemoveCollectionMarker(attribute.Name);
+                    value = ToValidJsonArray(attribute.Value);
+                }
+
                 jObject[name] = value;
             }
 
             return jObject;
+        }
+
+        /// <summary>
+        /// Validates the structure of an XML node marked as a collection node.
+        /// </summary>
+        /// <exception cref="ConfigurationException">will throw if:
+        /// 1) Any of the child node is not called 'Item'
+        /// 2) At least one child elements is primitive and one isn't
+        /// </exception>
+        /// <param name="node">The node to be validated</param>
+        private static void ValidateCollectionStructure(XmlNode node)
+        {
+            var nodes = node.ChildNodes.Cast<XmlNode>().ToArray();
+
+            //All nodes should be of type 'Item'
+            if (nodes.All(n => n.Name == ListItemElementName) == false)
+            {
+                throw new ConfigurationException(
+                    $"Node {node.Name} is marked as a list but contains a child element that is not a node of type <{ListItemElementName}/>");
+            }
+
+            //All nodes are primitive e.g. <Item>4</Item> this is valid
+            if (nodes.All(n => n.HasChildNodes && n.ChildNodes.Count == 1 &&
+                               n.ChildNodes[0].NodeType == XmlNodeType.Text && string.IsNullOrEmpty(n.InnerText) == false))
+                return;
+
+            //There is a node which is primitive but not all nodes e.g. <some-collection><Item>4</Item><Item name="foo"/></some-collection>
+            if (nodes.Any(n => n.HasChildNodes && n.ChildNodes.Count == 1 &&
+                              n.ChildNodes[0].NodeType == XmlNodeType.Text))
+                throw new ConfigurationException(
+                    $"Node {node.Name} contains  a primitive <{ListItemElementName}/> element but also contains complex <{ListItemElementName}/> elements");
         }
 
         /// <summary>
