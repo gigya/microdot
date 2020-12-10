@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic;
@@ -48,5 +49,53 @@ namespace Gigya.Microdot.UnitTests.Configuration
 
             return (k, providerMock, fileSystemMock);
         }
+    }
+
+    [ConfigurationRoot("StringArrayConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class StringArrayConfig : IConfigObject
+    {
+        public string[] StringArray { get; set; }
+    }
+
+    [ConfigurationRoot("IEnumerableConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class IEnumerableConfig : IConfigObject
+    {
+        public IEnumerable<int> IntEnumerable { get; set; }
+    }
+
+    [ConfigurationRoot("IntArrayConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class IntArrayConfig : IConfigObject
+    {
+        public int[] IntArray { get; set; }
+    }
+
+    [ConfigurationRoot("PersonArrayConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class PersonArrayConfig : IConfigObject
+    {
+        public Person[] PersonArray { get; set; }
+    }
+
+    internal class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public Pet[] Pets { get; set; }
+        public int[] FavoriteLotteryNumbers { get; set; }
+    }
+
+    internal class Pet
+    {
+        public string Name { get; set; }
+        public string Type { get; set; }
+    }
+    [ConfigurationRoot("NestedConfig", RootStrategy.ReplaceClassNameWithPath)]
+    internal class NestedConfig : IConfigObject
+    {
+        public InternalConfig[] Internals { get; set; }
+    }
+
+    internal class InternalConfig
+    {
+        public string Value { get; set; }
     }
 }

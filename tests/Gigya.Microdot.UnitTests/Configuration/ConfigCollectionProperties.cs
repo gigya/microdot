@@ -13,7 +13,7 @@ using Shouldly;
 namespace Gigya.Microdot.UnitTests.Configuration
 {
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
-    public class ConfigListProperties: ConfigTestBase
+    public class ConfigCollectionProperties: ConfigTestBase
     {
         public TConfig GetConfig<TConfig>(string configFile1,string configFile1Name, string configFile2, string configFile2Name)
         {
@@ -89,7 +89,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public void CanUseArrayPropertyInConfigObject()
         {
             var config = @"<configuration>
-                            <IntArrayConfig IntArray-list=""1,2,3,4""/>
+                            <IntArrayConfig IntArray-collection=""1,2,3,4""/>
                           </configuration>";
             var configObject = GetConfig<IntArrayConfig>(config);
             configObject.IntArray.GetType().ShouldBe(typeof(int[]));
@@ -105,9 +105,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
                             <IntArrayConfig>
-                                <IntArray-list>
+                                <IntArray-collection>
                                     1,2,3,4
-                                </IntArray-list>
+                                </IntArray-collection>
                             </IntArrayConfig>
                           </configuration>";
             var configObject = GetConfig<IntArrayConfig>(config);
@@ -122,7 +122,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
         public void CanProperlyParseStringArrayInConfigObject()
         {
             var config = @"<configuration>
-                            <StringArrayConfig StringArray-list=""a b , c d""/>
+                            <StringArrayConfig StringArray-collection=""a b , c d""/>
                           </configuration>";
             var configObject = GetConfig<StringArrayConfig>(config);
             configObject.StringArray.GetType().ShouldBe(typeof(string[]));
@@ -132,11 +132,11 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        [Description("Checks that we can deserialise to an IEnumerable")]
+        [Description("Checks that we can deserialize to an IEnumerable")]
         public void CanUseIEnumerablePropertyInConfigObject()
         {
             var config = @"<configuration>
-                            <IEnumerableConfig IntEnumerable-list=""1,2,3,4""/>
+                            <IEnumerableConfig IntEnumerable-collection=""1,2,3,4""/>
                           </configuration>";
             var configObject = GetConfig<IEnumerableConfig>(config);
             var value = 1;
@@ -152,12 +152,12 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <IntArrayConfig>
-		                        <IntArray-list>
+		                        <IntArray-collection>
 			                        <Item>1</Item>
 			                        <Item>2</Item>
 			                        <Item>3</Item>  
 			                        <Item>4</Item>
-		                        </IntArray-list>
+		                        </IntArray-collection>
 	                        </IntArrayConfig>
                         </configuration>";
             var configObject = GetConfig<IntArrayConfig>(config);
@@ -174,12 +174,12 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item><Person Name='Bob' Age='35'/></Item>
-			                        <Item><Person Name='John' Age='21'/></Item>
-			                        <Item><Person Name='Sarah' Age='45'/></Item>  
-			                        <Item><Person Name='Mira' Age='27'/></Item>
-		                        </PersonArray-list>
+		                        <PersonArray-collection>
+			                        <Item Name='Bob' Age='35'/>
+			                        <Item Name='John' Age='21'/>
+			                        <Item Name='Sarah' Age='45'/>
+			                        <Item Name='Mira' Age='27'/>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
             var configObject = GetConfig<PersonArrayConfig>(config);
@@ -196,20 +196,14 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item>
-                                        <Person Name='Bob' Age='35'>
-                                            <Pets-list>
-	                                            <Item>
-                                                    <Pet Name='Smelly' Type='Cat' />                                            
-                                                </Item>
-                                                <Item>
-                                                    <Pet Name='Hairy' Type='Dog' />                                            
-                                                </Item>
-                                            </Pets-list>
-                                        </Person>
+		                        <PersonArray-collection>
+                                    <Item Name='Bob' Age='35'>
+                                        <Pets-collection>
+                                            <Item Name='Smelly' Type='Cat' />                                            
+                                            <Item Name='Hairy' Type='Dog' />
+                                        </Pets-collection>
                                     </Item>
-		                        </PersonArray-list>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
             var configObject = GetConfig<PersonArrayConfig>(config);
@@ -228,9 +222,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                    <PersonArrayConfig>
-		                    <PersonArray-list>
-			                    <Item><Person Name='Bob' Age='35' FavoriteLotteryNumbers-list='3,7,13,28,31,42'/></Item>
-		                    </PersonArray-list>
+		                    <PersonArray-collection>
+			                    <Item Name='Bob' Age='35' FavoriteLotteryNumbers-collection='3,7,13,28,31,42'/>
+		                    </PersonArray-collection>
 	                    </PersonArrayConfig>
                     </configuration>";
             var configObject = GetConfig<PersonArrayConfig>(config);
@@ -248,34 +242,17 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        [Description("Checks that we throw if one of the elements in the list is not of the same type")]
-        public void HavingAnElementWithDifferentXMLTypeInTheListShouldThrow()
-        {
-            var config = @"<configuration>
-	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item><Person Name='Bob' Age='35'/></Item>
-			                        <Item><Person Name='John' Age='21'/></Item>
-			                        <Item><Person Name='Sarah' Age='45'/></Item>  
-			                        <Item><Person2 Name='Mira' Age='27'/></Item>
-		                        </PersonArray-list>
-	                        </PersonArrayConfig>
-                        </configuration>";
-            Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
-        }
-
-        [Test]
         [Description("Checks that we throw if one of the elements in the list is not an item")]
         public void ListMustContainOnlyItemElements()
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item><Person Name='Bob' Age='35'/></Item>
-			                        <Item><Person Name='John' Age='21'/></Item>
-			                        <Item><Person Name='Sarah' Age='45'/></Item>  
-			                        <Item2><Person Name='Mira' Age='27'/></Item2>
-		                        </PersonArray-list>
+		                        <PersonArray-collection>
+			                        <Item Name='Bob' Age='35'/>
+			                        <Item Name='John' Age='21'/>
+			                        <Item Name='Sarah' Age='45'/>
+			                        <Item2 Name='Mira' Age='27'/>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
             Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
@@ -287,8 +264,8 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-		                        </PersonArray-list>
+		                        <PersonArray-collection>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
             var configObject = GetConfig<PersonArrayConfig>(config);
@@ -302,9 +279,9 @@ namespace Gigya.Microdot.UnitTests.Configuration
         {
             var config = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item><Person/></Item>
-		                        </PersonArray-list>
+		                        <PersonArray-collection>
+			                        <Item/>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
             var configObject = GetConfig<PersonArrayConfig>(config);
@@ -318,39 +295,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
         }
 
         [Test]
-        [Description("Checks that we throw if one of the elements has no content and no attributes")]
-        public void ListItemsMustContainASingleChildElement()
-        {
-            var config = @"<configuration>
-	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item>
-                                        <Person Name='Bob' Age='35'/>
-                                        <Person Name='Sarah' Age='45'/>
-                                    </Item>
-		                        </PersonArray-list>
-	                        </PersonArrayConfig>
-                        </configuration>";
-            Should.Throw<ConfigurationException>(() => GetConfig<PersonArrayConfig>(config));
-        }
-
-        [Test]
-        [Description("Checks that we support shortcuts inside lists")]
-        public void ShortcutPathsInsideListsShouldWork()
-        {
-            var expectedValue = "expectedValue";
-            var config = $@"<configuration>
-	                        <NestedConfig>
-		                        <Internals-list>
-			                        <Item><InternalConfig.Value>{expectedValue}</InternalConfig.Value></Item>
-		                        </Internals-list>
-	                        </NestedConfig>
-                        </configuration>";
-            var nestedConfig = GetConfig<NestedConfig>(config);
-            nestedConfig.Internals.Single().Value.ShouldBe(expectedValue);
-        }
-
-        [Test]
         [Description("Checks that we override lists atomically")]
         public void OverridingListsShouldBeAtomic()
         {
@@ -358,19 +302,19 @@ namespace Gigya.Microdot.UnitTests.Configuration
                 @"[{ ""Pattern"": "".\\Config1.config"", ""Priority"": 1 },{ ""Pattern"": "".\\Config2.config"", ""Priority"": 2 }]";
             var config1 = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item><Person Name='Bob' Age='35'/></Item>
-			                        <Item><Person Name='John' Age='21'/></Item>
-		                        </PersonArray-list>
+		                        <PersonArray-collection>
+			                        <Item Name='Bob' Age='35'/>
+			                        <Item Name='John' Age='21'/>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
 
             var config2 = @"<configuration>
 	                        <PersonArrayConfig>
-		                        <PersonArray-list>
-			                        <Item><Person Name='Sarah' Age='45'/></Item>  
-			                        <Item><Person Name='Mira' Age='27'/></Item>
-		                        </PersonArray-list>
+		                        <PersonArray-collection>
+			                        <Item Name='Sarah' Age='45'/>
+			                        <Item Name='Mira' Age='27'/>
+		                        </PersonArray-collection>
 	                        </PersonArrayConfig>
                         </configuration>";
 
