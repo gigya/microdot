@@ -37,7 +37,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     [Serializable]
     [ConfigurationRoot("Discovery", RootStrategy.ReplaceClassNameWithPath)]
     public class DiscoveryConfig : IConfigObject
-    {        
+    {
         internal ServiceDiscoveryConfig DefaultItem { get; private set; }
 
         /// <summary>
@@ -97,6 +97,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public int TryHttpsIntervalInMinutes { get; set; } = 1;
 
         /// <summary>
+        /// Indicates whether the proxy provider send connections metrics to metrics.net and flume
+        /// </summary>
+        public bool PublishConnectionsMetrics { get; set; } = true;
+
+        /// <summary>
         /// Controls the client verification logic for the server certificate.
         /// Default behavior is to validate that the server domain matches the certificate domain.
         /// </summary>
@@ -123,8 +128,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         public bool EnvironmentFallbackEnabled { get; set; } = false;
 
-        public string EnvironmentFallbackTarget { get; set; } 
-        
+        public string EnvironmentFallbackTarget { get; set; }
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
@@ -138,8 +143,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                 Source = Source
             };
 
-            var services = (IDictionary<string, ServiceDiscoveryConfig>)Services?? new Dictionary<string, ServiceDiscoveryConfig>();
-            
+            var services = (IDictionary<string, ServiceDiscoveryConfig>)Services ?? new Dictionary<string, ServiceDiscoveryConfig>();
+
             Services = new ServiceDiscoveryCollection(services, DefaultItem, PortAllocation);
         }
     }
