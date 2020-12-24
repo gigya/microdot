@@ -75,7 +75,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 }
 
                 IsReachable = false;
-                
+
                 CancellationSource = new CancellationTokenSource();
 
                 // Task.Run is used here to have the long-running task of monitoring run on the thread pool,
@@ -143,5 +143,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         };
 
 
+        public override bool Equals(object obj)
+        {
+            if (!(obj is NodeMonitoringState other))
+                return false;
+
+            return Node.Equals(other.Node);
+        }
+
+        public override int GetHashCode()
+        {
+            return Node.GetHashCode();
+        }
     }
 }
