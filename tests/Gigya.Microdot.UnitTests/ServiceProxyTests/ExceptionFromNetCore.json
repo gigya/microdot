@@ -1,0 +1,77 @@
+﻿{
+  "$type": "Gigya.Microdot.UnitTests.ServiceProxyTests.MyException:Gigya.Common.Contracts.Exceptions.RequestException, Gigya.Microdot.UnitTests:Gigya.ServiceContract",
+  "_Messages": "[ArgumentOutOfRangeException] There was a faulty param (Parameter 'FaultyParam')\r\nActual value was System.NullReferenceException: bang. --> [MyException] foo bar buzz; MyNumber=0, ErrorCode=444",
+  "ClassName": "Gigya.Microdot.UnitTests.ServiceProxyTests.MyException",
+  "Message": "foo bar buzz",
+  "Data": null,
+  "InnerException": {
+    "$type": "System.ArgumentOutOfRangeException:System.ArgumentException:System.SystemException, System.Private.CoreLib:System.Private.CoreLib:System.Private.CoreLib",
+    "ClassName": "System.ArgumentOutOfRangeException",
+    "Message": "There was a faulty param",
+    "Data": null,
+    "InnerException": null,
+    "HelpURL": null,
+    "StackTraceString": null,
+    "RemoteStackTraceString": null,
+    "RemoteStackIndex": 0,
+    "ExceptionMethod": null,
+    "HResult": -2146233086,
+    "Source": null,
+    "WatsonBuckets": null,
+    "ParamName": "FaultyParam",
+    "ActualValue": {
+      "$type": "System.NullReferenceException:System.SystemException, System.Private.CoreLib:System.Private.CoreLib",
+      "ClassName": "System.NullReferenceException",
+      "Message": "bang",
+      "Data": null,
+      "InnerException": null,
+      "HelpURL": null,
+      "StackTraceString": null,
+      "RemoteStackTraceString": null,
+      "RemoteStackIndex": 0,
+      "ExceptionMethod": null,
+      "HResult": -2147467261,
+      "Source": null,
+      "WatsonBuckets": null
+    }
+  },
+  "HelpURL": null,
+  "StackTraceString": "--- End of stack trace from test v3.1.3.0 on W-PF171346 in zone-env ---",
+  "RemoteStackTraceString": null,
+  "RemoteStackIndex": 0,
+  "ExceptionMethod": null,
+  "HResult": -2146233088,
+  "Source": null,
+  "WatsonBuckets": null,
+  "ExtendedPropertiesNames": {
+    "$type": "System.String[], System.Private.CoreLib",
+    "$values": [
+      "MyNumber",
+      "ErrorCode",
+      "EncryptedTags",
+      "UnencryptedTags"
+    ]
+  },
+  "ExtendedPropertiesValues": {
+    "$type": "System.Object[], System.Private.CoreLib",
+    "$values": [
+      0,
+      444,
+      null,
+      null
+    ]
+  },
+  "Breadcrumbs": {
+    "$type": "Gigya.ServiceContract.Exceptions.Breadcrumb[], Gigya.ServiceContract",
+    "$values": [
+      {
+        "$type": "Gigya.ServiceContract.Exceptions.Breadcrumb, Gigya.ServiceContract",
+        "ServiceName": "test",
+        "ServiceVersion": "3.1.3.0",
+        "HostName": "W-PF171346",
+        "DataCenter": "zone",
+        "DeploymentEnvironment": "env"
+      }
+    ]
+  }
+}
