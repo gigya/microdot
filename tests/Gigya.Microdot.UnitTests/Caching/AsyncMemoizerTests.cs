@@ -4,8 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Metrics;
 
@@ -127,6 +129,62 @@ namespace Gigya.Microdot.UnitTests.Caching
             }
 
             dataSource.Received(1).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_MultipleCallsWithSuppressCaching_UsesDataSourceForEveryCall()
+        {
+            string firstValue = "first Value";
+            var dataSource = CreateDataSource(firstValue);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            using (TracingContext.SuppressCaching())
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    var actual = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing,
+                        new object[] {"someString"}, GetPolicy());
+                    actual.Id.ShouldBe(firstValue);
+                }
+            }
+
+            dataSource.Received(100).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_MultipleFailingCallsWithSuppressCaching_ThrowExceptionForEachSuppressedCacheCallAndReturnCachedValueForNonSuppressedCachedCalls()
+        {
+            string firstValue = "first Value";
+            var refreshTask = new TaskCompletionSource<Thing>();
+            var dataSource = CreateDataSource(firstValue, refreshTask);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            using (TracingContext.SuppressCaching())
+            {
+                //Cache result for a successful call 
+                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()); //1 call to data source
+                actual.Id.ShouldBe(firstValue);
+
+                //Should throw for each call to the data source
+                refreshTask.SetException(new Exception("Boo!!"));
+
+                //because we are in SuppressCaching using block, all calls will try to go to data source and fail
+                for (int i = 0; i < 10; i++) //10 calls to data source
+                {
+                    var task = (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                    task.ShouldThrow<EnvironmentException>();
+                }
+            }
+
+            for (int i = 0; i < 5; i++) 
+            {
+                //We are not in SuppressCaching using block, get cached result (NOT FROM DATA SOURCE)
+                var value = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()); //should not call data source
+                value.Id.ShouldBe(firstValue);
+            }
+
+            //We have total of 11 calls to data source: first one which cached the result, another failing 10 under SuppressCaching using block
+            dataSource.Received(11).ThingifyTaskThing("someString");
         }
 
 

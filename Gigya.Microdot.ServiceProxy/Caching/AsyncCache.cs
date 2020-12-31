@@ -294,6 +294,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     lock (existingItem.Lock)
                     {
                         var shouldSuppressCache = TracingContext.ShouldSuppressCaching.HasValue && TracingContext.ShouldSuppressCaching.Value == true;
+                        resultTask = existingItem.CurrentValueTask;
 
                         // Start refresh if an existing refresh ins't in progress and we've passed the next refresh time.
                         if ((existingItem.RefreshTask?.IsCompleted != false && DateTime.UtcNow >= existingItem.NextRefreshTime) || shouldSuppressCache)
@@ -320,9 +321,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                         }
                                     }
                                 })).Invoke();
-                        }
 
-                        resultTask = shouldSuppressCache ? existingItem.RefreshTask : existingItem.CurrentValueTask;
+                            if (shouldSuppressCache)
+                                resultTask = existingItem.RefreshTask;
+                        }
                     }
 
                     if (resultTask.GetAwaiter().IsCompleted)
