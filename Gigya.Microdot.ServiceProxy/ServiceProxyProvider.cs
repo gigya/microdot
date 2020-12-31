@@ -382,6 +382,7 @@ namespace Gigya.Microdot.ServiceProxy
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;
                 clientCallEvent.ParentSpanId = request.TracingData?.ParentSpanID;
+                clientCallEvent.SuppressCaching = TracingContext.ShouldSuppressCaching;
 
                 string responseContent;
                 HttpResponseMessage response;
@@ -399,8 +400,13 @@ namespace Gigya.Microdot.ServiceProxy
                 bool isHttps = false;
                 try
                 {
-                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
-                                        ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
+                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, TracingContext.ShouldSuppressCaching)
+                                        ?? new RequestOverrides
+                                        {
+                                            PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment, 
+                                            SuppressCaching       = TracingContext.ShouldSuppressCaching
+                                        };
+
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");

@@ -35,6 +35,8 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.ServiceContract.HttpService;
 using Metrics;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
@@ -258,7 +260,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 new AsyncCacheItem (); // if log is not needed, then do not cache unnecessary details which will blow up the memory
 
             Task<object> resultTask;
-
             // Taking a lock on the newItem in case it actually becomes the item in the cache (if no item with that key
             // existed). For another thread, it will be returned into the existingItem variable and will block on the
             // second lock, preventing concurrent mutation of the same object.
@@ -292,27 +293,36 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     // thread (which was the first to add from 'newItem', for subsequent threads it will be 'existingItem').
                     lock (existingItem.Lock)
                     {
-                        resultTask = existingItem.CurrentValueTask;
+                        var shouldSuppressCache = TracingContext.ShouldSuppressCaching.HasValue && TracingContext.ShouldSuppressCaching.Value == true;
 
                         // Start refresh if an existing refresh ins't in progress and we've passed the next refresh time.
-                        if (existingItem.RefreshTask?.IsCompleted != false && DateTime.UtcNow >= existingItem.NextRefreshTime)
+                        if ((existingItem.RefreshTask?.IsCompleted != false && DateTime.UtcNow >= existingItem.NextRefreshTime) || shouldSuppressCache)
                         {
-                            existingItem.RefreshTask = ((Func<Task>)(async () =>
+                            existingItem.RefreshTask = ((Func<Task<object>>)(async () =>
                                 {
                                     try
                                     {
                                         var getNewValue = WrappedFactory(false);
-                                        await getNewValue.ConfigureAwait(false);
+                                        var value = await getNewValue.ConfigureAwait(false);
                                         existingItem.CurrentValueTask = getNewValue;
                                         existingItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
                                         MemoryCache.Set(new CacheItem(key, existingItem), policy);
+                                        return value;
                                     }
-                                    catch
+                                    catch (Exception e)
                                     {
-                                        existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
+                                        if (shouldSuppressCache)
+                                            throw new EnvironmentException("Call to remote service failed (cache was suppressed)", e);
+                                        else
+                                        {
+                                            existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
+                                            return null;
+                                        }
                                     }
                                 })).Invoke();
                         }
+
+                        resultTask = shouldSuppressCache ? existingItem.RefreshTask : existingItem.CurrentValueTask;
                     }
 
                     if (resultTask.GetAwaiter().IsCompleted)

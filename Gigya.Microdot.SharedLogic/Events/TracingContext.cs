@@ -155,6 +155,15 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
+        public static IDisposable SuppressCaching()
+        {
+            var prevSuppressCaching = ShouldSuppressCaching;
+            ShouldSuppressCaching = true;
+
+            return new DisposableAction<bool?>(prevSuppressCaching, x => ShouldSuppressCaching = x);
+        }
+
+        public static bool? ShouldSuppressCaching { get; internal set; }
 
         /// <summary>
         /// The time at which the request was sent from the client.

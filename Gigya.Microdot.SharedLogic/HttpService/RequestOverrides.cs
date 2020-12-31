@@ -37,9 +37,18 @@ namespace Gigya.Microdot.SharedLogic.HttpService
         [JsonProperty]
         public string PreferredEnvironment { get; set; }
 
-        public RequestOverrides ShallowCloneWithDifferentPreferredEnvironment(string newPreferredEnvironment)
+        [JsonProperty]
+        public bool? SuppressCaching { get; set; }
+
+        public RequestOverrides ShallowCloneWithOverrides(string newPreferredEnvironment, bool? suppressCaching)
         {
-            return new RequestOverrides { AdditionalProperties = AdditionalProperties, Hosts = Hosts, PreferredEnvironment = newPreferredEnvironment };
+            return new RequestOverrides
+            {
+                AdditionalProperties = AdditionalProperties, 
+                Hosts                = Hosts,
+                PreferredEnvironment = newPreferredEnvironment,
+                SuppressCaching      = suppressCaching
+            };
         }
     }
 
