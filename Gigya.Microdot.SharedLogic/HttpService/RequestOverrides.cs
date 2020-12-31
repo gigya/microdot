@@ -24,6 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
+using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {
@@ -38,9 +39,9 @@ namespace Gigya.Microdot.SharedLogic.HttpService
         public string PreferredEnvironment { get; set; }
 
         [JsonProperty]
-        public bool? SuppressCaching { get; set; }
+        public CacheSuppress? SuppressCaching { get; set; }
 
-        public RequestOverrides ShallowCloneWithOverrides(string newPreferredEnvironment, bool? suppressCaching)
+        public RequestOverrides ShallowCloneWithOverrides(string newPreferredEnvironment, CacheSuppress? suppressCaching)
         {
             return new RequestOverrides
             {

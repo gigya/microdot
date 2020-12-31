@@ -44,6 +44,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
 using Timer = Metrics.Timer;
@@ -382,7 +383,7 @@ namespace Gigya.Microdot.ServiceProxy
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;
                 clientCallEvent.ParentSpanId = request.TracingData?.ParentSpanID;
-                clientCallEvent.SuppressCaching = TracingContext.ShouldSuppressCaching;
+                clientCallEvent.SuppressCaching = TracingContext.CacheSuppress?.ToString();
 
                 string responseContent;
                 HttpResponseMessage response;
@@ -400,11 +401,12 @@ namespace Gigya.Microdot.ServiceProxy
                 bool isHttps = false;
                 try
                 {
-                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, TracingContext.ShouldSuppressCaching)
+                    var cacheSuppresOverride = TracingContext.CacheSuppress.ToDownStreamServiceOverride();
+                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, cacheSuppresOverride)
                                         ?? new RequestOverrides
                                         {
-                                            PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment, 
-                                            SuppressCaching       = TracingContext.ShouldSuppressCaching
+                                            PreferredEnvironment  = nodeAndLoadBalancer.PreferredEnvironment, 
+                                            SuppressCaching       = cacheSuppresOverride
                                         };
 
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));

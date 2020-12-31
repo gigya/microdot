@@ -138,7 +138,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue);
             var memoizer = CreateMemoizer(CreateCache());
 
-            using (TracingContext.SuppressCaching())
+            using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
             {
                 for (int i = 0; i < 100; i++)
                 {
@@ -159,7 +159,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, refreshTask);
             var memoizer = CreateMemoizer(CreateCache());
 
-            using (TracingContext.SuppressCaching())
+            using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
             {
                 //Cache result for a successful call 
                 var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()); //1 call to data source

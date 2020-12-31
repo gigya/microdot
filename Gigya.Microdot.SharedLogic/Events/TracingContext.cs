@@ -155,15 +155,20 @@ namespace Gigya.Microdot.SharedLogic.Events
             return TryGetValue<string>(PARENT_SPAN_ID_KEY);
         }
 
-        public static IDisposable SuppressCaching()
-        {
-            var prevSuppressCaching = ShouldSuppressCaching;
-            ShouldSuppressCaching = true;
 
-            return new DisposableAction<bool?>(prevSuppressCaching, x => ShouldSuppressCaching = x);
+        /// <summary>
+        /// warning: CacheSuppress value of 'RecursiveAllDownstreamServices' will cause all downstream services to not use caching and might cause them performance issues.
+        /// It should be used sparingly.
+        /// </summary>
+        public static IDisposable SuppressCaching(CacheSuppress cacheSuppress)
+        {
+            var prevCacheSuppress = CacheSuppress;
+            CacheSuppress = cacheSuppress;
+
+            return new DisposableAction<CacheSuppress?>(prevCacheSuppress, x => CacheSuppress = x);
         }
 
-        public static bool? ShouldSuppressCaching { get; internal set; }
+        public static CacheSuppress? CacheSuppress { get; internal set; }
 
         /// <summary>
         /// The time at which the request was sent from the client.
@@ -263,5 +268,12 @@ namespace Gigya.Microdot.SharedLogic.Events
             
             return fallback.Get(key);
         }
+    }
+
+    public enum CacheSuppress
+    {
+        DoNotSuppress,
+        UpToNextServices,
+        RecursiveAllDownstreamServices
     }
 }

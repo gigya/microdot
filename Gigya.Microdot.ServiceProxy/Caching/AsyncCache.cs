@@ -37,6 +37,7 @@ using Metrics;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
@@ -293,7 +294,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     // thread (which was the first to add from 'newItem', for subsequent threads it will be 'existingItem').
                     lock (existingItem.Lock)
                     {
-                        var shouldSuppressCache = TracingContext.ShouldSuppressCaching.HasValue && TracingContext.ShouldSuppressCaching.Value == true;
+                        var shouldSuppressCache = TracingContext.CacheSuppress.ShouldSuppressCache();
                         resultTask = existingItem.CurrentValueTask;
 
                         // Start refresh if an existing refresh ins't in progress and we've passed the next refresh time.
