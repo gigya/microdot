@@ -79,6 +79,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         public double? NetworkTimeMS => TotalTimeMS - ServerTimeMs;
 
         [EventField(EventConsts.SuppressCaching)]
-        public string SuppressCaching { get; set; }
+        public CacheSuppress? SuppressCaching { get; set; }
     }
 }

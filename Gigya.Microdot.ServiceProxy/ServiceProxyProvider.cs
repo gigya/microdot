@@ -383,7 +383,7 @@ namespace Gigya.Microdot.ServiceProxy
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;
                 clientCallEvent.ParentSpanId = request.TracingData?.ParentSpanID;
-                clientCallEvent.SuppressCaching = TracingContext.CacheSuppress?.ToString();
+                clientCallEvent.SuppressCaching = TracingContext.CacheSuppress;
 
                 string responseContent;
                 HttpResponseMessage response;
@@ -401,7 +401,10 @@ namespace Gigya.Microdot.ServiceProxy
                 bool isHttps = false;
                 try
                 {
-                    var cacheSuppresOverride = TracingContext.CacheSuppress.ToDownStreamServiceOverride();
+                    var cacheSuppresOverride = TracingContext.CacheSuppress != null && TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices ?
+                        TracingContext.CacheSuppress :
+                        null;
+
                     request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, cacheSuppresOverride)
                                         ?? new RequestOverrides
                                         {

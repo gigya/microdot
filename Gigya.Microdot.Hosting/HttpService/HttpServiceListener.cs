@@ -381,7 +381,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             callEvent.ContextUnencryptedTags = requestData.TracingData?.Tags?.GetUnencryptedTags();
             callEvent.ContextTagsEncrypted   = requestData.TracingData?.Tags?.GetEncryptedTags();
             callEvent.UnknownTracingData     = requestData.TracingData?.AdditionalProperties;
-            callEvent.SuppressCaching        = requestData.Overrides?.SuppressCaching?.ToString();
+            callEvent.SuppressCaching        = requestData.Overrides?.SuppressCaching;
         }
 
         private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)

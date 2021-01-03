@@ -45,18 +45,5 @@ namespace Gigya.Microdot.SharedLogic.Utils
             return tags.Where(e => e.Value.IsEncrypted)
                        .Select(e => new KeyValuePair<string, object>(e.Key, e.Value.Value));
         }
-
-        public static bool ShouldSuppressCache(this CacheSuppress? cacheSupress)
-        {
-            return cacheSupress != null && (cacheSupress == CacheSuppress.UpToNextServices || cacheSupress == CacheSuppress.RecursiveAllDownstreamServices);
-        }
-
-        public static CacheSuppress? ToDownStreamServiceOverride(this CacheSuppress? cacheSuppress)
-        {
-            if (cacheSuppress != null && cacheSuppress == CacheSuppress.RecursiveAllDownstreamServices)
-                return cacheSuppress;
-            else
-                return null;
-        }
     }
 }
