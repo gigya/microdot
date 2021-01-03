@@ -132,15 +132,16 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        public async Task MemoizeAsync_MultipleCallsWithSuppressCaching_UsesDataSourceForEveryCall()
+        public async Task MemoizeAsync_MultipleCallsWithSuppressCaching_UsesDataSourceForEverySuppressedCacheCall()
         {
             string firstValue = "first Value";
             var dataSource = CreateDataSource(firstValue);
             var memoizer = CreateMemoizer(CreateCache());
 
+            //SuppressCaching - option 1 (50 calls)
             using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
             {
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 50; i++)
                 {
                     var actual = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing,
                         new object[] {"someString"}, GetPolicy());
@@ -148,7 +149,47 @@ namespace Gigya.Microdot.UnitTests.Caching
                 }
             }
 
+            //SuppressCaching - option 2 (50 calls)
+            using (TracingContext.SuppressCaching(CacheSuppress.UpToNextServices))
+            {
+                for (int i = 0; i < 50; i++)
+                {
+                    var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing,
+                        new object[] { "someString" }, GetPolicy());
+                    actual.Id.ShouldBe(firstValue);
+                }
+            }
+
+            //Use cache (we are not in suppressCaching block
+            for (int i = 0; i < 50; i++)
+            {
+                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                actual.Id.ShouldBe(firstValue);
+            }
+
             dataSource.Received(100).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_MultipleCallsWithDoNotSuppressCaching_UseCacheForDoNotSuppressCalls()
+        {
+            string firstValue = "first Value";
+            var dataSource = CreateDataSource(firstValue);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+            actual.Id.ShouldBe(firstValue);
+
+            using (TracingContext.SuppressCaching(CacheSuppress.DoNotSuppress))
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                    actual.Id.ShouldBe(firstValue);
+                }
+            }
+
+            dataSource.Received(1).ThingifyTaskThing("someString");
         }
 
         [Test]

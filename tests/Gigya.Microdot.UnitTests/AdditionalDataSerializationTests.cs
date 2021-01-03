@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -70,7 +71,8 @@ namespace Gigya.Microdot.UnitTests
             };
             RequestOverrides requestOverrides = new RequestOverrides
             {
-                Hosts = new[] { new HostOverride { ServiceName = "Service1", Host = "HostNameOverride" } }.ToList()
+                Hosts = new[] { new HostOverride { ServiceName = "Service1", Host = "HostNameOverride" } }.ToList(),
+                SuppressCaching = CacheSuppress.RecursiveAllDownstreamServices
             };
             InvocationTarget invocationTarget = new InvocationTarget{MethodName = "MethodName1" };
 
@@ -124,6 +126,7 @@ namespace Gigya.Microdot.UnitTests
             serviceRequestResult.Overrides.Hosts[0].AdditionalProperties.ShouldContainKeyAndValue("HostOverrideData", "HostOverrideData1");
             serviceRequestResult.Overrides.AdditionalProperties.Count.ShouldBe(1);
             serviceRequestResult.Overrides.AdditionalProperties.ShouldContainKeyAndValue("OverridesData", "OverridesData1");
+            serviceRequestResult.Overrides.SuppressCaching.ShouldBe(CacheSuppress.RecursiveAllDownstreamServices);
 
             serviceRequestResult.Target.MethodName.ShouldBe("MethodName1");
             serviceRequestResult.Target.AdditionalProperties.Count.ShouldBe(1);

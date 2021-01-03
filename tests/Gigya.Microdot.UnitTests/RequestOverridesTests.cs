@@ -26,7 +26,7 @@ namespace Gigya.Microdot.UnitTests
             ro.AdditionalProperties = new Dictionary<string, object>();
             ro.AdditionalProperties.Add("roKey", "roValue");
 
-            RequestOverrides roResult = ro.ShallowCloneWithOverrides("pe2", CacheSuppress.DoNotSuppress);
+            RequestOverrides roResult = ro.ShallowCloneWithOverrides("pe2", CacheSuppress.UpToNextServices);
             
             Assert.AreEqual(ro.Hosts.Count, roResult.Hosts.Count);
             Assert.AreEqual(ro.Hosts.Join(roResult.Hosts, h => new {h.Host, h.Port, h.ServiceName}, hr => new {hr.Host, hr.Port, hr.ServiceName}, (h, hr) => hr).Count(), roResult.Hosts.Count);
@@ -35,6 +35,7 @@ namespace Gigya.Microdot.UnitTests
             Assert.AreEqual(roResult.AdditionalProperties["roKey"], "roValue");
             Assert.AreEqual(ro.PreferredEnvironment, "pe1");
             Assert.AreEqual(roResult.PreferredEnvironment, "pe2");
+            Assert.AreEqual(roResult.SuppressCaching, CacheSuppress.UpToNextServices);
         }
     }
 }
