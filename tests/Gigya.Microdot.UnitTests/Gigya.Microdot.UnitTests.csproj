@@ -29,5 +29,9 @@
     <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
+    <EmbeddedResource Include="ServiceProxyTests\ExceptionFromNetCore.json" />
+  </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
