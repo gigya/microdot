@@ -181,9 +181,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             
             await ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
-                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UserNetCoreToFrameworkTypeTranslation",
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
                     "true"),
-                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UserNetCoreToFrameworkNameTranslation",
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
                     "true")
             });
             

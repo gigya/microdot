@@ -5,23 +5,23 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 {
     public interface IJsonExceptionSerializationSettings
     {
-        JsonSerializerSettings GetExceptionSerializerSettings();
+        JsonSerializerSettings SerializerSettings { get; }
 
-        JsonSerializer GetSerializer();
+        JsonSerializer Serializer { get; }
     }
-    public class JsonExceptionSerializationSettings:IJsonExceptionSerializationSettings
+
+    public class JsonExceptionSerializationSettings : IJsonExceptionSerializationSettings
     {
+
         private readonly Func<ExceptionSerializationConfig> _exceptionSerializationConfig;
-
-        private JsonSerializerSettings Settings;
-
-        private JsonSerializer Serializer;
+        public JsonSerializerSettings SerializerSettings { get; }
+        public JsonSerializer Serializer { get; }
 
         public JsonExceptionSerializationSettings(Func<ExceptionSerializationConfig> exceptionSerializationConfig)
         {
             _exceptionSerializationConfig = exceptionSerializationConfig;
 
-            Settings = new JsonSerializerSettings
+            SerializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All,
                 Binder = new ExceptionHierarchySerializationBinder(_exceptionSerializationConfig),
@@ -39,15 +39,6 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 Converters = {new StripHttpRequestExceptionConverter()}
             };
         }
-
-        public JsonSerializerSettings GetExceptionSerializerSettings()
-        {
-            return Settings;
-        }
-
-        public JsonSerializer GetSerializer()
-        {
-            return Serializer;
-        }
     }
+
 }

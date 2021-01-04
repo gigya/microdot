@@ -47,7 +47,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                     // https://programmingflow.com/2020/02/18/could-not-load-system-private-corelib.html
                     if (false == assemblyNameToFixedAssyemblyCache.TryGetValue(assemblyName, out var localAssemblyName))
                     {
-                        localAssemblyName = string.Copy(assemblyName);
+                        localAssemblyName = assemblyName;
 
                         if (localAssemblyName.AsSpan().Contains("System.Private.CoreLib".AsSpan(),
                             StringComparison.OrdinalIgnoreCase))
@@ -58,7 +58,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 
                     if (false == typeNameToFixedAssyemblyCache.TryGetValue(typeName, out var localTypeName))
                     {
-                        localTypeName = string.Copy(typeName);
+                        localTypeName = typeName;
 
                         if (localTypeName.AsSpan().Contains("System.Private.CoreLib".AsSpan(),
                             StringComparison.OrdinalIgnoreCase))

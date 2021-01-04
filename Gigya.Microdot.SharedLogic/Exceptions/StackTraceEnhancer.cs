@@ -46,7 +46,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             if (exception is SerializableException serEx)
                 serEx.AddBreadcrumb(breadcrumb);
 
-            var jobject = JObject.FromObject(exception, _jsonExceptionSerializationSettings.GetSerializer());
+            var jobject = JObject.FromObject(exception, _jsonExceptionSerializationSettings.Serializer);
 
             if (GetConfig().Enabled == false)
                 return jobject;
