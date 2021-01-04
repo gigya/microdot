@@ -14,20 +14,19 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 {
     public class StackTraceEnhancer : IStackTraceEnhancer
     {
+        private readonly IJsonExceptionSerializationSettings _jsonExceptionSerializationSettings;
         private CurrentApplicationInfo AppInfo { get; }
         private Func<StackTraceEnhancerSettings> GetConfig { get; }
         private IEnvironment Environment { get; }
-        private static readonly JsonSerializer Serializer = new JsonSerializer
-        {
-            TypeNameHandling = TypeNameHandling.All,
-            Binder = new ExceptionHierarchySerializationBinder(),
-            Formatting = Formatting.Indented,
-            DateParseHandling = DateParseHandling.DateTimeOffset,
-            Converters = { new StripHttpRequestExceptionConverter() }
-        };
+        
 
-        public StackTraceEnhancer(Func<StackTraceEnhancerSettings> getConfig, IEnvironment environment, CurrentApplicationInfo appInfo)
+        public StackTraceEnhancer(
+            Func<StackTraceEnhancerSettings> getConfig, 
+            IEnvironment environment, 
+            CurrentApplicationInfo appInfo,
+            IJsonExceptionSerializationSettings jsonExceptionSerializationSettings)
         {
+            _jsonExceptionSerializationSettings = jsonExceptionSerializationSettings;
             AppInfo = appInfo;
             GetConfig = getConfig;
             Environment = environment;
@@ -47,7 +46,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             if (exception is SerializableException serEx)
                 serEx.AddBreadcrumb(breadcrumb);
 
-            var jobject = JObject.FromObject(exception, Serializer);
+            var jobject = JObject.FromObject(exception, _jsonExceptionSerializationSettings.Serializer);
 
             if (GetConfig().Enabled == false)
                 return jobject;

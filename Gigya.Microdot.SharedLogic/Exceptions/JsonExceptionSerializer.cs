@@ -33,30 +33,14 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 	/// </summary>
 	public class JsonExceptionSerializer
 	{
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-		{
-			TypeNameHandling = TypeNameHandling.All,
-			Binder = new ExceptionHierarchySerializationBinder(),
-            Formatting = Formatting.Indented,
-            DateParseHandling = DateParseHandling.DateTimeOffset,
-            Converters = { new StripHttpRequestExceptionConverter() }
-        };
-
-	    private static readonly JsonSerializer Serializer = new JsonSerializer
-	    {
-	        TypeNameHandling = TypeNameHandling.All,
-	        Binder = new ExceptionHierarchySerializationBinder(),
-	        Formatting = Formatting.Indented,
-	        DateParseHandling = DateParseHandling.DateTimeOffset,
-	        Converters = { new StripHttpRequestExceptionConverter() }
-	    };
-
-	    private IStackTraceEnhancer StackTraceEnhancer { get; }
+		private readonly IJsonExceptionSerializationSettings _exceptionSerializationSettings;
+		private IStackTraceEnhancer StackTraceEnhancer { get; }
         
-        public JsonExceptionSerializer(IStackTraceEnhancer stackTraceEnhancer)
-	    {
+        public JsonExceptionSerializer(IStackTraceEnhancer stackTraceEnhancer, IJsonExceptionSerializationSettings exceptionSerializationSettings)
+        {
+	        _exceptionSerializationSettings = exceptionSerializationSettings;
 	        StackTraceEnhancer = stackTraceEnhancer;
-	    }
+        }
 
 	    /// <summary>
 	    /// Deserializes an exception from JSON, and uses the inheritance hierarchy embedded into the $type property in order to fall back to the
@@ -67,7 +51,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 	    /// <exception cref="Newtonsoft.Json.JsonSerializationException">Thrown when the exception failed to deserialize.</exception>
 	    public Exception Deserialize(string json)
 	    {
-	        var ex = JsonConvert.DeserializeObject<Exception>(json, Settings);
+	        var ex = JsonConvert.DeserializeObject<Exception>(json, _exceptionSerializationSettings.SerializerSettings);
 
 	        if (ex == null)
 	            throw new JsonSerializationException("Failed to deserialize exception.");
@@ -98,7 +82,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
                 current = current["InnerException"] is JObject inner ? inner : null;
             }
 
-			return JsonConvert.SerializeObject(root, Settings);
+			return JsonConvert.SerializeObject(root, _exceptionSerializationSettings.SerializerSettings);
 		}
     }
 }
