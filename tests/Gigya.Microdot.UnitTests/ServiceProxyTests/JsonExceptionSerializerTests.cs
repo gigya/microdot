@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
+using Newtonsoft.Json;
 using Ninject;
+using NSubstitute;
 using NUnit.Framework;
 
 using Shouldly;
@@ -28,6 +33,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public override void OneTimeSetUp()
         {
             base.OneTimeSetUp();
+            
             ExceptionSerializer = _unitTestingKernel.Get<JsonExceptionSerializer>();
             Task t = ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
@@ -37,6 +43,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     @".$1.$2(async)")
             });
             t.Wait();
+
         }
 
         protected override Action<IKernel> AdditionalBindings()
@@ -165,6 +172,80 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.InnerException.StackTrace.ShouldNotContain("at System.Runtime");
             actual.InnerException.StackTrace.ShouldNotContain("End of stack trace");
             actual.InnerException.StackTrace.ShouldNotContain("__");
+        }
+        
+        
+        [Test]
+        public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOn()
+        {
+            
+            await ChangeConfig<StackTraceEnhancerSettings>(new[]
+            {
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
+                    "true"),
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
+                    "true")
+            });
+            
+            string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
+
+            string netCoreExceptionJson = null;
+            Assembly asm = Assembly.GetExecutingAssembly();
+            using( Stream rsrcStream = asm.GetManifestResourceStream(strResourceName))
+            {
+                using (StreamReader sRdr = new StreamReader(rsrcStream))
+                {
+                    //For instance, gets it as text
+                    netCoreExceptionJson = sRdr.ReadToEnd();
+                }
+            }
+
+            object deserializedException = null;
+
+            Assert.DoesNotThrow(() => deserializedException = ExceptionSerializer.Deserialize(netCoreExceptionJson));
+
+            Assert.True(deserializedException is MyException);
+            
+            var myException = deserializedException as MyException;
+            
+            Assert.True(myException.InnerException != null);
+            Assert.True(myException.InnerException is ArgumentOutOfRangeException);
+
+            var argumentOutOfRange = myException.InnerException as ArgumentOutOfRangeException;
+            
+            Assert.AreEqual("FaultyParam", argumentOutOfRange.ParamName);
+            Assert.True(argumentOutOfRange.Message.StartsWith("There was a faulty param"));
+            Assert.NotNull(argumentOutOfRange.ActualValue);
+
+        }
+        
+         
+        [Test]
+        public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOff()
+        {
+            await ChangeConfig<StackTraceEnhancerSettings>(new[]
+            {
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
+                    "false"),
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
+                    "false")
+            });
+
+            var conf = _unitTestingKernel.Get<Func<ExceptionSerializationConfig>>();
+            string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
+
+            string netCoreExceptionJson = null;
+            Assembly asm = Assembly.GetExecutingAssembly();
+            using( Stream rsrcStream = asm.GetManifestResourceStream(strResourceName))
+            {
+                using (StreamReader sRdr = new StreamReader(rsrcStream))
+                {
+                    //For instance, gets it as text
+                    netCoreExceptionJson = sRdr.ReadToEnd();
+                }
+            }
+            
+            Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
         }
     }
 

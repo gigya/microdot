@@ -86,6 +86,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string siloAddress="silo.address";
         public const string siloDeploymentId="silo.deploymentId";
 
-
+        public const string SuppressCaching = "overrides.suppressCaching";
     }
 }

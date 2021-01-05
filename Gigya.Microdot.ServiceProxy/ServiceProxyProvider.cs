@@ -44,6 +44,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
 using Timer = Metrics.Timer;
@@ -382,6 +383,7 @@ namespace Gigya.Microdot.ServiceProxy
                 clientCallEvent.TargetMethod = request.Target.MethodName;
                 clientCallEvent.SpanId = request.TracingData?.SpanID;
                 clientCallEvent.ParentSpanId = request.TracingData?.ParentSpanID;
+                clientCallEvent.SuppressCaching = TracingContext.CacheSuppress;
 
                 string responseContent;
                 HttpResponseMessage response;
@@ -399,8 +401,17 @@ namespace Gigya.Microdot.ServiceProxy
                 bool isHttps = false;
                 try
                 {
-                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithDifferentPreferredEnvironment(nodeAndLoadBalancer.PreferredEnvironment)
-                                        ?? new RequestOverrides { PreferredEnvironment = nodeAndLoadBalancer.PreferredEnvironment };
+                    var cacheSuppresOverride = TracingContext.CacheSuppress != null && TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices ?
+                        TracingContext.CacheSuppress :
+                        null;
+
+                    request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, cacheSuppresOverride)
+                                        ?? new RequestOverrides
+                                        {
+                                            PreferredEnvironment  = nodeAndLoadBalancer.PreferredEnvironment, 
+                                            SuppressCaching       = cacheSuppresOverride
+                                        };
+
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");

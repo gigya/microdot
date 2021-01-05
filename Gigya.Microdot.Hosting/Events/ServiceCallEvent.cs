@@ -78,6 +78,8 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField("stats.client.response.time")]
         public virtual double? ClientResponseTimeIfNeeded => ClientResponseTime >= Configuration.MinResponseTimeForLog ? ClientResponseTime : null;
 
+        [EventField(EventConsts.SuppressCaching)]
+        public CacheSuppress? SuppressCaching { get; set; }  
 
         private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Sensitive).ToList());
         private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyUnencryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.NonSensitive).ToList());

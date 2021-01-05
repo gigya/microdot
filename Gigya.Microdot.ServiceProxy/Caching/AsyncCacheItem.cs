@@ -30,7 +30,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         public object Lock { get; } = new object();
         public DateTime NextRefreshTime { get; set; }
         public Task<object> CurrentValueTask { get; set; }
-        public Task RefreshTask { get; set; }
+        public Task<object> RefreshTask { get; set; }
 
         /// <summary>
         /// Group name of this cache item (e.g. method name). 
