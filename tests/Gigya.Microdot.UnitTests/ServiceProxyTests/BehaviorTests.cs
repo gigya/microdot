@@ -150,18 +150,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 using (TracingContext.Tags.SetUnencryptedTag("test", 1))
-                    await serviceProxy.Invoke(request, typeof(string));
+                    using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
+                        await serviceProxy.Invoke(request, typeof(string));
+
                 var body = requestMessage;
                 Console.WriteLine($"error: {body}");
              
-                    JsonConvert.DeserializeObject<GigyaRequestProtocol>(body, new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Error });
-
-            
+                JsonConvert.DeserializeObject<GigyaRequestProtocol>(body, new JsonSerializerSettings() { MissingMemberHandling = MissingMemberHandling.Error });
+                
                 uri.Host.ShouldBe(expectedHost);
                 uri.Port.ShouldBe(expectedPort);
             }
-
-
         }
 
         public class Arguments
@@ -210,6 +209,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
            
             [JsonRequired]
             public string PreferredEnvironment { get; set; }
+
+            [JsonProperty]
+            public CacheSuppress? SuppressCaching { get; set; }
         }
 
         public class Target

@@ -157,6 +157,20 @@ namespace Gigya.Microdot.SharedLogic.Events
 
 
         /// <summary>
+        /// warning: CacheSuppress value of 'RecursiveAllDownstreamServices' will cause all downstream services to not use caching and might cause them performance issues.
+        /// It should be used sparingly.
+        /// </summary>
+        public static IDisposable SuppressCaching(CacheSuppress cacheSuppress)
+        {
+            var prevCacheSuppress = CacheSuppress;
+            CacheSuppress = cacheSuppress;
+
+            return new DisposableAction<CacheSuppress?>(prevCacheSuppress, x => CacheSuppress = x);
+        }
+
+        public static CacheSuppress? CacheSuppress { get; internal set; }
+
+        /// <summary>
         /// The time at which the request was sent from the client.
         /// </summary>
         public static DateTimeOffset? SpanStartTime
@@ -254,5 +268,12 @@ namespace Gigya.Microdot.SharedLogic.Events
             
             return fallback.Get(key);
         }
+    }
+
+    public enum CacheSuppress
+    {
+        DoNotSuppress,
+        UpToNextServices,
+        RecursiveAllDownstreamServices
     }
 }
