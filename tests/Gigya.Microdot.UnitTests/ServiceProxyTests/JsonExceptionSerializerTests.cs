@@ -176,6 +176,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         
         
         [Test]
+        [NonParallelizable]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOn()
         {
             
@@ -186,7 +187,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
                     "true")
             });
-            
+
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
             string netCoreExceptionJson = null;
@@ -221,6 +222,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         
          
         [Test]
+        [NonParallelizable]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOff()
         {
             await ChangeConfig<StackTraceEnhancerSettings>(new[]
