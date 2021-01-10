@@ -107,6 +107,7 @@ namespace Gigya.Microdot.ServiceProxy
 
         private HttpMessageHandler _httpMessageHandler = null;
 
+        private readonly MetricsContext _connectionContext;
 
         private DateTime _lastHttpsTestTime = DateTime.MinValue;
         private readonly TimeSpan _httpsTestInterval;
@@ -164,6 +165,8 @@ namespace Gigya.Microdot.ServiceProxy
             var globalConfig = GetDiscoveryConfig();
             var serviceConfig = GetConfig();
             _httpsTestInterval = TimeSpan.FromMinutes(serviceConfig.TryHttpsIntervalInMinutes?? globalConfig.TryHttpsIntervalInMinutes);
+
+            _connectionContext = Metric.Context("Connections");
         }
 
         /// <summary>
@@ -453,6 +456,8 @@ namespace Gigya.Microdot.ServiceProxy
                     finally
                     {
                         clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
+                        
+                        PublishServiceConnectionMetrics(uri);
                     }
                     if (response.Headers.TryGetValues(GigyaHttpHeaders.ExecutionTime, out IEnumerable<string> values))
                     {
@@ -622,6 +627,44 @@ namespace Gigya.Microdot.ServiceProxy
             var result = await InvokeCore(new HttpServiceRequest { Target = new InvocationTarget { Endpoint = "schema" } }, typeof(ServiceSchema), JsonSettings).ConfigureAwait(false);
             return (ServiceSchema)result;
         }
+
+        private void PublishServiceConnectionMetrics(string uri)
+		{
+			DiscoveryConfig config = GetDiscoveryConfig();
+			if (!config.PublishConnectionsMetrics)
+				return;
+
+			Uri serviceUri = new Uri(uri);
+			MetricsContext serviceContext = _connectionContext.Context(ServiceName);
+
+			//[Connections - {ServiceName} - {Server-Host-Name}] Total (Connections)
+			serviceContext.Context(serviceUri.Host).Gauge("Total", () =>
+			{
+				ServicePoint servicePoint = ServicePointManager.FindServicePoint(serviceUri);
+				int currentConnections = servicePoint.CurrentConnections;
+				if (currentConnections == 0)
+					serviceContext.ShutdownContext(serviceUri.Host);
+
+				return currentConnections;
+			}, Unit.Custom("Connections"));
+
+			//[Connections - {ServiceName} - {Server-Host-Name}] Port (Port)
+			serviceContext.Context(serviceUri.Host).Gauge("Port", () => serviceUri.Port, Unit.Custom("Port"));
+
+			//[Connections - {ServiceName}] Total (Connections)
+			serviceContext.Gauge("Total", () =>
+			{
+				double sum = serviceContext.DataProvider.CurrentMetricsData.ChildMetrics
+					.Where(m => !string.Equals(m.Context, "Total"))
+					.Select(m => m.Gauges.FirstOrDefault(g => string.Equals(g.Name, "Total")))
+					.Sum(g => g?.Value ?? 0);
+
+				if (sum == 0)
+					_connectionContext.ShutdownContext(ServiceName);
+
+				return sum;
+			}, Unit.Custom("Connections"));
+		}
 
         public void Dispose()
         {
