@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Net;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Ninject.Host;
-
-using Gigya.Microdot.Interfaces.Configuration;
+using System.Threading.Tasks;
+using Orleans;
 
 namespace CalculatorService.Orleans
 {
@@ -28,5 +25,22 @@ namespace CalculatorService.Orleans
         }
 
         public override ILoggingModule GetLoggingModule() => new NLogModule();
+
+        protected override async Task AfterOrleansStartup(IGrainFactory grainFactory)
+        {
+            //StartGeneratingPerSiloGrainMessages(grainFactory);
+        }
+
+        public override Type PerSiloGrainType => typeof(MyPerSiloGrain);
+        async void StartGeneratingPerSiloGrainMessages(IGrainFactory grainFactory)
+        {
+            int count = 0;
+            while (true) {
+                var grain = grainFactory.GetGrain<IMyNormalGrain<int>>(0);
+                try { await grain.Publish(count++); }
+                catch {}
+                await Task.Delay(2000);
+            }
+        }
     }
 }

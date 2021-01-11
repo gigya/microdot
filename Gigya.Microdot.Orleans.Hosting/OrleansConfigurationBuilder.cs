@@ -225,10 +225,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                     break;
 
                 case SiloClusterMode.SecondaryNode:
-                    if(_endPointDefinition.SiloNetworkingPortOfPrimaryNode == null)
-                        throw new ArgumentException($"missing {nameof(_endPointDefinition.SiloNetworkingPortOfPrimaryNode)}");
-
-                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloNetworkingPortOfPrimaryNode.Value);
+                    silo.UseLocalhostClustering(_endPointDefinition.SiloNetworkingPort, _endPointDefinition.SiloGatewayPort,
+                        new IPEndPoint(IPAddress.Loopback, _endPointDefinition.BasePortOfPrimarySilo.Value + (int)PortOffsets.SiloNetworking));
 
                     break;
             }
