@@ -47,11 +47,11 @@ namespace Gigya.Microdot.Hosting.HttpService
         int SiloNetworkingPort { get; }
 
         /// <summary>
-        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
-        /// localhost and the original base port are always assumed (since the secondary nodes must use a
-        /// base port override to avoid port conflicts).
+        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests).
+        /// In case the primary node runs on a custom port (i.e. uses BasePortOverride), secondary nodes need to be able
+        /// to know what port it's running at. Use this property.
         ///</summary> 
-        int? SiloNetworkingPortOfPrimaryNode { get; }
+        int? BasePortOfPrimarySilo { get; }
 
         int? HttpPort { get; }
 
