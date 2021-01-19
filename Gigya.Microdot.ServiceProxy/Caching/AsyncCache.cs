@@ -158,6 +158,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Metrics.Gauge("Entries", () => MemoryCache.GetCount(), Unit.Items);
             Metrics.Gauge("SizeLimit", () => MemoryCache.CacheMemoryLimit / MB, Unit.MegaBytes);
             Metrics.Gauge("RamUsageLimit", () => MemoryCache.PhysicalMemoryLimit, Unit.Percent);
+            Metrics.Gauge("ReverseIndexEntries", () => RevokeKeyToCacheKeysIndex.Count, Unit.Items);
 
             // Counters
             AwaitingResult = Metrics.Context("AwaitingResult");
@@ -272,7 +273,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 // Surprisingly, when using MemoryCache.AddOrGetExisting() where the item doesn't exist in the cache,
                 // null is returned.
                 var existingItem = (AsyncCacheItem)MemoryCache.AddOrGetExisting(key, newItem, policy);
-
+                
                 if (existingItem == null)
                 {
                     Misses.Mark(metricsKeys);
@@ -363,6 +364,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private void ItemRemovedCallback(CacheEntryRemovedArguments arguments)
         {
             var cacheItem = arguments.CacheItem.Value as AsyncCacheItem;
+
             var shouldLog = ShouldLog(cacheItem?.GroupName);
 
             if (shouldLog)
@@ -375,9 +377,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 })); 
 
             var cachedItem = ((AsyncCacheItem)arguments.CacheItem.Value).CurrentValueTask;
-            if(cachedItem.Status == TaskStatus.RanToCompletion && (cachedItem.Result as IRevocable)?.RevokeKeys!=null)
-            {
-                foreach(var revokeKey in ((IRevocable)cachedItem.Result).RevokeKeys)
+
+            if(cachedItem.Status == TaskStatus.RanToCompletion      && 
+              (cachedItem.Result as IRevocable)?.RevokeKeys != null &&
+              !MemoryCache.Contains(arguments.CacheItem.Key)) //We want to remove items from reverseIndex only if they are not in MemoryCache
+            {                                                 //In MemoryCache.Set flow, we get here, but item is still in cache - so we skip removal
+                foreach (var revokeKey in ((IRevocable)cachedItem.Result).RevokeKeys)
                 {
                     if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out HashSet<string> cacheKeys))
                     {
@@ -403,7 +408,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                         cacheGroup = cacheItem?.GroupName,
                                         cacheData = cacheItem?.LogData
                                     }));
-
                             }
                         }
                     }

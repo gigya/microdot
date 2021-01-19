@@ -21,7 +21,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
@@ -34,15 +33,15 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
-using Gigya.Microdot.Orleans.Hosting.Logging;
+using Gigya.Microdot.Orleans.Hosting.Utils;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
-using Ninject.Syntax;
 using Orleans;
+using Orleans.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {
@@ -54,6 +53,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
     public abstract class MicrodotOrleansServiceHost : ServiceHostBase
     {
         public IKernel Kernel;
+
+        /// <summary>If you want to employ a <see cref="PerSiloGrain{T}"/>, provide the type of your concrete grain
+        /// implementation here to get it registered with Orleans and started up.</summary>
+        public virtual Type PerSiloGrainType { get; } = null;
 
         private IRequestListener requestListener;
 
@@ -78,6 +81,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             var metricsInitializer = Kernel.Get<IMetricsInitializer>();
             metricsInitializer.Init();
+
+            if (PerSiloGrainType != null)
+                Kernel.Get<OrleansConfigurationBuilder>().GetBuilder()
+                    .ConfigureServices(service => service.AddGrainService(PerSiloGrainType).AddSingleton(typeof(IPerSiloGrain), PerSiloGrainType));
 
             this.PreInitialize(Kernel);
 

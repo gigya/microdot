@@ -121,7 +121,30 @@ namespace Gigya.Microdot.UnitTests.Caching
             cache.CacheKeyCount.ShouldBe(1);
         }
 
+        [Test]
+        //Bug #134604
+        public async Task MemoizeAsync_ExistingItemWasRefreshedByTtlAndReciviedRevoke_AfterRevokeCacheIsNotUsedAndItemIsFetchedFromDataSource()
+        {
+            var completionSource = new TaskCompletionSource<Revocable<Thing>>();
+            completionSource.SetResult(new Revocable<Thing> { Value = new Thing { Id = "first Value" }, RevokeKeys = new[] { "revokeKey" } });
+            var dataSource = CreateRevokableDataSource(null, completionSource);
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+                                                                                                                              //To cause refresh in next call
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy(refreshTimeSeconds:0));
+            dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            dataSource.Received(2).ThingifyTaskRevokable("someString"); //Refresh task - fetch from datasource
+
+            //Post revoke message 
+            revokesSource.PostMessageSynced("revokeKey");
+
+            //We want to test that item was removed from cache after revoke and that new item is fetched from datasource
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            dataSource.Received(3).ThingifyTaskRevokable("someString"); //Revoke received and item removed from cache - fetch from datasource 
+        }
 
         [Test]
         public async Task MemoizeAsync_RevokableObjectShouldBeCachedAndRevoked()

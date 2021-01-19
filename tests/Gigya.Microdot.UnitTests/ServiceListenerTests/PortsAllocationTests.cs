@@ -98,7 +98,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             serviceEndpointDefinition.HttpPort.Should().Be(40005);
             serviceEndpointDefinition.SiloGatewayPort.Should().Be(41005);
             serviceEndpointDefinition.SiloNetworkingPort.Should().Be(42005);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(42001);
+            serviceEndpointDefinition.BasePortOfPrimarySilo.Should().Be(42001);
             ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(43005);
         }
 
@@ -113,7 +113,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             serviceEndpointDefinition.HttpPort.Should().Be(40001);
             serviceEndpointDefinition.SiloGatewayPort.Should().Be(41001);
             serviceEndpointDefinition.SiloNetworkingPort.Should().Be(42001);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(42001);
+            serviceEndpointDefinition.BasePortOfPrimarySilo.Should().Be(42001);
             ((IMetricsSettings)serviceEndpointDefinition).MetricsPort.Should().Be(43001);
         }
 
@@ -133,12 +133,12 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         public void IsSlotModeFlag_Working()
         {
              int basePort = 5555;
-            var kernel = SetUpKernel(new ServiceArguments(){SiloNetworkingPortOfPrimaryNode = basePort},false);
+            var kernel = SetUpKernel(new ServiceArguments(){BasePortOfPrimarySilo = basePort},false);
 
             var serviceEndpointDefinition = kernel.Get<IServiceEndPointDefinition>();
 
             serviceEndpointDefinition.HttpPort.Should().Be(basePort);
-            serviceEndpointDefinition.SiloNetworkingPortOfPrimaryNode.Should().Be(serviceEndpointDefinition.SiloNetworkingPort);            
+            serviceEndpointDefinition.BasePortOfPrimarySilo.Should().Be(basePort);            
 
             serviceEndpointDefinition.SiloGatewayPort.Should().Be(basePort+1);
             serviceEndpointDefinition.SiloNetworkingPort.Should().Be(basePort+2);

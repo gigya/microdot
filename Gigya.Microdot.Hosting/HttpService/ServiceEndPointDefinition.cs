@@ -52,12 +52,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public int SiloNetworkingPort { get; }
 
-        /// <summary>
-        /// Secondary nodes without ZooKeeper are only supported on a developer's machine (or unit tests), so
-        /// localhost and the original base port are always assumed (since the secondary nodes must use a
-        /// base port override to avoid port conflicts).
-        ///</summary> 
-        public int? SiloNetworkingPortOfPrimaryNode { get; }
+        public int? BasePortOfPrimarySilo { get; }
 
         public Dictionary<Type, string> ServiceNames { get; }
         public int SiloDashboardPort { get; }
@@ -133,7 +128,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
                 SiloNetworkingPort = basePort + (int)PortOffsets.SiloNetworking;
-                SiloNetworkingPortOfPrimaryNode = (serviceArguments.SiloNetworkingPortOfPrimaryNode ?? 0) + (int)PortOffsets.SiloNetworking;
+                BasePortOfPrimarySilo = serviceArguments.BasePortOfPrimarySilo ?? interfacePorts.First().BasePortWithoutOverrides;
                 SiloDashboardPort = basePort + (int)PortOffsets.SiloDashboard;
             }
             else
@@ -167,7 +162,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                 MetricsPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.Metrics).Value;
                 SiloGatewayPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloGateway).Value;
                 SiloNetworkingPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloNetworking).Value;
-                SiloNetworkingPortOfPrimaryNode = config.PortAllocation.GetPort(serviceConfig.DefaultSlotNumber, PortOffsets.SiloNetworking).Value;
+                // TODO: fix this, if we ever use slots
+                BasePortOfPrimarySilo = config.PortAllocation.GetPort(serviceConfig.DefaultSlotNumber, PortOffsets.SiloNetworking).Value;
                 SiloDashboardPort = config.PortAllocation.GetPort(slotNumber, PortOffsets.SiloDashboard).Value;
             }
 

@@ -90,9 +90,22 @@ namespace Gigya.Microdot.Hosting.Service
         public void Run(ServiceArguments argumentsOverride = null)
         {
             ServiceGracefullyStopped = new TaskCompletionSource<StopResult>();
-            Arguments = argumentsOverride ?? new ServiceArguments(System.Environment.GetCommandLineArgs().Skip(1).ToArray());
 
+            try {
+                Arguments = argumentsOverride ?? new ServiceArguments(System.Environment.GetCommandLineArgs().Skip(1).ToArray());
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ServiceArguments.GetHelpDocumentation());
+                return;
+            }
 
+            if (argumentsOverride == null && ServiceArguments.IsHelpRequired(System.Environment.GetCommandLineArgs()))
+            {
+                Console.WriteLine(ServiceArguments.GetHelpDocumentation());
+                return;
+            }
 
             if (Arguments.ServiceStartupMode == ServiceStartupMode.WindowsService)
             {
