@@ -138,7 +138,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var serviceEndpointDefinition = kernel.Get<IServiceEndPointDefinition>();
 
             serviceEndpointDefinition.HttpPort.Should().Be(basePort);
-            serviceEndpointDefinition.BasePortOfPrimarySilo.Should().Be(serviceEndpointDefinition.SiloNetworkingPort);            
+            serviceEndpointDefinition.BasePortOfPrimarySilo.Should().Be(basePort);            
 
             serviceEndpointDefinition.SiloGatewayPort.Should().Be(basePort+1);
             serviceEndpointDefinition.SiloNetworkingPort.Should().Be(basePort+2);
