@@ -50,6 +50,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private MemoryCache MemoryCache { get; set; }
         private long LastCacheSizeBytes { get; set; }
         private MetricsContext Metrics { get; }
+        private IRevokesCache RevokeCache { get; set; }
 
         internal ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex { get; set; } = new ConcurrentDictionary<string, HashSet<string>>();
 
@@ -66,7 +67,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private IDisposable RevokeDisposable { get; }
         private const double MB = 1048576.0;
         private int _clearCount;
-
+        private int _numOfOutgoingRequests;
 
         public int RevokeKeysCount => RevokeKeyToCacheKeysIndex.Count;
 
@@ -77,11 +78,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private static long oneTime = 0;
 
-        public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener, Func<CacheConfig> getRevokeConfig)
+        public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener, 
+                          Func<CacheConfig> getRevokeConfig, IRevokesCache revokeCache)
         {
             DateTime = dateTime;
             GetRevokeConfig = getRevokeConfig;
             Log = log;
+            RevokeCache = revokeCache;
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ObjectCache.Host == null
@@ -98,18 +101,23 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             InitMetrics();
             var onRevoke = new ActionBlock<string>(OnRevoke);
             RevokeDisposable = revokeListener.RevokeSource.LinkTo(onRevoke);
-
         }
 
         private Task OnRevoke(string revokeKey)
         {
-            var shouldLog = GetRevokeConfig().LogRevokes;
-
             if (string.IsNullOrEmpty(revokeKey))
             {
                 Log.Warn("Error while revoking cache, revokeKey can't be null");
                 return Task.FromResult(false);
             }
+
+            //only in case we have outgoing requests then we will register a revoke
+            //so revoke time will be registered and we can use it to catch race condition
+            //(between revoke and outgoing request)
+            if (_numOfOutgoingRequests > 0)
+                RevokeCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
+
+            var shouldLog = GetRevokeConfig().LogRevokes;
 
             try
             {    
@@ -198,7 +206,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             cacheData = logData
                         }));
 
-                    var result = await factory().ConfigureAwait(false);
+                    object result = null;
+                    var callServiceTask = factory();
+                    var requestSentTime = DateTime.UtcNow;
+                    RevokeCache.RegisterOutgoingRequest(callServiceTask, requestSentTime);
+                    Interlocked.Increment(ref _numOfOutgoingRequests);
+
+                    try
+                    {
+                        result = await callServiceTask.ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        Interlocked.Decrement(ref _numOfOutgoingRequests);
+                    }
+
                     if (shouldLog)
                     {
                         Log.Info(x => x("Cache item value is resolved", unencryptedTags: new
@@ -209,26 +231,64 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             value = GetValueForLogging(result)
                         }));
                     }
+
                     //Can happen if item removed before task is completed
                     if(MemoryCache.Contains(key))
                     {
                         var revocableResult = result as IRevocable;
                         if(revocableResult?.RevokeKeys != null)
                         {
-                            foreach(var revokeKey in revocableResult.RevokeKeys)
-                            {
-                                var cacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
+                            string recentlyRevokedKey = null;
+                            DateTime? recentlyRevokedTime = null;
 
-                                lock(cacheKeys)
+                            //check if one of the revoke keys was received after the request send time 
+                            //resulted from race condition between call and revoke
+                            foreach (var revokeKey in revocableResult.RevokeKeys)
+                            {
+                                recentlyRevokedTime = RevokeCache.IsRecentlyRevoked(revokeKey, requestSentTime);
+                                if (recentlyRevokedTime != null)
                                 {
-                                    cacheKeys.Add(key);
+                                    recentlyRevokedKey = revokeKey;
+                                    break;
                                 }
-                                Log.Info(x=>x("RevokeKey added to reverse index", unencryptedTags: new
+                            }
+
+                            //response is ok (not stale), add revoke keys to reverse index
+                            if (recentlyRevokedKey == null)
+                            {
+                                foreach (var revokeKey in revocableResult.RevokeKeys)
                                 {
-                                    revokeKey = revokeKey,
-                                    cacheKey = key,
+                                    var cacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string>());
+
+                                    lock (cacheKeys)
+                                    {
+                                        cacheKeys.Add(key);
+                                    }
+
+                                    Log.Info(x => x("RevokeKey added to reverse index", unencryptedTags: new
+                                    {
+                                        revokeKey = revokeKey,
+                                        cacheKey = key,
+                                        cacheGroup = groupName,
+                                        cacheData = logData
+                                    }));
+                                }
+                            }
+                            else //Response is stale
+                            {
+                                //we remove item that was not removed when we received the revoke
+                                //it can happen in case we received a revoke for key that was not mapped
+                                //in the reverse index for current cache item (new one)
+                                MemoryCache.Remove(key);
+
+                                Log.Warn(x => x("Stale cache item was removed", unencryptedTags: new
+                                {
+                                    cacheKey   = key,
                                     cacheGroup = groupName,
-                                    cacheData = logData
+                                    cacheData  = logData,
+                                    revokeKey  = recentlyRevokedKey,
+                                    revokeTime = recentlyRevokedTime,
+                                    requestSentTime,
                                 }));
                             }
                         }
@@ -312,7 +372,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                         var value = await getNewValue.ConfigureAwait(false);
                                         existingItem.CurrentValueTask = getNewValue;
                                         existingItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
-                                        MemoryCache.Set(new CacheItem(key, existingItem), policy);
+
+                                        //can happen if we are in a race condition situation,
+                                        //in which we received revoke while call is in-transit and we have removed it from cache
+                                        //so we dont want to cache this stale response
+                                        if (MemoryCache.Contains(key))
+                                            MemoryCache.Set(new CacheItem(key, existingItem), policy);
+
                                         return value;
                                     }
                                     catch (Exception e)

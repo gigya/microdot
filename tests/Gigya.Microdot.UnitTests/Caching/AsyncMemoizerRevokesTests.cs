@@ -12,9 +12,7 @@ using Gigya.ServiceContract.HttpService;
 using Metrics;
 using Metrics.MetricData;
 using NSubstitute;
-
 using NUnit.Framework;
-
 using Shouldly;
 
 // ReSharper disable ConsiderUsingConfigureAwait (not relevant for tests)
@@ -30,8 +28,10 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         private AsyncCache CreateCache(ISourceBlock<string> revokeSource = null)
         {
+            var revokeCache = Substitute.For<IRevokesCache>();
+            revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?) null);
             
-            return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new CacheConfig());
+            return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new CacheConfig(), revokeCache);
         }
 
         private IMemoizer CreateMemoizer(AsyncCache cache)

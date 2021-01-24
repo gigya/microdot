@@ -38,6 +38,7 @@ using Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
@@ -108,6 +109,7 @@ namespace Gigya.Microdot.Ninject
                 return clientHandler;
             });
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
+            Kernel.Rebind<IRevokesCache>().To<RevokesCache>().InSingletonScope();
             Kernel.BindPerString<AggregatingHealthStatus>();
 
             Rebind<MetricsContext>()
