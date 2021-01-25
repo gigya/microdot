@@ -50,7 +50,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             if(revokeSource != null)
                 revokeListener.RevokeSource = revokeSource;
 
-            var revokeCache = Substitute.For<IRevokesCache>();
+            var revokeCache = Substitute.For<IRecentlyRevokesCache>();
             revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
             return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, revokeListener, () => new CacheConfig(), revokeCache);
@@ -396,7 +396,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, secondValue, lastValue);
             var args = new object[] { "someString" };
 
-            var revokeCache = Substitute.For<IRevokesCache>();
+            var revokeCache = Substitute.For<IRecentlyRevokesCache>();
             revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
@@ -437,7 +437,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             refreshTask.SetException(new MissingFieldException("Boo!!"));
             var dataSource = CreateDataSource(firstValue, refreshTask, secondValue);
 
-            var revokeCache = Substitute.For<IRevokesCache>();
+            var revokeCache = Substitute.For<IRecentlyRevokesCache>();
             revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
