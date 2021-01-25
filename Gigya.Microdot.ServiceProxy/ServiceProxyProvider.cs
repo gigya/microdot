@@ -391,6 +391,10 @@ namespace Gigya.Microdot.ServiceProxy
             {
                 data.Add(key + "_", rc);
             }
+            else
+            {
+                data.Add(key, rc);
+            }
 
             sp.Restart();
         }
