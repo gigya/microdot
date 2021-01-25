@@ -383,7 +383,11 @@ namespace Gigya.Microdot.ServiceProxy
         private static void setElapsed(string key, Stopwatch sp, Dictionary<string, double> data)
         {
             var rc = sp.Elapsed.TotalMilliseconds;
-            data.Add(key, rc);
+            if (data.ContainsKey(key))
+            {
+                data.Add(key + "_", rc);
+            }
+
             sp.Restart();
         }
 
