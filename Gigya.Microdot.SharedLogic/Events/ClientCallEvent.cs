@@ -78,5 +78,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         [EventField(EventConsts.statsNetworkTime, OmitFromAudit = true)]
         public double? NetworkTimeMS => TotalTimeMS - ServerTimeMs;
 
+        [EventField(EventConsts.proxyStats, OmitFromAudit = true)]
+        public string ProxyStats;
+
     }
 }
