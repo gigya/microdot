@@ -81,11 +81,20 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.SuppressCaching)]
         public CacheSuppress? SuppressCaching { get; set; }  
 
+		[EventField("proxy.stats.service")]
+        public string ProxyStatsService { get; set; }
+
+        [EventField("proxy.stats.internalId")]
+        public int InternalId { get; set; }
+
+
         private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyEncryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.Sensitive).ToList());
         private readonly SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent> LazyUnencryptedRequestParams = new SharedLogic.Utils.Lazy<List<KeyValuePair<string, object>>, ServiceCallEvent>(this_ => this_.GetRequestParams(Sensitivity.NonSensitive).ToList());
 
 
         public IEnumerable<Param> Params { get; set; }
+        
+
 
         private IEnumerable<KeyValuePair<string, object>> GetRequestParams(Sensitivity sensitivity)
         {

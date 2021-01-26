@@ -205,7 +205,7 @@ namespace Gigya.Microdot.ServiceProxy
                 {
                     if (LastHttpClient != null && LastHttpClientKey.Equals(httpKey))
                     {
-                        var rcStr = $"httpConf={sp_beforelock};locktime={sp_afterlock};fin=0;";
+                        var rcStr = $"httpConf={sp_beforelock};locktime={sp_afterlock};fin=0;Reused;";
                         return (httpClient: LastHttpClient, isHttps: useHttps, rcStr);
                     }
 
@@ -227,18 +227,20 @@ namespace Gigya.Microdot.ServiceProxy
                             supplyClientCertificate: httpKey.SupplyClientCertificate);
                     }
 
+                    var not = "";
                     if (!(LastHttpClientKey?.Equals(httpKey) ?? false))
                     {
                         var messageHandler = _httpMessageHandlerFactory(httpKey);
                         var httpClient = CreateHttpClient(messageHandler, httpKey.Timeout);
 
+                        not = "Not";
                         LastHttpClient = httpClient;
                         LastHttpClientKey = httpKey;
                         _httpMessageHandler = messageHandler;
                     }
 
                     sp_fin = sp.ElapsedMilliseconds;
-                    var rcStr2 = $"httpConf={sp_beforelock};locktime={sp_afterlock};fin={sp_fin};";
+                    var rcStr2 = $"httpConf={sp_beforelock};locktime={sp_afterlock};fin={sp_fin};{not}Reused;";
                     return (httpClient: LastHttpClient, isHttps: httpKey.UseHttps, rcStr2);
                 }
                 finally
@@ -427,6 +429,8 @@ namespace Gigya.Microdot.ServiceProxy
             //will try using HTTPs only in-case we configured to try HTTPs explicitly
             bool tryHttps = GetConfig().TryHttps ?? discoveryConfig.TryHttps;
 
+            long postLen, ackLen;
+            string nowBefore, nowAfter;
             int countLoop = 0;
             var proxyStats = new StringBuilder();
             var data = new Dictionary<string, double>();
@@ -445,15 +449,6 @@ namespace Gigya.Microdot.ServiceProxy
 
                 string responseContent;
                 HttpResponseMessage response;
-
-                double sp_1_getconfig,
-                    sp_2_getnode,
-                    sp_3_geteffectiveport,
-                    sp_4_addheaders,
-                    sp_5_gethttpclient,
-                    sp_6_builduri,
-                    sp_7_postasync,
-                    sp_8_readasync;
 
                 setElapsed("GetConfig", sp, data);
                 var nodeAndLoadBalancer = await ServiceDiscovery.GetNode().ConfigureAwait(false); // can throw
@@ -522,10 +517,13 @@ namespace Gigya.Microdot.ServiceProxy
                         clientCallEvent.TargetPort = actualPort;
 
                         setElapsed("BuildUri", sp, data);
+                        nowBefore = DateTime.Now.ToLongTimeString();
                         response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
-
                         setElapsed("PostAsync", sp, data);
+                        nowAfter = DateTime.Now.ToLongTimeString();
+                        postLen = requestContent.Length;
                         responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        ackLen = responseContent.Length;
                         setElapsed("ReadAsStringAsync", sp, data);
                     }
                     finally
@@ -593,7 +591,8 @@ namespace Gigya.Microdot.ServiceProxy
 
                 setElapsed("Fin", sp, data);
 
-                var sb = new StringBuilder($"loop={countLoop};");
+                var sb = new StringBuilder($"PostLen={postLen};AckLen={ackLen};");
+                sb.Append($"loop={countLoop};nowBefore={nowBefore};nowAfter={nowAfter}");
                 foreach (var kv in data) 
                     sb.Append($"{kv.Key}={kv.Value};");
                 sb.Append($"rcStr={rcStr}|");

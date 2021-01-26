@@ -29,6 +29,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
@@ -49,6 +50,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
+using Timer = Metrics.Timer;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -204,17 +206,60 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async Task StartListening()
         {
+            int logCounter = 0;
+            DateTime lastlogTime = DateTime.MinValue;
+            bool pauseLogs = false;
 
             await _ReadyToGetTraffic.Task;
 
+            int internalId = 0;
             while (Listener.IsListening)
             {
+                ++internalId;
                 HttpListenerContext context;
 
                 try
                 {
+                    var spp = Stopwatch.StartNew();
                     context = await Listener.GetContextAsync();
-                    Worker.FireAndForget(() => HandleRequest(context));
+                    spp.Stop();
+
+                    var now = DateTime.UtcNow;
+
+                    var sp = Stopwatch.StartNew();
+                    var id = internalId;
+                    Worker.FireAndForget(() => HandleRequest(context, id));
+                    sp.Stop();
+
+                    if (pauseLogs)
+                    {
+                        if (DateTime.UtcNow - lastlogTime > TimeSpan.FromSeconds(30))
+                        {
+                            logCounter = 0;
+                            pauseLogs = false;
+                        }
+                    }
+
+                    if (pauseLogs == false && sp.ElapsedMilliseconds > 1000)
+                    {
+                        logCounter++;
+                        if (logCounter > 1000)
+                        {
+                            var dic = new Dictionary<string, object>() { { "internalId", internalId } };
+                            var counter = logCounter;
+                            Log.Info(msg => msg($"ProxyStats [Pause] [{counter}] - Totaltime:{sp.ElapsedMilliseconds};InternalID:{id};now={now.ToLongTimeString()};ctxWait={spp.ElapsedMilliseconds}", unencryptedTags: dic));
+                            pauseLogs = true;
+                            lastlogTime = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            var dic = new Dictionary<string, object>() {{"internalId", internalId}};
+                            var counter = logCounter;
+                            Log.Info(msg=>msg($"ProxyStats [{counter}] - Totaltime:{sp.ElapsedMilliseconds};InternalID:{id};now={now.ToLongTimeString()};ctxWait={spp.ElapsedMilliseconds}", unencryptedTags: dic));
+                        }
+                    }
+
+
                 }
                 catch (ObjectDisposedException)
                 {
@@ -235,17 +280,39 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
         }
 
-
-        private async Task HandleRequest(HttpListenerContext context)
+        private static void setElapsed(string key, Stopwatch sp, Dictionary<string, double> data)
         {
+            var rc = sp.Elapsed.TotalMilliseconds;
+            if (data.ContainsKey(key))
+            {
+                data.Add(key + "_", rc);
+            }
+            else
+            {
+                data.Add(key, rc);
+            }
+
+            sp.Restart();
+        }
+
+        private async Task HandleRequest(HttpListenerContext context, int internalId)
+        {
+            Dictionary<string, double> data = new Dictionary<string, double>();
+            var sp = Stopwatch.StartNew();
             RequestTimings.ClearCurrentTimings();
             using (context.Response)
             {
                 var sw = Stopwatch.StartNew();
+                setElapsed("ClearCurrentTimings", sp, data);
 
                 // Special endpoints should not be logged/measured/traced like regular endpoints
                 // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
-                if (await TryHandleSpecialEndpoints(context)) return;
+                var rc = await TryHandleSpecialEndpoints(context);
+                setElapsed("TryHandleSpecialEndpoints", sp, data);
+                if (rc)
+                {
+                    return;
+                }
 
                 // Regular endpoint handling
                 using (_activeRequestsCounter.NewContext("Request"))
@@ -263,12 +330,14 @@ namespace Gigya.Microdot.Hosting.HttpService
                     {
                         try
                         {
+                            setElapsed("ReqStuff", sp, data);
                             await CheckSecureConnection(context);
 
+                            setElapsed("CheckSecureConnection", sp, data);
                             ValidateRequest(context);
 
                             requestData = await ParseRequest(context);
-                           
+                            setElapsed("ParseRequest", sp, data);
 
                             //-----------------------------------------------------------------------------------------
                             // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
@@ -291,6 +360,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                             methodName = serviceMethod.ServiceInterfaceMethod.Name;
                             var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
                             argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
+
+                            setElapsed("TracingContext", sp, data);
                         }
                         catch (Exception e)
                         {
@@ -302,9 +373,13 @@ namespace Gigya.Microdot.Hosting.HttpService
                         }
 
                         RejectRequestIfLateOrOverloaded();
+                        setElapsed("Reject", sp, data);
 
                         var responseJson = await GetResponse(context, serviceMethod, requestData, argumentsWithDefaults);
-                        if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
+                        setElapsed("GetResponse", sp, data);
+                        var rc2 = await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent);
+                        setElapsed("TryWriteResponse", sp, data);
+                        if (rc2)
                         {
                             callEvent.ErrCode = 0;
                             _successCounter.Increment();
@@ -327,6 +402,15 @@ namespace Gigya.Microdot.Hosting.HttpService
                         _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
                         if (methodName != null)
                             _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
+
+                        setElapsed("fin", sp, data);
+
+                        var sb = new StringBuilder($"id={internalId};ReqCL={context.Request?.ContentLength64};ResCL={context.Response.ContentLength64};");
+                        foreach (var kv in data)
+                            sb.Append($"{kv.Key}={kv.Value};");
+                        callEvent.ProxyStatsService = sb.ToString();
+
+                        callEvent.InternalId = internalId;
 
                         _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
