@@ -245,7 +245,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         logCounter++;
                         if (logCounter > 1000)
                         {
-                            var dic = new Dictionary<string, object>() { { "internalId", internalId } };
+                            var dic = new {internalIdd = internalId};
                             var counter = logCounter;
                             Log.Info(msg => msg($"ProxyStats [Pause] [{counter}] - Totaltime:{sp.ElapsedMilliseconds};InternalID:{id};now={now.ToLongTimeString()};ctxWait={spp.ElapsedMilliseconds}", unencryptedTags: dic));
                             pauseLogs = true;
@@ -253,7 +253,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         }
                         else
                         {
-                            var dic = new Dictionary<string, object>() {{"internalId", internalId}};
+                            var dic = new { internalIdd = internalId };
                             var counter = logCounter;
                             Log.Info(msg=>msg($"ProxyStats [{counter}] - Totaltime:{sp.ElapsedMilliseconds};InternalID:{id};now={now.ToLongTimeString()};ctxWait={spp.ElapsedMilliseconds}", unencryptedTags: dic));
                         }
