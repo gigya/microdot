@@ -7,7 +7,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     [ConfigurationRoot("Cache", RootStrategy.ReplaceClassNameWithPath)]
     public class CacheConfig: IConfigObject
     {
-        public bool UseRecentlyRevokesCache { get; set; } = false;
+        public bool DontCacheRecentlyRevokedResponses { get; set; } = false;
         public bool LogRevokes { get; set; } = false;
         public Dictionary<string, CacheGroupConfig> Groups { get; } = new Dictionary<string, CacheGroupConfig>(StringComparer.InvariantCultureIgnoreCase);
     }

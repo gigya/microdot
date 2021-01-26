@@ -38,10 +38,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public void RegisterOutgoingRequest(Task task, DateTime sentTime)
         {
-            if (GetRevokeConfig().UseRecentlyRevokesCache)
+            if (GetRevokeConfig().DontCacheRecentlyRevokedResponses)
             {
                 if (task == null)
                     throw new ProgrammaticException("Received null task");
+
+                if (sentTime.Kind != DateTimeKind.Utc)
+                    throw new ProgrammaticException("Received non UTC time");
+
+                if (sentTime > DateTime.UtcNow.AddMinutes(-5))
+                    throw new ProgrammaticException("Received out of range time");
 
                 OngoingTasks.Enqueue((task, sentTime));
             }
@@ -49,10 +55,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public void RegisterRevokeKey(string revokeKey, DateTime receivedRevokeTime)
         {
-            if (GetRevokeConfig().UseRecentlyRevokesCache)
+            if (GetRevokeConfig().DontCacheRecentlyRevokedResponses)
             {
                 if (string.IsNullOrEmpty(revokeKey))
                     throw new ProgrammaticException("Received null or empty revokeKey");
+
+                if (receivedRevokeTime.Kind != DateTimeKind.Utc)
+                    throw new ProgrammaticException("Received non UTC time");
+
+                if (receivedRevokeTime > DateTime.UtcNow.AddMinutes(5))
+                    throw new ProgrammaticException("Received out of range time");
 
                 var revokeItem = RevokesIndex.GetOrAdd(revokeKey, s => new RevokeKeyItem());
 
@@ -70,9 +82,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             }
         }
 
-        public DateTime? IsRecentlyRevoked(string revokeKey, DateTime compareTime)
+        public DateTime? TryGetRecentlyRevokedTime(string revokeKey, DateTime compareTime)
         {
-            if (GetRevokeConfig().UseRecentlyRevokesCache && 
+            if (compareTime.Kind != DateTimeKind.Utc)
+                throw new ProgrammaticException("Received non UTC time");
+
+            if (GetRevokeConfig().DontCacheRecentlyRevokedResponses && 
                 RevokesIndex.TryGetValue(revokeKey, out var revokeItem) && 
                 revokeItem.RevokeTime > compareTime)
                 return revokeItem.RevokeTime;
@@ -92,10 +107,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             {
                 try
                 {
-                    if (!GetRevokeConfig().UseRecentlyRevokesCache)
-                        continue;
+                    if (!GetRevokeConfig().DontCacheRecentlyRevokedResponses)
+                    {
+                        while (RevokesQueue.TryDequeue(out var dequeued)) {}
+                        while (OngoingTasks.TryDequeue(out var dequeued)) {}
+                        RevokesIndex.Clear();
 
-                    var oldestOutgoingTaskSendTime = DateTime.UtcNow; //default in case no ongoing tasks
+                        continue;
+                    }
+
+                    var oldestOutgoingTaskSendTime = DateTime.UtcNow.AddSeconds(-1); //default in case no ongoing tasks, we take the time back to avoid rc in case an item was just added
                     while (OngoingTasks.TryPeek(out var taskTuple))
                     {
                         if (taskTuple.task.IsCompleted && OngoingTasks.TryDequeue(out taskTuple))
@@ -106,10 +127,17 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                     while (RevokesQueue.TryPeek(out var revokeQueueItem))
                     {
-                        if (revokeQueueItem.receivedTime < oldestOutgoingTaskSendTime)
+                        var isOldQueueItem = revokeQueueItem.receivedTime.AddMinutes(60) > DateTime.UtcNow;
+                        if (revokeQueueItem.receivedTime < oldestOutgoingTaskSendTime || isOldQueueItem)
                         {
+                            if (isOldQueueItem)
+                            {
+                                //TODO: what do we want to catch here?
+                            }
+
                             if (RevokesIndex.TryGetValue(revokeQueueItem.key, out var revokeIndexItem))
                             {
+                                //In case 'if' statement is false, we wont remove item from RevokesIndex, but there will be other RevokesQueue item that will remove it later
                                 if (revokeIndexItem.RevokeTime < oldestOutgoingTaskSendTime)
                                 {
                                     lock (revokeIndexItem.Locker)
@@ -121,9 +149,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                     }
                                 }
                             }
-                            
+
                             RevokesQueue.TryDequeue(out var dequeuedItem);
                         }
+                        else
+                            break;
                     }
                 }
                 catch (Exception e)
@@ -149,7 +179,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     {
         void RegisterOutgoingRequest(Task task, DateTime sentTime);
         void RegisterRevokeKey(string revokeKey, DateTime receivedTime);
-        DateTime? IsRecentlyRevoked(string revokeKey, DateTime compareTime);
+        DateTime? TryGetRecentlyRevokedTime(string revokeKey, DateTime compareTime);
     }
 
     public class RevokeKeyItem

@@ -67,7 +67,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private IDisposable RevokeDisposable { get; }
         private const double MB = 1048576.0;
         private int _clearCount;
-        private int _numOfOutgoingRequests;
 
         public int RevokeKeysCount => RevokeKeyToCacheKeysIndex.Count;
 
@@ -111,11 +110,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 return Task.FromResult(false);
             }
 
-            //only in case we have outgoing requests then we will register a revoke
-            //so revoke time will be registered and we can use it to catch race condition
-            //(between revoke and outgoing request)
-            if (_numOfOutgoingRequests > 0)
-                RecentlyRevokeCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
+            RecentlyRevokeCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
 
             var shouldLog = GetRevokeConfig().LogRevokes;
 
@@ -189,11 +184,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
 
-
         private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string groupName, string logData, string[] metricsKeys, Type taskResultType)
         {
             var shouldLog = ShouldLog(groupName);
 
+            //TODO: remove to method
             async Task<object> WrappedFactory(bool removeOnException)
             {
                 try
@@ -207,19 +202,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                         }));
 
                     object result = null;
-                    var callServiceTask = factory();
                     var requestSentTime = DateTime.UtcNow;
+                    var callServiceTask = factory(); 
                     RecentlyRevokeCache.RegisterOutgoingRequest(callServiceTask, requestSentTime);
-                    Interlocked.Increment(ref _numOfOutgoingRequests);
 
-                    try
-                    {
-                        result = await callServiceTask.ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        Interlocked.Decrement(ref _numOfOutgoingRequests);
-                    }
+                    result = await callServiceTask.ConfigureAwait(false);
 
                     if (shouldLog)
                     {
@@ -245,7 +232,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             //resulted from race condition between call and revoke
                             foreach (var revokeKey in revocableResult.RevokeKeys)
                             {
-                                recentlyRevokedTime = RecentlyRevokeCache.IsRecentlyRevoked(revokeKey, requestSentTime);
+                                recentlyRevokedTime = RecentlyRevokeCache.TryGetRecentlyRevokedTime(revokeKey, requestSentTime);
                                 if (recentlyRevokedTime != null)
                                 {
                                     recentlyRevokedKey = revokeKey;
@@ -281,7 +268,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                 //in the reverse index for current cache item (new one)
                                 MemoryCache.Remove(key);
 
-                                Log.Warn(x => x("Stale cache item was removed", unencryptedTags: new
+                                Items.Meter("RevokeRaceCondition", Unit.Items).Mark();
+                                Log.Warn(x => x("Response was not cached due to revoke race condition", unencryptedTags: new
                                 {
                                     cacheKey   = key,
                                     cacheGroup = groupName,
