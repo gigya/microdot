@@ -80,5 +80,9 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         [EventField(EventConsts.SuppressCaching)]
         public CacheSuppress? SuppressCaching { get; set; }
+
+		[EventField(EventConsts.proxyStats, OmitFromAudit = true)]
+        public string ProxyStats;
+
     }
 }
