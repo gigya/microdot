@@ -29,6 +29,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
@@ -49,6 +50,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
+using Timer = Metrics.Timer;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -201,11 +203,14 @@ namespace Gigya.Microdot.Hosting.HttpService
             StartListening();
         }
 
+        private static long OutstandingRequests;
 
         private async Task StartListening()
         {
 
             await _ReadyToGetTraffic.Task;
+
+            var sp = Stopwatch.StartNew();
 
             while (Listener.IsListening)
             {
@@ -213,8 +218,17 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                 try
                 {
+                    sp.Restart();
                     context = await Listener.GetContextAsync();
-                    Worker.FireAndForget(() => HandleRequest(context));
+                    var timeFromLastReq = sp.ElapsedMilliseconds;
+
+                    var ticks = DateTime.UtcNow.Ticks;
+                    Interlocked.Increment(ref OutstandingRequests);
+
+                    Worker.FireAndForget(() => HandleRequest(context, ticks));
+                    
+                    
+                    
                 }
                 catch (ObjectDisposedException)
                 {
@@ -236,101 +250,122 @@ namespace Gigya.Microdot.Hosting.HttpService
         }
 
 
-        private async Task HandleRequest(HttpListenerContext context)
+        private async Task HandleRequest(HttpListenerContext context, long ticks)
         {
-            RequestTimings.ClearCurrentTimings();
-            using (context.Response)
+            try
             {
+                var startHandleRequestTime = DateTime.UtcNow.Ticks;
                 var sw = Stopwatch.StartNew();
-
-                // Special endpoints should not be logged/measured/traced like regular endpoints
-                // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
-                if (await TryHandleSpecialEndpoints(context)) return;
-
-                // Regular endpoint handling
-                using (_activeRequestsCounter.NewContext("Request"))
+                RequestTimings.ClearCurrentTimings();
+                using (context.Response)
                 {
-                    RequestTimings.GetOrCreate(); // initialize request timing context
+                    // Special endpoints should not be logged/measured/traced like regular endpoints
+                    // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
+                    if (await TryHandleSpecialEndpoints(context)) return;
 
-                    string methodName = null;
-                    // Initialize with empty object for protocol backwards-compatibility.
-
-                    var requestData = new HttpServiceRequest { TracingData = new TracingData() };
-                    object[] argumentsWithDefaults=null;
-                    ServiceMethod serviceMethod = null;
-                    ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
-                    try
+                    // Regular endpoint handling
+                    using (_activeRequestsCounter.NewContext("Request"))
                     {
+                        RequestTimings.GetOrCreate(); // initialize request timing context
+
+                        string methodName = null;
+                        // Initialize with empty object for protocol backwards-compatibility.
+
+                        var requestData = new HttpServiceRequest {TracingData = new TracingData()};
+                        object[] argumentsWithDefaults = null;
+                        ServiceMethod serviceMethod = null;
+                        ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                         try
                         {
-                            await CheckSecureConnection(context);
+                            try
+                            {
+                                await CheckSecureConnection(context);
 
-                            ValidateRequest(context);
+                                ValidateRequest(context);
 
-                            requestData = await ParseRequest(context);
-                           
+                                requestData = await ParseRequest(context);
 
-                            //-----------------------------------------------------------------------------------------
-                            // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
-                            //-----------------------------------------------------------------------------------------
-                            TracingContext.SetRequestID(requestData.TracingData.RequestID);
-                            TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
-                            TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
-                            TracingContext.SetParentSpan(requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
-                            TracingContext.SetOverrides(requestData.Overrides);
-                            if (requestData.TracingData.Tags != null)
-                                TracingContext.Tags = new ContextTags(requestData.TracingData.Tags);
-                            TracingContext.AdditionalProperties = requestData.TracingData.AdditionalProperties;
-                            TracingContext.CacheSuppress = requestData.Overrides.SuppressCaching;
 
-                            callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
-                            SetCallEventRequestData(callEvent, requestData);
+                                //-----------------------------------------------------------------------------------------
+                                // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
+                                //-----------------------------------------------------------------------------------------
+                                TracingContext.SetRequestID(requestData.TracingData.RequestID);
+                                TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
+                                TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
+                                TracingContext.SetParentSpan(
+                                    requestData.TracingData.SpanID ?? Guid.NewGuid().ToString("N"));
+                                TracingContext.SetOverrides(requestData.Overrides);
+                                if (requestData.TracingData.Tags != null)
+                                    TracingContext.Tags = new ContextTags(requestData.TracingData.Tags);
+                                TracingContext.AdditionalProperties = requestData.TracingData.AdditionalProperties;
+                                TracingContext.CacheSuppress = requestData.Overrides?.SuppressCaching;
 
-                            serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
-                            callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
-                            methodName = serviceMethod.ServiceInterfaceMethod.Name;
-                            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
-                            argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
+                                callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
+                                SetCallEventRequestData(callEvent, requestData);
+
+                                serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
+                                callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
+                                methodName = serviceMethod.ServiceInterfaceMethod.Name;
+                                var arguments = requestData.Target.IsWeaklyTyped
+                                    ? GetParametersByName(serviceMethod, requestData.Arguments)
+                                    : requestData.Arguments.Values.Cast<object>().ToArray();
+                                argumentsWithDefaults =
+                                    GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
+
+                                callEvent.RecvDateTicks = ticks;
+                                callEvent.ReqStartupDeltaTicks = ticks - startHandleRequestTime;
+                                var outstandingReqs = Interlocked.Read(ref OutstandingRequests);
+                                if (outstandingReqs > 1)
+                                    callEvent.OutstandingRequests = outstandingReqs;
+                            }
+                            catch (Exception e)
+                            {
+                                callEvent.Exception = e;
+                                if (e is RequestException)
+                                    throw;
+
+                                throw new RequestException("Invalid request", e);
+                            }
+
+                            RejectRequestIfLateOrOverloaded();
+
+                            var responseJson = await GetResponse(context, serviceMethod, requestData,
+                                argumentsWithDefaults);
+                            if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
+                            {
+                                callEvent.ErrCode = 0;
+                                _successCounter.Increment();
+                            }
+                            else _failureCounter.Increment();
                         }
                         catch (Exception e)
                         {
-                            callEvent.Exception = e;
-                            if (e is RequestException)
-                                throw;
-
-                            throw new RequestException("Invalid request", e);
+                            callEvent.Exception = callEvent.Exception ?? e;
+                            _failureCounter.Increment();
+                            Exception ex = GetRelevantException(e);
+                            string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
+                            await TryWriteResponse(context, json, GetExceptionStatusCode(ex),
+                                serviceCallEvent: callEvent);
                         }
-
-                        RejectRequestIfLateOrOverloaded();
-
-                        var responseJson = await GetResponse(context, serviceMethod, requestData, argumentsWithDefaults);
-                        if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
+                        finally
                         {
-                            callEvent.ErrCode = 0;
-                            _successCounter.Increment();
+                            sw.Stop();
+                            callEvent.ActualTotalTime = sw.Elapsed.TotalMilliseconds;
+
+                            _roundtripTime.Record((long) (sw.Elapsed.TotalMilliseconds * 1000000),
+                                TimeUnit.Nanoseconds);
+                            if (methodName != null)
+                                _endpointContext.Timer(methodName, Unit.Requests)
+                                    .Record((long) (sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
+
+                            _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                         }
-                        else _failureCounter.Increment();
-                    }
-                    catch (Exception e)
-                    {
-                        callEvent.Exception = callEvent.Exception ?? e;
-                        _failureCounter.Increment();
-                        Exception ex = GetRelevantException(e);
-                        string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
-                        await TryWriteResponse(context, json, GetExceptionStatusCode(ex), serviceCallEvent: callEvent);
-                    }
-                    finally
-                    {
-                        sw.Stop();
-                        callEvent.ActualTotalTime = sw.Elapsed.TotalMilliseconds;
-
-                        _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
-                        if (methodName != null)
-                            _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
-
-                        _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
                 }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref OutstandingRequests);
             }
         }
 

@@ -19,6 +19,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
+
+
 namespace Gigya.Microdot.SharedLogic.Events
 {
     public static class EventConsts
@@ -37,6 +39,8 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string statsTotalTime = "stats.total.time";
         public const string statsServerTime = "stats.server.time";
         public const string statsNetworkTime = "stats.network.time";
+        public const string statsNetworkPostTime = "stats.network.post.time";
+        public const string clientReadResponseTime = "stats.network.read.time";
 
         public const string srvSystem = "srv.system";
         public const string srvService = "srv.service";
@@ -87,5 +91,13 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string siloDeploymentId="silo.deploymentId";
 
         public const string SuppressCaching = "overrides.suppressCaching";
+        
+        public const string statsRetryCount = "debug.retryCount";
+        public const string above10KmsgLength = "debug.above10KmsgLength";
+        public const string isNewClientCreated = "debug.isNewClientCreated";
+        public const string postDateTicks = "debug.post.date.ticks";
+        public const string RecvDateTicks = "debug.recv.date.ticks";
+        public const string ReqStartupDeltaTicks = "debug.reqStartupDelta.ticks";
+        public const string OutstandingRequests = "debug.OutstandingRequests";
     }
 }
