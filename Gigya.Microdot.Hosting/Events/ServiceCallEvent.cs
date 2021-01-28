@@ -87,6 +87,15 @@ namespace Gigya.Microdot.Hosting.Events
 
         public IEnumerable<Param> Params { get; set; }
 
+        [EventField(EventConsts.RecvDateTicks)]
+        public long RecvDateTicks { get; set; }
+
+        [EventField(EventConsts.ReqStartupDeltaTicks)]
+        public long ReqStartupDeltaTicks { get; set; }
+
+        [EventField(EventConsts.OutstandingRequests)]
+        public long? OutstandingRequests { get; set; }
+
         private IEnumerable<KeyValuePair<string, object>> GetRequestParams(Sensitivity sensitivity)
         {
 

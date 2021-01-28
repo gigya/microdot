@@ -41,6 +41,7 @@ namespace Gigya.Microdot.Hosting.Service
     public class MicrodotHostingConfig : IConfigObject
     {
         public bool FailServiceStartOnConfigError = true;
+        public bool TrueFireAndForgetOnOrleansServerReq = false;
     }
 
     public abstract class ServiceHostBase : IDisposable
