@@ -18,7 +18,7 @@ using Shouldly;
 // ReSharper disable ConsiderUsingConfigureAwait (not relevant for tests)
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class AsyncMemoizerRevokesTests
     {
         private const string cacheContextName = "AsyncCache";
@@ -342,7 +342,6 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        [NonParallelizable]
         public async Task MemoizeAsync_RefreshWithIntefiringRevokeShouldNotCacheStaleValue()
         {
             var cache = CreateCache(new OneTimeSynchronousSourceBlock<string>());

@@ -20,7 +20,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class CachingProxyTests
     {
         const string FirstResult  = "First Result";
@@ -189,7 +189,6 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        [NonParallelizable]
         public async Task RevokeBeforeServiceResultReceivedShouldRevokeStaleValue()
         {
             var key = Guid.NewGuid().ToString();
