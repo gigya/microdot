@@ -25,13 +25,14 @@ namespace Gigya.Microdot.UnitTests.Caching
         private const string memoizerContextName = "AsyncMemoizer";
 
         private DateTimeFake TimeFake { get; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
+        private IRecentlyRevokesCache RecentlyRevokesCache { get; set; }
 
         private AsyncCache CreateCache(ISourceBlock<string> revokeSource = null)
         {
-            var revokeCache = Substitute.For<IRecentlyRevokesCache>();
-            revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?) null);
+            RecentlyRevokesCache = Substitute.For<IRecentlyRevokesCache>();
+            RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?) null);
             
-            return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new CacheConfig(), revokeCache);
+            return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new CacheConfig(), RecentlyRevokesCache);
         }
 
         private IMemoizer CreateMemoizer(AsyncCache cache)
@@ -174,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             //Post revoke message, no cache keys should be stored
             revokesSource.PostMessageSynced("revokeKey");
-            cache.CacheKeyCount.ShouldBe(0);
+            cache.CacheKeyCount.ShouldBe(1);
 
             //Should have a single revoke in meter
             GetMetricsData("Revoke").AssertEquals(new MetricsDataEquatable
@@ -185,15 +186,9 @@ namespace Gigya.Microdot.UnitTests.Caching
                 }
             });
 
-            //Should have a single item removed in meter
-            GetMetricsData("Items").AssertEquals(new MetricsDataEquatable
-            {
-                MetersSettings = new MetricsCheckSetting { CheckValues = true },
-                Meters = new List<MetricDataEquatable> {
-                    new MetricDataEquatable {Name = CacheEntryRemovedReason.Removed.ToString(), Unit = Unit.Items, Value = 1},
-                }
-            });
-;
+            //Should not have an item removed in meter as in new behaviour we dont remove items from cache (only on expiry)
+            GetMetricsData("Items").AssertEquals(new MetricsDataEquatable { Meters = new List<MetricDataEquatable>()});
+            
             //Value should change to 6 
             actual = await CallWithMemoize(memoizer, dataSource);
             dataSource.Received(2).ThingifyTaskRevokable("someString");
@@ -208,17 +203,180 @@ namespace Gigya.Microdot.UnitTests.Caching
             dataSource.Received(2).ThingifyTaskRevokable("someString");
             actual.Value.Id.ShouldBe(secondValue);
             cache.CacheKeyCount.ShouldBe(1);
+        }
 
+        [Test]
+        public async Task MemoizeAsync_AfterRefreshRevokeKeysAreAddedToReverseIndexCorrectly()
+        {
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
 
+            var dataSource = Substitute.For<IThingFrobber>();
+            var result1  = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string>{"x"} };
+            var result2  = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string>{"x", "y"} };
+            dataSource.ThingifyTaskRevokable("someString").Returns(result1, result2);
 
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy(refreshTimeSeconds: 0));//refresh in next call
+            cache.RevokeKeysCount.ShouldBe(1);
+            cache.CacheKeyCount.ShouldBe(1);
 
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            cache.CacheKeyCount.ShouldBe(2);
+            cache.RevokeKeysCount.ShouldBe(2);
+        }
+
+        [Test]
+        public async Task MemoizeAsync_AfterRefreshRevokeKeysAreRemovedFromReverseIndexCorrectly()
+        {
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+
+            var dataSource = Substitute.For<IThingFrobber>();
+            var result1 = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string> { "x", "y" } };
+            var result2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x" } };
+            dataSource.ThingifyTaskRevokable("someString").Returns(result1, result2);
+
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy(refreshTimeSeconds: 0));//refresh in next call
+            cache.RevokeKeysCount.ShouldBe(2);
+            cache.CacheKeyCount.ShouldBe(2);
+
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            cache.CacheKeyCount.ShouldBe(1);
+            cache.RevokeKeysCount.ShouldBe(1);
+        }
+
+        [Test]
+        public async Task MemoizeAsync_AfterRefreshRevokeKeysArePreservedInReverseIndexCorrectly()
+        {
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+
+            var dataSource = Substitute.For<IThingFrobber>();
+            var result1 = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string> { "x", "y" } };
+            var result2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x", "y" } };
+            dataSource.ThingifyTaskRevokable("someString").Returns(result1, result2);
+
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy(refreshTimeSeconds: 0));//refresh in next call
+            cache.RevokeKeysCount.ShouldBe(2);
+            cache.CacheKeyCount.ShouldBe(2);
+
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            cache.CacheKeyCount.ShouldBe(2);
+            cache.RevokeKeysCount.ShouldBe(2);
+        }
+
+        [Test]
+        public async Task MemoizeAsync_NotCachedCallWithoutRevokeShouldCacheDataSourceValue()
+        {
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+
+            var dataSourceDelay = 1;
+            var dataSourceResult1 = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string> { "x" } };
+            var dataSource = new ThingFrobber(dataSourceDelay, new List<Revocable<Thing>> { dataSourceResult1 });
+
+            RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
+
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //get cached value
+        }
+
+        [Test]
+        public async Task MemoizeAsync_NotCachedCallWithIntefiringRevokeShouldNotCacheStaleValue()
+        {
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+
+            var dataSourceDelay = 1;
+            var dataSourceResult1 = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string> { "x" } };
+            var dataSourceResult2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x" } };
+            var dataSource = new ThingFrobber(dataSourceDelay, new List<Revocable<Thing>> { dataSourceResult1, dataSourceResult2 });
+
+            //first call to data source will receive a revoke!!!
+            RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns(TimeFake.UtcNow, (DateTime?)null);
+
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value 
+
+            //revoke received while in first call to data source, so value is not cached
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //call trigger a refresh because value is stale and a new data source value is returned
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //cached value is returned
+        }
+
+        [Test]
+        public async Task MemoizeAsync_RefreshWithoutRevokeShouldCacheNewValue()
+        {
+            var revokesSource = new OneTimeSynchronousSourceBlock<string>();
+            var cache = CreateCache(revokesSource);
+            var memoizer = CreateMemoizer(cache);
+
+            var dataSourceDelay = 1;
+            var dataSourceResult1 = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string> { "x" } };
+            var dataSourceResult2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x" } };
+            var dataSource = new ThingFrobber(dataSourceDelay, new List<Revocable<Thing>>{ dataSourceResult1, dataSourceResult2});
+
+            RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
+
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy(refreshTimeSeconds: 0));//refresh in next call
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //refresh triggered in the backround, but cached (old) value is returned
+
+            await Task.Delay(dataSourceDelay + 100); //wait for refresh to finish
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //second data source value returned (refreshed)
+        }
+
+        [Test]
+        public async Task MemoizeAsync_RefreshWithIntefiringRevokeShouldNotCacheStaleValue()
+        {
+            var cache = CreateCache(new OneTimeSynchronousSourceBlock<string>());
+            var memoizer = CreateMemoizer(cache);
+
+            var dataSourceDelay = 1;
+            var dataSourceResult1 = new Revocable<Thing> { Value = new Thing { Id = "result1" }, RevokeKeys = new List<string> { "x" } };
+            var dataSourceResult2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x" } };
+            var dataSourceResult3 = new Revocable<Thing> { Value = new Thing { Id = "result3" }, RevokeKeys = new List<string> { "x" } };
+            var dataSource = new ThingFrobber(dataSourceDelay, new List<Revocable<Thing>> { dataSourceResult1, dataSourceResult2, dataSourceResult3 });
+
+            //second call to data source will receive a revoke!!!
+            RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null, TimeFake.UtcNow, (DateTime?)null);
+
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy(refreshTimeSeconds: 0));//refresh in next call
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //refresh triggered in the backround, but cached (old) value is returned
+
+            //the backround refresh receives revoke while in call to remote service
+
+            await Task.Delay(dataSourceDelay + 100); //wait for refresh to finish
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //another refresh is triggered and its value is returned
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
+            result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //latest refresh value was cached and returned
         }
 
         private async Task<Revocable<Thing>> CallWithMemoize(IMemoizer memoizer, IThingFrobber dataSource)
         {
             return await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetPolicy());
         }
-
 
         private static MetricsData GetMetricsData(string subContext)
         {

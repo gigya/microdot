@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
@@ -51,7 +52,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 revokeListener.RevokeSource = revokeSource;
 
             var revokeCache = Substitute.For<IRecentlyRevokesCache>();
-            revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
+            revokeCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
             return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, revokeListener, () => new CacheConfig(), revokeCache);
         }
@@ -216,7 +217,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 for (int i = 0; i < 10; i++) //10 calls to data source
                 {
                     var task = (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
-                    task.ShouldThrow<EnvironmentException>();
+                    task.ShouldThrow<Exception>();
                 }
             }
 
@@ -329,8 +330,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var refreshTask = new TaskCompletionSource<Thing>();
             var args = new object[] { "someString" };
             string firstValue = "only value";
-         
-
+            
             var dataSource = CreateDataSource(firstValue, refreshTask);
 
             IMemoizer memoizer = CreateMemoizer(CreateCache());
@@ -344,7 +344,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             // Complete refresh task and verify new value
             refreshTask.SetException(new Exception("Boo!!"));
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue); // new value is expected now
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue); 
         }
 
         [Test]
@@ -379,10 +379,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             TimeFake.UtcNow += TimeSpan.FromMilliseconds(failedRefreshDelay.TotalMilliseconds * 0.7);
 
-            // FailedRefreshDelay passed so should trigger refresh.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
-
-            // Second refresh should succeed, should get new value (7);
+            // FailedRefreshDelay passed so should trigger refresh (and get new value)
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(secondValue);
         }
 
@@ -397,31 +394,28 @@ namespace Gigya.Microdot.UnitTests.Caching
             var args = new object[] { "someString" };
 
             var revokeCache = Substitute.For<IRecentlyRevokesCache>();
-            revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
+            revokeCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
 
             // T = 0s. No data in cache, should retrieve value from source (5).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(firstValue);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // T = 2s. Refresh just triggered, should get old value (5).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(firstValue);
+            // T = 2s. TTL passed, verify refreshed value. 
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue);
 
             await Task.Delay(TimeSpan.FromSeconds(0.5));
 
-            // T = 2.5s. Refresh task should have completed by now, verify new value. Should not trigger another refresh.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(secondValue);
+            // T = 2.5s. We're past the original TTL (from T=0s) but not past the refreshed TTL (from T=2s). Should still return secondValue. 
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue); 
 
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // T = 5s. We're past the original TTL (from T=0s) but not past the refreshed TTL (from T=2s). Should still
-            // return the refreshed value (7), not another (9). If (9) was returned, it means the data source was accessed
-            // again, probably because the TTL expired (it shouldn't, every refresh should extend the TTL). This should also
-            // trigger another refresh.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(4, 1))).Id.ShouldBe(secondValue); // new value is expected now
-            
+            // T = 3.5s. Second TTL passed (after it was updated), verify new refreshed value. 
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(lastValue);
+
             dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
         }
 
@@ -438,7 +432,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, refreshTask, secondValue);
 
             var revokeCache = Substitute.For<IRecentlyRevokesCache>();
-            revokeCache.IsRecentlyRevoked(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
+            revokeCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
 

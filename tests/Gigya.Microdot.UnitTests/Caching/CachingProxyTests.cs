@@ -32,6 +32,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         private ICachingTestService _serviceMock;
         private DateTime _now;
         private string _serviceResult;
+        private bool _delayResponse;
         private ICacheRevoker _cacheRevoker;
         private Task _revokeDelay;
         private IRevokeListener _revokeListener;
@@ -71,7 +72,16 @@ namespace Gigya.Microdot.UnitTests.Caching
         private void SetupServiceMock()
         {             
             _serviceMock = Substitute.For<ICachingTestService>();
-            _serviceMock.CallService().Returns(_ => Task.FromResult(_serviceResult));
+            _serviceMock.CallService().Returns(_ =>
+            {
+                if (_delayResponse)
+                {
+                    _delayResponse = false;
+                    return Task.Delay(1).ContinueWith(t => _serviceResult);
+                }
+                else
+                    return Task.FromResult(_serviceResult);
+            });
             _serviceMock.CallRevocableService(Arg.Any<string>()).Returns(async s =>
             {
                 var result = _serviceResult;
@@ -135,6 +145,27 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        public async Task CallWhileRefreshShouldReturnOldValueAndAfterRefreshTheNewValue()
+        {
+            TimeSpan expectedRefreshTime = TimeSpan.FromSeconds(10);
+            await SetCachingPolicyConfig(new[] { "RefreshTime", expectedRefreshTime.ToString() });
+
+            var result = await _proxy.CallService();
+            result.ShouldBe(FirstResult); 
+
+            _now += expectedRefreshTime;
+            _serviceResult = SecondResult;
+            _delayResponse = true;
+            result = await _proxy.CallService(); //trigger a refresh, but until it will finish, return old result
+            result.ShouldBe(FirstResult);
+
+            await Task.Delay(100); //wait for refresh to end
+
+            result = await _proxy.CallService();
+            result.ShouldBe(SecondResult); //refreshed value should be returned
+        }
+
+        [Test]
         public async Task CachingRefreshTimeByMethodConfiguration()
         {
             TimeSpan expectedRefreshTime = TimeSpan.FromSeconds(10);
@@ -158,7 +189,6 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        [Ignore("missing feature. This behavior is not supported yet. Should be fixed in the future")]
         public async Task RevokeBeforeServiceResultReceivedShouldRevokeStaleValue()
         {
             var key = Guid.NewGuid().ToString();
