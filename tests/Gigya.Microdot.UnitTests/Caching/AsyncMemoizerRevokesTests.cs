@@ -342,6 +342,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        [NonParallelizable]
         public async Task MemoizeAsync_RefreshWithIntefiringRevokeShouldNotCacheStaleValue()
         {
             var cache = CreateCache(new OneTimeSynchronousSourceBlock<string>());

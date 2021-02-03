@@ -189,6 +189,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        [NonParallelizable]
         public async Task RevokeBeforeServiceResultReceivedShouldRevokeStaleValue()
         {
             var key = Guid.NewGuid().ToString();
