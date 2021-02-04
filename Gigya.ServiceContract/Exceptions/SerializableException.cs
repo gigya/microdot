@@ -27,6 +27,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
 using System.Text;
 using Gigya.ServiceContract.Exceptions;
 
@@ -122,11 +123,11 @@ namespace Gigya.Common.Contracts.Exceptions
 		/// A read-only dictionary of tags that must be encrypted when stored. They are, however, serialized (and
 		/// therefore transmitted) without encryption.
 		/// </summary>
-		public IReadOnlyDictionary<string, string> EncryptedTags { get; private set; }
+		public IDictionary<string, string> EncryptedTags { get; private set; }
 		/// <summary>
 		/// A read-only dictionary of tags that needn't be encrypted when stored.
 		/// </summary>
-		public IReadOnlyDictionary<string, string> UnencryptedTags { get; private set; }
+		public IDictionary<string, string> UnencryptedTags { get; private set; }
 
 		/// <summary>
 		/// A read-only dictionary of property values that failed to deserialize into a matching property (either
@@ -134,9 +135,11 @@ namespace Gigya.Common.Contracts.Exceptions
 		/// key is the name of the serialized property and the value is the 
 		/// serialized property's value.
 		/// </summary>
-		public IReadOnlyDictionary<string, object> ExtendedProperties => new ReadOnlyDictionary<string, object>(_extendedProperties);
+		// note: no need to create new object each time we access the property
+		public IReadOnlyDictionary<string, object> ExtendedProperties => _extendedProperties;
 
-        public IReadOnlyList<Breadcrumb> Breadcrumbs => new ReadOnlyCollection<Breadcrumb>(_breadcrumbs);
+        // note: no need to create new object each time we access the property
+        public IReadOnlyList<Breadcrumb> Breadcrumbs => _breadcrumbs;
 
 	    /// <summary>
         /// Initializes a new instance of the <see cref="SerializableException"/> class with a specified error message
@@ -150,11 +153,8 @@ namespace Gigya.Common.Contracts.Exceptions
         /// about the exception, which needn't be encrypted when stored.</param>
         protected SerializableException(string message, Exception innerException = null, Tags encrypted = null, Tags unencrypted = null) : base(message, innerException)
 		{
-			if (encrypted != null && encrypted.Any())
-				EncryptedTags = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(encrypted));
-
-			if (unencrypted != null && unencrypted.Any())
-				UnencryptedTags = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(unencrypted));
+            EncryptedTags = encrypted;
+			UnencryptedTags = unencrypted;
 
 			_extendedProperties = new Dictionary<string, object>();
             _breadcrumbs = new Breadcrumb[0];
@@ -186,11 +186,11 @@ namespace Gigya.Common.Contracts.Exceptions
 		        _extendedProperties.Add(extendedPropertiesNames[i], extendedPropertiesValues[i]);
 
             _extendedProperties.TryGetValue(nameof(EncryptedTags), out object tags);
-            EncryptedTags = tags as IReadOnlyDictionary<string, string>;
+            EncryptedTags = tags as IDictionary<string, string>;
 		    _extendedProperties.Remove(nameof(EncryptedTags));
 
             _extendedProperties.TryGetValue(nameof(UnencryptedTags), out tags);
-            UnencryptedTags = tags as IReadOnlyDictionary<string, string>;
+            UnencryptedTags = tags as IDictionary<string, string>;
             _extendedProperties.Remove(nameof(UnencryptedTags));
 
             var properties = GetProperties().ToDictionary(p => p.Name);
@@ -268,6 +268,7 @@ namespace Gigya.Common.Contracts.Exceptions
         /// </summary>
         /// <returns>A <see cref="Dictionary{TKey,TValue}"/> where the key, of type <see cref="string"/>, is the name of
         ///  the property and the value, of type <see cref="object"/>, is the property value.</returns>
+        /// <remarks>this is a reflection based call and it is VERY EXPENSIVE</remarks>
         public Dictionary<string, object> GetCustomAndExtendedProperties()
         {
             var properties = new Dictionary<string, object>(_extendedProperties);
