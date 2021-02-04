@@ -142,13 +142,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                         var cacheItem = ((AsyncCacheItem) MemoryCache.Get(cacheKey));
 
                         if (cacheItem != null)
-                        {
-                            lock (cacheItem.Lock)
-                            {
-                                cacheItem.IsStale = true; //must not be inside cacheKeys lock (to prevent deadlock)
-                            }
-                        }
-
+                            cacheItem.IsStale = 1; 
                     }
                     
                     Revokes.Meter("Succeeded", Unit.Events).Mark();
@@ -233,13 +227,15 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                         try
                         {
                             if (t.Result.isRecentlyRevoked)
-                                lock (newItem.Lock)
-                                    newItem.IsStale = true;
+                                newItem.IsStale = 1;
 
                             return t.Result.value;
                         }
                         catch (AggregateException e) 
                         {
+                            lock (newItem.Lock)
+                                newItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
+
                             throw e.InnerExceptions?.FirstOrDefault() ?? e;
                         }
                     });
@@ -260,15 +256,20 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     // thread (which was the first to add from 'newItem', for subsequent threads it will be 'existingItem').
                     lock (existingItem.Lock)
                     {
+                        //TODO:if MC contains new item then return newItem.currentValuetask???
+
                         var cacheSuppress = TracingContext.CacheSuppress;
                         var shouldSuppressCache = cacheSuppress != null && 
                                                  (cacheSuppress == CacheSuppress.UpToNextServices ||
                                                   cacheSuppress == CacheSuppress.RecursiveAllDownstreamServices);
 
+                        //we want that only one thread will try to fetch a new value (by triggering refreshtask)
+                        var isStale = Interlocked.CompareExchange(ref existingItem.IsStale, 0, 1) == 1;
+                        var shouldRefresh = (DateTime.UtcNow >= existingItem.NextRefreshTime) && 
+                                            (existingItem.RefreshTask == null || existingItem.RefreshTask.IsCompleted);
+
                         // Start refresh if an existing refresh isn't in progress and we've passed the next refresh time.
-                        if (   (shouldSuppressCache || existingItem.IsStale || existingItem.CurrentValueTask.IsFaulted)
-                            || (   (DateTime.UtcNow >= existingItem.NextRefreshTime) 
-                                && (existingItem.RefreshTask == null || existingItem.RefreshTask.IsCompleted)))
+                        if (shouldSuppressCache || isStale || shouldRefresh)
                         {
                             existingItem.RefreshTask = ((Func<Task<object>>)(async () =>
                                 {
@@ -282,20 +283,35 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                             {
                                                 existingItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
                                                 existingItem.CurrentValueTask = Task.FromResult(value);
-                                                MemoryCache.Set(new CacheItem(key, existingItem), policy); //ItemRemovedCallback will be called with Reason=Removed
+                                                MemoryCache.Set(new CacheItem(key, existingItem), policy); //In order to extend expiration ; ItemRemovedCallback will be called with Reason=Removed
                                             }
                                             else
-                                                existingItem.IsStale = true;
+                                                existingItem.IsStale = 1;
                                         }
 
                                         return value;
                                     }
-                                    catch (Exception e) //do not cache exceptions (we explicitly dont want to cache also RequestException because there are 
-                                    {                   //cases of temporal exception, like a get of a just created item, that still not exist because of rc)
+                                    //new behaviour
+                                    //4xx errors (RequestException) are valid responses that should be cached
+                                    //4xx errors can sometime occur due to temporary rc (e.g. get that was sent before create causing a 404 error)
+                                    //therefore, to be on the safe side we dont want cache 4xx errors as long as a non error response and use a shorter refresh time (FailedRefreshDelay)
+                                    catch (RequestException e) 
+                                    {
+                                        lock (existingItem.Lock)
+                                        {
+                                            existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
+                                            existingItem.CurrentValueTask = Task.FromException<object>(e); 
+                                            MemoryCache.Set(new CacheItem(key, existingItem), policy); //In order to extend expiration ; ItemRemovedCallback will be called with Reason=Removed
+                                        }
+
+                                        throw;
+                                    }
+                                    catch (Exception e) //do not cache exceptions
+                                    {                   
                                         lock (existingItem.Lock)
                                         {
                                             //TODO: not sure about this delay, because we will return cached value after ttl,
-                                            //but probably it exist so we wont attack remote service which may be overloaded or suffering issues 
+                                            //TODO: but probably it exist so we wont attack remote service which may be overloaded or suffering issues 
                                             existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
                                         }
 
@@ -308,12 +324,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             existingItem.RefreshTask.ContinueWith(t => { var ignored = t.Exception; }); 
                         }
 
-                        //TODO: test existingItem.CurrentValueTask.IsFaulted logic in different exception flows
-                        if (existingItem.IsStale || existingItem.CurrentValueTask.IsFaulted) //return new fetched value and update cache (so stale cache value will not be returned)
+                        if (isStale) //return new fetched value and update cache (so stale cache value will not be returned)
                         {
                             resultTask = existingItem.RefreshTask;
                             existingItem.CurrentValueTask = existingItem.RefreshTask;
-                            existingItem.IsStale = false; //we want that only one thread will try to fetch a new value (in refreshtask)
                         }
                         else if (shouldSuppressCache) //return new fetched value and ignore cache
                             resultTask = existingItem.RefreshTask;

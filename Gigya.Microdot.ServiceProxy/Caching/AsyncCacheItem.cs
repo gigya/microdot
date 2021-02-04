@@ -31,7 +31,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         public DateTime NextRefreshTime { get; set; }
         public Task<object> CurrentValueTask { get; set; }
         public Task<object> RefreshTask { get; set; }
-        public bool IsStale { get; set; } //In the future we will want to return current value even if its stale (configurable)
+        public int IsStale = 0; //In the future we will want to return current value even if its stale (configurable)
 
         /// <summary>
         /// Group name of this cache item (e.g. method name). 
