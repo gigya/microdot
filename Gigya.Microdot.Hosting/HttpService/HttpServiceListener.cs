@@ -330,7 +330,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                                     callEvent.TimeFromLastReq = timeFromLastReq;
                                     var outstandingReqs = Interlocked.Read(ref OutstandingRequests);
                                     callEvent.OutstandingRequests = outstandingReqs;
-                                    if (deltaDelayTicks > 1000)
+                                    if (deltaDelayTicks > 10_000_000)
                                     {
                                         callEvent.CollectionCountGen0 = GC.CollectionCount(0);
                                         callEvent.CollectionCountGen1 = GC.CollectionCount(1);
