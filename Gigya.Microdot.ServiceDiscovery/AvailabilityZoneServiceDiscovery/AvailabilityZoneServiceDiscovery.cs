@@ -122,7 +122,9 @@ namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
                     {
                         modifyIndex = response.ModifyIndex ?? 0;
                         await SetDeploymentIdentifierAsync(response.ResponseObject, _disposeCancellationToken);
-                        _initialReadZonesTask.TrySetResult(default);
+                        
+                        if (Info.StatusCode == AvailabilityZoneInfo.StatusCodes.Ok)
+                            _initialReadZonesTask.TrySetResult(default);
                     }
                 }
                 catch (Exception e)
