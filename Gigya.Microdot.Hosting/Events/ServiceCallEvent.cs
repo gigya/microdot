@@ -93,6 +93,9 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.ReqStartupDeltaTicks)]
         public long ReqStartupDeltaTicks { get; set; }
 
+        [EventField(EventConsts.TimeFromLastReq)]
+        public long TimeFromLastReq { get; set; }
+
         [EventField(EventConsts.OutstandingRequests)]
         public long? OutstandingRequests { get; set; }
 

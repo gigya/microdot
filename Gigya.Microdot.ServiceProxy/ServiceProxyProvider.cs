@@ -218,7 +218,7 @@ namespace Gigya.Microdot.ServiceProxy
                 {
                     isNewCreated = true;
                     var equalState = (LastHttpClientKey?.Equals(httpKey))?.ToString() ?? "FirstTime";
-                    Log.Info(msg => msg($"GetHttpClient created new HttpClient (isEqual={equalState})")); // we expect this not to be equal ever
+                    Log.Info(msg => msg($"DelayDebug : GetHttpClient created new HttpClient (isEqual={equalState})")); // we expect this not to be equal ever
 
                     var messageHandler = _httpMessageHandlerFactory(httpKey);
                     var httpClient = CreateHttpClient(messageHandler, httpKey.Timeout);
@@ -264,7 +264,7 @@ namespace Gigya.Microdot.ServiceProxy
 
                 lock (HttpClientLock)
                 {
-                    Log.Info(msg => msg($"ValidateReachability created new Https HttpClient (isEqual={LastHttpClient.Equals(httpsClient)})")); // we expect this not to be equal ever
+                    Log.Info(msg => msg($"DelayDebug : ValidateReachability created new Https HttpClient (isEqual={LastHttpClient.Equals(httpsClient)})")); // we expect this not to be equal ever
 
                     LastHttpClient = httpsClient;
                     LastHttpClientKey = new HttpClientConfiguration(
