@@ -110,7 +110,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly MetricsContext _endpointContext;
         private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
         private TaskCompletionSource<int> _ReadyToGetTraffic = new TaskCompletionSource<int>();
-        private readonly bool _extendedDelayTimeLogging;
+        private readonly bool _extendedDelayTimeLogging = false;
 
         public void StartGettingTraffic()
         {
@@ -266,12 +266,6 @@ namespace Gigya.Microdot.Hosting.HttpService
             try
             {
                 var deltaDelayTicks = DateTime.UtcNow.Ticks - ticks;
-
-                if (_extendedDelayTimeLogging && deltaDelayTicks > 1000)
-                {
-                    
-                }
-
                 var sw = Stopwatch.StartNew();
                 RequestTimings.ClearCurrentTimings();
                 using (context.Response)
@@ -336,6 +330,12 @@ namespace Gigya.Microdot.Hosting.HttpService
                                     callEvent.TimeFromLastReq = timeFromLastReq;
                                     var outstandingReqs = Interlocked.Read(ref OutstandingRequests);
                                     callEvent.OutstandingRequests = outstandingReqs;
+                                    if (deltaDelayTicks > 1000)
+                                    {
+                                        callEvent.CollectionCountGen0 = GC.CollectionCount(0);
+                                        callEvent.CollectionCountGen1 = GC.CollectionCount(1);
+                                        callEvent.CollectionCountGen2 = GC.CollectionCount(2);
+                                    }
                                 }
                             }
                             catch (Exception e)
