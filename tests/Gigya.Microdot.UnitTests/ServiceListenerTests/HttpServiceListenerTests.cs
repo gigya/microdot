@@ -39,6 +39,7 @@ using RichardSzalay.MockHttp;
 
 using Shouldly;
 using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Hosting.Service;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -290,7 +291,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new CurrentApplicationInfo(
                         nameof(HttpServiceListenerTests),
                         Environment.UserName,
-                        System.Net.Dns.GetHostName())
+                        System.Net.Dns.GetHostName()),
+                    () => new MicrodotHostingConfig()
                 ))
                 {
                     listener.Start();
@@ -330,7 +332,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     new CurrentApplicationInfo(
                         nameof(HttpServiceListenerTests),
                         Environment.UserName,
-                        System.Net.Dns.GetHostName())));
+                        System.Net.Dns.GetHostName()),
+                    () => new MicrodotHostingConfig()));
 
                 certificateLocator.Received(1).GetCertificate("Service");
             }

@@ -93,8 +93,20 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.ReqStartupDeltaTicks)]
         public long ReqStartupDeltaTicks { get; set; }
 
+        [EventField(EventConsts.TimeFromLastReq)]
+        public long TimeFromLastReq { get; set; }
+
         [EventField(EventConsts.OutstandingRequests)]
         public long? OutstandingRequests { get; set; }
+
+        [EventField(EventConsts.CollectionCountGen0)]
+        public int? CollectionCountGen0 { get; set; }
+
+        [EventField(EventConsts.CollectionCountGen1)]
+        public int? CollectionCountGen1 { get; set; }
+
+        [EventField(EventConsts.CollectionCountGen2)]
+        public int? CollectionCountGen2 { get; set; }
 
         private IEnumerable<KeyValuePair<string, object>> GetRequestParams(Sensitivity sensitivity)
         {
