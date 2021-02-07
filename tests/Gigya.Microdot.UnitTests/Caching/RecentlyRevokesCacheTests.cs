@@ -15,12 +15,12 @@ namespace Gigya.Microdot.UnitTests.Caching
     [TestFixture]
     public class RecentlyRevokesCacheTests
     {
-        private IRecentlyRevokesCache RecentlyRevokesCache { get; set; }
+        private IRecentRevokesCache RecentlyRevokesCache { get; set; }
 
         [SetUp]
         public void SetUp()
         {
-            RecentlyRevokesCache = new RecentlyRevokesCache(Substitute.For<ILog>(),
+            RecentlyRevokesCache = new RecentRevokesCache(Substitute.For<ILog>(),
                 Metric.Context("RecentlyRevokesCache"), () => new CacheConfig
                 {
                     DontCacheRecentlyRevokedResponses = true,

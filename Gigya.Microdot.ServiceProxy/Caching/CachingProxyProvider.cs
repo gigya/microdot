@@ -92,7 +92,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);
 
             if (useCache)
-                return Memoizer.Memoize(DataSource, targetMethod, args, new CacheItemPolicyEx(config));
+                return Memoizer.Memoize(DataSource, targetMethod, args, config);
             else
                 return targetMethod.Invoke(DataSource, args);
         }

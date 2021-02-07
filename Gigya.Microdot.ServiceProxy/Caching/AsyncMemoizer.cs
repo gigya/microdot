@@ -26,8 +26,8 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
 
@@ -53,7 +53,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        public object Memoize(object dataSource, MethodInfo method, object[] args, CacheItemPolicyEx policy)
+        public object Memoize(object dataSource, MethodInfo method, object[] args, IMethodCachingSettings settings)
         {
             if (dataSource == null) throw new ArgumentNullException(nameof(dataSource));
             if (method == null) throw new ArgumentNullException(nameof(method));
@@ -67,7 +67,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var target = new InvocationTarget(method, method.GetParameters());
             string cacheKey = $"{target}#{GetArgumentHash(args)}";
             
-            return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(dataSource, args), taskResultType, policy, target.MethodName, string.Join(",", args), new []{target.TypeName, target.MethodName});
+            return Cache.GetOrAdd(cacheKey, () => (Task)method.Invoke(dataSource, args),
+                taskResultType, new[] { target.TypeName, target.MethodName }, settings);
         }
 
 

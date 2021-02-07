@@ -46,24 +46,34 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             DefaultItem = new MethodCachingPolicyConfig
             {
                 Enabled = Enabled ?? Default.Enabled,
-                ExpirationTime = ExpirationTime ?? Default.ExpirationTime,
-                FailedRefreshDelay = FailedRefreshDelay ?? Default.FailedRefreshDelay,
-                RefreshTime = RefreshTime ?? Default.RefreshTime
             };
+            Merge(Default, this);
         
             var methods = (IDictionary<string, MethodCachingPolicyConfig>)Methods ?? new Dictionary<string, MethodCachingPolicyConfig>();
 
             Methods = new CachingPolicyCollection(methods, DefaultItem);
         }
 
-        public static MethodCachingPolicyConfig Default =>
-                new MethodCachingPolicyConfig
-                {
-                    Enabled = true,
-                    RefreshTime = TimeSpan.FromMinutes(1),
-                    ExpirationTime = TimeSpan.FromHours(6),
-                    FailedRefreshDelay = TimeSpan.FromSeconds(1)
-                };
+        public readonly static MethodCachingPolicyConfig Default = new MethodCachingPolicyConfig
+        {
+            // For Revocable<>:
+            // RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus (RefreshMode.UseRefreshes otherwise)
+            // ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache
+
+            Enabled = true,
+            RefreshTime = TimeSpan.FromMinutes(1),
+            ExpirationTime = TimeSpan.FromHours(6),
+            FailedRefreshDelay = TimeSpan.FromSeconds(1),
+            ResponseKindsToCache  = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
+            ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
+            RefreshTimeInMinutes = 1,
+            ExpirationTimeInMinutes = 360,
+            FailedRefreshDelayInSeconds = 1,
+            UseRequestGrouping = true,
+            RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
+            RevokedResponseBehavior = RevokedResponseBehavior.TryFetchNewValueNextTime,
+            CacheResponsesWhenCacheWasSupressed = true,
+        };
 
     }
 }

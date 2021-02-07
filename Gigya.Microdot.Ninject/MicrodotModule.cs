@@ -109,7 +109,7 @@ namespace Gigya.Microdot.Ninject
                 return clientHandler;
             });
             Kernel.BindPerString<IServiceProxyProvider, ServiceProxyProvider>();
-            Kernel.Rebind<IRecentlyRevokesCache>().To<RecentlyRevokesCache>().InSingletonScope();
+            Kernel.Rebind<IRecentRevokesCache>().To<RecentRevokesCache>().InSingletonScope();
             Kernel.BindPerString<AggregatingHealthStatus>();
 
             Rebind<MetricsContext>()

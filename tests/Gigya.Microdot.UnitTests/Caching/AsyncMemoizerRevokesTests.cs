@@ -25,11 +25,11 @@ namespace Gigya.Microdot.UnitTests.Caching
         private const string memoizerContextName = "AsyncMemoizer";
 
         private DateTimeFake TimeFake { get; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
-        private IRecentlyRevokesCache RecentlyRevokesCache { get; set; }
+        private IRecentRevokesCache RecentlyRevokesCache { get; set; }
 
         private AsyncCache CreateCache(ISourceBlock<string> revokeSource = null)
         {
-            RecentlyRevokesCache = Substitute.For<IRecentlyRevokesCache>();
+            RecentlyRevokesCache = Substitute.For<IRecentRevokesCache>();
             RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?) null);
             
             return new AsyncCache(new ConsoleLog(), Metric.Context(cacheContextName), TimeFake, new EmptyRevokeListener { RevokeSource = revokeSource }, ()=>new CacheConfig(), RecentlyRevokesCache);

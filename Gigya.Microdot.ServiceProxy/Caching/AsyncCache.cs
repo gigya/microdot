@@ -25,7 +25,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Caching;
 using System.Runtime.Caching.Hosting;
 using System.Threading;
@@ -37,53 +36,72 @@ using Metrics;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.Utils;
+using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
 
     public sealed class AsyncCache : IMemoryCacheManager, IServiceProvider, IDisposable
     {
+        // Main data structures:
+
+        // 1. The main cache that maps a cache key to an actual cached response. Some responses may contain revoke keys.
+        //    We use MemoryCache and not a ConcurrentDictionary since it has some nice features like approximating its
+        //    RAM usage and evicting items when there's RAM pressure.
+        private MemoryCache MemoryCache { get; set; } // maps cache key --> AsyncCacheItem that contains the response.
+                                                      // Note that we may cache null responses (as per caching settings).
+
+        // 2. The list of requests in progress. We optionally group concurrent incoming requests for the same item to a single outgoing
+        //    request to the service, to reduce load on the target service. Each request returns a tuple with "Ok" denoting whether the
+        //    response should be cached as per the caching settings for the method being called.
+        private ConcurrentDictionary<string, Lazy<Task<object>>> RequestsInProgress
+            = new ConcurrentDictionary<string, Lazy<Task<object>>>();
+
+        // 3. A "reverse index" that maps revoke keys to items in the MemoryCache above. When we receive a revoke message,
+        //    we look up that index, find the relevant items in the main cache and remove them or mark them as stale.
+        //    Similarly, when an item is removed from the MemoryCache, we remove matching reverse index entries.
+        //    The MemoryCache and the reverse index MUST be kept in sync, otherwise we might miss revokes or have a memory leak.
+        private ConcurrentDictionary<string /* revoke key */, HashSet<AsyncCacheItem>> RevokeKeyToCacheItemsIndex
+            = new ConcurrentDictionary<string, HashSet<AsyncCacheItem>>();
+
+        // 4. A "reverse index" that keeps track of recent revoke messages. When we get a response from a service, in case
+        //    it contains a revoke key that was revoked after having sent the request to the service, we consider the response
+        //    stale. This is needed since we can't know ahead of time what revoke keys a response will contain.
+        private IRecentRevokesCache RecentRevokesCache { get; set; }
+
+
         private IDateTime DateTime { get; }
-        private Func<CacheConfig> GetRevokeConfig { get; }
         private ILog Log { get; }
-        private MemoryCache MemoryCache { get; set; }
         private long LastCacheSizeBytes { get; set; }
         private MetricsContext Metrics { get; }
-        private IRecentlyRevokesCache RecentlyRevokeCache { get; set; }
-
-        private ConcurrentDictionary<string, HashSet<string>> RevokeKeyToCacheKeysIndex { get; set; } = new ConcurrentDictionary<string, HashSet<string>>();
 
         private MetricsContext Hits { get; set; }
         private MetricsContext Misses { get; set; }
         private MetricsContext JoinedTeam { get; set; }
         private MetricsContext AwaitingResult { get; set; }
         private MetricsContext Failed { get; set; }
-        private Counter ClearCache { get; set; }
 
         private MetricsContext Items { get; set; }
-        private MetricsContext Revokes { get; set; }
 
         private IDisposable RevokeDisposable { get; }
         private const double MB = 1048576.0;
         private int _clearCount;
 
-        public int RevokeKeysCount => RevokeKeyToCacheKeysIndex.Count;
+        public int RevokeKeysCount => RevokeKeyToCacheItemsIndex.Count;
 
         /// <summary>
         /// Not thread safe used for testing
         /// </summary>
-        internal int CacheKeyCount => RevokeKeyToCacheKeysIndex.Sum(item => item.Value.Count);
+        internal int CacheKeyCount => RevokeKeyToCacheItemsIndex.Sum(item => item.Value.Count);
 
         private static long oneTime = 0;
 
         public AsyncCache(ILog log, MetricsContext metrics, IDateTime dateTime, IRevokeListener revokeListener, 
-                          Func<CacheConfig> getRevokeConfig, IRecentlyRevokesCache revokeCache)
+                          IRecentRevokesCache revokeCache)
         {
             DateTime = dateTime;
-            GetRevokeConfig = getRevokeConfig;
             Log = log;
-            RecentlyRevokeCache = revokeCache;
+            RecentRevokesCache = revokeCache;
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ObjectCache.Host == null
@@ -102,67 +120,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             RevokeDisposable = revokeListener.RevokeSource.LinkTo(onRevoke);
         }
 
-        private Task OnRevoke(string revokeKey)
-        {
-            if (string.IsNullOrEmpty(revokeKey))
-            {
-                Log.Warn("Error while revoking cache, revokeKey can't be null");
-                return Task.FromResult(false);
-            }
-
-            RecentlyRevokeCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
-
-            var shouldLog = GetRevokeConfig().LogRevokes;
-
-            try
-            {    
-                if (shouldLog)
-                    Log.Info(x=>x("Revoke request received", unencryptedTags: new {revokeKey}));
-
-                if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out HashSet<string>  cacheKeys))
-                {
-                    string[] arrayOfCacheKeys = null;
-					
-                    lock (cacheKeys)
-                    {						
-                        arrayOfCacheKeys = cacheKeys.ToArray(); // To prevent iteration over modified collection.
-                    }
-
-                    //race condition situation may happen, in which a key was added (in other thread) to cacheKeys after ToArray,
-                    //and revoke will not be applied. this rc WILL BE RESOLVED by the recently revoke mechanism
-
-                    if (shouldLog && arrayOfCacheKeys.Length==0)
-                       Log.Info(x => x("There is no CacheKey to Revoke", unencryptedTags: new { revokeKey }));
-
-                    foreach (var cacheKey in arrayOfCacheKeys)
-                    {
-                        if (shouldLog)
-                            Log.Info(x => x("Revoking cacheKey", unencryptedTags: new { revokeKey, cacheKey }));
-
-                        var cacheItem = ((AsyncCacheItem) MemoryCache.Get(cacheKey));
-
-                        if (cacheItem != null)
-                            cacheItem.IsStale = 1; 
-                    }
-                    
-                    Revokes.Meter("Succeeded", Unit.Events).Mark();
-                }
-                else
-                {
-                    if (shouldLog)
-                        Log.Info(x => x("Key is not cached. No revoke is needed", unencryptedTags: new { revokeKey }));
-
-                    Revokes.Meter("Discarded", Unit.Events).Mark();
-                }                
-            }
-            catch (Exception ex)
-            {
-                Revokes.Meter("Failed", Unit.Events).Mark();
-                Log.Warn("Error while revoking cache", exception: ex, unencryptedTags: new {revokeKey});
-            }
-            return Task.FromResult(true);
-        }
-
 
         private void InitMetrics()
         {
@@ -171,11 +128,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Metrics.Gauge("Entries", () => MemoryCache.GetCount(), Unit.Items);
             Metrics.Gauge("SizeLimit", () => MemoryCache.CacheMemoryLimit / MB, Unit.MegaBytes);
             Metrics.Gauge("RamUsageLimit", () => MemoryCache.PhysicalMemoryLimit, Unit.Percent);
-            Metrics.Gauge("ReverseIndexEntries", () => RevokeKeyToCacheKeysIndex.Count, Unit.Items);
+            Metrics.Gauge("ReverseIndexEntries", () => RevokeKeyToCacheItemsIndex.Count, Unit.Items);
+            Metrics.Gauge("ReverseIndexEntriesAndValues", () => RevokeKeyToCacheItemsIndex.Values.Sum(hash => hash.Count), Unit.Items);
+            Metrics.Gauge("RequestsInProgress", () => RequestsInProgress.Count, Unit.Items);
 
             // Counters
             AwaitingResult = Metrics.Context("AwaitingResult");
-            ClearCache = Metrics.Counter("ClearCache", Unit.Calls);
 
             // Meters
             Hits = Metrics.Context("Hits");
@@ -184,390 +142,288 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Failed = Metrics.Context("Failed");
 
             Items = Metrics.Context("Items");
-            Revokes = Metrics.Context("Revoke");
         }
 
 
-        public Task GetOrAdd(string key, Func<Task> factory, Type taskResultType, CacheItemPolicyEx policy, string groupName, string logData, string[] metricsKeys)
+        public Task GetOrAdd(string key, Func<Task> serviceMethod, Type taskResultType, string[] metricsKeys, IMethodCachingSettings settings)
         {
-            var getValueTask = GetOrAdd(key, () => TaskConverter.ToWeaklyTypedTask(factory(), taskResultType), policy, groupName, logData, metricsKeys, taskResultType);
+            // TBD: check is Task.Run() is actually needed; do we get here with Grain task scheduler?
+            var getValueTask = Task.Run(() => GetOrAdd(key, () =>
+                TaskConverter.ToWeaklyTypedTask(serviceMethod(), taskResultType), metricsKeys, settings));
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
         }
 
-        private Task<object> GetOrAdd(string key, Func<Task<object>> factory, CacheItemPolicyEx policy, string groupName, string logData, string[] metricsKeys, Type taskResultType)
+
+        private async Task<object> GetOrAdd(string key, Func<Task<object>> serviceMethod, string[] metricsKeys, IMethodCachingSettings settings)
         {
-            var shouldLog = ShouldLog(groupName);
+            AsyncCacheItem cached;
+            Task<object> MarkHitAndReturnValue(Task<object> obj) { Hits.Mark(metricsKeys); return obj; }
 
-            var newItem = shouldLog ? 
-                new AsyncCacheItem {GroupName =  string.Intern(groupName), LogData = logData} : 
-                new AsyncCacheItem (); // if log is not needed, then do not cache unnecessary details which will blow up the memory
+            // In case caching is suppressed, we don't try to obtain an existing value from the cache, or even wait on an existing request
+            // in progress. Meaning we potentially issue multiple concurrent calls to the service (no request grouping).
+            if (   TracingContext.CacheSuppress == CacheSuppress.UpToNextServices
+                || TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices)
 
-            Task<object> resultTask;
-            // Taking a lock on the newItem in case it actually becomes the item in the cache (if no item with that key
-            // existed). For another thread, it will be returned into the existingItem variable and will block on the
-            // second lock, preventing concurrent mutation of the same object.
-            lock (newItem.Lock)
-            {
-                if (typeof(IRevocable).IsAssignableFrom(taskResultType))
-                    policy.RemovedCallback += ItemRemovedCallback;
-                
-                // Surprisingly, when using MemoryCache.AddOrGetExisting() where the item doesn't exist in the cache,
-                // null is returned.
-                var existingItem = (AsyncCacheItem)MemoryCache.AddOrGetExisting(key, newItem, policy);
-                
-                if (existingItem == null)
-                {
-                    Misses.Mark(metricsKeys);
-                    AwaitingResult.Increment(metricsKeys);
-                    var requestTask = ExecuteRemoteRequest(key, factory, groupName, logData, metricsKeys, shouldLog, newItem);
+                // If the caching settings specify we shouldn't cache responses when suppressed, then don't.
+                if (!settings.CacheResponsesWhenCacheWasSupressed)
+                    return await CallService(serviceMethod, metricsKeys);
 
-                    newItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
-                    newItem.CurrentValueTask = requestTask.ContinueWith<object>(t =>
-                    {
-                        try
-                        {
-                            if (t.Result.isRecentlyRevoked)
-                                newItem.IsStale = 1;
+                // ...otherwise we do put the repsonse in the cache so that subsequent calls to the cache do not revert to the previously-cached value.
+                else return await TryFetchNewValue(key, serviceMethod, settings, metricsKeys);
 
-                            return t.Result.value;
-                        }
-                        catch (AggregateException e) 
-                        {
-                            lock (newItem.Lock)
-                                newItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
+            // Found a cached response.
+            // WARNING! Immediately after calling the line below, another thread may set a new value in the cache, and lines below
+            // that call CallServiceAndCacheResponse() do it needlessly, causing a redundant refresh operation. This is a rare race
+            // condition with negligible negative effects so we can ignore it for the sake of the simplicity of the code.
+            else if ((cached = (AsyncCacheItem)MemoryCache.Get(key)) != null)
 
-                            throw e.InnerExceptions?.FirstOrDefault() ?? e;
-                        }
-                    });
-                    
-                    resultTask = newItem.CurrentValueTask;
+                // Response was revoked.
+                if (cached.IsRevoked)
 
-                    if (shouldLog)
-                        Log.Info(x => x("Item added to cache", unencryptedTags: new
-                        {
-                            cacheKey = key,
-                            cacheGroup = groupName,
-                            cacheData = logData
-                        }));
-                }
-                else
-                {
-                    // This lock makes sure we're not mutating the same object as was added to the cache by an earlier
-                    // thread (which was the first to add from 'newItem', for subsequent threads it will be 'existingItem').
-                    lock (existingItem.Lock)
-                    {
-                        //TODO:if MC contains new item then return newItem.currentValuetask???
+                    // The caching settings specify we should ignore revoked responses; issue a request.
+                    if (settings.RevokedResponseBehavior == RevokedResponseBehavior.RemoveResponseFromCache)
+                        return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
 
-                        var cacheSuppress = TracingContext.CacheSuppress;
-                        var shouldSuppressCache = cacheSuppress != null && 
-                                                 (cacheSuppress == CacheSuppress.UpToNextServices ||
-                                                  cacheSuppress == CacheSuppress.RecursiveAllDownstreamServices);
+                    // The caching settings specify we should attempt to fetch a fresh response. If failed, return currently cached value.
+                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.TryFetchNewValueNextTime)
+                        return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
 
-                        //we want that only one thread will try to fetch a new value (by triggering refreshtask)
-                        var isStale = Interlocked.CompareExchange(ref existingItem.IsStale, 0, 1) == 1;
-                        var shouldRefresh = (DateTime.UtcNow >= existingItem.NextRefreshTime) && 
-                                            (existingItem.RefreshTask == null || existingItem.RefreshTask.IsCompleted);
+                    // The caching settings specify we should keep using revoked responses
+                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.KeepUsingStaleResponse)
+                        return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
 
-                        // Start refresh if an existing refresh isn't in progress and we've passed the next refresh time.
-                        if (shouldSuppressCache || isStale || shouldRefresh)
-                        {
-                            existingItem.RefreshTask = ((Func<Task<object>>)(async () =>
-                                {
-                                    try
-                                    {
-                                        var (value, isRecentlyRevoked) = await ExecuteRemoteRequest(key, factory, groupName, logData, metricsKeys, shouldLog, existingItem).ConfigureAwait(false);
-
-                                        lock (existingItem.Lock)
-                                        {
-                                            if (!isRecentlyRevoked)
-                                            {
-                                                existingItem.NextRefreshTime = DateTime.UtcNow + policy.RefreshTime;
-                                                existingItem.CurrentValueTask = Task.FromResult(value);
-                                                MemoryCache.Set(new CacheItem(key, existingItem), policy); //In order to extend expiration ; ItemRemovedCallback will be called with Reason=Removed
-                                            }
-                                            else
-                                                existingItem.IsStale = 1;
-                                        }
-
-                                        return value;
-                                    }
-                                    //new behaviour
-                                    //4xx errors (RequestException) are valid responses that should be cached
-                                    //4xx errors can sometime occur due to temporary rc (e.g. get that was sent before create causing a 404 error)
-                                    //therefore, to be on the safe side we dont want cache 4xx errors as long as a non error response and use a shorter refresh time (FailedRefreshDelay)
-                                    catch (RequestException e) 
-                                    {
-                                        lock (existingItem.Lock)
-                                        {
-                                            existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
-                                            existingItem.CurrentValueTask = Task.FromException<object>(e); 
-                                            MemoryCache.Set(new CacheItem(key, existingItem), policy); //In order to extend expiration ; ItemRemovedCallback will be called with Reason=Removed
-                                        }
-
-                                        throw;
-                                    }
-                                    catch (Exception e) //do not cache exceptions
-                                    {                   
-                                        lock (existingItem.Lock)
-                                        {
-                                            //TODO: not sure about this delay, because we will return cached value after ttl,
-                                            //TODO: but probably it exist so we wont attack remote service which may be overloaded or suffering issues 
-                                            existingItem.NextRefreshTime = DateTime.UtcNow + policy.FailedRefreshDelay;
-                                        }
-
-                                        throw; 
-                                    }
-                                })).Invoke();
-
-                            //prevents unhandled exception in case task was not awaited
-                            //(can be either awaited if its returned to the caller below, or run in the background and not awaited)
-                            existingItem.RefreshTask.ContinueWith(t => { var ignored = t.Exception; }); 
-                        }
-
-                        if (isStale) //return new fetched value and update cache (so stale cache value will not be returned)
-                        {
-                            resultTask = existingItem.RefreshTask;
-                            existingItem.CurrentValueTask = existingItem.RefreshTask;
-                        }
-                        else if (shouldSuppressCache) //return new fetched value and ignore cache
-                            resultTask = existingItem.RefreshTask;
-                        else
-                            resultTask = existingItem.CurrentValueTask; //return cached value
+                    // In case RevokedResponseBehavior=TryFetchNewValueInBackgroundNextTime or the enum value is a new option we don't know
+                    // how to handle yet, we initiate a background refresh and return the stale response.
+                    // TODO: In Microdot v3, we'd like to change the default to try and fetch a new value and wait for it (TryFetchNewValueNextTime)
+                    else {
+                        _ = GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
+                        return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
                     }
 
-                    if (resultTask.GetAwaiter().IsCompleted)
-                         Hits.Mark(metricsKeys);
-                    else
-                        JoinedTeam.Mark(metricsKeys);
-                }
-            }
+                // If refreshes are disabled it's because manual revokes are being performed, meaning the current response is up-to-date.
+                // Same for UseRefreshesWhenDisconnectedFromCacheRevokesBus, which we currently don't support, and assume everything is okay.
+                else if (   settings.RefreshMode == RefreshMode.DoNotUseRefreshes
+                         || settings.RefreshMode == RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus)
+                    return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
 
-            return resultTask;
+                // Refreshes are enabled and the refresh time passed
+                else if (DateTime.UtcNow >= cached.NextRefreshTime)
+
+                    // Try calling the service to obtain a fresh response. In case of failure return the old response.
+                    if (settings.RefreshBehavior == RefreshBehavior.TryFetchNewValueOrUseOld)
+                        return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
+
+                    // Return the current old response, and trigger a background refresh to obtain a new value.
+                    // TODO: In Microdot v3, we'd like to change the default to try and fetch a new value and wait for it (TryFetchNewValueOrUseOld)
+                    else {
+                        _ = GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
+                        return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
+                    }
+
+                // All ok, return cached value
+                else return MarkHitAndReturnValue(cached.Value); // Might throw stored exception
+
+            // No cached response. Call service.
+            else return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
+                TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
         }
 
-        private async Task<(object value, bool isRecentlyRevoked)> ExecuteRemoteRequest(string cacheKey, Func<Task<object>> factory, string groupName, string logData, 
-                                                                                        string[] metricsKeys, bool shouldLog, AsyncCacheItem cacheItem)
-        {
-            var tcs = new TaskCompletionSource<bool>();
 
+        // This method looks up whether there's a request in progress for the given key. If there is, it returns that ongoing request's task.
+        // Otherwise, it triggers a new request by calling the supplied send(), tracks it in RequestsInProgress, and returns that ongoing request task.
+        // Once send() is done, it removes it from the list of RequestsInProgress.
+        async Task<object> GroupRequestsIfNeeded(IMethodCachingSettings settings, string key, string[] metricsKeys, Func<Task<object>> send)
+        {
+            if (!settings.UseRequestGrouping) {
+                Misses.Mark(metricsKeys);
+                return await send();
+            }
+            else {
+                JoinedTeam.Mark(metricsKeys);
+                return await RequestsInProgress.GetOrAdd(key, _ => new Lazy<Task<object>>(async () =>
+                {
+                    Misses.Mark(metricsKeys);
+                    try { return await send(); }
+                    finally { RequestsInProgress.TryRemove(key, out var _); }
+                })).Value;
+            }
+        }
+
+
+        // This method has one of 4 possible outcomes:
+        //
+        // 1. We got a response from the service (null, not null or an exception) and the caching settings dictate that we should cache it:
+        //    We cache it with the default RefreshTime. This extends the ExpirationTime as well.
+        //
+        // 2. The caching settings dictate that the response shouldn't be cached, nor ignored:
+        //    We return the response and remove the previsouly-cached response from the cache
+        //
+        // 3. The caching settings dictate that the response shouldn't be cached, and should be ignored, and currentValue != null :
+        //    We return the currentValue and set its next refresh time to be now + FailedRefreshDelay so we don't "attack" the target service
+        //
+        // 4. The caching settings dictate that the response should not be cached, and should be ignored, and currentValue == null :
+        //    We return the response anyway, since we don't have a previously-good value
+        //
+        async Task<object> TryFetchNewValue(string cacheKey, Func<Task<object>> serviceMethod,
+            IMethodCachingSettings settings, string[] metricsKeys, AsyncCacheItem currentValue = null)
+        {
+            // We use the RecentRevokesCache to keep track of recent revoke messages that arrived, to detect if the response we're about
+            // to receive was revoked while in transit. It will track revoke messages as long as the task is not completed.
+            var requestSendTime = DateTime.UtcNow;
+            var tcs = new TaskCompletionSource<bool>();
+            RecentRevokesCache.RegisterOutgoingRequest(tcs.Task, requestSendTime);
+
+            Task<object> response; // We capture the response from the service here, including if it was an exception
+            ResponseKinds responseKind;
             try
             {
-                if (shouldLog)
-                    Log.Info(x => x("Cache item is waiting for value to be resolved", unencryptedTags: new
-                    {
-                        cacheKey,
-                        cacheGroup = groupName,
-                        cacheData = logData
-                    }));
+                // Call the service
+                response = Task.FromResult(await CallService(serviceMethod, metricsKeys));
 
-                object result = null;
-                var requestSentTime = DateTime.UtcNow;
-                RecentlyRevokeCache.RegisterOutgoingRequest(tcs.Task, requestSentTime);
-
-                result = await factory().ConfigureAwait(false);
-
-                if (shouldLog)
-                {
-                    Log.Info(x => x("Cache item value is resolved", unencryptedTags: new
-                    {
-                        cacheKey,
-                        cacheGroup = groupName,
-                        cacheData = logData,
-                        value = GetValueForLogging(result)
-                    }));
-                }
-
-                string recentlyRevokedKey = null;
-                DateTime? recentlyRevokedTime = null;
-                var revokeKeys = ((result as IRevocable)?.RevokeKeys)?.ToList() ?? new List<string>();
-
-                lock (cacheItem.Lock) //we want to enforce serial handle of revoke keys, so we wont get to an inconsistent revoke keys state
-                {
-                    IEnumerable<string> revokeKeysToAdd = null;
-                    IEnumerable<string> revokeKeysToRemove = null;
-
-                    if (cacheItem.CurrentValueTask == null     || 
-                       !cacheItem.CurrentValueTask.IsCompleted || 
-                        cacheItem.CurrentValueTask.IsFaulted   ||
-                        cacheItem.CurrentValueTask.IsCanceled  ||
-                      !(cacheItem.CurrentValueTask.Result is IRevocable))
-                    {
-                        revokeKeysToAdd = revokeKeys;
-                        revokeKeysToRemove = Enumerable.Empty<string>();
-                    }
-                    else
-                    {
-                        var oldRevokeKeys = ((IRevocable) cacheItem.CurrentValueTask.Result).RevokeKeys?.ToList() ?? new List<string>();
-
-                        revokeKeysToAdd = revokeKeys.Except(oldRevokeKeys);
-                        revokeKeysToRemove = oldRevokeKeys.Except(revokeKeys);
-                    }
-
-                    foreach (var revokeKey in revokeKeysToAdd)
-                    {
-                        var cacheKeys = RevokeKeyToCacheKeysIndex.GetOrAdd(revokeKey, k => new HashSet<string> { cacheKey });
-                        
-                        if (!cacheKeys.Contains(cacheKey))
-                            lock (cacheKeys)
-                            {
-                                cacheKeys.Add(cacheKey);
-                            }
-
-                        if (shouldLog)
-                            Log.Info(x => x("RevokeKey added to reverse index", unencryptedTags: new
-                            {
-                                revokeKey,
-                                cacheKey,
-                                cacheGroup = groupName,
-                                cacheData = logData
-                            }));
-                    }
-
-                    foreach (var revokeKey in revokeKeysToRemove)
-                    {
-                        RemoveRevokeKey(revokeKey, "RemovedFromResponse", cacheItem, cacheKey, shouldLog);
-                    }
-
-                    //check if one of the revoke keys was received after the request send time 
-                    //resulted from race condition between call and revoke
-                    foreach (var revokeKey in revokeKeys)
-                    {
-                        recentlyRevokedTime = RecentlyRevokeCache.TryGetRecentlyRevokedTime(revokeKey, requestSentTime);
-                        if (recentlyRevokedTime != null)
-                            recentlyRevokedKey = revokeKey;
-                    }
-                }
-
-                if (recentlyRevokedTime != null)
-                {
-                    Items.Meter("RevokeRaceCondition", Unit.Items).Mark();
-                    Log.Warn(x => x("Got revoke during request, marking as stale", unencryptedTags: new
-                    {
-                        cacheGroup = groupName,
-                        cacheData  = logData,
-                        revokeKey  = recentlyRevokedKey,
-                        revokeTime = recentlyRevokedTime,
-                        requestSentTime,
-                        cacheKey
-                    }));
-                }
-
-                AwaitingResult.Decrement(metricsKeys);
-                return (result, recentlyRevokedTime != null);
+                // Determine the kind of response. We consider it null also in case we got a non-null Revocable<> with null inner Value
+                bool isNullResponse =    response.Result == null
+                                      || (   response.Result.GetType().IsGenericType
+                                          && response.Result.GetType().GetGenericTypeDefinition() == typeof(Revocable<>)
+                                          && response.Result.GetType().GetProperty("Value").GetValue(response.Result) == null);
+                responseKind = isNullResponse ? ResponseKinds.NullResponse : ResponseKinds.NonNullResponse;
             }
-            catch (Exception exception)
+            catch (Exception e)
             {
-                Log.Info(x => x("Error resolving value for cache item", unencryptedTags: new
-                {
-                    cacheKey,
-                    cacheGroup = groupName,
-                    cacheData = logData,
-                    errorMessage = exception.Message
-                }));
+                if (!(e is RequestException))
+                    Failed.Mark(metricsKeys);
 
-                AwaitingResult.Decrement(metricsKeys);
-                Failed.Mark(metricsKeys);
-                throw;
+                // Determine the kind of exception
+                responseKind =   e is RequestException ? ResponseKinds.RequestException
+                               : e is EnvironmentException ? ResponseKinds.EnvironmentException
+                               : e is TimeoutException || e is TaskCanceledException ? ResponseKinds.TimeoutException
+                               : ResponseKinds.OtherExceptions;
+                response = Task.FromException<object>(e);
+            }
+
+            // Outcome #1: Cache the response
+            if (settings.ResponseKindsToCache.HasFlag(responseKind))
+                CacheResponse(cacheKey, requestSendTime, response, settings);
+
+            // Outcome #2: Do not cache response; remove previously-cached value
+            else if (!settings.ResponseKindsToIgnore.HasFlag(responseKind))
+                MemoryCache.Remove(cacheKey);
+
+            // Outcome #3: Leave old response cached and return it, and set its refresh time to the (short) FailedRefreshDelay
+            else if (currentValue != null)
+            {
+                currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
+                response = currentValue.Value;
+            }
+
+            // Outcome #4: Otherwise, the response shouldn't be cached and should be ignored but we don't have a previous value, so we return it
+
+            tcs.SetResult(true); // RecentRevokesCache can stop tracking revoke keys
+            return await response; // Might throw stored exception
+        }
+
+
+
+        private async Task<object> CallService(Func<Task<object>> serviceMethod, string[] metricsKeys)
+        {
+            try
+            {
+                AwaitingResult.Increment(metricsKeys);
+                return await serviceMethod();
             }
             finally
             {
-                tcs.SetResult(true);
+                AwaitingResult.Decrement(metricsKeys);
             }
         }
 
-        private ConcurrentDictionary<Type, FieldInfo> _revocableValueFieldPerType = new ConcurrentDictionary<Type, FieldInfo>();
-        private string GetValueForLogging(object value)
+
+
+        private void CacheResponse(string cacheKey, DateTime requestSendTime, Task<object> response, IMethodCachingSettings settings)
         {
-            if (value is IRevocable)
+            var cacheItem = new AsyncCacheItem
             {
-                var revocableValueField = _revocableValueFieldPerType.GetOrAdd(value.GetType(), t=>t.GetField(nameof(Revocable<int>.Value)));
-                if (revocableValueField != null)
-                    value = revocableValueField.GetValue(value);
+                NextRefreshTime = DateTime.UtcNow + settings.RefreshTime.Value,
+                Value = response,
+            };
+
+            // Register each revoke key in the response with the reverse index, if the response is not an exception and is a Revocable<>.
+            // Starting from now, the IsRevoked property in cacheItem might be set to true by another thread in OnRevoked().
+            var revokeKeys = !response.IsFaulted && !response.IsCanceled ? (response as IRevocable)?.RevokeKeys : null ?? Enumerable.Empty<string>();
+            lock (RevokeKeyToCacheItemsIndex)
+                foreach (var revokeKey in revokeKeys)
+                    RevokeKeyToCacheItemsIndex.GetOrAdd(revokeKey, _ => new HashSet<AsyncCacheItem>()).Add(cacheItem);
+
+            // Check if we got a revoke message from one of the revoke keys in the response while the request was in progress.
+            // Do this AFTER the above, so there's no point in time that we don't monitor cache revokes
+            var recentlyRevokedKey = revokeKeys.FirstOrDefault(rk => RecentRevokesCache.TryGetRecentlyRevokedTime(rk, requestSendTime) != null);
+            if (recentlyRevokedKey != null)
+            {
+                Items.Meter("RevokeRaceCondition", Unit.Items).Mark();
+                Log.Warn(x => x("Got revoke during request, marking as stale", unencryptedTags: new
+                {
+                    revokeKey = recentlyRevokedKey,
+                    requestSendTime,
+                    cacheKey,
+                    revokeTime = RecentRevokesCache.TryGetRecentlyRevokedTime(recentlyRevokedKey, requestSendTime)
+                }));
+                cacheItem.IsRevoked = true;
             }
 
-            if (value is ValueType || value is string)
-                return value.ToString();
-            else
-                return null;
+            // Set the MemoryCache policy based on our caching settings. If the response has no revoke keys, no need to receive a callback
+            // event when it's removed from the cache since we don't need to remove it from the reverse index.
+            var cacheItemPolicy = new CacheItemPolicy {};
+            if (settings.ExpirationBehavior == ExpirationBehavior.ExtendExpirationWhenReadFromCache)
+                cacheItemPolicy.SlidingExpiration = settings.ExpirationTime.Value;
+            else cacheItemPolicy.AbsoluteExpiration = DateTime.UtcNow + settings.ExpirationTime.Value;
+            if (revokeKeys.Any())
+                cacheItemPolicy.RemovedCallback += ItemRemovedCallback;
+
+            // Store the response in the main cache. Note that this will trigger a removal of a currently-cached value, if any,
+            // i.e. call ItemRemovedCallback() with Reason=Removed.
+            MemoryCache.Set(new CacheItem(cacheKey, cacheItem), cacheItemPolicy);
         }
+
+
 
         /// <summary>
-        /// For revocable items , move over all revoke ids in cache index and remove them.
+        /// For revocable items, move over all revoke ids in cache index and remove them.
         /// </summary>        
         private void ItemRemovedCallback(CacheEntryRemovedArguments arguments)
         {
-            var cacheItem = arguments.CacheItem.Value as AsyncCacheItem;
-
-            var shouldLog = ShouldLog(cacheItem?.GroupName);
-
-            if (shouldLog)
-                Log.Info(x=>x("Item removed from cache", unencryptedTags: new
-                {
-                    cacheKey     = arguments.CacheItem.Key,
-                    removeReason = arguments.RemovedReason.ToString(),
-                    cacheGroup   = cacheItem?.GroupName,
-                    cacheData    = cacheItem?.LogData
-                })); 
-
-            var currentValueTask = ((AsyncCacheItem)arguments.CacheItem.Value).CurrentValueTask;
-
-            if(currentValueTask.Status == TaskStatus.RanToCompletion      && 
-              (currentValueTask.Result as IRevocable)?.RevokeKeys != null &&
-               arguments.RemovedReason != CacheEntryRemovedReason.Removed) //We want to remove items from reverseIndex only if they are not in MemoryCache
-            {                                                             //In MemoryCache.Set flow, we get here, but item is still in cache - so we skip removal
-                foreach (var revokeKey in ((IRevocable)currentValueTask.Result).RevokeKeys)
-                {
-                    RemoveRevokeKey(revokeKey, arguments.RemovedReason.ToString(), cacheItem, arguments.CacheItem.Key, shouldLog);
-                }
-            }
-
             Items.Meter(arguments.RemovedReason.ToString(), Unit.Items).Mark();
+
+            var cacheItem = (AsyncCacheItem)arguments.CacheItem.Value;
+            var revokeKeys = !cacheItem.Value.IsFaulted && !cacheItem.Value.IsCanceled
+                ? (cacheItem.Value.Result as IRevocable)?.RevokeKeys : null ?? Enumerable.Empty<string>();
+
+            lock (RevokeKeyToCacheItemsIndex)
+                foreach (var revokeKey in revokeKeys)
+                    if (   !RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var hash)
+                        || !hash.Remove(cacheItem)
+                        || (hash.Count == 0 && !RevokeKeyToCacheItemsIndex.TryRemove(revokeKey, out _)))
+                        throw new ProgrammaticException("Invalid state");
         }
 
-        private void RemoveRevokeKey(string revokeKey, string removeReason, AsyncCacheItem cacheItem, string cacheKey, bool shouldLog)
+
+
+        private Task OnRevoke(string revokeKey)
         {
-            if (RevokeKeyToCacheKeysIndex.TryGetValue(revokeKey, out HashSet<string> cacheKeys))
-            {
-                lock (cacheKeys)
-                {
-                    var isRemoved = cacheKeys.Remove(cacheKey);
+            if (revokeKey == null)
+                throw new ArgumentNullException();
 
-                    if (shouldLog && isRemoved)
-                        Log.Info(x => x("RevokeKey removed from reverse index", unencryptedTags: new
-                        {
-                            cacheKey,
-                            revokeKey,
-                            removeReason,
-                            cacheGroup   = cacheItem?.GroupName,
-                            cacheData    = cacheItem?.LogData
-                        }));
+            RecentRevokesCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
 
-                    if (!cacheKeys.Any())
-                    {
-                        if (RevokeKeyToCacheKeysIndex.TryRemove(revokeKey, out _) && shouldLog)
-                            Log.Info(x => x("Reverse index for cache item was removed", unencryptedTags: new
-                            {
-                                cacheKey,
-                                revokeKey,
-                                removeReason,
-                                cacheGroup   = cacheItem?.GroupName,
-                                cacheData    = cacheItem?.LogData,
-                            }));
-                    }
-                }
-            }
-        }
+            lock (RevokeKeyToCacheItemsIndex)
+                if (RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var hash))
+                    foreach (var item in hash)
+                        item.IsRevoked = true;
 
-        private bool ShouldLog(string groupName)
-        {
-            if (groupName == null)
-                return false;
-
-            var config = GetRevokeConfig();
-            if (config.Groups.TryGetValue(groupName, out var groupConfig))
-                return groupConfig.WriteExtraLogs;
-
-            return false;
+            return Task.CompletedTask;
         }
 
 
@@ -580,7 +436,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             {
                 // Disposing of MemoryCache can be a CPU intensive task and should therefore not block the current thread.
                 Task.Run(() => oldMemoryCache.Dispose());
-                ClearCache.Increment();
             }
         }
 

@@ -11,7 +11,7 @@ using Metrics;
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
     //TODO: need a cr
-    public class RecentlyRevokesCache : IRecentlyRevokesCache, IDisposable
+    public class RecentRevokesCache : IRecentRevokesCache, IDisposable
     {
         public int RevokesIndexCount => RevokesIndex.Count;
         public int RevokesQueueCount => RevokesQueue.Count;
@@ -25,7 +25,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private ConcurrentQueue<(string key, DateTime receivedTime)> RevokesQueue { get; }
         private CancellationTokenSource                              ClearCancellationTokenSource { get; }
 
-        public RecentlyRevokesCache(ILog log, MetricsContext metrics, Func<CacheConfig> getRevokeConfig)
+        public RecentRevokesCache(ILog log, MetricsContext metrics, Func<CacheConfig> getRevokeConfig)
         {
             Log = log;
             Metrics = metrics;
@@ -188,7 +188,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
     }
 
-    public interface IRecentlyRevokesCache
+    public interface IRecentRevokesCache
     {
         void RegisterOutgoingRequest(Task task, DateTime sentTime);
         void RegisterRevokeKey(string revokeKey, DateTime receivedTime);
