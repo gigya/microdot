@@ -298,7 +298,6 @@ namespace Gigya.Microdot.Hosting.HttpService
                                 if (requestData.TracingData.Tags != null)
                                     TracingContext.Tags = new ContextTags(requestData.TracingData.Tags);
                                 TracingContext.AdditionalProperties = requestData.TracingData.AdditionalProperties;
-                                TracingContext.CacheSuppress = requestData.Overrides?.SuppressCaching;
 
                                 callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
                                 SetCallEventRequestData(callEvent, requestData);
