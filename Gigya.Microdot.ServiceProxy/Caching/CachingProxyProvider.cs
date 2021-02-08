@@ -74,11 +74,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
         {
-            if (CachingConfigPerMethod.TryGetValue(methodName, out var config))
-                return config;
-            else
-            {
-                config = new MethodCachingPolicyConfig();
+            //if (CachingConfigPerMethod.TryGetValue(methodName, out var config))
+            //    return config;
+            //else
+            //{
+                var config = new MethodCachingPolicyConfig();
                 GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
                 MethodCachingPolicyConfig.Merge(discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default, config);
 
@@ -110,7 +110,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                 // Add to cache and return
                 return CachingConfigPerMethod[methodName] = config;
-            }
+            //}
         }
 
 
