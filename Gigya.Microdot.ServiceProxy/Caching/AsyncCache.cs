@@ -147,7 +147,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public Task GetOrAdd(string key, Func<Task> serviceMethod, Type taskResultType, string[] metricsKeys, IMethodCachingSettings settings)
         {
+            //TaskScheduler.Current.Id == "Grain-sdfsdf"
             // TBD: check is Task.Run() is actually needed; do we get here with Grain task scheduler?
+            //      previously we used to ConfiguraAwait(false), did it disconnect us from the grain's task scheduler? If so, use Task.Run for the same effect
             var getValueTask = Task.Run(() => GetOrAdd(key, () =>
                 TaskConverter.ToWeaklyTypedTask(serviceMethod(), taskResultType), metricsKeys, settings));
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
@@ -156,6 +158,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private async Task<object> GetOrAdd(string key, Func<Task<object>> serviceMethod, string[] metricsKeys, IMethodCachingSettings settings)
         {
+            //TaskScheduler.Current.Id == "Default"
             AsyncCacheItem cached;
             Task<object> MarkHitAndReturnValue(Task<object> obj) { Hits.Mark(metricsKeys); return obj; }
 
@@ -165,7 +168,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 || TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices)
 
                 // If the caching settings specify we shouldn't cache responses when suppressed, then don't.
-                if (!settings.CacheResponsesWhenCacheWasSupressed)
+                if (settings.CacheResponsesWhenSupressedBehavior == CacheResponsesWhenSupressedBehavior.Disabled)
                     return await CallService(serviceMethod, metricsKeys);
 
                 // ...otherwise we do put the repsonse in the cache so that subsequent calls to the cache do not revert to the previously-cached value.
@@ -186,12 +189,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                             TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
 
                     // The caching settings specify we should attempt to fetch a fresh response. If failed, return currently cached value.
-                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.TryFetchNewValueNextTime)
+                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld)
                         return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
                             TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
 
                     // The caching settings specify we should keep using revoked responses
-                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.KeepUsingStaleResponse)
+                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.KeepUsingRevokedResponse)
                         return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
 
                     // In case RevokedResponseBehavior=TryFetchNewValueInBackgroundNextTime or the enum value is a new option we don't know
@@ -226,7 +229,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     }
 
                 // All ok, return cached value
-                else return MarkHitAndReturnValue(cached.Value); // Might throw stored exception
+                else return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
 
             // No cached response. Call service.
             else return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
@@ -239,7 +242,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         // Once send() is done, it removes it from the list of RequestsInProgress.
         async Task<object> GroupRequestsIfNeeded(IMethodCachingSettings settings, string key, string[] metricsKeys, Func<Task<object>> send)
         {
-            if (!settings.UseRequestGrouping) {
+            if (settings.RequestGroupingBehavior == RequestGroupingBehavior.Disabled) {
                 Misses.Mark(metricsKeys);
                 return await send();
             }
@@ -353,7 +356,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             // Register each revoke key in the response with the reverse index, if the response is not an exception and is a Revocable<>.
             // Starting from now, the IsRevoked property in cacheItem might be set to true by another thread in OnRevoked().
-            var revokeKeys = !response.IsFaulted && !response.IsCanceled ? (response as IRevocable)?.RevokeKeys : null ?? Enumerable.Empty<string>();
+            var revokeKeys = (!response.IsFaulted && !response.IsCanceled ? (response as IRevocable)?.RevokeKeys : null) ?? Enumerable.Empty<string>();
             lock (RevokeKeyToCacheItemsIndex)
                 foreach (var revokeKey in revokeKeys)
                     RevokeKeyToCacheItemsIndex.GetOrAdd(revokeKey, _ => new HashSet<AsyncCacheItem>()).Add(cacheItem);
@@ -398,8 +401,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Items.Meter(arguments.RemovedReason.ToString(), Unit.Items).Mark();
 
             var cacheItem = (AsyncCacheItem)arguments.CacheItem.Value;
-            var revokeKeys = !cacheItem.Value.IsFaulted && !cacheItem.Value.IsCanceled
-                ? (cacheItem.Value.Result as IRevocable)?.RevokeKeys : null ?? Enumerable.Empty<string>();
+            var revokeKeys = (!cacheItem.Value.IsFaulted && !cacheItem.Value.IsCanceled
+                ? (cacheItem.Value.Result as IRevocable)?.RevokeKeys : null) ?? Enumerable.Empty<string>();
 
             lock (RevokeKeyToCacheItemsIndex)
                 foreach (var revokeKey in revokeKeys)

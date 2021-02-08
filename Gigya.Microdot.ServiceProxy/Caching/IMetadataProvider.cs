@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Attributes;
 using System;
 using System.Reflection;
 
@@ -29,6 +30,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     {
         Type GetMethodTaskResultType(MethodInfo method);
         bool IsCached(MethodInfo methodInfo);
+        CachedAttribute GetCachedAttribute(MethodInfo methodInfo);
         bool HasCachedMethods(Type interfaceType);
     }
 }

@@ -1,24 +1,44 @@
-﻿using System;
+﻿using Gigya.ServiceContract.HttpService;
+using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
 
+    //interface MyService
+    //{
+    //    [Cached(ResponseKindsToCache  = ResponseKinds.NonNullResponse | ResponseKinds.RequestException,
+    //            ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.TimeoutException | ResponseKinds.OtherExceptions,
+    //            RefreshMode           = RefreshMode.UseRefreshes,
+    //            RefreshTimeInMinutes  = 10,
+    //            ExpirationBehavior    = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache)]
+    //    Task DoStuff();
+
+    //    [Cached(RefreshMode             = RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus,
+    //            RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
+    //            RefreshBehavior         = RefreshBehavior.TryFetchNewValueOrUseOld,
+    //            RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,
+    //            ExpirationBehavior      = ExpirationBehavior.ExtendExpirationWhenReadFromCache)]
+    //    Task<Revocable<string>> DoStuffRevocable();
+    //}
+
+
+
+
     public interface IMethodCachingSettings
     {
+        bool? Enabled { get; set; }
         ResponseKinds ResponseKindsToCache { get; set; }
         ResponseKinds ResponseKindsToIgnore { get; set; }
         RefreshMode RefreshMode { get; set; }
-        double RefreshTimeInMinutes { get; set; }
         TimeSpan? RefreshTime { get; set; }
-        double ExpirationTimeInMinutes { get; set; }
         TimeSpan? ExpirationTime { get; set; }
-        double FailedRefreshDelayInSeconds { get; set; }
         TimeSpan? FailedRefreshDelay { get; set; }
-        bool UseRequestGrouping { get; set; }
+        RequestGroupingBehavior RequestGroupingBehavior { get; set; }
         RefreshBehavior RefreshBehavior { get; set; }
         RevokedResponseBehavior RevokedResponseBehavior { get; set; }
         ExpirationBehavior ExpirationBehavior { get; set; }
-        bool CacheResponsesWhenCacheWasSupressed { get; set; }
+        CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
     }
 
 
@@ -32,21 +52,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     {
         public CachedAttribute()
         {
-            if (RefreshTimeInMinutes != -1)
-                if (RefreshTimeInMinutes <= 0)
-                    throw new ArgumentException("RefreshTimeInMinutes must be positive or -1");
-                else RefreshTime = TimeSpan.FromMinutes(RefreshTimeInMinutes);
-
-            if (ExpirationTimeInMinutes != -1)
-                if (ExpirationTimeInMinutes <= 0)
-                    throw new ArgumentException("ExpirationTimeInMinutes must be positive or -1");
-                else ExpirationTime = TimeSpan.FromMinutes(ExpirationTimeInMinutes);
-
-            if (FailedRefreshDelayInSeconds != -1)
-                if (FailedRefreshDelayInSeconds < 0)
-                    throw new ArgumentException("FailedRefreshDelayInSeconds must be positive or -1");
-                else FailedRefreshDelay = TimeSpan.FromSeconds(FailedRefreshDelayInSeconds);
-
             if (RefreshTime > ExpirationTime)
                 throw new ArgumentException("RefreshTime cannot be longer than ExpirationTime");
 
@@ -88,7 +93,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// the lower the load on your service, and the less up-to-date responses clients will cache. Consider what issues could be caused
         /// by clients using stale responses (they might make wrong decisions based on these responses, or write that stale data somewhere).
         /// </summary>
-        public double RefreshTimeInMinutes { get; set; } = -1;
+        public double RefreshTimeInMinutes {
+            get => RefreshTime?.TotalMinutes ?? -1;
+            set => RefreshTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
+        }
         public TimeSpan? RefreshTime { get; set; }
 
 
@@ -102,7 +110,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// hours). But also consider what issues could be caused by clients using very old stale responses (they might make wrong decisions
         /// based on these responses, or write that stale data somewhere).
         /// </summary>
-        public double ExpirationTimeInMinutes { get; set; } = -1;
+        public double ExpirationTimeInMinutes {
+            get => ExpirationTime?.TotalMinutes ?? -1;
+            set => ExpirationTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
+        }
         public TimeSpan? ExpirationTime { get; set; }
 
 
@@ -113,7 +124,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// attempts to refresh the data, since the response is now considered old and shouldn't be used for much longer. This delay is used
         /// so clients don't "attack" your service when it's already potentially having availability issues. To disable, set to 0.
         /// </summary>
-        public double FailedRefreshDelayInSeconds { get; set; } = -1;
+        public double FailedRefreshDelayInSeconds {
+            get => FailedRefreshDelay?.TotalSeconds ?? -1;
+            set => FailedRefreshDelay = value == -1 ? null : (TimeSpan?)TimeSpan.FromSeconds(value);
+        }
         public TimeSpan? FailedRefreshDelay { get; set; }
 
 
@@ -122,7 +136,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// "group" the requests and issue a single request to this method, to reduce the load on this service. It is assumed that this
         /// method returns the exact same answer given the exact same parameters. This flag controls whether to use request grouping or not.
         /// </summary>
-        public bool UseRequestGrouping { get; set; } = true;
+        public RequestGroupingBehavior RequestGroupingBehavior { get; set; }
 
 
         /// <summary>
@@ -147,7 +161,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// Default: true. When clients bypass their cache for specific requests using TracingContext.SuppressCaching(), this flag controls
         /// whether the response will be cached. I.e. clients ignore the cache while READING, but not necessarily when WRITING. 
         /// </summary>
-        public bool CacheResponsesWhenCacheWasSupressed { get; set; } = true;
+        public CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
+
+        // Not in use
+        bool? IMethodCachingSettings.Enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
     }
 
 
@@ -195,6 +212,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
 
     /// <summary>
+    /// Whether or not to group outgoing requests to the same method with the same parameters.
+    /// </summary>
+    public enum RequestGroupingBehavior
+    {
+        Enabled = 1,
+        Disabled = 2,
+    }
+
+
+    /// <summary>
     /// Determines what clients do when accessing a cached response that is considered old, i.e. its refresh time passed.
     /// </summary>
     public enum RefreshBehavior
@@ -234,7 +261,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// service while this service is down. It is assumed that it is preferable to use stale responses over not providing service.
         /// This is the default for Microdot v3+ clients.
         /// </summary>
-        TryFetchNewValueNextTime = 1,
+        TryFetchNewValueNextTimeOrUseOld = 1,
 
         /// <summary>
         /// DANGEROUS! When a client receives a revoke message, it looks for all cached responses tagged with that message key and marks them
@@ -267,7 +294,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// responses. You can achieve a similar effect by not returning Revocable&lt;&gt; responses, or responses with an empty list of
         /// revoke keys. If that's inconvenient, you can use this option as a work-around.
         /// </summary>
-        KeepUsingStaleResponse = 5,
+        KeepUsingRevokedResponse = 5,
     }
 
 
@@ -290,6 +317,17 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// use of cached responses, automatically extend the expiration time.
         /// </summary>
         DoNotExtendExpirationWhenReadFromCache = 2,
+    }
+
+
+    /// <summary>
+    /// When clients bypass their cache for specific requests using TracingContext.SuppressCaching(), this option controls
+    /// whether the response will be cached. I.e. clients ignore the cache while READING, but not necessarily when WRITING. 
+    /// </summary>
+    public enum CacheResponsesWhenSupressedBehavior
+    {
+        Enabled = 1,
+        Disabled = 2,
     }
 
 }

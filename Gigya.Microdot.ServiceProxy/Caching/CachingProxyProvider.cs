@@ -21,11 +21,13 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.System_Reflection.DispatchProxy;
+using Gigya.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
@@ -51,6 +53,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private string ServiceName { get; }
+        private ConcurrentDictionary<string /* method name */, MethodCachingPolicyConfig> CachingConfigPerMethod
+            = new ConcurrentDictionary<string, MethodCachingPolicyConfig>();
 
 
         public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
@@ -68,10 +72,45 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        private MethodCachingPolicyConfig GetConfig(string methodName)
+        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
         {
-            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
-            return config?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default;
+            if (CachingConfigPerMethod.TryGetValue(methodName, out var config))
+                return config;
+            else
+            {
+                config = new MethodCachingPolicyConfig();
+                GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
+                MethodCachingPolicyConfig.Merge(discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default, config);
+
+                // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
+                // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
+                // ...so we probably need access to configs before merges
+
+                //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
+
+
+                // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
+                // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
+                // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
+                var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
+                bool isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
+                if (config.RefreshMode == 0)
+                    if (isRevocable)
+                        config.RefreshMode = RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus;
+                    else config.RefreshMode = RefreshMode.UseRefreshes;
+
+                if (config.ExpirationBehavior == 0)
+                    if (isRevocable)
+                        config.ExpirationBehavior = ExpirationBehavior.ExtendExpirationWhenReadFromCache;
+                    else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+
+                // WARNING! this is currently a regression, we don't refresh configs.
+                // TODO: Detect config changes, but also cache merged-down config so we don't compute it every time. Maybe compare config
+                // object reference to previous one?
+
+                // Add to cache and return
+                return CachingConfigPerMethod[methodName] = config;
+            }
         }
 
 
@@ -88,7 +127,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig(GetMethodNameForCachingPolicy(targetMethod, args));
+            var config = GetConfig(targetMethod, GetMethodNameForCachingPolicy(targetMethod, args));
             bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);
 
             if (useCache)

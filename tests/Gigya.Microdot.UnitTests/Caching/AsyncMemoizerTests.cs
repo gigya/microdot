@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
@@ -36,12 +37,14 @@ namespace Gigya.Microdot.UnitTests.Caching
         private MethodInfo ThingifyVoidMethod { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyVoid));
         private IThingFrobber EmptyThingFrobber { get; } = Substitute.For<IThingFrobber>();
 
-        private CacheItemPolicyEx GetPolicy(double expirationTime = 60 * 60 * 6, double refreshTimeSeconds = 60, double failedRefreshDelaySeconds = 1) => new CacheItemPolicyEx
-        {
-            AbsoluteExpiration = DateTime.UtcNow + TimeSpan.FromSeconds(expirationTime),
-            RefreshTime = TimeSpan.FromSeconds(refreshTimeSeconds),
-            FailedRefreshDelay = TimeSpan.FromSeconds(failedRefreshDelaySeconds)
-        };
+        private IMethodCachingSettings GetCachingSettings(double expirationTime = 60 * 60 * 6, double refreshTimeSeconds = 60, double failedRefreshDelaySeconds = 1)
+            => new MethodCachingPolicyConfig
+            {
+                ExpirationTime = TimeSpan.FromSeconds(expirationTime),
+                RefreshTime = TimeSpan.FromSeconds(refreshTimeSeconds),
+                FailedRefreshDelay = TimeSpan.FromSeconds(failedRefreshDelaySeconds)
+            };
+
 
         private DateTimeFake TimeFake { get; set; } = new DateTimeFake { UtcNow = DateTime.UtcNow };
 
@@ -54,7 +57,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var revokeCache = Substitute.For<IRecentRevokesCache>();
             revokeCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
-            return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, revokeListener, () => new CacheConfig(), revokeCache);
+            return new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), TimeFake, revokeListener, revokeCache);
         }
         
         private IMemoizer CreateMemoizer(AsyncCache cache)
@@ -103,7 +106,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             string firstValue = "first Value";
             var dataSource = CreateDataSource(firstValue);
             
-            var actual = await (Task<Thing>)CreateMemoizer(CreateCache()).Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+            var actual = await (Task<Thing>)CreateMemoizer(CreateCache()).Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
             
             actual.Id.ShouldBe(firstValue);
             dataSource.Received(1).ThingifyTaskThing("someString");
@@ -116,7 +119,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(failedTask);
 
             failedTask.SetException(new Exception("Boo!!"));
-            Should.Throw<Exception>(() => (Task)CreateMemoizer(CreateCache()).Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<Exception>(() => (Task)CreateMemoizer(CreateCache()).Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings()));
         }
 
         [Test]
@@ -128,7 +131,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             for (int i = 0; i < 100; i++)
             {
-                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
                 actual.Id.ShouldBe(firstValue);
             }
 
@@ -148,7 +151,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 for (int i = 0; i < 50; i++)
                 {
                     var actual = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing,
-                        new object[] {"someString"}, GetPolicy());
+                        new object[] {"someString"}, GetCachingSettings());
                     actual.Id.ShouldBe(firstValue);
                 }
             }
@@ -159,7 +162,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 for (int i = 0; i < 50; i++)
                 {
                     var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing,
-                        new object[] { "someString" }, GetPolicy());
+                        new object[] { "someString" }, GetCachingSettings());
                     actual.Id.ShouldBe(firstValue);
                 }
             }
@@ -167,7 +170,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             //Use cache (we are not in suppressCaching block
             for (int i = 0; i < 50; i++)
             {
-                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
                 actual.Id.ShouldBe(firstValue);
             }
 
@@ -181,14 +184,14 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue);
             var memoizer = CreateMemoizer(CreateCache());
 
-            var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+            var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
             actual.Id.ShouldBe(firstValue);
 
             using (TracingContext.SuppressCaching(CacheSuppress.DoNotSuppress))
             {
                 for (int i = 0; i < 100; i++)
                 {
-                    actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                    actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
                     actual.Id.ShouldBe(firstValue);
                 }
             }
@@ -207,7 +210,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
             {
                 //Cache result for a successful call 
-                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()); //1 call to data source
+                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings()); //1 call to data source
                 actual.Id.ShouldBe(firstValue);
 
                 //Should throw for each call to the data source
@@ -216,7 +219,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 //because we are in SuppressCaching using block, all calls will try to go to data source and fail
                 for (int i = 0; i < 10; i++) //10 calls to data source
                 {
-                    var task = (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                    var task = (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
                     task.ShouldThrow<Exception>();
                 }
             }
@@ -224,7 +227,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             for (int i = 0; i < 5; i++) 
             {
                 //We are not in SuppressCaching using block, get cached result (NOT FROM DATA SOURCE)
-                var value = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy()); //should not call data source
+                var value = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings()); //should not call data source
                 value.Id.ShouldBe(firstValue);
             }
 
@@ -241,7 +244,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             for (int i = 0; i < 100; i++)
             {
-                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                var actual = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
                 actual.ShouldBeNull();
             }
 
@@ -256,7 +259,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             for (int i = 0; i < 100; i++)
             {
-                var actual = await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
+                var actual = await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
                 actual.ShouldBe(5);
             }
 
@@ -272,11 +275,11 @@ namespace Gigya.Microdot.UnitTests.Caching
             dataSource.ThingifyTaskThing("otherString").Returns(Task.FromResult(new Thing { Id = secondValue }));
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Id.ShouldBe(firstValue);
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "otherString" }, GetPolicy())).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "otherString" }, GetCachingSettings())).Id.ShouldBe(secondValue);
 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Id.ShouldBe(firstValue);
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "otherString" }, GetPolicy())).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "otherString" }, GetCachingSettings())).Id.ShouldBe(secondValue);
 
             dataSource.Received(1).ThingifyTaskThing("someString");
             dataSource.Received(1).ThingifyTaskThing("otherString");
@@ -290,10 +293,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, secondValue);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(1))).Id.ShouldBe(firstValue);
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(1))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(1))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(1))).Id.ShouldBe(firstValue);
             await Task.Delay(TimeSpan.FromSeconds(2));
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy(1))).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(1))).Id.ShouldBe(secondValue);
 
             dataSource.Received(2).ThingifyTaskThing("someString");
         }
@@ -310,17 +313,17 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, refreshTask);
 
             IMemoizer memoizer = CreateMemoizer(CreateCache());
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
             // fake that refreshTime has passed
             TimeFake.UtcNow += refreshTime;
 
             // Refresh task hasn't finished, should get old value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue); // value is not refreshed yet. it is running on background
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue); // value is not refreshed yet. it is running on background
             
             // Complete refresh task and verify new value
             refreshTask.SetResult(new Thing { Id = secondValue, Name = "seven" });
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(secondValue); // new value is expected now
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(secondValue); // new value is expected now
         }
 
         [Test]
@@ -334,17 +337,17 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, refreshTask);
 
             IMemoizer memoizer = CreateMemoizer(CreateCache());
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
             // fake that refreshTime has passed
             TimeFake.UtcNow += refreshTime;
 
             // Refresh task hasn't finished, should get old value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue); // value is not refreshed yet. it is running on background
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue); // value is not refreshed yet. it is running on background
 
             // Complete refresh task and verify new value
             refreshTask.SetException(new Exception("Boo!!"));
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue); 
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue); 
         }
 
         [Test]
@@ -359,28 +362,28 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, refreshTask, secondValue);
 
             IMemoizer memoizer = CreateMemoizer(CreateCache());
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
             // fake that refreshTime has passed
             TimeFake.UtcNow += refreshTime;
 
             // Should trigger refresh task that won't be completed yet, should get old value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
             // Fail the first refresh task and verify old value (5) still returned.
             // FailedRefreshDelay hasn't passed so shouldn't trigger refresh.
             refreshTask.SetException(new Exception("Boo!!"));
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
             TimeFake.UtcNow += TimeSpan.FromMilliseconds(failedRefreshDelay.TotalMilliseconds * 0.7);
 
             // FailedRefreshDelay still hasn't passed so shouldn't trigger refresh.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
             TimeFake.UtcNow += TimeSpan.FromMilliseconds(failedRefreshDelay.TotalMilliseconds * 0.7);
 
             // FailedRefreshDelay passed so should trigger refresh (and get new value)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy())).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(secondValue);
         }
 
 
@@ -396,25 +399,25 @@ namespace Gigya.Microdot.UnitTests.Caching
             var revokeCache = Substitute.For<IRecentRevokesCache>();
             revokeCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
-            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
+            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
 
             // T = 0s. No data in cache, should retrieve value from source (5).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(firstValue);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
             // T = 2s. TTL passed, verify refreshed value. 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue);
 
             await Task.Delay(TimeSpan.FromSeconds(0.5));
 
             // T = 2.5s. We're past the original TTL (from T=0s) but not past the refreshed TTL (from T=2s). Should still return secondValue. 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue); 
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue); 
 
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // T = 3.5s. Second TTL passed (after it was updated), verify new refreshed value. 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(refreshTimeSeconds: 1))).Id.ShouldBe(lastValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(lastValue);
 
             dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
         }
@@ -434,27 +437,27 @@ namespace Gigya.Microdot.UnitTests.Caching
             var revokeCache = Substitute.For<IRecentRevokesCache>();
             revokeCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
-            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), () => new CacheConfig(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
+            IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
 
             // T = 0s. No data in cache, should retrieve value from source (870).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1, 100))).Id.ShouldBe(firstValue);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
             // T = 2s. Past refresh time (1s), this triggers refresh in background (that will fail), should get existing value (870)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1, 100))).Id.ShouldBe(firstValue);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
             // T = 4s. Background refresh failed, but TTL (5s) not expired yet. Should still give old value (870) but won't
             // trigger additional background refresh because of very long FailedRefreshDelay that was spcified (100s).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1, 100))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1, 100))).Id.ShouldBe(firstValue);
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
             // T = 6s. We're past the original TTL (5s), and refresh task failed. Items should have been evicted from cache by now
             // according to 5s expiery from T=0s, not from T=2s of the failed refresh. New item (1002) should come in.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetPolicy(5, 1))).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1))).Id.ShouldBe(secondValue);
             dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
         }
 
@@ -466,9 +469,9 @@ namespace Gigya.Microdot.UnitTests.Caching
             dataSource.ThingifyTaskInt("someString").Returns(async i => { await Task.Delay(100); return 1; }, async i => 2);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
-            var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
-            var task3 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
+            var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
+            var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
+            var task3 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
 
             await Task.WhenAll(task1, task2, task3);
 
@@ -482,9 +485,9 @@ namespace Gigya.Microdot.UnitTests.Caching
             dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(100); throw new InvalidOperationException(); }, async i => 2);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
-            var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
-            var task3 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetPolicy());
+            var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
+            var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
+            var task3 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
 
             task1.ShouldThrow<InvalidOperationException>();
             task2.ShouldThrow<InvalidOperationException>();
@@ -496,10 +499,10 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Test]
         public void MemoizeAsync_NonCacheableMethods_Throws()
         {
-            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyInt, new object[] { "someString" }, GetPolicy()));
-            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyThing, new object[] { "someString" }, GetPolicy()));
-            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyTask, new object[] { "someString" }, GetPolicy()));
-            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyVoidMethod, new object[] { "someString" }, GetPolicy()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyInt, new object[] { "someString" }, GetCachingSettings()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyThing, new object[] { "someString" }, GetCachingSettings()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyTask, new object[] { "someString" }, GetCachingSettings()));
+            Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyVoidMethod, new object[] { "someString" }, GetCachingSettings()));
         }
     }
 }

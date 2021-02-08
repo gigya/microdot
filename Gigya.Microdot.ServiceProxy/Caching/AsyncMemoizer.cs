@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.ServiceContract.HttpService;
 using Metrics;
 using Newtonsoft.Json;
 

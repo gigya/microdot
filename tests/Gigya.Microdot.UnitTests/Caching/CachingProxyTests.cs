@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;

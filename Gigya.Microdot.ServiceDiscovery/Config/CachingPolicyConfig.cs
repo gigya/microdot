@@ -43,16 +43,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
-            DefaultItem = new MethodCachingPolicyConfig
-            {
-                Enabled = Enabled ?? Default.Enabled,
-            };
-            Merge(Default, this);
+            DefaultItem = new MethodCachingPolicyConfig();
+            Merge(this, DefaultItem);
+            Merge(Default, DefaultItem);
         
             var methods = (IDictionary<string, MethodCachingPolicyConfig>)Methods ?? new Dictionary<string, MethodCachingPolicyConfig>();
 
             Methods = new CachingPolicyCollection(methods, DefaultItem);
         }
+
+        // Method config <-- Service config <-- static hard-coded defaults
+
+        // Method config <-- [Cached] <-- Service config <-- static hard-coded defaults
+
 
         public readonly static MethodCachingPolicyConfig Default = new MethodCachingPolicyConfig
         {
@@ -66,13 +69,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             FailedRefreshDelay = TimeSpan.FromSeconds(1),
             ResponseKindsToCache  = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
             ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
-            RefreshTimeInMinutes = 1,
-            ExpirationTimeInMinutes = 360,
-            FailedRefreshDelayInSeconds = 1,
-            UseRequestGrouping = true,
+            RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
             RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
-            RevokedResponseBehavior = RevokedResponseBehavior.TryFetchNewValueNextTime,
-            CacheResponsesWhenCacheWasSupressed = true,
+            RevokedResponseBehavior = RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld, // Behavior change
+            CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
         };
 
     }

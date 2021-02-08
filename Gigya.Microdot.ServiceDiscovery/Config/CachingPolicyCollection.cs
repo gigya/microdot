@@ -33,7 +33,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         protected override MethodCachingPolicyConfig ApplyDefaults(MethodCachingPolicyConfig item)
         {
-            item.Enabled = item.Enabled ?? DefaultItem.Enabled;
             MethodCachingPolicyConfig.Merge(DefaultItem, item);
             return item;
         }
