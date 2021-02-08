@@ -171,6 +171,46 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        public async Task MemoizeAsync_ParallelSuppressedAndNonSuppressedCallsWithSuppressCaching_UsesDataSourceForEverySuppressedCacheCallX()
+        {
+            string firstValue = "first Value";
+            var dataSource = CreateDataSource(firstValue);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //call data source and cache value
+            await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+
+            List<Task<Thing>> tasks = new List<Task<Thing>>();
+
+            //calls should use cache, although they run in parallel to suppressed cached calls (but not under using)
+            for (int i = 0; i < 10; i++)
+            {
+                var task = new Task<Thing>(() => ((Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Result);
+                tasks.Add(task);
+            }
+
+            //SuppressCaching
+            using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
+            {
+                //start the tasks here, so they will run in parallel to cache suppress 
+                foreach (var task in tasks)
+                {
+                    task.Start();
+                }
+
+                //10 suppressed cached calls should call data source
+                for (int i = 0; i < 10; i++)
+                {
+                    await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                }
+            }
+
+            await Task.WhenAll(tasks.ToArray());
+
+            dataSource.Received(11).ThingifyTaskThing("someString");
+        }
+
+        [Test]
         public async Task MemoizeAsync_MultipleCallsWithDoNotSuppressCaching_UseCacheForDoNotSuppressCalls()
         {
             string firstValue = "first Value";

@@ -418,9 +418,9 @@ namespace Gigya.Microdot.ServiceProxy
                 bool isHttps = false;
                 try
                 {
-                    var cacheSuppresOverride = TracingContext.CacheSuppress != null && TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices ?
-                        TracingContext.CacheSuppress :
-                        null;
+                    var cacheSuppresOverride = TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices ?
+                        CacheSuppress.RecursiveAllDownstreamServices :
+                       (CacheSuppress?) null;
 
                     request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, cacheSuppresOverride)
                                         ?? new RequestOverrides
