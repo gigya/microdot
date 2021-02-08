@@ -41,7 +41,7 @@ namespace Gigya.Microdot.Hosting.Service
     public class MicrodotHostingConfig : IConfigObject
     {
         public bool FailServiceStartOnConfigError = true;
-        public bool TrueFireAndForgetOnOrleansServerReq = false;
+        public bool ExtendedDelaysTimeLogging = true;
     }
 
     public abstract class ServiceHostBase : IDisposable

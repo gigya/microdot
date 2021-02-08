@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
@@ -32,29 +33,19 @@ namespace Gigya.Microdot.Orleans.Hosting
     public sealed class ProcessingGrainWorker : IWorker
     {
         private readonly Lazy<IGrainFactory> _grainFactory;
-        private readonly Func<MicrodotHostingConfig> _microdotHostingConfigFactory;
 
         public ProcessingGrainWorker(Lazy<IGrainFactory> grainFactory, Func<MicrodotHostingConfig> microdotHostingConfigFactory)
         {
             _grainFactory = grainFactory;
-            _microdotHostingConfigFactory = microdotHostingConfigFactory;
         }
 
         public void FireAndForget(Func<Task> asyncAction)
         {
-            void Actions()
-            {
-                var infraLongProcessingGrain = _grainFactory.Value.GetGrain<IRequestProcessingGrain>(0);
-                infraLongProcessingGrain.Do(new Immutable<RequestProcessingAction>(() => asyncAction())).Ignore();
-            }
-
-            if (_microdotHostingConfigFactory().TrueFireAndForgetOnOrleansServerReq)
-                Task.Factory.StartNew(Actions);
-            else
-                Actions();
+            var infraLongProcessingGrain = _grainFactory.Value.GetGrain<IRequestProcessingGrain>(0);
+            infraLongProcessingGrain.Do(new Immutable<RequestProcessingAction>(() => asyncAction())).Ignore();
         }
 
 
-        public void Dispose() {}
+        public void Dispose() { }
     }
 }
