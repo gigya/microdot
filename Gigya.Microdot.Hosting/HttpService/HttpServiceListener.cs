@@ -208,7 +208,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             StartListening();
         }
 
-        private static long OutstandingRequests;
+        private static long _outstandingRecvRequests;
+        private readonly ObjectPool<Stopwatch> _stopwatchPool = new ObjectPool<Stopwatch>(() => new Stopwatch(), 4096);
 
         private async Task StartListening()
         {
@@ -229,14 +230,17 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                     var timeFromLastReq = sp.ElapsedMilliseconds;
                     var ticks = DateTime.UtcNow.Ticks;
-                    Interlocked.Increment(ref OutstandingRequests);
+                    Interlocked.Increment(ref _outstandingRecvRequests);
 
                     Worker.FireAndForget(() => HandleRequest(context, ticks, timeFromLastReq));
 
-                    var elappsed = sp.ElapsedMilliseconds;
-                    if (_extendedDelayTimeLogging && elappsed > 1000)
+                    var elapsed = sp.ElapsedMilliseconds;
+                    if (_extendedDelayTimeLogging && elapsed > 1000)
                     {
-                        Log.Info((t) => t("DelayDebug : HttpServiceListener - FireAndForget took more then 1 seconds: " + elappsed + " mSec"));
+                        Log.Info((t) => t("DelayDebug : HttpServiceListener - FireAndForget took more then 1 seconds: " + elapsed + " mSec", unencryptedTags: new Tags
+                        {
+                            {"delay.debug.fireAndForget", elapsed.ToString()}
+                        }));
                     }
 
 
@@ -263,10 +267,11 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private async Task HandleRequest(HttpListenerContext context, long ticks, long timeFromLastReq)
         {
+            var sw = _stopwatchPool.Get();
             try
             {
                 var deltaDelayTicks = DateTime.UtcNow.Ticks - ticks;
-                var sw = Stopwatch.StartNew();
+                sw.Restart();
                 RequestTimings.ClearCurrentTimings();
                 using (context.Response)
                 {
@@ -327,8 +332,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                                     callEvent.RecvDateTicks = ticks;
                                     callEvent.ReqStartupDeltaTicks = deltaDelayTicks;
                                     callEvent.TimeFromLastReq = timeFromLastReq;
-                                    var outstandingReqs = Interlocked.Read(ref OutstandingRequests);
-                                    callEvent.OutstandingRequests = outstandingReqs;
+                                    var outstandingRecvReqs = Interlocked.Read(ref _outstandingRecvRequests);
+                                    callEvent.OutstandingRecvRequests = outstandingRecvReqs;
                                     if (deltaDelayTicks > 10_000_000)
                                     {
                                         callEvent.CollectionCountGen0 = GC.CollectionCount(0);
@@ -384,7 +389,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
             finally
             {
-                Interlocked.Decrement(ref OutstandingRequests);
+                _stopwatchPool.Return(sw);
+                Interlocked.Decrement(ref _outstandingRecvRequests);
             }
         }
 

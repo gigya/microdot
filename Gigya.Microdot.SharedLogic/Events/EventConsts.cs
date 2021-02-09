@@ -99,9 +99,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string RecvDateTicks = "debug.recv.date.ticks";
         public const string ReqStartupDeltaTicks = "debug.reqStartupDelta.ticks";
         public const string TimeFromLastReq = "debug.timeFromLastReq.time";
-        public const string OutstandingRequests = "debug.OutstandingRequests";
+        public const string OutstandingRecvRequests = "debug.OutstandingRecvRequests";
         public const string CollectionCountGen0 = "debug.CollectionCountGen0";
         public const string CollectionCountGen1 = "debug.CollectionCountGen1";
         public const string CollectionCountGen2 = "debug.CollectionCountGen2";
+        public const string outstandingSentRequests = "debug.OutstandingSentRequests";
     }
 }
