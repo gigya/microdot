@@ -237,13 +237,11 @@ namespace Gigya.Microdot.Hosting.HttpService
                     var elapsed = sp.ElapsedMilliseconds;
                     if (_extendedDelayTimeLogging && elapsed > 1000)
                     {
-                        Log.Info((t) => t("DelayDebug : HttpServiceListener - FireAndForget took more then 1 seconds: " + elapsed + " mSec", unencryptedTags: new Tags
+                        Log.Info((t) => t("FireAndForget took more then 1 seconds", unencryptedTags: new Tags
                         {
-                            {"delay.debug.fireAndForget", elapsed.ToString()}
+                            {"debug.delay.fireAndForget", elapsed.ToString()}
                         }));
                     }
-
-
                 }
                 catch (ObjectDisposedException)
                 {
