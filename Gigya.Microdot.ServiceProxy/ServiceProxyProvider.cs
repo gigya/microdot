@@ -485,14 +485,13 @@ namespace Gigya.Microdot.ServiceProxy
                         clientCallEvent.OutstandingSentRequests = outstandingSentReqs;
 
 
-                        long now;
-                        now = DateTime.UtcNow.Ticks;
+                        var now = DateTime.UtcNow.Ticks;
 
                         asyncActionStopwatch.Restart();
                         response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
                         asyncActionStopwatch.Stop();
 
-
+                        clientCallEvent.StatsNetworkPostTime = asyncActionStopwatch.ElapsedMilliseconds;
                         clientCallEvent.PostDateTicks = now;
 
                         asyncActionStopwatch.Restart();
@@ -504,7 +503,6 @@ namespace Gigya.Microdot.ServiceProxy
                     finally
                     {
                         Interlocked.Decrement(ref _outstandingSentRequests);
-                        clientCallEvent.StatsNetworkPostTime = asyncActionStopwatch.ElapsedMilliseconds;
                         _stopwatchPool.Return(asyncActionStopwatch);
 
                         clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
