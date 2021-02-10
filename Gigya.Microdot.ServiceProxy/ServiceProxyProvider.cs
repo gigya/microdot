@@ -131,6 +131,10 @@ namespace Gigya.Microdot.ServiceProxy
 
         private CurrentApplicationInfo AppInfo { get; }
 
+        private static long _outstandingSentRequests;
+
+        private ObjectPool<Stopwatch> _stopwatchPool = new ObjectPool<Stopwatch>(() => new Stopwatch(), 4096);
+
         public ServiceProxyProvider(string serviceName, IEventPublisher<ClientCallEvent> eventPublisher,
             ILog log,
             Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery> serviceDiscoveryFactory,
@@ -218,7 +222,11 @@ namespace Gigya.Microdot.ServiceProxy
                 {
                     isNewCreated = true;
                     var equalState = (LastHttpClientKey?.Equals(httpKey))?.ToString() ?? "FirstTime";
-                    Log.Info(msg => msg($"DelayDebug : GetHttpClient created new HttpClient (isEqual={equalState})")); // we expect this not to be equal ever
+                    Log.Info(msg => msg("GetHttpClient created new HttpClient", unencryptedTags: new Tags
+                    {
+                        {"debug.delay.newHttpClient", equalState},
+                        {"debug.delay.method", "GetHttpClient"}
+                    })); // we expect this not to be equal ever
 
                     var messageHandler = _httpMessageHandlerFactory(httpKey);
                     var httpClient = CreateHttpClient(messageHandler, httpKey.Timeout);
@@ -264,7 +272,12 @@ namespace Gigya.Microdot.ServiceProxy
 
                 lock (HttpClientLock)
                 {
-                    Log.Info(msg => msg($"DelayDebug : ValidateReachability created new Https HttpClient (isEqual={LastHttpClient.Equals(httpsClient)})")); // we expect this not to be equal ever
+                    var isEqual = LastHttpClient?.Equals(httpsClient).ToString() ?? "Null";
+                    Log.Info(msg => msg("GetHttpClient created new HttpClient", unencryptedTags: new Tags
+                    {
+                        {"debug.delay.newHttpClient", isEqual},
+                        {"debug.delay.method", "Reachability"}
+                    })); // we expect this not to be equal ever
 
                     LastHttpClient = httpsClient;
                     LastHttpClientKey = new HttpClientConfiguration(
@@ -438,6 +451,8 @@ namespace Gigya.Microdot.ServiceProxy
 
                     httpContent.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
+                    var asyncActionStopwatch = _stopwatchPool.Get();
+                    var outstandingSentReqs = Interlocked.Increment(ref _outstandingSentRequests);
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
                     {
@@ -469,12 +484,15 @@ namespace Gigya.Microdot.ServiceProxy
                         clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
                         clientCallEvent.TargetPort = actualPort;
 
+                        clientCallEvent.OutstandingSentRequests = outstandingSentReqs;
+
+
                         var now = DateTime.UtcNow.Ticks;
-                        
-                        Stopwatch asyncActionStopwatch = Stopwatch.StartNew();
+
+                        asyncActionStopwatch.Restart();
                         response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
                         asyncActionStopwatch.Stop();
-                        
+
                         clientCallEvent.StatsNetworkPostTime = asyncActionStopwatch.ElapsedMilliseconds;
                         clientCallEvent.PostDateTicks = now;
 
@@ -486,6 +504,9 @@ namespace Gigya.Microdot.ServiceProxy
                     }
                     finally
                     {
+                        Interlocked.Decrement(ref _outstandingSentRequests);
+                        _stopwatchPool.Return(asyncActionStopwatch);
+
                         clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
                         
                         PublishServiceConnectionMetrics(uri);

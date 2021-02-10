@@ -96,8 +96,8 @@ namespace Gigya.Microdot.Hosting.Events
         [EventField(EventConsts.TimeFromLastReq)]
         public long TimeFromLastReq { get; set; }
 
-        [EventField(EventConsts.OutstandingRequests)]
-        public long? OutstandingRequests { get; set; }
+        [EventField(EventConsts.OutstandingRecvRequests)]
+        public long? OutstandingRecvRequests { get; set; }
 
         [EventField(EventConsts.CollectionCountGen0)]
         public int? CollectionCountGen0 { get; set; }
