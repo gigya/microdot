@@ -30,12 +30,18 @@ namespace CalculatorService.Interface
     [HttpService(12323)]
     public interface ICalculatorService
     {
-        Task<int> Add(int a, int b);
+        Task<string> Add(int a, int b);
 
         [Cached]
-        Task<int> Add_Cached(int a, int b);
+        Task<string> Add_Cached(int a, int b);
 
         [Cached]
-        Task<Revocable<int>> Add_CachedAndRevocable(int a, int b);
+        Task<string> Add_Cached_WithNewValueAfterServiceCall(int a, int b);
+
+        [Cached]
+        Task<Revocable<string>> Add_CachedAndRevocable(int a, int b);
+
+        [Cached]
+        Task<Revocable<string>> Add_CachedAndRevocable_WithNewValueAfterServiceCall(int a, int b);
     }
 }
