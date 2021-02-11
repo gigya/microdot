@@ -233,7 +233,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// that it is preferable to use stale responses over not providing service. The client will retry fetching a new value the next
         /// time it needs that response with a minimum delay of <see cref="FailedRefreshDelayInSeconds"/> between retries, unless it had no
         /// previously-cache response, in which case it might issue a request as soon as it received a reply for the previous one. This is
-        /// the default for Microdot v3+ clients.
+        /// the default for Microdot v4+ clients.
         /// </summary>
         TryFetchNewValueOrUseOld = 1,
 
@@ -242,7 +242,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// DANGEROUS! When a client encounters a cached response that is older than <see cref="CachedAttribute.RefreshTime"/>, it will 
         /// use it even though it's old (possibly several hours old), and will issue a request to obtain a fresh value so the NEXT time it
         /// needs it, it'll be (more) up-to-date (though if it needs it much later, it'll be old anyway). This behavior prioritizes low
-        /// latency over fresh data. This is the default for Microdot v1 and v2 clients.
+        /// latency over fresh data. This is the default for Microdot v1, v2 and v3 clients.
         /// </summary>
         UseOldAndFetchNewValueInBackground = 2,
     }
@@ -304,7 +304,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     public enum ExpirationBehavior
     {
         /// <summary>
-        /// This option defines that every time a response is read from the cache, its expiration is pushed back. This is suitable when
+        /// This option defines that every time a response is read from the cache, its expiration is pushed forward. This is suitable when
         /// you use manual cache revokes and responses aren't auto-refreshed (since you set <see cref="RefreshMode"/> to
         /// <see cref="RefreshMode.DoNotUseRefreshes"/>), hence their expiration isn't updated, and you don't want them to expire while
         /// they're still in use.

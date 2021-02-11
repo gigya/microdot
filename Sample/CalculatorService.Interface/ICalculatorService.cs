@@ -21,14 +21,21 @@
 #endregion
 
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.ServiceContract.HttpService;
 
 namespace CalculatorService.Interface
 {
-
     [HttpService(12323)]
     public interface ICalculatorService
     {
         Task<int> Add(int a, int b);
+
+        [Cached]
+        Task<int> Add_Cached(int a, int b);
+
+        [Cached]
+        Task<Revocable<int>> Add_CachedAndRevocable(int a, int b);
     }
 }

@@ -52,26 +52,20 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             Methods = new CachingPolicyCollection(methods, DefaultItem);
         }
 
-        // Method config <-- Service config <-- static hard-coded defaults
-
-        // Method config <-- [Cached] <-- Service config <-- static hard-coded defaults
-
-
-        public readonly static MethodCachingPolicyConfig Default = new MethodCachingPolicyConfig
+        public static readonly MethodCachingPolicyConfig Default = new MethodCachingPolicyConfig
         {
-            // For Revocable<>:
-            // RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus (RefreshMode.UseRefreshes otherwise)
-            // ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache
+            // Note! RefreshMode & ExpirationBehavior defaults, depends on whether it is a 'Revocable' method
+            // So their defaults will be set in later phase of configuration resolution
 
-            Enabled = true,
-            RefreshTime = TimeSpan.FromMinutes(1),
-            ExpirationTime = TimeSpan.FromHours(6),
-            FailedRefreshDelay = TimeSpan.FromSeconds(1),
-            ResponseKindsToCache  = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
-            ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
-            RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
-            RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
-            RevokedResponseBehavior = RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld, // Behavior change
+            Enabled                             = true,
+            RefreshTime                         = TimeSpan.FromMinutes(1),
+            ExpirationTime                      = TimeSpan.FromHours(6),
+            FailedRefreshDelay                  = TimeSpan.FromSeconds(1),
+            ResponseKindsToCache                = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
+            ResponseKindsToIgnore               = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
+            RequestGroupingBehavior             = RequestGroupingBehavior.Enabled,
+            RefreshBehavior                     = RefreshBehavior.UseOldAndFetchNewValueInBackground,
+            RevokedResponseBehavior             = RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld, // Behavior change
             CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
         };
 

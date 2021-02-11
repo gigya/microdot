@@ -74,43 +74,39 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
         {
-            //if (CachingConfigPerMethod.TryGetValue(methodName, out var config))
-            //    return config;
-            //else
-            //{
-                var config = new MethodCachingPolicyConfig();
-                GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
-                MethodCachingPolicyConfig.Merge(discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default, config);
+            var config = new MethodCachingPolicyConfig();
+            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
+            MethodCachingPolicyConfig.Merge(discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default, config);
 
-                // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
-                // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
-                // ...so we probably need access to configs before merges
-
-                //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
+            // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
+            // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
+            // ...so we probably need access to configs before merges
+            //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
 
 
-                // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
-                // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
-                // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
-                var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
-                bool isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
-                if (config.RefreshMode == 0)
-                    if (isRevocable)
-                        config.RefreshMode = RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus;
-                    else config.RefreshMode = RefreshMode.UseRefreshes;
+            // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
+            // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
+            // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
 
-                if (config.ExpirationBehavior == 0)
-                    if (isRevocable)
-                        config.ExpirationBehavior = ExpirationBehavior.ExtendExpirationWhenReadFromCache;
-                    else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+            var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
+            var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
 
-                // WARNING! this is currently a regression, we don't refresh configs.
-                // TODO: Detect config changes, but also cache merged-down config so we don't compute it every time. Maybe compare config
-                // object reference to previous one?
+            if (config.RefreshMode == 0)
+                if (isRevocable)
+                    config.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
+                else config.RefreshMode = RefreshMode.UseRefreshes;
 
-                // Add to cache and return
-                return CachingConfigPerMethod[methodName] = config;
-            //}
+            if (config.ExpirationBehavior == 0)
+                if (isRevocable)
+                    config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
+                else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+
+            // WARNING! this is currently a regression, we don't refresh configs.
+            // TODO: Detect config changes, but also cache merged-down config so we don't compute it every time. Maybe compare config
+            // object reference to previous one?
+
+            // Add to cache and return
+            return CachingConfigPerMethod[methodName] = config;
         }
 
 
