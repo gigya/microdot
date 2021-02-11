@@ -10,7 +10,6 @@ using Metrics;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-    //TODO: need a cr
     public class RecentRevokesCache : IRecentRevokesCache, IDisposable
     {
         public int RevokesIndexCount => RevokesIndex.Count;
@@ -20,6 +19,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private ILog                                                 Log { get; }
         private MetricsContext                                       Metrics { get; }
         private Func<CacheConfig>                                    GetRevokeConfig { get; }
+
+        //In case solution gets too complicated, we can use Queue<RevokeKeyItem> as Value. Currently not used in order to reduce memory consumption 
         private ConcurrentDictionary<string, RevokeKeyItem>          RevokesIndex { get; }
         private ConcurrentQueue<(Task task, DateTime sendTime)>      OngoingTasks { get; }
         private ConcurrentQueue<(string key, DateTime receivedTime)> RevokesQueue { get; }
@@ -43,8 +44,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public void RegisterOutgoingRequest(Task task, DateTime sentTime)
         {
-            //TODO: Can a rc be when entering items to the tasks queue, so oldest task time wont be first in queue?
-
             if (GetRevokeConfig().DontCacheRecentlyRevokedResponses)
             {
                 if (task == null)
@@ -53,9 +52,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 if (sentTime.Kind != DateTimeKind.Utc)
                     throw new ProgrammaticException("Received non UTC time");
 
-                if (sentTime < DateTime.UtcNow.AddMinutes(-5)) //TODO: verify
+                if (sentTime < DateTime.UtcNow.AddMinutes(-5)) 
                     throw new ProgrammaticException("Received out of range time");
 
+                //a rc can be when entering items to the tasks queue, so oldest task time wont be first in queue
+                //its ok as anyway they will be removed from the queue (after completion)
                 OngoingTasks.Enqueue((task, sentTime));
             }
         }
@@ -70,19 +71,19 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 if (receivedRevokeTime.Kind != DateTimeKind.Utc)
                     throw new ProgrammaticException("Received non UTC time");
 
-                if (receivedRevokeTime > DateTime.UtcNow.AddMinutes(5)) //TODO: verify
+                if (receivedRevokeTime > DateTime.UtcNow.AddMinutes(5)) 
                     throw new ProgrammaticException("Received out of range time");
 
                 var revokeItem = RevokesIndex.GetOrAdd(revokeKey, s => new RevokeKeyItem());
 
                 if (receivedRevokeTime > revokeItem.RevokeTime)
                 {
-                    lock (revokeItem.Locker)
+                    lock (revokeItem.Locker) //in case of rc we will always take the most recent receivedRevokeTime
                     {
                         if (receivedRevokeTime > revokeItem.RevokeTime)
                         {
                             revokeItem.RevokeTime = receivedRevokeTime;
-                            RevokesQueue.Enqueue((revokeKey, receivedRevokeTime));
+                            RevokesQueue.Enqueue((revokeKey, receivedRevokeTime)); //can be a second item with the same revokeKey
                         }
                     }
                 }
@@ -114,15 +115,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             {
                 try
                 {
-                    if (!GetRevokeConfig().DontCacheRecentlyRevokedResponses)
-                    {
-                        while (RevokesQueue.TryDequeue(out var dequeued)) {}
-                        while (OngoingTasks.TryDequeue(out var dequeued)) {}
-                        RevokesIndex.Clear();
-
-                        continue;
-                    }
-
                     var now = DateTime.UtcNow;
 
                     //default in case no ongoing tasks, we take the time back to avoid rc in case an item was just added
@@ -130,13 +122,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                     while (OngoingTasks.TryPeek(out var taskTuple))
                     {
-                        if (taskTuple.task.IsCompleted)
+                        if (taskTuple.task.IsCompleted || !GetRevokeConfig().DontCacheRecentlyRevokedResponses)
                             OngoingTasks.TryDequeue(out taskTuple);
-                        else if (taskTuple.sendTime.AddMinutes(5) < now) //protection for too old non completed tasks (should not happen)
+                        else if (taskTuple.sendTime.AddMinutes(60) < now) //protection for too old non completed tasks (should not happen)
                         {
                             OngoingTasks.TryDequeue(out taskTuple);
 
-                            Log.Error(x => x("Remove non completed old task from queue", unencryptedTags: new
+                            Log.Critical(x => x("Remove non completed old task from queue", unencryptedTags: new
                             {
                                 taskSendTime = taskTuple.sendTime,
                                 cacheTime    = now

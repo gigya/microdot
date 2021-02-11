@@ -305,7 +305,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                                : e is EnvironmentException ? ResponseKinds.EnvironmentException
                                : e is TimeoutException || e is TaskCanceledException ? ResponseKinds.TimeoutException
                                : ResponseKinds.OtherExceptions;
+
                 response = Task.FromException<object>(e);
+                var observed = response.Exception; //dont remove this line as it prevents UnobservedTaskException to be thrown 
             }
 
             // Outcome #1: Cache the response
@@ -412,6 +414,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                         throw new ProgrammaticException("Invalid state");
         }
 
+
+
         private Task OnRevoke(string revokeKey)
         {
             if (revokeKey == null)
@@ -427,7 +431,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return Task.CompletedTask;
         }
 
-        private IEnumerable<string> ExtarctRevokeKeys(Task<object> responseTask) => (!responseTask.IsFaulted && !responseTask.IsCanceled ? (responseTask.Result as IRevocable)?.RevokeKeys : null) ?? Enumerable.Empty<string>();
+        private IEnumerable<string> ExtarctRevokeKeys(Task<object> responseTask) => (!responseTask.IsFaulted && !responseTask.IsCanceled? (responseTask.Result as IRevocable)?.RevokeKeys : null) ?? Enumerable.Empty<string>();
 
         public void Clear()
         {
