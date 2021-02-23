@@ -259,7 +259,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// the cached response and call this method to obtain fresh data. If the new response does not match
         /// <see cref="ResponseKinds"/>, it will use the stale cached response. This lets the client to continue providing
         /// service while this service is down. It is assumed that it is preferable to use stale responses over not providing service.
-        /// This is the default for Microdot v3+ clients.
+        /// This is the default for Microdot v4+ clients.
         /// </summary>
         TryFetchNewValueNextTimeOrUseOld = 1,
 
@@ -268,7 +268,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// as "stale". With this option, the NEXT time the client happens to need such a cached response (if it didn't expire by then), it
         /// will immediately return the stale response and initiate a background call to the target service to obtain an up-to-date response,
         /// for the next-next time it needs it. Use this option if your clients need the lowest latency possible, even at the cost of using
-        /// stale data (that can be several hours out-of-date). This is the default for Microdot v1 and v2 clients.
+        /// stale data (that can be several hours out-of-date). This is the default for Microdot v1,v2 and v3 clients.
         /// </summary>
         TryFetchNewValueInBackgroundNextTime = 2,
 

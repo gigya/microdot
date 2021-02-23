@@ -82,6 +82,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private MetricsContext Failed { get; set; }
 
         private MetricsContext Items { get; set; }
+        private MetricsContext Revokes { get; set; }
 
         private IDisposable RevokeDisposable { get; }
         private const double MB = 1048576.0;
@@ -142,6 +143,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Failed = Metrics.Context("Failed");
 
             Items = Metrics.Context("Items");
+            Revokes = Metrics.Context("Revoke");
         }
 
 
@@ -423,10 +425,20 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             RecentRevokesCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
 
+            var revokeApplied = false;
             lock (RevokeKeyToCacheItemsIndex)
                 if (RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var hash))
+                {
                     foreach (var item in hash)
                         item.IsRevoked = true;
+
+                    revokeApplied = true;
+                }
+
+            if (revokeApplied)
+                Revokes.Meter("Succeeded", Unit.Events).Mark();
+            else
+                Revokes.Meter("Discarded", Unit.Events).Mark();
 
             return Task.CompletedTask;
         }

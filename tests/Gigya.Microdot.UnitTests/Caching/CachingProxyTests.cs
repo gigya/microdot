@@ -16,6 +16,7 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
@@ -31,7 +32,6 @@ namespace Gigya.Microdot.UnitTests.Caching
         private ICachingTestService _serviceMock;
         private DateTime _now;
         private string _serviceResult;
-        private bool _delayResponse;
         private ICacheRevoker _cacheRevoker;
         private Task _revokeDelay;
         private IRevokeListener _revokeListener;
@@ -73,13 +73,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             _serviceMock = Substitute.For<ICachingTestService>();
             _serviceMock.CallService().Returns(_ =>
             {
-                if (_delayResponse)
-                {
-                    _delayResponse = false;
-                    return Task.Delay(1).ContinueWith(t => _serviceResult);
-                }
-                else
-                    return Task.FromResult(_serviceResult);
+                return Task.FromResult(_serviceResult);
             });
             _serviceMock.CallRevocableService(Arg.Any<string>()).Returns(async s =>
             {
@@ -154,7 +148,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             _now += expectedRefreshTime;
             _serviceResult = SecondResult;
-            _delayResponse = true;
+            
             result = await _proxy.CallService(); //trigger a refresh, but until it will finish, return old result
             result.ShouldBe(FirstResult);
 
@@ -195,6 +189,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var deay = new TaskCompletionSource<int>();
             _revokeDelay = deay.Task;
             var serviceCallWillCompleteOnlyAfterRevoke = ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
+            await Task.Delay(1000); //Let the call to the service start before publishing revoke
             _serviceResult = SecondResult;
             await _cacheRevoker.Revoke(key);
             _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
@@ -279,13 +274,13 @@ namespace Gigya.Microdot.UnitTests.Caching
     [HttpService(1234)]
     public interface ICachingTestService
     {
-        [Cached]
+        [Gigya.Common.Contracts.Attributes.Cached]
         Task<string> CallService();
 
-        [Cached]
+        [Gigya.Common.Contracts.Attributes.Cached]
         Task<string> OtherMethod();
 
-        [Cached]
+        [Gigya.Common.Contracts.Attributes.Cached]
         Task<Revocable<string>> CallRevocableService(string keyToRevock);
 
     }

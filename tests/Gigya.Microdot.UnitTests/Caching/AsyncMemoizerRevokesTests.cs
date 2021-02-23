@@ -47,7 +47,17 @@ namespace Gigya.Microdot.UnitTests.Caching
             {
                 ExpirationTime = TimeSpan.FromSeconds(ttlSeconds),
                 RefreshTime = TimeSpan.FromSeconds(refreshTimeSeconds),
-                FailedRefreshDelay = TimeSpan.FromSeconds(1)
+
+                FailedRefreshDelay = TimeSpan.FromSeconds(1),
+                Enabled = true,
+                ResponseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
+                ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
+                RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
+                RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
+                RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,
+                CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
+                RefreshMode = RefreshMode.UseRefreshes,
+                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache
             };
 
         private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));

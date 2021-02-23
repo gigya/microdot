@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -42,7 +43,17 @@ namespace Gigya.Microdot.UnitTests.Caching
             {
                 ExpirationTime = TimeSpan.FromSeconds(expirationTime),
                 RefreshTime = TimeSpan.FromSeconds(refreshTimeSeconds),
-                FailedRefreshDelay = TimeSpan.FromSeconds(failedRefreshDelaySeconds)
+                FailedRefreshDelay = TimeSpan.FromSeconds(failedRefreshDelaySeconds),
+
+                Enabled = true,
+                ResponseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
+                ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
+                RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
+                RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
+                RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache, 
+                CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
+                RefreshMode = RefreshMode.UseRefreshes,
+                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache
             };
 
 
@@ -286,6 +297,9 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        [Order(1)] //If test does not run first, it fails (as standalone it pass), probably due to other tests that use the MemoryCache,
+                   //and internally the MC may set some expiration static field which effects this test
+                   //https://stackoverflow.com/questions/12630168/memorycache-absoluteexpiration-acting-strange
         public async Task MemoizeAsync_TwoCalls_RespectsCachingPolicy()
         {
             string firstValue = "first Value";
@@ -293,10 +307,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, secondValue);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(1))).Id.ShouldBe(firstValue);
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(1))).Id.ShouldBe(firstValue);
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(1))).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(2))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(2))).Id.ShouldBe(firstValue);
+            await Task.Delay(TimeSpan.FromMilliseconds(2500));
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings())).Id.ShouldBe(secondValue);
 
             dataSource.Received(2).ThingifyTaskThing("someString");
         }
@@ -367,11 +381,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             // fake that refreshTime has passed
             TimeFake.UtcNow += refreshTime;
 
-            // Should trigger refresh task that won't be completed yet, should get old value (5)
+            // Should trigger refresh task that won't be completed yet, should get old value 
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
-            // Fail the first refresh task and verify old value (5) still returned.
-            // FailedRefreshDelay hasn't passed so shouldn't trigger refresh.
+            // Fail the first refresh task and verify old value still returned.
             refreshTask.SetException(new Exception("Boo!!"));
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
 
@@ -382,7 +395,10 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             TimeFake.UtcNow += TimeSpan.FromMilliseconds(failedRefreshDelay.TotalMilliseconds * 0.7);
 
-            // FailedRefreshDelay passed so should trigger refresh (and get new value)
+            // FailedRefreshDelay passed so should trigger refresh in the background (and get old value)
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
+
+            // Second refresh should succeed and get new value 
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(secondValue);
         }
 
@@ -406,17 +422,18 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // T = 2s. TTL passed, verify refreshed value. 
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue);
+            // T = 2s. Refresh just triggered (in background), should get old value 
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(firstValue);
 
-            await Task.Delay(TimeSpan.FromSeconds(0.5));
-
-            // T = 2.5s. We're past the original TTL (from T=0s) but not past the refreshed TTL (from T=2s). Should still return secondValue. 
+            // Refresh task should have completed by now, verify new value. Should not trigger another refresh.
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue); 
 
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // T = 3.5s. Second TTL passed (after it was updated), verify new refreshed value. 
+            // T = 3s. Second TTL passed (after it was updated) and refresh triggered in the background, should get old value  
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue);
+
+            // Refresh task should have completed by now, verify new value
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(lastValue);
 
             dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
