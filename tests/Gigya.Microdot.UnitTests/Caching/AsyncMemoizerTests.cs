@@ -196,14 +196,14 @@ namespace Gigya.Microdot.UnitTests.Caching
             var memoizer = CreateMemoizer(CreateCache());
 
             //call data source and cache value
-            await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+            await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
 
             List<Task<Thing>> tasks = new List<Task<Thing>>();
 
             //calls should use cache, although they run in parallel to suppressed cached calls (but not under using)
             for (int i = 0; i < 10; i++)
             {
-                var task = new Task<Thing>(() => ((Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy())).Result);
+                var task = new Task<Thing>(() => ((Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings())).Result);
                 tasks.Add(task);
             }
 
@@ -219,7 +219,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 //10 suppressed cached calls should call data source
                 for (int i = 0; i < 10; i++)
                 {
-                    await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetPolicy());
+                    await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
                 }
             }
 
