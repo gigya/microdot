@@ -21,8 +21,10 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Hosting.Service;
 using Orleans;
 using Orleans.Concurrency;
 
@@ -32,7 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting
     {
         private readonly Lazy<IGrainFactory> _grainFactory;
 
-        public ProcessingGrainWorker(Lazy<IGrainFactory> grainFactory)
+        public ProcessingGrainWorker(Lazy<IGrainFactory> grainFactory, Func<MicrodotHostingConfig> microdotHostingConfigFactory)
         {
             _grainFactory = grainFactory;
         }
@@ -44,6 +46,6 @@ namespace Gigya.Microdot.Orleans.Hosting
         }
 
 
-        public void Dispose() {}
+        public void Dispose() { }
     }
 }

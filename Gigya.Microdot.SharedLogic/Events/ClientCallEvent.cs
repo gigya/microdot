@@ -80,5 +80,29 @@ namespace Gigya.Microdot.SharedLogic.Events
 
         [EventField(EventConsts.SuppressCaching)]
         public CacheSuppress? SuppressCaching { get; set; }
+
+        // Debug srv&cln send recv stats
+        [EventField(EventConsts.statsRetryCount)]
+        public int? StatsRetryCount { get; set; }
+
+        [EventField(EventConsts.above10KmsgLength)]
+        public int? Above10KmsgLength { get; set; }
+
+        [EventField(EventConsts.isNewClientCreated)]
+        public bool IsNewClientCreated { get; set; }
+
+        [EventField(EventConsts.statsNetworkPostTime)]
+        public long StatsNetworkPostTime { get; set; }
+
+        [EventField(EventConsts.postDateTicks)]
+        public long PostDateTicks { get; set; }
+
+        [EventField(EventConsts.clientReadResponseTime)]
+        public long ClientReadResponseTime { get; set; }
+
+        [EventField(EventConsts.outstandingSentRequests)]
+        public long OutstandingSentRequests { get; set; }
+        // Debug srv&cln send recv stats
+
     }
 }

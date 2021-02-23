@@ -162,13 +162,24 @@ namespace Gigya.Microdot.SharedLogic.Events
         /// </summary>
         public static IDisposable SuppressCaching(CacheSuppress cacheSuppress)
         {
-            var prevCacheSuppress = CacheSuppress;
-            CacheSuppress = cacheSuppress;
+            var overrides = (RequestOverrides)Implementation.Get(OVERRIDES_KEY);
 
-            return new DisposableAction<CacheSuppress?>(prevCacheSuppress, x => CacheSuppress = x);
+            if (overrides == null)
+            {
+                overrides = new RequestOverrides();
+                Implementation.Set(OVERRIDES_KEY, overrides);
+            }
+
+            var prevCacheSuppress = overrides.SuppressCaching;
+            overrides.SuppressCaching = cacheSuppress;
+
+            return new DisposableAction<CacheSuppress?>(prevCacheSuppress, x =>
+            {
+                ((RequestOverrides) Implementation.Get(OVERRIDES_KEY)).SuppressCaching = x;
+            });
         }
 
-        public static CacheSuppress? CacheSuppress { get; internal set; }
+        public static CacheSuppress? CacheSuppress => TryGetValue<RequestOverrides>(OVERRIDES_KEY)?.SuppressCaching;
 
         /// <summary>
         /// The time at which the request was sent from the client.

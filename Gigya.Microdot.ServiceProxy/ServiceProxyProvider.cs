@@ -131,6 +131,10 @@ namespace Gigya.Microdot.ServiceProxy
 
         private CurrentApplicationInfo AppInfo { get; }
 
+        private static long _outstandingSentRequests;
+
+        private ObjectPool<Stopwatch> _stopwatchPool = new ObjectPool<Stopwatch>(() => new Stopwatch(), 4096);
+
         public ServiceProxyProvider(string serviceName, IEventPublisher<ClientCallEvent> eventPublisher,
             ILog log,
             Func<string, ReachabilityCheck, IMultiEnvironmentServiceDiscovery> serviceDiscoveryFactory,
@@ -178,7 +182,7 @@ namespace Gigya.Microdot.ServiceProxy
             Timeout = timeout;
         }
 
-        private (HttpClient httpClient, bool isHttps) GetHttpClient(ServiceDiscoveryConfig serviceConfig, DiscoveryConfig defaultConfig, bool tryHttps, string hostname, int basePort)
+        private (HttpClient httpClient, bool isHttps, bool isNewCreated) GetHttpClient(ServiceDiscoveryConfig serviceConfig, DiscoveryConfig defaultConfig, bool tryHttps, string hostname, int basePort)
         {
             var forceHttps = serviceConfig.UseHttpsOverride ?? (ServiceInterfaceRequiresHttps || defaultConfig.UseHttpsOverride);
             var useHttps = tryHttps || forceHttps;
@@ -192,7 +196,7 @@ namespace Gigya.Microdot.ServiceProxy
             lock (HttpClientLock)
             {
                 if (LastHttpClient != null && LastHttpClientKey.Equals(httpKey))
-                    return ( httpClient: LastHttpClient, isHttps: useHttps);
+                    return ( httpClient: LastHttpClient, isHttps: useHttps, isNewCreated: false);
 
                 // In case we're trying HTTPs and the previous request on this instance was HTTP (or if this is the first request)
                 if (Not(forceHttps) && httpKey.UseHttps && Not(LastHttpClientKey?.UseHttps ?? false))
@@ -212,8 +216,18 @@ namespace Gigya.Microdot.ServiceProxy
                         supplyClientCertificate: httpKey.SupplyClientCertificate);
                 }
 
+
+                var isNewCreated = false;
                 if (!(LastHttpClientKey?.Equals(httpKey) ?? false))
                 {
+                    isNewCreated = true;
+                    var equalState = (LastHttpClientKey?.Equals(httpKey))?.ToString() ?? "FirstTime";
+                    Log.Info(msg => msg("GetHttpClient created new HttpClient", unencryptedTags: new Tags
+                    {
+                        {"debug.delay.newHttpClient", equalState},
+                        {"debug.delay.method", "GetHttpClient"}
+                    })); // we expect this not to be equal ever
+
                     var messageHandler = _httpMessageHandlerFactory(httpKey);
                     var httpClient = CreateHttpClient(messageHandler, httpKey.Timeout);
 
@@ -222,7 +236,7 @@ namespace Gigya.Microdot.ServiceProxy
                     _httpMessageHandler = messageHandler;
                 }
 
-                return (httpClient: LastHttpClient, isHttps: httpKey.UseHttps);
+                return (httpClient: LastHttpClient, isHttps: httpKey.UseHttps, isNewCreated: isNewCreated);
             }
         }
 
@@ -253,11 +267,18 @@ namespace Gigya.Microdot.ServiceProxy
                 {
                     messageHandler = _httpMessageHandlerFactory(clientConfiguration);
                     httpsClient = CreateHttpClient(messageHandler, configuration.Timeout);
-                    return (httpsClient, isHttps: true);
+                    return (httpsClient, isHttps: true, isNewCreated: true); // the return value is ignored as this async task is not awaited
                 }, cancellationToken: CancellationToken.None);
 
                 lock (HttpClientLock)
                 {
+                    var isEqual = LastHttpClient?.Equals(httpsClient).ToString() ?? "Null";
+                    Log.Info(msg => msg("GetHttpClient created new HttpClient", unencryptedTags: new Tags
+                    {
+                        {"debug.delay.newHttpClient", isEqual},
+                        {"debug.delay.method", "Reachability"}
+                    })); // we expect this not to be equal ever
+
                     LastHttpClient = httpsClient;
                     LastHttpClientKey = new HttpClientConfiguration(
                         useHttps: true, 
@@ -281,18 +302,18 @@ namespace Gigya.Microdot.ServiceProxy
             if (port == null)
                 throw new Exception("No port is configured");
 
-            Func<bool, (HttpClient client, bool isHttps)> clientFactory = tryHttps  => GetHttpClient(config, GetDiscoveryConfig(), tryHttps, node.Hostname, port.Value);
+            Func<bool, (HttpClient client, bool isHttps, bool isNewCreated)> clientFactory = tryHttps  => GetHttpClient(config, GetDiscoveryConfig(), tryHttps, node.Hostname, port.Value);
             return ValidateReachability(node.Hostname, port.Value, fallbackOnProtocolError: true, clientFactory: clientFactory, cancellationToken: cancellationToken);
         }
 
         private async Task ValidateReachability(string hostname,
             int port,
             bool fallbackOnProtocolError,
-            Func<bool, (HttpClient httpClient, bool isHttps)> clientFactory,
+            Func<bool, (HttpClient httpClient, bool isHttps, bool isNewCreated)> clientFactory,
             CancellationToken cancellationToken)
         {
             HttpResponseMessage response;
-            (HttpClient httpClient, bool isHttps)? clientInfo = null;
+            (HttpClient httpClient, bool isHttps, bool isNewCreated)? clientInfo = null;
             try
             {
                 clientInfo = clientFactory(true);
@@ -377,6 +398,7 @@ namespace Gigya.Microdot.ServiceProxy
             //will try using HTTPs only in-case we configured to try HTTPs explicitly
             bool tryHttps = GetConfig().TryHttps ?? discoveryConfig.TryHttps;
 
+            var retriesCount = 0;
             while (true)
             {
                 var config = GetConfig();
@@ -387,6 +409,11 @@ namespace Gigya.Microdot.ServiceProxy
                 clientCallEvent.SpanId = request.TracingData?.SpanID;
                 clientCallEvent.ParentSpanId = request.TracingData?.ParentSpanID;
                 clientCallEvent.SuppressCaching = TracingContext.CacheSuppress;
+
+                if (retriesCount > 0)
+                    clientCallEvent.StatsRetryCount = retriesCount;
+                
+                retriesCount++;
 
                 string responseContent;
                 HttpResponseMessage response;
@@ -404,9 +431,9 @@ namespace Gigya.Microdot.ServiceProxy
                 bool isHttps = false;
                 try
                 {
-                    var cacheSuppresOverride = TracingContext.CacheSuppress != null && TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices ?
-                        TracingContext.CacheSuppress :
-                        null;
+                    var cacheSuppresOverride = TracingContext.CacheSuppress == CacheSuppress.RecursiveAllDownstreamServices ?
+                        CacheSuppress.RecursiveAllDownstreamServices :
+                       (CacheSuppress?) null;
 
                     request.Overrides = TracingContext.TryGetOverrides()?.ShallowCloneWithOverrides(nodeAndLoadBalancer.PreferredEnvironment, cacheSuppresOverride)
                                         ?? new RequestOverrides
@@ -418,14 +445,22 @@ namespace Gigya.Microdot.ServiceProxy
                     string requestContent = _serializationTime.Time(() => JsonConvert.SerializeObject(request, jsonSettings));
 
                     var httpContent = new StringContent(requestContent, Encoding.UTF8, "application/json");
+                    
+                    if (requestContent.Length > 10 * 1024)
+                        clientCallEvent.Above10KmsgLength = requestContent.Length;
+
                     httpContent.Headers.Add(GigyaHttpHeaders.ProtocolVersion, HttpServiceRequest.ProtocolVersion);
 
+                    var asyncActionStopwatch = _stopwatchPool.Get();
+                    var outstandingSentReqs = Interlocked.Increment(ref _outstandingSentRequests);
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
                     {
-                        (httpClient, isHttps) = GetHttpClient(config, discoveryConfig, tryHttps,
+                        bool isNewCreated;
+                        (httpClient, isHttps, isNewCreated) = GetHttpClient(config, discoveryConfig, tryHttps,
                             nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
-
+                        
+                        clientCallEvent.IsNewClientCreated = isNewCreated;
                         clientCallEvent.ProtocolSchema = isHttps ? "HTTPS" : "HTTP";
 
                         // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
@@ -449,12 +484,29 @@ namespace Gigya.Microdot.ServiceProxy
                         clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
                         clientCallEvent.TargetPort = actualPort;
 
-                        response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
+                        clientCallEvent.OutstandingSentRequests = outstandingSentReqs;
 
+
+                        var now = DateTime.UtcNow.Ticks;
+
+                        asyncActionStopwatch.Restart();
+                        response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
+                        asyncActionStopwatch.Stop();
+
+                        clientCallEvent.StatsNetworkPostTime = asyncActionStopwatch.ElapsedMilliseconds;
+                        clientCallEvent.PostDateTicks = now;
+
+                        asyncActionStopwatch.Restart();
                         responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        asyncActionStopwatch.Stop();
+
+                        clientCallEvent.ClientReadResponseTime = asyncActionStopwatch.ElapsedMilliseconds;
                     }
                     finally
                     {
+                        Interlocked.Decrement(ref _outstandingSentRequests);
+                        _stopwatchPool.Return(asyncActionStopwatch);
+
                         clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
                         
                         PublishServiceConnectionMetrics(uri);
@@ -530,46 +582,44 @@ namespace Gigya.Microdot.ServiceProxy
 
                             return returnObj;
                         }
-                        else
+
+                        // Failuire:
+                        Exception remoteException;
+                        try
                         {
-                            Exception remoteException;
-
-                            try
-                            {
-                                remoteException = _deserializationTime.Time(() => ExceptionSerializer.Deserialize(responseContent));
-                            }
-                            catch (Exception ex)
-                            {
-                                _applicationExceptionCounter.Increment("ExceptionDeserializationFailure");
-
-                                throw new RemoteServiceException("The remote service returned a failure response " +
-                                                                 "that failed to deserialize.  See the 'RequestUri' property on this exception " +
-                                                                 "for the URL that was called, the inner exception for the exact error and the " +
-                                                                 "'responseContent' encrypted tag for the original response content.",
-                                    uri,
-                                    ex,
-                                    unencrypted: new Tags { { "requestUri", uri } },
-                                    encrypted: new Tags { { "responseContent", responseContent } });
-                            }
-
-                            _applicationExceptionCounter.Increment();
-
-                            clientCallEvent.Exception = remoteException;
-                            EventPublisher.TryPublish(clientCallEvent); // fire and forget!
-
-                            if (remoteException is RequestException || remoteException is EnvironmentException)
-                                ExceptionDispatchInfo.Capture(remoteException).Throw();
-
-                            if (remoteException is UnhandledException)
-                                remoteException = remoteException.InnerException;
-
-                            throw new RemoteServiceException("The remote service returned a failure response. See " +
-                                                             "the 'RequestUri' property on this exception for the URL that was called, and the " +
-                                                             "inner exception for details.",
-                                uri,
-                                remoteException,
-                                unencrypted: new Tags { { "requestUri", uri } });
+                            remoteException = _deserializationTime.Time(() => ExceptionSerializer.Deserialize(responseContent));
                         }
+                        catch (Exception ex)
+                        {
+                            _applicationExceptionCounter.Increment("ExceptionDeserializationFailure");
+
+                            throw new RemoteServiceException("The remote service returned a failure response " +
+                                                             "that failed to deserialize.  See the 'RequestUri' property on this exception " +
+                                                             "for the URL that was called, the inner exception for the exact error and the " +
+                                                             "'responseContent' encrypted tag for the original response content.",
+                                uri,
+                                ex,
+                                unencrypted: new Tags { { "requestUri", uri } },
+                                encrypted: new Tags { { "responseContent", responseContent } });
+                        }
+
+                        _applicationExceptionCounter.Increment();
+
+                        clientCallEvent.Exception = remoteException;
+                        EventPublisher.TryPublish(clientCallEvent); // fire and forget!
+
+                        if (remoteException is RequestException || remoteException is EnvironmentException)
+                            ExceptionDispatchInfo.Capture(remoteException).Throw();
+
+                        if (remoteException is UnhandledException)
+                            remoteException = remoteException.InnerException;
+
+                        throw new RemoteServiceException("The remote service returned a failure response. See " +
+                                                         "the 'RequestUri' property on this exception for the URL that was called, and the " +
+                                                         "inner exception for details.",
+                            uri,
+                            remoteException,
+                            unencrypted: new Tags { { "requestUri", uri } });
                     }
                     catch (JsonException ex)
                     {

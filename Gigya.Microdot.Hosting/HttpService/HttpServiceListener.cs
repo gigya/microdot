@@ -29,6 +29,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts;
 using Gigya.Common.Contracts.Exceptions;
@@ -36,6 +37,7 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
@@ -49,6 +51,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 using Gigya.ServiceContract.Exceptions;
 using Metrics;
 using Newtonsoft.Json;
+using Timer = Metrics.Timer;
 
 
 // ReSharper disable ConsiderUsingConfigureAwait
@@ -106,7 +109,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly Timer _metaEndpointsRoundtripTime;
         private readonly MetricsContext _endpointContext;
         private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
-        private TaskCompletionSource<int> _ReadyToGetTraffic=new TaskCompletionSource<int>();
+        private TaskCompletionSource<int> _ReadyToGetTraffic = new TaskCompletionSource<int>();
+        private readonly bool _extendedDelayTimeLogging = false;
 
         public void StartGettingTraffic()
         {
@@ -125,11 +129,12 @@ namespace Gigya.Microdot.Hosting.HttpService
             ServiceSchema serviceSchema,
             Func<LoadShedding> loadSheddingConfig,
             IServerRequestPublisher serverRequestPublisher,
-            CurrentApplicationInfo appInfo)
+            CurrentApplicationInfo appInfo,
+            Func<MicrodotHostingConfig> microdotHostingConfigFactory)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
-            
+
             ServiceEndPointDefinition = serviceEndPointDefinition;
             Worker = worker;
             Activator = activator;
@@ -140,10 +145,12 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
+            _extendedDelayTimeLogging = microdotHostingConfigFactory().ExtendedDelaysTimeLogging; // no need to read every request
+
             if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ClientCertificateVerificationMode.Disable)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
 
-            Listener = new HttpListener {IgnoreWriteExceptions = true};
+            Listener = new HttpListener { IgnoreWriteExceptions = true };
             if (ServiceEndPointDefinition.HttpsPort != null)
                 Listener.Prefixes.Add($"https://+:{ServiceEndPointDefinition.HttpsPort}/");
             if (ServiceEndPointDefinition.HttpPort != null)
@@ -201,11 +208,15 @@ namespace Gigya.Microdot.Hosting.HttpService
             StartListening();
         }
 
+        private static long _outstandingRecvRequests;
+        private readonly ObjectPool<Stopwatch> _stopwatchPool = new ObjectPool<Stopwatch>(() => new Stopwatch(), 4096);
 
         private async Task StartListening()
         {
 
             await _ReadyToGetTraffic.Task;
+
+            var sp = Stopwatch.StartNew();
 
             while (Listener.IsListening)
             {
@@ -213,8 +224,24 @@ namespace Gigya.Microdot.Hosting.HttpService
 
                 try
                 {
+                    sp.Restart();
+
                     context = await Listener.GetContextAsync();
-                    Worker.FireAndForget(() => HandleRequest(context));
+
+                    var timeFromLastReq = sp.ElapsedMilliseconds;
+                    var ticks = DateTime.UtcNow.Ticks;
+                    Interlocked.Increment(ref _outstandingRecvRequests);
+
+                    Worker.FireAndForget(() => HandleRequest(context, ticks, timeFromLastReq));
+
+                    var elapsed = sp.ElapsedMilliseconds;
+                    if (_extendedDelayTimeLogging && elapsed > 1000)
+                    {
+                        Log.Info((t) => t("FireAndForget took more then 1 seconds", unencryptedTags: new Tags
+                        {
+                            {"debug.delay.fireAndForget", elapsed.ToString()}
+                        }));
+                    }
                 }
                 catch (ObjectDisposedException)
                 {
@@ -229,108 +256,139 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(_ => _( "An error has occured during HttpListener.GetContextAsync(). Stopped listening to additional requests.", exception: ex));
+                    Log.Error(_ => _("An error has occured during HttpListener.GetContextAsync(). Stopped listening to additional requests.", exception: ex));
                     throw;
                 }
             }
         }
 
 
-        private async Task HandleRequest(HttpListenerContext context)
+        private async Task HandleRequest(HttpListenerContext context, long ticks, long timeFromLastReq)
         {
-            RequestTimings.ClearCurrentTimings();
-            using (context.Response)
+            var sw = _stopwatchPool.Get();
+            try
             {
-                var sw = Stopwatch.StartNew();
-
-                // Special endpoints should not be logged/measured/traced like regular endpoints
-                // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
-                if (await TryHandleSpecialEndpoints(context)) return;
-
-                // Regular endpoint handling
-                using (_activeRequestsCounter.NewContext("Request"))
+                var deltaDelayTicks = DateTime.UtcNow.Ticks - ticks;
+                sw.Restart();
+                RequestTimings.ClearCurrentTimings();
+                using (context.Response)
                 {
-                    RequestTimings.GetOrCreate(); // initialize request timing context
+                    // Special endpoints should not be logged/measured/traced like regular endpoints
+                    // Access is allowed without HTTPS verifications since they don't expose anything sensitive (e.g. config values are encrypted)
+                    if (await TryHandleSpecialEndpoints(context)) return;
 
-                    string methodName = null;
-                    // Initialize with empty object for protocol backwards-compatibility.
-
-                    var requestData = new HttpServiceRequest { TracingData = new TracingData() };
-                    object[] argumentsWithDefaults=null;
-                    ServiceMethod serviceMethod = null;
-                    ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
-                    try
+                    // Regular endpoint handling
+                    using (_activeRequestsCounter.NewContext("Request"))
                     {
+                        RequestTimings.GetOrCreate(); // initialize request timing context
+
+                        string methodName = null;
+                        // Initialize with empty object for protocol backwards-compatibility.
+
+                        var requestData = new HttpServiceRequest { TracingData = new TracingData() };
+                        object[] argumentsWithDefaults = null;
+                        ServiceMethod serviceMethod = null;
+                        ServiceCallEvent callEvent = _serverRequestPublisher.GetNewCallEvent();
                         try
                         {
-                            await CheckSecureConnection(context);
+                            try
+                            {
+                                await CheckSecureConnection(context);
 
-                            ValidateRequest(context);
+                                ValidateRequest(context);
 
-                            requestData = await ParseRequest(context);
-                           
+                                requestData = await ParseRequest(context);
 
-                            //-----------------------------------------------------------------------------------------
-                            // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
-                            //-----------------------------------------------------------------------------------------
-                            TracingContext.SetRequestID(requestData.TracingData.RequestID);
-                            TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
-                            TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
-                            TracingContext.SetParentSpan(requestData.TracingData.SpanID?? Guid.NewGuid().ToString("N"));
-                            TracingContext.SetOverrides(requestData.Overrides);
-                            if (requestData.TracingData.Tags != null)
-                                TracingContext.Tags = new ContextTags(requestData.TracingData.Tags);
-                            TracingContext.AdditionalProperties = requestData.TracingData.AdditionalProperties;
-                            TracingContext.CacheSuppress = requestData.Overrides.SuppressCaching;
 
-                            callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
-                            SetCallEventRequestData(callEvent, requestData);
+                                //-----------------------------------------------------------------------------------------
+                                // Don't move TracingContext writes main flow, IT have to be here, to avoid side changes
+                                //-----------------------------------------------------------------------------------------
+                                TracingContext.SetRequestID(requestData.TracingData.RequestID);
+                                TracingContext.SpanStartTime = requestData.TracingData.SpanStartTime;
+                                TracingContext.AbandonRequestBy = requestData.TracingData.AbandonRequestBy;
+                                TracingContext.SetParentSpan(
+                                    requestData.TracingData.SpanID ?? Guid.NewGuid().ToString("N"));
+                                TracingContext.SetOverrides(requestData.Overrides);
+                                if (requestData.TracingData.Tags != null)
+                                    TracingContext.Tags = new ContextTags(requestData.TracingData.Tags);
+                                TracingContext.AdditionalProperties = requestData.TracingData.AdditionalProperties;
 
-                            serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
-                            callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
-                            methodName = serviceMethod.ServiceInterfaceMethod.Name;
-                            var arguments = requestData.Target.IsWeaklyTyped ? GetParametersByName(serviceMethod, requestData.Arguments) : requestData.Arguments.Values.Cast<object>().ToArray();
-                            argumentsWithDefaults = GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
+                                callEvent.ServiceMethodSchema = context.Request.IsSecureConnection ? "HTTPS" : "HTTP";
+                                SetCallEventRequestData(callEvent, requestData);
+
+                                serviceMethod = ServiceEndPointDefinition.Resolve(requestData.Target);
+                                callEvent.CalledServiceName = serviceMethod.GrainInterfaceType.Name;
+                                methodName = serviceMethod.ServiceInterfaceMethod.Name;
+                                var arguments = requestData.Target.IsWeaklyTyped
+                                    ? GetParametersByName(serviceMethod, requestData.Arguments)
+                                    : requestData.Arguments.Values.Cast<object>().ToArray();
+                                argumentsWithDefaults =
+                                    GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
+
+                                if (_extendedDelayTimeLogging)
+                                {
+                                    callEvent.RecvDateTicks = ticks;
+                                    callEvent.ReqStartupDeltaTicks = deltaDelayTicks;
+                                    callEvent.TimeFromLastReq = timeFromLastReq;
+                                    var outstandingRecvReqs = Interlocked.Read(ref _outstandingRecvRequests);
+                                    callEvent.OutstandingRecvRequests = outstandingRecvReqs;
+                                    if (deltaDelayTicks > 10_000_000)
+                                    {
+                                        callEvent.CollectionCountGen0 = GC.CollectionCount(0);
+                                        callEvent.CollectionCountGen1 = GC.CollectionCount(1);
+                                        callEvent.CollectionCountGen2 = GC.CollectionCount(2);
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                callEvent.Exception = e;
+                                if (e is RequestException)
+                                    throw;
+
+                                throw new RequestException("Invalid request", e);
+                            }
+
+                            RejectRequestIfLateOrOverloaded();
+
+                            var responseJson = await GetResponse(context, serviceMethod, requestData,
+                                argumentsWithDefaults);
+                            if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
+                            {
+                                callEvent.ErrCode = 0;
+                                _successCounter.Increment();
+                            }
+                            else _failureCounter.Increment();
                         }
                         catch (Exception e)
                         {
-                            callEvent.Exception = e;
-                            if (e is RequestException)
-                                throw;
-
-                            throw new RequestException("Invalid request", e);
+                            callEvent.Exception = callEvent.Exception ?? e;
+                            _failureCounter.Increment();
+                            Exception ex = GetRelevantException(e);
+                            string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
+                            await TryWriteResponse(context, json, GetExceptionStatusCode(ex),
+                                serviceCallEvent: callEvent);
                         }
-
-                        RejectRequestIfLateOrOverloaded();
-
-                        var responseJson = await GetResponse(context, serviceMethod, requestData, argumentsWithDefaults);
-                        if (await TryWriteResponse(context, responseJson, serviceCallEvent: callEvent))
+                        finally
                         {
-                            callEvent.ErrCode = 0;
-                            _successCounter.Increment();
+                            sw.Stop();
+                            callEvent.ActualTotalTime = sw.Elapsed.TotalMilliseconds;
+
+                            _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000),
+                                TimeUnit.Nanoseconds);
+                            if (methodName != null)
+                                _endpointContext.Timer(methodName, Unit.Requests)
+                                    .Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
+
+                            _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                         }
-                        else _failureCounter.Increment();
-                    }
-                    catch (Exception e)
-                    {
-                        callEvent.Exception = callEvent.Exception ?? e;
-                        _failureCounter.Increment();
-                        Exception ex = GetRelevantException(e);
-                        string json = _serializationTime.Time(() => ExceptionSerializer.Serialize(ex));
-                        await TryWriteResponse(context, json, GetExceptionStatusCode(ex), serviceCallEvent: callEvent);
-                    }
-                    finally
-                    {
-                        sw.Stop();
-                        callEvent.ActualTotalTime = sw.Elapsed.TotalMilliseconds;
-
-                        _roundtripTime.Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
-                        if (methodName != null)
-                            _endpointContext.Timer(methodName, Unit.Requests).Record((long)(sw.Elapsed.TotalMilliseconds * 1000000), TimeUnit.Nanoseconds);
-
-                        _serverRequestPublisher.TryPublish(callEvent, argumentsWithDefaults, serviceMethod);
                     }
                 }
+            }
+            finally
+            {
+                _stopwatchPool.Return(sw);
+                Interlocked.Decrement(ref _outstandingRecvRequests);
             }
         }
 
@@ -373,15 +431,15 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         private void SetCallEventRequestData(ServiceCallEvent callEvent, HttpServiceRequest requestData)
         {
-            callEvent.ClientMetadata         = requestData.TracingData;
-            callEvent.ServiceMethod          = requestData.Target?.MethodName;
-            callEvent.RequestId              = requestData.TracingData?.RequestID;
-            callEvent.SpanId                 = requestData.TracingData?.SpanID;
-            callEvent.ParentSpanId           = requestData.TracingData?.ParentSpanID;
+            callEvent.ClientMetadata = requestData.TracingData;
+            callEvent.ServiceMethod = requestData.Target?.MethodName;
+            callEvent.RequestId = requestData.TracingData?.RequestID;
+            callEvent.SpanId = requestData.TracingData?.SpanID;
+            callEvent.ParentSpanId = requestData.TracingData?.ParentSpanID;
             callEvent.ContextUnencryptedTags = requestData.TracingData?.Tags?.GetUnencryptedTags();
-            callEvent.ContextTagsEncrypted   = requestData.TracingData?.Tags?.GetEncryptedTags();
-            callEvent.UnknownTracingData     = requestData.TracingData?.AdditionalProperties;
-            callEvent.SuppressCaching        = requestData.Overrides?.SuppressCaching;
+            callEvent.ContextTagsEncrypted = requestData.TracingData?.Tags?.GetEncryptedTags();
+            callEvent.UnknownTracingData = requestData.TracingData?.AdditionalProperties;
+            callEvent.SuppressCaching = requestData.Overrides?.SuppressCaching;
         }
 
         private async Task<bool> TryHandleSpecialEndpoints(HttpListenerContext context)
@@ -394,7 +452,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         (data, status, type) => TryWriteResponse(context, data, status, type)))
                     {
                         if (RequestTimings.Current.Request.ElapsedMS != null)
-                            _metaEndpointsRoundtripTime.Record((long) RequestTimings.Current.Request.ElapsedMS,
+                            _metaEndpointsRoundtripTime.Record((long)RequestTimings.Current.Request.ElapsedMS,
                                 TimeUnit.Milliseconds);
                         return true;
                     }
@@ -417,46 +475,50 @@ namespace Gigya.Microdot.Hosting.HttpService
             var now = DateTimeOffset.UtcNow;
 
             // Too much time passed since our direct caller made the request to us; something's causing a delay. Log or reject the request, if needed.
-            if (   config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.Disabled
+            if (config.DropMicrodotRequestsBySpanTime != LoadShedding.Toggle.Disabled
                 && TracingContext.SpanStartTime != null
                 && TracingContext.SpanStartTime.Value + config.DropMicrodotRequestsOlderThanSpanTimeBy < now)
             {
 
                 if (config.DropMicrodotRequestsBySpanTime == LoadShedding.Toggle.LogOnly)
-                    Log.Warn(_ => _("Accepted Microdot request despite that too much time passed since the client sent it to us.", unencryptedTags: new {
-                        clientSendTime    = TracingContext.SpanStartTime,
-                        currentTime       = now,
-                        maxDelayInSecs    = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds,
-                        actualDelayInSecs = (now -TracingContext.SpanStartTime.Value).TotalSeconds,
+                    Log.Warn(_ => _("Accepted Microdot request despite that too much time passed since the client sent it to us.", unencryptedTags: new
+                    {
+                        clientSendTime = TracingContext.SpanStartTime,
+                        currentTime = now,
+                        maxDelayInSecs = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds,
+                        actualDelayInSecs = (now - TracingContext.SpanStartTime.Value).TotalSeconds,
                     }));
 
                 else if (config.DropMicrodotRequestsBySpanTime == LoadShedding.Toggle.Drop)
-                    throw new EnvironmentException("Dropping Microdot request since too much time passed since the client sent it to us.", unencrypted: new Tags {
-                        ["clientSendTime"]    = TracingContext.SpanStartTime.ToString(),
-                        ["currentTime"]       = now.ToString(),
-                        ["maxDelayInSecs"]    = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
+                    throw new EnvironmentException("Dropping Microdot request since too much time passed since the client sent it to us.", unencrypted: new Tags
+                    {
+                        ["clientSendTime"] = TracingContext.SpanStartTime.ToString(),
+                        ["currentTime"] = now.ToString(),
+                        ["maxDelayInSecs"] = config.DropMicrodotRequestsOlderThanSpanTimeBy.TotalSeconds.ToString(),
                         ["actualDelayInSecs"] = (now - TracingContext.SpanStartTime.Value).TotalSeconds.ToString(),
                     });
             }
 
             // Too much time passed since the API gateway initially sent this request till it reached us (potentially
             // passing through other micro-services along the way). Log or reject the request, if needed.
-            if (   config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
+            if (config.DropRequestsByDeathTime != LoadShedding.Toggle.Disabled
                 && TracingContext.AbandonRequestBy != null
                 && now > TracingContext.AbandonRequestBy.Value - config.TimeToDropBeforeDeathTime)
             {
                 if (config.DropRequestsByDeathTime == LoadShedding.Toggle.LogOnly)
-                    Log.Warn(_ => _("Accepted Microdot request despite exceeding the API gateway timeout.", unencryptedTags: new {
+                    Log.Warn(_ => _("Accepted Microdot request despite exceeding the API gateway timeout.", unencryptedTags: new
+                    {
                         requestDeathTime = TracingContext.AbandonRequestBy,
-                        currentTime      = now,
-                        overTimeInSecs   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
+                        currentTime = now,
+                        overTimeInSecs = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds,
                     }));
 
                 else if (config.DropRequestsByDeathTime == LoadShedding.Toggle.Drop)
-                    throw new EnvironmentException("Dropping Microdot request since the API gateway timeout passed.", unencrypted: new Tags {
+                    throw new EnvironmentException("Dropping Microdot request since the API gateway timeout passed.", unencrypted: new Tags
+                    {
                         ["requestDeathTime"] = TracingContext.AbandonRequestBy.ToString(),
-                        ["currentTime"]      = now.ToString(),
-                        ["overTimeInSecs"]   = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
+                        ["currentTime"] = now.ToString(),
+                        ["overTimeInSecs"] = (now - TracingContext.AbandonRequestBy.Value).TotalSeconds.ToString(),
                     });
             }
         }
@@ -511,7 +573,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 throw new RequestException("Only requests with content are supported.");
             }
 
-        
+
         }
 
 
@@ -526,13 +588,13 @@ namespace Gigya.Microdot.Hosting.HttpService
                 }
 
                 _failureCounter.Increment("IncorrectSecurityType");
-                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.", 
+                throw new SecureRequestException("Incompatible channel security - both client and server must be either secure or insecure.",
                     unencrypted: new Tags { { "requestIsSecure", context.Request.IsSecureConnection.ToString() }, { "requestedUrl", context.Request.Url.ToString() } });
             }
 
             if (ServiceEndPointDefinition.ClientCertificateVerification == ClientCertificateVerificationMode.Disable)
             {
-                return; 
+                return;
             }
 
             var clientCertificate = await context.Request.GetClientCertificateAsync();
@@ -639,7 +701,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             return request;
         }
 
-        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData,object[] arguments)
+        private async Task<string> GetResponse(HttpListenerContext context, ServiceMethod serviceMethod, HttpServiceRequest requestData, object[] arguments)
         {
             var taskType = serviceMethod.ServiceInterfaceMethod.ReturnType;
             var resultType = taskType.IsGenericType ? taskType.GetGenericArguments().First() : null;
@@ -696,7 +758,7 @@ namespace Gigya.Microdot.Hosting.HttpService
 
         public void Stop()
         {
-            
+
         }
     }
 }
