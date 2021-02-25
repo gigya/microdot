@@ -201,7 +201,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                     // In case RevokedResponseBehavior=TryFetchNewValueInBackgroundNextTime or the enum value is a new option we don't know
                     // how to handle yet, we initiate a background refresh and return the stale response.
-                    // TODO: In Microdot v3, we'd like to change the default to try and fetch a new value and wait for it (TryFetchNewValueNextTime)
+                    // TODO: In Microdot v4, we'd like to change the default to try and fetch a new value and wait for it (TryFetchNewValueNextTime)
                     else {
                         _ = GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
                             TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
@@ -362,9 +362,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             // Starting from now, the IsRevoked property in cacheItem might be set to true by another thread in OnRevoked().
             var revokeKeys = ExtarctRevokeKeys(responseTask);
 
-            lock (RevokeKeyToCacheItemsIndex)
-                foreach (var revokeKey in revokeKeys)
-                    RevokeKeyToCacheItemsIndex.GetOrAdd(revokeKey, _ => new HashSet<AsyncCacheItem>()).Add(cacheItem);
+            if (revokeKeys.Any())
+                lock (RevokeKeyToCacheItemsIndex)
+                    foreach (var revokeKey in revokeKeys)
+                        RevokeKeyToCacheItemsIndex.GetOrAdd(revokeKey, _ => new HashSet<AsyncCacheItem>()).Add(cacheItem);
 
             // Check if we got a revoke message from one of the revoke keys in the response while the request was in progress.
             // Do this AFTER the above, so there's no point in time that we don't monitor cache revokes
@@ -426,14 +427,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             RecentRevokesCache.RegisterRevokeKey(revokeKey, DateTime.UtcNow);
 
             var revokeApplied = false;
-            lock (RevokeKeyToCacheItemsIndex)
-                if (RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var hash))
-                {
-                    foreach (var item in hash)
-                        item.IsRevoked = true;
 
-                    revokeApplied = true;
-                }
+            if (RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var _))
+                lock (RevokeKeyToCacheItemsIndex)
+                    if (RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var hash))
+                    {
+                        foreach (var item in hash)
+                            item.IsRevoked = true;
+
+                        revokeApplied = true;
+                    }
 
             if (revokeApplied)
                 Revokes.Meter("Succeeded", Unit.Events).Mark();
@@ -443,7 +446,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return Task.CompletedTask;
         }
 
-        private IEnumerable<string> ExtarctRevokeKeys(Task<object> responseTask) => (!responseTask.IsFaulted && !responseTask.IsCanceled? (responseTask.Result as IRevocable)?.RevokeKeys : null) ?? Enumerable.Empty<string>();
+        private IEnumerable<string> ExtarctRevokeKeys(Task<object> responseTask) => (!responseTask.IsFaulted && !responseTask.IsCanceled ? (responseTask.Result as IRevocable)?.RevokeKeys : null) ?? Enumerable.Empty<string>();
 
         public void Clear()
         {

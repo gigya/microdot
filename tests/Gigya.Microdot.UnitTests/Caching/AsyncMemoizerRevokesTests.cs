@@ -301,7 +301,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        public async Task MemoizeAsync_NotCachedCallWithIntefiringRevokeShouldNotCacheStaleValue()
+        public async Task MemoizeAsync_NotCachedCallWithIntefiringRevokeShouldMarkCacheValueAsStaleAndTriggerACallToDataSource()
         {
             var revokesSource = new OneTimeSynchronousSourceBlock<string>();
             var cache = CreateCache(revokesSource);
@@ -318,10 +318,10 @@ namespace Gigya.Microdot.UnitTests.Caching
             var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value 
 
-            //revoke received while in first call to data source, so value is not cached
+            //revoke received while in first call to data source
 
             result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
-            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //call trigger a refresh because value is stale and a new data source value is returned
+            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //call trigger a call to data source because value is stale and a new data source value is returned
 
             result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //cached value is returned
@@ -354,7 +354,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        public async Task MemoizeAsync_RefreshWithIntefiringRevokeShouldNotCacheStaleValue()
+        public async Task MemoizeAsync_RefreshWithIntefiringRevokeShouldMarkCacheValueAsStaleAndTriggerACallToDataSource()
         {
             var cache = CreateCache(new OneTimeSynchronousSourceBlock<string>());
             var memoizer = CreateMemoizer(cache);
@@ -379,7 +379,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             await Task.Delay(dataSourceDelay + 100); //wait for refresh to finish
 
             result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
-            result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //another refresh is triggered and its value is returned
+            result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //because cached value is stale, another call to data source is triggered and its value is returned
 
             result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //latest refresh value was cached and returned

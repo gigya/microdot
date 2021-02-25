@@ -15,7 +15,7 @@ using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Metrics;
 
 using NSubstitute;
-
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 using Shouldly;
@@ -38,7 +38,15 @@ namespace Gigya.Microdot.UnitTests.Caching
         private MethodInfo ThingifyVoidMethod { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyVoid));
         private IThingFrobber EmptyThingFrobber { get; } = Substitute.For<IThingFrobber>();
 
-        private IMethodCachingSettings GetCachingSettings(double expirationTime = 60 * 60 * 6, double refreshTimeSeconds = 60, double failedRefreshDelaySeconds = 1)
+        private IMethodCachingSettings GetCachingSettings(double expirationTime = 60 * 60 * 6, 
+                                                          double refreshTimeSeconds = 60, 
+                                                          double failedRefreshDelaySeconds = 1,
+                                                          RequestGroupingBehavior groupingBehavior = RequestGroupingBehavior.Enabled,
+                                                          RefreshMode refreshMode = RefreshMode.UseRefreshes,
+                                                          CacheResponsesWhenSupressedBehavior cacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
+                                                          RefreshBehavior refreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
+                                                          ResponseKinds responseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
+                                                          ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException)
             => new MethodCachingPolicyConfig
             {
                 ExpirationTime = TimeSpan.FromSeconds(expirationTime),
@@ -46,14 +54,14 @@ namespace Gigya.Microdot.UnitTests.Caching
                 FailedRefreshDelay = TimeSpan.FromSeconds(failedRefreshDelaySeconds),
 
                 Enabled = true,
-                ResponseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
-                ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
-                RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
-                RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
-                RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache, 
-                CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
-                RefreshMode = RefreshMode.UseRefreshes,
-                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache
+                ResponseKindsToCache = responseKindsToCache,
+                ResponseKindsToIgnore = responseKindsToIgnore,
+                RequestGroupingBehavior = groupingBehavior,
+                RefreshBehavior = refreshBehavior,
+                RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,  //Tested AsyncMemoizerRevokesTests
+                CacheResponsesWhenSupressedBehavior = cacheResponsesWhenSupressedBehavior,
+                RefreshMode = refreshMode,
+                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache //Tested in CachingProxyTests
             };
 
 
@@ -111,6 +119,72 @@ namespace Gigya.Microdot.UnitTests.Caching
             return dataSource;
         }
 
+        private IThingFrobber CreateDataSourceByResponseKind(ResponseKinds responseKind)
+        {
+            var dataSource = Substitute.For<IThingFrobber>();
+            dataSource.ThingifyTaskThing("someString").Returns<Task<Thing>>(async i =>
+            {
+                switch (responseKind)
+                {
+                    case ResponseKinds.NonNullResponse:
+                        return new Thing { Id = "response" };
+                    case ResponseKinds.NullResponse:
+                        return null;
+                    case ResponseKinds.RequestException:
+                        throw new RequestException("ex");
+                    case ResponseKinds.EnvironmentException:
+                        throw new EnvironmentException("ex");
+                    case ResponseKinds.TimeoutException:
+                        throw new TimeoutException("ex");
+                    case ResponseKinds.OtherExceptions:
+                        throw new Exception("ex");
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(responseKind), responseKind, null);
+                }
+            });
+
+            return dataSource;
+        }
+
+        private async Task ExecuteCallAndVerifyResult(ResponseKinds responseKind, Func<Task<Thing>> func)
+        {
+            Exception exceptionResult = null;
+            Thing nonExceptionResult = null;
+
+            try
+            {
+                nonExceptionResult = await func();
+            }
+            catch (Exception e)
+            {
+                exceptionResult = e;
+            }
+
+            switch (responseKind)
+            {
+                case ResponseKinds.NonNullResponse:
+                    nonExceptionResult.Id.ShouldNotBeNullOrEmpty();
+                    break;
+                case ResponseKinds.NullResponse:
+                    nonExceptionResult.ShouldBeNull();
+                    break;
+                case ResponseKinds.RequestException:
+                    exceptionResult.GetType().ShouldBe(typeof(RequestException));
+                    break;
+                case ResponseKinds.EnvironmentException:
+                    exceptionResult.GetType().ShouldBe(typeof(EnvironmentException));
+                    break;
+                case ResponseKinds.TimeoutException:
+                    exceptionResult.GetType().ShouldBe(typeof(TimeoutException));
+                    break;
+                case ResponseKinds.OtherExceptions:
+                    exceptionResult.GetType().ShouldBe(typeof(Exception));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(responseKind), responseKind, null);
+            }
+        }
+
         [Test]
         public async Task MemoizeAsync_FirstCall_UsesDataSource()
         {
@@ -121,6 +195,105 @@ namespace Gigya.Microdot.UnitTests.Caching
             
             actual.Id.ShouldBe(firstValue);
             dataSource.Received(1).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        [TestCase(ResponseKinds.NonNullResponse)]
+        [TestCase(ResponseKinds.NullResponse)]
+        [TestCase(ResponseKinds.EnvironmentException)]
+        [TestCase(ResponseKinds.TimeoutException)]
+        [TestCase(ResponseKinds.RequestException)]
+        [TestCase(ResponseKinds.OtherExceptions)]
+        public async Task MemoizeAsync_ResponseIsCachedAccordingToResponseKinds(ResponseKinds responseKind)
+        {
+            var dataSource = CreateDataSourceByResponseKind(responseKind);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //Call service and cache results
+            await ExecuteCallAndVerifyResult(responseKind, () => (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: responseKind, responseKindsToIgnore: 0)));
+
+            //Use cached results
+            await ExecuteCallAndVerifyResult(responseKind, () => (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: responseKind, responseKindsToIgnore: 0)));
+
+            //Only one call to data source!
+            dataSource.Received(1).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        [TestCase(ResponseKinds.NonNullResponse)]
+        [TestCase(ResponseKinds.NullResponse)]
+        [TestCase(ResponseKinds.EnvironmentException)]
+        [TestCase(ResponseKinds.TimeoutException)]
+        [TestCase(ResponseKinds.RequestException)]
+        [TestCase(ResponseKinds.OtherExceptions)]
+        public async Task MemoizeAsync_ResponseIsNotCachedAccordingToResponseKinds(ResponseKinds responseKind)
+        {
+            var dataSource = CreateDataSourceByResponseKind(responseKind);
+            var memoizer = CreateMemoizer(CreateCache());
+            ResponseKinds responseKindsToCache = 0; //Do not cache any response
+
+            //Call service - results should not be cached (according to responseKindsToCache)
+            await ExecuteCallAndVerifyResult(responseKind, () => (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: responseKindsToCache, responseKindsToIgnore: 0)));
+
+            //Should trigger another call to service
+            await ExecuteCallAndVerifyResult(responseKind, () => (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: responseKindsToCache, responseKindsToIgnore: 0)));
+
+            //Two calls to data source!
+            dataSource.Received(2).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_DataSourceCallReturnsAnIgnoredResponseKind_DataSourceResponseIsIgnoredAndCachedValueIsReturned()
+        {
+            var result1 = "result1";
+            var dataSource = CreateDataSource(result1, null);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //Call service and cache result
+            var result = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] {"someString"},                  //will trigger a refresh in next call
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse, refreshTimeSeconds:0)); 
+            result.Id.ShouldBe(result1);
+
+            //This call to the service will return a response (null) which we want to ignore, and return cached value
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.Id.ShouldBe(result1);
+
+            //Verify null response was not cached
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.Id.ShouldBe(result1);
+
+            dataSource.Received(2).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_DataSourceCallReturnsAnIgnoredResponseKindAndNoCachedValue_DataSourceResponseIsReturnedAndNotCached()
+        {
+            var secondResult = "second result";
+            var dataSource = CreateDataSource(null, secondResult);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //Call service - null result will not be cached (responseKindsToIgnore: ResponseKinds.NullResponse)
+            var result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },               
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.ShouldBeNull();
+
+            //Call service and cache the valid result (secondResult)
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },                  
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.Id.ShouldBe(secondResult);
+
+            //Use cached value
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.Id.ShouldBe(secondResult);
+
+            dataSource.Received(2).ThingifyTaskThing("someString");
         }
 
         [Test]
@@ -186,6 +359,41 @@ namespace Gigya.Microdot.UnitTests.Caching
             }
 
             dataSource.Received(100).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_CallsWithSuppressCachingAndResponseCachingIsDisabledByConfig_ResponseIsNotCachedWhileCacheIsSuppressed()
+        {
+            string firstValue  = "first Value";
+            string secondValue = "second Value";
+            string thirdValue  = "third Value";
+            string fourthValue = "fourth Value";
+            var dataSource = CreateDataSource(firstValue, secondValue, thirdValue, fourthValue);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //SuppressCaching - option 1 
+            using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
+            {
+                (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, 
+                GetCachingSettings(cacheResponsesWhenSupressedBehavior: CacheResponsesWhenSupressedBehavior.Disabled))).Id.ShouldBe(firstValue);
+            }
+
+            //SuppressCaching - option 2 
+            using (TracingContext.SuppressCaching(CacheSuppress.UpToNextServices))
+            {
+                (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(cacheResponsesWhenSupressedBehavior: CacheResponsesWhenSupressedBehavior.Disabled))).Id.ShouldBe(secondValue);
+            }
+
+            //Because previous calls did not cache the response, the following call will trigger another call to the data source
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+            GetCachingSettings())).Id.ShouldBe(thirdValue);
+
+            //Previous call response was cached (it was out of suppressed cache block)
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+            GetCachingSettings())).Id.ShouldBe(thirdValue);
+
+            dataSource.Received(3).ThingifyTaskThing("someString");
         }
 
         [Test]
@@ -349,15 +557,16 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(2))).Id.ShouldBe(firstValue);
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings(2))).Id.ShouldBe(firstValue);
-            await Task.Delay(TimeSpan.FromMilliseconds(2500));
+            await Task.Delay(TimeSpan.FromMilliseconds(2000)); //wait for item to be expired
+
+            //Item is expired and a new call to data source is made
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings())).Id.ShouldBe(secondValue);
 
             dataSource.Received(2).ThingifyTaskThing("someString");
         }
 
-
         [Test]        
-        public async Task MemoizeAsync_CallAfterRefreshTime_RefreshOnBackground()
+        public async Task MemoizeAsync_CallAfterRefreshTime_RefreshBehaviorIsUseOldAndFetchNewValueInBackground_RefreshOnBackground()
         {
             TimeSpan refreshTime = TimeSpan.FromMinutes(1);
             var refreshTask = new TaskCompletionSource<Thing>();
@@ -367,17 +576,99 @@ namespace Gigya.Microdot.UnitTests.Caching
             var dataSource = CreateDataSource(firstValue, refreshTask);
 
             IMemoizer memoizer = CreateMemoizer(CreateCache());
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshBehavior: RefreshBehavior.UseOldAndFetchNewValueInBackground))).Id.ShouldBe(firstValue);
 
             // fake that refreshTime has passed
             TimeFake.UtcNow += refreshTime;
 
             // Refresh task hasn't finished, should get old value (5)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(firstValue); // value is not refreshed yet. it is running on background
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshBehavior: RefreshBehavior.UseOldAndFetchNewValueInBackground))).Id.ShouldBe(firstValue); // value is not refreshed yet. it is running on background
             
             // Complete refresh task and verify new value
             refreshTask.SetResult(new Thing { Id = secondValue, Name = "seven" });
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings())).Id.ShouldBe(secondValue); // new value is expected now
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshBehavior: RefreshBehavior.UseOldAndFetchNewValueInBackground))).Id.ShouldBe(secondValue); // new value is expected now
+        }
+
+        [Test]
+        public async Task MemoizeAsync_CallAfterRefreshTime_RefreshBehaviorIsTryFetchNewValueOrUseOld_RefreshImmediately()
+        {
+            TimeSpan refreshTime = TimeSpan.FromMinutes(1);
+            var args = new object[] { "someString" };
+            int firstValue = 1;
+            int secondValue = 2;
+
+            var dataSource = CreateDataSource();                                    //delay refresh call (to ensure that we actually await it)
+            dataSource.ThingifyTaskInt("someString").Returns(async i => firstValue, async i => { await Task.Delay(100); return secondValue; });
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior:RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(firstValue);
+
+            //fake that refreshTime has passed
+            TimeFake.UtcNow += refreshTime;
+
+            //Refresh will run immediately and fetch new value 
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(secondValue);
+
+            //Cached value is used
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(secondValue);
+
+            dataSource.Received(2).ThingifyTaskInt(Arg.Any<string>());
+        }
+
+        [Test]
+        public async Task MemoizeAsync_CallAfterRefreshTimeAndRefreshReceivesAnException_RefreshBehaviorIsTryFetchNewValueOrUseOld_ExceptionIsIgnoredAndCachedValueIsReturned()
+        { 
+            var args = new object[] { "someString" };
+            int firstValue = 1;
+            int secondValue = 2;
+
+            var dataSource = CreateDataSource();                                   
+            dataSource.ThingifyTaskInt("someString").Returns(i => firstValue, i => throw new Exception(), i => secondValue);
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(firstValue);
+
+            //fake that refreshTime has passed
+            TimeFake.UtcNow += TimeSpan.FromMinutes(1);
+
+            //Refresh will run immediately, will get an exception, and return old cached value
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(firstValue);
+
+            //Old cached value is used
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(firstValue);
+
+            //fake that FailedRefreshDelay has passed
+            TimeFake.UtcNow += TimeSpan.FromSeconds(2);
+
+            //New call to data source will fetch new value
+            (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args, GetCachingSettings(refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(secondValue);
+
+            dataSource.Received(3).ThingifyTaskInt(Arg.Any<string>());
+        }
+
+        [Test]
+        [TestCase(RefreshMode.DoNotUseRefreshes)]
+        [TestCase(RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus)]
+        public async Task MemoizeAsync_DoNotUseRefreshes_CallAfterRefreshTime_DataSourceIsNotCalledAndResultIsNotRefreshed(RefreshMode refreshMode)
+        {
+            TimeSpan refreshTime = TimeSpan.FromMinutes(1);
+            var args = new object[] { "someString" };
+            string firstValue = "first Value";
+            string secondValue = "second Value";
+            var dataSource = CreateDataSource(firstValue, secondValue);
+
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshMode: refreshMode))).Id.ShouldBe(firstValue);
+
+            // fake that refreshTime has passed
+            TimeFake.UtcNow += refreshTime;
+
+            for (int i = 0; i < 10; i++)
+            {
+                (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshMode: refreshMode))).Id.ShouldBe(firstValue);
+            }
+
+            dataSource.Received(1).ThingifyTaskThing(Arg.Any<string>());
         }
 
         [Test]
@@ -520,23 +811,25 @@ namespace Gigya.Microdot.UnitTests.Caching
 
 
         [Test]
-        public async Task MemoizeAsync_MultipleIdenticalCallsBeforeFirstCompletes_TeamsWithFirstCall()
+        [TestCase(RequestGroupingBehavior.Enabled, 1)]
+        [TestCase(RequestGroupingBehavior.Disabled, 3)]
+        public async Task MemoizeAsync_MultipleIdenticalCallsBeforeFirstCompletes_NumOfDataSourceCallsIsAccordingToGroupingBehavior(RequestGroupingBehavior groupingBehavior, int expectedDataSourceCalls)
         {
             var dataSource = CreateDataSource();
             dataSource.ThingifyTaskInt("someString").Returns(async i => { await Task.Delay(100); return 1; }, async i => 2);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
-            var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
-            var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
-            var task3 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings());
+            var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings(groupingBehavior: groupingBehavior));
+            var task2 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings(groupingBehavior: groupingBehavior));
+            var task3 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings(groupingBehavior: groupingBehavior));
 
             await Task.WhenAll(task1, task2, task3);
 
-            dataSource.Received(1).ThingifyTaskInt("someString");
+            dataSource.Received(expectedDataSourceCalls).ThingifyTaskInt("someString");
         }
 
         [Test]
-        public void MemoizeAsync_MultipleIdenticalCallsBeforeFirstFails_TeamsWithFirstCall()
+        public void MemoizeAsync_MultipleIdenticalCallsBeforeFirstFails_GroupingIsEnabled_TeamsWithFirstCall()
         {
             var dataSource = Substitute.For<IThingFrobber>();
             dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(100); throw new InvalidOperationException(); }, async i => 2);
@@ -551,6 +844,40 @@ namespace Gigya.Microdot.UnitTests.Caching
             task3.ShouldThrow<InvalidOperationException>();
 
             dataSource.Received(1).ThingifyTaskInt("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_MultipleIdenticalCallsBeforeFirstFails_GroupingIsDisabled_SeperateCallsToDataSource()
+        {
+            int sourceValidResult = 2;
+            var dataSource = Substitute.For<IThingFrobber>();
+            dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(100); throw new InvalidOperationException(); }, async i => sourceValidResult);
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            var tasks = new List<Task<int>>
+            {
+                (Task<int>) memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] {"someString"}, GetCachingSettings(groupingBehavior: RequestGroupingBehavior.Disabled)),
+                (Task<int>) memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] {"someString"}, GetCachingSettings(groupingBehavior: RequestGroupingBehavior.Disabled)),
+                (Task<int>) memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] {"someString"}, GetCachingSettings(groupingBehavior: RequestGroupingBehavior.Disabled))
+            };
+
+            await Task.Delay(300); //wait for tasks to finish
+
+            var numOfFaulted = 0;
+            var nonFaultedResult = 0;
+
+            foreach (var task in tasks)
+            {
+                if (task.IsFaulted)
+                    numOfFaulted++;
+                else
+                    nonFaultedResult = task.Result;
+            }
+
+            numOfFaulted.ShouldBe(1); //Only first call throws
+            nonFaultedResult.ShouldBe(sourceValidResult); //All other should get a valid result
+
+            dataSource.Received(3).ThingifyTaskInt("someString");
         }
 
         [Test]
