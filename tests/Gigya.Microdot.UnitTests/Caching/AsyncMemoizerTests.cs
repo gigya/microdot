@@ -254,13 +254,15 @@ namespace Gigya.Microdot.UnitTests.Caching
             var memoizer = CreateMemoizer(CreateCache());
 
             //Call service and cache result
-            var result = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] {"someString"},                  //will trigger a refresh in next call
-                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse, refreshTimeSeconds:0)); 
+            var result = await (Task<Thing>) memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] {"someString"},                  
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse,
+                                   refreshTimeSeconds:0)); //will trigger a refresh in next call
             result.Id.ShouldBe(result1);
 
             //This call to the service will return a response (null) which we want to ignore, and return cached value
             result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
-                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse,
+                                   refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld)); //so we wont run as a backround refresh
             result.Id.ShouldBe(result1);
 
             //Verify null response was not cached
@@ -294,6 +296,32 @@ namespace Gigya.Microdot.UnitTests.Caching
             result.Id.ShouldBe(secondResult);
 
             dataSource.Received(2).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKind_ReturnResponseAndRemovePrevCachedValue()
+        {
+            var firstResult = "first result";
+            var secondResult = "second result";
+            var dataSource = CreateDataSource(firstResult,null, secondResult);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //Call service and cache result
+            var result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, refreshTimeSeconds: 0)); //trigger a refresh in next call
+            result.Id.ShouldBe(firstResult);
+
+            //Call service and get a null result, return it and remove previously-cached value
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, refreshBehavior:RefreshBehavior.TryFetchNewValueOrUseOld));
+            result.ShouldBeNull();
+
+            //This will trigger a call to the service because prev call removed the item from the cache
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.Id.ShouldBe(secondResult);
+
+            dataSource.Received(3).ThingifyTaskThing("someString");
         }
 
         [Test]
@@ -759,9 +787,9 @@ namespace Gigya.Microdot.UnitTests.Caching
             // Refresh task should have completed by now, verify new value. Should not trigger another refresh.
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue); 
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // T = 3s. Second TTL passed (after it was updated) and refresh triggered in the background, should get old value  
+            // T = 4s. Second TTL passed (after it was updated) and refresh triggered in the background, should get old value  
             (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(refreshTimeSeconds: 1))).Id.ShouldBe(secondValue);
 
             // Refresh task should have completed by now, verify new value

@@ -316,18 +316,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             if (settings.ResponseKindsToCache.HasFlag(responseKind))
                 CacheResponse(cacheKey, requestSendTime, response, settings);
 
-            // Outcome #2: Do not cache response; remove previously-cached value
-            else if (!settings.ResponseKindsToIgnore.HasFlag(responseKind))
-                MemoryCache.Remove(cacheKey);
-
-            // Outcome #3: Leave old response cached and return it, and set its refresh time to the (short) FailedRefreshDelay
-            else if (currentValue != null)
+            else if (settings.ResponseKindsToIgnore.HasFlag(responseKind))
             {
-                currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
-                response = currentValue.Value;
+                // Outcome #3: Leave old response cached and return it, and set its refresh time to the (short) FailedRefreshDelay
+                if (currentValue != null)
+                {
+                    currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
+                    response = currentValue.Value;
+                }
+
+                // Outcome #4: We don't have a previous cached value, so we return current response
             }
 
-            // Outcome #4: Otherwise, the response shouldn't be cached and should be ignored but we don't have a previous value, so we return it
+            // Outcome #2: Do not cache response; remove previously-cached value (dont ignore)
+            else
+                MemoryCache.Remove(cacheKey);
 
             tcs.SetResult(true); // RecentRevokesCache can stop tracking revoke keys
             return await response; // Might throw stored exception
