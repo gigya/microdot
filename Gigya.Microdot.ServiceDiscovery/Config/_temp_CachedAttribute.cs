@@ -75,11 +75,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public ResponseKinds ResponseKindsToIgnore { get; set; }
 
 
-        /// <summary>You can either manually revoke resposnes from client caches (by returning <c>Revocable&lt;&gt;</c> responses and using
+        /// <summary>You can either manually revoke responses from client caches (by returning <c>Revocable&lt;&gt;</c> responses and using
         /// an <c>ICacheRevoker</c> to revoke them), or define a time-to-live for cached responses so that clients will periodically fetch
         /// up-to-date responses. Using manual revokes is preferred since revoke messages typically arrive to clients immediately so they
         /// don't keep using stale responses once something was changed, i.e. they'll be "strongly consistent" instead of "eventually
-        /// consistent". Using time-to-live will cause clients to use stale responses up to <paramref name="refreshTimeInMinutes"/>, and
+        /// consistent". Using time-to-live will cause clients to use stale responses up to <see cref="RefreshTime"/>, and
         /// they will generate a constant stream of requests (as long as they use particular pieces of data) to fetch up-to-date values,
         /// even if the responses haven't changed.</summary>
         public RefreshMode RefreshMode { get; set; }
@@ -89,15 +89,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// Default: 1 minute. Once a response was cached, and assuming refreshing is enabled as per <see cref="RefreshMode"/>,
         /// clients will periodically ATTEMPT to fetch a fresh response. If they fail to do so (e.g. in case of a timeout error, and in case
         /// that's not allowed by <see cref="ResponseKindsToCache"/>), then they'll keep using the last-good cached response, up to
-        /// <see cref="ExpirationTimeInMinutes"/>, but they will keep retrying to fetch fresh values in the mean time. The higher this value,
+        /// <see cref="ExpirationTime"/>, but they will keep retrying to fetch fresh values in the mean time. The higher this value,
         /// the lower the load on your service, and the less up-to-date responses clients will cache. Consider what issues could be caused
         /// by clients using stale responses (they might make wrong decisions based on these responses, or write that stale data somewhere).
         /// </summary>
+        public TimeSpan? RefreshTime { get; set; }
+
         public double RefreshTimeInMinutes {
             get => RefreshTime?.TotalMinutes ?? -1;
             set => RefreshTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
         }
-        public TimeSpan? RefreshTime { get; set; }
 
 
         /// <summary>
@@ -110,25 +111,27 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// hours). But also consider what issues could be caused by clients using very old stale responses (they might make wrong decisions
         /// based on these responses, or write that stale data somewhere).
         /// </summary>
+        public TimeSpan? ExpirationTime { get; set; }
+
         public double ExpirationTimeInMinutes {
             get => ExpirationTime?.TotalMinutes ?? -1;
             set => ExpirationTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
         }
-        public TimeSpan? ExpirationTime { get; set; }
 
 
         /// <summary>
         /// Default: 1 second. When a client calls this method and receives a failure response (e.g. in case of a timeout error, and in case
         /// it should be ignored as per <see cref="ResponseKindsToIgnore"/>), it will not cache the response, and will keep using the last-
-        /// good response in the mean time, if any. However, it will wait a shorter delay than <see cref="ExpirationTimeInMinutes"/> till it
+        /// good response in the mean time, if any. However, it will wait a shorter delay than <see cref="ExpirationTime"/> till it
         /// attempts to refresh the data, since the response is now considered old and shouldn't be used for much longer. This delay is used
         /// so clients don't "attack" your service when it's already potentially having availability issues. To disable, set to 0.
         /// </summary>
+        public TimeSpan? FailedRefreshDelay { get; set; }
+
         public double FailedRefreshDelayInSeconds {
             get => FailedRefreshDelay?.TotalSeconds ?? -1;
             set => FailedRefreshDelay = value == -1 ? null : (TimeSpan?)TimeSpan.FromSeconds(value);
         }
-        public TimeSpan? FailedRefreshDelay { get; set; }
 
 
         /// <summary>
@@ -201,12 +204,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         /// <summary>Use this option in case this method returns Revocable&lt;&gt; responses and you use an ICacheRevoker to revoke cached
         /// responses. Refreshes will NOT be used (since you're revoking responses manually) except in case a client detects that it is
-        /// unable to obtain cache revoke messages, in which case it will fall back to using soft expirations until it reconnects to the
+        /// unable to obtain cache revoke messages, in which case it will fall back to using soft expiration until it reconnects to the
         /// revoke messages stream. Note that during that time your service will experience higher incoming traffic.</summary>
         UseRefreshesWhenDisconnectedFromCacheRevokesBus = 2,
 
         /// <summary>DANGEROUS. Use this option to prevent clients from refreshing responses, up to the time they expire (see
-        /// <see cref="CachedAttribute.ExpirationTimeInMinutes"/>).</summary>
+        /// <see cref="CachedAttribute.ExpirationTime"/>).</summary>
         DoNotUseRefreshes = 3,
     }
 
@@ -231,7 +234,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// this method and fetch a fresh value. If it fails to do so (i.e. the response does not match <see cref="ResponseKinds"/>),
         /// it will keep using the old value. This lets the client to continue providing service while this service is down. It is assumed
         /// that it is preferable to use stale responses over not providing service. The client will retry fetching a new value the next
-        /// time it needs that response with a minimum delay of <see cref="FailedRefreshDelayInSeconds"/> between retries, unless it had no
+        /// time it needs that response with a minimum delay of <see cref="CachedAttribute.FailedRefreshDelay"/> between retries, unless it had no
         /// previously-cache response, in which case it might issue a request as soon as it received a reply for the previous one. This is
         /// the default for Microdot v4+ clients.
         /// </summary>

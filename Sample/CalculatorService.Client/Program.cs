@@ -30,7 +30,7 @@ namespace CalculatorService.Client
                         k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
                     }))
                 {
-                    //NLog.LogManager.GlobalThreshold = NLog.LogLevel.Info;
+                    //NLog.LogManager.GlobalThreshold = NLog.LogLevel.Info; 
                     var calculatorService = microdotInitializer.Kernel.Get<ICalculatorService>();
 
                     Task.Factory.StartNew(() => ListenToRevokes());
@@ -39,8 +39,8 @@ namespace CalculatorService.Client
                     {
                         try
                         {
-                            var result = await calculatorService.Add_CachedAndRevocable(1, 2);
-                            Console.WriteLine($"Value: {result.Value}, RevokeKeys: {string.Join(",", result.RevokeKeys)}");
+                            var result = await calculatorService.Add(1, 2);
+                            Console.WriteLine($"Value: {result}");
                             await Task.Delay(1000);
                         }
                         catch (Exception e)
