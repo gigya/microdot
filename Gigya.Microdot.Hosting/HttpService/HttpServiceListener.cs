@@ -231,7 +231,8 @@ namespace Gigya.Microdot.Hosting.HttpService
                     var timeFromLastReq = sp.ElapsedMilliseconds;
                     var ticks = DateTime.UtcNow.Ticks;
                     Interlocked.Increment(ref _outstandingRecvRequests);
-
+                    
+                    sp.Restart();
                     Worker.FireAndForget(() => HandleRequest(context, ticks, timeFromLastReq));
 
                     var elapsed = sp.ElapsedMilliseconds;
