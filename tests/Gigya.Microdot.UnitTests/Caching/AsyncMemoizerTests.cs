@@ -844,7 +844,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         public async Task MemoizeAsync_MultipleIdenticalCallsBeforeFirstCompletes_NumOfDataSourceCallsIsAccordingToGroupingBehavior(RequestGroupingBehavior groupingBehavior, int expectedDataSourceCalls)
         {
             var dataSource = CreateDataSource();
-            dataSource.ThingifyTaskInt("someString").Returns(async i => { await Task.Delay(300); return 1; }, async i => 2);
+            dataSource.ThingifyTaskInt("someString").Returns(async i => { await Task.Delay(1000); return 1; }, async i => 2);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             var task1 = (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] { "someString" }, GetCachingSettings(groupingBehavior: groupingBehavior));
@@ -879,7 +879,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             int sourceValidResult = 2;
             var dataSource = Substitute.For<IThingFrobber>();
-            dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(100); throw new InvalidOperationException(); }, async i => sourceValidResult);
+            dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(1000); throw new InvalidOperationException(); }, async i => sourceValidResult);
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             var tasks = new List<Task<int>>
