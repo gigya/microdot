@@ -916,6 +916,142 @@ namespace Gigya.Microdot.UnitTests.Caching
             Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyTask, new object[] { "someString" }, GetCachingSettings()));
             Should.Throw<ArgumentException>(() => CreateMemoizer(CreateCache()).Memoize(EmptyThingFrobber, ThingifyVoidMethod, new object[] { "someString" }, GetCachingSettings()));
         }
+
+
+        [Test]
+        public async Task MemoizeAsync_DataSourceReturnsDifferentResponseOnEveryCallAndRefreshBehaviorIsTryFetchNewValueOrUseOld_ReturnsNewValueOnEveryCall()
+        {
+            var args = new object[] { "someString" };
+            int callIndex = 0;
+
+            var dataSource = CreateDataSource();
+            dataSource.ThingifyTaskInt("someString").Returns(i => callIndex++);
+
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            //all calls will trigger a call to data source
+            //expected results: 0, 1, 2, 3, 4... (return current data source response)
+            for (int i = 0; i < 100; i++)
+            {
+                (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args,
+                    GetCachingSettings(refreshTimeSeconds: 0, failedRefreshDelaySeconds: 0, refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld))).ShouldBe(i);
+            }
+
+            dataSource.Received(100).ThingifyTaskInt("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_DataSourceReturnsDifferentResponseOnEveryCallAndRefreshBehaviorIsUseOldAndFetchNewValueInBackground_ReturnsOldCachedValueOnEveryCallAndTriggerABackroundRefresh()
+        {
+            var args = new object[] { "someString" };
+            int callIndex = 0;
+
+            var dataSource = CreateDataSource();
+            dataSource.ThingifyTaskInt("someString").Returns(i => callIndex++);
+
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            //all calls will trigger a call to data source
+            //expected results: 0, 0, 1, 2, 3, 4... (return previous data source response)
+            for (int i = 0; i < 100; i++)
+            {
+                var expectedValue = i == 0 ? 0 : i -1;
+
+                (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args,
+                    GetCachingSettings(refreshTimeSeconds: 0, failedRefreshDelaySeconds: 0, refreshBehavior: RefreshBehavior.UseOldAndFetchNewValueInBackground))).ShouldBe(expectedValue);
+            }
+
+            dataSource.Received(100).ThingifyTaskInt("someString");
+        }
+
+        [Test]
+        [TestCase(RefreshBehavior.UseOldAndFetchNewValueInBackground)]
+        [TestCase(RefreshBehavior.TryFetchNewValueOrUseOld)]
+        public async Task MemoizeAsync_FlackyDataSource_OldCachedValueIsUsed(RefreshBehavior refreshBehavior)
+        {
+            var args = new object[] { "someString" };
+            int firstValue = 1;
+            int callIndex = 0;
+
+            var dataSource = CreateDataSource();
+            dataSource.ThingifyTaskInt("someString").Returns(i =>
+            {
+                callIndex++;
+
+                if (callIndex % 2 == 0)
+                    throw new EnvironmentException(""); 
+                else
+                    return firstValue; 
+            });
+
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            //first call will return firstValue and cache it
+            //all calls will trigger a call to data source
+            for (int i = 0; i < 100; i++)
+            {
+                (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args,
+                    GetCachingSettings(refreshTimeSeconds: 0, failedRefreshDelaySeconds:0, refreshBehavior: refreshBehavior))).ShouldBe(firstValue);
+            }
+
+            dataSource.Received(100).ThingifyTaskInt("someString");
+        }
+
+        [Test]
+        [TestCase(RefreshBehavior.UseOldAndFetchNewValueInBackground)]
+        [TestCase(RefreshBehavior.TryFetchNewValueOrUseOld)]
+        public async Task MemoizeAsync_DataSourceNotAvailableAndCachedValueExist_OldCachedValueIsUsed(RefreshBehavior refreshBehavior)
+        {
+            var args = new object[] { "someString" };
+            int firstValue = 1;
+
+            var dataSource = CreateDataSource();
+            dataSource.ThingifyTaskInt("someString").Returns(i => firstValue, i => throw new EnvironmentException(""));
+
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            //first call will return firstValue and cache it
+            //all calls will trigger a call to data source
+            for (int i = 0; i < 100; i++)
+            {
+                (await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args,
+                    GetCachingSettings(refreshTimeSeconds: 0, failedRefreshDelaySeconds: 0, refreshBehavior: refreshBehavior))).ShouldBe(firstValue);
+            }
+
+            dataSource.Received(100).ThingifyTaskInt("someString");
+        }
+
+        [Test]
+        [TestCase(RefreshBehavior.UseOldAndFetchNewValueInBackground)]
+        [TestCase(RefreshBehavior.TryFetchNewValueOrUseOld)]
+        public async Task MemoizeAsync_DataSourceNotAvailableAndCachedValueDoesNotExist_Exception(RefreshBehavior refreshBehavior)
+        {
+            var args = new object[] { "someString" };
+            var dataSource = CreateDataSource();
+            dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => throw new EnvironmentException(""));
+
+            IMemoizer memoizer = CreateMemoizer(CreateCache());
+
+            //all calls will trigger a call to data source
+            for (int i = 0; i < 100; i++)
+            {
+                Exception ex = null;
+
+                try
+                {
+                    await (Task<int>)memoizer.Memoize(dataSource, ThingifyTaskInt, args,
+                        GetCachingSettings(refreshTimeSeconds: 0, failedRefreshDelaySeconds: 0, refreshBehavior: refreshBehavior));
+                }
+                catch (Exception e)
+                {
+                    ex = e;
+                }
+
+                ex.GetType().ShouldBe(typeof(EnvironmentException));
+            }
+
+            dataSource.Received(100).ThingifyTaskInt("someString");
+        }
     }
 }
 ;

@@ -178,7 +178,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             // Found a cached response.
             // WARNING! Immediately after calling the line below, another thread may set a new value in the cache, and lines below
-            // that call CallServiceAndCacheResponse() do it needlessly, causing a redundant refresh operation. This is a rare race
+            // that call TryFetchNewValue() do it needlessly, causing a redundant refresh operation. This is a rare race
             // condition with negligible negative effects so we can ignore it for the sake of the simplicity of the code.
             else if ((cached = (AsyncCacheItem)MemoryCache.Get(key)) != null)
 
@@ -210,8 +210,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                 // If refreshes are disabled it's because manual revokes are being performed, meaning the current response is up-to-date.
                 // Same for UseRefreshesWhenDisconnectedFromCacheRevokesBus, which we currently don't support, and assume everything is okay.
-                else if (   settings.RefreshMode == RefreshMode.DoNotUseRefreshes
-                         || settings.RefreshMode == RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus)
+                else if (   settings.RefreshMode == RefreshMode.DoNotUseRefreshes 
+                         || settings.RefreshMode == RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus) //TODO: after DisconnectedFromCacheRevokesBus feature is done, fix this if (to be only when connected)
                     return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
 
                 // Refreshes are enabled and the refresh time passed
@@ -412,11 +412,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var cacheItem = (AsyncCacheItem)arguments.CacheItem.Value;
             var revokeKeys = ExtarctRevokeKeys(cacheItem.Value);
 
+            //Can lock as revokeKeys > 0
             lock (RevokeKeyToCacheItemsIndex)
                 foreach (var revokeKey in revokeKeys)
                     if (   !RevokeKeyToCacheItemsIndex.TryGetValue(revokeKey, out var hash)
-                        || !hash.Remove(cacheItem)
-                        || (hash.Count == 0 && !RevokeKeyToCacheItemsIndex.TryRemove(revokeKey, out _)))
+                           || !hash.Remove(cacheItem)
+                           || (hash.Count == 0 && !RevokeKeyToCacheItemsIndex.TryRemove(revokeKey, out _)))
                         throw new ProgrammaticException("Invalid state");
         }
 
