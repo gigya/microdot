@@ -239,16 +239,15 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             var key = Guid.NewGuid().ToString();
             await ClearCachingPolicyConfig();
-            var deay = new TaskCompletionSource<int>();
-            _revokeDelay = deay.Task;
+            var delay = new TaskCompletionSource<int>();
+            _revokeDelay = delay.Task;
             var serviceCallWillCompleteOnlyAfterRevoke = ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
-            await Task.Delay(1000); //Let the call to the service start before publishing revoke
-            _serviceResult = SecondResult;
             await _cacheRevoker.Revoke(key);
             _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
-            deay.SetResult(1);
+            delay.SetResult(1);
             await serviceCallWillCompleteOnlyAfterRevoke;
 
+            _serviceResult = SecondResult;
             await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
         }
 
