@@ -919,7 +919,11 @@ namespace Gigya.Microdot.UnitTests.Caching
                 (Task<int>) memoizer.Memoize(dataSource, ThingifyTaskInt, new object[] {"someString"}, GetCachingSettings(groupingBehavior: RequestGroupingBehavior.Disabled))
             };
 
-            await Task.Delay(300); //wait for tasks to finish
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception e) { }
 
             var numOfFaulted = 0;
             var nonFaultedResult = 0;
