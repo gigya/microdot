@@ -4,27 +4,6 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
-
-    //interface MyService
-    //{
-    //    [Cached(ResponseKindsToCache  = ResponseKinds.NonNullResponse | ResponseKinds.RequestException,
-    //            ResponseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.TimeoutException | ResponseKinds.OtherExceptions,
-    //            RefreshMode           = RefreshMode.UseRefreshes,
-    //            RefreshTimeInMinutes  = 10,
-    //            ExpirationBehavior    = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache)]
-    //    Task DoStuff();
-
-    //    [Cached(RefreshMode             = RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus,
-    //            RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
-    //            RefreshBehavior         = RefreshBehavior.TryFetchNewValueOrUseOld,
-    //            RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,
-    //            ExpirationBehavior      = ExpirationBehavior.ExtendExpirationWhenReadFromCache)]
-    //    Task<Revocable<string>> DoStuffRevocable();
-    //}
-
-
-
-
     public interface IMethodCachingSettings
     {
         bool? Enabled { get; set; }
@@ -39,6 +18,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         RevokedResponseBehavior RevokedResponseBehavior { get; set; }
         ExpirationBehavior ExpirationBehavior { get; set; }
         CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
+        RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
     }
 
 
@@ -58,7 +38,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             if ((ResponseKindsToCache & ResponseKindsToIgnore) > 0)
                 throw new ArgumentException("You cannot define a specific response kind both in ResponseKindsToCache and ResponseKindsToIgnore");
         }
-
 
         /// <summary>Defines which kinds of responses clients should cache (non-null, null, exceptions, etc). Default: non-null and null
         /// responses. Note that if the client called the method and received a response that needs to be cached (e.g. non-null), then later
@@ -135,7 +114,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
 
         /// <summary>
-        /// Default: true. When a client calls this method multiple times concurrently with the same parameters, the caching layer will
+        /// Default: Enabled. When a client calls this method multiple times concurrently with the same parameters, the caching layer will
         /// "group" the requests and issue a single request to this method, to reduce the load on this service. It is assumed that this
         /// method returns the exact same answer given the exact same parameters. This flag controls whether to use request grouping or not.
         /// </summary>
@@ -161,10 +140,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
 
         /// <summary>
-        /// Default: true. When clients bypass their cache for specific requests using TracingContext.SuppressCaching(), this flag controls
+        /// Default: Enabled. When clients bypass their cache for specific requests using TracingContext.SuppressCaching(), this flag controls
         /// whether the response will be cached. I.e. clients ignore the cache while READING, but not necessarily when WRITING. 
         /// </summary>
         public CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
+
+        /// <summary>
+        /// Default: Disabled. Defines whether to remove the previously cached response in case a response that we dont want to cache nor to ignore is received 
+        /// </summary>
+        public RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
 
         // Not in use
         bool? IMethodCachingSettings.Enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -328,6 +312,15 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     /// whether the response will be cached. I.e. clients ignore the cache while READING, but not necessarily when WRITING. 
     /// </summary>
     public enum CacheResponsesWhenSupressedBehavior
+    {
+        Enabled = 1,
+        Disabled = 2,
+    }
+
+    /// <summary>
+    /// Defines whether to remove the previously cached response in case a response that we dont want to cache nor to ignore is received 
+    /// </summary>
+    public enum RemoveFromCacheWhenNotIgnoredResponseBehavior
     {
         Enabled = 1,
         Disabled = 2,

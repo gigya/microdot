@@ -46,7 +46,8 @@ namespace Gigya.Microdot.UnitTests.Caching
                                                           CacheResponsesWhenSupressedBehavior cacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
                                                           RefreshBehavior refreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
                                                           ResponseKinds responseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
-                                                          ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException)
+                                                          ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
+                                                          RemoveFromCacheWhenNotIgnoredResponseBehavior removeFromCacheWhenNotIgnoredResponseBehavior = RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled)
             => new MethodCachingPolicyConfig
             {
                 ExpirationTime = TimeSpan.FromSeconds(expirationTime),
@@ -61,7 +62,8 @@ namespace Gigya.Microdot.UnitTests.Caching
                 RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,  //Tested AsyncMemoizerRevokesTests
                 CacheResponsesWhenSupressedBehavior = cacheResponsesWhenSupressedBehavior,
                 RefreshMode = refreshMode,
-                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache //Tested in CachingProxyTests
+                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache, //Tested in CachingProxyTests
+                RemoveFromCacheWhenNotIgnoredResponseBehavior = removeFromCacheWhenNotIgnoredResponseBehavior
             };
 
 
@@ -299,11 +301,11 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKind_ReturnResponseAndRemovePrevCachedValue()
+        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKindAndRemoveFromCacheWhenNotIgnoredResponseBehaviorIsEnabled_ReturnResponseAndRemovePrevCachedValue()
         {
             var firstResult = "first result";
             var secondResult = "second result";
-            var dataSource = CreateDataSource(firstResult,null, secondResult);
+            var dataSource = CreateDataSource(firstResult, null, secondResult);
             var memoizer = CreateMemoizer(CreateCache());
 
             //Call service and cache result
@@ -313,7 +315,8 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             //Call service and get a null result, return it and remove previously-cached value
             result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
-                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, refreshBehavior:RefreshBehavior.TryFetchNewValueOrUseOld));
+                GetCachingSettings(removeFromCacheWhenNotIgnoredResponseBehavior: RemoveFromCacheWhenNotIgnoredResponseBehavior.Enabled,
+                                   responseKindsToCache: ResponseKinds.NonNullResponse, refreshBehavior:RefreshBehavior.TryFetchNewValueOrUseOld));
             result.ShouldBeNull();
 
             //This will trigger a call to the service because prev call removed the item from the cache
@@ -322,6 +325,33 @@ namespace Gigya.Microdot.UnitTests.Caching
             result.Id.ShouldBe(secondResult);
 
             dataSource.Received(3).ThingifyTaskThing("someString");
+        }
+
+        [Test]
+        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKindAndRemoveFromCacheWhenNotIgnoredResponseBehaviorIsDisabled_ReturnResponseAndKeepPrevCachedValue()
+        {
+            var firstResult = "first result";
+            var dataSource = CreateDataSource(firstResult, null);
+            var memoizer = CreateMemoizer(CreateCache());
+
+            //Call service and cache result
+            var result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, refreshTimeSeconds: 0)); //trigger a refresh in next call
+            result.Id.ShouldBe(firstResult);
+
+            //Call service and get a null result, return it and keep previously-cached value
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(removeFromCacheWhenNotIgnoredResponseBehavior: RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled,
+                    responseKindsToCache: ResponseKinds.NonNullResponse, refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld));
+            result.ShouldBeNull();
+
+            //This will not trigger a call to the service, because prev call did not remove the item from the cache
+            //Returns previously cached value
+            result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
+                GetCachingSettings(responseKindsToCache: ResponseKinds.NonNullResponse, responseKindsToIgnore: ResponseKinds.NullResponse));
+            result.Id.ShouldBe(firstResult);
+
+            dataSource.Received(2).ThingifyTaskThing("someString");
         }
 
         [Test]
@@ -879,7 +909,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             int sourceValidResult = 2;
             var dataSource = Substitute.For<IThingFrobber>();
-            dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(1000); throw new InvalidOperationException(); }, async i => sourceValidResult);
+            dataSource.ThingifyTaskInt("someString").Returns<Task<int>>(async i => { await Task.Delay(100); throw new InvalidOperationException(); }, async i => { await Task.Delay(100); return sourceValidResult; });
             IMemoizer memoizer = CreateMemoizer(CreateCache());
 
             var tasks = new List<Task<int>>

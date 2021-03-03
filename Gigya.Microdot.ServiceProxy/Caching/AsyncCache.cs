@@ -149,9 +149,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         public Task GetOrAdd(string key, Func<Task> serviceMethod, Type taskResultType, string[] metricsKeys, IMethodCachingSettings settings)
         {
-            //TaskScheduler.Current.Id == "Grain-sdfsdf"
-            // TBD: check is Task.Run() is actually needed; do we get here with Grain task scheduler?
-            //      previously we used to ConfiguraAwait(false), did it disconnect us from the grain's task scheduler? If so, use Task.Run for the same effect
             var getValueTask = Task.Run(() => GetOrAdd(key, () =>
                 TaskConverter.ToWeaklyTypedTask(serviceMethod(), taskResultType), metricsKeys, settings));
             return TaskConverter.ToStronglyTypedTask(getValueTask, taskResultType);
@@ -160,7 +157,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private async Task<object> GetOrAdd(string key, Func<Task<object>> serviceMethod, string[] metricsKeys, IMethodCachingSettings settings)
         {
-            //TaskScheduler.Current.Id == "Default"
             AsyncCacheItem cached;
             Task<object> MarkHitAndReturnValue(Task<object> obj) { Hits.Mark(metricsKeys); return obj; }
 
@@ -260,20 +256,22 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        // This method has one of 4 possible outcomes:
+        // This method has one of 5 possible outcomes:
         //
         // 1. We got a response from the service (null, not null or an exception) and the caching settings dictate that we should cache it:
         //    We cache it with the default RefreshTime. This extends the ExpirationTime as well.
         //
-        // 2. The caching settings dictate that the response shouldn't be cached, nor ignored:
-        //    We return the response and remove the previously-cached response from the cache
-        //
-        // 3. The caching settings dictate that the response shouldn't be cached, and should be ignored, and currentValue != null :
+        // 2. The caching settings dictate that the response shouldn't be cached, and should be ignored, and currentValue != null :
         //    We return the currentValue and set its next refresh time to be now + FailedRefreshDelay so we don't "attack" the target service
         //
-        // 4. The caching settings dictate that the response should not be cached, and should be ignored, and currentValue == null :
+        // 3. The caching settings dictate that the response should not be cached, and should be ignored, and currentValue == null :
         //    We return the response anyway, since we don't have a previously-good value
         //
+        // 4. The caching settings dictate that the response shouldn't be cached, nor ignored and removed from cache:
+        //    We return the response and remove the previously-cached response from the cache
+        //
+        // 5. The caching settings dictate that the response shouldn't be cached, nor ignored and remain in cache:
+        //    We return the response 
         private async Task<object> TryFetchNewValue(string cacheKey, Func<Task<object>> serviceMethod,
             IMethodCachingSettings settings, string[] metricsKeys, AsyncCacheItem currentValue = null)
         {
@@ -313,24 +311,31 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             }
 
             // Outcome #1: Cache the response
-            if (settings.ResponseKindsToCache.HasFlag(responseKind))
+            if (settings.ResponseKindsToCache.HasFlag(responseKind))        
                 CacheResponse(cacheKey, requestSendTime, response, settings);
 
-            else if (settings.ResponseKindsToIgnore.HasFlag(responseKind))
+            else if (settings.ResponseKindsToIgnore.HasFlag(responseKind)) 
             {
-                // Outcome #3: Leave old response cached and return it, and set its refresh time to the (short) FailedRefreshDelay
+                // Outcome #2: Leave old response cached and return it, and set its refresh time to the (short) FailedRefreshDelay
                 if (currentValue != null)
                 {
                     currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
                     response = currentValue.Value;
                 }
 
-                // Outcome #4: We don't have a previous cached value, so we return current response
+                // Outcome #3: We don't have currentValue, so we cant ignore response and we return it
             }
+            else //Dont cache and dont ignore (i.e. return it)
+            {
+                // Outcome #4: Do not cache response and return it; remove previously-cached value
+                if (settings.RemoveFromCacheWhenNotIgnoredResponseBehavior == RemoveFromCacheWhenNotIgnoredResponseBehavior.Enabled)
+                    MemoryCache.Remove(cacheKey);
 
-            // Outcome #2: Do not cache response; remove previously-cached value (dont ignore)
-            else
-                MemoryCache.Remove(cacheKey);
+                // Outcome #5: Do not cache response and return it; leave old response cached
+                // If old response exist, set its refresh time to the (short) FailedRefreshDelay
+                else if (currentValue != null)
+                    currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
+            }
 
             tcs.SetResult(true); // RecentRevokesCache can stop tracking revoke keys
             return await response; // Might throw stored exception

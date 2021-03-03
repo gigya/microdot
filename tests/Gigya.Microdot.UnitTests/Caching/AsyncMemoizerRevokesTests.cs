@@ -61,7 +61,8 @@ namespace Gigya.Microdot.UnitTests.Caching
                 RevokedResponseBehavior = revokedResponseBehavior,
                 CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
                 RefreshMode = RefreshMode.UseRefreshes,
-                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache
+                ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache,
+                RemoveFromCacheWhenNotIgnoredResponseBehavior = RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled
             };
 
         private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));

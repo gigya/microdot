@@ -3,7 +3,6 @@ using System.Runtime.Serialization;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
-
     /// <summary>
     /// Caching Configuration for specific method on a specific service. Used by CachingProxy.
     /// </summary>
@@ -39,6 +38,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public RevokedResponseBehavior RevokedResponseBehavior { get; set; }
         public ExpirationBehavior ExpirationBehavior { get; set; }
         public CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
+        public RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
@@ -58,18 +58,19 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             if (other == null)
                 return false;
 
-            return    Enabled                             == other.Enabled
-                   && ResponseKindsToCache                == other.ResponseKindsToCache
-                   && ResponseKindsToIgnore               == other.ResponseKindsToIgnore
-                   && RefreshMode                         == other.RefreshMode
-                   && RefreshTime                         == other.RefreshTime
-                   && ExpirationTime                      == other.ExpirationTime
-                   && FailedRefreshDelay                  == other.FailedRefreshDelay
-                   && RequestGroupingBehavior             == other.RequestGroupingBehavior
-                   && RefreshBehavior                     == other.RefreshBehavior
-                   && RevokedResponseBehavior             == other.RevokedResponseBehavior
-                   && ExpirationBehavior                  == other.ExpirationBehavior
-                   && CacheResponsesWhenSupressedBehavior == other.CacheResponsesWhenSupressedBehavior;
+            return    Enabled                                       == other.Enabled
+                   && ResponseKindsToCache                          == other.ResponseKindsToCache
+                   && ResponseKindsToIgnore                         == other.ResponseKindsToIgnore
+                   && RefreshMode                                   == other.RefreshMode
+                   && RefreshTime                                   == other.RefreshTime
+                   && ExpirationTime                                == other.ExpirationTime
+                   && FailedRefreshDelay                            == other.FailedRefreshDelay
+                   && RequestGroupingBehavior                       == other.RequestGroupingBehavior
+                   && RefreshBehavior                               == other.RefreshBehavior
+                   && RevokedResponseBehavior                       == other.RevokedResponseBehavior
+                   && ExpirationBehavior                            == other.ExpirationBehavior
+                   && CacheResponsesWhenSupressedBehavior           == other.CacheResponsesWhenSupressedBehavior
+                   && RemoveFromCacheWhenNotIgnoredResponseBehavior == other.RemoveFromCacheWhenNotIgnoredResponseBehavior;
         }
 
 
@@ -89,24 +90,26 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
                 hashCode = (hashCode * 397) ^ RevokedResponseBehavior.GetHashCode();
                 hashCode = (hashCode * 397) ^ ExpirationBehavior.GetHashCode();
                 hashCode = (hashCode * 397) ^ CacheResponsesWhenSupressedBehavior.GetHashCode();
+                hashCode = (hashCode * 397) ^ RemoveFromCacheWhenNotIgnoredResponseBehavior.GetHashCode();
                 return hashCode;
             }
         }
 
         public static void Merge(IMethodCachingSettings source, IMethodCachingSettings target)
         {
-            if (target.Enabled == null)                          target.Enabled = source.Enabled;
-            if (target.ResponseKindsToCache == 0)                target.ResponseKindsToCache = source.ResponseKindsToCache;
-            if (target.ResponseKindsToIgnore == 0)               target.ResponseKindsToIgnore = source.ResponseKindsToIgnore;
-            if (target.RefreshMode == 0)                         target.RefreshMode = source.RefreshMode;
-            if (target.RefreshTime == null)                      target.RefreshTime = source.RefreshTime;
-            if (target.ExpirationTime == null)                   target.ExpirationTime = source.ExpirationTime;
-            if (target.FailedRefreshDelay == null)               target.FailedRefreshDelay = source.FailedRefreshDelay;
-            if (target.RequestGroupingBehavior == 0)             target.RequestGroupingBehavior = source.RequestGroupingBehavior;
-            if (target.RefreshBehavior == 0)                     target.RefreshBehavior = source.RefreshBehavior;
-            if (target.RevokedResponseBehavior == 0)             target.RevokedResponseBehavior = source.RevokedResponseBehavior;
-            if (target.ExpirationBehavior == 0)                  target.ExpirationBehavior = source.ExpirationBehavior;
-            if (target.CacheResponsesWhenSupressedBehavior == 0) target.CacheResponsesWhenSupressedBehavior = source.CacheResponsesWhenSupressedBehavior;
+            if (target.Enabled == null)                                      target.Enabled = source.Enabled;
+            if (target.ResponseKindsToCache == 0)                            target.ResponseKindsToCache = source.ResponseKindsToCache;
+            if (target.ResponseKindsToIgnore == 0)                           target.ResponseKindsToIgnore = source.ResponseKindsToIgnore;
+            if (target.RefreshMode == 0)                                     target.RefreshMode = source.RefreshMode;
+            if (target.RefreshTime == null)                                  target.RefreshTime = source.RefreshTime;
+            if (target.ExpirationTime == null)                               target.ExpirationTime = source.ExpirationTime;
+            if (target.FailedRefreshDelay == null)                           target.FailedRefreshDelay = source.FailedRefreshDelay;
+            if (target.RequestGroupingBehavior == 0)                         target.RequestGroupingBehavior = source.RequestGroupingBehavior;
+            if (target.RefreshBehavior == 0)                                 target.RefreshBehavior = source.RefreshBehavior;
+            if (target.RevokedResponseBehavior == 0)                         target.RevokedResponseBehavior = source.RevokedResponseBehavior;
+            if (target.ExpirationBehavior == 0)                              target.ExpirationBehavior = source.ExpirationBehavior;
+            if (target.CacheResponsesWhenSupressedBehavior == 0)             target.CacheResponsesWhenSupressedBehavior = source.CacheResponsesWhenSupressedBehavior;
+            if (target.RemoveFromCacheWhenNotIgnoredResponseBehavior == 0)   target.RemoveFromCacheWhenNotIgnoredResponseBehavior = source.RemoveFromCacheWhenNotIgnoredResponseBehavior;
         }
                 
     }
