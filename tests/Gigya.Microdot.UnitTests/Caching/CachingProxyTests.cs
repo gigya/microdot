@@ -20,7 +20,7 @@ using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture,Parallelizable(ParallelScope.None)]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class CachingProxyTests
     {
         const string FirstResult  = "First Result";
@@ -230,7 +230,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             await ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
             await _cacheRevoker.Revoke(key);
             _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
-            await Task.Delay(5);
+            await Task.Delay(100);
             await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
         }
 
