@@ -53,8 +53,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private string ServiceName { get; }
-        private ConcurrentDictionary<string /* method name */, MethodCachingPolicyConfig> CachingConfigPerMethod
-            = new ConcurrentDictionary<string, MethodCachingPolicyConfig>();
+        private ConcurrentDictionary<string /* method name */, (MethodCachingPolicyConfig methodConfig, MethodCachingPolicyConfig effMethodConfig)> 
+            CachingConfigPerMethod = new ConcurrentDictionary<string, (MethodCachingPolicyConfig, MethodCachingPolicyConfig)>();
 
 
         public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
@@ -74,43 +74,52 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
         {
-            var config = new MethodCachingPolicyConfig();
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
-            MethodCachingPolicyConfig.Merge(discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default, config);
+            var methodConfig = discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default;
 
-            // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
-            // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
-            // ...so we probably need access to configs before merges
-            //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
-            //US #136496
+            if (CachingConfigPerMethod.TryGetValue(methodName, out var cachedMethodConfigTuple) &&
+                ReferenceEquals(methodConfig, cachedMethodConfigTuple.methodConfig))
+            {
+                return cachedMethodConfigTuple.effMethodConfig;
+            }
+            else
+            {
+                var effMethodConfig = new MethodCachingPolicyConfig();
+                MethodCachingPolicyConfig.Merge(methodConfig, effMethodConfig);
 
-            //TODO: Unmark following code and remove following 2 lines after config is cached US #136496
-            //// For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
-            //// define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
-            //// expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
+                // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
+                // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
+                // ...so we probably need access to configs before merges
+                //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
+                //US #136496
 
-            //var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
-            //var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
+                // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
+                // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
+                // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
 
-            //if (config.RefreshMode == 0)
-            //    if (isRevocable)
-            //        config.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
-            //    else config.RefreshMode = RefreshMode.UseRefreshes;
+                var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
+                var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
 
-            //if (config.ExpirationBehavior == 0)
-            //    if (isRevocable)
-            //        config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
-            //    else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+                if (effMethodConfig.RefreshMode == 0)
+                    if (isRevocable)
+                        effMethodConfig.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
+                    else effMethodConfig.RefreshMode = RefreshMode.UseRefreshes;
 
-            if (config.RefreshMode == 0)        config.RefreshMode        = RefreshMode.UseRefreshes;
-            if (config.ExpirationBehavior == 0) config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+                if (effMethodConfig.ExpirationBehavior == 0)
+                    if (isRevocable)
+                        effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
+                    else effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
 
-            // TODO: Cache merged-down config (with changes detection) so we don't compute it every time.
-            // Maybe compare config object reference to previous one?
-            //US #136496
+                //Note: In case we want to add config validations (like we have in CacheAttribute), we can do it here and use Func<string, AggregatingHealthStatus> getAggregatedHealthCheck
+                //If validation failed, we wont update the cache, and preserve the error in CachingConfigPerMethod entry value
+                //HealthCheck func will set 'Bad' state in case an error exist in any entry. Otherwise it will set 'Good'
+                //The error will be cleaned (after config fix), either by a call made to GetConfig with specific methodName
+                //Or (if no call to the specific methodName was made), by a timer that cleans old errors from CachingConfigPerMethod
 
-            // Add to cache and return
-            return CachingConfigPerMethod[methodName] = config;
+                // Add to cache and return
+                CachingConfigPerMethod[methodName] = (methodConfig, effMethodConfig);
+                return effMethodConfig;
+            }
         }
 
 
