@@ -84,22 +84,26 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
             //US #136496
 
-            // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
-            // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
-            // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
+            //TODO: Unmark following code and remove following 2 lines after config is cached US #136496
+            //// For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
+            //// define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
+            //// expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
 
-            var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
-            var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
+            //var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
+            //var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
 
-            if (config.RefreshMode == 0)
-                if (isRevocable)
-                    config.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
-                else config.RefreshMode = RefreshMode.UseRefreshes;
+            //if (config.RefreshMode == 0)
+            //    if (isRevocable)
+            //        config.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
+            //    else config.RefreshMode = RefreshMode.UseRefreshes;
 
-            if (config.ExpirationBehavior == 0)
-                if (isRevocable)
-                    config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
-                else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+            //if (config.ExpirationBehavior == 0)
+            //    if (isRevocable)
+            //        config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
+            //    else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+
+            config.RefreshMode        = RefreshMode.UseRefreshes;
+            config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
 
             // TODO: Cache merged-down config (with changes detection) so we don't compute it every time.
             // Maybe compare config object reference to previous one?
