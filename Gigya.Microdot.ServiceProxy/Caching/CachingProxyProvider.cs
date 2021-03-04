@@ -102,8 +102,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             //        config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
             //    else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
 
-            config.RefreshMode        = RefreshMode.UseRefreshes;
-            config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+            if (config.RefreshMode == 0)        config.RefreshMode        = RefreshMode.UseRefreshes;
+            if (config.ExpirationBehavior == 0) config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
 
             // TODO: Cache merged-down config (with changes detection) so we don't compute it every time.
             // Maybe compare config object reference to previous one?

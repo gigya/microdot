@@ -187,7 +187,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Retry(3)] //Sometimes fails in build server because of timing issues
         public async Task ExtendExpirationWhenReadFromCache_CallAfterCacheItemIsExpiredAndExtendedShouldNotTriggerACallToTheService()
         {
-            TimeSpan expectedExpirationTime = TimeSpan.FromSeconds(2);
+            TimeSpan expectedExpirationTime = TimeSpan.FromSeconds(3);
             await SetCachingPolicyConfig(new[] { "ExpirationTime",     expectedExpirationTime.ToString() },
                                          new[] { "ExpirationBehavior", "ExtendExpirationWhenReadFromCache" });
 
@@ -205,7 +205,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             result.ShouldBe(FirstResult);
 
             //Additional time has passed (beyond the expectedExpirationTime)
-            await Task.Delay(1100);
+            await Task.Delay(2100);
 
             //Prev item is not expired (expiration was extended) - no service call
             result = await _proxy.CallService();
