@@ -82,7 +82,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
             // ...so we probably need access to configs before merges
             //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
-
+            //US #136496
 
             // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
             // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
@@ -101,8 +101,9 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
                 else config.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
 
-            // TODO: Detect config changes, but also cache merged-down config so we don't compute it every time. Maybe compare config
-            // object reference to previous one?
+            // TODO: Cache merged-down config (with changes detection) so we don't compute it every time.
+            // Maybe compare config object reference to previous one?
+            //US #136496
 
             // Add to cache and return
             return CachingConfigPerMethod[methodName] = config;

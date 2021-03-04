@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
+    //TODO: In US #136496: Move this to Gigya.ServiceContract, unmark CachedAttribute code and replace it with exiting attribute
+    //TODO: Create a nuget package, and consume it in microdot (in all of IMethodCachingSettings usages). Delete this code
+
     public interface IMethodCachingSettings
     {
         bool? Enabled { get; set; }
@@ -21,138 +24,137 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
     }
 
-
     /// <summary>
     /// Specifies that the method should be cached using the CachingProxy. Set the relevant properties to control caching settings. Note
     /// that clients may override these preferences with their own. Also note that clients using older versions of Microdot may ignore some
     /// of these settings.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
-    public class CachedAttribute : Attribute, IMethodCachingSettings
-    {
-        public CachedAttribute()
-        {
-            if (RefreshTime > ExpirationTime)
-                throw new ArgumentException("RefreshTime cannot be longer than ExpirationTime");
+    //[AttributeUsage(AttributeTargets.Method)]
+    //public class CachedAttribute : Attribute, IMethodCachingSettings
+    //{
+    //    public CachedAttribute()
+    //    {
+    //        if (RefreshTime > ExpirationTime)
+    //            throw new ArgumentException("RefreshTime cannot be longer than ExpirationTime");
 
-            if ((ResponseKindsToCache & ResponseKindsToIgnore) > 0)
-                throw new ArgumentException("You cannot define a specific response kind both in ResponseKindsToCache and ResponseKindsToIgnore");
-        }
+    //        if ((ResponseKindsToCache & ResponseKindsToIgnore) > 0)
+    //            throw new ArgumentException("You cannot define a specific response kind both in ResponseKindsToCache and ResponseKindsToIgnore");
+    //    }
 
-        /// <summary>Defines which kinds of responses clients should cache (non-null, null, exceptions, etc). Default: non-null and null
-        /// responses. Note that if the client called the method and received a response that needs to be cached (e.g. non-null), then later
-        /// refreshes the response and receives a response that shouldn't be cached (e.g. null), it will remove the previous response from
-        /// the cache, unless that kind of response is set to be ignored (see <see cref="ResponseKindsToIgnore"/>). Also note that if you
-        /// choose to cache exceptions, there's currently no way to revoke them (you can't add revoke keys to exceptions).</summary>
-        public ResponseKinds ResponseKindsToCache { get; set; }
-
-
-        /// <summary>When a client has a cached response but tries to obtain a fresh value (since it was revoked or is considered old), it
-        /// will ignore bad responses (e.g. exceptions) and return the last-good value instead. This enum defines which kinds of responses
-        /// to ignore. Note that you may not define the same kind both here and in <see cref="ResponseKindsToCache"/>.
-        /// Default: all exceptions.</summary>
-        public ResponseKinds ResponseKindsToIgnore { get; set; }
+    //    /// <summary>Defines which kinds of responses clients should cache (non-null, null, exceptions, etc). Default: non-null and null
+    //    /// responses. Note that if the client called the method and received a response that needs to be cached (e.g. non-null), then later
+    //    /// refreshes the response and receives a response that shouldn't be cached (e.g. null), it will remove the previous response from
+    //    /// the cache, unless that kind of response is set to be ignored (see <see cref="ResponseKindsToIgnore"/>). Also note that if you
+    //    /// choose to cache exceptions, there's currently no way to revoke them (you can't add revoke keys to exceptions).</summary>
+    //    public ResponseKinds ResponseKindsToCache { get; set; }
 
 
-        /// <summary>You can either manually revoke responses from client caches (by returning <c>Revocable&lt;&gt;</c> responses and using
-        /// an <c>ICacheRevoker</c> to revoke them), or define a time-to-live for cached responses so that clients will periodically fetch
-        /// up-to-date responses. Using manual revokes is preferred since revoke messages typically arrive to clients immediately so they
-        /// don't keep using stale responses once something was changed, i.e. they'll be "strongly consistent" instead of "eventually
-        /// consistent". Using time-to-live will cause clients to use stale responses up to <see cref="RefreshTime"/>, and
-        /// they will generate a constant stream of requests (as long as they use particular pieces of data) to fetch up-to-date values,
-        /// even if the responses haven't changed.</summary>
-        public RefreshMode RefreshMode { get; set; }
+    //    /// <summary>When a client has a cached response but tries to obtain a fresh value (since it was revoked or is considered old), it
+    //    /// will ignore bad responses (e.g. exceptions) and return the last-good value instead. This enum defines which kinds of responses
+    //    /// to ignore. Note that you may not define the same kind both here and in <see cref="ResponseKindsToCache"/>.
+    //    /// Default: all exceptions.</summary>
+    //    public ResponseKinds ResponseKindsToIgnore { get; set; }
 
 
-        /// <summary>
-        /// Default: 1 minute. Once a response was cached, and assuming refreshing is enabled as per <see cref="RefreshMode"/>,
-        /// clients will periodically ATTEMPT to fetch a fresh response. If they fail to do so (e.g. in case of a timeout error, and in case
-        /// that's not allowed by <see cref="ResponseKindsToCache"/>), then they'll keep using the last-good cached response, up to
-        /// <see cref="ExpirationTime"/>, but they will keep retrying to fetch fresh values in the mean time. The higher this value,
-        /// the lower the load on your service, and the less up-to-date responses clients will cache. Consider what issues could be caused
-        /// by clients using stale responses (they might make wrong decisions based on these responses, or write that stale data somewhere).
-        /// </summary>
-        public TimeSpan? RefreshTime { get; set; }
-
-        public double RefreshTimeInMinutes {
-            get => RefreshTime?.TotalMinutes ?? -1;
-            set => RefreshTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
-        }
+    //    /// <summary>You can either manually revoke responses from client caches (by returning <c>Revocable&lt;&gt;</c> responses and using
+    //    /// an <c>ICacheRevoker</c> to revoke them), or define a time-to-live for cached responses so that clients will periodically fetch
+    //    /// up-to-date responses. Using manual revokes is preferred since revoke messages typically arrive to clients immediately so they
+    //    /// don't keep using stale responses once something was changed, i.e. they'll be "strongly consistent" instead of "eventually
+    //    /// consistent". Using time-to-live will cause clients to use stale responses up to <see cref="RefreshTime"/>, and
+    //    /// they will generate a constant stream of requests (as long as they use particular pieces of data) to fetch up-to-date values,
+    //    /// even if the responses haven't changed.</summary>
+    //    public RefreshMode RefreshMode { get; set; }
 
 
-        /// <summary>
-        /// Default: 360 minutes (6 hours). How long should clients cache responses for. When that time passed, responses are evicted from
-        /// the cache, unless they were refreshed earlier (see <see cref="RefreshTime"/>), or unless <see cref="ExpirationBehavior"/>
-        /// specifies the expiration time is auto-extended when a cached response is used. Responses might be evicted earlier if they were
-        /// explicitly revoked or due to RAM pressure on client machines. Note that in case your service is unavailable, incoming requests
-        /// will fail and your service clients won't be able to fall back to cached responses after that time, possibly causing them to fail
-        /// as well. When picking a value, think how long it might take you to restore your service in case of a production disaster (e.g. 6
-        /// hours). But also consider what issues could be caused by clients using very old stale responses (they might make wrong decisions
-        /// based on these responses, or write that stale data somewhere).
-        /// </summary>
-        public TimeSpan? ExpirationTime { get; set; }
+    //    /// <summary>
+    //    /// Default: 1 minute. Once a response was cached, and assuming refreshing is enabled as per <see cref="RefreshMode"/>,
+    //    /// clients will periodically ATTEMPT to fetch a fresh response. If they fail to do so (e.g. in case of a timeout error, and in case
+    //    /// that's not allowed by <see cref="ResponseKindsToCache"/>), then they'll keep using the last-good cached response, up to
+    //    /// <see cref="ExpirationTime"/>, but they will keep retrying to fetch fresh values in the mean time. The higher this value,
+    //    /// the lower the load on your service, and the less up-to-date responses clients will cache. Consider what issues could be caused
+    //    /// by clients using stale responses (they might make wrong decisions based on these responses, or write that stale data somewhere).
+    //    /// </summary>
+    //    public TimeSpan? RefreshTime { get; set; }
 
-        public double ExpirationTimeInMinutes {
-            get => ExpirationTime?.TotalMinutes ?? -1;
-            set => ExpirationTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
-        }
+    //    public double RefreshTimeInMinutes {
+    //        get => RefreshTime?.TotalMinutes ?? -1;
+    //        set => RefreshTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
+    //    }
 
 
-        /// <summary>
-        /// Default: 1 second. When a client calls this method and receives a failure response (e.g. in case of a timeout error, and in case
-        /// it should be ignored as per <see cref="ResponseKindsToIgnore"/>), it will not cache the response, and will keep using the last-
-        /// good response in the mean time, if any. However, it will wait a shorter delay than <see cref="ExpirationTime"/> till it
-        /// attempts to refresh the data, since the response is now considered old and shouldn't be used for much longer. This delay is used
-        /// so clients don't "attack" your service when it's already potentially having availability issues. To disable, set to 0.
-        /// </summary>
-        public TimeSpan? FailedRefreshDelay { get; set; }
+    //    /// <summary>
+    //    /// Default: 360 minutes (6 hours). How long should clients cache responses for. When that time passed, responses are evicted from
+    //    /// the cache, unless they were refreshed earlier (see <see cref="RefreshTime"/>), or unless <see cref="ExpirationBehavior"/>
+    //    /// specifies the expiration time is auto-extended when a cached response is used. Responses might be evicted earlier if they were
+    //    /// explicitly revoked or due to RAM pressure on client machines. Note that in case your service is unavailable, incoming requests
+    //    /// will fail and your service clients won't be able to fall back to cached responses after that time, possibly causing them to fail
+    //    /// as well. When picking a value, think how long it might take you to restore your service in case of a production disaster (e.g. 6
+    //    /// hours). But also consider what issues could be caused by clients using very old stale responses (they might make wrong decisions
+    //    /// based on these responses, or write that stale data somewhere).
+    //    /// </summary>
+    //    public TimeSpan? ExpirationTime { get; set; }
 
-        public double FailedRefreshDelayInSeconds {
-            get => FailedRefreshDelay?.TotalSeconds ?? -1;
-            set => FailedRefreshDelay = value == -1 ? null : (TimeSpan?)TimeSpan.FromSeconds(value);
-        }
-
-
-        /// <summary>
-        /// Default: Enabled. When a client calls this method multiple times concurrently with the same parameters, the caching layer will
-        /// "group" the requests and issue a single request to this method, to reduce the load on this service. It is assumed that this
-        /// method returns the exact same answer given the exact same parameters. This flag controls whether to use request grouping or not.
-        /// </summary>
-        public RequestGroupingBehavior RequestGroupingBehavior { get; set; }
+    //    public double ExpirationTimeInMinutes {
+    //        get => ExpirationTime?.TotalMinutes ?? -1;
+    //        set => ExpirationTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
+    //    }
 
 
-        /// <summary>
-        /// Determines what clients do when accessing a cached response that is considered old, i.e. its refresh time passed.
-        /// </summary>
-        public RefreshBehavior RefreshBehavior { get; set; }
+    //    /// <summary>
+    //    /// Default: 1 second. When a client calls this method and receives a failure response (e.g. in case of a timeout error, and in case
+    //    /// it should be ignored as per <see cref="ResponseKindsToIgnore"/>), it will not cache the response, and will keep using the last-
+    //    /// good response in the mean time, if any. However, it will wait a shorter delay than <see cref="ExpirationTime"/> till it
+    //    /// attempts to refresh the data, since the response is now considered old and shouldn't be used for much longer. This delay is used
+    //    /// so clients don't "attack" your service when it's already potentially having availability issues. To disable, set to 0.
+    //    /// </summary>
+    //    public TimeSpan? FailedRefreshDelay { get; set; }
+
+    //    public double FailedRefreshDelayInSeconds {
+    //        get => FailedRefreshDelay?.TotalSeconds ?? -1;
+    //        set => FailedRefreshDelay = value == -1 ? null : (TimeSpan?)TimeSpan.FromSeconds(value);
+    //    }
 
 
-        /// <summary>
-        /// Dictates what clients do when a cached response is explicitly revoked by the server.
-        /// </summary>
-        public RevokedResponseBehavior RevokedResponseBehavior { get; set; }
+    //    /// <summary>
+    //    /// Default: Enabled. When a client calls this method multiple times concurrently with the same parameters, the caching layer will
+    //    /// "group" the requests and issue a single request to this method, to reduce the load on this service. It is assumed that this
+    //    /// method returns the exact same answer given the exact same parameters. This flag controls whether to use request grouping or not.
+    //    /// </summary>
+    //    public RequestGroupingBehavior RequestGroupingBehavior { get; set; }
 
 
-        /// <summary>
-        /// Defines how cached response expiration time is auto-extended.
-        /// </summary>
-        public ExpirationBehavior ExpirationBehavior { get; set; }
+    //    /// <summary>
+    //    /// Determines what clients do when accessing a cached response that is considered old, i.e. its refresh time passed.
+    //    /// </summary>
+    //    public RefreshBehavior RefreshBehavior { get; set; }
 
 
-        /// <summary>
-        /// Default: Enabled. When clients bypass their cache for specific requests using TracingContext.SuppressCaching(), this flag controls
-        /// whether the response will be cached. I.e. clients ignore the cache while READING, but not necessarily when WRITING. 
-        /// </summary>
-        public CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
+    //    /// <summary>
+    //    /// Dictates what clients do when a cached response is explicitly revoked by the server.
+    //    /// </summary>
+    //    public RevokedResponseBehavior RevokedResponseBehavior { get; set; }
 
-        /// <summary>
-        /// Default: Disabled. Defines whether to remove the previously cached response in case a response that we dont want to cache nor to ignore is received 
-        /// </summary>
-        public RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
 
-        // Not in use
-        bool? IMethodCachingSettings.Enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    }
+    //    /// <summary>
+    //    /// Defines how cached response expiration time is auto-extended.
+    //    /// </summary>
+    //    public ExpirationBehavior ExpirationBehavior { get; set; }
+
+
+    //    /// <summary>
+    //    /// Default: Enabled. When clients bypass their cache for specific requests using TracingContext.SuppressCaching(), this flag controls
+    //    /// whether the response will be cached. I.e. clients ignore the cache while READING, but not necessarily when WRITING. 
+    //    /// </summary>
+    //    public CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
+
+    //    /// <summary>
+    //    /// Default: Disabled. Defines whether to remove the previously cached response in case a response that we dont want to cache nor to ignore is received 
+    //    /// </summary>
+    //    public RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
+
+    //    // Not in use
+    //    bool? IMethodCachingSettings.Enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    //}
 
 
     /// <summary>The various kinds of responses that can be obtained from a service (non-null, null, exceptions).</summary>
