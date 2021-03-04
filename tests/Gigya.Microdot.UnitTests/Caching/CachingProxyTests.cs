@@ -184,7 +184,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        [Retry(2)] //Sometimes fails in build server because of timing issues
+        [Retry(3)] //Sometimes fails in build server because of timing issues
         public async Task ExtendExpirationWhenReadFromCache_CallAfterCacheItemIsExpiredAndExtendedShouldNotTriggerACallToTheService()
         {
             TimeSpan expectedExpirationTime = TimeSpan.FromSeconds(2);
