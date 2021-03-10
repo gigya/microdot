@@ -170,7 +170,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     return await CallService(serviceMethod, metricsKeys);
 
                 // ...otherwise we do put the response in the cache so that subsequent calls to the cache do not revert to the previously-cached value.
-                else return await TryFetchNewValue(key, serviceMethod, settings, metricsKeys);
+                else return await TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Suppress);
 
             // Found a cached response.
             // WARNING! Immediately after calling the line below, another thread may set a new value in the cache, and lines below
@@ -179,28 +179,23 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             else if ((cached = (AsyncCacheItem)MemoryCache.Get(key)) != null)
 
                 // Response was revoked.
-                if (cached.IsRevoked)
+                if (cached.IsRevoked && settings.RevokedResponseBehavior != RevokedResponseBehavior.KeepUsingRevokedResponse)
 
                     // The caching settings specify we should ignore revoked responses; issue a request.
-                    if (settings.RevokedResponseBehavior == RevokedResponseBehavior.RemoveResponseFromCache)
+                    if (settings.RevokedResponseBehavior == RevokedResponseBehavior.FetchNewValueNextTime)
                         return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
-                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Revoked));
 
                     // The caching settings specify we should attempt to fetch a fresh response. If failed, return currently cached value.
                     else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld)
                         return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
-                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
-
-                    // The caching settings specify we should keep using revoked responses
-                    else if (settings.RevokedResponseBehavior == RevokedResponseBehavior.KeepUsingRevokedResponse)
-                        return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Revoked, cached));
 
                     // In case RevokedResponseBehavior=TryFetchNewValueInBackgroundNextTime or the enum value is a new option we don't know
                     // how to handle yet, we initiate a background refresh and return the stale response.
-                    // TODO: In Microdot v4, we'd like to change the default to try and fetch a new value and wait for it (TryFetchNewValueNextTime)
                     else {
                         _ = GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
-                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Revoked));
                         return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
                     }
 
@@ -216,13 +211,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     // Try calling the service to obtain a fresh response. In case of failure return the old response.
                     if (settings.RefreshBehavior == RefreshBehavior.TryFetchNewValueOrUseOld)
                         return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
-                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Refresh, cached));
 
                     // Return the current old response, and trigger a background refresh to obtain a new value.
                     // TODO: In Microdot v4, we'd like to change the default to try and fetch a new value and wait for it (TryFetchNewValueOrUseOld)
                     else {
                         _ = GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
-                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, cached));
+                            TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Refresh, cached));
                         return await MarkHitAndReturnValue(cached.Value); // Might throw stored exception
                     }
 
@@ -231,7 +226,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             // No cached response. Call service.
             else return await GroupRequestsIfNeeded(settings, key, metricsKeys, () =>
-                TryFetchNewValue(key, serviceMethod, settings, metricsKeys));
+                TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.New));
         }
 
 
@@ -273,7 +268,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         // 5. The caching settings dictate that the response shouldn't be cached, nor ignored and remain in cache:
         //    We return the response 
         private async Task<object> TryFetchNewValue(string cacheKey, Func<Task<object>> serviceMethod,
-            IMethodCachingSettings settings, string[] metricsKeys, AsyncCacheItem currentValue = null)
+            IMethodCachingSettings settings, string[] metricsKeys, CallReason callReason, AsyncCacheItem currentValue = null)
         {
             // We use the RecentRevokesCache to keep track of recent revoke messages that arrived, to detect if the response we're about
             // to receive was revoked while in transit. It will track revoke messages as long as the task is not completed.
@@ -310,32 +305,46 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 var observed = response.Exception; //dont remove this line as it prevents UnobservedTaskException to be thrown 
             }
 
-            // Outcome #1: Cache the response
-            if (settings.ResponseKindsToCache.HasFlag(responseKind))        
-                CacheResponse(cacheKey, requestSendTime, response, settings);
+            string outcome = null;
 
-            else if (settings.ResponseKindsToIgnore.HasFlag(responseKind)) 
+            // Outcome #1: Cache the response
+            if (settings.ResponseKindsToCache.HasFlag(responseKind))
             {
+                outcome = "cached";
+                CacheResponse(cacheKey, requestSendTime, response, settings);
+            }
+            else if (settings.ResponseKindsToIgnore.HasFlag(responseKind))
+
                 // Outcome #2: Leave old response cached and return it, and set its refresh time to the (short) FailedRefreshDelay
                 if (currentValue != null)
                 {
+                    outcome = "ignored_cachedValueExist";
                     currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
                     response = currentValue.Value;
                 }
 
                 // Outcome #3: We don't have currentValue, so we cant ignore response and we return it
-            }
+                else
+                    outcome = "ignored_cachedValueDoesNotExist";
+
             else //Dont cache and dont ignore (i.e. return it)
-            {
+            
                 // Outcome #4: Do not cache response and return it; remove previously-cached value
-                if (settings.RemoveFromCacheWhenNotIgnoredResponseBehavior == RemoveFromCacheWhenNotIgnoredResponseBehavior.Enabled)
+                if (settings.NotIgnoredResponseBehavior == NotIgnoredResponseBehavior.RemoveCachedResponse)
+                {
+                    outcome = "notCachedNotIgnored_cachedValueRemoved";
                     MemoryCache.Remove(cacheKey);
+                }
 
                 // Outcome #5: Do not cache response and return it; leave old response cached
                 // If old response exist, set its refresh time to the (short) FailedRefreshDelay
                 else if (currentValue != null)
+                {
+                    outcome = "notCachedNotIgnored_cachedValuePreserved";
                     currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
-            }
+                }
+
+            Log.Debug(x => x("Service call", unencryptedTags: new { cacheKey, callReason, responseKind, outcome }));
 
             tcs.SetResult(true); // RecentRevokesCache can stop tracking revoke keys
             return await response; // Might throw stored exception
@@ -493,6 +502,14 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             MemoryCache?.Dispose();
             RevokeDisposable?.Dispose();
         }
+    }
+
+    public enum CallReason
+    {
+        New,
+        Refresh,
+        Suppress,
+        Revoked
     }
 
 }

@@ -44,7 +44,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
         private IMethodCachingSettings GetCachingSettings(double ttlSeconds = 60 * 60 * 6, 
                                                           double refreshTimeSeconds = 60, 
-                                                          RevokedResponseBehavior revokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,
+                                                          RevokedResponseBehavior revokedResponseBehavior = RevokedResponseBehavior.FetchNewValueNextTime,
                                                           ResponseKinds responseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
                                                           ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException) =>
             new MethodCachingPolicyConfig
@@ -62,7 +62,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
                 RefreshMode = RefreshMode.UseRefreshes,
                 ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache,
-                RemoveFromCacheWhenNotIgnoredResponseBehavior = RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled
+                NotIgnoredResponseBehavior = NotIgnoredResponseBehavior.KeepCachedResponse
             };
 
         private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));

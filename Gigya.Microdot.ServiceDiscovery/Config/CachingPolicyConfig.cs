@@ -67,7 +67,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             RefreshBehavior                               = RefreshBehavior.UseOldAndFetchNewValueInBackground,
             RevokedResponseBehavior                       = RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld, // Behavior change
             CacheResponsesWhenSupressedBehavior           = CacheResponsesWhenSupressedBehavior.Enabled,
-            RemoveFromCacheWhenNotIgnoredResponseBehavior = RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled
+            NotIgnoredResponseBehavior                    = NotIgnoredResponseBehavior.KeepCachedResponse
         };
 
     }

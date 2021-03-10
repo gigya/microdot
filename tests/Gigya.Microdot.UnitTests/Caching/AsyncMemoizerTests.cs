@@ -47,7 +47,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                                                           RefreshBehavior refreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
                                                           ResponseKinds responseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
                                                           ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
-                                                          RemoveFromCacheWhenNotIgnoredResponseBehavior removeFromCacheWhenNotIgnoredResponseBehavior = RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled)
+                                                          NotIgnoredResponseBehavior notIgnoredResponseBehavior = NotIgnoredResponseBehavior.KeepCachedResponse)
             => new MethodCachingPolicyConfig
             {
                 ExpirationTime = TimeSpan.FromSeconds(expirationTime),
@@ -59,11 +59,11 @@ namespace Gigya.Microdot.UnitTests.Caching
                 ResponseKindsToIgnore = responseKindsToIgnore,
                 RequestGroupingBehavior = groupingBehavior,
                 RefreshBehavior = refreshBehavior,
-                RevokedResponseBehavior = RevokedResponseBehavior.RemoveResponseFromCache,  //Tested AsyncMemoizerRevokesTests
+                RevokedResponseBehavior = RevokedResponseBehavior.FetchNewValueNextTime,  //Tested in AsyncMemoizerRevokesTests
                 CacheResponsesWhenSupressedBehavior = cacheResponsesWhenSupressedBehavior,
                 RefreshMode = refreshMode,
                 ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache, //Tested in CachingProxyTests
-                RemoveFromCacheWhenNotIgnoredResponseBehavior = removeFromCacheWhenNotIgnoredResponseBehavior
+                NotIgnoredResponseBehavior = notIgnoredResponseBehavior
             };
 
 
@@ -301,7 +301,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKindAndRemoveFromCacheWhenNotIgnoredResponseBehaviorIsEnabled_ReturnResponseAndRemovePrevCachedValue()
+        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKindAndNotIgnoredResponseBehaviorIsRemoveCachedResponse_ReturnResponseAndRemovePrevCachedValue()
         {
             var firstResult = "first result";
             var secondResult = "second result";
@@ -315,7 +315,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             //Call service and get a null result, return it and remove previously-cached value
             result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
-                GetCachingSettings(removeFromCacheWhenNotIgnoredResponseBehavior: RemoveFromCacheWhenNotIgnoredResponseBehavior.Enabled,
+                GetCachingSettings(notIgnoredResponseBehavior: NotIgnoredResponseBehavior.RemoveCachedResponse,
                                    responseKindsToCache: ResponseKinds.NonNullResponse, refreshBehavior:RefreshBehavior.TryFetchNewValueOrUseOld));
             result.ShouldBeNull();
 
@@ -328,7 +328,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKindAndRemoveFromCacheWhenNotIgnoredResponseBehaviorIsDisabled_ReturnResponseAndKeepPrevCachedValue()
+        public async Task MemoizeAsync_DataSourceCallReturnsANoneCachedAndNoneIgnoreResponseKindAndNotIgnoredResponseBehaviorIsKeepCachedResponse_ReturnResponseAndKeepPrevCachedValue()
         {
             var firstResult = "first result";
             var dataSource = CreateDataSource(firstResult, null);
@@ -341,7 +341,7 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             //Call service and get a null result, return it and keep previously-cached value
             result = await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" },
-                GetCachingSettings(removeFromCacheWhenNotIgnoredResponseBehavior: RemoveFromCacheWhenNotIgnoredResponseBehavior.Disabled,
+                GetCachingSettings(notIgnoredResponseBehavior: NotIgnoredResponseBehavior.KeepCachedResponse,
                     responseKindsToCache: ResponseKinds.NonNullResponse, refreshBehavior: RefreshBehavior.TryFetchNewValueOrUseOld));
             result.ShouldBeNull();
 

@@ -21,7 +21,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         RevokedResponseBehavior RevokedResponseBehavior { get; set; }
         ExpirationBehavior ExpirationBehavior { get; set; }
         CacheResponsesWhenSupressedBehavior CacheResponsesWhenSupressedBehavior { get; set; }
-        RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
+        NotIgnoredResponseBehavior NotIgnoredResponseBehavior { get; set; }
     }
 
     /// <summary>
@@ -76,7 +76,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     //    /// </summary>
     //    public TimeSpan? RefreshTime { get; set; }
 
-    //    public double RefreshTimeInMinutes {
+    //    public double RefreshTimeInMinutes
+    //    {
     //        get => RefreshTime?.TotalMinutes ?? -1;
     //        set => RefreshTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
     //    }
@@ -94,7 +95,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     //    /// </summary>
     //    public TimeSpan? ExpirationTime { get; set; }
 
-    //    public double ExpirationTimeInMinutes {
+    //    public double ExpirationTimeInMinutes
+    //    {
     //        get => ExpirationTime?.TotalMinutes ?? -1;
     //        set => ExpirationTime = value == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(value);
     //    }
@@ -109,7 +111,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     //    /// </summary>
     //    public TimeSpan? FailedRefreshDelay { get; set; }
 
-    //    public double FailedRefreshDelayInSeconds {
+    //    public double FailedRefreshDelayInSeconds
+    //    {
     //        get => FailedRefreshDelay?.TotalSeconds ?? -1;
     //        set => FailedRefreshDelay = value == -1 ? null : (TimeSpan?)TimeSpan.FromSeconds(value);
     //    }
@@ -150,7 +153,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     //    /// <summary>
     //    /// Default: Disabled. Defines whether to remove the previously cached response in case a response that we dont want to cache nor to ignore is received 
     //    /// </summary>
-    //    public RemoveFromCacheWhenNotIgnoredResponseBehavior RemoveFromCacheWhenNotIgnoredResponseBehavior { get; set; }
+    //    public NotIgnoredResponseBehavior NotIgnoredResponseBehavior { get; set; }
 
     //    // Not in use
     //    bool? IMethodCachingSettings.Enabled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -248,7 +251,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         /// the cached response and call this method to obtain fresh data. If the new response does not match
         /// <see cref="ResponseKinds"/>, it will use the stale cached response. This lets the client to continue providing
         /// service while this service is down. It is assumed that it is preferable to use stale responses over not providing service.
-        /// This is the default for Microdot v4+ clients.
+        /// This is the default for Microdot v3+ clients.
         /// </summary>
         TryFetchNewValueNextTimeOrUseOld = 1,
 
@@ -271,12 +274,12 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         //TryFetchNewValueImmediately = 3,
 
         /// <summary>
-        /// DANGEROUS! With this option, when a client receives a cache revoke message, it will immediately remove all cached responses
+        /// DANGEROUS! With this option, when a client receives a cache revoke message, it will immediately stop using all cached responses
         /// tagged with that message key. In case your service becomes unavailable the client will not have last-good cached responses
         /// to fall back to, which may cause it to fail, in turn. Use this option in case your clients must absolutely not use stale
         /// responses, even at the cost of not providing service.
         /// </summary>
-        RemoveResponseFromCache = 4,
+        FetchNewValueNextTime = 4,
 
         /// <summary>
         /// DANGEROUS! With this option, when a client receives a cache revoke message, it will ignore the message and keep using stale
@@ -322,10 +325,10 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     /// <summary>
     /// Defines whether to remove the previously cached response in case a response that we dont want to cache nor to ignore is received 
     /// </summary>
-    public enum RemoveFromCacheWhenNotIgnoredResponseBehavior
+    public enum NotIgnoredResponseBehavior
     {
-        Enabled = 1,
-        Disabled = 2,
+        RemoveCachedResponse = 1,
+        KeepCachedResponse = 2,
     }
 
 }
