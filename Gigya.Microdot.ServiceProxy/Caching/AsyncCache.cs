@@ -167,7 +167,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                 // If the caching settings specify we shouldn't cache responses when suppressed, then don't.
                 if (settings.CacheResponsesWhenSupressedBehavior == CacheResponsesWhenSupressedBehavior.Disabled)
-                    return await CallService(serviceMethod, metricsKeys);
+                    return await (await CallService(serviceMethod, metricsKeys)).response;
 
                 // ...otherwise we do put the response in the cache so that subsequent calls to the cache do not revert to the previously-cached value.
                 else return await TryFetchNewValue(key, serviceMethod, settings, metricsKeys, CallReason.Suppress);
@@ -178,7 +178,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             // condition with negligible negative effects so we can ignore it for the sake of the simplicity of the code.
             else if ((cached = (AsyncCacheItem)MemoryCache.Get(key)) != null)
 
-                // Response was revoked.
+                // Response was revoked and settings specify we should not use revoked responses
                 if (cached.IsRevoked && settings.RevokedResponseBehavior != RevokedResponseBehavior.KeepUsingRevokedResponse)
 
                     // The caching settings specify we should ignore revoked responses; issue a request.
@@ -276,34 +276,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var tcs = new TaskCompletionSource<bool>();
             RecentRevokesCache.RegisterOutgoingRequest(tcs.Task, requestSendTime);
 
-            Task<object> response; // We capture the response from the service here, including if it was an exception
-            ResponseKinds responseKind;
-            try
-            {
-                // Call the service
-                response = Task.FromResult(await CallService(serviceMethod, metricsKeys));
-
-                // Determine the kind of response. We consider it null also in case we got a non-null Revocable<> with null inner Value
-                bool isNullResponse =    response.Result == null
-                                      || (   response.Result.GetType().IsGenericType
-                                          && response.Result.GetType().GetGenericTypeDefinition() == typeof(Revocable<>)
-                                          && response.Result.GetType().GetProperty("Value").GetValue(response.Result) == null);
-                responseKind = isNullResponse ? ResponseKinds.NullResponse : ResponseKinds.NonNullResponse;
-            }
-            catch (Exception e)
-            {
-                if (!(e is RequestException))
-                    Failed.Mark(metricsKeys);
-
-                // Determine the kind of exception
-                responseKind =   e is RequestException ? ResponseKinds.RequestException
-                               : e is EnvironmentException ? ResponseKinds.EnvironmentException
-                               : e is TimeoutException || e is TaskCanceledException ? ResponseKinds.TimeoutException
-                               : ResponseKinds.OtherExceptions;
-
-                response = Task.FromException<object>(e);
-                var observed = response.Exception; //dont remove this line as it prevents UnobservedTaskException to be thrown 
-            }
+            // We capture the response from the service here, including if it was an exception
+            var (response, responseKind) = await CallService(serviceMethod, metricsKeys);
 
             string outcome = null;
 
@@ -328,21 +302,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     outcome = "ignored_cachedValueDoesNotExist";
 
             else //Dont cache and dont ignore (i.e. return it)
-            
-                // Outcome #4: Do not cache response and return it; remove previously-cached value
+            {
+                outcome = "notCachedNotIgnored";
+
+                // Outcome #4: Do not cache response and return it; remove previously-cached value (if exist)
                 if (settings.NotIgnoredResponseBehavior == NotIgnoredResponseBehavior.RemoveCachedResponse)
                 {
-                    outcome = "notCachedNotIgnored_cachedValueRemoved";
-                    MemoryCache.Remove(cacheKey);
+                    if (MemoryCache.Remove(cacheKey) != null)
+                        outcome = "notCachedNotIgnored_cachedValueRemoved";
                 }
 
                 // Outcome #5: Do not cache response and return it; leave old response cached
-                // If old response exist, set its refresh time to the (short) FailedRefreshDelay
+                // If old response is not null, set its refresh time to the (short) FailedRefreshDelay
                 else if (currentValue != null)
-                {
-                    outcome = "notCachedNotIgnored_cachedValuePreserved";
                     currentValue.NextRefreshTime = DateTime.UtcNow + settings.FailedRefreshDelay.Value;
-                }
+            }
 
             Log.Debug(x => x("Service call", unencryptedTags: new { cacheKey, callReason, responseKind, outcome }));
 
@@ -352,17 +326,46 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
 
 
-        private async Task<object> CallService(Func<Task<object>> serviceMethod, string[] metricsKeys)
+        private async Task<(Task<object> response, ResponseKinds responseKind)> CallService(Func<Task<object>> serviceMethod, string[] metricsKeys)
         {
+            Task<object> response; 
+            ResponseKinds responseKind;
+
             try
             {
                 AwaitingResult.Increment(metricsKeys);
-                return await serviceMethod();
+
+                // Call the service
+                response = Task.FromResult(await serviceMethod());
+
+                // Determine the kind of response. We consider it null also in case we got a non-null Revocable<> with null inner Value
+                var isNullResponse =    response.Result == null
+                                     || (   response.Result.GetType().IsGenericType
+                                         && response.Result.GetType().GetGenericTypeDefinition() == typeof(Revocable<>)
+                                         && response.Result.GetType().GetProperty("Value").GetValue(response.Result) == null);
+
+                responseKind = isNullResponse ? ResponseKinds.NullResponse : ResponseKinds.NonNullResponse;
+            }
+            catch (Exception e)
+            {
+                if (!(e is RequestException))
+                    Failed.Mark(metricsKeys);
+
+                // Determine the kind of exception
+                responseKind =   e is RequestException ? ResponseKinds.RequestException
+                               : e is EnvironmentException ? ResponseKinds.EnvironmentException
+                               : e is TimeoutException || e is TaskCanceledException ? ResponseKinds.TimeoutException
+                               : ResponseKinds.OtherExceptions;
+
+                response = Task.FromException<object>(e);
+                var observed = response.Exception; //dont remove this line as it prevents UnobservedTaskException to be thrown 
             }
             finally
             {
                 AwaitingResult.Decrement(metricsKeys);
             }
+
+            return (response, responseKind);
         }
 
 
