@@ -334,7 +334,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             try
             {
                 AwaitingResult.Increment(metricsKeys);
-
+                
                 // Call the service
                 response = Task.FromResult(await serviceMethod());
 
@@ -460,7 +460,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     }
 
             if (revokeApplied)
+            {
                 Revokes.Meter("Succeeded", Unit.Events).Mark();
+                Log.Debug(x => x("Revoke applied", unencryptedTags: new { revokeKey }));
+            }
             else
                 Revokes.Meter("Discarded", Unit.Events).Mark();
 
