@@ -229,6 +229,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     context = await Listener.GetContextAsync();
 
                     var timeFromLastReq = sp.ElapsedMilliseconds;
+                    sp.Restart();
                     var ticks = DateTime.UtcNow.Ticks;
                     Interlocked.Increment(ref _outstandingRecvRequests);
 
