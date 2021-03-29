@@ -32,7 +32,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
     public class MetadataProvider : IMetadataProvider
     {
         private ConcurrentDictionary<MethodInfo, Type> TaskReturnTypes { get; } = new ConcurrentDictionary<MethodInfo, Type>();
-        private ConcurrentDictionary<MethodInfo, bool> IsMethodCached { get; } = new ConcurrentDictionary<MethodInfo, bool>();
+        private ConcurrentDictionary<MethodInfo, CachedAttribute> CachedAttributePerMethod { get; } = new ConcurrentDictionary<MethodInfo, CachedAttribute>();
 
 
         public Type GetMethodTaskResultType(MethodInfo method)
@@ -59,12 +59,15 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        public bool IsCached(MethodInfo methodInfo)
+        public bool IsCached(MethodInfo methodInfo) => GetCachedAttribute(methodInfo) != null;
+
+
+        public CachedAttribute GetCachedAttribute(MethodInfo methodInfo)
         {
             if (methodInfo == null)
                 throw new ArgumentNullException(nameof(methodInfo));
 
-            return IsMethodCached.GetOrAdd(methodInfo, m => m.GetCustomAttribute<CachedAttribute>() != null);
+            return CachedAttributePerMethod.GetOrAdd(methodInfo, m => m.GetCustomAttribute<CachedAttribute>());
         }
 
 

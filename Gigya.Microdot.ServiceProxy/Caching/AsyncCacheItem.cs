@@ -27,20 +27,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 {
     public class AsyncCacheItem
     {
-        public object Lock { get; } = new object();
-        public DateTime NextRefreshTime { get; set; }
-        public Task<object> CurrentValueTask { get; set; }
-        public Task<object> RefreshTask { get; set; }
+        /// <summary>The Task is completed, but might store an exception, if the settings for this method define it's ok to cache exceptions</summary>
+        public Task<object> Value;
 
-        /// <summary>
-        /// Group name of this cache item (e.g. method name). 
-        /// The group name is used to configure whether extra logData should be written for items of this group.
-        /// </summary>
-        public string GroupName { get; set; }
+        /// <summary>Whether this response was revoked.</summary>
+        public bool IsRevoked = false;
 
-        /// <summary>
-        /// Extra data for log purposes (e.g. arguments list)
-        /// </summary>
-        public string LogData { get; set; }
+        /// <summary>The time after which, the next time this response is fetched from the cache, we might decide to obtain a fresh value.</summary>
+        public DateTime NextRefreshTime;
     }
 }
