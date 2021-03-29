@@ -21,11 +21,13 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.System_Reflection.DispatchProxy;
+using Gigya.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
@@ -51,6 +53,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private string ServiceName { get; }
+        private ConcurrentDictionary<string /* method name */, (MethodCachingPolicyConfig methodConfig, MethodCachingPolicyConfig effMethodConfig)> 
+            CachingConfigPerMethod = new ConcurrentDictionary<string, (MethodCachingPolicyConfig, MethodCachingPolicyConfig)>();
 
 
         public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
@@ -68,10 +72,54 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        private MethodCachingPolicyConfig GetConfig(string methodName)
+        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
         {
-            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig config);
-            return config?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default;
+            GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
+            var methodConfig = discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default;
+
+            if (CachingConfigPerMethod.TryGetValue(methodName, out var cachedMethodConfigTuple) &&
+                ReferenceEquals(methodConfig, cachedMethodConfigTuple.methodConfig))
+            {
+                return cachedMethodConfigTuple.effMethodConfig;
+            }
+            else
+            {
+                var effMethodConfig = new MethodCachingPolicyConfig();
+                MethodCachingPolicyConfig.Merge(methodConfig, effMethodConfig);
+
+                // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
+                // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
+                // ...so we probably need access to configs before merges
+                //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
+                //US #136496
+
+                // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
+                // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
+                // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
+
+                var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
+                var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
+
+                if (effMethodConfig.RefreshMode == 0)
+                    if (isRevocable)
+                        effMethodConfig.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
+                    else effMethodConfig.RefreshMode = RefreshMode.UseRefreshes;
+
+                if (effMethodConfig.ExpirationBehavior == 0)
+                    if (isRevocable)
+                        effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
+                    else effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+
+                //Note: In case we want to add config validations (like we have in CacheAttribute), we can do it here and use Func<string, AggregatingHealthStatus> getAggregatedHealthCheck
+                //If validation failed, we wont update the cache, and preserve the error in CachingConfigPerMethod entry value
+                //HealthCheck func will set 'Bad' state in case an error exist in any entry. Otherwise it will set 'Good'
+                //The error will be cleaned (after config fix), either by a call made to GetConfig with specific methodName
+                //Or (if no call to the specific methodName was made), by a timer that cleans old errors from CachingConfigPerMethod
+
+                // Add to cache and return
+                CachingConfigPerMethod[methodName] = (methodConfig, effMethodConfig);
+                return effMethodConfig;
+            }
         }
 
 
@@ -88,11 +136,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig(GetMethodNameForCachingPolicy(targetMethod, args));
+            var config = GetConfig(targetMethod, GetMethodNameForCachingPolicy(targetMethod, args));
             bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);
 
             if (useCache)
-                return Memoizer.Memoize(DataSource, targetMethod, args, new CacheItemPolicyEx(config));
+                return Memoizer.Memoize(DataSource, targetMethod, args, config);
             else
                 return targetMethod.Invoke(DataSource, args);
         }

@@ -26,18 +26,16 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 {
     public class CachingPolicyCollection: ConfigCollection<MethodCachingPolicyConfig>
     {
-        public CachingPolicyCollection(IDictionary<string, MethodCachingPolicyConfig> source, MethodCachingPolicyConfig defaultItem) : base(source, defaultItem)
+        public CachingPolicyCollection(IDictionary<string, MethodCachingPolicyConfig> source, MethodCachingPolicyConfig defaultItem)
+            : base(source, defaultItem)
         {
         }
 
         protected override MethodCachingPolicyConfig ApplyDefaults(MethodCachingPolicyConfig item)
         {
-            item.RefreshTime = item.RefreshTime ?? DefaultItem.RefreshTime;
-            item.Enabled = item.Enabled ?? DefaultItem.Enabled;
-            item.ExpirationTime = item.ExpirationTime ?? DefaultItem.ExpirationTime;
-            item.FailedRefreshDelay = item.FailedRefreshDelay ?? DefaultItem.FailedRefreshDelay;
-
+            MethodCachingPolicyConfig.Merge(DefaultItem, item);
             return item;
         }
+
     }
 }

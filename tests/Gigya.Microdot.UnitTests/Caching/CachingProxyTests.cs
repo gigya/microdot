@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
@@ -17,6 +16,7 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
@@ -71,7 +71,10 @@ namespace Gigya.Microdot.UnitTests.Caching
         private void SetupServiceMock()
         {             
             _serviceMock = Substitute.For<ICachingTestService>();
-            _serviceMock.CallService().Returns(_ => Task.FromResult(_serviceResult));
+            _serviceMock.CallService().Returns(_ =>
+            {
+                return Task.FromResult(_serviceResult);
+            });
             _serviceMock.CallRevocableService(Arg.Any<string>()).Returns(async s =>
             {
                 var result = _serviceResult;
@@ -135,6 +138,81 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        public async Task CallWhileRefreshShouldReturnOldValueAndAfterRefreshTheNewValue()
+        {
+            TimeSpan expectedRefreshTime = TimeSpan.FromSeconds(10);
+            await SetCachingPolicyConfig(new[] { "RefreshTime", expectedRefreshTime.ToString() });
+
+            var result = await _proxy.CallService();
+            result.ShouldBe(FirstResult); 
+
+            _now += expectedRefreshTime;
+            _serviceResult = SecondResult;
+            
+            result = await _proxy.CallService(); //trigger a refresh, but until it will finish, return old result
+            result.ShouldBe(FirstResult);
+
+            await Task.Delay(100); //wait for refresh to end
+
+            result = await _proxy.CallService();
+            result.ShouldBe(SecondResult); //refreshed value should be returned
+        }
+
+        [Test]
+        public async Task DoNotExtendExpirationWhenReadFromCache_CallAfterCacheItemIsExpiredShouldTriggerACallToTheService()
+        {
+            TimeSpan expectedExpirationTime = TimeSpan.FromSeconds(1);
+            await SetCachingPolicyConfig(new[] { "ExpirationTime",     expectedExpirationTime.ToString() }, 
+                                         new[] { "ExpirationBehavior", "DoNotExtendExpirationWhenReadFromCache" });
+
+            //First call to service - value is cached
+            var result = await _proxy.CallService();
+            result.ShouldBe(FirstResult);
+
+            _serviceResult = SecondResult;
+
+            //No service call - cached value is used
+            result = await _proxy.CallService();
+            result.ShouldBe(FirstResult);
+
+            //Wait for item to be expired
+            await Task.Delay(1500);
+
+            //Prev item is expired - make a call to the service
+            result = await _proxy.CallService(); 
+            result.ShouldBe(SecondResult);
+        }
+
+        [Test]
+        [Retry(3)] //Sometimes fails in build server because of timing issues
+        public async Task ExtendExpirationWhenReadFromCache_CallAfterCacheItemIsExpiredAndExtendedShouldNotTriggerACallToTheService()
+        {
+            TimeSpan expectedExpirationTime = TimeSpan.FromSeconds(3);
+            await SetCachingPolicyConfig(new[] { "ExpirationTime",     expectedExpirationTime.ToString() },
+                                         new[] { "ExpirationBehavior", "ExtendExpirationWhenReadFromCache" });
+
+            //First call to service - value is cached
+            var result = await _proxy.CallService();
+            result.ShouldBe(FirstResult);
+
+            _serviceResult = SecondResult;
+
+            //Time has passed, but expiration has not reached
+            await Task.Delay(1000);
+
+            //No service call - cached value is used and expiration is extended
+            result = await _proxy.CallService();
+            result.ShouldBe(FirstResult);
+
+            //Additional time has passed (beyond the expectedExpirationTime)
+            await Task.Delay(2100);
+
+            //Prev item is not expired (expiration was extended) - no service call
+            result = await _proxy.CallService();
+            result.ShouldBe(FirstResult);
+        }
+
+        [Test]
         public async Task CachingRefreshTimeByMethodConfiguration()
         {
             TimeSpan expectedRefreshTime = TimeSpan.FromSeconds(10);
@@ -153,25 +231,24 @@ namespace Gigya.Microdot.UnitTests.Caching
             await ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
             await _cacheRevoker.Revoke(key);
             _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
-            await Task.Delay(5);
+            await Task.Delay(100);
             await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
         }
 
         [Test]
-        [Ignore("missing feature. This behavior is not supported yet. Should be fixed in the future")]
         public async Task RevokeBeforeServiceResultReceivedShouldRevokeStaleValue()
         {
             var key = Guid.NewGuid().ToString();
             await ClearCachingPolicyConfig();
-            var deay = new TaskCompletionSource<int>();
-            _revokeDelay = deay.Task;
+            var delay = new TaskCompletionSource<int>();
+            _revokeDelay = delay.Task;
             var serviceCallWillCompleteOnlyAfterRevoke = ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
-            _serviceResult = SecondResult;
             await _cacheRevoker.Revoke(key);
             _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
-            deay.SetResult(1);
+            delay.SetResult(1);
             await serviceCallWillCompleteOnlyAfterRevoke;
-
+            await Task.Delay(100);
+            _serviceResult = SecondResult;
             await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
         }
 
@@ -250,13 +327,13 @@ namespace Gigya.Microdot.UnitTests.Caching
     [HttpService(1234)]
     public interface ICachingTestService
     {
-        [Cached]
+        [Gigya.Common.Contracts.Attributes.Cached]
         Task<string> CallService();
 
-        [Cached]
+        [Gigya.Common.Contracts.Attributes.Cached]
         Task<string> OtherMethod();
 
-        [Cached]
+        [Gigya.Common.Contracts.Attributes.Cached]
         Task<Revocable<string>> CallRevocableService(string keyToRevock);
 
     }
