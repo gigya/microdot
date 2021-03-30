@@ -98,7 +98,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
 
                 var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
-                var isRevocable = taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
+                var isRevocable = taskResultType != null && taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
 
                 if (effMethodConfig.RefreshMode == 0)
                     if (isRevocable)
