@@ -23,6 +23,7 @@
 using System;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -49,14 +50,13 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 	    /// <param name="json">The JSON to deserialize.</param>
 	    /// <returns>The deserialized exception.</returns>
 	    /// <exception cref="Newtonsoft.Json.JsonSerializationException">Thrown when the exception failed to deserialize.</exception>
-	    public Exception Deserialize(string json)
+	    public (Exception ex, (string LogText, Tags unencryptedTags) logInspectionItem) Deserialize(string json)
 	    {
-	        var ex = JsonConvert.DeserializeObject<Exception>(json, _exceptionSerializationSettings.SerializerSettings);
-
+            var(ex, logInspectionItem) = JsonConvertSecured.DeserializeObject<Exception>(json, _exceptionSerializationSettings.SerializerSettings);
+            
 	        if (ex == null)
 	            throw new JsonSerializationException("Failed to deserialize exception.");
-
-	        return ex;
+            return (ex, logInspectionItem);
 	    }
 
 

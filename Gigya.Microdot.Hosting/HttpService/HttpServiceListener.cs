@@ -97,8 +97,8 @@ namespace Gigya.Microdot.Hosting.HttpService
         private JsonExceptionSerializer ExceptionSerializer { get; }
         private Func<LoadShedding> LoadSheddingConfig { get; }
         private CurrentApplicationInfo AppInfo { get; }
-
         private ServiceSchema ServiceSchema { get; }
+        public Func<MicrodotHostingConfig> MicrodotHostingConfigFactory { get; set; }
 
         private readonly Timer _serializationTime;
         private readonly Timer _deserializationTime;
@@ -110,7 +110,6 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly MetricsContext _endpointContext;
         private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
         private TaskCompletionSource<int> _ReadyToGetTraffic = new TaskCompletionSource<int>();
-        private readonly bool _extendedDelayTimeLogging = false;
 
         public void StartGettingTraffic()
         {
@@ -144,8 +143,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             ExceptionSerializer = exceptionSerializer;
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
-
-            _extendedDelayTimeLogging = microdotHostingConfigFactory().ExtendedDelaysTimeLogging; // no need to read every request
+            MicrodotHostingConfigFactory = microdotHostingConfigFactory;
 
             if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ClientCertificateVerificationMode.Disable)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
@@ -168,6 +166,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             _activeRequestsCounter = context.Timer("ActiveRequests", Unit.Requests);
             _endpointContext = context.Context("Endpoints");
         }
+
 
         public Task Listen()
         {
@@ -236,7 +235,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                     Worker.FireAndForget(() => HandleRequest(context, ticks, timeFromLastReq));
 
                     var elapsed = sp.ElapsedMilliseconds;
-                    if (_extendedDelayTimeLogging && elapsed > 1000)
+                    if (MicrodotHostingConfigFactory().ExtendedDelaysTimeLogging && elapsed > 1000)
                     {
                         Log.Info((t) => t("FireAndForget took more then 1 seconds", unencryptedTags: new Tags
                         {
@@ -326,7 +325,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                                 argumentsWithDefaults =
                                     GetConvertedAndDefaultArguments(serviceMethod.ServiceInterfaceMethod, arguments);
 
-                                if (_extendedDelayTimeLogging)
+                                if (MicrodotHostingConfigFactory().ExtendedDelaysTimeLogging)
                                 {
                                     callEvent.RecvDateTicks = ticks;
                                     callEvent.ReqStartupDeltaTicks = deltaDelayTicks;
@@ -679,7 +678,14 @@ namespace Gigya.Microdot.Hosting.HttpService
                 using (var streamReader = new StreamReader(context.Request.InputStream))
                 {
                     var json = await streamReader.ReadToEndAsync();
-                    return JsonConvert.DeserializeObject<HttpServiceRequest>(json, JsonSettings);
+                    // return JsonConvert.DeserializeObject<HttpServiceRequest>(json, JsonSettings);
+                    var (deserializeObject, logInspectionItem) = JsonConvertSecured.DeserializeObject<HttpServiceRequest>(json, JsonSettings);
+                    if (logInspectionItem.LogText != null && MicrodotHostingConfigFactory().DollarTypeInspectionLogging)
+                    {
+                        Log.Info(l => l(logInspectionItem.LogText, unencryptedTags: logInspectionItem.unencryptedTags));
+                    }
+
+                    return deserializeObject;
                 }
             });
 

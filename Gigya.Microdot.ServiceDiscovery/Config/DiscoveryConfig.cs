@@ -130,6 +130,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         public string EnvironmentFallbackTarget { get; set; }
 
+        public bool DollarTypeInspectionLogging { get; set; } = true;
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {

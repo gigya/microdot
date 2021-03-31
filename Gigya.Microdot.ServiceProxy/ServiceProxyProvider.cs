@@ -44,6 +44,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Gigya.Microdot.SharedLogic.Security;
 using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
@@ -574,7 +575,16 @@ namespace Gigya.Microdot.ServiceProxy
                     {
                         if (response.IsSuccessStatusCode)
                         {
-                            var returnObj = _deserializationTime.Time(() => JsonConvert.DeserializeObject(responseContent, resultReturnType, jsonSettings));
+                            var returnObj = _deserializationTime.Time(() =>
+                            {
+                                var (deserializeObject, logInspectionItem) = JsonConvertSecured.DeserializeObject(responseContent, resultReturnType, jsonSettings);
+                                if (logInspectionItem.LogText != null && GetDiscoveryConfig().DollarTypeInspectionLogging)
+                                {
+                                    Log.Info(l => l(logInspectionItem.LogText, unencryptedTags: logInspectionItem.unencryptedTags));
+                                }
+
+                                return deserializeObject;
+                            });
 
                             clientCallEvent.ErrCode = 0;
                             EventPublisher.TryPublish(clientCallEvent); // fire and forget!
@@ -587,7 +597,15 @@ namespace Gigya.Microdot.ServiceProxy
                         Exception remoteException;
                         try
                         {
-                            remoteException = _deserializationTime.Time(() => ExceptionSerializer.Deserialize(responseContent));
+                            remoteException = _deserializationTime.Time(() =>
+                            {
+                                var (exception, logInspectionItem) = ExceptionSerializer.Deserialize(responseContent);
+                                if (logInspectionItem.LogText != null && GetDiscoveryConfig().DollarTypeInspectionLogging)
+                                {
+                                    Log.Info(l => l(logInspectionItem.LogText, unencryptedTags: logInspectionItem.unencryptedTags));
+                                }
+                                return exception;
+                            });
                         }
                         catch (Exception ex)
                         {

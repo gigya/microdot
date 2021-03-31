@@ -42,6 +42,7 @@ namespace Gigya.Microdot.Hosting.Service
     {
         public bool FailServiceStartOnConfigError = true;
         public bool ExtendedDelaysTimeLogging = true;
+        public bool DollarTypeInspectionLogging = true;
     }
 
     public abstract class ServiceHostBase : IDisposable

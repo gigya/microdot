@@ -28,6 +28,7 @@ using Orleans.Serialization;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Gigya.Microdot.SharedLogic.Security;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
@@ -90,7 +91,16 @@ namespace Gigya.Microdot.Orleans.Hosting
         public virtual object Deserialize(Type expectedType, IDeserializationContext context)
         {
             var str = SerializationManager.DeserializeInner<string>(context);
-            return JsonConvert.DeserializeObject(str, expectedType, JsonSettingsFunc());
+            
+            // return JsonConvert.DeserializeObject(str, expectedType, JsonSettingsFunc());
+            var (deserializeObject, logInspectionItem) = JsonConvertSecured.DeserializeObject(str, expectedType, JsonSettingsFunc());
+
+            if (logInspectionItem.LogText != null)
+            {
+                // TODO : Log somehow
+            }
+
+            return deserializeObject;
         }
 
         public virtual void RegisterType(Type itemType)

@@ -57,7 +57,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var expected = new RequestException("message").ThrowAndCatch();
             var json = ExceptionSerializer.Serialize(expected);
 
-            var actual = ExceptionSerializer.Deserialize(json);
+            var actual = ExceptionSerializer.Deserialize(json).ex;
 
             actual.ShouldBeOfType<RequestException>();
             actual.Message.ShouldBe(expected.Message);
@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var json = ExceptionSerializer.Serialize(new RequestException("message").ThrowAndCatch());
             var actual = ExceptionSerializer.Deserialize(json);
 
-            var breadcrumbs = ((RequestException)actual).Breadcrumbs;
+            var breadcrumbs = ((RequestException)actual.ex).Breadcrumbs;
             breadcrumbs.ShouldNotBeEmpty();
             breadcrumbs.First().ServiceName.ShouldBe("test");            
         }
@@ -79,9 +79,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public void RequestException_SerializedTwice_AddAnotherBreadcrumb()
         {
             var json1 = ExceptionSerializer.Serialize(new RequestException("message").ThrowAndCatch());
-            var actual1 = ExceptionSerializer.Deserialize(json1);
+            var actual1 = ExceptionSerializer.Deserialize(json1).ex;
             var json2 = ExceptionSerializer.Serialize(actual1);
-            var actual2 = ExceptionSerializer.Deserialize(json2); 
+            var actual2 = ExceptionSerializer.Deserialize(json2).ex; 
 
             var breadcrumbs = ((RequestException)actual2).Breadcrumbs;
             breadcrumbs.Count.ShouldBe(2);
@@ -95,7 +95,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var expected = new RequestException("message", 30000).ThrowAndCatch();
             var json = ExceptionSerializer.Serialize(expected);
 
-            var actual = (RequestException)ExceptionSerializer.Deserialize(json);
+            var actual = (RequestException)ExceptionSerializer.Deserialize(json).ex;
 
             actual.ShouldBeOfType<RequestException>();
             actual.Message.ShouldBe(expected.Message);
@@ -110,7 +110,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var json = ExceptionSerializer.Serialize(expected);
 
             json = json.Replace("MyException", "MyNonexistentException");
-            var actual = (RequestException)ExceptionSerializer.Deserialize(json);
+            var actual = (RequestException)ExceptionSerializer.Deserialize(json).ex;
 
             actual.ShouldBeOfType<RequestException>();
             actual.Message.ShouldBe(expected.Message);
@@ -141,7 +141,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var ex = new RemoteServiceException("Remote service exception", "http://foo/bar", httpEx).ThrowAndCatch();
 
             string json = ExceptionSerializer.Serialize(ex);
-            var actual = ExceptionSerializer.Deserialize(json);
+            var actual = ExceptionSerializer.Deserialize(json).ex;
 
             actual.ShouldBeOfType<RemoteServiceException>();
             actual.Message.ShouldBe(ex.Message);
@@ -158,7 +158,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var ex = new RemoteServiceException("Remote service exception", "http://foo/bar", webEx).ThrowAndCatchAsync();
 
             string json = ExceptionSerializer.Serialize(ex);
-            var actual = ExceptionSerializer.Deserialize(json);
+            var actual = ExceptionSerializer.Deserialize(json).ex;
 
             actual.ShouldBeOfType<RemoteServiceException>();
             actual.Message.ShouldBe(ex.Message);
