@@ -70,7 +70,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var json = ExceptionSerializer.Serialize(new RequestException("message").ThrowAndCatch());
             var actual = ExceptionSerializer.Deserialize(json).ex;
 
-            var breadcrumbs = ((RequestException)actual.ex).Breadcrumbs;
+            var breadcrumbs = ((RequestException)actual).Breadcrumbs;
             breadcrumbs.ShouldNotBeEmpty();
             breadcrumbs.First().ServiceName.ShouldBe("test");            
         }
@@ -245,7 +245,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 }
             }
             
-            Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson).ex);
+            Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
         }
     }
 
