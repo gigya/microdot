@@ -116,6 +116,12 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        public async Task CallServiceWithoutReturnValueSucceed() //bug #139872
+        {
+            await _proxy.CallServiceWithoutReturnValue();
+        }
+
+        [Test]
         public async Task CachingDisabledByMethodConfiguration()
         {
             await SetCachingPolicyConfig(new[] { "Methods.CallService.Enabled", "false" });
@@ -336,6 +342,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         [Gigya.Common.Contracts.Attributes.Cached]
         Task<Revocable<string>> CallRevocableService(string keyToRevock);
 
+        Task CallServiceWithoutReturnValue();
     }
 
     public class FakeRevokingManager : ICacheRevoker, IRevokeListener
