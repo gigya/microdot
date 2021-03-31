@@ -68,7 +68,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public void RequestException_Serialization_AddBreadcrumbs()
         {                        
             var json = ExceptionSerializer.Serialize(new RequestException("message").ThrowAndCatch());
-            var actual = ExceptionSerializer.Deserialize(json);
+            var actual = ExceptionSerializer.Deserialize(json).ex;
 
             var breadcrumbs = ((RequestException)actual.ex).Breadcrumbs;
             breadcrumbs.ShouldNotBeEmpty();
@@ -126,7 +126,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var ex = new HttpRequestException("message").ThrowAndCatch();
             var json = ExceptionSerializer.Serialize(ex);
 
-            var actual = ExceptionSerializer.Deserialize(json);
+            var actual = ExceptionSerializer.Deserialize(json).ex;
 
             var envException = actual.ShouldBeOfType<EnvironmentException>();
             envException.RawMessage().ShouldEndWith(ex.RawMessage());
@@ -202,7 +202,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             object deserializedException = null;
 
-            Assert.DoesNotThrow(() => deserializedException = ExceptionSerializer.Deserialize(netCoreExceptionJson));
+            Assert.DoesNotThrow(() => deserializedException = ExceptionSerializer.Deserialize(netCoreExceptionJson).ex);
 
             Assert.True(deserializedException is MyException);
             
@@ -245,7 +245,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 }
             }
             
-            Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
+            Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson).ex);
         }
     }
 

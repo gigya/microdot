@@ -99,7 +99,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
-            var responseException = _exceptionSerializer.Deserialize(responseJson);
+            var responseException = _exceptionSerializer.Deserialize(responseJson).ex;
             responseException.ShouldBeOfType<ArgumentException>();
         }
 
@@ -120,7 +120,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
-            var responseException = _exceptionSerializer.Deserialize(responseJson);
+            var responseException = _exceptionSerializer.Deserialize(responseJson).ex;
             responseException.ShouldBeOfType(exceptionType);
         }
 
