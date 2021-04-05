@@ -87,7 +87,10 @@ namespace Gigya.Microdot.SharedLogic.Security
                     var tags = new Tags();
                     int i = 0;
                     foreach (var val in valuesToInspect)
+                    {
                         tags.Add($"ValueToInspect{i}", val ?? "null");
+                        ++i;
+                    }
 
                     tags.Add("TotalInspectionTimeMs_l", sp.Elapsed.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
