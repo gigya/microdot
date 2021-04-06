@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.LanguageExtensions</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<AssemblyTitle>Gigya.Microdot.LanguageExtensions</AssemblyTitle>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
 
 </Project>

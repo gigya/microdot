@@ -1,26 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net472</TargetFramework>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <noWarn>1591</noWarn>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Include="loadPaths.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\..\tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
-    <ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
-    <ProjectReference Include="..\CalculatorService\CalculatorService.csproj" />
-  </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net5.0-windows</TargetFrameworks>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<noWarn>1591</noWarn>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="loadPaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+		<ProjectReference Include="..\..\tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
+		<ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
+		<ProjectReference Include="..\CalculatorService\CalculatorService.csproj" />
+	</ItemGroup>
+	<Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

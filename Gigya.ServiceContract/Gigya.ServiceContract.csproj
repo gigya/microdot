@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
     <AssemblyTitle>Gigya.ServiceContract</AssemblyTitle>
     <Company>Gigya</Company>
     <Product>Gigya.ServiceContract</Product>
@@ -9,5 +10,9 @@
     <AssemblyVersion>2.7.6</AssemblyVersion>
     <FileVersion>2.7.6</FileVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="paket.dependencies" />
+    <None Remove="paket.lock" />
+  </ItemGroup>
   <Import Project=".paket\Paket.Restore.targets" />
 </Project>

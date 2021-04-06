@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <AssemblyTitle>Gigya.Microdot.Ninject.Host</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<AssemblyTitle>Gigya.Microdot.Ninject.Host</AssemblyTitle>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
+	</ItemGroup>
+	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

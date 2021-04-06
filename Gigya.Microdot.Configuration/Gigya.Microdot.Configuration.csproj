@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <noWarn>1591</noWarn>
-    <AssemblyTitle>Gigya.Microdot.Configuration</AssemblyTitle>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<noWarn>1591</noWarn>
+		<AssemblyTitle>Gigya.Microdot.Configuration</AssemblyTitle>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
+	</ItemGroup>
+	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

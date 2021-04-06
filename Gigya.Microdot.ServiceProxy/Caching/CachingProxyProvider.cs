@@ -26,7 +26,6 @@ using System.Reflection;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.System_Reflection.DispatchProxy;
 using Gigya.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
@@ -66,7 +65,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Log = log;
             DateTime = dateTime;
 
-            Proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
+            Proxy = System_Reflection.DispatchProxy.DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
             ((DelegatingDispatchProxy)(object)Proxy).InvokeDelegate = Invoke;
             ServiceName = serviceName ?? typeof(TInterface).GetServiceName();
         }

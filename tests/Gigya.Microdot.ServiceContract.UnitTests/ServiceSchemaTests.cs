@@ -63,7 +63,6 @@ namespace Gigya.Common.Contracts.UnitTests
     [TestFixture,Parallelizable(ParallelScope.Fixtures)]
     public class ServiceSchemaTests
     {
-
         [Test]
         public void TestSerialization()
         {
@@ -72,37 +71,55 @@ namespace Gigya.Common.Contracts.UnitTests
             schema = JsonConvert.DeserializeObject<ServiceSchema>(serialized);
 
             Assert.IsTrue(schema.Interfaces.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Name == typeof(ITestInterface).FullName);
-            Assert.IsTrue(schema.Interfaces[0].Attributes.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Attributes[0].Attribute is HttpServiceAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Attributes[0].TypeName == typeof(HttpServiceAttribute).AssemblyQualifiedName);
-            Assert.IsTrue((schema.Interfaces[0].Attributes[0].Attribute as HttpServiceAttribute).BasePort == 100);
-            Assert.IsTrue(schema.Interfaces[0].Methods.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Name == nameof(ITestInterface.DoSomething));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes[0].Attribute is PublicEndpointAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Attributes[0].TypeName == typeof(PublicEndpointAttribute).AssemblyQualifiedName);
-            Assert.IsTrue((schema.Interfaces[0].Methods[0].Attributes[0].Attribute as PublicEndpointAttribute).EndpointName == "demo.doSomething");
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters.Length == 4);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[0].Attributes.Length == 0);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[0].Name == "i");
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[0].Type == typeof(int));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[0].TypeName == typeof(int).AssemblyQualifiedName);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[1].Name == "nd");
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[1].Type == typeof(double?));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[2].Name == "s");
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes.Length == 1);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Name == nameof(DataParamBase.BaseField));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(int));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Name == nameof(Data.s));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Type == typeof(string));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Type == typeof(ResponseData));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Name == nameof(ResponseData.a));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Type == typeof(string));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[1].Name == nameof(ResponseData.b));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[1].Type == typeof(int));
+
+            InterfaceSchema interfaceSchema = schema.Interfaces[0];
+            Assert.IsTrue(interfaceSchema.Name == typeof(ITestInterface).FullName);
+            Assert.IsTrue(interfaceSchema.Attributes.Length == 1);
+            Assert.IsTrue(interfaceSchema.Attributes[0].Attribute is HttpServiceAttribute);
+            Assert.IsTrue(interfaceSchema.Attributes[0].TypeName == typeof(HttpServiceAttribute).AssemblyQualifiedName);
+            Assert.IsTrue(((HttpServiceAttribute)interfaceSchema.Attributes[0].Attribute).BasePort == 100);
+            Assert.IsTrue(interfaceSchema.Methods.Length == 1);
+
+            MethodSchema methodSchema = interfaceSchema.Methods[0];
+            Assert.IsTrue(methodSchema.Name == nameof(ITestInterface.DoSomething));
+            Assert.IsTrue(methodSchema.Attributes.Length == 1);
+
+            AttributeSchema attributeSchema = methodSchema.Attributes[0];
+            Assert.IsTrue(attributeSchema.Attribute is PublicEndpointAttribute);
+            Assert.IsTrue(attributeSchema.TypeName == typeof(PublicEndpointAttribute).AssemblyQualifiedName);
+            Assert.IsTrue(((PublicEndpointAttribute)attributeSchema.Attribute).EndpointName == "demo.doSomething");
+
+            Assert.IsTrue(methodSchema.Parameters.Length == 4);
+            Assert.AreEqual(0, methodSchema.Parameters[0].Attributes.Length);
+            Assert.AreEqual("i", methodSchema.Parameters[0].Name);
+
+            Assert.AreEqual(typeof(int), methodSchema.Parameters[0].Type);
+            Assert.AreEqual(typeof(int).AssemblyQualifiedName, methodSchema.Parameters[0].TypeName);
+            Assert.AreEqual("nd", methodSchema.Parameters[1].Name);
+            Assert.AreEqual(typeof(double?), methodSchema.Parameters[1].Type);
+            Assert.AreEqual(typeof(double?).AssemblyQualifiedName, methodSchema.Parameters[1].TypeName);
+            Assert.AreEqual("s", methodSchema.Parameters[2].Name);
+
+
+            Assert.AreEqual(1, methodSchema.Parameters[3].Attributes.Length);
+            Assert.IsTrue(methodSchema.Parameters[3].Attributes[0].Attribute is SensitiveAttribute);
+
+
+            Assert.AreEqual(nameof(DataParamBase.BaseField), methodSchema.Parameters[3].Fields[2].Name);
+            Assert.IsTrue(methodSchema.Parameters[3].Fields[2].Attributes[0].Attribute is SensitiveAttribute);
+
+            Assert.AreEqual(nameof(Data.s), methodSchema.Parameters[3].Fields[0].Name);
+            Assert.AreEqual(typeof(string), methodSchema.Parameters[3].Fields[0].Type);
+
+            Assert.AreEqual(nameof(Data.n), methodSchema.Parameters[3].Fields[1].Name);
+            Assert.AreEqual(typeof(Nested), methodSchema.Parameters[3].Fields[1].Type);
+
+
+            Assert.AreEqual(typeof(ResponseData), methodSchema.Response.Type);
+            Assert.AreEqual(nameof(ResponseData.a), methodSchema.Response.Fields[0].Name);
+            Assert.AreEqual(typeof(string), methodSchema.Response.Fields[0].Type);
+            Assert.AreEqual(nameof(ResponseData.b), methodSchema.Response.Fields[1].Name);
+            Assert.AreEqual(typeof(int), methodSchema.Response.Fields[1].Type);
         }
 
 

@@ -20,7 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using Gigya.Microdot.System_Reflection.DispatchProxy;
+
 using System;
 using System.Reflection;
 
@@ -33,7 +33,7 @@ namespace Gigya.Microdot.ServiceProxy
     /// <remarks>
     /// In order for proxy generation to succeed, this class must be public and have a parameterless constructor.
     /// </remarks>
-    public class DelegatingDispatchProxy : DispatchProxy
+    public class DelegatingDispatchProxy : System_Reflection.DispatchProxy.DispatchProxy
     {
         public Func<MethodInfo, object[], object> InvokeDelegate { get; set; }
 

@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+		<AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+	</ItemGroup>
+	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

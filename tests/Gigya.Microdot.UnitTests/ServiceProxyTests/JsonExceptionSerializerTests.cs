@@ -166,6 +166,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.StackTrace.ShouldNotContain("at System.Runtime");
             actual.StackTrace.ShouldNotContain("End of stack trace from previous location");
             actual.StackTrace.ShouldNotContain("__");
+            actual.InnerException.ShouldNotBeNull();
             actual.InnerException.ShouldBeOfType<WebException>();
             actual.InnerException.Message.ShouldBe(webEx.Message);
             actual.InnerException.StackTrace.ShouldNotBeNullOrEmpty();

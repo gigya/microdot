@@ -1,24 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AssemblyName>Metrics</AssemblyName>
-    <PackageId>Metrics</PackageId>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <NoWarn />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DocumentationFile>..\..\bin\$(Configuration)\Metrics.XML</DocumentationFile>
-    <NoWarn>1591; 1570; 1587;</NoWarn>
-  </PropertyGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Endpoints\index.full.html.gz" />
-    <EmbeddedResource Include="metrics_32.png">
-      <Link>Endpoints\metrics_32.png</Link>
-    </EmbeddedResource>
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<AssemblyName>Metrics</AssemblyName>
+		<PackageId>Metrics</PackageId>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<NoWarn />
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DocumentationFile>..\..\bin\$(Configuration)\Metrics.XML</DocumentationFile>
+		<NoWarn>1591; 1570; 1587;</NoWarn>
+	</PropertyGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Endpoints\index.full.html.gz" />
+		<EmbeddedResource Include="metrics_32.png">
+			<Link>Endpoints\metrics_32.png</Link>
+		</EmbeddedResource>
+	</ItemGroup>
+	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

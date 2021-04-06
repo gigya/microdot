@@ -5,4 +5,5 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
+nuget NUnit3TestAdapter
 nuget Newtonsoft.Json >= 12

@@ -27,7 +27,6 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.System_Reflection.DispatchProxy;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -79,7 +78,7 @@ namespace Gigya.Microdot.ServiceProxy
                 InnerProvider.DefaultPort = attribute.BasePort + (int)PortOffsets.Http;                
             }
 
-            Client = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
+            Client = System_Reflection.DispatchProxy.DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
             ((DelegatingDispatchProxy)(object)Client).InvokeDelegate = Invoke;
         }
 

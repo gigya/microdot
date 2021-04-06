@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using Gigya.Microdot.System_Reflection.DispatchProxy;
 using System.Reflection;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
@@ -34,7 +33,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
     {
         public static TInterface ToProxy<TInterface>(IProxyable proxyable)
         {
-            var proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
+            var proxy = Gigya.Microdot.System_Reflection.DispatchProxy.DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
             ((DelegatingDispatchProxy)(object)proxy).InvokeDelegate = proxyable.Invoke;
             return proxy;
         }

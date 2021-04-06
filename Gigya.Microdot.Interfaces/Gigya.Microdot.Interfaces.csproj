@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.Interfaces</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<AssemblyTitle>Gigya.Microdot.Interfaces</AssemblyTitle>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj" />
+	</ItemGroup>
+	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
