@@ -71,17 +71,6 @@ namespace Gigya.Microdot.UnitTests.Configuration
             }, expected);
         }
 
-
-        [Test]
-        [Ignore("Test this in new config system.")]
-        public void AllPathExists_NoEnvironmentVariablesExists_EnvironmentExceptionExpected()
-        {
-            Action act = () => BaseTest(new Dictionary<string, string> { { "ENV", null }, { "ZONE", null } }, new ConfigFileDeclaration[0]);
-
-            act.ShouldThrow<EnvironmentException>()
-               .Message.ShouldContain("Some environment variables are not defined, please add them");
-        }
-
         [Test]
         [TestCase("Not a JSON", TestName = "Not a JSON file")]
         [TestCase(@"[{Pattern: './*.config', Priority:  1 }", TestName = "Missing ]")]        

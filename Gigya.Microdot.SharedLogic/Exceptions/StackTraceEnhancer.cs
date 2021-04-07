@@ -75,7 +75,12 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             var replacements = config.RegexReplacements.Values.ToArray();
             var frames = stackTrace
                 .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(f => f.StartsWith("   at System.Runtime") == false && f.StartsWith("Exception rethrown at ") == false && f.StartsWith("Server stack trace:") == false && f != "--- End of stack trace from previous location where exception was thrown ---")
+                .Where(f => 
+                    f.StartsWith("   at System.Runtime") == false && 
+                    f.StartsWith("Exception rethrown at ") == false && 
+                    f.StartsWith("Server stack trace:") == false && 
+                    f != "--- End of stack trace from previous location where exception was thrown ---" && 
+                    f != "--- End of stack trace from previous location ---")
                 .Select(f => ApplyRegexs(f, replacements));
 
             return string.Join("\r\n", frames);

@@ -219,8 +219,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Assert.NotNull(argumentOutOfRange.ActualValue);
 
         }
-        
-         
+#if NETFRAMEWORK         
         [Test]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOff()
         {
@@ -249,6 +248,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
         }
     }
+#endif
 
     [Serializable]
     public class MyException : RequestException

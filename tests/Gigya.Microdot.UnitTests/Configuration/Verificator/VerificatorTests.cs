@@ -74,12 +74,6 @@ namespace Gigya.Microdot.UnitTests.Configuration.Verificator
         }
 
         [Test]
-        [Ignore("just to be able to search in tests tree")]
-        public void VerificatorTest()
-        {
-        }
-
-        [Test]
         [Description("check we recognize a violation of annotated property in config object")]
         public void WhenDataAnnotationViolatedShouldAddFailure()
         {

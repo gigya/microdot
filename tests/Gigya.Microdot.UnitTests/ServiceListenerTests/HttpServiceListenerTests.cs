@@ -166,37 +166,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             await _testinghost.Host.Kernel.Get<IDemoService>().Received().ToUpper(null);
         }
 
-        [Test]
-        [Ignore("should refactor to be simple ")]
-        public async Task SendRequestWithInvalidParameterValue()
-        {
-
-            // var methodName = nameof(IDemoService.ToUpper);
-            // var expectedParamName = typeof(IDemoService).GetMethod(methodName).GetParameters().First().Name;
-
-            //_testinghost.Host._overrideServiceMethod = invocationTarget =>
-            // {
-            //     // Cause HttpServiceListener to think it is a weakly-typed request,
-            //     // and get the parameters list from the mocked ServiceMethod, and not from the original invocation target
-            //     invocationTarget.ParameterTypes = null;
-
-            //     // return a ServiceMethod which expects only int values
-            //     return new ServiceMethod(typeof(IDemoServiceSupportOnlyIntValues),
-            //         typeof(IDemoServiceSupportOnlyIntValues).GetMethod(methodName));
-            // };
-
-            // try
-            // {
-            //     await _insecureClient.ToUpper("Non-Int value");
-            //     Assert.Fail("Host was expected to throw an exception");
-            // }
-            // catch (InvalidParameterValueException ex)
-            // {
-            //     ex.parameterName.ShouldBe(expectedParamName);
-            // }
-        }
-
-
+        
         [Test]
         public async Task SendRequestWithNoParameters()
         {
