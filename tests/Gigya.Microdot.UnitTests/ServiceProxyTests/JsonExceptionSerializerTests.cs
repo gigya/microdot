@@ -247,8 +247,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             
             Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
         }
-    }
 #endif
+    }
+
 
     [Serializable]
     public class MyException : RequestException
