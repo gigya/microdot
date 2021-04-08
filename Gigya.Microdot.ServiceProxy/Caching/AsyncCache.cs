@@ -34,6 +34,7 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.ServiceContract.HttpService;
 using Metrics;
 using System.Threading.Tasks.Dataflow;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.ServiceDiscovery.Config;

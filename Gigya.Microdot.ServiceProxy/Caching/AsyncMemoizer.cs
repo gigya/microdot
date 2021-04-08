@@ -25,6 +25,7 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.HttpService;

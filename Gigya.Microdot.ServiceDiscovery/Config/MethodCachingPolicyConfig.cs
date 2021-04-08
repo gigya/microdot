@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.Serialization;
+using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
