@@ -49,10 +49,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         public MethodCachingPolicyConfig() { }
 
         //Because CachedAttribute Enabled property is not in use and throws we 
-        //Create MethodCachingPolicyConfig using CachedAttribute with Enabled 'true'
+        //Create MethodCachingPolicyConfig using CachedAttribute with Enabled
+        //Value 'null', so it wont effect the configuration merge
         public MethodCachingPolicyConfig(CachedAttribute attr)
         {
-            Enabled                             = true;
+            Enabled                             = null;
             ResponseKindsToCache                = attr.ResponseKindsToCache;
             ResponseKindsToIgnore               = attr.ResponseKindsToIgnore;
             RefreshMode                         = attr.RefreshMode;

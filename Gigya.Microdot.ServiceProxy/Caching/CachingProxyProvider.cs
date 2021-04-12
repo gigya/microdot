@@ -73,7 +73,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
+        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName, object[] args)
         {
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
 
@@ -97,7 +97,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     MethodCachingPolicyConfig.Merge(methodCachingConfig, effMethodConfig); 
 
                 //attribute
-                var cachedAttribute = MetadataProvider.GetCachedAttribute(targetMethod);
+                var cachedAttribute = GetCachedAttribute(targetMethod, args);
                 if (cachedAttribute != null)
                     MethodCachingPolicyConfig.Merge(new MethodCachingPolicyConfig(cachedAttribute), effMethodConfig); 
 
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
                 //defaults 
                 MethodCachingPolicyConfig.Merge(CachingPolicyConfig.Default, effMethodConfig); 
-                ApplyDynamicDefaults(targetMethod, effMethodConfig);
+                ApplyDynamicDefaults(targetMethod, effMethodConfig, args);
 
                 //Note: In case we want to add config validations (like we have in CacheAttribute), we can do it here and use Func<string, AggregatingHealthStatus> getAggregatedHealthCheck
                 //If validation failed, we wont update the cache, and preserve the error in CachingConfigPerMethod entry value
@@ -132,10 +132,20 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return MetadataProvider.IsCached(targetMethod);
         }
 
+        protected virtual CachedAttribute GetCachedAttribute(MethodInfo targetMethod, object[] args)
+        {
+            return MetadataProvider.GetCachedAttribute(targetMethod);
+        }
+
+        protected virtual Type GetMethodTaskResultType(MethodInfo targetMethod, object[] args)
+        {
+            return MetadataProvider.GetMethodTaskResultType(targetMethod);
+        }
+
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig(targetMethod, GetMethodNameForCachingPolicy(targetMethod, args));
+            var config = GetConfig(targetMethod, GetMethodNameForCachingPolicy(targetMethod, args), args);
             bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);
 
             if (useCache)
@@ -148,13 +158,13 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
         // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
         // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
-        private void ApplyDynamicDefaults(MethodInfo targetMethod, MethodCachingPolicyConfig effMethodConfig)
+        private void ApplyDynamicDefaults(MethodInfo targetMethod, MethodCachingPolicyConfig effMethodConfig, object[] args)
         {
             bool isRevocable = false;
 
             try
             {
-                var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
+                var taskResultType = GetMethodTaskResultType(targetMethod, args);
                 isRevocable = taskResultType != null && taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
             }
             catch (Exception e)
