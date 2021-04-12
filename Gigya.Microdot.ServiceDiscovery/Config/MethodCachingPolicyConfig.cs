@@ -46,6 +46,27 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         {
         }
 
+        public MethodCachingPolicyConfig() { }
+
+        //Because CachedAttribute Enabled property is not in use and throws we 
+        //Create MethodCachingPolicyConfig using CachedAttribute with Enabled 'true'
+        public MethodCachingPolicyConfig(CachedAttribute attr)
+        {
+            Enabled                             = true;
+            ResponseKindsToCache                = attr.ResponseKindsToCache;
+            ResponseKindsToIgnore               = attr.ResponseKindsToIgnore;
+            RefreshMode                         = attr.RefreshMode;
+            RefreshTime                         = attr.RefreshTime;
+            ExpirationTime                      = attr.ExpirationTime;
+            FailedRefreshDelay                  = attr.FailedRefreshDelay;
+            RequestGroupingBehavior             = attr.RequestGroupingBehavior;
+            RefreshBehavior                     = attr.RefreshBehavior;
+            RevokedResponseBehavior             = attr.RevokedResponseBehavior;
+            ExpirationBehavior                  = attr.ExpirationBehavior;
+            CacheResponsesWhenSupressedBehavior = attr.CacheResponsesWhenSupressedBehavior;
+            NotIgnoredResponseBehavior          = attr.NotIgnoredResponseBehavior;
+        }
+
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj))

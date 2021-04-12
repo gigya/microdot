@@ -34,8 +34,6 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
     [Serializable]
     public class CachingPolicyConfig: MethodCachingPolicyConfig
     {
-        internal MethodCachingPolicyConfig DefaultItem { get; private set; }
-
         /// <summary>
         /// The discovery configuration for the various services.
         /// </summary>
@@ -44,13 +42,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
-            DefaultItem = new MethodCachingPolicyConfig();
-            Merge(this, DefaultItem);
-            Merge(Default, DefaultItem);
-        
-            var methods = (IDictionary<string, MethodCachingPolicyConfig>)Methods ?? new Dictionary<string, MethodCachingPolicyConfig>();
-
-            Methods = new CachingPolicyCollection(methods, DefaultItem);
+            
         }
 
         public static readonly MethodCachingPolicyConfig Default = new MethodCachingPolicyConfig
