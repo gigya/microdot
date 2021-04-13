@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -30,6 +31,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public IRevokeContextConcurrentCollection MergeMissingEntriesWith(IRevokeContextConcurrentCollection other)
         {
+            if (other == null)
+            {
+                return this;
+            }
+
             foreach (var entry in other)
             {
                 var otherObj = entry.Revokee;
@@ -47,6 +53,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public void Insert(RevokeContext context)
         {
+            if (context == null)
+            {
+                throw new NullReferenceException("RevokeContext can not be null");
+            }
             var revokee = context.Revokee;
             if (revokee != null)
             {
@@ -60,6 +70,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public bool RemoveEntryMatchingObject(object obj)
         {
+            if (null == obj)
+            {
+                return false;
+            }
             var keyToRemove = new EquatableWeakReference<object>(obj);
             return _collection.TryRemove(keyToRemove, out _);
         }

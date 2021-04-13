@@ -7,7 +7,6 @@ using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 {
-    //TODO: move the code to Microdot according to @Daniel it should be next to IRevokeListener 
     public class RevokeNotifier : IRevokeNotifier
     {
         private ILog _logger;
@@ -19,7 +18,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public RevokeNotifier(ILog logger, 
                               IRevokeListener revokeListener,
-                              MetricsContext metricsContext, 
                               Func<IRevokeKeyIndexer> indexerFactory,
                               Func<RevokeNotifierConfig> configFunc)
         {
@@ -34,6 +32,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             revokeListener.RevokeSource.LinkTo(actionBlock);
 
         }
+
+        public int TimerInterval => _timerInterval;
 
 
         private void RevokeNotifierTimerCallback(object state)
@@ -86,6 +86,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public  void NotifyOnRevoke(object @this, Func<string, Task> callback, params string[] revokeKeys)
         {
+            if (null == @this)
+            {
+                throw new NullReferenceException("Object can't be null");
+            }
+
+            if (null == callback)
+            {
+                throw new NullReferenceException("Callback can't be null");
+            }
+
+            if (null == revokeKeys)
+            {
+                throw new NullReferenceException("Revoke keys can't be null");
+            }
+
             foreach (var key in revokeKeys)
             {
                 NotifyOnRevokeOnce(key, @this, callback);
@@ -101,6 +116,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public  void RemoveNotifications(object @this, params string[] revokeKeys)
         {
+            if (null == @this)
+            {
+                throw new NullReferenceException("Object can't be null");
+            }
+
+            if (null == revokeKeys)
+            {
+                throw new NullReferenceException("Revoke keys can't be null");
+            }
+
             foreach (var key in revokeKeys)
             {
                 RemoveNotificationsOnce(@this, key);
@@ -109,11 +134,24 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         protected  void RemoveNotificationsOnce(object @this, string key)
         {
+            if (null == @this)
+            {
+                throw new NullReferenceException("Object can't be null");
+            }
+
+            if (null == key)
+            {
+                throw new NullReferenceException("Key can't be null");
+            }
             _revokeIndexer.Remove(@this, key);
         }
 
         public  void RemoveAllNotifications(object @this)
         {
+            if (null == @this)
+            {
+                throw new NullReferenceException("Object can't be null");
+            }
             _revokeIndexer.Remove(@this);
         }
     }

@@ -22,7 +22,6 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
         private Func<string, Task> Callback => UnWrapWeakReference(_callback);
         private TaskFactory RevokeeTaskScheduler => UnWrapWeakReference(_revokeeTaskScheduler);
 
-        //TODO:maybe move to util class
         private static T UnWrapWeakReference<T>(WeakReference<T> reference) where T:class
         {
             return reference.TryGetTarget(out var target) ? target : null;
@@ -47,6 +46,10 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public bool ObjectEqual(RevokeContext entry)
         {
+            if (entry == null)
+            {
+                return false;
+            }
             var ourObj = Revokee;
             var theirObj = entry.Revokee;
 

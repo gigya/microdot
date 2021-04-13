@@ -19,8 +19,18 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             _entries = new ConcurrentDictionary<string, IRevokeContextConcurrentCollection>();
             _contextCollectionFactory = contextCollectionFactory;
         }
+
+        public bool ContainsKey(string key)
+        {
+            return _entries.ContainsKey(key);
+        }
         public IEnumerable<RevokeContext> GetLiveRevokeesAndSafelyRemoveDeadOnes(string revokeKey)
         {
+            if (null == revokeKey)
+            {
+                throw new NullReferenceException("Key can't be null");
+            }
+
             if (false == _entries.TryGetValue(revokeKey, out var revokees))
             {
                 return Enumerable.Empty<RevokeContext>();
@@ -41,7 +51,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
         }
 
 
-        protected virtual bool SafelyRemoveEntry(string revokeKey, out IRevokeContextConcurrentCollection revived)
+        protected bool SafelyRemoveEntry(string revokeKey, out IRevokeContextConcurrentCollection revived)
         {
             revived = null;
             _entries.TryRemove(revokeKey, out var removed);
@@ -66,6 +76,14 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public void AddRevokeContext(string key, RevokeContext context)
         {
+            if (key == null)
+            {
+                throw new NullReferenceException("Key can't be null");
+            }
+            if(context == null)
+            {
+                throw new NullReferenceException("Context can't be null");
+            }
             var collection = _entries.GetOrAdd(key, _ => _contextCollectionFactory());
             collection.Insert(context);
         }
@@ -73,6 +91,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public bool Remove(object obj, string key)
         {
+            if(null == obj)
+            {
+                throw new NullReferenceException("Object can't be null");
+            }
+
+            if(key == null)
+            {
+                throw new NullReferenceException("Key can't be null");
+            }
+
             if (false == _entries.TryGetValue(key, out var collection))
             {
                 return false;
@@ -91,10 +119,14 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public void Remove(object obj)
         {
+            if (null == obj)
+            {
+                throw new NullReferenceException("Object can't be null");
+            }
             RemoveCore(obj, RemoveLogic);
         }
 
-        protected virtual void RemoveLogic(object obj, KeyValuePair<string, IRevokeContextConcurrentCollection> keyCollection, List<string> toBeRemoved)
+        protected void RemoveLogic(object obj, KeyValuePair<string, IRevokeContextConcurrentCollection> keyCollection, List<string> toBeRemoved)
         {
             var collection = keyCollection.Value;
             var removed = collection.RemoveEntryMatchingObject(obj);
@@ -110,7 +142,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             RemoveCore(null, CleanupLogic);
         }
 
-        protected virtual void CleanupLogic(object obj, KeyValuePair<string, IRevokeContextConcurrentCollection> keyCollection, List<string> toBeRemoved)
+        protected void CleanupLogic(object obj, KeyValuePair<string, IRevokeContextConcurrentCollection> keyCollection, List<string> toBeRemoved)
         {
             var collection = keyCollection.Value;
             var cleanAmount = collection.Cleanup();
@@ -131,7 +163,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             }
         }
 
-        protected virtual void RemoveCore(object obj, Action<object, KeyValuePair<string,IRevokeContextConcurrentCollection>, List<string>> actAndMarkForRemoval)
+        protected void RemoveCore(object obj, Action<object, KeyValuePair<string,IRevokeContextConcurrentCollection>, List<string>> actAndMarkForRemoval)
         {
             List<string> toBeRemoved = new List<string>();
 
@@ -145,6 +177,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             {
                 SafelyRemoveEntry(toBeDeletedKey, out _);
             }
+        }
+
+        public int CountRevokees()
+        {
+            return _entries.Values.SelectMany(e => e.Select(r => r.Revokee)).Count();
         }
     }
 

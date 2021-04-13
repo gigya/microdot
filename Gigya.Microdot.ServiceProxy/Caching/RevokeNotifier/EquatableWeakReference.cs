@@ -2,7 +2,6 @@
 
 namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 {
-    //TODO: write unit test for this class to verify it works as expected
     /// <summary>
     /// The purpose of this class is to be able to have weakly references objects as keys for collections,
     /// The equality is reference based.
