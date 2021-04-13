@@ -4,6 +4,7 @@ using Metrics;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.ServiceProxy.Caching;
@@ -231,7 +232,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             }
 
             //Act
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            SpinForSeconds(2);
 
             //Asert
             Assert.AreEqual(7,revokeNotifier.TimerInterval);
@@ -251,10 +252,16 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
                 });
 
             //Act
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            SpinForSeconds(2);
 
             //Asert
             subRevokeKeyIndexer.Received(1).Cleanup();
+        }
+
+        private static void SpinForSeconds(int seconds)
+        {
+            DateTime spinUntil = DateTime.Now + TimeSpan.FromSeconds(seconds);
+            SpinWait.SpinUntil(() => DateTime.Now >= spinUntil);
         }
 
         [Test]
@@ -271,6 +278,8 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
 
             //Act
             rm.Revoke(key);
+
+            SpinForSeconds(2);
 
             //Asert
             subRevokeKeyIndexer.Received(1).GetLiveRevokeesAndSafelyRemoveDeadOnes(key);
