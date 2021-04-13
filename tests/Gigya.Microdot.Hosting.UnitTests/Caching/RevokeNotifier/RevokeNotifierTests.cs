@@ -260,7 +260,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             SpinForSeconds(2);
 
             //Asert
-            subRevokeKeyIndexer.Received(1).Cleanup();
+            subRevokeKeyIndexer.Received().Cleanup();
         }
 
         private static void SpinForSeconds(int seconds)
