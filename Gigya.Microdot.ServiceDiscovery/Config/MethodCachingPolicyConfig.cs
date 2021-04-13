@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.Serialization;
+using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {
@@ -43,6 +44,28 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
+        }
+
+        public MethodCachingPolicyConfig() { }
+
+        //Because CachedAttribute Enabled property is not in use and throws we 
+        //Create MethodCachingPolicyConfig using CachedAttribute with Enabled
+        //Value 'null', so it wont effect the configuration merge
+        public MethodCachingPolicyConfig(CachedAttribute attr)
+        {
+            Enabled                             = null;
+            ResponseKindsToCache                = attr.ResponseKindsToCache;
+            ResponseKindsToIgnore               = attr.ResponseKindsToIgnore;
+            RefreshMode                         = attr.RefreshMode;
+            RefreshTime                         = attr.RefreshTime;
+            ExpirationTime                      = attr.ExpirationTime;
+            FailedRefreshDelay                  = attr.FailedRefreshDelay;
+            RequestGroupingBehavior             = attr.RequestGroupingBehavior;
+            RefreshBehavior                     = attr.RefreshBehavior;
+            RevokedResponseBehavior             = attr.RevokedResponseBehavior;
+            ExpirationBehavior                  = attr.ExpirationBehavior;
+            CacheResponsesWhenSupressedBehavior = attr.CacheResponsesWhenSupressedBehavior;
+            NotIgnoredResponseBehavior          = attr.NotIgnoredResponseBehavior;
         }
 
         public override bool Equals(object obj)
