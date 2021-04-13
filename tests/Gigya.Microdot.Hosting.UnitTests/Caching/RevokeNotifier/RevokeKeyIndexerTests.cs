@@ -12,13 +12,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
     [TestFixture]
     public class RevokeKeyIndexerTests
     {
-        private Func<IRevokeContextConcurrentCollection> subFunc;
+        private IRevokeContextConcurrentCollectionFactory subFunc;
         private ILog subLog;
 
         [SetUp]
         public void SetUp()
         {
-            this.subFunc = ()=> Substitute.For<IRevokeContextConcurrentCollection>();
+            this.subFunc = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
             this.subLog = Substitute.For<ILog>();
         }
 
@@ -90,9 +90,11 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         {
             // Arrange
             var rcc = new RevokeContextConcurrentCollection();
-            Func<IRevokeContextConcurrentCollection> func = () => rcc;
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => rcc);
+            IRevokeContextConcurrentCollectionFactory subFunc = sub;
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             string revokeKey = "existing";
             revokeKeyIndexer.AddRevokeContext(revokeKey,CreateRevokeContextRooted());
@@ -109,9 +111,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         {
             // Arrange
             var rcc = new RevokeContextConcurrentCollection();
-            Func<IRevokeContextConcurrentCollection> func = () => rcc;
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => rcc);
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             string revokeKey = "existing";
             revokeKeyIndexer.AddRevokeContext(revokeKey, CreateRevokeContext());
@@ -128,9 +131,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         {
             // Arrange
             var rcc = new RevokeContextConcurrentCollection();
-            Func<IRevokeContextConcurrentCollection> func = () => rcc;
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => rcc);
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             string revokeKey = "existing";
             revokeKeyIndexer.AddRevokeContext(revokeKey, CreateRevokeContextRooted());
@@ -149,9 +153,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         {
             // Arrange
             var rcc = new RevokeContextConcurrentCollection();
-            Func<IRevokeContextConcurrentCollection> func = () => rcc;
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => rcc);
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             string revokeKey = "existing";
             revokeKeyIndexer.AddRevokeContext(revokeKey, CreateRevokeContext());
@@ -214,9 +219,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         public void AddRevokeContext_Concurrently_Should_Succeed(int active)
         {
             // Arrange
-            Func<IRevokeContextConcurrentCollection> func = () => new RevokeContextConcurrentCollection();
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => new RevokeContextConcurrentCollection());
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
 
             // Act
@@ -280,9 +286,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         public void Remove_None_Existing_Key_Should_Fail()
         {
             // Arrange
-            Func<IRevokeContextConcurrentCollection> func = () => new RevokeContextConcurrentCollection();
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => new RevokeContextConcurrentCollection());
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             var context = CreateRevokeContextRooted();
             object obj = context.Revokee;
@@ -303,9 +310,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         public void Remove_Existing_Key_Should_Succeed()
         {
             // Arrange
-            Func<IRevokeContextConcurrentCollection> func = () => new RevokeContextConcurrentCollection();
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => new RevokeContextConcurrentCollection());
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             var context = CreateRevokeContextRooted();
             object obj = context.Revokee;
@@ -339,9 +347,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         public void Remove_Object_Should_Remove_From_All_Keys()
         {
             // Arrange
-            Func<IRevokeContextConcurrentCollection> func = () => new RevokeContextConcurrentCollection();
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => new RevokeContextConcurrentCollection());
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
             var context = CreateRevokeContextRooted();
             object obj = context.Revokee;
@@ -365,9 +374,10 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         public void Cleanup_StateUnderTest_ExpectedBehavior(int active)
         {
             // Arrange
-            Func<IRevokeContextConcurrentCollection> func = () => new RevokeContextConcurrentCollection();
+            var sub = Substitute.For<IRevokeContextConcurrentCollectionFactory>();
+            sub.Create().Returns(_ => new RevokeContextConcurrentCollection());
             var revokeKeyIndexer = new RevokeKeyIndexer(
-                func,
+                sub,
                 this.subLog); ;
 
             // Act

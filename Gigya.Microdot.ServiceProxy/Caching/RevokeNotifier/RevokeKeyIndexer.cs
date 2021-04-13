@@ -9,11 +9,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
     public class RevokeKeyIndexer : IRevokeKeyIndexer
     {
         private ConcurrentDictionary<string, IRevokeContextConcurrentCollection> _entries;
-        private Func<IRevokeContextConcurrentCollection> _contextCollectionFactory;
+        private IRevokeContextConcurrentCollectionFactory _contextCollectionFactory;
         private ILog _log;
 
 
-        public RevokeKeyIndexer(Func<IRevokeContextConcurrentCollection> contextCollectionFactory, ILog log)
+        public RevokeKeyIndexer(IRevokeContextConcurrentCollectionFactory contextCollectionFactory, ILog log)
         {
             _log = log;
             _entries = new ConcurrentDictionary<string, IRevokeContextConcurrentCollection>();
@@ -84,7 +84,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             {
                 throw new NullReferenceException("Context can't be null");
             }
-            var collection = _entries.GetOrAdd(key, _ => _contextCollectionFactory());
+            var collection = _entries.GetOrAdd(key, _ => _contextCollectionFactory.Create());
             collection.Insert(context);
         }
 

@@ -7,8 +7,12 @@ using System;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.UnitTests.Caching;
+using Ninject;
+using Ninject.Extensions.Factory;
 
 namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
 {
@@ -17,7 +21,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
     {
         private ILog subLog;
         private IRevokeListener subRevokeListener;
-        private Func<IRevokeKeyIndexer> subFuncRevokeKeyIndexer;
+        private IRevokeKeyIndexerFactory subFuncRevokeKeyIndexer;
         private Func<RevokeNotifierConfig> subFuncRevokeNotifierConfig;
         private IRevokeKeyIndexer subRevokeKeyIndexer;
 
@@ -27,7 +31,8 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             this.subLog = Substitute.For<ILog>();
             this.subRevokeListener = Substitute.For<IRevokeListener>();
             this.subRevokeKeyIndexer = Substitute.For<IRevokeKeyIndexer>();
-            this.subFuncRevokeKeyIndexer = ()=> subRevokeKeyIndexer;
+            this.subFuncRevokeKeyIndexer = Substitute.For<IRevokeKeyIndexerFactory>();
+            subFuncRevokeKeyIndexer.Create().Returns(_ => subRevokeKeyIndexer);
             this.subFuncRevokeNotifierConfig = ()=>new RevokeNotifierConfig{CleanupIntervalInSec = 1};
         }
 
@@ -283,6 +288,14 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
 
             //Asert
             subRevokeKeyIndexer.Received(1).GetLiveRevokeesAndSafelyRemoveDeadOnes(key);
+        }
+
+        [Test]
+        public void Can_Create_RevokeNotifier_If_All_Bindings_Are_Set()
+        {
+            var kernel = new StandardKernel(new MicrodotModule());
+            kernel.Bind<ILog>().To<TraceLog>().InSingletonScope();
+            Assert.DoesNotThrow(()=>kernel.Get<IRevokeNotifier>());
         }
     }
 }

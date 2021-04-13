@@ -18,11 +18,11 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public RevokeNotifier(ILog logger, 
                               IRevokeListener revokeListener,
-                              Func<IRevokeKeyIndexer> indexerFactory,
+                              IRevokeKeyIndexerFactory indexerFactory,
                               Func<RevokeNotifierConfig> configFunc)
         {
             _logger = logger;
-            _revokeIndexer = indexerFactory();
+            _revokeIndexer = indexerFactory.Create();
             ITargetBlock<string> actionBlock = new ActionBlock<string>(OnRevoke); //TODO: move to new class
             _configFunc = configFunc;
             var config = _configFunc();
