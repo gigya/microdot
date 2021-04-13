@@ -97,7 +97,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                     MethodCachingPolicyConfig.Merge(methodCachingConfig, effMethodConfig); 
 
                 //attribute
-                var cachedAttribute = GetCachedAttribute(targetMethod, args);
+                var cachedAttribute = TryGetCachedAttribute(targetMethod, args);
                 if (cachedAttribute != null)
                     MethodCachingPolicyConfig.Merge(new MethodCachingPolicyConfig(cachedAttribute), effMethodConfig); 
 
@@ -121,6 +121,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             }
         }
 
+        //Note! Following methods are overriden in Gator as it is not using MetadataProvider in 'Generic' flow
 
         protected virtual string GetMethodNameForCachingPolicy(MethodInfo targetMethod, object[] args)
         {
@@ -132,15 +133,17 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return MetadataProvider.IsCached(targetMethod);
         }
 
-        protected virtual CachedAttribute GetCachedAttribute(MethodInfo targetMethod, object[] args)
+        protected virtual CachedAttribute TryGetCachedAttribute(MethodInfo targetMethod, object[] args)
         {
             return MetadataProvider.GetCachedAttribute(targetMethod);
         }
 
-        protected virtual Type GetMethodTaskResultType(MethodInfo targetMethod, object[] args)
+        protected virtual Type TryGetMethodTaskResultType(MethodInfo targetMethod, object[] args)
         {
             return MetadataProvider.GetMethodTaskResultType(targetMethod);
         }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
         private object Invoke(MethodInfo targetMethod, object[] args)
@@ -164,7 +167,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
 
             try
             {
-                var taskResultType = GetMethodTaskResultType(targetMethod, args);
+                var taskResultType = TryGetMethodTaskResultType(targetMethod, args);
                 isRevocable = taskResultType != null && taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
             }
             catch (Exception e)
