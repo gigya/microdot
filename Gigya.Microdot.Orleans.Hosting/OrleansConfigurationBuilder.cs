@@ -148,7 +148,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             hostBuilder.Configure<SchedulingOptions>(options =>
             {
                 options.PerformDeadlockDetection = true;
-                options.AllowCallChainReentrancy = true;
+                options.AllowCallChainReentrancy = false;
                 options.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
             });
 
