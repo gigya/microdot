@@ -77,7 +77,11 @@ namespace Gigya.Microdot.UnitTests.Caching
             {
                 return Task.FromResult(_serviceResult);
             });
-            _serviceMock.CallServiceWithAttValue().Returns(_ =>
+            _serviceMock.CallServiceWithAttRefreshTime().Returns(_ =>
+            {
+                return Task.FromResult(_serviceResult);
+            });
+            _serviceMock.CallServiceWithoutAttRefreshTime().Returns(_ =>
             {
                 return Task.FromResult(_serviceResult);
             });
@@ -222,26 +226,23 @@ namespace Gigya.Microdot.UnitTests.Caching
         public async Task CachingRefreshTimeByDefault()
         {
             TimeSpan expectedRefreshTime = CachingPolicyConfig.Default.RefreshTime.Value;
-            await SetCachingPolicyConfig(new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" });
-            await ServiceResultShouldRefreshAfter(expectedRefreshTime);
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
         }
 
         [Test]
         public async Task CachingRefreshTimeByServiceConfiguration()
         {
             TimeSpan expectedRefreshTime = TimeSpan.FromSeconds(10);
-            await SetCachingPolicyConfig(new[] { "RefreshTime", expectedRefreshTime.ToString() },
-                                         new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" });
-            await ServiceResultShouldRefreshAfter(expectedRefreshTime);
+            await SetCachingPolicyConfig(new[] {"RefreshTime", expectedRefreshTime.ToString()});
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
         }
 
         [Test]
         public async Task CachingRefreshTimeByMethodConfiguration()
         {
             TimeSpan expectedRefreshTime = TimeSpan.FromSeconds(10);
-            await SetCachingPolicyConfig(new[] { "Methods.CallService.RefreshTime",     expectedRefreshTime.ToString() },
-                                         new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" });
-            await ServiceResultShouldRefreshAfter(expectedRefreshTime);
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", expectedRefreshTime.ToString()});
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
         }
 
         [Test]
@@ -250,18 +251,16 @@ namespace Gigya.Microdot.UnitTests.Caching
             TimeSpan methodRefreshTime = TimeSpan.FromSeconds(5);
             TimeSpan serviceRefreshTime = TimeSpan.FromSeconds(10);
 
-            await SetCachingPolicyConfig(new[] { "Methods.CallService.RefreshTime", methodRefreshTime.ToString() },
-                                         new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" }, 
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", methodRefreshTime.ToString() },
                                          new[] { "RefreshTime", serviceRefreshTime.ToString() });
-            await ServiceResultShouldRefreshAfter(methodRefreshTime);
+            await ServiceResultShouldRefreshAfter(methodRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
         }
 
         [Test]
         public async Task CachingRefreshTimeByAttribute()
         {
             TimeSpan expectedRefreshTime = TimeSpan.FromMinutes(CachingProxyTests.AttRefreshTimeInMinutes);
-            await SetCachingPolicyConfig(new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" });
-            await ServiceResultShouldRefreshAfter(expectedRefreshTime, true);
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithAttRefreshTime);
         }
 
         [Test]
@@ -269,10 +268,9 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             TimeSpan methodRefreshTime = TimeSpan.FromSeconds(5);
 
-            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithAttValue.RefreshTime", methodRefreshTime.ToString() },
-                                         new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" });
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithAttRefreshTime.RefreshTime", methodRefreshTime.ToString() });
 
-            await ServiceResultShouldRefreshAfter(methodRefreshTime, true);
+            await ServiceResultShouldRefreshAfter(methodRefreshTime, ServiceMethod.CallServiceWithAttRefreshTime);
         }
 
         [Test]
@@ -280,10 +278,9 @@ namespace Gigya.Microdot.UnitTests.Caching
         {
             TimeSpan serviceRefreshTime = TimeSpan.FromSeconds(10);
 
-            await SetCachingPolicyConfig(new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" },
-                                         new[] { "RefreshTime", serviceRefreshTime.ToString() });
+            await SetCachingPolicyConfig(new[] { "RefreshTime", serviceRefreshTime.ToString() });
 
-            await ServiceResultShouldRefreshAfter(TimeSpan.FromMinutes(CachingProxyTests.AttRefreshTimeInMinutes), true);
+            await ServiceResultShouldRefreshAfter(TimeSpan.FromMinutes(CachingProxyTests.AttRefreshTimeInMinutes), ServiceMethod.CallServiceWithAttRefreshTime);
         }
 
         [Test]
@@ -292,11 +289,136 @@ namespace Gigya.Microdot.UnitTests.Caching
             TimeSpan methodRefreshTime = TimeSpan.FromSeconds(5);
             TimeSpan serviceRefreshTime = TimeSpan.FromSeconds(10);
 
-            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithAttValue.RefreshTime", methodRefreshTime.ToString() },
-                                         new[] { "RefreshBehavior", "TryFetchNewValueOrUseOld" },
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithAttRefreshTime.RefreshTime", methodRefreshTime.ToString() },
                                          new[] { "RefreshTime", serviceRefreshTime.ToString() });
 
-            await ServiceResultShouldRefreshAfter(methodRefreshTime, true);
+            await ServiceResultShouldRefreshAfter(methodRefreshTime, ServiceMethod.CallServiceWithAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromDefaultToService_ServiceConfigurationIsUsed()
+        {
+            //Trigger call
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithoutAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += CachingPolicyConfig.Default.RefreshTime.Value;
+
+            //Apply config change and test
+            var expectedRefreshTime = TimeSpan.FromSeconds(10);
+            await SetCachingPolicyConfig(new[] { "RefreshTime", expectedRefreshTime.ToString() });
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromServiceToDefault_DefaultConfigurationIsUsed()
+        {
+            //Trigger call
+            var expectedRefreshTime = TimeSpan.FromSeconds(10);
+            await SetCachingPolicyConfig(new[] { "RefreshTime", expectedRefreshTime.ToString() });
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithoutAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += expectedRefreshTime;
+
+            //Apply config change and test
+            await SetCachingPolicyConfig();
+            await ServiceResultShouldRefreshAfter(CachingPolicyConfig.Default.RefreshTime.Value, ServiceMethod.CallServiceWithoutAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromAttrToService_AttrConfigurationIsUsed()
+        {
+            //Trigger call
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithAttRefreshTime);
+
+            //Adjust time to cause refresh
+            var expectedRefreshTime = TimeSpan.FromMinutes(CachingProxyTests.AttRefreshTimeInMinutes);
+            _now += expectedRefreshTime;
+
+            //Apply config change and test
+            await SetCachingPolicyConfig(new[] { "RefreshTime", TimeSpan.FromSeconds(10).ToString() });
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromDefaultToMethod_MethodConfigurationIsUsed()
+        {
+            //Trigger call
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithoutAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += CachingPolicyConfig.Default.RefreshTime.Value;
+
+            //Apply config change and test
+            var expectedRefreshTime = TimeSpan.FromSeconds(20);
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", expectedRefreshTime.ToString()});
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromMethodToDefault_DefaultConfigurationIsUsed()
+        {
+            //Trigger call
+            var expectedRefreshTime = TimeSpan.FromSeconds(20);
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", expectedRefreshTime.ToString() });
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithoutAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += expectedRefreshTime;
+
+            //Apply config change and test
+            await SetCachingPolicyConfig();
+            await ServiceResultShouldRefreshAfter(CachingPolicyConfig.Default.RefreshTime.Value, ServiceMethod.CallServiceWithoutAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromAttrToMethod_MethodConfigurationIsUsed()
+        {
+            //Trigger call
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += TimeSpan.FromMinutes(CachingProxyTests.AttRefreshTimeInMinutes);
+
+            //Apply config change and test
+            var expectedRefreshTime = TimeSpan.FromSeconds(20);
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithAttRefreshTime.RefreshTime", expectedRefreshTime.ToString() });
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromServiceToMethod_MethodConfigurationIsUsed()
+        {
+            //Trigger call
+            var expectedRefreshTime = TimeSpan.FromSeconds(10);
+            await SetCachingPolicyConfig(new[] { "RefreshTime", expectedRefreshTime.ToString() });
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithoutAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += expectedRefreshTime;
+
+            //Apply config change and test
+            expectedRefreshTime = TimeSpan.FromSeconds(30);
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", expectedRefreshTime.ToString() });
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
+        }
+
+        [Test]
+        public async Task CachingRefreshTimeConfigUpdateFromMethodToService_MethodConfigurationIsUsed()
+        {
+            //Trigger call
+            var expectedRefreshTime = TimeSpan.FromSeconds(10);
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", expectedRefreshTime.ToString() });
+            await ResultShouldBe(FirstResult, serviceMethod: ServiceMethod.CallServiceWithoutAttRefreshTime);
+
+            //Adjust time to cause refresh
+            _now += expectedRefreshTime;
+
+            //Apply config change and test
+            await SetCachingPolicyConfig(new[] { "Methods.CallServiceWithoutAttRefreshTime.RefreshTime", expectedRefreshTime.ToString() },
+                                         new[] { "RefreshTime", TimeSpan.FromSeconds(30).ToString() });
+            await ServiceResultShouldRefreshAfter(expectedRefreshTime, ServiceMethod.CallServiceWithoutAttRefreshTime);
         }
 
         #endregion
@@ -378,37 +500,39 @@ namespace Gigya.Microdot.UnitTests.Caching
             await ResultShouldBe(SecondResult, "Result shouldn't have been cached");
         }
 
-        private async Task ServiceResultShouldRefreshAfter(TimeSpan timeSpan, bool isAttMethod = false)
+        private async Task ServiceResultShouldRefreshAfter(TimeSpan timeSpan, ServiceMethod serviceMethod = ServiceMethod.CallService)
         {
-            await ResultShouldBe(FirstResult, isAttMethod:isAttMethod);
+            await ResultShouldBe(FirstResult, serviceMethod: serviceMethod);
 
             _serviceResult = SecondResult;
 
             //just before refresh time - cached result returned
             _now += timeSpan.Subtract(TimeSpan.FromSeconds(1));
-            await ResultShouldBe(FirstResult, isAttMethod: isAttMethod);
+            await ResultShouldBe(FirstResult, serviceMethod: serviceMethod);
 
             //just after refresh time - new result returned
             _now += TimeSpan.FromSeconds(1);
-            await ResultShouldBe(SecondResult, isAttMethod: isAttMethod , message: $"Cached value should have been background-refreshed after {timeSpan}");
+            await ResultShouldBe(SecondResult, serviceMethod: serviceMethod, message: $"Cached value should have been refreshed after {timeSpan}");
         }
 
-        private async Task TriggerCacheRefreshOnBackground(bool isAttMethod = false)
-        {
-            if (isAttMethod)
-                await _proxy.CallServiceWithAttValue();
-            else
-                await _proxy.CallService();
-        }
-
-        private async Task ResultShouldBe(string expectedResult, string message = null, bool isAttMethod = false)
+        private async Task ResultShouldBe(string expectedResult, string message = null, ServiceMethod serviceMethod = ServiceMethod.CallService)
         {
             string result = null;
 
-            if (isAttMethod)
-                result = await _proxy.CallServiceWithAttValue();
-            else
-                result = await _proxy.CallService();
+            switch (serviceMethod)
+            {
+                case ServiceMethod.CallService:
+                    result = await _proxy.CallService();
+                    break;
+                case ServiceMethod.CallServiceWithAttRefreshTime:
+                    result = await _proxy.CallServiceWithAttRefreshTime();
+                    break;
+                case ServiceMethod.CallServiceWithoutAttRefreshTime:
+                    result = await _proxy.CallServiceWithoutAttRefreshTime();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(serviceMethod), serviceMethod, null);
+            }
 
             result.ShouldBe(expectedResult, message);
         }
@@ -420,14 +544,25 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
     }
 
+    public enum ServiceMethod
+    {
+        CallService,
+        CallServiceWithAttRefreshTime,
+        CallServiceWithoutAttRefreshTime
+    }
+
     [HttpService(1234)]
     public interface ICachingTestService
     {
         [Cached]
         Task<string> CallService();
 
-        [Cached(RefreshTimeInMinutes = CachingProxyTests.AttRefreshTimeInMinutes)]
-        Task<string> CallServiceWithAttValue();
+        [Cached(RefreshTimeInMinutes = CachingProxyTests.AttRefreshTimeInMinutes,
+                RefreshBehavior = RefreshBehavior.TryFetchNewValueOrUseOld)]
+        Task<string> CallServiceWithAttRefreshTime();
+
+        [Cached(RefreshBehavior = RefreshBehavior.TryFetchNewValueOrUseOld)]
+        Task<string> CallServiceWithoutAttRefreshTime();
 
         [Cached]
         Task<string> OtherMethod();
