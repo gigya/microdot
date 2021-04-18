@@ -6,25 +6,25 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
-nuget Gigya.ServiceContract ~> 2.7.3
+nuget Gigya.ServiceContract
 
 # .Net
-nuget Microsoft.CSharp ~> 4.7
-nuget System.ComponentModel.Annotations ~> 4.0
-nuget System.Data.DataSetExtensions ~> 4.5
-nuget System.Diagnostics.PerformanceCounter ~> 4.7.0 
-nuget System.Net.Http ~> 4.3
-nuget System.Runtime.Caching ~> 4.7
-nuget System.ServiceProcess.ServiceController ~> 4.7
+nuget Microsoft.CSharp
+nuget System.ComponentModel.Annotations
+nuget System.Data.DataSetExtensions
+nuget System.Diagnostics.PerformanceCounter
+nuget System.Net.Http
+nuget System.Runtime.Caching
+nuget System.ServiceProcess.ServiceController
 nuget System.ValueTuple
-nuget System.Reflection.Emit ~> 4.7
-nuget System.Configuration.ConfigurationManager ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
+nuget System.Reflection.Emit
+nuget System.Configuration.ConfigurationManager # For some reason Infra tests can't resolve it, while Microdot tests can
 
 #
-nuget Newtonsoft.Json ~> 12.0.3
-nuget Nito.AsyncEx ~> 5.0
-nuget System.Threading.Tasks.Dataflow ~> 4.0
-nuget ZooKeeperNetEx ~> 3.0
+nuget Newtonsoft.Json
+nuget Nito.AsyncEx
+nuget System.Threading.Tasks.Dataflow
+nuget ZooKeeperNetEx
 
 # Orleans
 nuget Microsoft.Orleans.Core >= 3.4.1
@@ -36,26 +36,26 @@ nuget Microsoft.Orleans.OrleansCodeGenerator >= 3.4.1
 nuget Microsoft.Orleans.CodeGenerator.MSBuild >= 3.4.1
 nuget Microsoft.Orleans.Client >= 3.4.1
 nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  >= 3.4.1
-nuget Microsoft.AspNetCore.Http.Features ~> 3.1.0
-nuget Microsoft.Extensions.Primitives ~> 3.1.0
+nuget Microsoft.AspNetCore.Http.Features
+nuget Microsoft.Extensions.Primitives
 nuget Microsoft.Orleans.Server  >= 3.4.1
 nuget Microsoft.Orleans.Core.Abstractions >= 3.4.1
 nuget Microsoft.Orleans.Connections.Security >= 3.4.1
 nuget Gigya.OrleansDashboard.NetStandard == 3.0.8.0
 # TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
-nuget System.Text.Json >= 4.7.1
+nuget System.Text.Json
 nuget LibLog ~> 4.2.3
 
-nuget Microsoft.AspNetCore.Hosting ~> 2
-nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
+nuget Microsoft.AspNetCore.Hosting
+nuget Microsoft.AspNetCore.Server.Kestrel
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 
 # Ninject
-nuget Ninject ~> 3.3
-nuget Ninject.Extensions.Factory ~> 3.3
-nuget Ninject.Extensions.Conventions ~> 3.3
-nuget Castle.Core ~> 4.0
+nuget Ninject
+nuget Ninject.Extensions.Factory
+nuget Ninject.Extensions.Conventions
+nuget Castle.Core
 
 # Tests only dependencies
 nuget NUnit ~> 3.0
@@ -66,4 +66,4 @@ nuget FluentAssertions ~> 5.0
 nuget Nuget.CommandLine ~> 5.0
 nuget Shouldly ~> 3.0
 nuget NLog ~> 4.0
-nuget Microsoft.NET.Test.Sdk ~> 16.3
+nuget Microsoft.NET.Test.Sdk
