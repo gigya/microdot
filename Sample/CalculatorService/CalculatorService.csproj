@@ -1,38 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<ProjectGuid>{5B1BA713-F5BA-466B-B79E-95261DB27FA9}</ProjectGuid>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net5.0-windows</TargetFrameworks>
+		<TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<PublishUrl>publish\</PublishUrl>
-		<Install>true</Install>
-		<InstallFrom>Disk</InstallFrom>
-		<UpdateEnabled>false</UpdateEnabled>
-		<UpdateMode>Foreground</UpdateMode>
-		<UpdateInterval>7</UpdateInterval>
-		<UpdateIntervalUnits>Days</UpdateIntervalUnits>
-		<UpdatePeriodically>false</UpdatePeriodically>
-		<UpdateRequired>false</UpdateRequired>
-		<MapFileExtensions>true</MapFileExtensions>
-		<ApplicationRevision>0</ApplicationRevision>
-		<ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-		<IsWebBootstrapper>false</IsWebBootstrapper>
-		<UseApplicationTrust>false</UseApplicationTrust>
-		<BootstrapperEnabled>true</BootstrapperEnabled>
-		<noWarn>1591</noWarn>
-		<AssemblyTitle>CalculatorService</AssemblyTitle>
-		<Product>CalculatorService</Product>
-		<Copyright>Copyright ©  2018</Copyright>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-		<OutputPath>bin\$(Configuration)\</OutputPath>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<DebugType>full</DebugType>
-		<WarningLevel>3</WarningLevel>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-		<DebugType>pdbonly</DebugType>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="loadPaths.json">
