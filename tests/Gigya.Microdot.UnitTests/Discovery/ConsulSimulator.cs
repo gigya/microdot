@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.SharedLogic;
 using Newtonsoft.Json.Linq;
@@ -292,7 +293,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private async Task SetResponse(HttpListenerContext context, string serviceName, ulong? index, Func<string, ulong, Task<ConsulResponse>> getResponseByService)
         {
-            using (context.Response)
+
+            try
             {
                 Exception exception = null;
                 ConsulResponse response = null;
@@ -304,6 +306,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 {
                     exception = ex;
                 }
+
                 exception = exception ?? _httpErrorFake;
                 if (exception != null)
                     response = new ConsulResponse
@@ -312,17 +315,25 @@ namespace Gigya.Microdot.UnitTests.Discovery
                         StatusCode = HttpStatusCode.InternalServerError
                     };
 
-                context.Response.StatusCode = (int)response.StatusCode;
-                if (response.ModifyIndex!=null)
+                context.Response.StatusCode = (int) response.StatusCode;
+                if (response.ModifyIndex != null)
                     context.Response.AddHeader("x-consul-index", response.ModifyIndex.Value.ToString());
-                await context.Response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes(response.Content), 0, response.Content.Length);
+                await context.Response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes(response.Content), 0,
+                    response.Content.Length);
+            }
+            catch (ObjectDisposedException)
+            {
+
+            }
+            finally
+            {
+                context.Response.TryDispose();
             }
         }
         
         public void Dispose()
         {
             _consulListener.Close();
-            ((IDisposable)_consulListener)?.Dispose();
             _waitForKeyValueIndexModification.TrySetResult(false);
             _waitForHealthIndexModification.TrySetResult(false);
         }
