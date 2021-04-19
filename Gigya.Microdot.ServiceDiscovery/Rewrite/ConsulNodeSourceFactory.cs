@@ -117,7 +117,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                     _initCompleted.TrySetResult(true);
 
                     // If we got an error, we don't want to spam Consul so we wait a bit
-                    if (consulResponse.Error != null)
+                    if (consulResponse.Error != null && !_shutdownToken.IsCancellationRequested)
                         await DateTime.Delay(GetConfig().ErrorRetryInterval, _shutdownToken.Token).ConfigureAwait(false);
                 }
             }

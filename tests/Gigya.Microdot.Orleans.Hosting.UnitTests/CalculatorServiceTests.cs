@@ -222,7 +222,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var dict = new Dictionary<string, object> { { "a", "5" } };
 
-            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JValue));
             ((JToken)res).Value<int>().ShouldBe(5);
         }
 
