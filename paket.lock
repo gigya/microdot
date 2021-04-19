@@ -318,7 +318,7 @@ NUGET
       Microsoft.NETCore.Platforms (>= 5.0) - restriction: || (&& (== net472) (>= netcoreapp2.0)) (== net5.0-windows7.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
     NETStandard.Library (2.0.3) - restriction: || (&& (== net472) (< net35)) (== net5.0-windows7.0) (== netstandard2.0)
       Microsoft.NETCore.Platforms (>= 1.1)
-    Newtonsoft.Json (13.0.1)
+    Newtonsoft.Json (12.0.3)
     Ninject (3.3.4)
       System.Reflection.Emit.ILGeneration (>= 4.3) - restriction: || (&& (== net472) (< net45)) (== net5.0-windows7.0) (== netstandard2.0)
       System.Reflection.Emit.Lightweight (>= 4.3) - restriction: || (&& (== net472) (< net45)) (== net5.0-windows7.0) (== netstandard2.0)

@@ -21,7 +21,7 @@ nuget System.Reflection.Emit
 nuget System.Configuration.ConfigurationManager # For some reason Infra tests can't resolve it, while Microdot tests can
 
 #
-nuget Newtonsoft.Json
+nuget Newtonsoft.Json ~> 12.0.3
 nuget Nito.AsyncEx
 nuget System.Threading.Tasks.Dataflow
 nuget ZooKeeperNetEx
