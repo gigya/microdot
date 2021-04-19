@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
@@ -19,4 +20,18 @@
 		<TargetFrameworks Include="net5.0" />
 	</ItemGroup>
 	<Import Project=".paket\Paket.Restore.targets" />
+=======
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyTitle>Gigya.ServiceContract</AssemblyTitle>
+    <Company>Gigya</Company>
+    <Product>Gigya.ServiceContract</Product>
+    <Copyright>© 2017 Gigya Inc.</Copyright>
+    <Version>2.7.7</Version>
+    <AssemblyVersion>2.7.7</AssemblyVersion>
+    <FileVersion>2.7.7</FileVersion>
+  </PropertyGroup>
+  <Import Project=".paket\Paket.Restore.targets" />
+>>>>>>> develop
 </Project>
