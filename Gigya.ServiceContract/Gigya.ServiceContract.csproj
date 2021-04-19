@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
@@ -7,31 +6,13 @@
 		<Company>Gigya</Company>
 		<Product>Gigya.ServiceContract</Product>
 		<Copyright>© 2017 Gigya Inc.</Copyright>
-		<Version>2.7.6</Version>
-		<AssemblyVersion>2.7.6</AssemblyVersion>
-		<FileVersion>2.7.6</FileVersion>
+		<Version>5.0.0</Version>
+		<AssemblyVersion>5.0.0</AssemblyVersion>
+		<FileVersion>5.0.0</FileVersion>
 	</PropertyGroup>
-	<ItemGroup>
-		<None Remove="paket.dependencies" />
-		<None Remove="paket.lock" />
-	</ItemGroup>
 	<ItemGroup>
 		<TargetFrameworks Include="netstandard2.0" />
 		<TargetFrameworks Include="net5.0" />
 	</ItemGroup>
 	<Import Project=".paket\Paket.Restore.targets" />
-=======
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.ServiceContract</AssemblyTitle>
-    <Company>Gigya</Company>
-    <Product>Gigya.ServiceContract</Product>
-    <Copyright>© 2017 Gigya Inc.</Copyright>
-    <Version>2.7.7</Version>
-    <AssemblyVersion>2.7.7</AssemblyVersion>
-    <FileVersion>2.7.7</FileVersion>
-  </PropertyGroup>
-  <Import Project=".paket\Paket.Restore.targets" />
->>>>>>> develop
 </Project>
