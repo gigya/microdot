@@ -6,9 +6,9 @@
 		<Company>Gigya</Company>
 		<Product>Gigya.ServiceContract</Product>
 		<Copyright>© 2017 Gigya Inc.</Copyright>
-		<Version>5.0.0</Version>
-		<AssemblyVersion>5.0.0</AssemblyVersion>
-		<FileVersion>5.0.0</FileVersion>
+		<Version>4.0.0</Version>
+		<AssemblyVersion>4.0.0</AssemblyVersion>
+		<FileVersion>4.0.0</FileVersion>
 	</PropertyGroup>
 	<ItemGroup>
 		<TargetFrameworks Include="netstandard2.0" />
