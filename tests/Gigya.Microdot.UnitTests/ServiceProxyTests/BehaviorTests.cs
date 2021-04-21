@@ -339,10 +339,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var dict = new Dictionary<string, string>
             {
                 {"Discovery.Services.DemoService.Source", "Config"},
-                {"Discovery.Services.DemoService.Hosts", "host1,host2"},
+                {"Discovery.Services.DemoService.Hosts", "host1,host2,host3"},
                 {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
-
+            int retries = 5;
             int counter = 0;
             Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
@@ -355,9 +355,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                         if (req.Method == HttpMethod.Get && req.RequestUri.Scheme == "https")
                             throw new HttpRequestException();
 
+                        if (req.RequestUri.Host == "host1" || req.RequestUri.Host == "host3") throw new HttpRequestException();
+
                         counter++;
 
-                        if (req.RequestUri.Host == "host1") throw new HttpRequestException();
                         return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
                     });
                 return messageHandler;
@@ -380,13 +381,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < retries; i++)
                 {
                     var server = await serviceProxy.Invoke(request, typeof(string));
                     server.ShouldBe("host2");
                 }
 
-                counter.ShouldBe(3);
+                counter.ShouldBe(retries);
             }
         }
 
