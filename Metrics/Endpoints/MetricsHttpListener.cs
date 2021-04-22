@@ -141,15 +141,23 @@ namespace Metrics.Endpoints
 
             var urlPath = context.Request.RawUrl.Substring(this.prefixPath.Length)
                 .ToLowerInvariant();
-
-            if (TryProcessFixedEndpoints(context, urlPath))
+            try
             {
-                return;
+                if (TryProcessFixedEndpoints(context, urlPath))
+                {
+                    return;
+                }
+
+                if (TryProcessDynamicEndpoints(context, urlPath))
+                {
+                    return;
+                }
             }
-
-            if (TryProcessDynamicEndpoints(context, urlPath))
+            catch (HttpListenerException ex)
             {
-                return;
+                // bug/141833
+                log.InfoException($"DebugMetrics - Failed to process request {urlPath}", ex);
+                throw;
             }
 
             WriteNotFound(context);
