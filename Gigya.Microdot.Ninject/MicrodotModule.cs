@@ -39,6 +39,7 @@ using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
@@ -143,6 +144,10 @@ namespace Gigya.Microdot.Ninject
 
             Kernel.Rebind<SystemInitializer.SystemInitializer>().ToSelf().InSingletonScope();
             Kernel.Rebind<IAvailabilityZoneServiceDiscovery>().To<AvailabilityZoneServiceDiscovery>().InTransientScope();
+
+            Kernel.Bind<IRevokeContextConcurrentCollection>().To<RevokeContextConcurrentCollection>();
+            Kernel.Bind<IRevokeContextConcurrentCollectionFactory>().ToFactory();
+            Kernel.Bind<IRevokeKeyIndexerFactory>().ToFactory();
         }
 
 
