@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Testing\Gigya.Microdot.Testing.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />
+    <ProjectReference Include="..\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="loadPaths.json">
