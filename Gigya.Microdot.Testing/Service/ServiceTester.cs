@@ -64,7 +64,8 @@ namespace Gigya.Microdot.Testing.Service
                             ConsoleOutputMode.Disabled, 
                             SiloClusterMode.PrimaryNode, 
                             _port.Port, 
-                            initTimeOutSec: 15);
+                            initTimeOutSec: 15,
+                            onStopWaitTimeSec: 30);
             
             Initialize();
         }
@@ -123,7 +124,6 @@ namespace Gigya.Microdot.Testing.Service
 
             var waitStopped = Host.WaitForServiceGracefullyStoppedAsync();
 
-            // We aren't actually waiting?
             if (waitStopped.IsCompleted && waitStopped.Result == StopResult.Force)
                 throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
            

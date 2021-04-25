@@ -121,7 +121,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                         await DateTime.Delay(GetConfig().ErrorRetryInterval, _shutdownToken.Token).ConfigureAwait(false);
                 }
             }
-            catch (TaskCanceledException) when (_shutdownToken.IsCancellationRequested)
+            catch (Exception) when (_shutdownToken.IsCancellationRequested)
             {
                 // Ignore exception during shutdown.
             }
