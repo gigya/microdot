@@ -15,7 +15,7 @@ using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 {
-    [TestFixture, Parallelizable(ParallelScope.All)]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class OrleansToNinjectBindingTests
     {
         public enum ServiceProviderType
