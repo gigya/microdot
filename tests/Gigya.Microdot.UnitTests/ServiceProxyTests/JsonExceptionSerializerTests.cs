@@ -174,8 +174,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.InnerException.StackTrace.ShouldNotContain("End of stack trace");
             actual.InnerException.StackTrace.ShouldNotContain("__");
         }
-        
-        
+
+#if NETFRAMEWORK
         [Test]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOn()
         {
@@ -219,7 +219,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Assert.NotNull(argumentOutOfRange.ActualValue);
 
         }
-#if NETFRAMEWORK         
+         
         [Test]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOff()
         {
