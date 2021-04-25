@@ -20,7 +20,7 @@ using Shouldly;
 // ReSharper disable ConsiderUsingConfigureAwait (not relevant for tests)
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class AsyncMemoizerRevokesTests
     {
         private const string cacheContextName = "AsyncCache";

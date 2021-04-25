@@ -16,7 +16,7 @@ using NUnit.Framework;
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
   
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public abstract class AbstractServiceProxyTest
     {
         protected TestingKernel<ConsoleLog> unitTesting;
