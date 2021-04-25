@@ -1,13 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+		<TargetFramework>net5.0</TargetFramework>
+		<LangVersion>8</LangVersion>
+		<AssemblyTitle>Gigya.ServiceContract.UnitTests</AssemblyTitle>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<RunSettingsFilePath>$(SolutionDir)..\test.runsettings</RunSettingsFilePath>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Include="paket.references" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
+		<PackageReference Include="NUnit" Version="3.*" />
+		<PackageReference Include="NUnit3TestAdapter" Version="3.*" />
+		<PackageReference Include="Shouldly" Version="4.*" />
 	</ItemGroup>
-	<Import Project="..\..\.paket\Paket.Restore.targets" />
+	<ItemGroup>
+		<ProjectReference Include="..\..\Gigya.ServiceContract\Gigya.ServiceContract.csproj" />
+	</ItemGroup>
 </Project>

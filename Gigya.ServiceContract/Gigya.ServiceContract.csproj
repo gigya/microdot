@@ -2,9 +2,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
-		<AssemblyTitle>Gigya.ServiceContract</AssemblyTitle>
 		<LangVersion>8</LangVersion>
-		<IsPackable>true</IsPackable>
+		<AssemblyTitle>Gigya.ServiceContract</AssemblyTitle>
+		<Description>
+			Referenced by microservice public-facing interfaces. Provides common
+			facilities that are needed to define a service's contract. Part of the
+			Microdot framework.
+		</Description>
+		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
+		<PackageTags>gigya microdot microservice microservices contracts</PackageTags>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>
-	<Import Project=".paket\Paket.Restore.targets" />
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.*" />
+	</ItemGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\symbolPackages" />
+	</Target>
 </Project>
