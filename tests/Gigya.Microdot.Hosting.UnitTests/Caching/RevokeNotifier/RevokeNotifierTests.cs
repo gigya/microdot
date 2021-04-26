@@ -13,6 +13,7 @@ using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.UnitTests.Caching;
 using Ninject;
 using Ninject.Extensions.Factory;
+using Ninject.Parameters;
 
 namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
 {
@@ -296,6 +297,11 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             var kernel = new StandardKernel(new MicrodotModule());
             kernel.Bind<ILog>().To<TraceLog>().InSingletonScope();
             Assert.DoesNotThrow(()=>kernel.Get<IRevokeNotifier>());
+            Assert.DoesNotThrow(() => kernel.Get<IRevokeContextConcurrentCollection>());
+            Assert.DoesNotThrow(() => kernel.Get<EquatableWeakReference<object>>(new ConstructorArgument("target",new object())));
+            Assert.DoesNotThrow(() => kernel.Get<IRevokeContextConcurrentCollectionFactory>());
+            Assert.DoesNotThrow(() => kernel.Get<IRevokeKeyIndexer>());
+            Assert.DoesNotThrow(() => kernel.Get<IRevokeKeyIndexerFactory>());
         }
     }
 }
