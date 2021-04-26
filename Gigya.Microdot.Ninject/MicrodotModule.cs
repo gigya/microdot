@@ -145,7 +145,7 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<SystemInitializer.SystemInitializer>().ToSelf().InSingletonScope();
             Kernel.Rebind<IAvailabilityZoneServiceDiscovery>().To<AvailabilityZoneServiceDiscovery>().InTransientScope();
 
-            Kernel.Bind<IRevokeContextConcurrentCollection>().To<RevokeContextConcurrentCollection>();
+            Kernel.Rebind<IRevokeContextConcurrentCollection>().To<RevokeContextConcurrentCollection>().InTransientScope();
             Kernel.Bind<IRevokeContextConcurrentCollectionFactory>().ToFactory();
             Kernel.Bind<IRevokeKeyIndexerFactory>().ToFactory();
         }
