@@ -23,6 +23,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite

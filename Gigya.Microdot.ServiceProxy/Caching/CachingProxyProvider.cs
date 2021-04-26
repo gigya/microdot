@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using Gigya.Common.Contracts.Attributes;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -53,8 +54,8 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         private IDateTime DateTime { get; }
         private Func<DiscoveryConfig> GetDiscoveryConfig { get; }
         private string ServiceName { get; }
-        private ConcurrentDictionary<string /* method name */, (MethodCachingPolicyConfig methodConfig, MethodCachingPolicyConfig effMethodConfig)> 
-            CachingConfigPerMethod = new ConcurrentDictionary<string, (MethodCachingPolicyConfig, MethodCachingPolicyConfig)>();
+        private ConcurrentDictionary<string /* method name */, (MethodCachingPolicyConfig serviceConfig, MethodCachingPolicyConfig methodConfig, MethodCachingPolicyConfig effMethodConfig)> 
+            CachingConfigPerMethod = new ConcurrentDictionary<string, (MethodCachingPolicyConfig, MethodCachingPolicyConfig, MethodCachingPolicyConfig)>();
 
 
         public CachingProxyProvider(TInterface dataSource, IMemoizer memoizer, IMetadataProvider metadataProvider, Func<DiscoveryConfig> getDiscoveryConfig, ILog log, IDateTime dateTime, string serviceName)
@@ -72,52 +73,41 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         }
 
 
-        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName)
+        private MethodCachingPolicyConfig GetConfig(MethodInfo targetMethod, string methodName, object[] args)
         {
             GetDiscoveryConfig().Services.TryGetValue(ServiceName, out ServiceDiscoveryConfig discoveryConfig);
-            var methodConfig = discoveryConfig?.CachingPolicy?.Methods?[methodName] ?? CachingPolicyConfig.Default;
+
+            var serviceCachingConfig = discoveryConfig?.CachingPolicy;
+
+            MethodCachingPolicyConfig methodCachingConfig = null;
+            serviceCachingConfig?.Methods?.TryGetValue(methodName, out methodCachingConfig);
 
             if (CachingConfigPerMethod.TryGetValue(methodName, out var cachedMethodConfigTuple) &&
-                ReferenceEquals(methodConfig, cachedMethodConfigTuple.methodConfig))
+                ReferenceEquals(serviceCachingConfig, cachedMethodConfigTuple.serviceConfig) &&
+                ReferenceEquals(methodCachingConfig, cachedMethodConfigTuple.methodConfig)) 
             {
                 return cachedMethodConfigTuple.effMethodConfig;
             }
             else
             {
                 var effMethodConfig = new MethodCachingPolicyConfig();
-                MethodCachingPolicyConfig.Merge(methodConfig, effMethodConfig);
 
-                // TODO: fix below; currently the ServiceDiscoveryConfig merges configs like so: hard-coded defaults --> per-service --> per method
-                // In this method we want to merge like this: hard-coded defaults --> per-service --> cached attribute --> per method
-                // ...so we probably need access to configs before merges
-                //MethodCachingPolicyConfig.Merge(MetadataProvider.GetCachedAttribute(targetMethod), config);
-                //US #136496
+                //method config
+                if (methodCachingConfig != null)
+                    MethodCachingPolicyConfig.Merge(methodCachingConfig, effMethodConfig); 
 
-                // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
-                // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
-                // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
+                //attribute
+                var cachedAttribute = TryGetCachedAttribute(targetMethod, args);
+                if (cachedAttribute != null)
+                    MethodCachingPolicyConfig.Merge(new MethodCachingPolicyConfig(cachedAttribute), effMethodConfig); 
 
-                bool isRevocable = false;
+                //service config
+                if (serviceCachingConfig != null)
+                    MethodCachingPolicyConfig.Merge(serviceCachingConfig, effMethodConfig); 
 
-                try
-                {
-                    var taskResultType = MetadataProvider.GetMethodTaskResultType(targetMethod);
-                    isRevocable = taskResultType != null && taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
-                }
-                catch (Exception e)
-                {
-                    Log.Error("Error retrieving result type", exception: e);
-                }
-
-                if (effMethodConfig.RefreshMode == 0)
-                    if (isRevocable)
-                        effMethodConfig.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
-                    else effMethodConfig.RefreshMode = RefreshMode.UseRefreshes;
-
-                if (effMethodConfig.ExpirationBehavior == 0)
-                    if (isRevocable)
-                        effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
-                    else effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
+                //defaults 
+                MethodCachingPolicyConfig.Merge(CachingPolicyConfig.Default, effMethodConfig); 
+                ApplyDynamicDefaults(targetMethod, effMethodConfig, args);
 
                 //Note: In case we want to add config validations (like we have in CacheAttribute), we can do it here and use Func<string, AggregatingHealthStatus> getAggregatedHealthCheck
                 //If validation failed, we wont update the cache, and preserve the error in CachingConfigPerMethod entry value
@@ -126,11 +116,12 @@ namespace Gigya.Microdot.ServiceProxy.Caching
                 //Or (if no call to the specific methodName was made), by a timer that cleans old errors from CachingConfigPerMethod
 
                 // Add to cache and return
-                CachingConfigPerMethod[methodName] = (methodConfig, effMethodConfig);
+                CachingConfigPerMethod[methodName] = (serviceCachingConfig, methodCachingConfig, effMethodConfig);
                 return effMethodConfig;
             }
         }
 
+        //Note! Following methods are overriden in Gator as it is not using MetadataProvider in 'Generic' flow
 
         protected virtual string GetMethodNameForCachingPolicy(MethodInfo targetMethod, object[] args)
         {
@@ -142,16 +133,57 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             return MetadataProvider.IsCached(targetMethod);
         }
 
+        protected virtual CachedAttribute TryGetCachedAttribute(MethodInfo targetMethod, object[] args)
+        {
+            return MetadataProvider.GetCachedAttribute(targetMethod);
+        }
+
+        protected virtual Type TryGetMethodTaskResultType(MethodInfo targetMethod, object[] args)
+        {
+            return MetadataProvider.GetMethodTaskResultType(targetMethod);
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
         private object Invoke(MethodInfo targetMethod, object[] args)
         {
-            var config = GetConfig(targetMethod, GetMethodNameForCachingPolicy(targetMethod, args));
+            var config = GetConfig(targetMethod, GetMethodNameForCachingPolicy(targetMethod, args), args);
             bool useCache = config.Enabled == true && IsMethodCached(targetMethod, args);
 
             if (useCache)
                 return Memoizer.Memoize(DataSource, targetMethod, args, config);
             else
                 return targetMethod.Invoke(DataSource, args);
+        }
+
+
+        // For methods returning Revocable<> responses, we assume they issue manual cache revokes. If the caching settings do not
+        // define explicit RefreshMode and ExpirationBehavior, then for Revocable<> methods we don't use refreshes and use a sliding
+        // expiration. For non-Revocable<> we do use refreshes and a fixed expiration.
+        private void ApplyDynamicDefaults(MethodInfo targetMethod, MethodCachingPolicyConfig effMethodConfig, object[] args)
+        {
+            bool isRevocable = false;
+
+            try
+            {
+                var taskResultType = TryGetMethodTaskResultType(targetMethod, args);
+                isRevocable = taskResultType != null && taskResultType.IsGenericType && taskResultType.GetGenericTypeDefinition() == typeof(Revocable<>);
+            }
+            catch (Exception e)
+            {
+                Log.Error("Error retrieving result type", exception: e);
+            }
+
+            if (effMethodConfig.RefreshMode == 0)
+                if (isRevocable)
+                    effMethodConfig.RefreshMode = RefreshMode.UseRefreshes; //TODO: change to RefreshMode.UseRefreshesWhenDisconnectedFromCacheRevokesBus after disconnect from bus feature is developed
+                else effMethodConfig.RefreshMode = RefreshMode.UseRefreshes;
+
+            if (effMethodConfig.ExpirationBehavior == 0)
+                if (isRevocable)
+                    effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache; //TODO: change to ExpirationBehavior.ExtendExpirationWhenReadFromCache after disconnect from bus feature is developed
+                else effMethodConfig.ExpirationBehavior = ExpirationBehavior.DoNotExtendExpirationWhenReadFromCache;
         }
     }
 }

@@ -93,11 +93,13 @@ namespace Gigya.Common.Contracts.UnitTests
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[2].Name == "s");
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes.Length == 1);
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Name == nameof(DataParamBase.BaseField));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Attributes[0].Attribute is SensitiveAttribute);
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(int));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Name == nameof(Data.s));
-            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Type == typeof(string));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[2].Name == nameof(DataParamBase.BaseField));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[2].Attributes[0].Attribute is SensitiveAttribute);
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[2].Type == typeof(int));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Name == nameof(Data.n));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[1].Type == typeof(Nested));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Name == nameof(Data.s));
+            Assert.IsTrue(schema.Interfaces[0].Methods[0].Parameters[3].Fields[0].Type == typeof(string));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Type == typeof(ResponseData));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Name == nameof(ResponseData.a));
             Assert.IsTrue(schema.Interfaces[0].Methods[0].Response.Fields[0].Type == typeof(string));
