@@ -2,23 +2,50 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<LangVersion>8.0</LangVersion>
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<AssemblyName>Metrics</AssemblyName>
+		<AssemblyTitle>Metrics</AssemblyTitle>
 		<PackageId>Metrics</PackageId>
+		<Description>
+			Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.
+		</Description>
+		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
 		<NoWarn />
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
 		<DocumentationFile>..\..\bin\$(Configuration)\Metrics.XML</DocumentationFile>
 		<NoWarn>1591; 1570; 1587;</NoWarn>
 	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="nugetPackages\**" />
+		<None Remove="symbolPackages\**" />
+	</ItemGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\symbolPackages" />
+	</Target>
 	<ItemGroup>
 		<EmbeddedResource Include="Endpoints\index.full.html.gz" />
 		<EmbeddedResource Include="metrics_32.png">
 			<Link>Endpoints\metrics_32.png</Link>
 		</EmbeddedResource>
 	</ItemGroup>
-	<Import Project="..\.paket\Paket.Restore.targets" />
+	<ItemGroup>
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.*" />
+		<PackageReference Include="LibLog" Version="4.2.6" />
+	</ItemGroup>
 </Project>

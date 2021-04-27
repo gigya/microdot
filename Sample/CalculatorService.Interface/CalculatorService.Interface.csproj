@@ -1,26 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<ProjectGuid>{1FB8E464-6A36-44A2-A343-8E95B51B4542}</ProjectGuid>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<LangVersion>8</LangVersion>
 		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Interface</AssemblyTitle>
-		<Product>Gigya.Microdot.Sample.CalculatorService.Interface</Product>
-		<Copyright>Copyright ©  2018</Copyright>
-		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<DebugType>full</DebugType>
-		<WarningLevel>3</WarningLevel>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
 		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Include="paket.references">
-			<SubType>Designer</SubType>
-		</None>
+		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
 	</ItemGroup>
-	<Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

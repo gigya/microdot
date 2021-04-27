@@ -3,7 +3,6 @@
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
 		<LangVersion>8</LangVersion>
-		<CodeAnalysisRuleSet></CodeAnalysisRuleSet>
 		<AssemblyTitle>Gigya.ServiceContract</AssemblyTitle>
 		<Description>
 			Referenced by microservice public-facing interfaces. Provides common
@@ -27,6 +26,10 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="nugetPackages\**" />
+		<None Remove="symbolPackages\**" />
+	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.*" />
 	</ItemGroup>

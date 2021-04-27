@@ -2,17 +2,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<LangVersion>8</LangVersion>
 		<AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
-		<Product>Gigya.Microdot.UnitTests</Product>
-		<Copyright>Copyright ©  2017</Copyright>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<OutputPath>bin\$(Configuration)</OutputPath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
 	<ItemGroup>
-		<None Include="loadpaths.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="Microsoft.Orleans.Core" Version="3.4.2" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
+		<!--Remove after the transition to netcore completed-->
+		<PackageReference Include="System.ServiceProcess.ServiceController" Version="5.*" />
+		<PackageReference Include="Ninject" Version="3.3.*" />
+		<PackageReference Include="NSubstitute" Version="4.2.*" />
+		<PackageReference Include="NUnit" Version="3.*" />
+		<PackageReference Include="NUnit3TestAdapter" Version="3.*" />
+		<PackageReference Include="Shouldly" Version="4.*" />
+		<PackageReference Include="Castle.Core" Version="4.4.*" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="5.*" />
+		<PackageReference Include="FluentAssertions" Version="5.10.*" />
+		<PackageReference Include="System.ComponentModel.Annotations" Version="5.*" />
+		<PackageReference Include="System.Runtime.Caching" Version="5.*" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
@@ -30,8 +51,12 @@
 		<ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<None Include="loadpaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
 		<None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
 		<EmbeddedResource Include="ServiceProxyTests\ExceptionFromNetCore.json" />
 	</ItemGroup>
-	<Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

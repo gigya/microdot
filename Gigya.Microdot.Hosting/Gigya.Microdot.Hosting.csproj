@@ -2,12 +2,48 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<AssemblyTitle>Gigya.Microdot.Hosting</AssemblyTitle>
-		<DefineConstants>CODE_ANALYSIS;DEBUG;TRACE</DefineConstants>
+		<LangVersion>8</LangVersion>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-		<LangVersion>8.0</LangVersion>
+		<AssemblyTitle>Gigya.Microdot.Hosting</AssemblyTitle>
+		<Description>
+			Infrastructure used for hosting Microdot services, part of the Microdot framework.
+		</Description>
+		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="nugetPackages\**" />
+		<None Remove="symbolPackages\**" />
+	</ItemGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\symbolPackages" />
+	</Target>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.*" />
+		<PackageReference Include="System.ComponentModel.Annotations" Version="5.*" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="5.*" />
+		<PackageReference Include="System.Collections.Immutable" Version="5.*" />
+		<PackageReference Include="System.ValueTuple" Version="4.5.*" />
+		<PackageReference Include="System.ServiceProcess.ServiceController" Version="5.*" />
+		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.4.2" />
+	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
@@ -15,5 +51,4 @@
 		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
 		<ProjectReference Include="..\Metrics\Metrics.csproj" />
 	</ItemGroup>
-	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

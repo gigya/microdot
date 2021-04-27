@@ -1,16 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
+		<TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
+		<LangVersion>8</LangVersion>
+		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Client</AssemblyTitle>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net5.0-windows</TargetFrameworks>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-		<noWarn>1591</noWarn>
+		<OutputPath>bin\$(Configuration)\</OutputPath>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Include="loadPaths.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+		<PackageReference Include="Ninject" Version="3.3.*" />
+		<PackageReference Include="Ninject.Extensions.Factory" Version="3.3.*" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
@@ -22,5 +32,9 @@
 		<ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
 		<ProjectReference Include="..\CalculatorService\CalculatorService.csproj" />
 	</ItemGroup>
-	<Import Project="..\..\.paket\Paket.Restore.targets" />
+	<ItemGroup>
+		<None Include="loadPaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

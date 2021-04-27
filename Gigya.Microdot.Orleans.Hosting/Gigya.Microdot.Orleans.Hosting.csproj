@@ -2,13 +2,73 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
-		<AssemblyTitle>Gigya.Microdot.Orleans.Host</AssemblyTitle>
+		<LangVersion>8</LangVersion>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+		<AssemblyTitle>Gigya.Microdot.Orleans.Host</AssemblyTitle>
+		<Description>
+			Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.
+		</Description>
+		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="nugetPackages\**" />
+		<None Remove="symbolPackages\**" />
+	</ItemGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\symbolPackages" />
+	</Target>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.9.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+
+		<PackageReference Include="Microsoft.Orleans.Connections.Security" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.Core" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansCodeGenerator" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansSqlUtils" Version="2.4.5" />
+		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.Server" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="3.4.2" />
+		<!--# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard -->
+		<PackageReference Include="Gigya.OrleansDashboard.NetStandard" Version="3.0.8" />
+		<PackageReference Include="System.Text.Json" Version="5.*" />
+
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="5.*" />
+		<PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="5.*" />
+		<PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.*" />
+		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.*" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.*" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.*" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.*" />
+		<PackageReference Include="Microsoft.Extensions.DependencyModel " Version="5.*" />
+		<PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="5.*" />
+		<PackageReference Include="Microsoft.Extensions.Primitives" Version="5.*" />
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.*" />
+	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
 	</ItemGroup>
-	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>

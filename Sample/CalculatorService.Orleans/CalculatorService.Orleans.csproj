@@ -1,17 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net472;net5.0-windows</TargetFrameworks>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<LangVersion>8</LangVersion>
+		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService</AssemblyTitle>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Exe</OutputType>
+		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
 	<ItemGroup>
-		<None Include="loadPaths.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Include="paket.references" />
+		<PackageReference Include="Ninject" Version="3.3.*" />
+		<PackageReference Include="Microsoft.Orleans.Core" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.4.2" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
@@ -22,5 +32,10 @@
 		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 		<ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
 	</ItemGroup>
-	<Import Project="..\..\.paket\Paket.Restore.targets" />
+	<ItemGroup>
+		<None Include="loadPaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 </Project>

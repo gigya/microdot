@@ -2,10 +2,57 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<AssemblyTitle>Gigya.Microdot.Orleans.Ninject.Host</AssemblyTitle>
+		<LangVersion>8</LangVersion>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+		<AssemblyTitle>Gigya.Microdot.Orleans.Ninject.Host</AssemblyTitle>
+		<Description>
+			A container used to host an Orleans Microdot service which uses Ninject for
+			dependency injection. Incoming HTTP calls (via Gigya.Microdot.ServiceProxy)
+			are handled and processed inside Orleans and are then dispatched to
+			specific Grains. Part of the Microdot framework.
+		</Description>
+		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>
+		<Authors>Gigya Inc.</Authors>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<OutputType>Library</OutputType>
+		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="nugetPackages\**" />
+		<None Remove="symbolPackages\**" />
+	</ItemGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\symbolPackages" />
+	</Target>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
+
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.*"/>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.*"/>
+
+		<PackageReference Include="Microsoft.Orleans.Core" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="3.4.2" />
+		<PackageReference Include="Microsoft.Orleans.Server" Version="3.4.2" />
+
+		<PackageReference Include="Ninject" Version="3.3.*" />
+		<PackageReference Include="Ninject.Extensions.Conventions" Version="3.3.*" />
+		<PackageReference Include="Ninject.Extensions.Factory" Version="3.3.*" />
+
+	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
@@ -15,5 +62,4 @@
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
 	</ItemGroup>
-	<Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
