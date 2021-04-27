@@ -31,9 +31,7 @@ using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 
 namespace Gigya.Microdot.Hosting.Service
 {
@@ -47,7 +45,7 @@ namespace Gigya.Microdot.Hosting.Service
     public abstract class ServiceHostBase : IDisposable
     {
         private bool disposed;
-        private object syncRoot = new object();
+        private readonly object syncRoot = new object();
 
         public abstract string ServiceName { get; }
 
@@ -61,9 +59,7 @@ namespace Gigya.Microdot.Hosting.Service
         protected ICrashHandler CrashHandler { get; set; }
 
         public virtual Version InfraVersion { get; }
-
-        private IRequestListener requestListener;
-
+        
         public bool? FailServiceStartOnConfigError { get; set; } = null;
 
         public ServiceHostBase()
@@ -294,7 +290,7 @@ namespace Gigya.Microdot.Hosting.Service
                 var badConfigs = configurationVerificator.Verify().Where(c => !c.Success).ToList();
                 if (badConfigs.Any())
                     throw new EnvironmentException("Bad configuration(s) detected. Stopping service startup. You can disable this behavior through the Microdot.Hosting.FailServiceStartOnConfigError configuration. Errors:\n"
-                        + badConfigs.Aggregate(new StringBuilder(), (sb, bc) => sb.Append(bc).Append("\n")));
+                        + badConfigs.Aggregate(new StringBuilder(), (sb, bc) => sb.Append(bc).Append('\n')));
             }
         }
 

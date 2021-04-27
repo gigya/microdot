@@ -45,6 +45,8 @@
 		</EmbeddedResource>
 	</ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.*" />
 		<PackageReference Include="LibLog" Version="4.2.6" />
 	</ItemGroup>
