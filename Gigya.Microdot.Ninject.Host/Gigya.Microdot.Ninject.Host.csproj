@@ -16,7 +16,7 @@
 		<Authors>Gigya Inc.</Authors>
 		<Copyright>© 2021 Gigya Inc.</Copyright>
 		<IncludeSymbols>true</IncludeSymbols>
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 		<OutputType>Library</OutputType>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>

@@ -5,7 +5,7 @@
 		<LangVersion>8</LangVersion>
 		<AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
 		<IncludeSymbols>true</IncludeSymbols>
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 		<OutputType>Library</OutputType>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 	</PropertyGroup>

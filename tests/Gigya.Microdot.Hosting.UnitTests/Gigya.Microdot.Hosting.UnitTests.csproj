@@ -6,7 +6,7 @@
 		<AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
 		<Authors>Gigya Inc.</Authors>
 		<Copyright>© 2021 Gigya Inc.</Copyright>
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 		<OutputType>Library</OutputType>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
