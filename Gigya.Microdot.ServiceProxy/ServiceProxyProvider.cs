@@ -459,7 +459,7 @@ namespace Gigya.Microdot.ServiceProxy
                         bool isNewCreated;
                         (httpClient, isHttps, isNewCreated) = GetHttpClient(config, discoveryConfig, tryHttps,
                             nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
-                        
+
                         clientCallEvent.IsNewClientCreated = isNewCreated;
                         clientCallEvent.ProtocolSchema = isHttps ? "HTTPS" : "HTTP";
 
@@ -501,6 +501,13 @@ namespace Gigya.Microdot.ServiceProxy
                         asyncActionStopwatch.Stop();
 
                         clientCallEvent.ClientReadResponseTime = asyncActionStopwatch.ElapsedMilliseconds;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("Failed to call remote service. See tags for URL and exception for details.",
+                            exception: ex,
+                            unencryptedTags: new { uri });
+                        throw;
                     }
                     finally
                     {
