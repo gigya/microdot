@@ -456,13 +456,6 @@ namespace Gigya.Microdot.ServiceProxy
                     clientCallEvent.RequestStartTimestamp = Stopwatch.GetTimestamp();
                     try
                     {
-                        bool isNewCreated;
-                        (httpClient, isHttps, isNewCreated) = GetHttpClient(config, discoveryConfig, tryHttps,
-                            nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
-                        
-                        clientCallEvent.IsNewClientCreated = isNewCreated;
-                        clientCallEvent.ProtocolSchema = isHttps ? "HTTPS" : "HTTP";
-
                         // The URL is only for a nice experience in Fiddler, it's never parsed/used for anything.
                         uri = BuildUri(nodeAndLoadBalancer.Node.Hostname, effectivePort.Value, isHttps,
                             out int actualPort) + ServiceName;
@@ -470,6 +463,13 @@ namespace Gigya.Microdot.ServiceProxy
                             uri += $".{request.Target.MethodName}";
                         if (request.Target.Endpoint != null)
                             uri += $"/{request.Target.Endpoint}";
+
+                        bool isNewCreated;
+                        (httpClient, isHttps, isNewCreated) = GetHttpClient(config, discoveryConfig, tryHttps,
+                            nodeAndLoadBalancer.Node.Hostname, effectivePort.Value);
+
+                        clientCallEvent.IsNewClientCreated = isNewCreated;
+                        clientCallEvent.ProtocolSchema = isHttps ? "HTTPS" : "HTTP";
 
                         Log.Debug(_ => _("ServiceProxy: Calling remote service. See tags for details.",
                             unencryptedTags: new
@@ -501,6 +501,13 @@ namespace Gigya.Microdot.ServiceProxy
                         asyncActionStopwatch.Stop();
 
                         clientCallEvent.ClientReadResponseTime = asyncActionStopwatch.ElapsedMilliseconds;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("Failed to call remote service. See tags for URL and exception for details.",
+                            exception: ex,
+                            unencryptedTags: new { uri });
+                        throw;
                     }
                     finally
                     {
