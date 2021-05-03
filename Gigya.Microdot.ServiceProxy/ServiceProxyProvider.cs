@@ -688,7 +688,7 @@ namespace Gigya.Microdot.ServiceProxy
         private void PublishServiceConnectionMetrics(string uri)
 		{
 			DiscoveryConfig config = GetDiscoveryConfig();
-			if (!config.PublishConnectionsMetrics)
+			if (!config.PublishConnectionsMetrics || string.IsNullOrEmpty(uri))
 				return;
 
 			Uri serviceUri = new Uri(uri);
