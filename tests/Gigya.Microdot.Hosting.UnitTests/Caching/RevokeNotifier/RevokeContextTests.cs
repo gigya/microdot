@@ -85,7 +85,17 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         }
 
         [Test]
-        public void TryInvoke_RevokeContext__Doesnt_Invokes_Func_If_Revokee_Collected()
+        public void RevokeContext_TaskScheduler_Should_Not_Be_Collected()
+        {
+            // Arrange & Act
+            var revokeContext = CreateRevokeContext(Revokee1, true);
+
+            // Assert
+            Assert.NotNull(revokeContext.RevokeeTaskScheduler);
+        }
+
+        [Test]
+        public void TryInvoke_RevokeContext_Doesnt_Invokes_Func_If_Revokee_Collected()
         {
             // Arrange
             var revokeContext = CreateRevokeContext(collectObject:true);

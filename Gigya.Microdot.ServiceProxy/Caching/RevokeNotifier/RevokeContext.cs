@@ -7,20 +7,20 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
     {
         private WeakReference<object> _revokee;
         private WeakReference<Func<string, Task>> _callback;
-        private WeakReference<TaskFactory> _revokeeTaskScheduler;
+        private TaskFactory _revokeeTaskScheduler;
 
 
         public RevokeContext(object revokee, Func<string, Task> callback, TaskScheduler revokeeTaskScheduler)
         {
             _revokee = new WeakReference<object>(revokee);
             _callback = new WeakReference<Func<string, Task>>(callback);
-            _revokeeTaskScheduler = new WeakReference<TaskFactory>(new TaskFactory(revokeeTaskScheduler));
+            _revokeeTaskScheduler = new TaskFactory(revokeeTaskScheduler);
         }
 
 
         public object Revokee => UnWrapWeakReference(_revokee);
         private Func<string, Task> Callback => UnWrapWeakReference(_callback);
-        private TaskFactory RevokeeTaskScheduler => UnWrapWeakReference(_revokeeTaskScheduler);
+        public TaskFactory RevokeeTaskScheduler => _revokeeTaskScheduler;
 
         private static T UnWrapWeakReference<T>(WeakReference<T> reference) where T:class
         {
