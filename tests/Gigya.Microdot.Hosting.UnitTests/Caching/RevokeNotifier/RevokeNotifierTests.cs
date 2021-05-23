@@ -63,7 +63,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         }
 
         [Test]
-        public void NotifyOnRevoke_Null_Callback_Should_Throw()
+        public void NotifyOnRevoke_Null_RevokeKey_Should_Throw()
         {
             // Arrange
             var revokeNotifier = this.CreateRevokeNotifier();
@@ -74,7 +74,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             // Act & Assert
             Assert.Throws<NullReferenceException>(() => revokeNotifier.NotifyOnRevoke(
                 @this,
-                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
+                null,
                 revokeKeys));
         }
 
