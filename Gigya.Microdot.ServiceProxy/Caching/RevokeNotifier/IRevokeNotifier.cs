@@ -5,7 +5,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 {
     public interface IRevokeNotifier
     {
-        void NotifyOnRevoke(object @this, Func<string, Task> callback, params string[] revokeKeys);
+        void NotifyOnRevoke(object @this, IRevokeKey revokeKey, params string[] revokeKeys);
         void RemoveNotifications(object @this, params string[] revokeKeys);
         void RemoveAllNotifications(object @this);
     }

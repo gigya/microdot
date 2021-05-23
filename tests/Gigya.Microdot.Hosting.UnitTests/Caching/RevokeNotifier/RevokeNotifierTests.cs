@@ -52,13 +52,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             // Arrange
             var revokeNotifier = this.CreateRevokeNotifier();
             object @this = null;
-            Func<string, Task> callback = s => Task.CompletedTask;
+
             string[] revokeKeys = {"key"};
 
             // Act & Assert
             Assert.Throws<NullReferenceException>(()=>revokeNotifier.NotifyOnRevoke(
                 @this,
-                callback,
+                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                 revokeKeys));
         }
 
@@ -68,13 +68,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             // Arrange
             var revokeNotifier = this.CreateRevokeNotifier();
             object @this = new object();
-            Func<string, Task> callback = null;
+
             string[] revokeKeys = { "key" };
 
             // Act & Assert
             Assert.Throws<NullReferenceException>(() => revokeNotifier.NotifyOnRevoke(
                 @this,
-                callback,
+                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                 revokeKeys));
         }
 
@@ -84,13 +84,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             // Arrange
             var revokeNotifier = this.CreateRevokeNotifier();
             object @this = new object();
-            Func<string, Task> callback = s => Task.CompletedTask;
+            
             string[] revokeKeys = null;
 
             // Act & Assert
             Assert.Throws<NullReferenceException>(() => revokeNotifier.NotifyOnRevoke(
                 @this,
-                callback,
+                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                 revokeKeys));
         }
 
@@ -100,14 +100,14 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             // Arrange
             var revokeNotifier = this.CreateRevokeNotifier();
             object @this = new object();
-            Func<string, Task> callback = s => Task.CompletedTask;
+            
             var key = "Foo";
             string[] revokeKeys = { key };
 
             // Act 
             revokeNotifier.NotifyOnRevoke(
                 @this,
-                callback,
+                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                 revokeKeys);
 
             //Assert
@@ -122,12 +122,11 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             var revokeNotifier = this.CreateRevokeNotifier();
             object obj = new object();
 
-            Func<string, Task> callback = s => Task.CompletedTask;
             var key1 = "Foo1";
             var key2 = "Foo2";
 
             // Act 
-            revokeNotifier.NotifyOnRevoke(obj, callback, key1, key2);
+            revokeNotifier.NotifyOnRevoke(obj, RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance, key1, key2);
 
             //Assert
             subRevokeKeyIndexer.Received(1).AddRevokeContext(key1, Arg.Any<RevokeContext>());
@@ -164,13 +163,13 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             // Arrange
             var revokeNotifier = this.CreateRevokeNotifier();
             object @this = new object();
-            Func<string, Task> callback = s => Task.CompletedTask;
+            
             var key = "Foo";
             string[] revokeKeys = { key };
             
             revokeNotifier.NotifyOnRevoke(
                 @this,
-                callback,
+                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                 revokeKeys);
             
             // Act
@@ -200,12 +199,11 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             object obj1 = new object();
             object obj2 = new object();
 
-            Func<string, Task> callback = s => Task.CompletedTask;
             var key1 = "Foo1";
             var key2 = "Foo2";
 
-            revokeNotifier.NotifyOnRevoke(obj1,callback,key1,key2);
-            revokeNotifier.NotifyOnRevoke(obj2, callback, key1, key2);
+            revokeNotifier.NotifyOnRevoke(obj1, RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance, key1,key2);
+            revokeNotifier.NotifyOnRevoke(obj2, RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance, key1, key2);
             
             // Act
             revokeNotifier.RemoveAllNotifications(obj1);

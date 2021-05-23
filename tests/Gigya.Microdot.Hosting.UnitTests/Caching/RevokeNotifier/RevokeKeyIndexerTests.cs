@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         {
             var target = new RevokeNotifierTestClass();
             RevokeContext res = new RevokeContext(target,
-                (s) => Task.CompletedTask,
+                RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                 TaskScheduler.Current);
             _anchor.Add(target);
             return res;
@@ -46,7 +46,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             Action notRootByDebuger = () =>
             {
                 res = new RevokeContext(new RevokeNotifierTestClass(),
-                    (s) => Task.CompletedTask,
+                    RevokeContextConcurrentCollectionTests.RevokeKeySubstitute.Instance,
                     TaskScheduler.Current);
 
             };

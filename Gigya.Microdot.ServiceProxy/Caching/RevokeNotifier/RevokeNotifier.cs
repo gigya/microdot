@@ -84,16 +84,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
             return Task.CompletedTask;
         }
 
-        public  void NotifyOnRevoke(object @this, Func<string, Task> callback, params string[] revokeKeys)
+        public  void NotifyOnRevoke(object @this, IRevokeKey revokeKey, params string[] revokeKeys)
         {
             if (null == @this)
             {
                 throw new NullReferenceException("Object can't be null");
             }
 
-            if (null == callback)
+            if (null == revokeKey)
             {
-                throw new NullReferenceException("Callback can't be null");
+                throw new NullReferenceException("IRevokeKey can't be null");
             }
 
             if (null == revokeKeys)
@@ -103,14 +103,14 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
             foreach (var key in revokeKeys)
             {
-                NotifyOnRevokeOnce(key, @this, callback);
+                NotifyOnRevokeOnce(key, @this, revokeKey);
             }
             
         }
 
-        protected  void NotifyOnRevokeOnce(string key, object @this, Func<string, Task> callback)
+        protected  void NotifyOnRevokeOnce(string key, object @this, IRevokeKey revokeKey)
         {
-            var newContext = new RevokeContext(@this, callback, TaskScheduler.Current);
+            var newContext = new RevokeContext(@this, revokeKey, TaskScheduler.Current);
             _revokeIndexer.AddRevokeContext(key, newContext);
         }
 
