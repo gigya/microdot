@@ -10,7 +10,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
     [TestFixture]
     public class RevokeContextTests
     {
-        private Func<string, Task> subFunc;
+        private IRevokeKey subRevokeKey;
         private TaskScheduler subTaskScheduler;
 
         //Rooting anchors
@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         [SetUp]
         public void SetUp()
         {
-            this.subFunc = Substitute.For<Func<string, Task>>();
+            this.subRevokeKey = Substitute.For<IRevokeKey>();
             this.subTaskScheduler = TaskScheduler.Current;
         }
 
@@ -55,7 +55,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
             Action notRootByDebuger = () =>
             {
                 res = new RevokeContext(revokee??new RevokeNotifierTestClass(), 
-                    this.subFunc,
+                    this.subRevokeKey,
                     this.subTaskScheduler);
 
             };
@@ -85,7 +85,17 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
         }
 
         [Test]
-        public void TryInvoke_RevokeContext__Doesnt_Invokes_Func_If_Revokee_Collected()
+        public void RevokeContext_TaskScheduler_Should_Not_Be_Collected()
+        {
+            // Arrange & Act
+            var revokeContext = CreateRevokeContext(Revokee1, true);
+
+            // Assert
+            Assert.NotNull(revokeContext.RevokeeTaskFactory);
+        }
+
+        [Test]
+        public void TryInvoke_RevokeContext_Doesnt_Invokes_Func_If_Revokee_Collected()
         {
             // Arrange
             var revokeContext = CreateRevokeContext(collectObject:true);
@@ -97,7 +107,7 @@ namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
 
             // Assert
             Assert.False(result);
-            subFunc.DidNotReceive().Invoke(Arg.Is("foo"));
+            subRevokeKey.DidNotReceive().OnKeyRevoked(Arg.Is("foo"));
         }
 
         [Test]

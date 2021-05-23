@@ -6,21 +6,21 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
     public class RevokeContext
     {
         private WeakReference<object> _revokee;
-        private WeakReference<Func<string, Task>> _callback;
-        private WeakReference<TaskFactory> _revokeeTaskScheduler;
+        private WeakReference<IRevokeKey> _revokeKey;
+        private TaskFactory _revokeeTaskFactory;
 
 
-        public RevokeContext(object revokee, Func<string, Task> callback, TaskScheduler revokeeTaskScheduler)
+        public RevokeContext(object revokee, IRevokeKey revokeKey, TaskScheduler revokeeTaskScheduler)
         {
             _revokee = new WeakReference<object>(revokee);
-            _callback = new WeakReference<Func<string, Task>>(callback);
-            _revokeeTaskScheduler = new WeakReference<TaskFactory>(new TaskFactory(revokeeTaskScheduler));
+            _revokeKey = new WeakReference<IRevokeKey>(revokeKey);
+            _revokeeTaskFactory = new TaskFactory(revokeeTaskScheduler);
         }
 
 
         public object Revokee => UnWrapWeakReference(_revokee);
-        private Func<string, Task> Callback => UnWrapWeakReference(_callback);
-        private TaskFactory RevokeeTaskScheduler => UnWrapWeakReference(_revokeeTaskScheduler);
+        private IRevokeKey RevokeKey => UnWrapWeakReference(_revokeKey);
+        public TaskFactory RevokeeTaskFactory => _revokeeTaskFactory;
 
         private static T UnWrapWeakReference<T>(WeakReference<T> reference) where T:class
         {
@@ -29,16 +29,16 @@ namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 
         public bool TryInvoke(string key)
         {
-            var scheduler = RevokeeTaskScheduler;
-            var callback = Callback;
+            var revokeeTaskFactory = RevokeeTaskFactory;
+            var revokeKey = RevokeKey;
 
             //Those objects might have been collected by the GC need to verify before invoking
-            if (scheduler == null || callback == null)
+            if (revokeeTaskFactory == null || revokeKey == null)
             {
                 return false;
             }
 
-            scheduler.StartNew(() => callback(key));
+            revokeeTaskFactory.StartNew(() => revokeKey.OnKeyRevoked(key));
 
             return true;
         }
