@@ -54,13 +54,15 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly CurrentApplicationInfo _appInfo;
         private readonly ISiloHostBuilder _siloHostBuilder;
         private readonly ICertificateLocator _certificateLocator;
+        private IOrleansConfigurationBuilderConfigurator _orleansConfigurationBuilderConfigurator;
 
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
             OrleansServiceInterfaceMapper orleansServiceInterfaceMapper,
             ClusterIdentity clusterIdentity, IServiceEndPointDefinition endPointDefinition,
             ServiceArguments serviceArguments,
             CurrentApplicationInfo appInfo,
-            ICertificateLocator certificateLocator)
+            ICertificateLocator certificateLocator,
+            IOrleansConfigurationBuilderConfigurator orleansConfigurationBuilderConfigurator)
         {
             _orleansConfig = orleansConfig;
             _commonConfig = commonConfig;
@@ -70,6 +72,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             _serviceArguments = serviceArguments;
             _appInfo = appInfo;
             _certificateLocator = certificateLocator;
+            _orleansConfigurationBuilderConfigurator = orleansConfigurationBuilderConfigurator;
             _siloHostBuilder = InitBuilder();
         }
 
@@ -108,6 +111,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         private ISiloHostBuilder InitBuilder()
         {
             var hostBuilder = new SiloHostBuilder();
+
+            _orleansConfigurationBuilderConfigurator.PreInitializationConfiguration(hostBuilder);
 
             hostBuilder.Configure<SerializationProviderOptions>(options =>
                 {
@@ -190,6 +195,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 o.PerfCountersWriteInterval = TimeSpan.Parse(_orleansConfig.MetricsTableWriteInterval);
             });
 
+            _orleansConfigurationBuilderConfigurator.PostInitializationConfiguration(hostBuilder);
             return hostBuilder;
         }
 
