@@ -1,4 +1,5 @@
-﻿using Gigya.Microdot.Interfaces.Configuration;
+﻿using System;
+using Gigya.Microdot.Interfaces.Configuration;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -55,6 +56,8 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// </example>
         [JsonConverter(typeof(StringEnumConverter))]
         public LogLevel DefaultCategoryLogLevel  { get; set; } = LogLevel.Information;
+        
+        public TimeSpan? MessageResponseTime { get; set; }
     }
 
     public class ZooKeeperConfig
