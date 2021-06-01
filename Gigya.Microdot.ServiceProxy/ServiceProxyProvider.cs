@@ -289,9 +289,9 @@ namespace Gigya.Microdot.ServiceProxy
                     _httpMessageHandler = messageHandler;
                 }
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                Log.Info(_ => _($"HTTPS for service {ServiceName} is not available."));
+                Log.Warn(_ => _($"HTTPS for service {ServiceName} is not available.", ex));
             }
         }
 

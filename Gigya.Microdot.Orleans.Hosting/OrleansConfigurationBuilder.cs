@@ -152,10 +152,18 @@ namespace Gigya.Microdot.Orleans.Hosting
                 options.MaxActiveThreads = Process.GetCurrentProcess().ProcessorAffinityList().Count();
             });
 
-            hostBuilder.Configure<ClusterMembershipOptions>(options =>
+            hostBuilder.Configure<ClientMessagingOptions>(options =>
             {
-               
+                if (_orleansConfig.MessageResponseTime.HasValue)
+                    options.ResponseTimeout = _orleansConfig.MessageResponseTime.Value;
             });
+            
+            hostBuilder.Configure<SiloMessagingOptions>(options =>
+            {
+                if (_orleansConfig.MessageResponseTime.HasValue)
+                    options.ResponseTimeout = _orleansConfig.MessageResponseTime.Value;
+            });
+
 
             if (_orleansConfig.EnableTls)
             {
