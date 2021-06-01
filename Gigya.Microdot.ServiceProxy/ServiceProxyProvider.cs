@@ -291,7 +291,8 @@ namespace Gigya.Microdot.ServiceProxy
             }
             catch (HttpRequestException ex)
             {
-                Log.Warn(_ => _($"HTTPS for service {ServiceName} is not available.", ex));
+                Log.Info(_ => _($"HTTPS for service {ServiceName} is not available."));
+                Log.Debug(_ => _($"HTTPS for service {ServiceName} is not available.", ex));
             }
         }
 
