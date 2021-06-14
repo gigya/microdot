@@ -2,7 +2,9 @@
 using System.Net.Http;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.SharedLogic.Security;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Orleans;
 using Orleans.Configuration;
@@ -110,6 +112,29 @@ namespace Gigya.Microdot.UnitTests.Serialization
             
             AssertExceptionsAreEqual(expected, actual2);
             AssertExceptionsAreEqual(expected, actual);
+        }
+
+        [Test]
+        public void ExcludeTypesSerializationBinder_PreventsConfiguredTypes()
+        {
+            var excludeTypesSerializationBinder = new ExcludeTypesSerializationBinder();
+            excludeTypesSerializationBinder.ExcludeTypes.Add("System.Windows.Data.ObjectDataProvider");
+
+            var forbidenJson =
+                @"{""$type"":""System.Windows.Data.ObjectDataProvider, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"",""MethodName"":""Start"",""MethodParameters"":{""$type"":""System.Collections.ArrayList, mscorlib, Version=4.0.0.0,Culture=neutral, PublicKeyToken=b77a5c561934e089"",""$values"":[""cmd"",""/ccalc""]},""ObjectInstance"":{""$type"":""System.Diagnostics.Process, System,Version=4.0.0.0, ulture=neutral, PublicKeyToken=b77a5c561934e089""}}";
+            try
+            {
+                JsonConvert.DeserializeObject(forbidenJson, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    SerializationBinder = excludeTypesSerializationBinder
+                });
+                Assert.True(false, "Json Deserialize MUST throw here (security issue)");
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'System.Windows.Data.ObjectDataProvider'", ex.InnerException?.Message);
+            }
         }
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)
