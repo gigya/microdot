@@ -147,7 +147,7 @@ namespace Gigya.Microdot.ServiceProxy
             Func<MicrodotSerializationSecurity> microdotSerializationSecurity)
         {
             var binder = new ExcludeTypesSerializationBinder();
-            binder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbidenTypes);
+            binder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbiddenTypes);
             JsonSettings.SerializationBinder = binder;
 
             EventPublisher = eventPublisher;

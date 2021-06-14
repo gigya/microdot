@@ -49,7 +49,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public OrleansCustomSerialization(Func<MicrodotSerializationSecurity> microdotSerializationSecurity)
         {
-            ExcludeTypesSerializationBinder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbidenTypes);
+            ExcludeTypesSerializationBinder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbiddenTypes);
 
             _supportedTypes = new[]
             {

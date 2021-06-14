@@ -41,7 +41,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
         public ServiceProxyProvider(string serviceName, Func<MicrodotSerializationSecurity> microdotSerializationSecurity)
         {
             var binder = new ExcludeTypesSerializationBinder();
-            binder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbidenTypes);
+            binder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbiddenTypes);
             JsonSettings.SerializationBinder = binder;
 
             ServiceName = serviceName;

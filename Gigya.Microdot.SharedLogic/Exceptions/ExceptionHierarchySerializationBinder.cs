@@ -44,7 +44,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         private Type TryBindToType(string assemblyName, string typeName)
         {
             var binder = new ExcludeTypesSerializationBinder();
-            binder.ParseCommaSeparatedToExcludeTypes(_microdotSerializationSecurity().DeserializationForbidenTypes);
+            binder.ParseCommaSeparatedToExcludeTypes(_microdotSerializationSecurity().DeserializationForbiddenTypes);
             if (binder.IsExcluded(typeName))
             {
                 throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToType (from ExceptionHierarchySerializationBinder) type '{typeName}'");
@@ -92,7 +92,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
             var binder = new ExcludeTypesSerializationBinder();
-            binder.ParseCommaSeparatedToExcludeTypes(_microdotSerializationSecurity().DeserializationForbidenTypes);
+            binder.ParseCommaSeparatedToExcludeTypes(_microdotSerializationSecurity().DeserializationForbiddenTypes);
             var nameAssembly = serializedType.Assembly.FullName;
             if (binder.IsExcluded(nameAssembly))
             {

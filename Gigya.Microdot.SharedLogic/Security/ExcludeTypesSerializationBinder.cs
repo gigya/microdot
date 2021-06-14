@@ -10,7 +10,7 @@ namespace Gigya.Microdot.SharedLogic.Security
     [ConfigurationRoot("Microdot.SerializationSecurity", RootStrategy.ReplaceClassNameWithPath)]
     public class MicrodotSerializationSecurity : IConfigObject
     {
-        public string DeserializationForbidenTypes = "System.Windows.Data.ObjectDataProvider,System.Diagnostics.Process";
+        public string DeserializationForbiddenTypes = "System.Windows.Data.ObjectDataProvider,System.Diagnostics.Process";
     }
 
     public class ExcludeTypesSerializationBinder : ISerializationBinder
@@ -19,7 +19,7 @@ namespace Gigya.Microdot.SharedLogic.Security
 
         public void ParseCommaSeparatedToExcludeTypes(string commaSeparated)
         {
-            var items = commaSeparated?.Split(',');
+            var items = commaSeparated?.Split(',') ?? new string[0];
             foreach (var item in items)
             {
                 if (ExcludeTypes.Contains(item) == false)
