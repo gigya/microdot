@@ -28,6 +28,9 @@ using Orleans.Serialization;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic.Security;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
@@ -38,12 +41,16 @@ namespace Gigya.Microdot.Orleans.Hosting
     /// </summary>
     public class OrleansCustomSerialization : IExternalSerializer
     {
+        private static readonly ExcludeTypesSerializationBinder ExcludeTypesSerializationBinder = new ExcludeTypesSerializationBinder();
+
         protected readonly Dictionary<string,Type> _supportedTypes;
 
         public Func<JsonSerializerSettings> JsonSettingsFunc { get; set; }
 
-        public OrleansCustomSerialization()
+        public OrleansCustomSerialization(Func<MicrodotSerializationSecurity> microdotSerializationSecurity)
         {
+            ExcludeTypesSerializationBinder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbidenTypes);
+
             _supportedTypes = new[]
             {
                 typeof(JObject), 
@@ -59,7 +66,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
                 Formatting = Formatting.Indented,
-                DateParseHandling = DateParseHandling.None
+                DateParseHandling = DateParseHandling.None,
+                SerializationBinder = ExcludeTypesSerializationBinder
             };
         }
 

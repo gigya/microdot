@@ -34,6 +34,7 @@ using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
@@ -44,6 +45,7 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Gigya.Microdot.SharedLogic.Security;
 using Gigya.Microdot.SharedLogic.Utils;
 using Metrics;
 using Newtonsoft.Json;
@@ -141,8 +143,13 @@ namespace Gigya.Microdot.ServiceProxy
             Func<DiscoveryConfig> getConfig,
             JsonExceptionSerializer exceptionSerializer, 
             CurrentApplicationInfo appInfo,
-            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory)
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory,
+            Func<MicrodotSerializationSecurity> microdotSerializationSecurity)
         {
+            var binder = new ExcludeTypesSerializationBinder();
+            binder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbidenTypes);
+            JsonSettings.SerializationBinder = binder;
+
             EventPublisher = eventPublisher;
 
             Log = log;

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -24,9 +25,12 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         private static readonly ConcurrentDictionary<string, string> typeNameToFixedAssyemblyCache =
             new ConcurrentDictionary<string, string>();
 
-        public ExceptionHierarchySerializationBinder(Func<ExceptionSerializationConfig> getExceptionSerializationConfig)
+        private static Func<MicrodotSerializationSecurity> _microdotSerializationSecurity;
+
+        public ExceptionHierarchySerializationBinder(Func<ExceptionSerializationConfig> getExceptionSerializationConfig, Func<MicrodotSerializationSecurity> _microdotConfigFunc)
         {
             _getExceptionSerializationConfig = getExceptionSerializationConfig;
+            _microdotSerializationSecurity = _microdotConfigFunc;
         }
         public override Type BindToType(string assemblyName, string typeName)
         {
@@ -39,6 +43,13 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 
         private Type TryBindToType(string assemblyName, string typeName)
         {
+            var binder = new ExcludeTypesSerializationBinder();
+            binder.ParseCommaSeparatedToExcludeTypes(_microdotSerializationSecurity().DeserializationForbidenTypes);
+            if (binder.IsExcluded(typeName))
+            {
+                throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToType (from ExceptionHierarchySerializationBinder) type '{typeName}'");
+            }
+
             try
             {
                 if (_getExceptionSerializationConfig().UseNetCoreToFrameworkTypeTranslation)
@@ -80,6 +91,14 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 
         public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
+            var binder = new ExcludeTypesSerializationBinder();
+            binder.ParseCommaSeparatedToExcludeTypes(_microdotSerializationSecurity().DeserializationForbidenTypes);
+            var nameAssembly = serializedType.Assembly.FullName;
+            if (binder.IsExcluded(nameAssembly))
+            {
+                throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToName type (from ExceptionHierarchySerializationBinder) '{serializedType.FullName}'");
+            }
+
             if (serializedType.IsSubclassOf(typeof(Exception)))
             {
                 var inheritanceHierarchy = GetInheritanceHierarchy(serializedType)

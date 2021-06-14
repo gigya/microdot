@@ -20,6 +20,11 @@ namespace Gigya.Microdot.UnitTests.Serialization
         private SerializationManager _serializationManager;
 		private MyServiceException MyServiceException { get; set; }
 
+        private class ForSerializationClass
+        {
+            public int Dummy;
+        }
+
         /// <remarks>
         /// c:\gigya\orleans\test\Benchmarks\Serialization\SerializationBenchmarks.cs
         /// </remarks>
@@ -129,12 +134,47 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     TypeNameHandling = TypeNameHandling.All,
                     SerializationBinder = excludeTypesSerializationBinder
                 });
-                Assert.True(false, "Json Deserialize MUST throw here (security issue)");
             }
             catch (Exception ex)
             {
                 Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'System.Windows.Data.ObjectDataProvider'", ex.InnerException?.Message);
+                return;
             }
+            Assert.True(false, "Json Deserialize MUST throw here (security issue)");
+        }
+
+        [Test]
+        public void ExcludeTypesSerializationBinder_AllowNonConfiguredTypes()
+        {
+            var newCls = new ForSerializationClass();
+            var json = JsonConvert.SerializeObject(newCls, new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All});
+
+            var excludeTypesSerializationBinder = new ExcludeTypesSerializationBinder();
+            excludeTypesSerializationBinder.ExcludeTypes.Add("System.Windows.Data.ObjectDataProvider");
+
+            var t = JsonConvert.DeserializeObject(json, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    SerializationBinder = excludeTypesSerializationBinder
+                });
+
+            Assert.AreEqual(typeof(ForSerializationClass), t?.GetType());
+
+            excludeTypesSerializationBinder.ExcludeTypes.Add("ForSerial");
+            try
+            {
+                JsonConvert.DeserializeObject(json, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    SerializationBinder = excludeTypesSerializationBinder
+                });
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'ForSerial*'", ex.InnerException?.Message);
+                return;
+            }
+            Assert.True(false, "Json Deserialize MUST throw here (security issue!)");
         }
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)

@@ -6,10 +6,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
@@ -36,9 +38,12 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
 
-        public ServiceProxyProvider(string serviceName)
+        public ServiceProxyProvider(string serviceName, Func<MicrodotSerializationSecurity> microdotSerializationSecurity)
         {
-            
+            var binder = new ExcludeTypesSerializationBinder();
+            binder.ParseCommaSeparatedToExcludeTypes(microdotSerializationSecurity().DeserializationForbidenTypes);
+            JsonSettings.SerializationBinder = binder;
+
             ServiceName = serviceName;
         }
 

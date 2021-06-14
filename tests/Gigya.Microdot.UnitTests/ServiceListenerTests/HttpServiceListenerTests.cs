@@ -40,6 +40,7 @@ using RichardSzalay.MockHttp;
 using Shouldly;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic.Security;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -284,7 +285,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     Substitute.For<ILog>(),
                     Enumerable.Empty<ICustomEndpoint>(),
                     Substitute.For<IEnvironment>(),
-                    new JsonExceptionSerializer(Substitute.For<IStackTraceEnhancer>(), new JsonExceptionSerializationSettings(()=> new ExceptionSerializationConfig(false, false))),
+                    new JsonExceptionSerializer(Substitute.For<IStackTraceEnhancer>(), new JsonExceptionSerializationSettings(() => new MicrodotSerializationSecurity(), () => new ExceptionSerializationConfig(false, false))),
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
@@ -325,7 +326,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     Substitute.For<ILog>(),
                     Enumerable.Empty<ICustomEndpoint>(),
                     Substitute.For<IEnvironment>(),
-                    new JsonExceptionSerializer(Substitute.For<IStackTraceEnhancer>(), new JsonExceptionSerializationSettings(()=> new ExceptionSerializationConfig(false, false))),
+                    new JsonExceptionSerializer(Substitute.For<IStackTraceEnhancer>(), new JsonExceptionSerializationSettings(() => new MicrodotSerializationSecurity(), () => new ExceptionSerializationConfig(false, false))),
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),

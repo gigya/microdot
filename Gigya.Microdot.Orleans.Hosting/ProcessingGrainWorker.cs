@@ -23,6 +23,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Service;
 using Orleans;
