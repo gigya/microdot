@@ -5,16 +5,6 @@ VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Hosting", "Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj", "{33C1B76E-47B2-40BC-A434-81EE22996BEF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Solution Items", ".Solution Items", "{2E2E6FD0-E228-44D7-9794-FEA76E00FD34}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		Changelog.md = Changelog.md
-		Directory.Build.props = Directory.Build.props
-		LICENSE.md = LICENSE.md
-		main.ruleset = main.ruleset
-		README.md = README.md
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Fakes", "Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj", "{2865F69B-D847-4901-8945-4941E463F94E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.ServiceProxy", "Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj", "{1FCB2569-A640-4292-9CDC-821AEEF14813}"
@@ -75,6 +65,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Changelog.md = Changelog.md
 		Directory.Build.props = Directory.Build.props
 		LICENSE.md = LICENSE.md
+		main.ruleset = main.ruleset
 		README.md = README.md
 		test.runsettings = test.runsettings
 	EndProjectSection
@@ -208,7 +199,7 @@ Global
 		{DB6D3561-835E-40D5-B9D4-83951CF426DF} = {A14C7201-FAAC-487C-AED3-8A0CA86A8A88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
 		SolutionGuid = {8A847321-B6B0-4BA9-9AC3-0DB91FA99B90}
+		EnterpriseLibraryConfigurationToolBinariesPathV6 = packages\EnterpriseLibrary.TransientFaultHandling.6.0.1304.0\lib\portable-net45+win+wp8
 	EndGlobalSection
 EndGlobal
