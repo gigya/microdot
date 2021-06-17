@@ -173,7 +173,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         {
             var specialVersions = new[] { new { Name = "(service)", Version = GetVersion(Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()) } };
             var assemblyVersions = AssemblyProvider.GetAssemblies()
-                                                   .Where(x => x.GlobalAssemblyCache == false)
+                                                   //.Where(x => x.GlobalAssemblyCache == false)
                                                    .Select(a => new { a.GetName().Name, Version = GetVersion(a) });
 
             return specialVersions

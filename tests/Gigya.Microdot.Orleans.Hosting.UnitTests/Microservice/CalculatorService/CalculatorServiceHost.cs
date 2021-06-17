@@ -46,9 +46,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         {
             return new FakesLoggersModules();
         }
-
-        public IKernel Kernel;
-
+        
         protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
         {
             var env = new HostEnvironment(new TestHostEnvironmentSource());

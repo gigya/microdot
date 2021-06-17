@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFrameworks>net472;net5.0</TargetFrameworks>
 		<LangVersion>8</LangVersion>
 		<AssemblyTitle>Gigya.ServiceContract.UnitTests</AssemblyTitle>
 		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>

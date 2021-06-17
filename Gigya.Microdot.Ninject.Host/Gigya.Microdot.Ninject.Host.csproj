@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
 		<LangVersion>8</LangVersion>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
 		<AssemblyTitle>Gigya.Microdot.Ninject.Host</AssemblyTitle>

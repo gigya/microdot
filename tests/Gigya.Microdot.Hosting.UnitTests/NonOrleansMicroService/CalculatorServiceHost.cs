@@ -13,7 +13,6 @@ namespace Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService
 {
     public class CalculatorServiceHost : MicrodotServiceHost<ICalculatorService>
     {
-        public IKernel Kernel;
         private readonly HostEnvironment environment;
 
         public override string ServiceName => "ICalculatorService";

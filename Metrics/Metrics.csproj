@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>8.0</LangVersion>
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -48,6 +48,5 @@
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.*" />
-		<PackageReference Include="LibLog" Version="4.2.6" />
 	</ItemGroup>
 </Project>

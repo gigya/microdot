@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using Gigya.Microdot.LanguageExtensions;
 
 namespace Gigya.Microdot.SharedLogic
@@ -32,11 +30,6 @@ namespace Gigya.Microdot.SharedLogic
         public static string HostName { get; private set; }
 
         /// <summary>
-        /// Indicates if the current process is running as a Windows service.
-        /// </summary>
-        public bool IsRunningAsWindowsService { get; }
-
-        /// <summary>
         /// Indicates whether current process has an interactive console window.
         /// </summary>
         public bool HasConsoleWindow { get; }
@@ -62,13 +55,8 @@ namespace Gigya.Microdot.SharedLogic
 
             Version = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()).GetName().Version;
 
-            // ReSharper disable once PossibleNullReferenceException
-            // TODO: Test whether this code is still correct or remove outright
-            IsRunningAsWindowsService = Environment.OSVersion.Platform == PlatformID.Win32NT &&
-                OsUser == @"NT AUTHORITY\SYSTEM";
-
             // TODO: Consider using Environment.UserInteractive
-            HasConsoleWindow = !IsRunningAsWindowsService && !Console.IsInputRedirected;
+            HasConsoleWindow = !Console.IsInputRedirected;
 
             // TODO: Possible error: Microdot version assigned to Infra version
             InfraVersion = infraVersion ?? typeof(CurrentApplicationInfo).Assembly.GetName().Version;
