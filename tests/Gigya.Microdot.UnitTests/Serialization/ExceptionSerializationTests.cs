@@ -122,9 +122,6 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void ExcludeTypesSerializationBinder_PreventsConfiguredTypes()
         {
-            var excludeTypesSerializationBinder = new ExcludeTypesSerializationBinder();
-            excludeTypesSerializationBinder.ExcludeTypes.Add("System.Windows.Data.ObjectDataProvider");
-
             var forbidenJson =
                 @"{""$type"":""System.Windows.Data.ObjectDataProvider, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"",""MethodName"":""Start"",""MethodParameters"":{""$type"":""System.Collections.ArrayList, mscorlib, Version=4.0.0.0,Culture=neutral, PublicKeyToken=b77a5c561934e089"",""$values"":[""cmd"",""/ccalc""]},""ObjectInstance"":{""$type"":""System.Diagnostics.Process, System,Version=4.0.0.0, ulture=neutral, PublicKeyToken=b77a5c561934e089""}}";
             try
@@ -132,8 +129,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 JsonConvert.DeserializeObject(forbidenJson, new JsonSerializerSettings
                 {
                     TypeNameHandling = TypeNameHandling.All,
-                    SerializationBinder = excludeTypesSerializationBinder
-                });
+                    SerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("System.Windows.Data.ObjectDataProvider")
+            });
             }
             catch (Exception ex)
             {
@@ -149,8 +146,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
             var newCls = new ForSerializationClass();
             var json = JsonConvert.SerializeObject(newCls, new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All});
 
-            var excludeTypesSerializationBinder = new ExcludeTypesSerializationBinder();
-            excludeTypesSerializationBinder.ExcludeTypes.Add("System.Windows.Data.ObjectDataProvider");
+            var excludeTypesSerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("System.Windows.Data.ObjectDataProvider");
 
             var t = JsonConvert.DeserializeObject(json, new JsonSerializerSettings
                 {
@@ -160,7 +156,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
 
             Assert.AreEqual(typeof(ForSerializationClass), t?.GetType());
 
-            excludeTypesSerializationBinder.ExcludeTypes.Add("ForSerial");
+            excludeTypesSerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("System.Windows.Data.ObjectDataProvider,ForSerial");
             try
             {
                 JsonConvert.DeserializeObject(json, new JsonSerializerSettings
@@ -171,7 +167,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
             }
             catch (Exception ex)
             {
-                Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'ForSerial*'", ex.InnerException?.Message);
+                Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'Gigya.Microdot.UnitTests.Serialization.ExceptionSerializationTests+ForSerializationClass'", ex.InnerException?.Message);
                 return;
             }
             Assert.True(false, "Json Deserialize MUST throw here (security issue!)");
