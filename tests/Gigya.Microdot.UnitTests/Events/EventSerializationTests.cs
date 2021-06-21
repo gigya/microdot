@@ -10,8 +10,10 @@ using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Configurations;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.Security;
 using NUnit.Framework;
 using Shouldly;
 
@@ -28,7 +30,7 @@ namespace Gigya.Microdot.UnitTests.Events
             () => new StackTraceEnhancerSettings(), 
                 new NullEnvironment(), 
                 AppInfo,
-                new JsonExceptionSerializationSettings(()=> new ExceptionSerializationConfig(false, false))
+                new JsonExceptionSerializationSettings(()=> new MicrodotSerializationSecurityConfig(), ()=> new ExceptionSerializationConfig(false, false), new ExcludeTypesSerializationBinderFactory())
             ),
             () => new EventConfiguration(), 
             AppInfo);
@@ -44,7 +46,7 @@ namespace Gigya.Microdot.UnitTests.Events
                     () => new StackTraceEnhancerSettings(),
                     new NullEnvironment(), 
                     AppInfo,
-                    new JsonExceptionSerializationSettings(()=> new ExceptionSerializationConfig(false, false))
+                    new JsonExceptionSerializationSettings(() => new MicrodotSerializationSecurityConfig(), () => new ExceptionSerializationConfig(false, false), new ExcludeTypesSerializationBinderFactory())
                 ),
                 () => new EventConfiguration(), 
                 AppInfo);
