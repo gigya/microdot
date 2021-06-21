@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Net.Http;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
 using Gigya.Microdot.SharedLogic.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Ninject;
 using NUnit.Framework;
 using Orleans;
 using Orleans.Configuration;
@@ -171,6 +175,15 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 return;
             }
             Assert.True(false, "Json Deserialize MUST throw here (security issue!)");
+        }
+
+        [Test]
+        public void CanCreateSerializationAfterBinding()
+        {
+            var kernel = new StandardKernel(new MicrodotModule());
+            var binderFactory = kernel.Get<IExcludeTypesSerializationBinderFactory>();
+            var serializationBinder = binderFactory.GetOrCreateExcludeTypesSerializationBinder("abc,efg");
+            Assert.AreEqual(typeof(ExcludeTypesSerializationBinder), serializationBinder.GetType());
         }
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)

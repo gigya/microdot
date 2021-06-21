@@ -149,7 +149,7 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<IRevokeContextConcurrentCollection>().To<RevokeContextConcurrentCollection>().InTransientScope();
             Kernel.Bind<IRevokeContextConcurrentCollectionFactory>().ToFactory();
             Kernel.Bind<IRevokeKeyIndexerFactory>().ToFactory();
-            Kernel.Bind<IExcludeTypesSerializationBinderFactory>().To<ExcludeTypesSerializationBinderFactory>().InSingletonScope();
+            //Kernel.Bind<IExcludeTypesSerializationBinderFactory>().To<ExcludeTypesSerializationBinderFactory>().InSingletonScope();
         }
 
 
