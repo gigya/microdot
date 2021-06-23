@@ -130,7 +130,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             Func<LoadShedding> loadSheddingConfig,
             IServerRequestPublisher serverRequestPublisher,
             CurrentApplicationInfo appInfo,
-            Func<MicrodotHostingConfig> microdotHostingConfigFactory)
+            Func<MicrodotHostingConfig> microdotHostingConfigFactory,
+            IExcludeTypesSerializationBinderFactory excludeTypesSerializationBinder,
+            Func<MicrodotSerializationSecurityConfig> serializationSecurityConfig)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -146,6 +148,9 @@ namespace Gigya.Microdot.Hosting.HttpService
             AppInfo = appInfo;
 
             _extendedDelayTimeLogging = microdotHostingConfigFactory().ExtendedDelaysTimeLogging; // no need to read every request
+            JsonSettings.SerializationBinder =
+                excludeTypesSerializationBinder.GetOrCreateExcludeTypesSerializationBinder(
+                    serializationSecurityConfig().DeserializationForbiddenTypes);
 
             if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ClientCertificateVerificationMode.Disable)
                 ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();

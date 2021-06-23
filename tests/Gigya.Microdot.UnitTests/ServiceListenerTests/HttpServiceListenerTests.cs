@@ -293,7 +293,9 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                         nameof(HttpServiceListenerTests),
                         Environment.UserName,
                         System.Net.Dns.GetHostName()),
-                    () => new MicrodotHostingConfig()
+                    () => new MicrodotHostingConfig(),
+                    new ExcludeTypesSerializationBinderFactory(), 
+                    Substitute.For<Func<MicrodotSerializationSecurityConfig>>()
                 ))
                 {
                     listener.Start();
@@ -334,7 +336,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                         nameof(HttpServiceListenerTests),
                         Environment.UserName,
                         System.Net.Dns.GetHostName()),
-                    () => new MicrodotHostingConfig()));
+                    () => new MicrodotHostingConfig(),
+                  new ExcludeTypesSerializationBinderFactory(),
+                  Substitute.For<Func<MicrodotSerializationSecurityConfig>>()
+                ));
 
                 certificateLocator.Received(1).GetCertificate("Service");
             }
