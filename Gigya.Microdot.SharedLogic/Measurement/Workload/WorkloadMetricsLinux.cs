@@ -8,7 +8,117 @@ using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 {
-    public sealed class WorkloadMetrics : IWorkloadMetrics
+    public sealed class WorkloadMetricsLinux : IWorkloadMetrics
+    {
+        private readonly AggregatingHealthStatus _healthStatus;
+        private readonly Func<WorkloadMetricsConfig> _getConfig;
+        private readonly IDateTime _dateTime;
+
+        private LowSensitivityHealthCheck _cpuUsageHealthCheck;
+        private LowSensitivityHealthCheck _threadsCountHealthCheck;
+        private LowSensitivityHealthCheck _orleansQueueHealthCheck;
+
+        private readonly MetricsContext _context = Metric.Context("Workload");
+        private Timer _triggerHealthChecksEvery5Seconds;
+        private bool _disposed;
+
+        private ILog Log { get; }
+
+
+        public WorkloadMetricsLinux(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
+        {
+            Log = log;
+            _getConfig = getConfig;
+            _dateTime = dateTime;
+            _healthStatus = getAggregatingHealthStatus("Workload");
+            
+        }
+
+        
+        public void Init()
+        {
+            _cpuUsageHealthCheck = new LowSensitivityHealthCheck(CpuUsageHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
+            _threadsCountHealthCheck = new LowSensitivityHealthCheck(ThreadsCountHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
+            _orleansQueueHealthCheck = new LowSensitivityHealthCheck(OrleansRequestQueueHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
+
+            _healthStatus.RegisterCheck("CPU Usage", _cpuUsageHealthCheck.GetHealthStatus);
+            _healthStatus.RegisterCheck("Threads Count", _threadsCountHealthCheck.GetHealthStatus);
+            _healthStatus.RegisterCheck("Orleans Queue", _orleansQueueHealthCheck.GetHealthStatus);
+
+            _triggerHealthChecksEvery5Seconds = new Timer(TriggerHealthCheck, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }
+
+        private void TriggerHealthCheck(object state)
+        {
+            try
+            {
+                _cpuUsageHealthCheck.GetHealthStatus();
+                _threadsCountHealthCheck.GetHealthStatus();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn(x => x("Error triggering workload health status", exception: ex));
+            }
+        }
+
+        private HealthCheckResult CpuUsageHealth()
+        {
+            if (!_getConfig().ReadPerformanceCounters)
+                return HealthCheckResult.Healthy("CPU Usage: Reading perf counter disabled by configuration");
+
+            var cpuUsage = 0;//ReadPerfCounter(_processorTimePercent);
+            var maxCpuUsage = _getConfig().MaxHealthyCpuUsage;
+
+            if (cpuUsage > maxCpuUsage)
+                return HealthCheckResult.Unhealthy($"CPU Usage: {cpuUsage}% (unhealthy above {maxCpuUsage}%)");
+            else
+                return HealthCheckResult.Healthy($"CPU Usage: {cpuUsage}% (unhealthy above {maxCpuUsage}%)");
+        }
+
+
+        private HealthCheckResult ThreadsCountHealth()
+        {
+            if (!_getConfig().ReadPerformanceCounters)
+                return HealthCheckResult.Healthy("Threads: Reading perf counter disabled by configuration");
+
+            var threads = 0;//ReadPerfCounter(_threadCount);
+            var maxThreads = _getConfig().MaxHealthyThreadsCount;
+
+            if (threads > maxThreads)
+                return HealthCheckResult.Unhealthy($"Threads: {threads} (unhealthy above {maxThreads})");
+            else
+                return HealthCheckResult.Healthy($"Threads: {threads} (unhealthy above {maxThreads})");
+        }
+
+
+        private HealthCheckResult OrleansRequestQueueHealth()
+        {
+            var queueLength = Metric.Context("Silo").DataProvider.CurrentMetricsData.Gauges
+                                                    .FirstOrDefault(x => x.Name == "Request queue length")?.Value;
+            if (queueLength == null)
+                return HealthCheckResult.Healthy("Orleans queue length: unknown");
+
+            var maxLength = _getConfig().MaxHealthyOrleansQueueLength;
+            if (queueLength > maxLength)
+                return HealthCheckResult.Unhealthy($"Orleans queue length: {queueLength} (unhealthy above {maxLength})");
+
+            return HealthCheckResult.Healthy($"Orleans queue length: {queueLength} (unhealthy above {maxLength})");
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _context?.Dispose();
+            _triggerHealthChecksEvery5Seconds?.Dispose();
+        }
+
+    }
+
+    /*
+    public sealed class WorkloadMetricsLinux : IWorkloadMetrics
     {
         private readonly AggregatingHealthStatus _healthStatus;
         private readonly Func<WorkloadMetricsConfig> _getConfig;
@@ -34,7 +144,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 
         private ILog Log { get; }
 
-        public WorkloadMetrics(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
+        public WorkloadMetricsLinux(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
         {
             Log = log;
             _getConfig = getConfig;
@@ -145,15 +255,16 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context?.Dispose();
             _triggerHealthChecksEvery5Seconds?.Dispose();
 
-            _processorTimePercent.Dispose();
-            _processorTotalPercent.Dispose();
-            _virtualBytes.Dispose();
-            _privateBytes.Dispose();
-            _workingSet.Dispose();
-            _threadCount.Dispose();
-            _dotNetThreadCount.Dispose();
-            _gen2Collections.Dispose();
-            _timeInGc.Dispose();
+            //_processorTimePercent?.Dispose();
+            //_processorTotalPercent?.Dispose();
+            //_virtualBytes?.Dispose();
+            //_privateBytes?.Dispose();
+            //_workingSet?.Dispose();
+            //_threadCount?.Dispose();
+            //_dotNetThreadCount?.Dispose();
+            //_gen2Collections?.Dispose();
+            //_timeInGc?.Dispose();
         }
     }
+    */
 }

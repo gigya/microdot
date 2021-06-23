@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -56,6 +57,9 @@ namespace Gigya.Microdot.UnitTests.Monitor
                 k.Rebind<IHealthMonitor>().To<HealthMonitor>();
                 k.Rebind<ServiceArguments>().ToMethod(c => _serviceArguments);
                 k.Rebind<IDateTime>().ToMethod(c => _dateTimeFake);
+
+                k.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+                k.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
             });
 
             _kernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();

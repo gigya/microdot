@@ -21,6 +21,7 @@
 #endregion
 
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
@@ -67,6 +68,9 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
             Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
+
+            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
 
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);

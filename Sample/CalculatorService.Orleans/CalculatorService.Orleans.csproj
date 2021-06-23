@@ -2,11 +2,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net472;net5.0</TargetFrameworks>
+		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<LangVersion>8</LangVersion>
+
 		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService</AssemblyTitle>
 		<Authors>Gigya Inc.</Authors>
 		<Copyright>© 2021 Gigya Inc.</Copyright>
 		<IncludeSymbols>true</IncludeSymbols>
+		
 		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 		<OutputType>Exe</OutputType>
 		<OutputPath>bin\$(Configuration)\</OutputPath>

@@ -11,8 +11,6 @@ namespace Metrics.PerfCounters
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        private static readonly bool IsMono = Type.GetType("Mono.Runtime") != null;
-
         private const string TotalInstance = "_Total";
 
         private const string Exceptions = ".NET CLR Exceptions";
@@ -131,53 +129,20 @@ namespace Metrics.PerfCounters
         {
             Log.Debug(() => $"Registering performance counter [{counter}] in category [{category}] for instance [{instance ?? "none"}]");
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                if (PerformanceCounterCategory.Exists(category))
-                {
-                    if (instance == null || PerformanceCounterCategory.InstanceExists(instance, category))
-                    {
-                        if (PerformanceCounterCategory.CounterExists(counter, category))
-                        {
-                            var counterTags = new MetricTags(tags.Tags.Concat(new[] {"PerfCounter"}));
-                            if (derivate == null)
-                            {
-                                context.Advanced.Gauge(name,
-                                    () => new PerformanceCounterGauge(category, counter, instance), unit, counterTags);
-                            }
-                            else
-                            {
-                                context.Advanced.Gauge(name,
-                                    () => new DerivedGauge(new PerformanceCounterGauge(category, counter, instance),
-                                        derivate), unit, counterTags);
-                            }
-
-                            return;
-                        }
-                    }
-                }
-            }
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                var counterTags = new MetricTags(tags.Tags.Concat(new[] { "PerfCounter" }));
-                if (derivate == null)
-                {
-                    context.Advanced.Gauge(name,
-                        () => new PerformanceCounterGauge(category, counter, instance), unit, counterTags);
-                }
-                else
-                {
-                    context.Advanced.Gauge(name,
-                        () => new DerivedGauge(new PerformanceCounterGauge(category, counter, instance),
-                            derivate), unit, counterTags);
-                }
-
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !PerformanceCounterCategory.Exists(category))
                 return;
 
-            }
-            if (!IsMono)
+            var counterTags = new MetricTags(tags.Tags.Concat(new[] { "PerfCounter" }));
+            if (derivate == null)
             {
-                Log.ErrorFormat("Performance counter does not exist [{0}] in category [{1}] for instance [{2}]", counter, category, instance ?? "none");
+                context.Advanced.Gauge(name,
+                    () => new PerformanceCounterGauge(category, counter, instance), unit, counterTags);
+            }
+            else
+            {
+                context.Advanced.Gauge(name,
+                    () => new DerivedGauge(new PerformanceCounterGauge(category, counter, instance),
+                        derivate), unit, counterTags);
             }
         }
     }

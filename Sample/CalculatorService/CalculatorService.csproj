@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net472;net5.0</TargetFrameworks>
+		<TargetFramework>net5.0</TargetFramework>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<LangVersion>8</LangVersion>
 		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService</AssemblyTitle>
 		<Authors>Gigya Inc.</Authors>
@@ -20,6 +21,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Ninject" Version="3.3.*" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.14" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
@@ -37,5 +39,4 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
 </Project>

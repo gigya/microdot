@@ -22,6 +22,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Configuration;
@@ -70,6 +71,9 @@ namespace Gigya.Microdot.Ninject.Host
             Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
+            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
+
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
 
@@ -78,6 +82,7 @@ namespace Gigya.Microdot.Ninject.Host
             CrashHandler = Kernel.Get<ICrashHandler>();
             CrashHandler.Init(OnCrash);
 
+            
             IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
             workloadMetrics.Init();
 
