@@ -28,6 +28,8 @@ using Orleans.Serialization;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Gigya.Microdot.SharedLogic.Configurations;
+using Gigya.Microdot.SharedLogic.Security;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
@@ -42,7 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public Func<JsonSerializerSettings> JsonSettingsFunc { get; set; }
 
-        public OrleansCustomSerialization()
+        public OrleansCustomSerialization(Func<MicrodotSerializationSecurityConfig> microdotSerializationSecurity, IExcludeTypesSerializationBinderFactory serializationBinderFactory)
         {
             _supportedTypes = new[]
             {
@@ -59,8 +61,9 @@ namespace Gigya.Microdot.Orleans.Hosting
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
                 Formatting = Formatting.Indented,
-                DateParseHandling = DateParseHandling.None
-            };
+                DateParseHandling = DateParseHandling.None,
+                SerializationBinder = serializationBinderFactory.GetOrCreateExcludeTypesSerializationBinder(microdotSerializationSecurity().DeserializationForbiddenTypes)
+        };
         }
 
         public virtual bool IsSupportedType(Type itemType)

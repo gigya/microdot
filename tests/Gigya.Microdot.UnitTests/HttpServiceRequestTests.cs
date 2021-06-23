@@ -2,6 +2,7 @@
 using System.Reflection;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 
 using NUnit.Framework;
@@ -12,7 +13,7 @@ namespace Gigya.Microdot.UnitTests {
     public class HttpServiceRequestTests {
         private MethodInfo methodInfo;
         byte[] data;
-        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.Auto, NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented};
+        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.Auto, NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented, SerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("")};
         
         [SetUp]
         public void SetUp() {

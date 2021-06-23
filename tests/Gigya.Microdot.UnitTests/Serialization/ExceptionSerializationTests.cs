@@ -1,8 +1,14 @@
 ﻿using System;
 using System.Net.Http;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
+using Gigya.Microdot.SharedLogic.Security;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Ninject;
 using NUnit.Framework;
 using Orleans;
 using Orleans.Configuration;
@@ -17,6 +23,11 @@ namespace Gigya.Microdot.UnitTests.Serialization
     {
         private SerializationManager _serializationManager;
 		private MyServiceException MyServiceException { get; set; }
+
+        private class ForSerializationClass
+        {
+            public int Dummy;
+        }
 
         /// <remarks>
         /// c:\gigya\orleans\test\Benchmarks\Serialization\SerializationBenchmarks.cs
@@ -110,6 +121,69 @@ namespace Gigya.Microdot.UnitTests.Serialization
             
             AssertExceptionsAreEqual(expected, actual2);
             AssertExceptionsAreEqual(expected, actual);
+        }
+
+        [Test]
+        public void ExcludeTypesSerializationBinder_PreventsConfiguredTypes()
+        {
+            var forbidenJson =
+                @"{""$type"":""System.Windows.Data.ObjectDataProvider, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"",""MethodName"":""Start"",""MethodParameters"":{""$type"":""System.Collections.ArrayList, mscorlib, Version=4.0.0.0,Culture=neutral, PublicKeyToken=b77a5c561934e089"",""$values"":[""cmd"",""/ccalc""]},""ObjectInstance"":{""$type"":""System.Diagnostics.Process, System,Version=4.0.0.0, ulture=neutral, PublicKeyToken=b77a5c561934e089""}}";
+            try
+            {
+                JsonConvert.DeserializeObject(forbidenJson, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    SerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("System.Windows.Data.ObjectDataProvider")
+            });
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'System.Windows.Data.ObjectDataProvider'", ex.InnerException?.Message);
+                return;
+            }
+            Assert.True(false, "Json Deserialize MUST throw here (security issue)");
+        }
+
+        [Test]
+        public void ExcludeTypesSerializationBinder_AllowNonConfiguredTypes()
+        {
+            var newCls = new ForSerializationClass();
+            var json = JsonConvert.SerializeObject(newCls, new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All});
+
+            var excludeTypesSerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("System.Windows.Data.ObjectDataProvider");
+
+            var t = JsonConvert.DeserializeObject(json, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    SerializationBinder = excludeTypesSerializationBinder
+                });
+
+            Assert.AreEqual(typeof(ForSerializationClass), t?.GetType());
+
+            excludeTypesSerializationBinder = new ExcludeTypesSerializationBinderFactory().GetOrCreateExcludeTypesSerializationBinder("System.Windows.Data.ObjectDataProvider,ForSerial");
+            try
+            {
+                JsonConvert.DeserializeObject(json, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    SerializationBinder = excludeTypesSerializationBinder
+                });
+            }
+            catch (Exception ex)
+            {
+                Assert.AreEqual("JSON Serialization Binder forbids BindToType type 'Gigya.Microdot.UnitTests.Serialization.ExceptionSerializationTests+ForSerializationClass'", ex.InnerException?.Message);
+                return;
+            }
+            Assert.True(false, "Json Deserialize MUST throw here (security issue!)");
+        }
+
+        [Test]
+        public void CanCreateSerializationAfterBinding()
+        {
+            var kernel = new StandardKernel(new MicrodotModule());
+            var binderFactory = kernel.Get<IExcludeTypesSerializationBinderFactory>();
+            var serializationBinder = binderFactory.GetOrCreateExcludeTypesSerializationBinder("abc,efg");
+            Assert.AreEqual(typeof(ExcludeTypesSerializationBinder), serializationBinder.GetType());
         }
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)

@@ -1,4 +1,6 @@
 ﻿using System;
+using Gigya.Microdot.SharedLogic.Configurations;
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
@@ -12,19 +14,15 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
 
     public class JsonExceptionSerializationSettings : IJsonExceptionSerializationSettings
     {
-
-        private readonly Func<ExceptionSerializationConfig> _exceptionSerializationConfig;
         public JsonSerializerSettings SerializerSettings { get; }
         public JsonSerializer Serializer { get; }
 
-        public JsonExceptionSerializationSettings(Func<ExceptionSerializationConfig> exceptionSerializationConfig)
+        public JsonExceptionSerializationSettings(Func<MicrodotSerializationSecurityConfig> microdotSerializationSecurity, Func<ExceptionSerializationConfig> exceptionSerializationConfig, IExcludeTypesSerializationBinderFactory serializationBinderFactory)
         {
-            _exceptionSerializationConfig = exceptionSerializationConfig;
-
             SerializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All,
-                Binder = new ExceptionHierarchySerializationBinder(_exceptionSerializationConfig),
+                Binder = new ExceptionHierarchySerializationBinder(exceptionSerializationConfig, microdotSerializationSecurity, serializationBinderFactory),
                 Formatting = Formatting.Indented,
                 DateParseHandling = DateParseHandling.DateTimeOffset,
                 Converters = {new StripHttpRequestExceptionConverter()}
@@ -33,7 +31,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             Serializer = new JsonSerializer
             {
                 TypeNameHandling = TypeNameHandling.All,
-                Binder = new ExceptionHierarchySerializationBinder(_exceptionSerializationConfig),
+                Binder = new ExceptionHierarchySerializationBinder(exceptionSerializationConfig, microdotSerializationSecurity, serializationBinderFactory),
                 Formatting = Formatting.Indented,
                 DateParseHandling = DateParseHandling.DateTimeOffset,
                 Converters = {new StripHttpRequestExceptionConverter()}
