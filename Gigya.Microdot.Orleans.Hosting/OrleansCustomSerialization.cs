@@ -44,6 +44,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public Func<JsonSerializerSettings> JsonSettingsFunc { get; set; }
 
+        public IExcludeTypesSerializationBinderFactory IExcludeTypesSerializationBinderFactory;
+        public MicrodotSerializationSecurityConfig MicrodotSerializationSecurityConfig;
+
         public OrleansCustomSerialization()
         {
             _supportedTypes = new[]
@@ -62,7 +65,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 NullValueHandling = NullValueHandling.Ignore,
                 Formatting = Formatting.Indented,
                 DateParseHandling = DateParseHandling.None,
-                // TODO: SerializationBinder = serializationBinderFactory.GetOrCreateExcludeTypesSerializationBinder(microdotSerializationSecurity().DeserializationForbiddenTypes)
+                SerializationBinder = IExcludeTypesSerializationBinderFactory.GetOrCreateExcludeTypesSerializationBinder(MicrodotSerializationSecurityConfig.DeserializationForbiddenTypes)
         };
         }
 
