@@ -1,26 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
+using System.Linq;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 {
     public class PerformanceEventListener : EventListener
     {
-        private const string Runtime = "System.Runtime";
+        private static readonly string[] EventSources = {
+            "System.Runtime",
+            "System.Net.NameResolution",
+            "System.Net.Http",
+            "System.Net.Sockets",
+            "System.Net.Security"
+        };
+
         private const string EventCounters = "EventCounters";
 
         private readonly Func<WorkloadMetricsConfig> _getConfig;
-        private readonly IDateTime _dateTime;
-        private readonly ILog _log;
-        private readonly Dictionary<string, double> _counters;
-        public PerformanceEventListener(Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
+        private readonly Dictionary<string, Counter> _counters;
+        private readonly Dictionary<string, Counter> _perfCounters;
+
+        public PerformanceEventListener(Func<WorkloadMetricsConfig> getConfig)
         {
-            _log = log;
             _getConfig = getConfig;
-            _dateTime = dateTime;
-            _counters = new Dictionary<string, double>();
+            _counters = new Dictionary<string, Counter>();
+            _perfCounters = new Dictionary<string, Counter>();
         }
 
         public bool Subscribe(string performanceCounterName)
@@ -34,20 +39,21 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             if (_counters.ContainsKey(eventCounter))
                 return true;
 
-            _counters.Add(eventCounter, 0);
+            Counter counter = new Counter(eventCounter, performanceCounterName);
+            _counters.Add(eventCounter, counter);
+            _perfCounters.Add(performanceCounterName, counter);
 
             return true;
         }
 
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
-            if (eventSource.Name.Equals(Runtime))
+            if (EventSources.Contains(eventSource.Name))
             {
                 Dictionary<string, string> refreshInterval = new Dictionary<string, string> { { "EventCounterIntervalSec", "1" } };
                 EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All, refreshInterval);
             }
         }
-
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
@@ -57,19 +63,18 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
                 {
                     if (eventData.Payload[i] is IDictionary<string, object> eventPayload)
                     {
-                        var counter = GetRelevantMetric(eventPayload);
+                        var counter = GetMetric(eventPayload);
                         if (_counters.ContainsKey(counter.Name))
-                            _counters[counter.Name] = counter.Value;
+                            _counters[counter.Name].Value = counter.Value;
                     }
                 }
             }
         }
 
-        private (string Name, double Value) GetRelevantMetric(IDictionary<string, object> eventPayload)
+        private (string Name, double Value) GetMetric(IDictionary<string, object> eventPayload)
         {
             string name = string.Empty;
             double value = 0;
-            
             foreach (KeyValuePair<string, object> payload in eventPayload)
             {
                 switch (payload.Key)
@@ -83,10 +88,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
                         break;
                 }
             }
-
             return (name, value);
         }
-
 
         private string NormalizeCounterName(string name)
         {
@@ -95,14 +98,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 
         public double? ReadPerfCounter(string performanceCounterName)
         {
-            string counterName = NormalizeCounterName(performanceCounterName);
-            var translationDictionary = _getConfig().PerformanceCountersToEventCounters;
-            if (!translationDictionary.ContainsKey(counterName))
-                return null;
-
-            string eventCounter = translationDictionary[counterName];
-            if (_counters.ContainsKey(eventCounter))
-                return _counters[eventCounter];
+            if (_perfCounters.ContainsKey(performanceCounterName))
+                return _perfCounters[performanceCounterName].Value;
 
             return null;
         }
