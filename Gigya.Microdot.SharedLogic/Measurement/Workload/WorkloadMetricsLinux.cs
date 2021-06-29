@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -13,6 +14,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         private readonly AggregatingHealthStatus _healthStatus;
         private readonly Func<WorkloadMetricsConfig> _getConfig;
         private readonly IDateTime _dateTime;
+        private readonly PerformanceEventListener _eventListener;
 
         private LowSensitivityHealthCheck _cpuUsageHealthCheck;
         private LowSensitivityHealthCheck _threadsCountHealthCheck;
@@ -25,18 +27,32 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         private ILog Log { get; }
 
 
-        public WorkloadMetricsLinux(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
+        public WorkloadMetricsLinux(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log, PerformanceEventListener eventListener)
         {
             Log = log;
             _getConfig = getConfig;
             _dateTime = dateTime;
+            _eventListener = eventListener;
+
             _healthStatus = getAggregatingHealthStatus("Workload");
-            
         }
 
         
         public void Init()
         {
+            _eventListener.Subscribe("Working Set");
+            _eventListener.Subscribe("% Processor Time");
+            _eventListener.Subscribe("# of current logical Threads");
+            _eventListener.Subscribe("# Gen 2 Collections");
+            _eventListener.Subscribe("% Time in GC");
+            
+            _context.Context("CPU").Gauge("Processor Affinity", () => Process.GetCurrentProcess().ProcessorAffinityList().Count(), Unit.Items);
+            _context.Context("CPU").Gauge("CPU usage", () => ReadPerfCounter("% Processor Time"), Unit.Percent);
+            _context.Context("CPU").Gauge("Thread count", () => { double threads = ReadPerfCounter("# of current logical Threads"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
+            _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter("Working Set"), Unit.Bytes);
+            _context.Context("GC").Gauge("Gen-2 collections", () => ReadPerfCounter("# Gen 2 Collections"), Unit.Events);
+            _context.Context("GC").Gauge("Time in GC", () => ReadPerfCounter("% Time in GC"), Unit.Percent);
+
             _cpuUsageHealthCheck = new LowSensitivityHealthCheck(CpuUsageHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
             _threadsCountHealthCheck = new LowSensitivityHealthCheck(ThreadsCountHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
             _orleansQueueHealthCheck = new LowSensitivityHealthCheck(OrleansRequestQueueHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
@@ -46,6 +62,16 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _healthStatus.RegisterCheck("Orleans Queue", _orleansQueueHealthCheck.GetHealthStatus);
 
             _triggerHealthChecksEvery5Seconds = new Timer(TriggerHealthCheck, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }
+
+        private double ReadPerfCounter(string performanceCounterName)
+        {
+            if (_getConfig().ReadPerformanceCounters)
+            {
+                return _eventListener.ReadPerfCounter(performanceCounterName) ?? 0;
+            }
+            
+            return 0;
         }
 
         private void TriggerHealthCheck(object state)
@@ -66,7 +92,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             if (!_getConfig().ReadPerformanceCounters)
                 return HealthCheckResult.Healthy("CPU Usage: Reading perf counter disabled by configuration");
 
-            var cpuUsage = 0;//ReadPerfCounter(_processorTimePercent);
+            var cpuUsage = ReadPerfCounter("% Processor Time");//ReadPerfCounter(_processorTimePercent);
             var maxCpuUsage = _getConfig().MaxHealthyCpuUsage;
 
             if (cpuUsage > maxCpuUsage)
@@ -81,7 +107,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             if (!_getConfig().ReadPerformanceCounters)
                 return HealthCheckResult.Healthy("Threads: Reading perf counter disabled by configuration");
 
-            var threads = 0;//ReadPerfCounter(_threadCount);
+            var threads = ReadPerfCounter("# of current logical Threads");//ReadPerfCounter(_threadCount);
             var maxThreads = _getConfig().MaxHealthyThreadsCount;
 
             if (threads > maxThreads)

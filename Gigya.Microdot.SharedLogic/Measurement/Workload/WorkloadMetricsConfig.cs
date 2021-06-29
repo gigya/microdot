@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
@@ -34,5 +31,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         /// Service will report itself as unhealthy only if some unhelthy metric is unhealthy for at least the specified duration
         /// </summary>
         public TimeSpan MinUnhealthyDuration { get; set; } = TimeSpan.FromMinutes(3);
+
+        public Dictionary<string,string> PerformanceCountersToEventCounters { get; set; }
     }
 }

@@ -58,6 +58,8 @@ namespace Gigya.Microdot.UnitTests.Monitor
                 k.Rebind<ServiceArguments>().ToMethod(c => _serviceArguments);
                 k.Rebind<IDateTime>().ToMethod(c => _dateTimeFake);
 
+                k.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
+
                 k.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
                 k.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
             });
