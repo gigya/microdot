@@ -52,7 +52,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var port = DisposablePort.GetPort().Port;
             var dict = new Dictionary<string, string> {
                 {"Discovery.Services.DemoService.Source", "Config"},
-                {"Discovery.Services.DemoService.Hosts", "host1,host2"},
+                {"Discovery.Services.DemoService.Hosts", "host1,host2,host3,host4,host5,host6,host7,host8,host9,host10,host11"},
                 {"Discovery.Services.DemoService.DefaultPort", port.ToString()}
             };
 
