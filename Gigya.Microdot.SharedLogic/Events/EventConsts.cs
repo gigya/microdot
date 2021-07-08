@@ -39,8 +39,6 @@ namespace Gigya.Microdot.SharedLogic.Events
         public const string statsTotalTime = "stats.total.time";
         public const string statsServerTime = "stats.server.time";
         public const string statsNetworkTime = "stats.network.time";
-        public const string statsNetworkPostTime = "stats.network.post.time";
-        public const string clientReadResponseTime = "stats.network.read.time";
 
         public const string srvSystem = "srv.system";
         public const string srvService = "srv.service";
@@ -94,15 +92,5 @@ namespace Gigya.Microdot.SharedLogic.Events
         
         public const string statsRetryCount = "debug.retryCount";
         public const string above10KmsgLength = "debug.above10KmsgLength";
-        public const string isNewClientCreated = "debug.isNewClientCreated";
-        public const string postDateTicks = "debug.post.date.ticks";
-        public const string RecvDateTicks = "debug.recv.date.ticks";
-        public const string ReqStartupDeltaTicks = "debug.reqStartupDelta.ticks";
-        public const string TimeFromLastReq = "debug.timeFromLastReq.time";
-        public const string OutstandingRecvRequests = "debug.OutstandingRecvRequests";
-        public const string CollectionCountGen0 = "debug.CollectionCountGen0";
-        public const string CollectionCountGen1 = "debug.CollectionCountGen1";
-        public const string CollectionCountGen2 = "debug.CollectionCountGen2";
-        public const string outstandingSentRequests = "debug.OutstandingSentRequests";
     }
 }
