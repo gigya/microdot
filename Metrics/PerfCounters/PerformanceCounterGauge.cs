@@ -1,4 +1,5 @@
-﻿using Metrics.MetricData;
+﻿using System;
+using Metrics.MetricData;
 using System.Runtime.InteropServices;
 
 namespace Metrics.PerfCounters
@@ -15,8 +16,10 @@ namespace Metrics.PerfCounters
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 _performanceCounterGauge = new PerformanceCounterGaugeWindows(category, counter, instance);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 _performanceCounterGauge = new PerformanceCounterGaugeLinux(category, counter, instance);
+            else 
+                throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
         }
         
         public double GetValue(bool resetMetric = false)
