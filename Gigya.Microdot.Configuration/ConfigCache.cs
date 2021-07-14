@@ -21,21 +21,16 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.SharedLogic.Monitor;
-using Metrics;
 using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration
 {
     public class ConfigCache
     {
-        private readonly IHealthMonitor _healthMonitor;
-        private readonly ConcurrentDictionary<string,string> _deprecatedArrayEntries = new ConcurrentDictionary<string, string>();
         public ISourceBlock<ConfigItemsCollection> ConfigChanged => ConfigChangedBroadcastBlock;
         public ConfigItemsCollection LatestConfig { get; private set; }
         public DateTime? LatestConfigFileModifyTime { get; private set; }
@@ -45,7 +40,7 @@ namespace Gigya.Microdot.Configuration
         private IConfigItemsSource Source { get; }
         private BroadcastBlock<ConfigItemsCollection> ConfigChangedBroadcastBlock { get; }
 
-        public ConfigCache(IConfigItemsSource source, IConfigurationDataWatcher watcher,ILog log, IHealthMonitor healthMonitor)
+        public ConfigCache(IConfigItemsSource source, IConfigurationDataWatcher watcher,ILog log)
         {
             Source = source;
             Log = log;
@@ -53,16 +48,7 @@ namespace Gigya.Microdot.Configuration
             
             watcher.DataChanges.LinkTo(new ActionBlock<bool>(nothing => Refresh()));
 
-            _healthMonitor = healthMonitor;
-            _healthMonitor.SetHealthFunction(nameof(ConfigCache),HealthCheck);
             Refresh(false).GetAwaiter().GetResult();
-        }
-
-        private HealthCheckResult HealthCheck()
-        {
-            if (_deprecatedArrayEntries.IsEmpty)
-                return HealthCheckResult.Healthy();
-            return HealthCheckResult.Unhealthy(string.Join(Environment.NewLine,_deprecatedArrayEntries.Values));
         }
 
         private async Task Refresh(bool catchExceptions=true)
@@ -110,18 +96,6 @@ namespace Gigya.Microdot.Configuration
 
                 JToken value = configItem.isArray != ArrayType.None ? (JToken)JArray.Parse(configItem.Value) : configItem.Value;
 
-                if (configItem.isArray == ArrayType.List)
-                {
-                    _deprecatedArrayEntries.TryAdd(configItem.Key, $"Usage of deprecated -list syntax found for key:{configItem.Key}");
-                }
-                else
-                {
-                    //Clean up old warnings but only if there were any 
-                    if (_deprecatedArrayEntries.IsEmpty == false)
-                    {
-                        _deprecatedArrayEntries.TryRemove(configItem.Key, out _);
-                    }
-                }
 
                 currentObj[pathParts.Last()] = value;
             }
