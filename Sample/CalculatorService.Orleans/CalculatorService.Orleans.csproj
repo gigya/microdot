@@ -1,11 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net472;net5.0</TargetFrameworks>
-		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
+		<TargetFrameworks>net5.0</TargetFrameworks>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
 		<LangVersion>8</LangVersion>
-
 		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService</AssemblyTitle>
 		<Authors>Gigya Inc.</Authors>
 		<Copyright>© 2021 Gigya Inc.</Copyright>
@@ -26,6 +25,7 @@
 		<PackageReference Include="Ninject" Version="3.3.*" />
 		<PackageReference Include="Microsoft.Orleans.Core" Version="3.4.2" />
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.4.2" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.14" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />

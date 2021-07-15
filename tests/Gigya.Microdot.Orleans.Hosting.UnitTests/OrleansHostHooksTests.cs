@@ -58,7 +58,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             Assert.IsTrue(tester.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
 
-            tester.Dispose();
+            //tester.Dispose();
         }
     }
 }
