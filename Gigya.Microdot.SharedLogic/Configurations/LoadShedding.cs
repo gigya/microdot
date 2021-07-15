@@ -29,6 +29,8 @@ namespace Gigya.Microdot.SharedLogic.Configurations
 
         public Toggle DropOrleansRequestsBySpanTime { get; set; } = Toggle.Disabled;
         public TimeSpan DropOrleansRequestsOlderThanSpanTimeBy { get; set; } = TimeSpan.FromSeconds(5);
-    }
 
+        public Toggle DropRequestWhenCpuOverloaded { get; set; } = Toggle.Disabled;
+        public float MaximumAllowedCpuUsage { get; set; } = 100;
+    }
 }
