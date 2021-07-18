@@ -10,6 +10,7 @@ using Orleans;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Orleans.Statistics;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -24,10 +25,16 @@ namespace Gigya.Microdot.Orleans.Hosting
         private Meter DropEvent { get; }
 
         private readonly IEventPublisher<GrainCallEvent> _eventPublisher;
+        private readonly IHostEnvironmentStatistics _hostEnvironmentStatistics;
         private readonly Func<LoadShedding> _loadSheddingConfig;
 
-        public MicrodotIncomingGrainCallFilter(IEventPublisher<GrainCallEvent> eventPublisher,
-            Func<LoadShedding> loadSheddingConfig, ILog log, ClusterIdentity clusterIdentity, Func<GrainLoggingConfig> grainLoggingConfig)
+        public MicrodotIncomingGrainCallFilter(
+            IEventPublisher<GrainCallEvent> eventPublisher,
+            Func<LoadShedding> loadSheddingConfig,
+            ILog log,
+            ClusterIdentity clusterIdentity,
+            Func<GrainLoggingConfig> grainLoggingConfig,
+            IHostEnvironmentStatistics hostEnvironmentStatistics)
         {
             _log = log;
             _clusterIdentity = clusterIdentity;
@@ -35,6 +42,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             _eventPublisher = eventPublisher;
             _loadSheddingConfig = loadSheddingConfig;
+            _hostEnvironmentStatistics = hostEnvironmentStatistics;
 
             DropEvent = Metric.Context("Silo").Meter("LoadShedding Drop Event", Unit.Items);
         }
@@ -209,7 +217,30 @@ namespace Gigya.Microdot.Orleans.Hosting
             }
 
 
-            object CreateTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, double dropConfigValue, double actualDelayInSecs)
+            // Drop or log request when the current CPU usage is evaluated as "overloaded" per configuration
+            if (config.DropRequestWhenCpuOverloaded != LoadShedding.Toggle.Disabled && _hostEnvironmentStatistics != null)
+            {
+                var currentCpuUsage = _hostEnvironmentStatistics.CpuUsage ?? 0;
+                var isCpuOverloaded = currentCpuUsage > config.MaximumAllowedCpuUsage;
+                if (isCpuOverloaded)
+                {
+                    if (config.DropRequestWhenCpuOverloaded == LoadShedding.Toggle.LogOnly)
+                        _log.Warn(_ => _("Accepted request despite CPU being overloaded",
+                            unencryptedTags: CreateTags(grainTags, now, nameof(config.DropRequestWhenCpuOverloaded),
+                                config.MaximumAllowedCpuUsage, currentCpuUsage)));
+                    else if (config.DropRequestWhenCpuOverloaded == LoadShedding.Toggle.Drop)
+                    {
+                        DropEvent.Mark();
+                        //Add grain  id to tags
+                        throw new EnvironmentException("Dropping Orleans request since the CPU is overloaded.",
+                            unencrypted: CreateExceptionTags(grainTags, now,
+                                nameof(config.DropRequestWhenCpuOverloaded), config.MaximumAllowedCpuUsage.ToString(),
+                                currentCpuUsage.ToString()));
+                    }
+                }
+            }
+
+            object CreateTags<T>(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, T dropConfigValue, T dropActualValue)
             {
                 return new
                 {
@@ -219,7 +250,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                     // ReSharper disable once RedundantAnonymousTypePropertyName
                     dropConfigValue = dropConfigValue,
                     // ReSharper disable once RedundantAnonymousTypePropertyName
-                    actualDelayInSecs = actualDelayInSecs,
+                    dropActualValue = dropActualValue,
                     targetType = grainTagsLazy.Value.TargetType,
                     targetMethod = grainTagsLazy.Value.TargetMethod,
                     grainID = grainTagsLazy.Value.GrainId,
@@ -227,14 +258,14 @@ namespace Gigya.Microdot.Orleans.Hosting
                 };
             }
 
-            Tags CreateExceptionTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, string dropConfigValue, string actualDelayInSecs)
+            Tags CreateExceptionTags(Lazy<GrainTags> grainTagsLazy, DateTimeOffset nowOffset, string dropConfigName, string dropConfigValue, string dropActualValue)
             {
                 return new Tags
                 {
                     ["currentTime"] = nowOffset.ToString(),
                     ["dropConfigName"] = dropConfigName,
                     ["dropConfigValue"] = dropConfigValue,
-                    ["actualDelayInSecs"] = actualDelayInSecs,
+                    ["dropActualValue"] = dropActualValue,
                     ["targetType"] = grainTagsLazy.Value.TargetType,
                     ["targetMethod"] = grainTagsLazy.Value.TargetMethod,
                     ["grainID"] = grainTagsLazy.Value.GrainId,
