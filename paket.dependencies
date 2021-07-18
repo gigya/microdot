@@ -6,7 +6,7 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
-nuget Gigya.ServiceContract ~> 2.7.7
+nuget Gigya.ServiceContract ~> 4
 
 # .Net
 nuget Microsoft.CSharp ~> 4.7
@@ -19,35 +19,46 @@ nuget System.ServiceProcess.ServiceController ~> 4.7
 nuget System.ValueTuple
 nuget System.Reflection.Emit ~> 4.7
 nuget System.Configuration.ConfigurationManager ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
+nuget System.Text.Json ~> 5
+
 
 #
-nuget Newtonsoft.Json ~> 12.0.3
+nuget Newtonsoft.Json ~> 13
 nuget Nito.AsyncEx ~> 5.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
 
 # Orleans
-nuget Microsoft.Orleans.Core >= 3.4.2
-nuget Microsoft.Orleans.OrleansRuntime >= 3.4.2
-nuget Microsoft.Orleans.OrleansProviders >= 3.4.2
-nuget Microsoft.Orleans.OrleansSqlUtils 
-nuget Microsoft.Orleans.OrleansZooKeeperUtils >= 3.4.2
-nuget Microsoft.Orleans.OrleansCodeGenerator >= 3.4.2
-nuget Microsoft.Orleans.CodeGenerator.MSBuild >= 3.4.2
-nuget Microsoft.Orleans.Client >= 3.4.2
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters  >= 3.4.2
-nuget Microsoft.AspNetCore.Http.Features ~> 3.1.0
-nuget Microsoft.Extensions.Primitives ~> 3.1.0
-nuget Microsoft.Orleans.Server  >= 3.4.2
-nuget Microsoft.Orleans.Core.Abstractions >= 3.4.2
-nuget Microsoft.Orleans.Connections.Security >= 3.4.2
-nuget Gigya.OrleansDashboard.NetStandard == 3.0.8.0
-# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
-nuget System.Text.Json >= 4.7.1
-nuget LibLog ~> 4.2.3
+nuget Microsoft.Orleans.Core ~> 3.4
+nuget Microsoft.Orleans.OrleansRuntime ~> 3.4
+nuget Microsoft.Orleans.OrleansProviders ~> 3.4
+nuget Microsoft.Orleans.OrleansSqlUtils ~> 2.4
+nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3.4
+nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3.4
+nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3.4
+nuget Microsoft.Orleans.Client ~> 3.4
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters ~> 3.4
+nuget Microsoft.Orleans.Server ~> 3.4
+nuget Microsoft.Orleans.Core.Abstractions ~> 3.4
+nuget Microsoft.Orleans.Connections.Security ~> 3.4
 
+nuget Microsoft.AspNetCore.Connections.Abstractions ~> 3.1
+nuget Microsoft.AspNetCore.Http.Features ~> 3.1
 nuget Microsoft.AspNetCore.Hosting ~> 2
 nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
+
+nuget Microsoft.Extensions.Primitives ~> 3.1
+nuget Microsoft.Extensions.Configuration.Abstractions ~> 3.1
+nuget Microsoft.Extensions.Options ~> 3.1
+nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 3.1
+nuget Microsoft.Extensions.Logging ~> 3.1
+nuget Microsoft.Extensions.Logging.Abstractions ~> 3.1
+
+# TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
+nuget Gigya.OrleansDashboard.NetStandard ~> 3
+
+nuget LibLog ~> 4.2.3
+
 nuget Microsoft.CodeAnalysis.CSharp
 nuget Microsoft.CodeAnalysis.Common
 
