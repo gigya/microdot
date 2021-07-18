@@ -54,7 +54,7 @@ Microdot provides integration with **[Microsoft Orleans](https://github.com/dotn
 
 You may choose to implement your micro-services over Orleans or not (or just some of them). In general, you're probably better off using Orleans, but in certain cases you might want not to, e.g. if you have a stateless service that requires no internal consistency or coordination -- such as an API gateway, a repository on top of a database (that handles the concurrency), pure functions such as complex calculations, image or document processing or generation, or a proxy service to external systems.
 
-The rest of this document uses Orlean jargon such as *grains* and *silos*. It is highly recommended to familiarize yourself with those basic concepts by reading this short [introduction to Orleans](https://dotnet.github.io/orleans/Documentation/Introduction.html). 
+The rest of this document uses Orlean jargon such as *grains* and *silos*. It is highly recommended to familiarize yourself with those basic concepts by reading this short [introduction to Orleans](https://dotnet.github.io/orleans/docs/index.html). 
 
 <br/>
 
