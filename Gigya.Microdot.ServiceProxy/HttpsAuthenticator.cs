@@ -33,11 +33,18 @@ namespace Gigya.Microdot.ServiceProxy
                 configuration.VerificationMode.HasFlag(ServerCertificateVerificationMode.VerifyIdenticalRootCertificate))
             {
                 clientCert = CertificateLocator.GetCertificate("Client");
+                
                 if (configuration.SupplyClientCertificate)
                 {
                     clientHandler.ClientCertificates.Add(clientCert);
                 }
-            }
+
+                Log.Info(_ => _($"Client certificate loaded: {clientCert.FriendlyName}",
+                    unencryptedTags: new
+                    {
+                        Thumbprint = clientCert.Thumbprint.Substring(clientCert.Thumbprint.Length - 5),
+                    }));
+             }
 
 
             clientHandler.ServerCertificateCustomValidationCallback = (sender, serverCertificate, serverChain, errors) =>
