@@ -17,12 +17,12 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
         public JsonSerializerSettings SerializerSettings { get; }
         public JsonSerializer Serializer { get; }
 
-        public JsonExceptionSerializationSettings(Func<MicrodotSerializationSecurityConfig> microdotSerializationSecurity, Func<ExceptionSerializationConfig> exceptionSerializationConfig, IExcludeTypesSerializationBinderFactory serializationBinderFactory)
+        public JsonExceptionSerializationSettings(IExceptionHierarchySerializationBinder exceptionSerializationBinder)
         {
             SerializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All,
-                Binder = new ExceptionHierarchySerializationBinder(exceptionSerializationConfig, microdotSerializationSecurity, serializationBinderFactory),
+                SerializationBinder = exceptionSerializationBinder,
                 Formatting = Formatting.Indented,
                 DateParseHandling = DateParseHandling.DateTimeOffset,
                 Converters = {new StripHttpRequestExceptionConverter()}
@@ -31,7 +31,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             Serializer = new JsonSerializer
             {
                 TypeNameHandling = TypeNameHandling.All,
-                Binder = new ExceptionHierarchySerializationBinder(exceptionSerializationConfig, microdotSerializationSecurity, serializationBinderFactory),
+                SerializationBinder = exceptionSerializationBinder,
                 Formatting = Formatting.Indented,
                 DateParseHandling = DateParseHandling.DateTimeOffset,
                 Converters = {new StripHttpRequestExceptionConverter()}

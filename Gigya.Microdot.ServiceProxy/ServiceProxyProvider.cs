@@ -141,10 +141,9 @@ namespace Gigya.Microdot.ServiceProxy
             JsonExceptionSerializer exceptionSerializer, 
             CurrentApplicationInfo appInfo,
             Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory,
-            Func<MicrodotSerializationSecurityConfig> microdotSerializationSecurity,
-            IExcludeTypesSerializationBinderFactory serializationBinderFactory)
+            IGigyaTypePolicySerializationBinder serializationBinder)
         {
-            JsonSettings.SerializationBinder = serializationBinderFactory.GetOrCreateExcludeTypesSerializationBinder(microdotSerializationSecurity().DeserializationForbiddenTypes);
+            JsonSettings.SerializationBinder = serializationBinder;
 
             EventPublisher = eventPublisher;
 

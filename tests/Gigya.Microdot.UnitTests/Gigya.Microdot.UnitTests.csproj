@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
+    <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
     <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />

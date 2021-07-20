@@ -41,13 +41,15 @@ namespace CalculatorService.Client
                         {
                             var result = await calculatorService.Add(1, 2);
                             Console.WriteLine($"Value: {result}");
-                            await Task.Delay(1000);
                         }
                         catch (Exception e)
                         {
                             Console.WriteLine($"Error: {e.Message}");
-                            throw;
+                         //   throw;
                         }
+                        
+                        await Task.Delay(1000);
+
                     }
 
                 }
