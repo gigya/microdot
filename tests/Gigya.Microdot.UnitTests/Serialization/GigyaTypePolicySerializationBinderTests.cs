@@ -35,9 +35,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
             var constraints = Substitute.For<IMicrodotSerializationConstraints>();
 
             constraints.TryGetAssemblyNameAndTypeReplacement(assemblyFullName, typeFullName)
-                .Returns(new MicrodotSerializationConstraints.AssemblyAndTypeName(expectedAssemblyFullName, expectedTypeFullName));
+                .Returns(new AssemblyAndTypeName(expectedAssemblyFullName, expectedTypeFullName));
             
-            var binder = new GigyaTypePolicySerializationBinder(constraints);
+            var binder = new MicrodotTypePolicySerializationBinder(constraints);
             
             var result = binder.BindToType(assemblyFullName, typeFullName);
             
@@ -59,7 +59,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 throw new MyException(expectedExceptionMessage);
             });
 
-            var binder = new GigyaTypePolicySerializationBinder(constraints);
+            var binder = new MicrodotTypePolicySerializationBinder(constraints);
             
             Action action = ()=> binder.BindToType(assemblyFullName, typeFullName);
 

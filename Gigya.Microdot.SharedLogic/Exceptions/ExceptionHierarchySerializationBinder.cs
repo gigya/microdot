@@ -18,11 +18,11 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
     
     public class ExceptionHierarchySerializationBinder : IExceptionHierarchySerializationBinder
     {
-        private readonly IGigyaTypePolicySerializationBinder _gigyaBinder;
+        private readonly IMicrodotTypePolicySerializationBinder _microdotBinder;
 
-        public ExceptionHierarchySerializationBinder(IGigyaTypePolicySerializationBinder gigyaBinder)
+        public ExceptionHierarchySerializationBinder(IMicrodotTypePolicySerializationBinder microdotBinder)
         {
-            _gigyaBinder = gigyaBinder;
+            _microdotBinder = microdotBinder;
         }
         public Type BindToType(string assemblyName, string typeName)
         {
@@ -30,14 +30,14 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             var typeNames = typeName.Split(':');
             var type = assemblyNames.Zip(typeNames, TryBindToType).FirstOrDefault(t => t != null);
 
-            return type ?? _gigyaBinder.BindToType(typeof(Exception).Assembly.GetName().Name, typeof(Exception).FullName);
+            return type ?? _microdotBinder.BindToType(typeof(Exception).Assembly.GetName().Name, typeof(Exception).FullName);
         }
 
         private Type TryBindToType(string assemblyName, string typeName)
         {
             try
             {
-                return _gigyaBinder.BindToType(assemblyName, typeName);
+                return _microdotBinder.BindToType(assemblyName, typeName);
             }
             catch (JsonSerializationException)
             {
@@ -58,7 +58,7 @@ namespace Gigya.Microdot.SharedLogic.Exceptions
             }
             else
             {
-                _gigyaBinder.BindToName(serializedType, out assemblyName, out typeName);
+                _microdotBinder.BindToName(serializedType, out assemblyName, out typeName);
             }
         }
 

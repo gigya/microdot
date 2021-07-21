@@ -27,18 +27,18 @@ nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
 
 # Orleans
-nuget Microsoft.Orleans.Core ~> 3.4
-nuget Microsoft.Orleans.OrleansRuntime ~> 3.4
-nuget Microsoft.Orleans.OrleansProviders ~> 3.4
+nuget Microsoft.Orleans.Core == 3.4.1
+nuget Microsoft.Orleans.OrleansRuntime == 3.4.1
+nuget Microsoft.Orleans.OrleansProviders == 3.4.1
 nuget Microsoft.Orleans.OrleansSqlUtils ~> 2.4
-nuget Microsoft.Orleans.OrleansZooKeeperUtils ~> 3.4
-nuget Microsoft.Orleans.OrleansCodeGenerator ~> 3.4
-nuget Microsoft.Orleans.CodeGenerator.MSBuild ~> 3.4
-nuget Microsoft.Orleans.Client ~> 3.4
-nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters ~> 3.4
-nuget Microsoft.Orleans.Server ~> 3.4
-nuget Microsoft.Orleans.Core.Abstractions ~> 3.4
-nuget Microsoft.Orleans.Connections.Security ~> 3.4
+nuget Microsoft.Orleans.OrleansZooKeeperUtils == 3.4.1
+nuget Microsoft.Orleans.OrleansCodeGenerator == 3.4.1
+nuget Microsoft.Orleans.CodeGenerator.MSBuild == 3.4.1
+nuget Microsoft.Orleans.Client == 3.4.1
+nuget Microsoft.Orleans.OrleansTelemetryConsumers.Counters == 3.4.1
+nuget Microsoft.Orleans.Server == 3.4.1
+nuget Microsoft.Orleans.Core.Abstractions == 3.4.1
+nuget Microsoft.Orleans.Connections.Security == 3.4.1
 
 nuget Microsoft.AspNetCore.Connections.Abstractions ~> 3.1
 nuget Microsoft.AspNetCore.Http.Features ~> 3.1

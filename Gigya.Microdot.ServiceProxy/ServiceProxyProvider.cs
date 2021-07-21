@@ -141,7 +141,7 @@ namespace Gigya.Microdot.ServiceProxy
             JsonExceptionSerializer exceptionSerializer, 
             CurrentApplicationInfo appInfo,
             Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory,
-            IGigyaTypePolicySerializationBinder serializationBinder)
+            IMicrodotTypePolicySerializationBinder serializationBinder)
         {
             JsonSettings.SerializationBinder = serializationBinder;
 

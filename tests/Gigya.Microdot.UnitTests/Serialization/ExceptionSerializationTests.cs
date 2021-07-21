@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Ninject;
@@ -52,11 +53,15 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     TypeNameHandling = TypeNameHandling.All,
                     SerializationBinder = 
 	                    new ExceptionHierarchySerializationBinder(
-		                    new GigyaTypePolicySerializationBinder(
+		                    new MicrodotTypePolicySerializationBinder(
 			                    new MicrodotSerializationConstraints(()=> 
-				                    new MicrodotSerializationSecurityConfig(
-					                    new []{"System.Windows.Data.ObjectDataProvider"}.ToList(), 
-					                    null)
+				                    new MicrodotSerializationSecurityConfig
+				                    {
+					                    DeserializationForbiddenTypes = new Dictionary<string, bool>()
+					                    {
+						                    {"System.Windows.Data.ObjectDataProvider", true}
+					                    }
+				                    }
 			                    )
 			                )
 		                )
@@ -78,11 +83,15 @@ namespace Gigya.Microdot.UnitTests.Serialization
 
             var excludeTypesSerializationBinder =
 	            new ExceptionHierarchySerializationBinder(
-		            new GigyaTypePolicySerializationBinder(
+		            new MicrodotTypePolicySerializationBinder(
 			            new MicrodotSerializationConstraints(() =>
-				            new MicrodotSerializationSecurityConfig(
-					            new[] {"System.Windows.Data.ObjectDataProvider"}.ToList(),
-					            null)
+				            new MicrodotSerializationSecurityConfig
+				            {
+					            DeserializationForbiddenTypes = new Dictionary<string, bool>
+					            {
+						            {"System.Windows.Data.ObjectDataProvider", true}
+					            }
+				            }
 			            )
 		            )
 	            );
@@ -98,11 +107,16 @@ namespace Gigya.Microdot.UnitTests.Serialization
 
             excludeTypesSerializationBinder =
 	            new ExceptionHierarchySerializationBinder(
-		            new GigyaTypePolicySerializationBinder(
+		            new MicrodotTypePolicySerializationBinder(
 			            new MicrodotSerializationConstraints(() =>
-				            new MicrodotSerializationSecurityConfig(
-					            new[] {"System.Windows.Data.ObjectDataProvider", "ForSerial"}.ToList(),
-					            null)
+				            new MicrodotSerializationSecurityConfig
+				            {
+					            DeserializationForbiddenTypes = new Dictionary<string, bool>
+					            {
+						            {"System.Windows.Data.ObjectDataProvider", true},
+						            {"ForSerial", true}
+					            }
+						    }
 			            )
 		            )
 	            );    
@@ -128,8 +142,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
         public void CanCreateSerializationAfterBinding()
         {
             var kernel = new StandardKernel(new MicrodotModule());
-            var serializationBinder = kernel.Get<IGigyaTypePolicySerializationBinder>();
-            Assert.AreEqual(typeof(GigyaTypePolicySerializationBinder), serializationBinder.GetType());
+            var serializationBinder = kernel.Get<IMicrodotTypePolicySerializationBinder>();
+            Assert.AreEqual(typeof(MicrodotTypePolicySerializationBinder), serializationBinder.GetType());
         }
 
         private static void AssertExceptionsAreEqual(Exception expected, Exception actual)

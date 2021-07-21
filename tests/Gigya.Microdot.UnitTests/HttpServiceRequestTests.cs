@@ -21,9 +21,9 @@ namespace Gigya.Microdot.UnitTests {
             NullValueHandling = NullValueHandling.Ignore, 
             Formatting = Formatting.Indented, 
             SerializationBinder = new ExceptionHierarchySerializationBinder(
-                new GigyaTypePolicySerializationBinder(
+                new MicrodotTypePolicySerializationBinder(
                     new MicrodotSerializationConstraints(()=> 
-                        new MicrodotSerializationSecurityConfig(null, null)
+                        new MicrodotSerializationSecurityConfig()
                     )
                 )
             )

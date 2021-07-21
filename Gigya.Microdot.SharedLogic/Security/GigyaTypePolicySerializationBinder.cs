@@ -10,16 +10,16 @@ using Newtonsoft.Json.Serialization;
 
 namespace Gigya.Microdot.SharedLogic.Security
 {
-    public interface IGigyaTypePolicySerializationBinder : ISerializationBinder
+    public interface IMicrodotTypePolicySerializationBinder : ISerializationBinder
     {
         
     }
     
-    public class GigyaTypePolicySerializationBinder : DefaultSerializationBinder, IGigyaTypePolicySerializationBinder
+    public class MicrodotTypePolicySerializationBinder : DefaultSerializationBinder, IMicrodotTypePolicySerializationBinder
     {
         private readonly IMicrodotSerializationConstraints _serializationConstraints;
         
-        public GigyaTypePolicySerializationBinder(IMicrodotSerializationConstraints serializationConstraints)
+        public MicrodotTypePolicySerializationBinder(IMicrodotSerializationConstraints serializationConstraints)
         {
             _serializationConstraints = serializationConstraints;
         }
@@ -35,7 +35,7 @@ namespace Gigya.Microdot.SharedLogic.Security
             return base.BindToType(assemblyAndTypeName.AssemblyName, assemblyAndTypeName.TypeName);
         }
 
-        public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
+        public override void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
         {
             var serializedTypeFullName = serializedType.Assembly.FullName;
             

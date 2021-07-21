@@ -1,41 +1,72 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 {
+    public class AssemblyAndTypeName
+    {
+        public string AssemblyName { get; }
+        public string TypeName { get; }
+
+        public AssemblyAndTypeName(string assemblyName, string typeName)
+        {
+            AssemblyName = assemblyName;
+            TypeName = typeName;
+        }
+    }    
+    
     public interface IMicrodotSerializationConstraints
     {
         void ThrowIfExcluded(string typeName);
-        MicrodotSerializationConstraints.AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName);
+        AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName);
 
-        MicrodotSerializationConstraints.AssemblyAndTypeName TryGetAssemblyAndTypeNameReplacementFromType(Type serializedType,
+        AssemblyAndTypeName TryGetAssemblyAndTypeNameReplacementFromType(Type serializedType,
             string assemblyName, string typeName);
     }
 
     public class MicrodotSerializationConstraints : IMicrodotSerializationConstraints
     {
-        public class AssemblyAndTypeName
+        public class MicrodotSerializationEffectiveConfiguration
         {
-            public string AssemblyName { get; }
-            public string TypeName { get; }
+            public List<AssemblyNameToRegexReplacement> RegexReplacements { get; }
+            public List<string> ForbiddenTypes { get; }
 
-            public AssemblyAndTypeName(string assemblyName, string typeName)
+            public ConcurrentDictionary<string, string> AssemblyNameToFixedAssyemblyCache { get; }
+            public ConcurrentDictionary<string, string> TypeNameToFixedAssyemblyCache { get; }
+            public ConcurrentDictionary<Type, AssemblyAndTypeName> TypeToAssemblyCache { get; }
+
+            public MicrodotSerializationEffectiveConfiguration(List<AssemblyNameToRegexReplacement> regexReplacements, List<string> forbiddenTypes)
             {
-                AssemblyName = assemblyName;
-                TypeName = typeName;
+                RegexReplacements = regexReplacements?? new List<AssemblyNameToRegexReplacement>();
+                ForbiddenTypes = forbiddenTypes?? new List<string>();
+                AssemblyNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
+                TypeNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
+                TypeToAssemblyCache = new ConcurrentDictionary<Type, AssemblyAndTypeName>();
             }
         }
         
+        public class AssemblyNameToRegexReplacement
+        {
+            public Regex AssemblyRegularExpression { get; }
+            public string AssemblyToReplace { get; }
+            public string AssemblyReplacement { get; }
+
+            public AssemblyNameToRegexReplacement(string assemblyToReplace, string assemblyReplacement)
+            {
+                AssemblyRegularExpression = new Regex($@"{assemblyToReplace.Replace(".", @"\.")}(, Version=[\d\.]+)?(, Culture=[\w-]+)?(, PublicKeyToken=[\w\d]+)?", RegexOptions.Compiled);
+                AssemblyReplacement = assemblyReplacement;
+                AssemblyToReplace = assemblyToReplace;
+            }
+        }
+
         private readonly Func<MicrodotSerializationSecurityConfig> _getSerializationConfig;
-        private ConcurrentDictionary<string, string> assemblyNameToFixedAssyemblyCache =
-            new ConcurrentDictionary<string, string>();
-        private ConcurrentDictionary<string, string> typeNameToFixedAssyemblyCache =
-            new ConcurrentDictionary<string, string>();
-        private ConcurrentDictionary<Type, AssemblyAndTypeName> typeToAssemblyCache =
-            new ConcurrentDictionary<Type, AssemblyAndTypeName>();
 
         private MicrodotSerializationSecurityConfig _lastConfig;
+        private MicrodotSerializationEffectiveConfiguration _effectiveConfigCache;
 
         public MicrodotSerializationConstraints(Func<MicrodotSerializationSecurityConfig> getSerializationConfig)
         {
@@ -44,7 +75,9 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
         public void ThrowIfExcluded(string typeName)
         {
-            foreach (var deserializationForbiddenType in _getSerializationConfig().DeserializationForbiddenTypes)
+            var config = GetSerializationConfigAndRefreshCaches();
+
+            foreach (var deserializationForbiddenType in config.ForbiddenTypes)
             {
                 if (typeName.IndexOf(deserializationForbiddenType, StringComparison.InvariantCultureIgnoreCase) >=0)
                     throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToType type '{typeName}'");    
@@ -57,11 +90,11 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
             // treat deserialization of net core System.Private.CoreLib library classes to net framework counterparts
             // https://programmingflow.com/2020/02/18/could-not-load-system-private-corelib.html
-            if (false == assemblyNameToFixedAssyemblyCache.TryGetValue(assemblyName, out var localAssemblyName))
+            if (false == config.AssemblyNameToFixedAssyemblyCache.TryGetValue(assemblyName, out var localAssemblyName))
             {
                 localAssemblyName = assemblyName;
 
-                foreach (var assemblyNameToRegexReplacement in config.AssemblyNamesRegexReplacements)
+                foreach (var assemblyNameToRegexReplacement in config.RegexReplacements)
                 {
                     if (localAssemblyName.IndexOf(
                         assemblyNameToRegexReplacement.AssemblyToReplace,
@@ -71,7 +104,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                         localAssemblyName = assemblyNameToRegexReplacement.AssemblyRegularExpression
                             .Replace(localAssemblyName, assemblyNameToRegexReplacement.AssemblyReplacement);
 
-                        assemblyNameToFixedAssyemblyCache.TryAdd(assemblyName, localAssemblyName);
+                        config.AssemblyNameToFixedAssyemblyCache.TryAdd(assemblyName, localAssemblyName);
 
                         if (localAssemblyName != assemblyName)
                         {
@@ -86,11 +119,11 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 assemblyName = localAssemblyName;
             }
 
-            if (false == typeNameToFixedAssyemblyCache.TryGetValue(typeName, out var localTypeName))
+            if (false == config.TypeNameToFixedAssyemblyCache.TryGetValue(typeName, out var localTypeName))
             {
                 localTypeName = typeName;
 
-                foreach (var assemblyNameToRegexReplacement in config.AssemblyNamesRegexReplacements)
+                foreach (var assemblyNameToRegexReplacement in config.RegexReplacements)
                 {
                     if (localTypeName.IndexOf(
                         assemblyNameToRegexReplacement.AssemblyToReplace,
@@ -100,7 +133,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                         localTypeName = assemblyNameToRegexReplacement.AssemblyRegularExpression
                             .Replace(localTypeName, assemblyNameToRegexReplacement.AssemblyReplacement);
 
-                        typeNameToFixedAssyemblyCache.TryAdd(typeName, localTypeName);
+                        config.TypeNameToFixedAssyemblyCache.TryAdd(typeName, localTypeName);
 
                         if (localTypeName != typeName)
                         {
@@ -118,19 +151,27 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             return new AssemblyAndTypeName(assemblyName, typeName);
         }
 
-        private MicrodotSerializationSecurityConfig GetSerializationConfigAndRefreshCaches()
+        private MicrodotSerializationEffectiveConfiguration GetSerializationConfigAndRefreshCaches()
         {
-            var config = _getSerializationConfig();
-
-            if (config != _lastConfig)
+            lock (this)
             {
-                assemblyNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
-                typeNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
-                typeToAssemblyCache = new ConcurrentDictionary<Type, AssemblyAndTypeName>();
+                var config = _getSerializationConfig();
+
+                if (config != _lastConfig)
+                {
+                    var assemblyNameToRegexReplacements = config.AssemblyNamesRegexReplacements
+                        .Select(x => new AssemblyNameToRegexReplacement(x.Key, x.Value)).ToList();
+                    var forbiddenTypes = config.DeserializationForbiddenTypes.Where(x=>x.Value).Select(x=>x.Key).ToList();
+                    
+                    _effectiveConfigCache = new MicrodotSerializationEffectiveConfiguration(
+                        assemblyNameToRegexReplacements,
+                        forbiddenTypes);
+                }
+
+                _lastConfig = config;
             }
 
-            _lastConfig = config;
-            return config;
+            return _effectiveConfigCache;
         }
 
 
@@ -143,7 +184,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             // https://programmingflow.com/2020/02/18/could-not-load-system-private-corelib.html
         
             // treat deserialization of net core System.Private.CoreLib library classes to net framework counterparts
-            if (typeToAssemblyCache.TryGetValue(serializedType, out var assemblyNameAndTypeName))
+            if (config.TypeToAssemblyCache.TryGetValue(serializedType, out var assemblyNameAndTypeName))
             {
                 return assemblyNameAndTypeName;
             }
@@ -151,7 +192,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             var localTypeName = typeName;
             var localAssemblyName = assemblyName;
 
-            foreach (var assemblyNameToRegexReplacement in config.AssemblyNamesRegexReplacements)
+            foreach (var assemblyNameToRegexReplacement in config.RegexReplacements)
             {
                 if (localTypeName.IndexOf(
                     assemblyNameToRegexReplacement.AssemblyToReplace,
@@ -169,7 +210,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 }
             }
                 
-            foreach (var assemblyNameToRegexReplacement in config.AssemblyNamesRegexReplacements)
+            foreach (var assemblyNameToRegexReplacement in config.RegexReplacements)
             {
                 if (localAssemblyName.IndexOf(
                     assemblyNameToRegexReplacement.AssemblyToReplace,
@@ -188,7 +229,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 }
             }
                 
-            typeToAssemblyCache.TryAdd(serializedType, new AssemblyAndTypeName(assemblyName, typeName));
+            config.TypeToAssemblyCache.TryAdd(serializedType, new AssemblyAndTypeName(assemblyName, typeName));
 
             return new AssemblyAndTypeName(assemblyName, typeName);
         }

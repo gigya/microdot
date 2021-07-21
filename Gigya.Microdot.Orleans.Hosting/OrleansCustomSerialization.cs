@@ -44,7 +44,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
         public Func<JsonSerializerSettings> JsonSettingsFunc { get; set; }
 
-        public OrleansCustomSerialization(IGigyaTypePolicySerializationBinder serializationBinder)
+        public OrleansCustomSerialization(IMicrodotTypePolicySerializationBinder serializationBinder)
         {
             _supportedTypes = new[]
             {

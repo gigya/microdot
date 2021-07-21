@@ -130,7 +130,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             IServerRequestPublisher serverRequestPublisher,
             CurrentApplicationInfo appInfo,
             Func<MicrodotHostingConfig> microdotHostingConfigFactory,
-            IGigyaTypePolicySerializationBinder serializationBinder)
+            IMicrodotTypePolicySerializationBinder serializationBinder)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;

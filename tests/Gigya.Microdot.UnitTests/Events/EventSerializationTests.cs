@@ -31,8 +31,8 @@ namespace Gigya.Microdot.UnitTests.Events
             () => new StackTraceEnhancerSettings(), 
                 new NullEnvironment(), 
                 AppInfo,
-                new JsonExceptionSerializationSettings(new ExceptionHierarchySerializationBinder(new GigyaTypePolicySerializationBinder(new MicrodotSerializationConstraints(()=> new 
-                    MicrodotSerializationSecurityConfig(null, null)))))
+                new JsonExceptionSerializationSettings(new ExceptionHierarchySerializationBinder(new MicrodotTypePolicySerializationBinder(new MicrodotSerializationConstraints(()=> new 
+                    MicrodotSerializationSecurityConfig()))))
             ),
             () => new EventConfiguration(), 
             AppInfo);
@@ -48,8 +48,8 @@ namespace Gigya.Microdot.UnitTests.Events
                     () => new StackTraceEnhancerSettings(),
                     new NullEnvironment(), 
                     AppInfo,
-                    new JsonExceptionSerializationSettings(new ExceptionHierarchySerializationBinder(new GigyaTypePolicySerializationBinder(new MicrodotSerializationConstraints(()=> new 
-                        MicrodotSerializationSecurityConfig(null, null)))))
+                    new JsonExceptionSerializationSettings(new ExceptionHierarchySerializationBinder(new MicrodotTypePolicySerializationBinder(new MicrodotSerializationConstraints(()=> new 
+                        MicrodotSerializationSecurityConfig()))))
                 ),
                 () => new EventConfiguration(), 
                 AppInfo);

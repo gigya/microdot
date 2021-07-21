@@ -39,7 +39,7 @@ namespace Gigya.Microdot.ServiceProxy.Rewrite
 
         private ConcurrentDictionary<string, DeployedService> Deployments { get; set; }
 
-        public ServiceProxyProvider(string serviceName, IGigyaTypePolicySerializationBinder binder)
+        public ServiceProxyProvider(string serviceName, IMicrodotTypePolicySerializationBinder binder)
         {
             JsonSettings.SerializationBinder = binder;
             ServiceName = serviceName;
