@@ -130,8 +130,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             IServerRequestPublisher serverRequestPublisher,
             CurrentApplicationInfo appInfo,
             Func<MicrodotHostingConfig> microdotHostingConfigFactory,
-            IExcludeTypesSerializationBinderFactory excludeTypesSerializationBinder,
-            Func<MicrodotSerializationSecurityConfig> serializationSecurityConfig)
+            IMicrodotTypePolicySerializationBinder serializationBinder)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -146,12 +145,18 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            JsonSettings.SerializationBinder =
-                excludeTypesSerializationBinder.GetOrCreateExcludeTypesSerializationBinder(
-                    serializationSecurityConfig().DeserializationForbiddenTypes);
+            JsonSettings.SerializationBinder = serializationBinder;
 
             if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ClientCertificateVerificationMode.Disable)
-                ServerRootCertHash = certificateLocator.GetCertificate("Service").GetHashOfRootCertificate();
+            {
+                var serviceCertificate = certificateLocator.GetCertificate("Service");
+                Log.Info(_ => _($"Service certificate loaded: {serviceCertificate.FriendlyName}",
+                   unencryptedTags: new
+                   {
+                       Thumbprint = serviceCertificate.Thumbprint.Substring(serviceCertificate.Thumbprint.Length - 5),
+                   }));
+                ServerRootCertHash = serviceCertificate.GetHashOfRootCertificate();
+            }
 
             Listener = new HttpListener { IgnoreWriteExceptions = true };
             if (ServiceEndPointDefinition.HttpsPort != null)

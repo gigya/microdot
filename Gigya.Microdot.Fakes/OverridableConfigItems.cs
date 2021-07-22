@@ -59,9 +59,12 @@ namespace Gigya.Microdot.Fakes
             var items = new Dictionary<string, ConfigItem>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in Data)
             {
+                var isArray = ((item.Key?.EndsWith("-collection") ?? false) && (item.Value?.Contains("[") ?? false))
+                    ? ArrayType.Collection
+                    : ArrayType.None;
                 items.Add(item.Key, new ConfigItem(_configDecryptor)
                 {
-                    Key = item.Key,
+                    Key = isArray == ArrayType.Collection? item.Key.Replace("-collection", "") : item.Key,
                     Value = item.Value,
                     Overrides = new List<ConfigItemInfo>
                     {
@@ -69,7 +72,8 @@ namespace Gigya.Microdot.Fakes
                             FileName = @"c:\\dumy.config",
                             Priority = 1,
                             Value = item.Value}
-                    }
+                    },
+                    isArray = isArray 
                 });
             }
             return items;

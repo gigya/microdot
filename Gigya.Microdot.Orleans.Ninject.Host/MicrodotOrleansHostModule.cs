@@ -60,10 +60,8 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Rebind<IWarmup>().To<GrainsWarmup>().InSingletonScope();
             Rebind<BaseCommonConfig, OrleansCodeConfig>().To<OrleansCodeConfig>().InSingletonScope();
 
-            var excludeTypesSerializationBinderFactory = Kernel.Get<IExcludeTypesSerializationBinderFactory>();
-            var microdotSerializationSecurityConfig = Kernel.Get<MicrodotSerializationSecurityConfig>();
             Rebind<IExternalSerializer, OrleansCustomSerialization>().To<OrleansCustomSerialization>()
-                .InSingletonScope().WithPropertyValue(nameof(IExcludeTypesSerializationBinderFactory), excludeTypesSerializationBinderFactory).WithPropertyValue(nameof(MicrodotSerializationSecurityConfig), microdotSerializationSecurityConfig);
+                .InSingletonScope();
 
             // Register logger per category
             Kernel.BindPerString<OrleansLogAdapter>();
