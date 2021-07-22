@@ -40,6 +40,7 @@ using RichardSzalay.MockHttp;
 using Shouldly;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.Security;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
@@ -278,6 +279,9 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 var certificateLocator = Substitute.For<ICertificateLocator>();
                 certificateLocator.GetCertificate(Arg.Any<string>()).Throws<Exception>();
 
+                var microdotSerializationConstraints = new MicrodotSerializationConstraints(() =>
+                    new MicrodotSerializationSecurityConfig()
+                );
                 using (var listener = new HttpServiceListener(Substitute.For<IActivator>(),
                     Substitute.For<IWorker>(),
                     endpointDefinition,
@@ -285,7 +289,16 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     Substitute.For<ILog>(),
                     Enumerable.Empty<ICustomEndpoint>(),
                     Substitute.For<IEnvironment>(),
-                    new JsonExceptionSerializer(Substitute.For<IStackTraceEnhancer>(), new JsonExceptionSerializationSettings(() => new MicrodotSerializationSecurityConfig(), () => new ExceptionSerializationConfig(false, false), new ExcludeTypesSerializationBinderFactory())),
+                    new JsonExceptionSerializer(
+                        Substitute.For<IStackTraceEnhancer>(),
+                        new JsonExceptionSerializationSettings(
+                            new ExceptionHierarchySerializationBinder(
+                                new MicrodotTypePolicySerializationBinder(
+                                    microdotSerializationConstraints
+                                )
+                            )
+                        )
+                    ),
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
@@ -294,8 +307,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                         Environment.UserName,
                         System.Net.Dns.GetHostName()),
                     () => new MicrodotHostingConfig(),
-                    new ExcludeTypesSerializationBinderFactory(), 
-                    Substitute.For<Func<MicrodotSerializationSecurityConfig>>()
+                    new MicrodotTypePolicySerializationBinder(microdotSerializationConstraints)
                 ))
                 {
                     listener.Start();
@@ -321,6 +333,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 var certificateLocator = Substitute.For<ICertificateLocator>();
                 certificateLocator.GetCertificate(Arg.Any<string>()).Throws<Exception>();
 
+                var microdotSerializationConstraints = new MicrodotSerializationConstraints(() =>
+                    new MicrodotSerializationSecurityConfig()
+                );
+                
                 Assert.Throws<Exception>(() => new HttpServiceListener(Substitute.For<IActivator>(),
                     Substitute.For<IWorker>(),
                     endpointDefinition,
@@ -328,7 +344,16 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                     Substitute.For<ILog>(),
                     Enumerable.Empty<ICustomEndpoint>(),
                     Substitute.For<IEnvironment>(),
-                    new JsonExceptionSerializer(Substitute.For<IStackTraceEnhancer>(), new JsonExceptionSerializationSettings(() => new MicrodotSerializationSecurityConfig(), () => new ExceptionSerializationConfig(false, false), new ExcludeTypesSerializationBinderFactory())),
+                    new JsonExceptionSerializer(
+                        Substitute.For<IStackTraceEnhancer>(),
+                        new JsonExceptionSerializationSettings(
+                            new ExceptionHierarchySerializationBinder(
+                                new MicrodotTypePolicySerializationBinder(
+                                    microdotSerializationConstraints
+                                )
+                            )
+                        )
+                    ),
                     new ServiceSchema(),
                     () => new LoadShedding(),
                     Substitute.For<IServerRequestPublisher>(),
@@ -337,8 +362,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                         Environment.UserName,
                         System.Net.Dns.GetHostName()),
                     () => new MicrodotHostingConfig(),
-                  new ExcludeTypesSerializationBinderFactory(),
-                  Substitute.For<Func<MicrodotSerializationSecurityConfig>>()
+                    new MicrodotTypePolicySerializationBinder(microdotSerializationConstraints)
                 ));
 
                 certificateLocator.Received(1).GetCertificate("Service");

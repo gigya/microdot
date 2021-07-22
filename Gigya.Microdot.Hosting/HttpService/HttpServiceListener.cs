@@ -130,8 +130,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             IServerRequestPublisher serverRequestPublisher,
             CurrentApplicationInfo appInfo,
             Func<MicrodotHostingConfig> microdotHostingConfigFactory,
-            IExcludeTypesSerializationBinderFactory excludeTypesSerializationBinder,
-            Func<MicrodotSerializationSecurityConfig> serializationSecurityConfig)
+            IMicrodotTypePolicySerializationBinder serializationBinder)
         {
             ServiceSchema = serviceSchema;
             _serverRequestPublisher = serverRequestPublisher;
@@ -146,9 +145,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
 
-            JsonSettings.SerializationBinder =
-                excludeTypesSerializationBinder.GetOrCreateExcludeTypesSerializationBinder(
-                    serializationSecurityConfig().DeserializationForbiddenTypes);
+            JsonSettings.SerializationBinder = serializationBinder;
 
             if (ServiceEndPointDefinition.HttpsPort != null && ServiceEndPointDefinition.ClientCertificateVerification != ClientCertificateVerificationMode.Disable)
             {

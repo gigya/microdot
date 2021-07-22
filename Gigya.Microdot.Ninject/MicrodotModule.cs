@@ -42,6 +42,7 @@ using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Security;
@@ -149,7 +150,6 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<IRevokeContextConcurrentCollection>().To<RevokeContextConcurrentCollection>().InTransientScope();
             Kernel.Bind<IRevokeContextConcurrentCollectionFactory>().ToFactory();
             Kernel.Bind<IRevokeKeyIndexerFactory>().ToFactory();
-            //Kernel.Bind<IExcludeTypesSerializationBinderFactory>().To<ExcludeTypesSerializationBinderFactory>().InSingletonScope();
         }
 
 

@@ -6,10 +6,14 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
@@ -175,17 +179,18 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         }
         
         
-        [Test]
+        //[Test]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOn()
         {
-            
-            await ChangeConfig<StackTraceEnhancerSettings>(new[]
+            for (var i=0; i<3; i++)
             {
-                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
-                    "true"),
-                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
-                    "true")
-            });
+                await ChangeConfig<MicrodotSerializationSecurityConfig>(new[]
+                {
+                    new KeyValuePair<string, string>("Microdot.SerializationSecurity.AssemblyNamesRegexReplacements.System.Private.CoreLib",
+                        "mscorlib")
+                }, TimeSpan.FromSeconds(15));
+                await Task.Delay(16);
+            }
             
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
@@ -209,7 +214,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var myException = deserializedException as MyException;
             
             Assert.True(myException.InnerException != null);
-            Assert.True(myException.InnerException is ArgumentOutOfRangeException);
+            
+            Assert.AreEqual("System.ArgumentOutOfRangeException",myException.InnerException.GetType().FullName, $"type was {myException.InnerException.GetType().FullName} {myException.InnerException}");
 
             var argumentOutOfRange = myException.InnerException as ArgumentOutOfRangeException;
             
@@ -225,13 +231,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         {
             await ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
-                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
-                    "false"),
-                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
-                    "false")
+                new KeyValuePair<string, string>("Microdot.SerializationSecurity.AssemblyNamesRegexReplacements",
+                    "[]")
             });
 
-            var conf = _unitTestingKernel.Get<Func<ExceptionSerializationConfig>>();
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
             string netCoreExceptionJson = null;
