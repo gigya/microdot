@@ -6,22 +6,49 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
+
+nuget Microsoft.AspNetCore.Http.Features == 3.1.17
+nuget Microsoft.AspNetCore.Connections.Abstractions == 3.1.17
+
+nuget Microsoft.Extensions.Primitives == 3.1.17
+nuget Microsoft.Extensions.Configuration.Abstractions == 3.1.17
+nuget Microsoft.Extensions.Options == 3.1.17
+nuget Microsoft.Extensions.DependencyInjection.Abstractions == 3.1.17
+nuget Microsoft.Extensions.Logging == 3.1.17
+nuget Microsoft.Extensions.Logging.Abstractions == 3.1.17
+nuget Microsoft.Extensions.Configuration == 3.1.17
+nuget Microsoft.Extensions.Configuration.Binder == 3.1.7
+nuget Microsoft.Extensions.Configuration.EnvironmentVariables == 3.1.7
+nuget Microsoft.Extensions.Configuration.FileExtensions == 3.1.7
+nuget Microsoft.Extensions.DependencyInjection == 3.1.17
+nuget Microsoft.Extensions.DependencyModel == 3.1.6
+nuget Microsoft.Extensions.FileProviders.Abstractions == 3.1.17
+nuget Microsoft.Extensions.FileProviders.Physical == 3.1.17
+nuget Microsoft.Extensions.FileSystemGlobbing == 3.1.17
+nuget Microsoft.Extensions.Hosting.Abstractions == 3.1.17
+nuget Microsoft.Extensions.Logging.Configuration == 3.1.17
+nuget Microsoft.Extensions.Logging.Console == 3.1.17
+nuget Microsoft.Extensions.ObjectPool == 3.1.17
+nuget Microsoft.Extensions.Options.ConfigurationExtensions == 3.1.17
+
+
+
 nuget Gigya.ServiceContract ~> 2.7.7
 
 # .Net
-nuget Microsoft.CSharp ~> 4.7
-nuget System.ComponentModel.Annotations ~> 4.0
-nuget System.Data.DataSetExtensions ~> 4.5
-nuget System.Diagnostics.PerformanceCounter ~> 4.7.0 
-nuget System.Net.Http ~> 4.3
-nuget System.Runtime.Caching ~> 4.7
-nuget System.ServiceProcess.ServiceController ~> 4.7
+nuget Microsoft.CSharp
+nuget System.ComponentModel.Annotations
+nuget System.Data.DataSetExtensions
+nuget System.Diagnostics.PerformanceCounter
+nuget System.Net.Http
+nuget System.Runtime.Caching 
+nuget System.ServiceProcess.ServiceController
 nuget System.ValueTuple
-nuget System.Reflection.Emit ~> 4.7
-nuget System.Configuration.ConfigurationManager ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
+nuget System.Reflection.Emit
+nuget System.Configuration.ConfigurationManager # ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
 
 #
-nuget Newtonsoft.Json ~> 12.0.3
+nuget Newtonsoft.Json ~> 12
 nuget Nito.AsyncEx ~> 5.0
 nuget System.Threading.Tasks.Dataflow ~> 4.0
 nuget ZooKeeperNetEx ~> 3.0
@@ -30,7 +57,6 @@ nuget ZooKeeperNetEx ~> 3.0
 nuget Microsoft.Orleans.Core == 3.4.1
 nuget Microsoft.Orleans.OrleansRuntime == 3.4.1
 nuget Microsoft.Orleans.OrleansProviders == 3.4.1
-nuget Microsoft.Orleans.OrleansSqlUtils ~> 2.4
 nuget Microsoft.Orleans.OrleansZooKeeperUtils == 3.4.1
 nuget Microsoft.Orleans.OrleansCodeGenerator == 3.4.1
 nuget Microsoft.Orleans.CodeGenerator.MSBuild == 3.4.1
@@ -40,17 +66,13 @@ nuget Microsoft.Orleans.Server == 3.4.1
 nuget Microsoft.Orleans.Core.Abstractions == 3.4.1
 nuget Microsoft.Orleans.Connections.Security == 3.4.1
 
-nuget Microsoft.AspNetCore.Connections.Abstractions ~> 3.1
-nuget Microsoft.AspNetCore.Http.Features ~> 3.1
-nuget Microsoft.AspNetCore.Hosting ~> 2
-nuget Microsoft.AspNetCore.Server.Kestrel ~> 2
+nuget Microsoft.Orleans.OrleansSqlUtils ~> 2.4
 
-nuget Microsoft.Extensions.Primitives ~> 3.1
-nuget Microsoft.Extensions.Configuration.Abstractions ~> 3.1
-nuget Microsoft.Extensions.Options ~> 3.1
-nuget Microsoft.Extensions.DependencyInjection.Abstractions ~> 3.1
-nuget Microsoft.Extensions.Logging ~> 3.1
-nuget Microsoft.Extensions.Logging.Abstractions ~> 3.1
+nuget Microsoft.AspNetCore.Hosting ~> 2.2
+nuget Microsoft.AspNetCore.Server.Kestrel ~> 2.2
+nuget Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets == 2.2.1
+
+
 
 # TODO: remove this dependency once we move to dotnet core and go back to using the original dashboard 
 nuget Gigya.OrleansDashboard.NetStandard ~> 3
@@ -73,6 +95,6 @@ nuget RichardSzalay.MockHttp ~> 5.0
 nuget NSubstitute ~> 4.0
 nuget FluentAssertions ~> 5.0
 nuget Nuget.CommandLine ~> 5.0
-nuget Shouldly ~> 3.0
+nuget Shouldly
 nuget NLog ~> 4.0
 nuget Microsoft.NET.Test.Sdk ~> 16.3
