@@ -16,8 +16,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new MicrodotSerializationConstraints(
                     () => new MicrodotSerializationSecurityConfig
                     {
-                        DeserializationForbiddenTypes = new Dictionary<string, bool>(){{"foo",  true}}
+                        DeserializationForbiddenTypes = new[] {"foo"}.ToList()
                     });
+                
             
             Assert.DoesNotThrow(()=>serializationConstraints.ThrowIfExcluded("bar"));
         }
@@ -27,36 +28,34 @@ namespace Gigya.Microdot.UnitTests.Serialization
         {
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
-                    () => new MicrodotSerializationSecurityConfig()
+                    () => new MicrodotSerializationSecurityConfig
                     {
-                        DeserializationForbiddenTypes = new Dictionary<string, bool>
-                        {
-                            {"foo", true}
-                        }
-                    });
-                        
+                        DeserializationForbiddenTypes = new[] {"foo"}.ToList()
+                    }
+                );
 
             Assert.Throws<UnauthorizedAccessException>(()=>serializationConstraints.ThrowIfExcluded("foo"));
             Assert.Throws<UnauthorizedAccessException>(()=>serializationConstraints.ThrowIfExcluded("barfoobuzz"));
             Assert.Throws<UnauthorizedAccessException>(()=>serializationConstraints.ThrowIfExcluded("barfOobuzz"));
         }
-    
+
         [Test]
         public void ShouldClearAssemblyCacheOnConfigChange()
         {
             var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
             {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
-                {
-                    {"foobar", "buz"}
-                }
+                AssemblyNamesRegexReplacements = 
+                    new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new[]
+                    {
+                        new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
+                    }
+            )
             };
-            
-            var serializationConstraints =
+
+        var serializationConstraints =
                 new MicrodotSerializationConstraints(
                     () =>
                     {
-                        
                         return microdotSerializationSecurityConfig;
                     });
 
@@ -65,12 +64,12 @@ namespace Gigya.Microdot.UnitTests.Serialization
             Assert.AreEqual("buz", result.AssemblyName);
             Assert.AreEqual("bar", result.TypeName);
             
-            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "ding"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
+                })
             };
             
             result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("foobar", "bar");
@@ -82,14 +81,12 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void ShouldClearTypeNameCacheOnConfigChange()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"}
-                }
-            };
-           
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
+                })};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -104,12 +101,12 @@ namespace Gigya.Microdot.UnitTests.Serialization
             Assert.AreEqual("bar", result.AssemblyName);
             Assert.AreEqual("buz", result.TypeName);
 
-            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "ding"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
+                })
             };
             
             result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("bar", "foobar");
@@ -121,12 +118,13 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void ShouldClearTypeCacheOnConfigChange()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
+                })
+                
             };
             
             var serializationConstraints =
@@ -145,14 +143,14 @@ namespace Gigya.Microdot.UnitTests.Serialization
             Assert.AreEqual("bar", result.AssemblyName);
             Assert.AreEqual("buz", result.TypeName);
 
-            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "ding"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
+                })
             };
-
+            
             result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
                 typeof(string),
                 "bar", 
@@ -167,12 +165,14 @@ namespace Gigya.Microdot.UnitTests.Serialization
         public void TryGetAssemblyNameReplacementWhenReplacementExists()
         {
             var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
                 {
-                    {"foobar", "buz"}
-                }
-            };
+                    AssemblyNamesRegexReplacements =
+                        new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new[]
+                        {
+                            new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
+                        })
+                };
+                
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -199,13 +199,12 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetAssemblyNameReplacementWhenReplacementDoesNotExists()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"moobar", "buz"}
-                }
-            };
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("moobar", "buz")
+                })};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -230,13 +229,13 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetAssemblyNameReplacementWhenReplacementExistsForFirstResult()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"}
-                }
-            };
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull")
+                })};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -261,12 +260,13 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetTypeNameReplacementWhenReplacementExists()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
+                })
+                
             };
             
             var serializationConstraints =
@@ -292,12 +292,13 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetTypeNameReplacementWhenReplacementDoesNotExists()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+            AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"mobar", "buz"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("mobar", "buz")
+                })
+         
             };
             
             var serializationConstraints =
@@ -323,13 +324,13 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetTypeNameReplacementWhenReplacementExistsForFirstResult()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                 AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"}
-                }
-            };
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull")
+                })};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -354,14 +355,13 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetAssemblyNameAndTypeNameReplacementWhenReplacementExists()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"},
-                    {"carmel", "gilboa"}
-                }
-            };
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "gilboa")
+                })};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -386,13 +386,14 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetAssemblyNameAndTypeNameReplacementWhenReplacementDoesNotExists()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"buz", "foobar"},
-                    {"gilboa", "carmel"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("buz", "foobar"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("gilboa", "carmel")
+                })
+                
             };
             
             var serializationConstraints =
@@ -418,14 +419,15 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetAssemblyNameAndTypeNameReplacementWhenReplacementExistsForFirstResult()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"},
-                    {"carmel", "gilboa"},
-                }
-            };
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "gilboa"),
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "megido"),
+                })};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -450,12 +452,12 @@ namespace Gigya.Microdot.UnitTests.Serialization
         [Test]
         public void TryGetAssemblyAndTypeNameReplacementFromType()
         {
-            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                AssemblyNamesRegexReplacements = 
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
-                    {"foobar", "buz"}
-                }
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
+                })
             };
             
             var serializationConstraints =
@@ -474,12 +476,12 @@ namespace Gigya.Microdot.UnitTests.Serialization
             Assert.AreEqual("bar", result.AssemblyName);
             Assert.AreEqual("buz", result.TypeName);
 
-            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
-            {
-                AssemblyNamesRegexReplacements = new Dictionary<string, string>
-                {
-                    {"foobar", "ding"}
-                }
+            microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig{
+                 AssemblyNamesRegexReplacements = 
+                    new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
+                    {
+                        new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
+                    })
             };
             
             result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(

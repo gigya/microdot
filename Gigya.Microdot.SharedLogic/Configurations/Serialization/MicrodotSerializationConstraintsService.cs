@@ -32,16 +32,16 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
     {
         public class MicrodotSerializationEffectiveConfiguration
         {
-            public List<AssemblyNameToRegexReplacement> RegexReplacements { get; }
+            public List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement> RegexReplacements { get; }
             public List<string> ForbiddenTypes { get; }
 
             public ConcurrentDictionary<string, string> AssemblyNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<string, string> TypeNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<Type, AssemblyAndTypeName> TypeToAssemblyCache { get; }
 
-            public MicrodotSerializationEffectiveConfiguration(List<AssemblyNameToRegexReplacement> regexReplacements, List<string> forbiddenTypes)
+            public MicrodotSerializationEffectiveConfiguration(List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement> regexReplacements, List<string> forbiddenTypes)
             {
-                RegexReplacements = regexReplacements?? new List<AssemblyNameToRegexReplacement>();
+                RegexReplacements = regexReplacements?? new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>();
                 ForbiddenTypes = forbiddenTypes?? new List<string>();
                 AssemblyNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
@@ -49,20 +49,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             }
         }
         
-        public class AssemblyNameToRegexReplacement
-        {
-            public Regex AssemblyRegularExpression { get; }
-            public string AssemblyToReplace { get; }
-            public string AssemblyReplacement { get; }
-
-            public AssemblyNameToRegexReplacement(string assemblyToReplace, string assemblyReplacement)
-            {
-                AssemblyRegularExpression = new Regex($@"{assemblyToReplace.Replace(".", @"\.")}(, Version=[\d\.]+)?(, Culture=[\w-]+)?(, PublicKeyToken=[\w\d]+)?", RegexOptions.Compiled);
-                AssemblyReplacement = assemblyReplacement;
-                AssemblyToReplace = assemblyToReplace;
-            }
-        }
-
+      
         private readonly Func<MicrodotSerializationSecurityConfig> _getSerializationConfig;
 
         private MicrodotSerializationSecurityConfig _lastConfig;
@@ -159,9 +146,8 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
                 if (config != _lastConfig)
                 {
-                    var assemblyNameToRegexReplacements = config.AssemblyNamesRegexReplacements
-                        .Select(x => new AssemblyNameToRegexReplacement(x.Key, x.Value)).ToList();
-                    var forbiddenTypes = config.DeserializationForbiddenTypes.Where(x=>x.Value).Select(x=>x.Key).ToList();
+                    var assemblyNameToRegexReplacements = config.AssemblyNamesRegexReplacements;
+                    var forbiddenTypes = config.DeserializationForbiddenTypes;
                     
                     _effectiveConfigCache = new MicrodotSerializationEffectiveConfiguration(
                         assemblyNameToRegexReplacements,

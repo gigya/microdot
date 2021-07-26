@@ -57,10 +57,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
 			                    new MicrodotSerializationConstraints(()=> 
 				                    new MicrodotSerializationSecurityConfig
 				                    {
-					                    DeserializationForbiddenTypes = new Dictionary<string, bool>()
-					                    {
-						                    {"System.Windows.Data.ObjectDataProvider", true}
-					                    }
+					                    DeserializationForbiddenTypes = new List<string>(new [] {"System.Windows.Data.ObjectDataProvider"})
+					                    
 				                    }
 			                    )
 			                )
@@ -87,10 +85,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
 			            new MicrodotSerializationConstraints(() =>
 				            new MicrodotSerializationSecurityConfig
 				            {
-					            DeserializationForbiddenTypes = new Dictionary<string, bool>
-					            {
-						            {"System.Windows.Data.ObjectDataProvider", true}
-					            }
+					            DeserializationForbiddenTypes = new List<string>(new [] 
+						            {"System.Windows.Data.ObjectDataProvider"}
+					            )
 				            }
 			            )
 		            )
@@ -111,11 +108,10 @@ namespace Gigya.Microdot.UnitTests.Serialization
 			            new MicrodotSerializationConstraints(() =>
 				            new MicrodotSerializationSecurityConfig
 				            {
-					            DeserializationForbiddenTypes = new Dictionary<string, bool>
-					            {
-						            {"System.Windows.Data.ObjectDataProvider", true},
-						            {"ForSerial", true}
-					            }
+					            DeserializationForbiddenTypes = new List<string>(new [] 
+						            {"System.Windows.Data.ObjectDataProvider",
+						            "ForSerial"}
+					            )
 						    }
 			            )
 		            )
