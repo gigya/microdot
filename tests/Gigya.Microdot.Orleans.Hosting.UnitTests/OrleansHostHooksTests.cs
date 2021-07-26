@@ -58,10 +58,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var tester = new ServiceTester<TestHost>();
 
             Assert.IsTrue(tester.Host.AfterOrleansCalled, "AfterOrleansStartup hasn't been called.");
-
-            tester.Host.Kernel.Get<MicrodotTypePolicySerializationBinder>().BindToType("foo", "bar");
-
-            tester.Dispose();
         }
     }
 }
