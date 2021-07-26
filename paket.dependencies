@@ -1,4 +1,4 @@
-source https://api.nuget.org/v3/index.json
+source https://api.nuget.org/v3/index.json 
 source http://nuget.gigya.net/nugetForVS/nuget/
 
 framework: auto-detect
@@ -6,10 +6,9 @@ redirects: off
 content: once
 copy_content_to_output_dir: always
 
-
+# Pinning to 3.1.17 as 5.0.0+ are net5 nugets
 nuget Microsoft.AspNetCore.Http.Features == 3.1.17
 nuget Microsoft.AspNetCore.Connections.Abstractions == 3.1.17
-
 nuget Microsoft.Extensions.Primitives == 3.1.17
 nuget Microsoft.Extensions.Configuration.Abstractions == 3.1.17
 nuget Microsoft.Extensions.Options == 3.1.17
@@ -17,9 +16,9 @@ nuget Microsoft.Extensions.DependencyInjection.Abstractions == 3.1.17
 nuget Microsoft.Extensions.Logging == 3.1.17
 nuget Microsoft.Extensions.Logging.Abstractions == 3.1.17
 nuget Microsoft.Extensions.Configuration == 3.1.17
-nuget Microsoft.Extensions.Configuration.Binder == 3.1.7
-nuget Microsoft.Extensions.Configuration.EnvironmentVariables == 3.1.7
-nuget Microsoft.Extensions.Configuration.FileExtensions == 3.1.7
+nuget Microsoft.Extensions.Configuration.Binder == 3.1.17
+nuget Microsoft.Extensions.Configuration.EnvironmentVariables == 3.1.17
+nuget Microsoft.Extensions.Configuration.FileExtensions == 3.1.17
 nuget Microsoft.Extensions.DependencyInjection == 3.1.17
 nuget Microsoft.Extensions.DependencyModel == 3.1.6
 nuget Microsoft.Extensions.FileProviders.Abstractions == 3.1.17
@@ -36,16 +35,19 @@ nuget Microsoft.Extensions.Options.ConfigurationExtensions == 3.1.17
 nuget Gigya.ServiceContract ~> 2.7.7
 
 # .Net
-nuget Microsoft.CSharp
-nuget System.ComponentModel.Annotations
+# Pinning to 4.7.0 as 5.0.0+ are net5 nugets
+nuget Microsoft.CSharp ~> 4.7
+nuget System.ComponentModel.Annotations ~> 4.7
+nuget System.Diagnostics.PerformanceCounter ~> 4.7
+nuget System.Runtime.Caching ~> 4.7
+nuget System.ServiceProcess.ServiceController ~> 4.7
+nuget System.Reflection.Emit ~> 4.7
+nuget System.Configuration.ConfigurationManager ~> 4.7
+
 nuget System.Data.DataSetExtensions
-nuget System.Diagnostics.PerformanceCounter
 nuget System.Net.Http
-nuget System.Runtime.Caching 
-nuget System.ServiceProcess.ServiceController
 nuget System.ValueTuple
-nuget System.Reflection.Emit
-nuget System.Configuration.ConfigurationManager # ~> 4.7 # For some reason Infra tests can't resolve it, while Microdot tests can
+
 
 #
 nuget Newtonsoft.Json ~> 12
@@ -79,22 +81,22 @@ nuget Gigya.OrleansDashboard.NetStandard ~> 3
 
 nuget LibLog ~> 4.2.3
 
-nuget Microsoft.CodeAnalysis.CSharp
-nuget Microsoft.CodeAnalysis.Common
+nuget Microsoft.CodeAnalysis.CSharp ~> 3
+nuget Microsoft.CodeAnalysis.Common ~> 3
 
 # Ninject
 nuget Ninject ~> 3.3
 nuget Ninject.Extensions.Factory ~> 3.3
 nuget Ninject.Extensions.Conventions ~> 3.3
-nuget Castle.Core ~> 4.0
+nuget Castle.Core ~> 4
 
 # Tests only dependencies
-nuget NUnit ~> 3.0
-nuget NUnit3TestAdapter ~> 3.15
-nuget RichardSzalay.MockHttp ~> 5.0
-nuget NSubstitute ~> 4.0
-nuget FluentAssertions ~> 5.0
-nuget Nuget.CommandLine ~> 5.0
-nuget Shouldly
-nuget NLog ~> 4.0
-nuget Microsoft.NET.Test.Sdk ~> 16.3
+nuget NUnit ~> 3
+nuget NUnit3TestAdapter ~> 3
+nuget RichardSzalay.MockHttp ~> 5
+nuget NSubstitute ~> 4
+nuget FluentAssertions ~> 5
+nuget Nuget.CommandLine ~> 5
+nuget Shouldly ~> 3
+nuget NLog ~> 4
+nuget Microsoft.NET.Test.Sdk ~> 16
