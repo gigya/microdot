@@ -31,7 +31,7 @@
 		<None Remove="symbolPackages\**" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.*" />
+		<PackageReference Include="Newtonsoft.Json" Version="12.*" />
 	</ItemGroup>
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />

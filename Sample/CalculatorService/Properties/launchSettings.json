@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "CalculatorService": {
+      "commandName": "Project",
+      "commandLineArgs": "--ServiceStartupMode:CommandLineInteractive --ConsoleOutputMode:Color"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "commandLineArgs": "--ServiceStartupMode:CommandLineInteractive --ConsoleOutputMode:Color",
+      "environmentVariables": {
+        "GIGYA_ENVVARS_FILE": "/gigya/environmentVariablesLinux.json"
+      },
+      "DockerfileRunArguments": "-v C:\\Gigya:/gigya -p 12323:12323 -p 12324:12324 -p 12325:12325 -p 12326:12326 -p 12327:12327 -p 12328:12328 -e ENV=st11 -e DC=il1 -e region=il1 -e GIGYA_BASE_PATH=/gigya -e GIGYA_CONFIG_PATHS_FILE=/gigya/config/loadPathsWithLocal.json -e GIGYA_CONFIG_ROOT=/gigya/config -e CONSUL=consul.service.il1.gigya.io:8500 -e GIGYA_SERVICE_INSTANCE_NAME=A"
+    }
+  }
+}

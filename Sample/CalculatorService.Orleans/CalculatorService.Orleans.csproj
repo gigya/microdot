@@ -41,5 +41,10 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+	<ItemGroup>
+	  <None Update="docker-entrypoint.sh">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 
 </Project>

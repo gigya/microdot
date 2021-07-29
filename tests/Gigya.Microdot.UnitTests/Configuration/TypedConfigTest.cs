@@ -94,14 +94,14 @@ namespace Gigya.Microdot.UnitTests.Configuration
             configFromNotification = null;
             configItems.SetValue("BusSettings.MessageFormatNullable", "Invalid");
             eventSource.RaiseChangeEvent();
-            await Task.Delay(100);
+            await Task.Delay(200);
             // Since the config is invalid, the config object isn't updated and the event wasn't triggered
             configFromNotification.ShouldBeNull();
 
             configFromNotification = null;
             configItems.SetValue("BusSettings.MessageFormatNullable", "Json");
             eventSource.RaiseChangeEvent();
-            await Task.Delay(100);
+            await Task.Delay(200);
             // Since the config is valid AND a property changed (Avro --> Json), the config object was updated and an event was triggered
             configFromNotification.ShouldNotBeNull();
         }
@@ -137,7 +137,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             var eventSource = infraKernel.Get<ManualConfigurationEvents>();
             configItems.SetValue("BusSettings.TopicName", "Changed");
             eventSource.RaiseChangeEvent();
-            await Task.Delay(100);
+            await Task.Delay(200);
             configFromNotification.ShouldNotBeNull();
             configFromNotification.TopicName.ShouldBe("Changed");
             infraKernel.Dispose();
@@ -168,7 +168,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             configItems.SetValue("BusSettings.TopicName","NewValue");
             
             eventSource.RaiseChangeEvent();
-            await Task.Delay(100);
+            await Task.Delay(200);
             busSettings = extractor();
             busSettings.TopicName.ShouldBe("NewValue");
 
@@ -261,7 +261,7 @@ namespace Gigya.Microdot.UnitTests.Configuration
             configItems.SetValue("BusSettings.RequestTimeoutInMs", "NotNumber");
 
             eventSource.RaiseChangeEvent();
-            await Task.Delay(100);
+            await Task.Delay(200);
 
             //Make sure last good configuration is returned.
             busSettings = extractor();

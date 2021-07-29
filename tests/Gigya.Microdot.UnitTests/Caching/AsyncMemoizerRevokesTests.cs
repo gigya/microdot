@@ -481,7 +481,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
-        [Retry(3)] //Sometime fails on build server because of timing issues
+        [Retry(5)] //Sometime fails on build server because of timing issues
         public async Task MemoizeAsync_RefreshWithoutRevokeShouldCacheNewValue()
         {
             var revokesSource = new OneTimeSynchronousSourceBlock<string>();

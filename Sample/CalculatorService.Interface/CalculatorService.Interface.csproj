@@ -19,6 +19,6 @@
 		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
+		<PackageReference Include="Gigya.ServiceContract" Version="4.0.1" />
 	</ItemGroup>
 </Project>

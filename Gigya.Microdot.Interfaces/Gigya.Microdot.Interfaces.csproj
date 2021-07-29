@@ -32,7 +32,7 @@
 		<None Remove="symbolPackages\**" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.*" />
+		<PackageReference Include="Newtonsoft.Json" Version="12.*" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj" />
