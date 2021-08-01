@@ -32,6 +32,8 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
     {
         public class MicrodotSerializationEffectiveConfiguration
         {
+            private MicrodotSerializationSecurityConfig _lastConfig;
+            
             public List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement> RegexReplacements { get; }
             public List<string> ForbiddenTypes { get; }
 
@@ -39,20 +41,26 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             public ConcurrentDictionary<string, string> TypeNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<Type, AssemblyAndTypeName> TypeToAssemblyCache { get; }
 
-            public MicrodotSerializationEffectiveConfiguration(List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement> regexReplacements, List<string> forbiddenTypes)
+            public MicrodotSerializationEffectiveConfiguration(MicrodotSerializationSecurityConfig serializationConfig)
             {
-                RegexReplacements = regexReplacements?? new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>();
-                ForbiddenTypes = forbiddenTypes?? new List<string>();
+                _lastConfig = serializationConfig;
+
+                RegexReplacements = serializationConfig.AssemblyNamesRegexReplacements?? new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>();
+                ForbiddenTypes = serializationConfig.DeserializationForbiddenTypes?? new List<string>();
                 AssemblyNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeToAssemblyCache = new ConcurrentDictionary<Type, AssemblyAndTypeName>();
+            }
+
+            public bool WasConfigChanged(MicrodotSerializationSecurityConfig serializationConfig)
+            {
+                return _lastConfig != serializationConfig;
             }
         }
         
       
         private readonly Func<MicrodotSerializationSecurityConfig> _getSerializationConfig;
 
-        private MicrodotSerializationSecurityConfig _lastConfig;
         private MicrodotSerializationEffectiveConfiguration _effectiveConfigCache;
 
         public MicrodotSerializationConstraints(Func<MicrodotSerializationSecurityConfig> getSerializationConfig)
@@ -140,22 +148,12 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
         private MicrodotSerializationEffectiveConfiguration GetSerializationConfigAndRefreshCaches()
         {
-            lock (this)
-            {
-                var config = _getSerializationConfig();
+            var config = _getSerializationConfig();
 
-                if (config != _lastConfig)
-                {
-                    var assemblyNameToRegexReplacements = config.AssemblyNamesRegexReplacements;
-                    var forbiddenTypes = config.DeserializationForbiddenTypes;
-                    
-                    _effectiveConfigCache = new MicrodotSerializationEffectiveConfiguration(
-                        assemblyNameToRegexReplacements,
-                        forbiddenTypes);
-                }
-
-                _lastConfig = config;
-            }
+            if (_effectiveConfigCache == null)
+                _effectiveConfigCache = new MicrodotSerializationEffectiveConfiguration(config);
+            else if (_effectiveConfigCache.WasConfigChanged(config))
+                _effectiveConfigCache = new MicrodotSerializationEffectiveConfiguration(config);
 
             return _effectiveConfigCache;
         }
