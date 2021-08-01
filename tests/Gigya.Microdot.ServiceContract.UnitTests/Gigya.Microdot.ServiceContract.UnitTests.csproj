@@ -5,8 +5,7 @@
 		<LangVersion>8</LangVersion>
 		<AssemblyTitle>Gigya.ServiceContract.UnitTests</AssemblyTitle>
 		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
-		<OutputType>Library</OutputType>
-		<RunSettingsFilePath>$(SolutionDir)..\test.runsettings</RunSettingsFilePath>
+		<OutputType>Library</OutputType>		
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />

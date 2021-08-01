@@ -191,7 +191,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             result.ShouldBe(SecondResult);
         }
 
-        [Test]
+        [Test,Retry(5)]
         public async Task ExtendExpirationWhenReadFromCache_CallAfterCacheItemIsExpiredAndExtendedShouldNotTriggerACallToTheService()
         {
             TimeSpan expectedExpirationTime = TimeSpan.FromSeconds(3);

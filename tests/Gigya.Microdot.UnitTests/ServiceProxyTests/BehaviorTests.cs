@@ -46,6 +46,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             unitTesting.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();
         }
 
+#if NETFRAMEWORK //hash algorithm was changed in .net core
         [Test]
         public async Task AllRequestsForSameCallID_SameHostSelected()
         {
@@ -95,6 +96,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 host.ShouldNotBe(hostOfFirstReq);
             }
         }
+#endif
 
         [Test]
         public async Task ServiceProxyRpcMessageShouldRemainSame()

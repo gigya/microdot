@@ -326,8 +326,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
         }
 
-        [Test]
-        [Repeat(Repeat)]
+        [Test, Retry(5)]        
         public async Task EndPointsChangedShouldFireWhenHostChange()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
