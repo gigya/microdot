@@ -48,7 +48,7 @@ namespace Gigya.Microdot.Configuration.Objects
         /// </summary>
         public object ChangeNotifications { get; private set; }
 
-        private object Latest { get; set; }
+        private volatile object Latest;
         private UsageTracking UsageTracking { get; }
         private ILog Log { get; }
         private Type ObjectType { get; }
