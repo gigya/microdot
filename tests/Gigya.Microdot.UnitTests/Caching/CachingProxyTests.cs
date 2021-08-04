@@ -184,7 +184,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             result.ShouldBe(FirstResult);
 
             //Wait for item to be expired
-            await Task.Delay(1500);
+            await Task.Delay(2500);
 
             //Prev item is expired - make a call to the service
             result = await _proxy.CallService(); 
