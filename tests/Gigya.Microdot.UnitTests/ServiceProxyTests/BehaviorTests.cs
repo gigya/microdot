@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 
@@ -587,9 +588,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.Message.ShouldBe(expected.Message);
         }
 
-
-
-
         [Test]
         public async Task ToUpper_MethodCallFailsWithRemoteServiceException_CorrectExceptionIsThrown()
         {
@@ -725,7 +723,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             }
         }
 
-
         [Test]
         public async Task HttpsListening_CallHttpsAfterFirstHttpCall()
         {
@@ -740,7 +737,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
-            int httpsTestCount = 0;
+            long httpsTestCount = 0;
 
             Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
@@ -751,7 +748,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     {
                         if (req.RequestUri.AbsoluteUri == $"https://{host}:{port + httpsPortOffset}/")
                         {
-                            httpsTestCount++;
+                            Interlocked.Increment(ref httpsTestCount);
                             return HttpResponseFactory.GetResponse(content: "'some HTTPS response'");
                         }
                         if (req.RequestUri.AbsoluteUri == $"https://{host}:{port + httpsPortOffset}/DemoService.testMethod")
@@ -795,14 +792,14 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 10; i++)
                 {
-                    bool httpsTestFinished = httpsTestCount > 0;
+                    bool httpsTestFinished = Interlocked.Read(ref httpsTestCount) > 0;
 
                     var server = await serviceProxy.Invoke(request, typeof(string));
 
-                    server.ShouldBe( httpsTestFinished ? "some HTTPS response" : "some HTTP response");
+                    server.ShouldBe( httpsTestFinished ? "some HTTPS response" : "some HTTP response", $"Iteration #{i}, httpsTestCount:{httpsTestCount}");
                 }
 
-                Assert.That(() => httpsTestCount, Is.EqualTo(1).After(10).Seconds.PollEvery(1).Seconds);
+                Assert.AreEqual(1, httpsTestCount);
             }
         }
 
