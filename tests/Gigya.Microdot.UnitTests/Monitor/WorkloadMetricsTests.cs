@@ -87,10 +87,10 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
 
-        private const int Repet = 1;
+        private const int Repeat = 1;
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task AddWorkloadGaugesToMetrics()
         {
             Init();
@@ -107,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
 
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task MetricsShouldBeZeroIfConfiguredNotToReadPerformanceCounters()
         {
             _config.ReadPerformanceCounters = false;
@@ -125,7 +125,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
 
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task AddWorkloadHealthCheck()
         {
             Init();
@@ -133,7 +133,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeUnhealthyAfterThreadsCountIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;
@@ -143,7 +143,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeUnhealthyAfterCPUUsageIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyCpuUsage = 0.01;
@@ -153,7 +153,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeUnhealthyAfterOrleansQueueIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyOrleansQueueLength = 1;
@@ -164,7 +164,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeHealthyIfProblemDetectedForLessThanSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;
@@ -174,7 +174,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeHealthyIfProblemWasSolvedDuringSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;

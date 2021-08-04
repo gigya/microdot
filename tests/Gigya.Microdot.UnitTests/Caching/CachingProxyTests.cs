@@ -20,7 +20,7 @@ using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,NonParallelizable]
     public class CachingProxyTests
     {
         public const int AttRefreshTimeInMinutes = 2;
