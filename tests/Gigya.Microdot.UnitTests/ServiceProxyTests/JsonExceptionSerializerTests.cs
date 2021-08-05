@@ -9,14 +9,11 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 using Ninject;
-using NSubstitute;
 using NUnit.Framework;
-
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
@@ -25,27 +22,21 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
     {
         private JsonExceptionSerializer ExceptionSerializer { get; set; }
 
-        public override void Setup()
-        {
-            
-        }
-
-        public override void OneTimeSetUp()
+        [OneTimeSetUp]
+        public async Task OneTimeSetupAsync()
         {
             base.OneTimeSetUp();
-            
+
             ExceptionSerializer = _unitTestingKernel.Get<JsonExceptionSerializer>();
-            Task t = ChangeConfig<StackTraceEnhancerSettings>(new[]
+            await ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
                 new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Pattern",
                     @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\|?\d>d.MoveNext\(\)"),
                 new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Replacement",
                     @".$1.$2(async)")
             });
-            t.Wait();
-
         }
-
+        
         protected override Action<IKernel> AdditionalBindings()
         {
             return null;
