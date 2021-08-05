@@ -21,7 +21,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
     public class JsonExceptionSerializerTests : UpdatableConfigTests
     {
         private JsonExceptionSerializer ExceptionSerializer { get; set; }
-
+       
         [OneTimeSetUp]
         public async Task OneTimeSetupAsync()
         {
