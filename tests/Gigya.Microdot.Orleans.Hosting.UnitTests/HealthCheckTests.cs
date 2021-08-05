@@ -62,13 +62,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             //serviceDrainTimeSec:
             var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
-                SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 1, instanceName: "test", initTimeOutSec: 10);
+                SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 10, instanceName: "test", initTimeOutSec: 10, onStopWaitTimeSec:30);
 
-            var customServiceTester = new ServiceTester<CalculatorServiceHost>(
-                serviceArguments: serviceArguments);
+            var customServiceTester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
-            await Task.Delay(200);
+            //await Task.Delay(200);
 
             var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);

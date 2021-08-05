@@ -22,6 +22,11 @@
 
 #endregion Copyright
 
+using System;
+using System.Linq;
+using System.Net;
+using System.Reflection;
+using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Service;
@@ -31,11 +36,6 @@ using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
 using Orleans;
 using Orleans.Configuration;
-using System;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Testing.Service
 {
@@ -68,14 +68,14 @@ namespace Gigya.Microdot.Testing.Service
 
         private void Initialize()
         {
-            Host = new TServiceHost()
+            Host = new TServiceHost
             {
                 FailServiceStartOnConfigError = false
             };
 
             BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
 
-            this.SiloStopped = Task.Run(() => this.Host.Run((ServiceArguments)this.ServiceArguments));
+            SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
 
             //Silo is ready or failed to start
             Task.WaitAny(SiloStopped, Host.WaitForServiceStartedAsync());
@@ -96,7 +96,7 @@ namespace Gigya.Microdot.Testing.Service
                 throw new Exception("Silo Failed to start");
         }
 
-        protected int GetBasePortFromHttpServiceAttribute()
+        private int GetBasePortFromHttpServiceAttribute()
         {
             var commonConfig = new BaseCommonConfig();
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, new ConsoleLog()));
