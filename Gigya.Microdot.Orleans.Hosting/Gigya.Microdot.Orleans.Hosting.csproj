@@ -34,7 +34,7 @@
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
 	</Target>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" Version="4.0.1" />
+		<PackageReference Include="Gigya.ServiceContract" Version="4.*" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.9.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" />
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
