@@ -18,7 +18,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,NonParallelizable]
     public class ConsulNodeSourceTests
     {
         private  int ConsulPort = DisposablePort.GetPort().Port;
