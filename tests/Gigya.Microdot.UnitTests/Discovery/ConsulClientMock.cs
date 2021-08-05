@@ -15,6 +15,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private readonly object _lastResultLocker = new object();
         private Timer _resultsTimer;
 
+        public TaskCompletionSource<bool> InitFinished { get; } = new TaskCompletionSource<bool>();
+
         public void SetResult(EndPointsResult result)
         {
             lock (_lastResultLocker)
@@ -51,6 +53,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 }, null, 100, Timeout.Infinite);
 
             }
+            InitFinished.SetResult(true);
         }
 
         public EndPointsResult Result { get; set; } = new EndPointsResult();
