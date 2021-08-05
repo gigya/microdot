@@ -737,7 +737,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 {"Discovery.Services.DemoService.TryHttps", "true"}
             };
 
-            long httpsTestCount = 0;
+            int httpTestCount = 0;
+            int httpsTestCount = 0;
+            int httpsReachabilityCount = 0;
 
             Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
             {
@@ -747,12 +749,15 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     .Respond(req =>
                     {
                         if (req.RequestUri.AbsoluteUri == $"https://{host}:{port + httpsPortOffset}/")
-                        {
-                            Interlocked.Increment(ref httpsTestCount);
+                        {                            
+                            httpsReachabilityCount++;
                             return HttpResponseFactory.GetResponse(content: "'some HTTPS response'");
                         }
                         if (req.RequestUri.AbsoluteUri == $"https://{host}:{port + httpsPortOffset}/DemoService.testMethod")
+                        {
+                            httpsTestCount++;
                             return HttpResponseFactory.GetResponse(content: "'some HTTPS response'");
+                        }
                         throw new HttpRequestException("Invalid uri");
                     });
                 messageHandler
@@ -760,7 +765,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     .Respond(req =>
                     {
                         if (req.RequestUri.AbsoluteUri == $"http://{host}:{port}/DemoService.testMethod")
+                        {
+                            httpTestCount++;
                             return HttpResponseFactory.GetResponse(content: "'some HTTP response'");
+                        }
                         throw new HttpRequestException("Invalid uri");
                     });
 
@@ -792,14 +800,16 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 10; i++)
                 {
-                    bool httpsTestFinished = Interlocked.Read(ref httpsTestCount) > 0;
+                    bool httpsTestFinished = httpsTestCount > 0;
 
                     var server = await serviceProxy.Invoke(request, typeof(string));
 
                     server.ShouldBe( httpsTestFinished ? "some HTTPS response" : "some HTTP response", $"Iteration #{i}, httpsTestCount:{httpsTestCount}");
                 }
 
-                Assert.AreEqual(1, httpsTestCount);
+                Assert.Greater(httpTestCount, 0, "First HTTP call is missing");
+                Assert.Greater(httpsTestCount, 0, "First HTTPS call is missing");
+                Assert.Greater(httpsReachabilityCount, 0, "Rechability call is missing");
             }
         }
 
