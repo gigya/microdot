@@ -17,31 +17,31 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
-    internal class HostTests
-    {
-        private static int _counter = 0;
+//    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+//    internal class HostTests
+//    {
+//        private static int _counter = 0;
 
-        [Test, Repeat(5)]
-        public void HostShouldStartAndStopMultipleTimes()
-        {
-            _counter++;
-            Stopwatch sw = Stopwatch.StartNew();
-            Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
-            try
-            {
-                var host = new ServiceTester<TestHost>();
-                host.GetServiceProxy<ICalculatorService>();
-                Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
-                 host.Dispose();
-            }
-            finally
-            {
-                Console.WriteLine(
-                    $"-----------------------------End run {_counter} time, took {sw.ElapsedMilliseconds}ms  ---------------");
-            }
-        }
-    }
+//        [Test, Repeat(5)]
+//        public void HostShouldStartAndStopMultipleTimes()
+//        {
+//            _counter++;
+//            Stopwatch sw = Stopwatch.StartNew();
+//            Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
+//            try
+//            {
+//                var host = new ServiceTester<TestHost>();
+//                host.GetServiceProxy<ICalculatorService>();
+//                Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
+//                 host.Dispose();
+//            }
+//            finally
+//            {
+//                Console.WriteLine(
+//                    $"-----------------------------End run {_counter} time, took {sw.ElapsedMilliseconds}ms  ---------------");
+//            }
+//        }
+//    }
 
     internal class TestHost : MicrodotOrleansServiceHost
     {

@@ -21,19 +21,12 @@
 #endregion
 
 using System;
-using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json.Linq;
@@ -43,7 +36,7 @@ using NUnit.Framework;
 
 namespace Gigya.Common.Application.UnitTests.Validation
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, NonParallelizable]
 
     public class SensitivityAttributesValidatorTests
     {
