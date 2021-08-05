@@ -15,6 +15,7 @@ using Metrics;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
+using Orleans.Internal;
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
@@ -113,6 +114,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
+            
+            var discovey = GetServiceDiscovey();
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnServiceNotDefined(OriginatingService);
+            
             var nextHost = GetServiceDiscovey().GetNextHost();
             nextHost.Result.HostName.ShouldBe(MasterService);
         }
@@ -123,6 +137,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnServiceNotDefined(OriginatingService);
+            
+            var discovey = GetServiceDiscovey();
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnServiceNotDefined(OriginatingService);
+            
             var nextHost = await GetServiceDiscovey().GetNextHost();
             HealthChecks.GetStatus().Results.Single(_ => _.Name == MasterService).Check.IsHealthy.ShouldBeTrue();
             HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService);
@@ -134,6 +161,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetMockToReturnServiceNotDefined(MasterService);
             SetMockToReturnHost(OriginatingService);
+            
+            var discovey = GetServiceDiscovey();
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnServiceNotDefined(MasterService);
+            SetMockToReturnHost(OriginatingService);
+            
             var nextHost = await GetServiceDiscovey().GetNextHost();
             HealthChecks.GetStatus().Results.Single(_ => _.Name == OriginatingService).Check.IsHealthy.ShouldBeTrue();
             HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService);
@@ -156,6 +196,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
            _unitTestingKernel.Get<Func<DiscoveryConfig>>()().Services[_serviceName].Scope = ServiceScope.Zone;
             SetMockToReturnHost(_serviceName);
+            
+            var discovey = GetServiceDiscovey();
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[_serviceName].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnHost(_serviceName);
+            
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(_serviceName);
         }
@@ -169,8 +220,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
-
+            
             var discovey = GetServiceDiscovey();
+            
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
             var waitForEvents = discovey.EndPointsChanged.WhenEventReceived(_timeOut);
 
             var nextHost = discovey.GetNextHost();
@@ -194,6 +253,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnServiceNotDefined(OriginatingService);
 
             var discovey = GetServiceDiscovey();
+
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnServiceNotDefined(OriginatingService);
 
             var nextHost = discovey.GetNextHost();
             (await nextHost).HostName.ShouldBe(MasterService);
@@ -226,7 +296,20 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
+            
+            var discovey = GetServiceDiscovey();
 
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnHost(OriginatingService);
+            
             var nextHost = GetServiceDiscovey().GetNextHost();
             (await nextHost).HostName.ShouldBe(OriginatingService);
         }
@@ -257,6 +340,18 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             //in the first time can fire one or two event
             var discovey = GetServiceDiscovey();
+
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnHost(OriginatingService);
+            
             discovey.GetNextHost();
             discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => numOfEvent++));
             Thread.Sleep(200);
@@ -279,6 +374,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             //in the first time can fire one or two event
             var discovey = GetServiceDiscovey();
+            
+
+            await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
+            SetMockToReturnHost(MasterService);
+            SetMockToReturnHost(OriginatingService);
+            
             var waitForEvents = discovey.EndPointsChanged.StartCountingEvents();
 
             await discovey.GetNextHost();
@@ -335,6 +443,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService);
             var discovey = GetServiceDiscovey();
             await discovey.GetAllEndPoints();
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
+                _consulClient[OriginatingService].InitFinished.Task);
+            
+            Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
+            
 
             var wait = discovey.EndPointsChanged.StartCountingEvents();
             bool UseOriginatingService(int i) => i % 2 == 0;
