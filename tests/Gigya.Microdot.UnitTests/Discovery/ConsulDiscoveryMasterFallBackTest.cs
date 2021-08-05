@@ -19,7 +19,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,NonParallelizable]
     public class ConsulDiscoveryMasterFallBackTest
     {
         private const string ServiceVersion = "1.2.30.1234";
@@ -326,7 +326,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
         }
 
-        [Test, Retry(5)]        
+        [Test]        
         public async Task EndPointsChangedShouldFireWhenHostChange()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
