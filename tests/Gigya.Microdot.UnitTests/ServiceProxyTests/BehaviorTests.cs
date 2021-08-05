@@ -800,9 +800,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 10; i++)
                 {
-                    bool httpsTestFinished = httpsTestCount > 0;
-
                     var server = await serviceProxy.Invoke(request, typeof(string));
+                    
+                    bool httpsTestFinished = httpsTestCount > 0;
 
                     server.ShouldBe( httpsTestFinished ? "some HTTPS response" : "some HTTP response", $"Iteration #{i}, httpsTestCount:{httpsTestCount}");
                 }
