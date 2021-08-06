@@ -67,7 +67,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var customServiceTester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
             var dispose = Task.Run(() => customServiceTester.Dispose());
-            //await Task.Delay(200);
+            await Task.Delay(200);
 
             var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
             httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
