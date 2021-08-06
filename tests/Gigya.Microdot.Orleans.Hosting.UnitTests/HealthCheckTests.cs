@@ -24,8 +24,6 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
@@ -36,11 +34,11 @@ using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,NonParallelizable]
     public class HealthCheckTests
     {
         private ServiceTester<CalculatorServiceHost> _tester;
-        private int BasePort => _tester.Host.Arguments.BasePortOverride.Value;
+        private int BasePort => _tester.Host.Arguments.BasePortOverride ?? 0;
 
         [OneTimeSetUp]
         public void SetUp()
@@ -54,25 +52,25 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             _tester.Dispose();
         }
 
-        [Test]
-        public async Task HealthCheck_ServiceDrain_StatueShouldBe521()
-        {
-            int port = DisposablePort.GetPort().Port;
+        //[Test]
+        //public async Task HealthCheck_ServiceDrain_StatueShouldBe521()
+        //{
+        //    int port = DisposablePort.GetPort().Port;
 
-            //serviceDrainTimeSec:
-            var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
-                ConsoleOutputMode.Disabled,
-                SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 10, instanceName: "test", initTimeOutSec: 10, onStopWaitTimeSec:30);
+        //    //serviceDrainTimeSec:
+        //    var serviceArguments = new ServiceArguments(ServiceStartupMode.CommandLineNonInteractive,
+        //        ConsoleOutputMode.Disabled,
+        //        SiloClusterMode.PrimaryNode, port, serviceDrainTimeSec: 10, instanceName: "test", initTimeOutSec: 10, onStopWaitTimeSec:30);
 
-            var customServiceTester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
+        //    var customServiceTester = new ServiceTester<CalculatorServiceHost>(serviceArguments);
 
-            var dispose = Task.Run(() => customServiceTester.Dispose());
-            await Task.Delay(200);
+        //    var dispose = Task.Run(() => customServiceTester.Dispose());
+        //    await Task.Delay(200);
 
-            var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
-            httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
-            await dispose;
-        }
+        //    var httpResponseMessage = await new HttpClient().GetAsync(new Uri($"http://{CurrentApplicationInfo.HostName}:{port}/{nameof(IProgrammableHealth).Substring(1)}.status"));
+        //    httpResponseMessage.StatusCode.ShouldBe((HttpStatusCode)521);
+        //    await dispose;
+        //}
 
         [Test]
         public async Task HealthCheck_NotHealthy_ShouldReturn500()

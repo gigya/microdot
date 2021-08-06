@@ -339,9 +339,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService);
 
             //in the first time can fire one or two event
-            var discovey = GetServiceDiscovery();
+            var discovery = GetServiceDiscovery();
 
-            await discovey.GetAllEndPoints();
+            await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
             var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
@@ -352,14 +352,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(MasterService);
             SetMockToReturnHost(OriginatingService);
             
-            discovey.GetNextHost();
-            discovey.EndPointsChanged.LinkTo(new ActionBlock<string>(x => numOfEvent++));
+            discovery.GetNextHost();
+            discovery.EndPointsChanged.LinkTo(new ActionBlock<string>(x => numOfEvent++));
             Thread.Sleep(200);
             numOfEvent = 0;
 
             for (int i = 0; i < 5; i++)
             {
-                discovey.GetNextHost();
+                discovery.GetNextHost();
                 Thread.Sleep((int) reloadInterval.TotalMilliseconds * 10);
             }
             numOfEvent.ShouldBe(0);
