@@ -807,9 +807,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     server.ShouldBe( httpsTestFinished ? "some HTTPS response" : "some HTTP response", $"Iteration #{i}, httpsTestCount:{httpsTestCount}");
                 }
 
-                Assert.Greater(httpTestCount, 0, "First HTTP call is missing");
-                Assert.Greater(httpsTestCount, 0, "First HTTPS call is missing");
-                Assert.Greater(httpsReachabilityCount, 0, "Rechability call is missing");
+                Assert.Greater(httpTestCount, 0, "First HTTP call is missing" + $"httpTestCount: {httpTestCount}, httpsTestCount: {httpsTestCount}, httpsReachabilityCount: {httpsReachabilityCount}");
+                Assert.Greater(httpsTestCount, 0, "First HTTPS call is missing"+ $"httpTestCount: {httpTestCount}, httpsTestCount: {httpsTestCount}, httpsReachabilityCount: {httpsReachabilityCount}");
+                Assert.Greater(httpsReachabilityCount, 0, "Rechability call is missing"+ $"httpTestCount: {httpTestCount}, httpsTestCount: {httpsTestCount}, httpsReachabilityCount: {httpsReachabilityCount}");
             }
         }
 
