@@ -88,7 +88,8 @@ namespace Gigya.Microdot.ServiceDiscovery
             _environment = environment;
 
             // Must be run in Task.Run() because of incorrect Orleans scheduling
-            _initTask = Task.Run(() => ReloadRemoteHost(discoveryConfigFactory()));
+            // todo: this is temporary, we need to figure out whether we want this change or not
+            _initTask = Task.Run(async () => await ReloadRemoteHost(discoveryConfigFactory()));
             _configBlockLink = configListener.LinkTo(new ActionBlock<DiscoveryConfig>(ReloadRemoteHost));
 
         }
