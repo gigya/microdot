@@ -538,7 +538,19 @@ namespace Gigya.Microdot.UnitTests.Caching
                 for (int i = 0; i < 10; i++) //10 calls to data source
                 {
                     var task = (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
-                    task.ShouldThrow<Exception>();
+
+                    Exception thrownException = null;
+                    
+                    try
+                    {
+                        await task;
+                    }
+                    catch (Exception ex)
+                    {
+                        thrownException = ex;
+                    }
+                    
+                    Assert.NotNull(thrownException);
                 }
             }
 
