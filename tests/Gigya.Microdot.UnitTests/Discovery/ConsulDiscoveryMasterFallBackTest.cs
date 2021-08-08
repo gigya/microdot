@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -23,7 +24,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
     public class ConsulDiscoveryMasterFallBackTest
     {
         private const string ServiceVersion = "1.2.30.1234";
-        private string _serviceName;
+        private string _serviceName2;
         private const string MasterEnvironment = "prod";
         private const string OriginatingEnvironment = "fake_env";
         private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(5);
@@ -40,7 +41,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public void SetUp()
         {
             
-            _serviceName = $"ServiceName{++_id}";
+         //   _serviceName = $"ServiceName{++_id}";
 
             _environment = Substitute.For<IEnvironment>();
             _environment.Zone.Returns("il3");
@@ -80,8 +81,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _consulClient = new Dictionary<string, ConsulClientMock>();
 
-            CreateConsulMock(MasterService);
-            CreateConsulMock(OriginatingService);
+            CreateConsulMock(MasterService());
+            CreateConsulMock(OriginatingService());
 
         }
 
@@ -111,103 +112,111 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task QueryNotDefinedShouldFallBackToMaster()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
             
             var discovery = GetServiceDiscovery();
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
             
             var nextHost = await GetServiceDiscovery().GetNextHost();
-            nextHost.HostName.ShouldBe(MasterService);
+            nextHost.HostName.ShouldBe(MasterService());
         }
 
         [Test]
         [Repeat(Repeat)]
         public async Task FallBackToMasterShouldNotHaveOriginatingServiceHealth()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            var serviceName = GetServiceName();
+
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
             
             var discovery = GetServiceDiscovery();
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
             
             await GetServiceDiscovery().GetNextHost();
-            HealthChecks.GetStatus().Results.Single(_ => _.Name == MasterService).Check.IsHealthy.ShouldBeTrue();
-            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService);
+            HealthChecks.GetStatus().Results.Single(_ => _.Name == MasterService()).Check.IsHealthy.ShouldBeTrue();
+            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService(serviceName));
         }
 
         [Test]
         [Repeat(Repeat)]
         public async Task NoFallBackShouldNotHavMasterServiceHealth()
         {
-            SetMockToReturnServiceNotDefined(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            var serviceName = GetServiceName();
+
+            SetMockToReturnServiceNotDefined(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             var discovery = GetServiceDiscovery();
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnServiceNotDefined(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnServiceNotDefined(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             await GetServiceDiscovery().GetNextHost();
-            HealthChecks.GetStatus().Results.Single(_ => _.Name == OriginatingService).Check.IsHealthy.ShouldBeTrue();
-            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService);
+            HealthChecks.GetStatus().Results.Single(_ => _.Name == OriginatingService()).Check.IsHealthy.ShouldBeTrue();
+            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService(serviceName));
         }
 
         [Test]
         [Repeat(Repeat)]
         public void CreateServiceDiscoveryWithoutGetNextHostNoServiceHealthShouldAppear()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            var serviceName = GetServiceName();
+
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
             GetServiceDiscovery();
-            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService);
-            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService);
+            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == MasterService(serviceName));
+            HealthChecks.GetStatus().Results.ShouldNotContain(_ => _.Name == OriginatingService(serviceName));
         }
 
         [Test]
         [Repeat(Repeat)]
         public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
-           _unitTestingKernel.Get<Func<DiscoveryConfig>>()().Services[_serviceName].Scope = ServiceScope.Zone;
-            SetMockToReturnHost(_serviceName);
+            var serviceName = GetServiceName();
+
+           _unitTestingKernel.Get<Func<DiscoveryConfig>>()().Services[serviceName].Scope = ServiceScope.Zone;
+            SetMockToReturnHost(serviceName);
             
             var discovery = GetServiceDiscovery();
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[_serviceName].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[serviceName].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnHost(_serviceName);
+            SetMockToReturnHost(serviceName);
             
             var nextHost = await GetServiceDiscovery().GetNextHost();
-            nextHost.HostName.ShouldBe(_serviceName);
+            nextHost.HostName.ShouldBe(serviceName);
         }
 
         [Test]
@@ -215,30 +224,32 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task WhenQueryDeleteShouldFallBackToMaster()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
-            _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
+            var serviceName = GetServiceName();
 
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            _configDic[$"Discovery.Services.{serviceName}.ReloadInterval"] = reloadInterval.ToString();
+
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             var discovery = GetServiceDiscovery();
             
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
             var waitForEvents = discovery.EndPointsChanged.WhenEventReceived(_timeOut);
 
             var nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(OriginatingService);
+            nextHost.HostName.ShouldBe(OriginatingService());
 
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            SetMockToReturnServiceNotDefined(OriginatingService());
             await waitForEvents;
 
             nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(MasterService);
+            nextHost.HostName.ShouldBe(MasterService());
         }
 
         [Test]
@@ -246,46 +257,47 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task WhenQueryAddShouldNotFallBackToMaster()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
-            _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
+            var serviceName = GetServiceName();
+            _configDic[$"Discovery.Services.{serviceName}.ReloadInterval"] = reloadInterval.ToString();
 
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
 
             var discovery = GetServiceDiscovery();
 
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnServiceNotDefined(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnServiceNotDefined(OriginatingService());
 
             var nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(MasterService);
+            nextHost.HostName.ShouldBe(MasterService());
 
             var waitForEvents = discovery.EndPointsChanged.WhenEventReceived(_timeOut);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnHost(OriginatingService());
             await waitForEvents;
 
             nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(OriginatingService);
+            nextHost.HostName.ShouldBe(OriginatingService());
         }
 
         [Test]
         [Repeat(Repeat)]
         public void ShouldNotFallBackToMasterOnConsulError()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnError(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnError(OriginatingService());
             var exception = Should.Throw<EnvironmentException>(async () => await GetServiceDiscovery().GetNextHost());
             exception.UnencryptedTags["responseLog"].ShouldBe("Error response log");
             exception.UnencryptedTags["queryDefined"].ShouldBe("True");
             exception.UnencryptedTags["consulError"].ShouldNotBeNullOrEmpty();
-            exception.UnencryptedTags["requestedService"].ShouldBe(OriginatingService);
+            exception.UnencryptedTags["requestedService"].ShouldBe(OriginatingService());
 
         }
 
@@ -293,24 +305,24 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task QueryDefinedShouldNotFallBackToMaster()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             var discovery = GetServiceDiscovery();
 
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
 
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             var nextHost = await GetServiceDiscovery().GetNextHost();
-            nextHost.HostName.ShouldBe(OriginatingService);
+            nextHost.HostName.ShouldBe(OriginatingService());
         }
 
         [Test]
@@ -322,7 +334,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             _environment.DeploymentEnvironment.Returns(MasterEnvironment);
             _unitTestingKernel.Rebind<IEnvironment>().ToConstant(_environment);
 
-            SetMockToReturnServiceNotDefined(MasterService);
+            SetMockToReturnServiceNotDefined(MasterService());
 
             Should.Throw<EnvironmentException>(async () => await GetServiceDiscovery().GetNextHost());
         }
@@ -331,11 +343,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task EndPointsChangedShouldNotFireWhenNothingChange()
         {
+            var serviceName = GetServiceName();
+
             TimeSpan reloadInterval = TimeSpan.FromMilliseconds(5);
-            _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
+            _configDic[$"Discovery.Services.{serviceName}.ReloadInterval"] = reloadInterval.ToString();
             int numOfEvent = 0;
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnHost(OriginatingService());
 
             //in the first time can fire one or two event
             var discovery = GetServiceDiscovery();
@@ -343,13 +357,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService()].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             await discovery.GetNextHost();
             
@@ -369,30 +383,32 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Repeat(Repeat)]
         public async Task EndPointsChangedShouldFireConfigChange()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            var serviceName = GetServiceName();
+
+            SetMockToReturnHost(MasterService(serviceName));
+            SetMockToReturnHost(OriginatingService(serviceName));
 
             //in the first time can fire one or two event
-            var discovery = GetServiceDiscovery();
+            var discovery = GetServiceDiscovery(serviceName);
             
 
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService(serviceName)].InitFinished.Task,
+                _consulClient[OriginatingService()].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            SetMockToReturnHost(MasterService());
+            SetMockToReturnHost(OriginatingService());
             
             var waitForEvents = discovery.EndPointsChanged.StartCountingEvents();
 
             await discovery.GetNextHost();
 
-            _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
-            _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
+            _configDic[$"Discovery.Services.{serviceName}.Hosts"] = "localhost";
+            _configDic[$"Discovery.Services.{serviceName}.Source"] = "Config";
 
             Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
             await _configRefresh.ApplyChanges<DiscoveryConfig>();
@@ -403,24 +419,31 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         }
 
+        public string GetServiceName([CallerMemberName] string caller = null)
+        {
+            return caller;
+        }
+        
         [Test]
         [Repeat(Repeat)]
         public async Task GetAllEndPointsChangedShouldFireConfigChange()
         {
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
+            var serviceName = GetServiceName();
+
+            SetMockToReturnHost(MasterService(serviceName));
+            SetMockToReturnHost(OriginatingService(serviceName));
 
             //in the first time can fire one or two event
-            var discovery = GetServiceDiscovery();
+            var discovery = GetServiceDiscovery(serviceName);
 
             //wait for discovery to be initialize!!
             var endPoints = await discovery.GetAllEndPoints();
-            endPoints.Single().HostName.ShouldBe(OriginatingService);
+            endPoints.Single().HostName.ShouldBe(OriginatingService(serviceName));
 
             var waitForEvents = discovery.EndPointsChanged.StartCountingEvents();
 
-            _configDic[$"Discovery.Services.{_serviceName}.Source"] = "Config";
-            _configDic[$"Discovery.Services.{_serviceName}.Hosts"] = "localhost";
+            _configDic[$"Discovery.Services.{serviceName}.Source"] = "Config";
+            _configDic[$"Discovery.Services.{serviceName}.Hosts"] = "localhost";
             Console.WriteLine("RaiseChangeEvent");
 
             Task waitForChangeEvent = waitForEvents.WhenNextEventReceived();
@@ -438,15 +461,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
         public async Task EndPointsChangedShouldFireWhenHostChange()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
-            _configDic[$"Discovery.Services.{_serviceName}.ReloadInterval"] = reloadInterval.ToString();
-            SetMockToReturnHost(MasterService);
-            SetMockToReturnHost(OriginatingService);
-            var discovery = GetServiceDiscovery();
+            var serviceName = GetServiceName();
+            _configDic[$"Discovery.Services.{serviceName}.ReloadInterval"] = reloadInterval.ToString();
+            SetMockToReturnHost(MasterService(serviceName));
+            SetMockToReturnHost(OriginatingService(serviceName));
+            var discovery = GetServiceDiscovery(serviceName);
             await discovery.GetAllEndPoints();
 
             var timeout = Task.Delay(TimeSpan.FromSeconds(10));
-            var initsFinished = Task.WhenAny(_consulClient[MasterService].InitFinished.Task,
-                _consulClient[OriginatingService].InitFinished.Task);
+            var initsFinished = Task.WhenAny(_consulClient[MasterService(serviceName)].InitFinished.Task,
+                _consulClient[OriginatingService(serviceName)].InitFinished.Task);
             
             Assert.AreNotEqual(timeout, await Task.WhenAny(timeout, initsFinished));
             
@@ -458,18 +482,18 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 var waitForNextEvent = wait.WhenNextEventReceived();
                 //act                
                 if (UseOriginatingService(i))
-                    SetMockToReturnHost(OriginatingService);
+                    SetMockToReturnHost(OriginatingService(serviceName));
                 else
-                    SetMockToReturnServiceNotDefined(OriginatingService);
+                    SetMockToReturnServiceNotDefined(OriginatingService(serviceName));
 
                 await waitForNextEvent;
                 //assert
                 wait.ReceivedEvents.Count.ShouldBe(i);
                 var nextHost = (await discovery.GetNextHost()).HostName;
                 if (UseOriginatingService(i))
-                    nextHost.ShouldBe(OriginatingService);
+                    nextHost.ShouldBe(OriginatingService(serviceName));
                 else
-                    nextHost.ShouldBe(MasterService);
+                    nextHost.ShouldBe(MasterService(serviceName));
             }
         }
 
@@ -491,11 +515,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         private void SetMockToReturnServiceNotDefined(string serviceName)
         {
+            if (!_consulClient.ContainsKey(serviceName))
+                CreateConsulMock(serviceName);
+            
             _consulClient[serviceName].SetResult(new EndPointsResult {IsQueryDefined = false});            
         }
 
         private void SetMockToReturnError(string serviceName)
         {
+            if (!_consulClient.ContainsKey(serviceName))
+                CreateConsulMock(serviceName);
+            
             _consulClient[serviceName].SetResult(
                 new EndPointsResult
                 {
@@ -508,15 +538,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [Test]
         public void ServiceDiscoveySameNameShouldBeTheSame()
         {
-            Assert.AreEqual(GetServiceDiscovery(), GetServiceDiscovery());
+            var serviceName = GetServiceName();
+            Assert.AreEqual(GetServiceDiscovery(serviceName), GetServiceDiscovery(serviceName));
         }
 
         private readonly ReachabilityChecker _reachabilityChecker = x => Task.FromResult(true);
 
-        private IServiceDiscovery GetServiceDiscovery()
+        private IServiceDiscovery GetServiceDiscovery([CallerMemberName]string serviceName = null)
         {
             var discovery =
-                _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(_serviceName,
+                _unitTestingKernel.Get<Func<string, ReachabilityChecker, IServiceDiscovery>>()(serviceName,
                     _reachabilityChecker);
             Task.Delay(200).GetAwaiter()
                 .GetResult(); // let ConsulClient return the expected result before getting the dicovery object
@@ -524,8 +555,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
 
-        private string MasterService => ConsulServiceName(_serviceName, MasterEnvironment);
-        private string OriginatingService => ConsulServiceName(_serviceName, OriginatingEnvironment);
+        private string MasterService([CallerMemberName]string serviceName= null) => ConsulServiceName(serviceName, MasterEnvironment);
+        private string OriginatingService([CallerMemberName]string serviceName = null) => ConsulServiceName(serviceName, OriginatingEnvironment);
 
         private static string ConsulServiceName(string serviceName, string deploymentEnvironment) =>
             $"{serviceName}-{deploymentEnvironment}";
