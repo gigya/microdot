@@ -34,7 +34,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\|?\d>d.MoveNext\(\)"),
                 new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Replacement",
                     @".$1.$2(async)")
-            });
+            }, TimeSpan.FromMinutes(1));
         }
         
         protected override Action<IKernel> AdditionalBindings()
