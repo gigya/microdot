@@ -800,6 +800,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 10; i++)
                 {
+                    // adding deloay to allow ServiceProxyProvider.RunHttpsAvailabilityTest to coplete i't execution
+                    if (httpsReachabilityCount == 0)
+                        await Task.Delay(20); 
+                    
                     var server = await serviceProxy.Invoke(request, typeof(string));
                     
                     bool httpsTestFinished = httpsTestCount > 0;
