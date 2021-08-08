@@ -17,37 +17,36 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    //[TestFixture, NonParallelizable]
-    //internal class HostTests
-    //{
-    //    private static int _counter;
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
+    internal class HostTests
+    {
+        private static int _counter;
 
-    //    [Test]
-    //    public void HostShouldStartAndStopMultipleTimes()
-    //    {
-    //        for (int i = 0; i < 10; i++)
-    //        {
-    //            _counter++;
-    //            Stopwatch sw = Stopwatch.StartNew();
-    //            Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
-    //            try
-    //            {
-    //                using (var host = new ServiceTester<TestHost>())
-    //                {
-    //                    host.GetServiceProxy<ICalculatorService>();
-    //                    Console.WriteLine(
-    //                        $"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
-    //                    host.Dispose();
-    //                }
-    //            }
-    //            finally
-    //            {
-    //                Console.WriteLine(
-    //                    $"-----------------------------End run {_counter} time, took {sw.ElapsedMilliseconds}ms  ---------------");
-    //            }
-    //        }
-    //    }
-    //}
+        [Test, Repeat(5)]
+        public void HostShouldStartAndStopMultipleTimes()
+        {
+            _counter++;
+            Stopwatch sw = Stopwatch.StartNew();
+            Console.WriteLine($"-----------------------------Start run {_counter} time---------------");
+            try
+            {
+                var host = new ServiceTester<TestHost>();
+                host.GetServiceProxy<ICalculatorService>();
+                Console.WriteLine(
+                    $"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
+                host.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                Console.WriteLine(
+                    $"-----------------------------End run {_counter} time, took {sw.ElapsedMilliseconds}ms  ---------------");
+            }
+        }
+    }
 
     internal class TestHost : MicrodotOrleansServiceHost
     {
