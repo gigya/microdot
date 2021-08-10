@@ -40,8 +40,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         [SetUp]
         public void SetUp()
         {
-            
-         //   _serviceName = $"ServiceName{++_id}";
+         
 
             _environment = Substitute.For<IEnvironment>();
             _environment.Zone.Returns("il3");
@@ -57,7 +56,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 k.Rebind<Func<string, IConsulClient>>().ToMethod(_ => (s => _consulClient[s]));
 
                 _dateTimeMock = Substitute.For<IDateTime>();
-                _dateTimeMock.Delay(Arg.Any<TimeSpan>()).Returns(c => Task.Delay(TimeSpan.FromMilliseconds(100)));
+                _dateTimeMock.Delay(Arg.Any<TimeSpan>()).Returns(async c => await Task.Delay(c.Arg<TimeSpan>()));
                 k.Rebind<IDateTime>().ToConstant(_dateTimeMock);
             }, _configDic);
             _configRefresh = _unitTestingKernel.Get<ManualConfigurationEvents>();
@@ -81,8 +80,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _consulClient = new Dictionary<string, ConsulClientMock>();
 
-            CreateConsulMock(MasterService());
-            CreateConsulMock(OriginatingService());
+            CreateConsulMock(MasterService(NUnit.Framework.TestContext.CurrentContext.Test.Name));
+            CreateConsulMock(OriginatingService(NUnit.Framework.TestContext.CurrentContext.Test.Name));
 
         }
 
