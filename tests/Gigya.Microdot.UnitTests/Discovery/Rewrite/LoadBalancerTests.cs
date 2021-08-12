@@ -90,7 +90,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
             _environment = Substitute.For<IEnvironment>();
         }
 
-        private void CreateLoadBalancer(TrafficRoutingStrategy trafficRoutingStrategy = TrafficRoutingStrategy.RandomByRequestID)
+        private void CreateLoadBalancer(TrafficRoutingStrategy trafficRoutingStrategy = TrafficRoutingStrategy.RoundRobin)
         {
             var createLoadBalancer = _kernel.Get<Func<DeploymentIdentifier, ReachabilityCheck, TrafficRoutingStrategy, ILoadBalancer>>();
             _loadBalancer = createLoadBalancer(
@@ -375,7 +375,7 @@ namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
         [Repeat(Repeat)]
         public async Task GetNode_NodesUnreachableButReachabilityCheckThrows_ErrorIsLogged()
         {
-            CreateLoadBalancer();
+            CreateLoadBalancer(TrafficRoutingStrategy.RoundRobin);
             SetupDefaultNodes();
             var reachabilityException = new Exception("Simulated error while running reachability check");
 
