@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Net;
 using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Ninject;
@@ -20,8 +16,6 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
         [OneTimeSetUp]
         public void SetUp()
         {
-
- 
             MicrodotInitializer microdotInitializer = new MicrodotInitializer(
                 "",
                 new NLogModule(), kernel =>
@@ -30,7 +24,7 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
             _testingKernel = microdotInitializer.Kernel;
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Teardown()
         {
             _testingKernel.Dispose();
@@ -42,11 +36,13 @@ namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
             int magicNumber = 2000000;
             int maxTimeInSec = 1;
 
-            ParallelOptions pOptions = new ParallelOptions();
-            pOptions.MaxDegreeOfParallelism = 4;
+            ParallelOptions pOptions = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = 4
+            };
 
             ConfigCreatorFuncObject configFunc = _testingKernel.Get<ConfigCreatorFuncObject>();
-            configFunc.GetConfig()();
+            configFunc.GetConfig();
 
             EvaluateFunc(configFunc.GetConfig(), magicNumber, pOptions, maxTimeInSec);
         }
