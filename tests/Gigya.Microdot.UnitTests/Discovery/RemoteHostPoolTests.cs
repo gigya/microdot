@@ -60,9 +60,9 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         }
 
-        private void ChangeConfig(string endPoints)
+        private async Task ChangeConfig(string endPoints)
         {
-            _discoverySourceMock.SetEndPoints(endPoints);
+            await _discoverySourceMock.SetEndPoints(endPoints);
         }
 
         private HealthCheckResult GetHealthResult()
@@ -110,10 +110,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void GetNextHost_HostsThatChange_ReturnsNewHosts()
+        public async Task GetNextHost_HostsThatChange_ReturnsNewHosts()
         {
             CreatePool("host1, host2, host3");
-            ChangeConfig("host4, host5, host6");
+            await ChangeConfig("host4, host5, host6");
 
             var res = Get100HostNames();
             res.Distinct()
@@ -145,19 +145,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_Throws()
+        public async Task GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_Throws()
         {
             CreatePool("host1, host2, host3");
-            ChangeConfig("");
+            await ChangeConfig("");
             Should.Throw<EnvironmentException>(() => Pool.GetNextHost());
         }
 
         [Test]
-        public void GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_ShouldNotBeHealthy()
+        public async Task GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_ShouldNotBeHealthy()
         {
             CreatePool("host1, host2, host3");
             Pool.GetNextHost();
-            ChangeConfig("");
+            await ChangeConfig("");
             Should.Throw<EnvironmentException>(() => Pool.GetNextHost());
             var healthResult = GetHealthResult();
             healthResult.IsHealthy.ShouldBeFalse();
@@ -346,7 +346,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue(initialEndPoints)};
         }
 
-        public void SetEndPoints(string endPoints)
+        public async Task SetEndPoints(string endPoints)
         {
             Result = new EndPointsResult {EndPoints = new EndPoint[0]};
             if (!string.IsNullOrWhiteSpace(endPoints))
@@ -356,7 +356,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                     .ToArray()};
 
             EndpointsChangedBroadcast.Post(Result);
-            Task.Delay(100).Wait();
+            await Task.Delay(100);
         }
 
         private EndPoint[] GetEndPointsInitialValue(string initialEndPoints)
