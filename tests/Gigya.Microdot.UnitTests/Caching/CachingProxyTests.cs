@@ -17,6 +17,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
 using Gigya.Common.Contracts.Attributes;
+using System.Diagnostics;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {
@@ -439,10 +440,12 @@ namespace Gigya.Microdot.UnitTests.Caching
             await ResultlRevocableServiceShouldBe(FirstResult, key);
             _serviceResult = SecondResult;
             await ResultlRevocableServiceShouldBe(FirstResult, key, "Result should have been cached");
+            var eventReceivedResult = _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
             await _cacheRevoker.Revoke(key);
-            _revokeListener.RevokeSource.WhenEventReceived(TimeSpan.FromMinutes(1));
+            await eventReceivedResult;
+            Console.WriteLine($"event received result :" + eventReceivedResult.Result);
             await Task.Delay(100);
-            await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached");
+            await ResultlRevocableServiceShouldBe(SecondResult, key, "Result shouldn't have been cached", retry:3);
         }
 
         [Test]
@@ -544,10 +547,29 @@ namespace Gigya.Microdot.UnitTests.Caching
             result.ShouldBe(expectedResult, message);
         }
 
-        private async Task ResultlRevocableServiceShouldBe(string expectedResult,string key ,string message = null)
+        private async Task ResultlRevocableServiceShouldBe(string expectedResult,string key ,string message = null, int retry=1)
         {
-            var result = await _proxy.CallRevocableService(key);
-            result.Value.ShouldBe(expectedResult, message);
+            while (retry-- > 0)
+            {
+                var result = await _proxy.CallRevocableService(key);
+
+                try
+                {
+                    result.Value.ShouldBe(expectedResult, message);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    if (retry == 0)
+                    {
+                        Debugger.Break();
+                        throw ex;
+                    }
+                    await Task.Delay(100);
+                    
+                }
+                
+            }
         }
     }
 
