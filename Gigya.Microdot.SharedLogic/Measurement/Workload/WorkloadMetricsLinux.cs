@@ -5,7 +5,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
-using Metrics.EventCounters.Linux;
+using Metrics.EventCounters.Linux.CPU;
 using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
@@ -35,8 +35,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _getConfig = getConfig;
             _dateTime = dateTime;
             _eventListener = eventListener;
-            _cpuUsageCalculator = new LinuxCpuUsageCalculator();
-            _cpuUsageCalculator.Init();
+            _cpuUsageCalculator = CpuHelper.GetOSCpuUsageCalculator();
             _healthStatus = getAggregatingHealthStatus("Workload");
         }
 
@@ -55,8 +54,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _eventListener.Subscribe("gc-fragmentation");
             _eventListener.Subscribe("active-timer-count");
 
-            _context.Context("CPU").Gauge("Process Cpu Usage", () => _cpuUsageCalculator.Calculate().MachineCpuUsage, Unit.Items);
-            _context.Context("CPU").Gauge("Machine Cpu Usage", () => _cpuUsageCalculator.Calculate().ProcessCpuUsage, Unit.Items);
+            _context.Context("CPU").Gauge("Process Cpu Usage", () => _cpuUsageCalculator.Calculate().MachineCpuUsage, Unit.Percent);
+            _context.Context("CPU").Gauge("Machine Cpu Usage", () => _cpuUsageCalculator.Calculate().ProcessCpuUsage, Unit.Percent);
             _context.Context("CPU").Gauge("Processor Affinity", () => Process.GetCurrentProcess().ProcessorAffinityList().Count(), Unit.Items);
             _context.Context("CPU").Gauge("CPU usage", () => ReadPerfCounter("% Processor Time"), Unit.Percent);
             _context.Context("CPU").Gauge("Thread count", () => { double threads = ReadPerfCounter("# of current logical Threads"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
