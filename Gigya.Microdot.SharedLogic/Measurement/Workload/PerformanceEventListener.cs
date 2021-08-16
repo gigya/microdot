@@ -12,7 +12,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             "System.Net.NameResolution",
             "System.Net.Http",
             "System.Net.Sockets",
-            "System.Net.Security"
+            "System.Net.Security",
+            "Gigya.EventCounters"
         };
 
         private const string EventCounters = "EventCounters";

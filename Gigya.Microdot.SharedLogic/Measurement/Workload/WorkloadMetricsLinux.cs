@@ -5,6 +5,7 @@ using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
+using Metrics.EventCounters.Linux;
 using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
@@ -19,6 +20,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         private LowSensitivityHealthCheck _cpuUsageHealthCheck;
         private LowSensitivityHealthCheck _threadsCountHealthCheck;
         private LowSensitivityHealthCheck _orleansQueueHealthCheck;
+        private ICpuUsageCalculator _cpuUsageCalculator;
 
         private readonly MetricsContext _context = Metric.Context("Workload");
         private Timer _triggerHealthChecksEvery5Seconds;
@@ -33,7 +35,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _getConfig = getConfig;
             _dateTime = dateTime;
             _eventListener = eventListener;
-
+            _cpuUsageCalculator = new LinuxCpuUsageCalculator();
+            _cpuUsageCalculator.Init();
             _healthStatus = getAggregatingHealthStatus("Workload");
         }
 
@@ -52,7 +55,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _eventListener.Subscribe("gc-fragmentation");
             _eventListener.Subscribe("active-timer-count");
 
-
+            _context.Context("CPU").Gauge("Process Cpu Usage", () => _cpuUsageCalculator.Calculate().MachineCpuUsage, Unit.Items);
+            _context.Context("CPU").Gauge("Machine Cpu Usage", () => _cpuUsageCalculator.Calculate().ProcessCpuUsage, Unit.Items);
             _context.Context("CPU").Gauge("Processor Affinity", () => Process.GetCurrentProcess().ProcessorAffinityList().Count(), Unit.Items);
             _context.Context("CPU").Gauge("CPU usage", () => ReadPerfCounter("% Processor Time"), Unit.Percent);
             _context.Context("CPU").Gauge("Thread count", () => { double threads = ReadPerfCounter("# of current logical Threads"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
@@ -153,6 +157,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 
             _disposed = true;
             _context?.Dispose();
+            _cpuUsageCalculator?.Dispose();
             _triggerHealthChecksEvery5Seconds?.Dispose();
         }
 
