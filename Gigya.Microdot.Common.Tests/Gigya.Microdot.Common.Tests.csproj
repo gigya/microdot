@@ -1,16 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.Common.Tests</AssemblyTitle>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Threading.Tasks.Dataflow" />		
+		<PackageReference Include="Microsoft.CSharp" />
+		<PackageReference Include="Ninject" />		
+		<PackageReference Include="NSubstitute" />		
+	</ItemGroup>
 </Project>

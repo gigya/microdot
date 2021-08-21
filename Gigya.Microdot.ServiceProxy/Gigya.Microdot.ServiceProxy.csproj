@@ -1,15 +1,35 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.ServiceProxy</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\Metrics\Metrics.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.ServiceProxy</AssemblyTitle>
+		<Description>
+			ServiceProxy is used to call remote Microdot services. It is a
+			runtime-generated transparent proxy which implements the remote	service's
+			public interface, translating all calls performed on it to HTTP calls.
+			Part of the Microdot framework.
+		</Description>
+		<PackageTags>gigya microdot microservice microservices serviceproxy http rpc</PackageTags>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
+		<ProjectReference Include="..\Metrics\Metrics.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" />
+		<PackageReference Include="System.Collections.Immutable" />
+		<PackageReference Include="System.ValueTuple" />
+		<PackageReference Include="System.ComponentModel.Annotations" />		
+		<PackageReference Include="System.Runtime.Caching" />
+		<PackageReference Include="System.Reflection.DispatchProxy" />
+		
+		<PackageReference Include="Nito.AsyncEx" />
+	</ItemGroup>
 </Project>

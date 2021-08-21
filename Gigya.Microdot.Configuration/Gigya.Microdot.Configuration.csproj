@@ -1,15 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <noWarn>1591</noWarn>
-    <AssemblyTitle>Gigya.Microdot.Configuration</AssemblyTitle>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.Configuration</AssemblyTitle>
+		<Description>
+			A configuration system based on a hierarchy of XML files, the values of
+			which are accessed using strongly-typed configuration objects. Supports
+			modification of the files on live service, environment variable substitution,
+			encryption and collections. Part of the Microdot framework.
+		</Description>
+		<noWarn>1591</noWarn>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>	
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="Microsoft.CSharp" />
+		<PackageReference Include="System.ComponentModel.Annotations" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" />
+	</ItemGroup>
 </Project>

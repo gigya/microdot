@@ -131,7 +131,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                     else if (response.Error != null)
                         delay = config.ErrorRetryInterval;
 
-                    await _dateTime.Delay(delay).ConfigureAwait(false);
+                    await _dateTime.Delay(delay, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
@@ -162,7 +162,7 @@ namespace Gigya.Microdot.ServiceDiscovery
                 if (consulResponse.Error != null)
                     delay = config.ErrorRetryInterval;
 
-                await _dateTime.Delay(delay).ConfigureAwait(false);
+                await _dateTime.Delay(delay, CancellationToken.None).ConfigureAwait(false);
             }
         }
 

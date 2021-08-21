@@ -1,18 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.Ninject</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.Ninject</AssemblyTitle>
+		<Description>Ninject modules, providers and binding resolvers for various Microdotcomponents, part of the Microdot framework.</Description>
+		<PackageTags>gigya microdot microservice microservices ninject ioc di</PackageTags>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" />
+		<PackageReference Include="Microsoft.CSharp" />
+		<PackageReference Include="Ninject.Extensions.Conventions" />
+		<PackageReference Include="Ninject.Extensions.Factory" />
+	</ItemGroup>
 </Project>

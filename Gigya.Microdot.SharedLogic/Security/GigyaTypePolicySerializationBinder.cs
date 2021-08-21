@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Gigya.Microdot.SharedLogic.Configurations;
+﻿#nullable enable
+
+using System;
 using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Newtonsoft.Json.Serialization;
 

@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
@@ -91,7 +92,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task TimeoutIfNotReceivedFirstResult()
         {
-            await DateTime.Delay(TimeSpan.FromSeconds(10));
+            await DateTime.Delay(TimeSpan.FromSeconds(10), CancellationToken.None);
             if (_firstResultInitialized.Task.GetAwaiter().IsCompleted)
                 return;
             ConsulResultChanged(new EndPointsResult

@@ -99,30 +99,18 @@ namespace Metrics.PerfCounters
             }
             catch (UnauthorizedAccessException x)
             {
-                var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
+                var message = "Error reading performance counter data." +
                    ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
                 MetricsErrorHandler.Handle(x, message);
             }
             catch (Exception x)
             {
-                var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
+                var message = "Error reading performance counter data." +
                    ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
                 MetricsErrorHandler.Handle(x, message);
             }
         }
-
-        private static string GetIdentity()
-        {
-            try
-            {
-                return WindowsIdentity.GetCurrent().Name;
-            }
-            catch (Exception x)
-            {
-                return "[Unknown user | " + x.Message + " ]";
-            }
-        }
-
+      
         private static void WrappedRegister(MetricsContext context, string name, Unit unit,
             string category, string counter, string instance = null,
             Func<double, double> derivate = null,

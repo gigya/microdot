@@ -1,8 +1,0 @@
-Gigya.ServiceContract
-System.Threading.Tasks.Dataflow
-Newtonsoft.Json
-System.ComponentModel.Annotations
-System.Configuration.ConfigurationManager
-
-Microsoft.CSharp
-System.Net.Http

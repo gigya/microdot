@@ -1,18 +1,44 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.ServiceDiscovery</AssemblyTitle>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Rewrite\_diagram_from_draw.io.xml" />
-    <Content Include="Rewrite\_diagram.png" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.ServiceDiscovery</AssemblyTitle>
+		<Description>
+			Using this component you can find other Microdot services (and any other
+			remote system), perform client-side load balancing between multiple
+			servers, detect and	skip unresponsive servers and resume using them
+			when they return to full operation. Discovery is typically perfomed with
+			Consul by HashiCorp	(http://consul.io) but it also supports manual server
+			lists specified in Microdot configuration (see NuGet package
+			Gigya.Microdot.Configuration) and can be expanded to support additional
+			service discovery systems.
+		</Description>
+		<PackageTags>gigya microdot microservice microservices discovery service-discovery consul</PackageTags>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
+	</Target>
+	<ItemGroup>
+		<Content Include="Rewrite\_diagram_from_draw.io.xml" />
+		<Content Include="Rewrite\_diagram.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
+		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="Microsoft.CSharp" />	
+		<PackageReference Include="System.ComponentModel.Annotations" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" />		
+		<PackageReference Include="System.ValueTuple" />
+		<PackageReference Include="System.Collections.Immutable" />
+	</ItemGroup>
 </Project>

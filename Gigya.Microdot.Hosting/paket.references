@@ -1,9 +1,0 @@
-Gigya.ServiceContract
-Newtonsoft.Json
-System.Threading.Tasks.Dataflow
-System.Collections.Immutable
-System.ValueTuple
-Microsoft.Orleans.Core.Abstractions
-System.ComponentModel.Annotations
-System.Net.Http
-System.ServiceProcess.ServiceController

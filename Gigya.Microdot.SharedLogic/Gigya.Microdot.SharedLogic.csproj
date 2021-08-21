@@ -1,14 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>Gigya.Microdot.SharedLogic</AssemblyTitle>
-    <LangVersion>8.0</LangVersion>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\Metrics\Metrics.csproj" />
-  </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.SharedLogic</AssemblyTitle>
+		<Description>Various components and utilities shared between different parts of the Microdot framework.</Description>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
+		<ProjectReference Include="..\Metrics\Metrics.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="Microsoft.CSharp" />
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" />		
+		<PackageReference Include="System.ComponentModel.Annotations" />
+		<PackageReference Include="System.ValueTuple" />
+	</ItemGroup>
 </Project>

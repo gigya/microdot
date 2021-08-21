@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
-using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using FluentAssertions;
-
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Fakes.KernelUtils;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
@@ -25,8 +21,6 @@ using Gigya.Microdot.Testing.Shared.Service;
 using Newtonsoft.Json;
 using Ninject;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
-using NSubstitute.Exceptions;
 using NUnit.Framework;
 
 using RichardSzalay.MockHttp;
@@ -438,10 +432,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var serviceProxy = providerFactory("DemoService");
                 serviceProxy.DefaultPort = port;
 
-                //Disable  TracingContext.SetRequestID("1");
-
-                CallContext.FreeNamedDataSlot("#ORL_RC");
-
                 string overrideHost = "override-host";
                 int overridePort = 5318;
                 TracingContext.SetHostOverride("DemoService", overrideHost, overridePort);
@@ -499,10 +489,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
                 var serviceProxy = providerFactory("DemoService");
                 serviceProxy.DefaultPort = port;
-
-                //Disable  TracingContext.SetRequestID("1");
-
-                CallContext.FreeNamedDataSlot("#ORL_RC");
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 

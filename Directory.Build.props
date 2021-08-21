@@ -1,11 +1,27 @@
 <Project>
- <PropertyGroup>
-   <Company>Gigya Inc.</Company>
-   <Copyright>© 2020 Gigya Inc.</Copyright>
-   <Product>Microdot Framework</Product>
-   <Description>Microdot Framework</Description>
-   <AssemblyVersion></AssemblyVersion>
-   <Version>3.3.21</Version>
-   <RunSettingsFilePath>$(SolutionDir)\test.runsettings</RunSettingsFilePath>
- </PropertyGroup>
+	<PropertyGroup>
+		<Company>Gigya Inc.</Company>
+		<Copyright>© 2021 Gigya Inc.</Copyright>
+		<Product>Microdot Framework</Product>
+		<Description>Microdot Framework</Description>
+		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>
+		<Version>4.0.0$(VersionSuffix)</Version>		
+	</PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
+		<Platforms>x64</Platforms>
+		<RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+		<LangVersion>8.0</LangVersion>
+		<IncludeSymbols>true</IncludeSymbols>
+		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+		<OutputPath>bin\$(Configuration)</OutputPath>
+		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
+	</Target>
 </Project>

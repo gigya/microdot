@@ -1,7 +1,0 @@
-REDIRECTS: OFF
-COPY-CONTENT-TO-OUTPUT-DIR: ALWAYS
-CONTENT: ONCE
-RESTRICTION: == netstandard2.0
-NUGET
-  remote: https://api.nuget.org/v3/index.json
-    Newtonsoft.Json (12.0.3)

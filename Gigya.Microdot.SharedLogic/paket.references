@@ -1,8 +1,0 @@
-Gigya.ServiceContract
-Newtonsoft.Json
-System.ComponentModel.Annotations
-System.Diagnostics.PerformanceCounter
-System.Net.Http
-System.Threading.Tasks.Dataflow
-System.ValueTuple
-Microsoft.CSharp

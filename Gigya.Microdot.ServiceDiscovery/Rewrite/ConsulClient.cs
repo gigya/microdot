@@ -283,10 +283,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
             {
                 _httpClient.Dispose();
             }
-            catch (Exception e)
-            {
-                
-            }
+            catch{}
          
         }
     }

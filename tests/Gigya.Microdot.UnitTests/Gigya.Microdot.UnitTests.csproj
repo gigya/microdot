@@ -1,38 +1,41 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
-    <Product>Gigya.Microdot.UnitTests</Product>
-    <Copyright>Copyright ©  2017</Copyright>
-    <CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Include="loadpaths.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-    <ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
-    <EmbeddedResource Include="ServiceProxyTests\ExceptionFromNetCore.json" />
-  </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+	<PropertyGroup>
+		<AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
+		<TargetFrameworks>net5.0-windows</TargetFrameworks>		
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="loadpaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
+		<ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="System.Runtime.Caching" />
+		<PackageReference Include="System.Runtime.Caching" />	
+		<PackageReference Include="Microsoft.CSharp" />
+		<PackageReference Include="Microsoft.Orleans.Core" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />			
+		<PackageReference Include="Ninject" />
+		
+		<PackageReference Include="NSubstitute" />
+		<PackageReference Include="FluentAssertions" />
+		<PackageReference Include="NUnit" />
+		<PackageReference Include="NUnit3TestAdapter" />
+		<PackageReference Include="RichardSzalay.MockHttp" />
+		<PackageReference Include="Shouldly" />
+				
+		
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
+		<EmbeddedResource Include="ServiceProxyTests\ExceptionFromNetCore.json" />
+	</ItemGroup>
 </Project>

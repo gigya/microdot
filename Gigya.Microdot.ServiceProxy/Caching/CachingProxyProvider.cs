@@ -27,7 +27,6 @@ using Gigya.Common.Contracts.Attributes;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.System_Reflection.DispatchProxy;
 using Gigya.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
