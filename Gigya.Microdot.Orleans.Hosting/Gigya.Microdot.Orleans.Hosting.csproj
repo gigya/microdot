@@ -19,9 +19,8 @@
 		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="System.Threading.Tasks.Dataflow" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" />
-		
-		<!--# TODO: remove this dependencies once we move to dotnet core and go back to using the original dashboard-->
-		<PackageReference Include="Gigya.OrleansDashboard.NetStandard" />
+				
+		<PackageReference Include="OrleansDashboard" />
 		<PackageReference Include="System.Text.Json" />
 				
 		<PackageReference Include="Microsoft.CSharp" />

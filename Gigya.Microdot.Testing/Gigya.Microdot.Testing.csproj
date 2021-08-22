@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
+	<PropertyGroup>		
 		<AssemblyTitle>Gigya.Microdot.Testing</AssemblyTitle>
 		<Description>
 			Tools to help write tests for Microdot services.

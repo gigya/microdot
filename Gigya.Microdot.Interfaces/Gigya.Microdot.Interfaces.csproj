@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>		
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
 		<AssemblyTitle>Gigya.Microdot.Interfaces</AssemblyTitle>
 		<Description>
 			Interface abstractions used by various Microdot components, seperated from

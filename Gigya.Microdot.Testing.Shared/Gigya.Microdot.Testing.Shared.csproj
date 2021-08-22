@@ -7,6 +7,7 @@
 			The project contains logic for both Orleans and Non-Orleans host testers.
 		</Description>
 		<PackageTags>gigya microdot microservice microservices fakes mocks mocking unit-testing</PackageTags>
+		<TargetFrameworks>net5.0</TargetFrameworks>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>

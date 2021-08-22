@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
+	<PropertyGroup>		
 		<AssemblyTitle>Gigya.Microdot.Ninject</AssemblyTitle>
 		<Description>Ninject modules, providers and binding resolvers for various Microdotcomponents, part of the Microdot framework.</Description>
 		<PackageTags>gigya microdot microservice microservices ninject ioc di</PackageTags>
