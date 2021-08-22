@@ -17,6 +17,7 @@
 		<PackageReference Include="Ninject" />
 		<PackageReference Include="ZooKeeperNetEx" />
 		<PackageReference Include="System.ValueTuple" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="NSubstitute" />
 		<PackageReference Include="NUnit" />
 		<PackageReference Include="NUnit3TestAdapter" />

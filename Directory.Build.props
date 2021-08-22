@@ -7,7 +7,8 @@
 		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
-		<Version>4.0.0$(VersionSuffix)</Version>		
+		<Version>4.0.0$(VersionSuffix)</Version>
+		<OutputType>Library</OutputType>
 	</PropertyGroup>
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>

@@ -3,6 +3,8 @@
 	<PropertyGroup>
 		<AssemblyTitle>CalculatorService.Client</AssemblyTitle>
 		<TargetFrameworks>net5.0-windows</TargetFrameworks>
+		<OutputType>Exe</OutputType>
+		<ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="loadPaths.json">

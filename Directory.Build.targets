@@ -34,13 +34,7 @@
 		<PackageReference Update="Ninject.Extensions.Factory" Version="*"/>
 		<PackageReference Update="Castle.Core" Version="*"/>
 		<PackageReference Update="NLog" Version="*"/>
-
-		<!--
-		<PackageReference Update="Polly" Version="7.*"/>
-		<PackageReference Update="ZooKeeperNetEx" Version="3.*"/>
-		<PackageReference Update="ParallelExtensionsExtras" Version="1.*"/>
-		-->
-
+		<PackageReference Update="ZooKeeperNetEx" Version="*"/>	
 	</ItemGroup>
 
 	<ItemGroup Label="Test">

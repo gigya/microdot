@@ -130,7 +130,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorServic
         public Task LogData(string message)
         {
             _log.Warn(x => x(message));
-            return TaskDone.Done;
+            return Task.CompletedTask;
         }
 
         public Task LogPram(string sensitive, string notSensitive, string notExists, string @default)

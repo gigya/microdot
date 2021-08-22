@@ -16,7 +16,7 @@
 		<PackageReference Include="System.Runtime.Caching" />	
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.Orleans.Core" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" />			
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />		
 		<PackageReference Include="Ninject" />
 		
 		<PackageReference Include="NSubstitute" />
