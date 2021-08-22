@@ -9,11 +9,12 @@
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
 		<Version>4.0.0$(VersionSuffix)</Version>
 		<OutputType>Library</OutputType>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 	</PropertyGroup>
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
 		<Platforms>x64</Platforms>
-		<RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+		<RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>		
 		<LangVersion>8.0</LangVersion>
 		<IncludeSymbols>true</IncludeSymbols>
 		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
