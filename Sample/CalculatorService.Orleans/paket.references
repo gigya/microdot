@@ -1,5 +1,0 @@
-Ninject
-Microsoft.Orleans.CodeGenerator.MsBuild
-Microsoft.Orleans.Core
-
-# Solve binding redirect issue, related to project vs nuget references. OrleansDashboard depends on.

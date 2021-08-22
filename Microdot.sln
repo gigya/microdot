@@ -12,9 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Solution Items", ".Solutio
 		Directory.Build.targets = Directory.Build.targets
 		LICENSE.md = LICENSE.md
 		main.ruleset = main.ruleset
-		paket.dependencies = paket.dependencies
-		paket.lock = paket.lock
 		README.md = README.md
+		test.runsettings = test.runsettings
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Fakes", "Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj", "{2865F69B-D847-4901-8945-4941E463F94E}"
@@ -64,15 +63,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.Common.Tests", "Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj", "{47CBF637-AB8F-4568-86D6-EAB6EF08B9CE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gigya.Microdot.LanguageExtensions", "Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj", "{54F30C07-4D6C-4E8F-8C38-BCD8B0ECEE43}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9E13FD47-A463-4D69-A078-59EECAEC294F}"
-	ProjectSection(SolutionItems) = preProject
-		Changelog.md = Changelog.md
-		Directory.Build.props = Directory.Build.props
-		paket.dependencies = paket.dependencies
-		README.md = README.md
-		test.runsettings = test.runsettings
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metrics", "Metrics\Metrics.csproj", "{C4AB90EF-198B-47E8-B5EE-0B517C7250D6}"
 EndProject

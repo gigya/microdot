@@ -2,13 +2,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
-		<TargetFrameworks>net5.0-windows</TargetFrameworks>		
-	</PropertyGroup>
-	<ItemGroup>
-		<None Include="loadpaths.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
+		<TargetFrameworks>net5.0-windows</TargetFrameworks>
+	</PropertyGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
 		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
@@ -18,7 +13,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="System.Runtime.Caching" />
 		<PackageReference Include="System.Runtime.Caching" />	
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.Orleans.Core" />
@@ -30,9 +24,12 @@
 		<PackageReference Include="NUnit" />
 		<PackageReference Include="NUnit3TestAdapter" />
 		<PackageReference Include="RichardSzalay.MockHttp" />
-		<PackageReference Include="Shouldly" />
-				
-		
+		<PackageReference Include="Shouldly" />						
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="loadpaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 	<ItemGroup>
 		<None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
