@@ -27,7 +27,7 @@ namespace Gigya.Microdot.UnitTests.Caching
     // Calls to NSubstitute's .Received() method on async methods generate this warning.
 
 
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.Default)]
     public class AsyncMemoizerTests
     {
         private MethodInfo ThingifyInt { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyInt));
@@ -538,7 +538,19 @@ namespace Gigya.Microdot.UnitTests.Caching
                 for (int i = 0; i < 10; i++) //10 calls to data source
                 {
                     var task = (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, new object[] { "someString" }, GetCachingSettings());
-                    task.ShouldThrow<Exception>();
+
+                    Exception thrownException = null;
+                    
+                    try
+                    {
+                        await task;
+                    }
+                    catch (Exception ex)
+                    {
+                        thrownException = ex;
+                    }
+                    
+                    Assert.NotNull(thrownException);
                 }
             }
 
@@ -847,24 +859,27 @@ namespace Gigya.Microdot.UnitTests.Caching
             IMemoizer memoizer = new AsyncMemoizer(new AsyncCache(new ConsoleLog(), Metric.Context("AsyncCache"), new DateTimeImpl(), new EmptyRevokeListener(), revokeCache), new MetadataProvider(), Metric.Context("Tests"));
 
             // T = 0s. No data in cache, should retrieve value from source (870).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1, 100))).Id.ShouldBe(firstValue);
+            const int ExpirationTime = 10;
+            const int watiTime = 4;
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(ExpirationTime, 1, 100))).Id.ShouldBe(firstValue);
+
+            await Task.Delay(TimeSpan.FromSeconds(watiTime));
 
             // T = 2s. Past refresh time (1s), this triggers refresh in background (that will fail), should get existing value (870)
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1, 100))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(ExpirationTime, 1, 100))).Id.ShouldBe(firstValue);
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            await Task.Delay(TimeSpan.FromSeconds(watiTime));
 
             // T = 4s. Background refresh failed, but TTL (5s) not expired yet. Should still give old value (870) but won't
             // trigger additional background refresh because of very long FailedRefreshDelay that was spcified (100s).
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1, 100))).Id.ShouldBe(firstValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(ExpirationTime, 1, 100))).Id.ShouldBe(firstValue);
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            await Task.Delay(TimeSpan.FromSeconds(watiTime));
 
             // T = 6s. We're past the original TTL (5s), and refresh task failed. Items should have been evicted from cache by now
             // according to 5s expiery from T=0s, not from T=2s of the failed refresh. New item (1002) should come in.
-            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(5, 1))).Id.ShouldBe(secondValue);
+            (await (Task<Thing>)memoizer.Memoize(dataSource, ThingifyTaskThing, args, GetCachingSettings(ExpirationTime, 1))).Id.ShouldBe(secondValue);
             dataSource.Received(3).ThingifyTaskThing(Arg.Any<string>());
         }
 

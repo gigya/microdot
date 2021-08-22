@@ -1,0 +1,23 @@
+[*.cs]
+# CS0618: Type or member is obsolete
+dotnet_diagnostic.CS0618.severity = none
+# VSTHRD200: Use "Async" suffix for async methods
+dotnet_diagnostic.VSTHRD200.severity = none
+# SYSLIB0011: Type or member is obsolete
+dotnet_diagnostic.SYSLIB0011.severity = none
+# CS0168: Variable is declared but never used
+dotnet_diagnostic.CS0168.severity = none
+# CA1416: Validate platform compatibility
+dotnet_diagnostic.CA1416.severity = error
+
+
+# CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call.
+dotnet_diagnostic.CS4014.severity = none
+# CS0169: The field is never used
+dotnet_diagnostic.CS0169.severity = none
+# CS0414: The field is assigned but its value is never used
+dotnet_diagnostic.CS0414.severity = none
+# CS0219: The variable is assigned but its value is never used
+dotnet_diagnostic.CS0219.severity = none
+# CS0649:  Field is never assigned to, and will always have its default value
+dotnet_diagnostic.CS0649.severity = none

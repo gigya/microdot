@@ -9,11 +9,10 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Orleans.Hosting.Events;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Ninject;
-using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {
-    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, NonParallelizable]
     public class GrainCallEventTests
     {
         private const int REPEAT = 1;

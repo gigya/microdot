@@ -1,13 +1,12 @@
-﻿using Metrics.MetricData;
-using System;
-using System.Diagnostics;
-using System.Security.Principal;
+﻿using System;
+using Metrics.MetricData;
+using System.Runtime.InteropServices;
 
 namespace Metrics.PerfCounters
 {
     public class PerformanceCounterGauge : MetricValueProvider<double>
     {
-        private readonly PerformanceCounter performanceCounter;
+        private readonly IPerformanceCounterGauge _performanceCounterGauge;
 
         public PerformanceCounterGauge(string category, string counter)
             : this(category, counter, instance: null)
@@ -15,54 +14,19 @@ namespace Metrics.PerfCounters
 
         public PerformanceCounterGauge(string category, string counter, string instance)
         {
-            try
-            {
-                this.performanceCounter = instance == null ?
-                    new PerformanceCounter(category, counter, true) :
-                    new PerformanceCounter(category, counter, instance, true);
-                Metric.Internal.Counter("Performance Counters", Unit.Custom("Perf Counters")).Increment();
-            }
-            catch (Exception x)
-            {
-                var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
-                    ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
-                MetricsErrorHandler.Handle(x, message);
-            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                _performanceCounterGauge = new PerformanceCounterGaugeWindows(category, counter, instance);
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                _performanceCounterGauge = new PerformanceCounterGaugeLinux(category, counter, instance);
+            else 
+                throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
         }
-
-        private static string GetIdentity()
-        {
-            try
-            {
-                return Environment.UserName;
-            }
-            catch (Exception x)
-            {
-                return "[Unknown user | " + x.Message + " ]";
-            }
-        }
-
+        
         public double GetValue(bool resetMetric = false)
         {
-            return this.Value;
+            return _performanceCounterGauge.GetValue(resetMetric);
         }
 
-        public double Value
-        {
-            get
-            {
-                try
-                {
-                    return this.performanceCounter?.NextValue() ?? double.NaN;
-                }
-                catch (Exception x)
-                {
-                    var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
-                        ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
-                    MetricsErrorHandler.Handle(x, message);
-                    return double.NaN;
-                }
-            }
-        }
+        public double Value => _performanceCounterGauge.Value;
     }
 }

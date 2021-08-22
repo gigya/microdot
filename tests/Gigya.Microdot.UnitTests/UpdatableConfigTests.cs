@@ -87,14 +87,14 @@ namespace Gigya.Microdot.UnitTests
             return await _unitTestingKernel.Get<ManualConfigurationEvents>().ApplyChanges<T>();
         }
         
-        protected async Task<T> ChangeConfig<T>(IEnumerable<KeyValuePair<string, string>> keyValue, TimeSpan timout) where T : IConfigObject
+        protected async Task<T> ChangeConfig<T>(IEnumerable<KeyValuePair<string, string>> keyValue, TimeSpan timeout) where T : IConfigObject
         {
             foreach (KeyValuePair<string, string> keyValuePair in keyValue)
             {
                 _configDic[keyValuePair.Key] = keyValuePair.Value;
             }
 
-            return await _unitTestingKernel.Get<ManualConfigurationEvents>().ApplyChanges<T>(timout);
+            return await _unitTestingKernel.Get<ManualConfigurationEvents>().ApplyChanges<T>(timeout);
         }
 
         protected async Task ClearChanges<T>() where T : IConfigObject

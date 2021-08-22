@@ -373,13 +373,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             await Service.LogGrainId();
         }
 
-        [Test,Ignore("This silo need to run on separate app domain from nunit it should set default before any Regex is called")]
-        public async Task RegexTestWithTimeout()
-        {
-            //This silo need to run on separate app domain from nunit it should set default before any Regex is called
-            await Service.RegexTestWithDefaultTimeoutDefault(10);
-        }
-
         #region MockData
         public class Person
         {

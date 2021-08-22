@@ -48,7 +48,7 @@ namespace Gigya.Microdot.Configuration.Objects
         /// </summary>
         public object ChangeNotifications { get; private set; }
 
-        private object Latest { get; set; }
+        private volatile object Latest;
         private UsageTracking UsageTracking { get; }
         private ILog Log { get; }
         private Type ObjectType { get; }
@@ -200,6 +200,9 @@ namespace Gigya.Microdot.Configuration.Objects
                 {
                     if (Latest != null)
                         ValidationErrors = null;
+                    
+                    if (ConfigPath.Contains("StackTraceEnhancerSettings"))
+                        Log.Info(_=> _($"RemoveThis: Decided that config was not changed for path {ConfigPath}. Old config :{LatestNode} new config: {config}"));
 
                     return;
                 }

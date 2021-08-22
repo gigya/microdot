@@ -6,21 +6,14 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 using Ninject;
-using NSubstitute;
 using NUnit.Framework;
-
 using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
@@ -28,28 +21,22 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
     public class JsonExceptionSerializerTests : UpdatableConfigTests
     {
         private JsonExceptionSerializer ExceptionSerializer { get; set; }
-
-        public override void Setup()
-        {
-            
-        }
-
-        public override void OneTimeSetUp()
+       
+        [OneTimeSetUp]
+        public async Task OneTimeSetupAsync()
         {
             base.OneTimeSetUp();
-            
+
             ExceptionSerializer = _unitTestingKernel.Get<JsonExceptionSerializer>();
-            Task t = ChangeConfig<StackTraceEnhancerSettings>(new[]
+            await ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
                 new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Pattern",
                     @"\.<>c__DisplayClass(?:\d+)_(?:\d+)(?:`\d)?\.<<(\w+)>g__(\w+)\|?\d>d.MoveNext\(\)"),
                 new KeyValuePair<string, string>("StackTraceEnhancerSettings.RegexReplacements.TidyAsyncLocalFunctionNames.Replacement",
                     @".$1.$2(async)")
-            });
-            t.Wait();
-
+            }, TimeSpan.FromMinutes(1));
         }
-
+        
         protected override Action<IKernel> AdditionalBindings()
         {
             return null;
@@ -170,6 +157,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.StackTrace.ShouldNotContain("at System.Runtime");
             actual.StackTrace.ShouldNotContain("End of stack trace from previous location");
             actual.StackTrace.ShouldNotContain("__");
+            actual.InnerException.ShouldNotBeNull();
             actual.InnerException.ShouldBeOfType<WebException>();
             actual.InnerException.Message.ShouldBe(webEx.Message);
             actual.InnerException.StackTrace.ShouldNotBeNullOrEmpty();
@@ -177,20 +165,19 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             actual.InnerException.StackTrace.ShouldNotContain("End of stack trace");
             actual.InnerException.StackTrace.ShouldNotContain("__");
         }
-        
-        
+
+#if NETFRAMEWORK
         [Test]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOn()
         {
-            for (var i=0; i<3; i++)
+            
+            await ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
-                await ChangeConfig<MicrodotSerializationSecurityConfig>(new[]
-                {
-                    new KeyValuePair<string, string>("Microdot.SerializationSecurity.AssemblyNamesRegexReplacements-collection",
-                        "[{\"assemblyToReplace\":\"System.Private.CoreLib\", \"assemblyReplacement\":\"mscorlib\"}]")
-                }, TimeSpan.FromMinutes(5));
-                await Task.Delay(16);
-            }
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
+                    "true"),
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
+                    "true")
+            });
             
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
@@ -214,8 +201,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var myException = deserializedException as MyException;
             
             Assert.True(myException.InnerException != null);
-            
-            Assert.AreEqual("System.ArgumentOutOfRangeException",myException.InnerException.GetType().FullName, $"type was {myException.InnerException.GetType().FullName} {myException.InnerException}");
+            Assert.True(myException.InnerException is ArgumentOutOfRangeException);
 
             var argumentOutOfRange = myException.InnerException as ArgumentOutOfRangeException;
             
@@ -224,17 +210,19 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Assert.NotNull(argumentOutOfRange.ActualValue);
 
         }
-        
          
         [Test]
         public async Task TryParseExceptionJsonFromNetCoreOriginWithConfigOff()
         {
             await ChangeConfig<StackTraceEnhancerSettings>(new[]
             {
-                new KeyValuePair<string, string>("Microdot.SerializationSecurity.AssemblyNamesRegexReplacements-collection",
-                    "[]")
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkTypeTranslation",
+                    "false"),
+                new KeyValuePair<string, string>("Microdot.ExceptionSerialization.UseNetCoreToFrameworkNameTranslation",
+                    "false")
             });
 
+            var conf = _unitTestingKernel.Get<Func<ExceptionSerializationConfig>>();
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
             string netCoreExceptionJson = null;
@@ -250,7 +238,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             
             Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
         }
+#endif
     }
+
 
     [Serializable]
     public class MyException : RequestException

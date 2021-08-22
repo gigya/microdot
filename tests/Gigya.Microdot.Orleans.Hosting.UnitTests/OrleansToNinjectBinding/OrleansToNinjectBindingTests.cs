@@ -15,7 +15,7 @@ using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
 {
-    [TestFixture, Parallelizable(ParallelScope.All)]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class OrleansToNinjectBindingTests
     {
         public enum ServiceProviderType
@@ -108,34 +108,6 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.OrleansToNinjectBinding
             Assert.AreEqual(1, groups.Count());
         }
 
-
-        [Ignore("manual")]
-        //Convert to benchmark dot nets
-        [TestCase(ServiceProviderType.microdot)]
-        [TestCase(ServiceProviderType.microsoft)]
-        public void SimpleSantyForPreforamce(ServiceProviderType serviceProviderType)
-        {
-            var binding = new ServiceCollection().AddScoped<Dependency>();
-
-            var serviceProvider = CreateServiceProvider(binding, serviceProviderType);
-            var sw = Stopwatch.StartNew();
-            Parallel.For(0, 10000, (i) =>
-             {
-                 var serviceScopeFactory = (IServiceScopeFactory)serviceProvider.GetService(typeof(IServiceScopeFactory));
-                 var serviceScope = serviceScopeFactory.CreateScope();
-                 ConcurrentBag<Dependency> dependencies = new ConcurrentBag<Dependency>();
-
-                 Parallel.For(0, 5, (j) =>
-                 {
-                     var object1 = (Dependency)serviceScope.ServiceProvider.GetService(typeof(Dependency));
-                     dependencies.Add(object1);
-                 });
-
-                 var groups = dependencies.ToArray().GroupBy(x => x);
-                 Assert.AreEqual(1, groups.Count());
-             });
-            Assert.Greater(1000, sw.ElapsedMilliseconds);
-        }
         [TestCase(ServiceProviderType.microsoft)]
         [TestCase(ServiceProviderType.microdot)]
 

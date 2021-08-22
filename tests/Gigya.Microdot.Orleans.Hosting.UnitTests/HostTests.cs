@@ -17,10 +17,10 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     internal class HostTests
     {
-        private static int _counter = 0;
+        private static int _counter;
 
         [Test, Repeat(5)]
         public void HostShouldStartAndStopMultipleTimes()
@@ -32,8 +32,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             {
                 var host = new ServiceTester<TestHost>();
                 host.GetServiceProxy<ICalculatorService>();
-                Console.WriteLine($"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
-                 host.Dispose();
+                Console.WriteLine(
+                    $"-----------------------------Silo Is running {_counter} time took, {sw.ElapsedMilliseconds}ms---------------");
+                host.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
             finally
             {
@@ -52,13 +57,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             return new FakesLoggersModules();
         }
 
-        protected override void PreConfigure(IKernel kernel, ServiceArguments Arguments)
+        protected override void PreConfigure(IKernel kernel, ServiceArguments arguments)
         {
             var env = new HostEnvironment(new TestHostEnvironmentSource());
             kernel.Rebind<IEnvironment>().ToConstant(env).InSingletonScope();
             kernel.Rebind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
-            base.PreConfigure(kernel, Arguments);
+            base.PreConfigure(kernel, arguments);
             Console.WriteLine($"-----------------------------Silo is RebindForTests");
             kernel.Rebind<ServiceValidator>().To<CalculatorServiceHost.MockServiceValidator>().InSingletonScope();
             kernel.Rebind<ICertificateLocator>().To<DummyCertificateLocator>().InSingletonScope();

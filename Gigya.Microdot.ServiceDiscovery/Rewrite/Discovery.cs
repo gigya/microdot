@@ -169,27 +169,37 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         // differs from configuration.
         private async void CleanupLoop()
         {
-            while (!_shutdownTokenSource.Token.IsCancellationRequested)
+            try
             {
-                try
+                while (!_shutdownTokenSource.Token.IsCancellationRequested)
                 {
-                    var expiryTime = DateTime.UtcNow - GetConfig().MonitoringLifetime;
+                    try
+                    {
+                        var expiryTime = DateTime.UtcNow - GetConfig().MonitoringLifetime;
 
-                    foreach (var nodeSource in _nodeSources)
-                        if (   nodeSource.Value.Value.LastAccessTime < expiryTime
-                            || nodeSource.Value.Value.NodeSourceType != GetConfiguredSourceType(nodeSource.Key)
-                            || !await IsServiceDeployed(nodeSource.Key).ConfigureAwait(false))
-                        {
-    #pragma warning disable 4014
-                            nodeSource.Value.Value.NodeSourceTask.ContinueWith(t => t.Result.Dispose());
-    #pragma warning restore 4014
-                            _nodeSources.TryRemove(nodeSource.Key, out _);
-                        }
+                        foreach (var nodeSource in _nodeSources)
+                            if (nodeSource.Value.Value.LastAccessTime < expiryTime
+                                || nodeSource.Value.Value.NodeSourceType != GetConfiguredSourceType(nodeSource.Key)
+                                || !await IsServiceDeployed(nodeSource.Key).ConfigureAwait(false))
+                            {
+#pragma warning disable 4014
+                                nodeSource.Value.Value.NodeSourceTask.ContinueWith(t => t.Result.Dispose());
+#pragma warning restore 4014
+                                _nodeSources.TryRemove(nodeSource.Key, out _);
+                            }
 
-                    await DateTime.Delay(TimeSpan.FromSeconds(1), _shutdownTokenSource.Token);
+                        await DateTime.Delay(TimeSpan.FromSeconds(1), _shutdownTokenSource.Token);
+                    }
+                    catch
+                    {
+                    } // Shouldn't happen, but just in case. Cleanup musn't stop.
                 }
-                catch {} // Shouldn't happen, but just in case. Cleanup musn't stop.
             }
+            catch(ObjectDisposedException)
+            {
+                //Can happen on host shutdown.  
+            }
+
         }
 
 

@@ -65,8 +65,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 res.Should().Be(1);
 
                 testinghost.Host.Kernel.Get<IDemoService>().Received().Increment(0);
-                Thread.Sleep(100);
-                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected());
+
+
+                Thread.Sleep(200);
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected("Success"));
             }
         }
 
@@ -78,15 +80,10 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Do(x => { throw new Exception("Do exception"); });
 
                 Assert.Throws<RemoteServiceException>(() => testinghost.GetServiceProxy<IDemoService>().DoSomething().GetAwaiter().GetResult());
+                
 
-                var metricsExpected = DefaultExpected();
-
-                metricsExpected.Counters = new List<MetricDataEquatable>
-                {
-                    new MetricDataEquatable {Name = "Failed", Unit = Unit.Calls}
-                };
-
-                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(metricsExpected);
+                Thread.Sleep(200);
+                GetMetricsData(testinghost.Host.ServiceName).AssertEquals(DefaultExpected("Failed"));
             }
         }
 
@@ -100,13 +97,13 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         }
 
 
-        private static MetricsDataEquatable DefaultExpected()
+        private static MetricsDataEquatable DefaultExpected(string name)
         {
             return new MetricsDataEquatable
             {
                 Counters = new List<MetricDataEquatable>
                 {
-                    new MetricDataEquatable {Name = "Success", Unit = Unit.Calls}
+                    new MetricDataEquatable {Name = name, Unit = Unit.Calls}
                 },
                 Timers = new List<MetricDataEquatable>
                 {

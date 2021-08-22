@@ -8,7 +8,7 @@ using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 {
-    public sealed class WorkloadMetrics : IWorkloadMetrics
+    public sealed class WorkloadMetricsWindows : IWorkloadMetrics
     {
         private readonly AggregatingHealthStatus _healthStatus;
         private readonly Func<WorkloadMetricsConfig> _getConfig;
@@ -34,7 +34,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 
         private ILog Log { get; }
 
-        public WorkloadMetrics(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
+        public WorkloadMetricsWindows(Func<string, AggregatingHealthStatus> getAggregatingHealthStatus, Func<WorkloadMetricsConfig> getConfig, IDateTime dateTime, ILog log)
         {
             Log = log;
             _getConfig = getConfig;
@@ -145,15 +145,15 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context?.Dispose();
             _triggerHealthChecksEvery5Seconds?.Dispose();
 
-            _processorTimePercent.Dispose();
-            _processorTotalPercent.Dispose();
-            _virtualBytes.Dispose();
-            _privateBytes.Dispose();
-            _workingSet.Dispose();
-            _threadCount.Dispose();
-            _dotNetThreadCount.Dispose();
-            _gen2Collections.Dispose();
-            _timeInGc.Dispose();
+            _processorTimePercent?.Dispose();
+            _processorTotalPercent?.Dispose();
+            _virtualBytes?.Dispose();
+            _privateBytes?.Dispose();
+            _workingSet?.Dispose();
+            _threadCount?.Dispose();
+            _dotNetThreadCount?.Dispose();
+            _gen2Collections?.Dispose();
+            _timeInGc?.Dispose();
         }
     }
 }

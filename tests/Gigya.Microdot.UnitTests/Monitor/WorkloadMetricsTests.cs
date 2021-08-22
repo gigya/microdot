@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -56,6 +57,11 @@ namespace Gigya.Microdot.UnitTests.Monitor
                 k.Rebind<IHealthMonitor>().To<HealthMonitor>();
                 k.Rebind<ServiceArguments>().ToMethod(c => _serviceArguments);
                 k.Rebind<IDateTime>().ToMethod(c => _dateTimeFake);
+
+                k.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
+
+                k.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+                k.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
             });
 
             _kernel.Get<Ninject.SystemInitializer.SystemInitializer>().Init();
@@ -81,10 +87,10 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
 
-        private const int Repet = 1;
+        private const int Repeat = 1;
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task AddWorkloadGaugesToMetrics()
         {
             Init();
@@ -101,7 +107,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
 
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task MetricsShouldBeZeroIfConfiguredNotToReadPerformanceCounters()
         {
             _config.ReadPerformanceCounters = false;
@@ -119,7 +125,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
 
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task AddWorkloadHealthCheck()
         {
             Init();
@@ -127,7 +133,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeUnhealthyAfterThreadsCountIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;
@@ -137,7 +143,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeUnhealthyAfterCPUUsageIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyCpuUsage = 0.01;
@@ -147,7 +153,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeUnhealthyAfterOrleansQueueIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyOrleansQueueLength = 1;
@@ -158,7 +164,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeHealthyIfProblemDetectedForLessThanSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;
@@ -168,7 +174,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repet)]
+        [Repeat(Repeat)]
         public async Task BeHealthyIfProblemWasSolvedDuringSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;

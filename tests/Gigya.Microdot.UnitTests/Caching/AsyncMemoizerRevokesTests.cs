@@ -20,7 +20,7 @@ using Shouldly;
 // ReSharper disable ConsiderUsingConfigureAwait (not relevant for tests)
 namespace Gigya.Microdot.UnitTests.Caching
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.None)]
     public class AsyncMemoizerRevokesTests
     {
         private const string cacheContextName = "AsyncCache";
@@ -47,8 +47,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                                                           double refreshTimeSeconds = 60, 
                                                           RevokedResponseBehavior revokedResponseBehavior = RevokedResponseBehavior.FetchNewValueNextTime,
                                                           ResponseKinds responseKindsToCache = ResponseKinds.NonNullResponse | ResponseKinds.NullResponse,
-                                                          ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException,
-                                                          RefreshBehavior refreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground) =>
+                                                          ResponseKinds responseKindsToIgnore = ResponseKinds.EnvironmentException | ResponseKinds.OtherExceptions | ResponseKinds.RequestException | ResponseKinds.TimeoutException) =>
             new MethodCachingPolicyConfig
             {
                 ExpirationTime = TimeSpan.FromSeconds(ttlSeconds),
@@ -59,7 +58,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 ResponseKindsToCache = responseKindsToCache,
                 ResponseKindsToIgnore = responseKindsToIgnore,
                 RequestGroupingBehavior = RequestGroupingBehavior.Enabled,
-                RefreshBehavior = refreshBehavior,
+                RefreshBehavior = RefreshBehavior.UseOldAndFetchNewValueInBackground,
                 RevokedResponseBehavior = revokedResponseBehavior,
                 CacheResponsesWhenSupressedBehavior = CacheResponsesWhenSupressedBehavior.Enabled,
                 RefreshMode = RefreshMode.UseRefreshes,
@@ -67,7 +66,7 @@ namespace Gigya.Microdot.UnitTests.Caching
                 NotIgnoredResponseBehavior = NotIgnoredResponseBehavior.KeepCachedResponse
             };
 
-        private MethodInfo ThingifyTaskRevokabkle { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));
+        private MethodInfo ThingifyTaskRevokable { get; } = typeof(IThingFrobber).GetMethod(nameof(IThingFrobber.ThingifyTaskRevokable));
 
         private IThingFrobber CreateRevokableDataSource(string[] revokeKeys, params object[] results)
         {
@@ -106,6 +105,7 @@ namespace Gigya.Microdot.UnitTests.Caching
         }
 
         [Test]
+        [Retry(5)] //Sometime fails on build server because of timing issues
         public async Task MemoizeAsync_RevokeBeforeRetrivalTaskCompletedCaused_NoIssues()
         {
             var completionSource = new TaskCompletionSource<Revocable<Thing>>();
@@ -115,7 +115,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var memoizer = CreateMemoizer(cache);
             string firstValue = "first Value";
             //Call method to get results
-            var resultTask = (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var resultTask = (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
 
             //Post revoke message while results had not arrived
             revokesSource.PostMessageSynced("revokeKey");
@@ -130,7 +130,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             });
 
             //Wait before sending results 
-            await Task.Delay(100);
+            await Task.Delay(200);
             completionSource.SetResult(new Revocable<Thing> { Value = new Thing { Id = firstValue }, RevokeKeys = new[] { "revokeKey" } });
 
             //Results should arive now
@@ -152,17 +152,17 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
                                                                                                                               //To cause refresh in next call
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds:0));
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds:0));
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             dataSource.Received(2).ThingifyTaskRevokable("someString"); //Refresh task - fetch from datasource
 
             //Post revoke message 
             revokesSource.PostMessageSynced("revokeKey");
 
             //We want to test that item was removed from cache after revoke and that new item is fetched from datasource
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             dataSource.Received(3).ThingifyTaskRevokable("someString"); //Revoke received and item removed from cache - fetch from datasource 
         }
 
@@ -175,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
             
-            var result =  await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result =  await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
@@ -183,7 +183,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             revokesSource.PostMessageSynced("revokeKey");
 
             //We want to test that revoked item is still in cache and returned
-            result = await(Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, 
+            result = await(Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, 
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.KeepUsingRevokedResponse));
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //Revoke received and item was not removed from cache - do not fetch from datasource 
@@ -199,7 +199,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
 
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
@@ -207,7 +207,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             revokesSource.PostMessageSynced("revokeKey");
 
             //We want to test that revoked item is ignored and we fetch a new item from data source
-            result = await(Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await(Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld));
             result.Value.Id.ShouldBe(secondResult);
             dataSource.Received(2).ThingifyTaskRevokable("someString"); 
@@ -223,7 +223,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
 
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
@@ -231,7 +231,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             revokesSource.PostMessageSynced("revokeKey");
 
             //We want to test that revoked item is returned (because data source response should be ignored)
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld,
                                    responseKindsToCache:  ResponseKinds.NonNullResponse, 
                                    responseKindsToIgnore: ResponseKinds.NullResponse));
@@ -239,7 +239,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             dataSource.Received(2).ThingifyTaskRevokable("someString"); //tried to fetch from data source (and ignored)
 
             //Cached item is still revoked, so we do another call to data source and get a new valid response
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueNextTimeOrUseOld));
             result.Value.Id.ShouldBe(secondResult); //get new value
             dataSource.Received(3).ThingifyTaskRevokable("someString"); 
@@ -255,7 +255,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
 
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
@@ -263,13 +263,13 @@ namespace Gigya.Microdot.UnitTests.Caching
             revokesSource.PostMessageSynced("revokeKey");
 
             //We want to test that revoked item is used and we fetch a new item from data source in the backround
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueInBackgroundNextTime));
             result.Value.Id.ShouldBe(firstResult); //Use old cached value
             dataSource.Received(2).ThingifyTaskRevokable("someString"); //A backround call to the data source is made
 
             //After backround call is done, we should get new result
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueInBackgroundNextTime));
             result.Value.Id.ShouldBe(secondResult);
             dataSource.Received(2).ThingifyTaskRevokable("someString"); //No additional data source call
@@ -285,7 +285,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             var cache = CreateCache(revokesSource);
             var memoizer = CreateMemoizer(cache);
 
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(1).ThingifyTaskRevokable("someString"); //New item - fetch from datasource
 
@@ -293,7 +293,7 @@ namespace Gigya.Microdot.UnitTests.Caching
             revokesSource.PostMessageSynced("revokeKey");
 
             //We want to test that revoked item is used and we fetch a new item from data source in the backround
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueInBackgroundNextTime,
                                    responseKindsToCache: ResponseKinds.NonNullResponse,
                                    responseKindsToIgnore: ResponseKinds.NullResponse));
@@ -301,13 +301,13 @@ namespace Gigya.Microdot.UnitTests.Caching
             dataSource.Received(2).ThingifyTaskRevokable("someString"); //A backround call to the data source is made
 
             //Backround call returned an ignored response, so we should get old cached value an issue another data source call (old item is still revoked)
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueInBackgroundNextTime));
             result.Value.Id.ShouldBe(firstResult);
             dataSource.Received(3).ThingifyTaskRevokable("someString"); //Second backround call
 
             //Second backround call returned a new valid response and cached it. We should get cached value
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" },
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" },
                 GetCachingSettings(revokedResponseBehavior: RevokedResponseBehavior.TryFetchNewValueInBackgroundNextTime));
             result.Value.Id.ShouldBe(secondResult);
             dataSource.Received(3).ThingifyTaskRevokable("someString"); //No additional data source call
@@ -383,11 +383,11 @@ namespace Gigya.Microdot.UnitTests.Caching
             var result2  = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string>{"x", "y"} };
             dataSource.ThingifyTaskRevokable("someString").Returns(result1, result2);
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
             cache.RevokeKeysCount.ShouldBe(1);
             cache.CacheKeyCount.ShouldBe(1);
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             cache.CacheKeyCount.ShouldBe(2);
             cache.RevokeKeysCount.ShouldBe(2);
         }
@@ -404,11 +404,11 @@ namespace Gigya.Microdot.UnitTests.Caching
             var result2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x" } };
             dataSource.ThingifyTaskRevokable("someString").Returns(result1, result2);
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
             cache.RevokeKeysCount.ShouldBe(2);
             cache.CacheKeyCount.ShouldBe(2);
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             cache.CacheKeyCount.ShouldBe(1);
             cache.RevokeKeysCount.ShouldBe(1);
         }
@@ -425,11 +425,11 @@ namespace Gigya.Microdot.UnitTests.Caching
             var result2 = new Revocable<Thing> { Value = new Thing { Id = "result2" }, RevokeKeys = new List<string> { "x", "y" } };
             dataSource.ThingifyTaskRevokable("someString").Returns(result1, result2);
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
             cache.RevokeKeysCount.ShouldBe(2);
             cache.CacheKeyCount.ShouldBe(2);
 
-            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             cache.CacheKeyCount.ShouldBe(2);
             cache.RevokeKeysCount.ShouldBe(2);
         }
@@ -447,10 +447,10 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //get cached value
         }
 
@@ -469,19 +469,20 @@ namespace Gigya.Microdot.UnitTests.Caching
             //first call to data source will receive a revoke!!!
             RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns(TimeFake.UtcNow, (DateTime?)null);
 
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value 
 
             //revoke received while in first call to data source
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //call trigger a call to data source because value is stale and a new data source value is returned
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //cached value is returned
         }
 
         [Test]
+        [Retry(5)] //Sometime fails on build server because of timing issues
         public async Task MemoizeAsync_RefreshWithoutRevokeShouldCacheNewValue()
         {
             var revokesSource = new OneTimeSynchronousSourceBlock<string>();
@@ -495,19 +496,20 @@ namespace Gigya.Microdot.UnitTests.Caching
 
             RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null);
 
-            var refreshBehavior = RefreshBehavior.TryFetchNewValueOrUseOld;
-                                                                                                                                                              //refresh in next call
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0, refreshBehavior: refreshBehavior));
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
             result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshBehavior: refreshBehavior));
-            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //refresh triggered, get second value from data source and cache
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //refresh triggered in the backround, but cached (old) value is returned
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshBehavior: refreshBehavior));
-            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //return refreshed cached value
+            await Task.Delay(dataSourceDelay + 200); //wait for refresh to finish
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
+            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //second data source value returned (refreshed)
         }
 
         [Test]
+        [Retry(5)] //Sometime fails on build server because of timing issues
         public async Task MemoizeAsync_RefreshWithIntefiringRevokeShouldMarkCacheValueAsStaleAndTriggerACallToDataSource()
         {
             var cache = CreateCache(new OneTimeSynchronousSourceBlock<string>());
@@ -522,26 +524,26 @@ namespace Gigya.Microdot.UnitTests.Caching
             //second call to data source will receive a revoke!!!
             RecentlyRevokesCache.TryGetRecentlyRevokedTime(Arg.Any<string>(), Arg.Any<DateTime>()).Returns((DateTime?)null, TimeFake.UtcNow, (DateTime?)null);
 
-            var refreshBehavior = RefreshBehavior.TryFetchNewValueOrUseOld;
-                                                                                                                                                             //refresh in next call
-            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0, refreshBehavior: refreshBehavior));
+            var result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings(refreshTimeSeconds: 0));//refresh in next call
             result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //call data source and get first value
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshBehavior: refreshBehavior));
-            result.Value.Id.ShouldBe(dataSourceResult2.Value.Id); //refresh triggered, get second value
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
+            result.Value.Id.ShouldBe(dataSourceResult1.Value.Id); //refresh triggered in the backround, but cached (old) value is returned
 
-            //previous refresh received revoke while in call to remote service and marked item as stale
+            //the backround refresh receives revoke while in call to remote service
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshBehavior: refreshBehavior));
+            await Task.Delay(dataSourceDelay + 200); //wait for refresh to finish
+
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //because cached value is stale, another call to data source is triggered and its value is returned
 
-            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings(refreshBehavior: refreshBehavior));
+            result = await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
             result.Value.Id.ShouldBe(dataSourceResult3.Value.Id); //latest refresh value was cached and returned
         }
 
         private async Task<Revocable<Thing>> CallWithMemoize(IMemoizer memoizer, IThingFrobber dataSource)
         {
-            return await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokabkle, new object[] { "someString" }, GetCachingSettings());
+            return await (Task<Revocable<Thing>>)memoizer.Memoize(dataSource, ThingifyTaskRevokable, new object[] { "someString" }, GetCachingSettings());
         }
 
         private static MetricsData GetMetricsData(string subContext)

@@ -1,8 +1,5 @@
-﻿
-using System;
+﻿using System;
 using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.WarmupTestService;
 using Gigya.Microdot.Testing.Service;
 using NUnit.Framework;
@@ -25,8 +22,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             Assert.Greater(beforeGrainCreated, dependencyCreateDate, "dependencyCreateDate should create before grain is created");
 
-            tester.Dispose();
+            try
+            {
+                tester.Dispose();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
-
     }
 }

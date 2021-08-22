@@ -25,7 +25,7 @@ using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class RemoteHostPoolTests
     {
         private const string SERVICE_NAME = "ServiceName";
@@ -52,17 +52,17 @@ namespace Gigya.Microdot.UnitTests.Discovery
             Log = (LogSpy)unitTesting.Get<ILog>();
             var factory = unitTesting.Get<IRemoteHostPoolFactory>();
             _discoverySourceMock = new DiscoverySourceMock(serviceContext, endPoints);
-            
+
             Pool = factory.Create(
-                new DeploymentIdentifier(SERVICE_NAME, "prod", Substitute.For<IEnvironment>()), 
-                _discoverySourceMock, 
+                new DeploymentIdentifier(SERVICE_NAME, "prod", Substitute.For<IEnvironment>()),
+                _discoverySourceMock,
                 isReachableChecker ?? (rh => Task.FromResult(false)));
 
         }
 
-        private void ChangeConfig(string endPoints)
+        private async Task ChangeConfig(string endPoints)
         {
-            _discoverySourceMock.SetEndPoints(endPoints);
+            await _discoverySourceMock.SetEndPoints(endPoints);
         }
 
         private HealthCheckResult GetHealthResult()
@@ -110,14 +110,39 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void GetNextHost_HostsThatChange_ReturnsNewHosts()
+        public async Task GetNextHost_HostsThatChange_ReturnsNewHosts()
         {
             CreatePool("host1, host2, host3");
-            ChangeConfig("host4, host5, host6");
+            await ChangeConfig("host4, host5, host6");
 
-            var res = Get100HostNames();
-            res.Distinct()
-               .ShouldBe(new[] { "host4", "host5", "host6" }, true);
+            await RetryGet();
+        }
+
+
+        private async Task RetryGet()
+        {
+            bool isSuccess = false;
+            for (int i = 0; i < 10; i++)
+            {
+                var res = Get100HostNames();
+                try
+                {
+                    res.Distinct().ShouldBe(new[] { "host4", "host5", "host6" }, true);
+                    isSuccess = true;
+                    break;
+                }
+                catch
+                {
+                    await Task.Delay(100);
+                }
+                
+            }
+
+            if (!isSuccess)
+            {
+                var res = Get100HostNames();
+                res.Distinct().ShouldBe(new[] { "host4", "host5", "host6" }, true);
+            }
         }
 
 
@@ -145,19 +170,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_Throws()
+        public async Task GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_Throws()
         {
             CreatePool("host1, host2, host3");
-            ChangeConfig("");
+            await ChangeConfig("");
             Should.Throw<EnvironmentException>(() => Pool.GetNextHost());
         }
 
         [Test]
-        public void GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_ShouldNotBeHealthy()
+        public async Task GetNextHost_LocalhostFallbackOff_AfterRefreshNoEndpoints_ShouldNotBeHealthy()
         {
             CreatePool("host1, host2, host3");
             Pool.GetNextHost();
-            ChangeConfig("");
+            await ChangeConfig("");
             Should.Throw<EnvironmentException>(() => Pool.GetNextHost());
             var healthResult = GetHealthResult();
             healthResult.IsHealthy.ShouldBeFalse();
@@ -198,7 +223,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             CreatePool("host1, host2, host3");
 
-            Run100times(host =>
+            Run100Times(host =>
             {
                 if (host.HostName == "host2")
                     host.ReportFailure();
@@ -209,7 +234,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
 
-        private void Run100times(Action<IEndPointHandle> act)
+        private void Run100Times(Action<IEndPointHandle> act)
         {
             for (int i = 0; i < 100; i++)
             {
@@ -225,14 +250,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
             CreatePool("host2", host => Task.FromResult(isReachable));
 
             var wait = Pool.ReachabilitySource.WhenEventReceived();
-          
-                    for (int i = 0; i < 2; i++)
-                    {
-                        var host = Pool.GetNextHost();
 
-                        if (host.HostName == "host2")
-                            host.ReportFailure();
-                    }
+            for (int i = 0; i < 2; i++)
+            {
+                var host = Pool.GetNextHost();
+
+                if (host.HostName == "host2")
+                    host.ReportFailure();
+            }
             (await wait).IsReachable.ShouldBeFalse();
 
             (await Pool.ReachabilitySource.ShouldRaiseMessage(() =>
@@ -270,7 +295,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             Should.Throw<EnvironmentException>(() => Pool.GetNextHost());
         }
 
-        [Test]    
+        [Test]
         public void ReportFailure_AllHostFails_ShouldNotBeHealthy()
         {
             CreatePool("host1, host2, host3");
@@ -343,20 +368,22 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
         public DiscoverySourceMock(string deployment, string initialEndPoints) : base(deployment)
         {
-            Result = new EndPointsResult {EndPoints = GetEndPointsInitialValue(initialEndPoints)};
+            Result = new EndPointsResult { EndPoints = GetEndPointsInitialValue(initialEndPoints) };
         }
 
-        public void SetEndPoints(string endPoints)
+        public async Task SetEndPoints(string endPoints)
         {
-            Result = new EndPointsResult {EndPoints = new EndPoint[0]};
+            Result = new EndPointsResult { EndPoints = new EndPoint[0] };
             if (!string.IsNullOrWhiteSpace(endPoints))
-                Result = new EndPointsResult {EndPoints= endPoints.Split(',').Select(_ => _.Trim())
+                Result = new EndPointsResult
+                {
+                    EndPoints = endPoints.Split(',').Select(_ => _.Trim())
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .Select(_ => new EndPoint { HostName = _ })
-                    .ToArray()};
-
+                    .ToArray()
+                };
             EndpointsChangedBroadcast.Post(Result);
-            Task.Delay(100).Wait();
+            await Task.Delay(100);
         }
 
         private EndPoint[] GetEndPointsInitialValue(string initialEndPoints)
@@ -370,7 +397,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             return new EndPoint[0];
         }
 
-        public bool AlwaysThrowException=false;
+        public bool AlwaysThrowException = false;
 
         public override bool IsServiceDeploymentDefined => true;
         public override string SourceName => "Mock";

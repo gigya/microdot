@@ -36,20 +36,20 @@ using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 {
-    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class ServiceTesterTests
     {
         private ServiceTester<CalculatorServiceHost> _tester;
 
         [Test]
-        public async Task ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
+        public void ServiceTesterWhenServiceFailedToGracefullyShutdownShouldThrow()
         {
             // shutdownWaitTimeSec: 0 
             var serviceArguments = new ServiceArguments(
-                ServiceStartupMode.CommandLineNonInteractive, 
+                ServiceStartupMode.CommandLineNonInteractive,
                 ConsoleOutputMode.Disabled,
-                SiloClusterMode.PrimaryNode, 
-                DisposablePort.GetPort().Port, 
+                SiloClusterMode.PrimaryNode,
+                DisposablePort.GetPort().Port,
                 onStopWaitTimeSec: 0);
 
             _tester = new ServiceTester<CalculatorServiceHost>(

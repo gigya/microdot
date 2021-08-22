@@ -66,7 +66,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             Log = log;
             DateTime = dateTime;
 
-            Proxy = DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
+            Proxy = System_Reflection.DispatchProxy.DispatchProxy.Create<TInterface, DelegatingDispatchProxy>();
             ((DelegatingDispatchProxy)(object)Proxy).InvokeDelegate = Invoke;
             ServiceName = serviceName ?? typeof(TInterface).GetServiceName();
         }

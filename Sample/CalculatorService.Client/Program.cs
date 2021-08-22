@@ -25,6 +25,7 @@ namespace CalculatorService.Client
         {
             try
             {
+                Random rnd = new Random(Guid.NewGuid().GetHashCode());
                 using (var microdotInitializer = new MicrodotInitializer("test-client", new NLogModule(), k =>
                     {
                         k.Rebind<IRevokeListener>().ToConstant(_fakeRevokingManager);
@@ -39,17 +40,17 @@ namespace CalculatorService.Client
                     {
                         try
                         {
-                            var result = await calculatorService.Add(1, 2);
-                            Console.WriteLine($"Value: {result}");
+                            int a = rnd.Next(100);
+                            int b = rnd.Next(100);
+                            var result = await calculatorService.Add(a, b);
+                            Console.WriteLine($"{a}+{b}={result}");
+                            await Task.Delay(1000);
                         }
                         catch (Exception e)
                         {
                             Console.WriteLine($"Error: {e.Message}");
-                         //   throw;
+                            throw;
                         }
-                        
-                        await Task.Delay(1000);
-
                     }
 
                 }

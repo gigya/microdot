@@ -12,8 +12,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
     public class DisposablePort : IDisposable
     {
         public readonly int Port;
-        private readonly List<Semaphore> _semaphores = new List<Semaphore>(4);
-        private static ConcurrentDictionary<Semaphore, DateTime> portMaintainer = new ConcurrentDictionary<Semaphore, DateTime>();
+        private readonly List<Mutex> _mutexes = new List<Mutex>(4);
+        private static ConcurrentDictionary<Mutex, DateTime> portMaintainerMutex = new ConcurrentDictionary<Mutex, DateTime>();
 
         internal DisposablePort(int port)
         {
@@ -22,11 +22,11 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
         public void Dispose()
         {
-            foreach (var x in _semaphores)
+            foreach (var x in _mutexes)
             {
                 try
                 {
-                    portMaintainer.TryRemove(x, out _);
+                    portMaintainerMutex.TryRemove(x, out _);
                     x.Dispose();
                 }
                 catch (Exception ex)
@@ -72,7 +72,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
                 var randomPort = random.Next(rangeFrom, rangeTo);
 
-                // Check the every port in the sequence isn't occupoed
+                // Check the every port in the sequence isn't occupied
                 bool freeRange = true;
                 for (int port = randomPort; port < randomPort + sequence; port++)
                 {
@@ -94,7 +94,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
                     for (int port = randomPort; port < randomPort + sequence; port++)
                     {
                         var name = $"ServiceTester-{port}";
-                        if (Semaphore.TryOpenExisting(name, out var _))
+
+                        if (Mutex.TryOpenExisting(name, out _))
                         {
                             someOneElseWantThisPort = true;
                         }
@@ -102,9 +103,9 @@ namespace Gigya.Microdot.Testing.Shared.Service
                         {
                             try
                             {
-                                var item = new Semaphore(1, 1, name);
-                                result._semaphores.Add(item);
-                                portMaintainer.TryAdd(item, DateTime.UtcNow);
+                                var item = new Mutex(true, name);
+                                result._mutexes.Add(item);
+                                portMaintainerMutex.TryAdd(item, DateTime.UtcNow);
                                 if (port == randomPort)
                                 {
                                     IsHttpSysLocked(port);
@@ -127,7 +128,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
                         Console.WriteLine($"Service Tester found a free port: {randomPort}. " +
                                           $"After retries: {retry}. " +
                                           $"Initially occupied ports: {occupiedPorts.Count}. " +
-                                          $"Port maintainer contains: {portMaintainer.Count}. " +
+                                          $"Port maintainer contains: {portMaintainerMutex.Count}. " +
                                           $"New semaphore exceptions: {totalNewSemExceptions}. " +
                                           $"Total elapsed, ms: {sw.ElapsedMilliseconds}");
                         return result;
@@ -138,7 +139,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
             throw new Exception($"Can't find free port in range: [{rangeFrom}-{rangeTo}]." +
                                 $"Retries: {retries}. " +
                                 $"Currently occupied ports: {Occupied().Count}. " +
-                                $"Port maintainer contains: {portMaintainer.Count}. " +
+                                $"Port maintainer contains: {portMaintainerMutex.Count}. " +
                                 $"New semaphore exceptions: {totalNewSemExceptions}. " +
                                 $"Total elapsed, ms: {sw.ElapsedMilliseconds}." +
                                 $"Process id: {Process.GetCurrentProcess().Id}");

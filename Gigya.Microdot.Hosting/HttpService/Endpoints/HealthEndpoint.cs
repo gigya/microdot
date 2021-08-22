@@ -68,7 +68,8 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                 else
                 {
                     var healthStatusResult = await CheckServiceHealth().ConfigureAwait(false);
-
+                    if (healthStatusResult == null)
+                        return false;
                     var status = healthStatusResult.IsHealthy ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
                     var json = healthStatusResult.Message;
                     await writeResponse(json, status).ConfigureAwait(false);

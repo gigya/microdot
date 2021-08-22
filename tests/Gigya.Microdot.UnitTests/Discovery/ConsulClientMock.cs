@@ -8,12 +8,14 @@ namespace Gigya.Microdot.UnitTests.Discovery
 {
     public sealed class ConsulClientMock: IConsulClient
     {
-        private readonly BufferBlock<EndPointsResult> _resultChanged = new BufferBlock<EndPointsResult>();
+        private readonly BroadcastBlock<EndPointsResult> _resultChanged = new BroadcastBlock<EndPointsResult>(null);
         private EndPointsResult _lastResult;
         private bool _initialized = false;
         private bool _disposed = false;
         private readonly object _lastResultLocker = new object();
         private Timer _resultsTimer;
+
+        public TaskCompletionSource<bool> InitFinished { get; } = new TaskCompletionSource<bool>();
 
         public void SetResult(EndPointsResult result)
         {
@@ -45,12 +47,16 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 if (_lastResult != null)
                     _resultChanged.Post(_lastResult);
 
-                _resultsTimer = new Timer(_ =>
+                if (_resultsTimer == null)
                 {
+                    _resultsTimer = new Timer(_ =>
+                    {
                         _resultChanged.Post(_lastResult);
-                }, null, 100, Timeout.Infinite);
+                    }, null, 100, 100);
+                }
 
             }
+            InitFinished.SetResult(true);
         }
 
         public EndPointsResult Result { get; set; } = new EndPointsResult();

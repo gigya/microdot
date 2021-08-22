@@ -166,9 +166,6 @@ namespace Gigya.Microdot.SharedLogic
                     case ServiceStartupMode.CommandLineNonInteractive:
                         ConsoleOutputMode = ConsoleOutputMode.Standard;
                         break;
-                    case ServiceStartupMode.WindowsService:
-                        ConsoleOutputMode = ConsoleOutputMode.Disabled;
-                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -182,9 +179,6 @@ namespace Gigya.Microdot.SharedLogic
                     case ServiceStartupMode.CommandLineNonInteractive:
                     case ServiceStartupMode.VerifyConfigurations:
                         SiloClusterMode = SiloClusterMode.PrimaryNode;
-                        break;
-                    case ServiceStartupMode.WindowsService:
-                        SiloClusterMode = SiloClusterMode.ZooKeeper;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -241,7 +235,7 @@ Supported parameters:
 -h, --help or /?: This help screen
         
 --ServiceStartupMode: Specifies under which mode to start the service (command
-    line, Windows service, etc). Possible values:
+    line, etc). Possible values:
 
     CommandLineInteractive: Specifies that the service will run in command-line
         mode, expecting input from the user. This is the default value when
@@ -250,9 +244,6 @@ Supported parameters:
     CommandLineNonInteractive: Specifies that the service will run in command-
         line mode, not requiring any input from the user. This is the default
         value when compiled with 'Debug' when Console.IsInputRedirected == true.
-
-    WindowsService: Specifies that the service will run as a Windows service.
-        This is the default value when compiled with 'Release'.
 
 	VerifyConfigurations: Specifies that the service will run to verify
         configuration objects only (while performing only minimal required
@@ -271,7 +262,7 @@ Supported parameters:
         CommandLineNonInteractive.
 
     Disabled: Specifies that log messages should not be written to the console
-        at all. This is the default when running as WindowsService.
+        at all.
 
 --SiloClusterMode: Specifies how a silo started in this service should behave in
     a cluster. Not relevant for non-Orleans services. Possible values:
@@ -287,7 +278,7 @@ Supported parameters:
 
     ZooKeeper: Specifies that this node belongs to a real cluster, which has its
         membership table managed by ZooKeeper and the reminder table stored on
-        an external database. Default when running as WindowsService.
+        an external database.
 
 --BasePortOverride: Specifies what base port should be used for the silo. Not
     relevant for non-Orleans services. This value takes precedence over any base
@@ -345,13 +336,7 @@ Supported parameters:
         /// default value when compiled with 'Debug' when Console.IsInputRedirected == true.
         /// </summary>
         CommandLineNonInteractive,
-
-        /// <summary>
-        /// Specifies that the service will run as a Windows service. This is the default value when compiled with
-        /// 'Release'.
-        /// </summary>
-        WindowsService,
-
+        
 		/// <summary>
 		/// Specifies that the service will run to verify configuration objects only (while performing only minimal required initialization).
 		/// Available IConfigObject implementations (config objects) in service assemblies will be instantiated to pass validations.
@@ -387,15 +372,14 @@ Supported parameters:
         Standard,
 
         /// <summary>
-        /// Specifies that log messages should not be written to the console at all. This is the default when running
-        /// as <see cref="ServiceStartupMode.WindowsService" />.
+        /// Specifies that log messages should not be written to the console at all.
         /// </summary>
         Disabled
     }
 
 
     /// <summary>
-    /// Specifies how a silo hosten in a service should find other nodes.
+    /// Specifies how a silo hosted in a service should find other nodes.
     /// </summary>
     public enum SiloClusterMode
     {
@@ -422,7 +406,6 @@ Supported parameters:
         /// <summary>
         /// Specifies that this node belongs to a real cluster, which has it's membership table managed by ZooKeeper and
         /// the reminder table stored on an external database. This is the default when running as
-        /// <see cref="ServiceStartupMode.WindowsService" />.
         /// </summary>
         ZooKeeper
     }

@@ -1,18 +1,15 @@
-﻿
-using Metrics.Core;
+﻿using Metrics.Core;
 using Metrics.Logging;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace Metrics.PerfCounters
 {
     internal static class PerformanceCounters
     {
-        private static readonly ILog log = LogProvider.GetCurrentClassLogger();
-
-        private static readonly bool isMono = Type.GetType("Mono.Runtime") != null;
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         private const string TotalInstance = "_Total";
 
@@ -99,48 +96,53 @@ namespace Metrics.PerfCounters
             }
             catch (UnauthorizedAccessException x)
             {
-                var message = "Error reading performance counter data." +
+                var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
                    ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
                 MetricsErrorHandler.Handle(x, message);
             }
             catch (Exception x)
             {
-                var message = "Error reading performance counter data." +
+                var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
                    ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
                 MetricsErrorHandler.Handle(x, message);
             }
         }
-      
+
+        private static string GetIdentity()
+        {
+            //try
+            //{
+            //    return WindowsIdentity.GetCurrent().Name;
+            //}
+            //catch (Exception x)
+            //{
+            //    return "[Unknown user | " + x.Message + " ]";
+            //}
+            return "[Unknown user]";
+        }
+
+
         private static void WrappedRegister(MetricsContext context, string name, Unit unit,
             string category, string counter, string instance = null,
             Func<double, double> derivate = null,
             MetricTags tags = default(MetricTags))
         {
-            log.Debug(() => $"Registering performance counter [{counter}] in category [{category}] for instance [{instance ?? "none"}]");
+            Log.Debug(() => $"Registering performance counter [{counter}] in category [{category}] for instance [{instance ?? "none"}]");
 
-            if (PerformanceCounterCategory.Exists(category))
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !PerformanceCounterCategory.Exists(category))
+                return;
+
+            var counterTags = new MetricTags(tags.Tags.Concat(new[] { "PerfCounter" }));
+            if (derivate == null)
             {
-                if (instance == null || PerformanceCounterCategory.InstanceExists(instance, category))
-                {
-                    if (PerformanceCounterCategory.CounterExists(counter, category))
-                    {
-                        var counterTags = new MetricTags(tags.Tags.Concat(new[] { "PerfCounter" }));
-                        if (derivate == null)
-                        {
-                            context.Advanced.Gauge(name, () => new PerformanceCounterGauge(category, counter, instance), unit, counterTags);
-                        }
-                        else
-                        {
-                            context.Advanced.Gauge(name, () => new DerivedGauge(new PerformanceCounterGauge(category, counter, instance), derivate), unit, counterTags);
-                        }
-                        return;
-                    }
-                }
+                context.Advanced.Gauge(name,
+                    () => new PerformanceCounterGauge(category, counter, instance), unit, counterTags);
             }
-
-            if (!isMono)
+            else
             {
-                log.ErrorFormat("Performance counter does not exist [{0}] in category [{1}] for instance [{2}]", counter, category, instance ?? "none");
+                context.Advanced.Gauge(name,
+                    () => new DerivedGauge(new PerformanceCounterGauge(category, counter, instance),
+                        derivate), unit, counterTags);
             }
         }
     }

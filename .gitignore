@@ -259,4 +259,5 @@ OrleansAdoNetContent/
 
 
 /.paket/
-launchSettings.json
+/testlogs/
+/CustomEvent
