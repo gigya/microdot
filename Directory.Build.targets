@@ -1,8 +1,7 @@
 <Project>
 	<PropertyGroup>
 		<Orleans_Version>3.*</Orleans_Version>
-		<Microsoft_Extensions_Version>5.*</Microsoft_Extensions_Version>
-		<Orleans_Dashboard_Version>2.*</Orleans_Dashboard_Version>
+		<Microsoft_Extensions_Version>5.*</Microsoft_Extensions_Version>		
 	</PropertyGroup>
 
 	<ItemGroup Label="Gigya">
@@ -11,13 +10,10 @@
 	</ItemGroup>
 
 	<ItemGroup Label="Orleans">
-		<PackageReference Update="Microsoft.Orleans.Core" Version="$(Orleans_Version)"/>
-		<PackageReference Update="Microsoft.Orleans.Core.Abstractions" Version="$(Orleans_Version)"/>
-		<PackageReference Update="Microsoft.Orleans.OrleansCodeGenerator" Version="$(Orleans_Version)"/>
+		<PackageReference Update="Microsoft.Orleans.Core" Version="$(Orleans_Version)"/>			
 		<PackageReference Update="Microsoft.Orleans.CodeGenerator.MSBuild" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansRuntime" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansProviders" Version="$(Orleans_Version)"/>
-		<PackageReference Update="Microsoft.Orleans.Server" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Connections.Security" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansZooKeeperUtils" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="$(Orleans_Version)"/>			
@@ -25,58 +21,39 @@
 	</ItemGroup>
 
 	<ItemGroup Label="External_Libraries">
-		<PackageReference Update="Newtonsoft.Json" Version="13.*"/>
-		<PackageReference Update="Nito.AsyncEx" Version="5.*"/>
-
-	
+		<PackageReference Update="Newtonsoft.Json" Version="*"/>
+		<PackageReference Update="Nito.AsyncEx" Version="*"/>
 		<PackageReference Update="Ninject" Version="*"/>
 		<PackageReference Update="Ninject.Extensions.Conventions" Version="*"/>
 		<PackageReference Update="Ninject.Extensions.Factory" Version="*"/>
-		<PackageReference Update="Castle.Core" Version="*"/>
 		<PackageReference Update="NLog" Version="*"/>
 		<PackageReference Update="ZooKeeperNetEx" Version="*"/>	
 	</ItemGroup>
 
-	<ItemGroup Label="Test">
-		
-		<PackageReference Update="NSubstitute" Version="*"/>
-		
+	<ItemGroup Label="Test">		
+		<PackageReference Update="NSubstitute" Version="*"/>		
 		<PackageReference Update="Shouldly" Version="3.0.2"/>
-		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="*"/>
-		
+		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="*"/>		
 		<PackageReference Update="NUnit" Version="*"/>
 		<PackageReference Update="NUnit3TestAdapter" Version="*"/>
 		<PackageReference Update="FluentAssertions" Version="*"/>
-
-		<PackageReference Update="RichardSzalay.MockHttp" Version="*"/>
-		
+		<PackageReference Update="RichardSzalay.MockHttp" Version="*"/>		
 	</ItemGroup>
 
 	<ItemGroup Label="Microsoft">
 		<PackageReference Update="Microsoft.CSharp" Version="4.*"/>
 		<PackageReference Update="Microsoft.CodeAnalysis.CSharp" Version="3.*" />
-		<PackageReference Update="Microsoft.CodeAnalysis.Common" Version="3.*" />
 	</ItemGroup>
 
 	<ItemGroup Label="Microsoft_AspNetCore_Version">
-		<PackageReference Update="Microsoft.AspNetCore.Connections.Abstractions" Version="5.*"/>
-		<PackageReference Update="Microsoft.AspNetCore.Http.Features" Version="5.*"/>
-		<PackageReference Update="Microsoft.AspNetCore.Hosting" Version="2.*"/>
-		<PackageReference Update="Microsoft.AspNetCore.Server.Kestrel" Version="2.*"/>
+		<PackageReference Update="Microsoft.AspNetCore.Hosting" Version="2.2.*"/>
+		<PackageReference Update="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.*"/>
 	</ItemGroup>
 
 	<ItemGroup Label="Microsoft_Extensions">
 		<PackageReference Update="Microsoft.Extensions.Logging" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.Http" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.Options" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.Configuration" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.ObjectPool" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.DependencyModel" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.FileSystemGlobbing" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.Primitives" Version="$(Microsoft_Extensions_Version)"/>
+		<PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="$(Microsoft_Extensions_Version)"/>		
+		<PackageReference Update="Microsoft.Extensions.FileSystemGlobbing" Version="$(Microsoft_Extensions_Version)"/>		
 	</ItemGroup>
 
 	<ItemGroup Label="System">
@@ -86,16 +63,11 @@
 		<PackageReference Update="System.Threading.Tasks.Dataflow" Version="5.*"/>
 		<PackageReference Update="System.Runtime.Caching" Version="5.*"/>
 		<PackageReference Update="System.ServiceProcess.ServiceController" Version="5.*"/>
-		<PackageReference Update="System.Collections.Immutable" Version="5.*"/>
-		
+		<PackageReference Update="System.Collections.Immutable" Version="5.*"/>		
 		<PackageReference Update="System.Text.Json" Version="5.*"/>
-		
-
 		<PackageReference Update="System.Net.Http" Version="4.*"/>
 		<PackageReference Update="System.ValueTuple" Version="4.*"/>
 		<PackageReference Update="System.Reflection.Emit" Version="4.*"/>
 		<PackageReference Update="System.Reflection.DispatchProxy" Version="4.*"/>
-
-		<PackageReference Update="System.Data.DataSetExtensions" Version="4.6.0-preview3.19128.7"/>
 	</ItemGroup>
 </Project>
