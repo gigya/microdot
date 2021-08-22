@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net5.0-windows</TargetFrameworks>
 		<AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
 	</PropertyGroup>
 	<ItemGroup>

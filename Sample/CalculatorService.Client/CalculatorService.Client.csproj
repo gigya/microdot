@@ -2,7 +2,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>CalculatorService.Client</AssemblyTitle>
-		<TargetFrameworks>net5.0-windows</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 		<ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
 	</PropertyGroup>

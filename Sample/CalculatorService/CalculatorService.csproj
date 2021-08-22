@@ -2,7 +2,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>CalculatorService</AssemblyTitle>
-		<TargetFrameworks>net5.0-windows</TargetFrameworks>
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
