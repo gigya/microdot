@@ -15,8 +15,7 @@
 		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />
-		<PackageReference Include="Microsoft.Orleans.OrleansProviders" />
-		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" />
+		<PackageReference Include="Microsoft.Orleans.OrleansProviders" />		
 		<PackageReference Include="Ninject" />
 		<PackageReference Include="ZooKeeperNetEx" />
 		<PackageReference Include="System.ValueTuple" />

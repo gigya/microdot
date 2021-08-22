@@ -11,8 +11,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="Microsoft.AspNetCore.Hosting" />
+		<PackageReference Include="Microsoft.CSharp" />		
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />			
 		<PackageReference Include="Ninject" />
 		<PackageReference Include="ZooKeeperNetEx" />

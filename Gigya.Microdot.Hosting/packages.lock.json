@@ -154,7 +154,7 @@
         "dependencies": {
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -176,7 +176,7 @@
           "Gigya.Microdot.Configuration": "4.0.0",
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Collections.Immutable": "5.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0",
@@ -189,7 +189,7 @@
           "Gigya.Microdot.Interfaces": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.ValueTuple": "4.0.0"
@@ -198,7 +198,7 @@
       "metrics": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0"
         }
@@ -392,7 +392,7 @@
         "dependencies": {
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -414,7 +414,7 @@
           "Gigya.Microdot.Configuration": "4.0.0",
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Collections.Immutable": "5.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0",
@@ -427,7 +427,7 @@
           "Gigya.Microdot.Interfaces": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.ValueTuple": "4.0.0"
@@ -436,7 +436,7 @@
       "metrics": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0"
         }

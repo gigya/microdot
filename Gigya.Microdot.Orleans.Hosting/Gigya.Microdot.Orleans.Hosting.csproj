@@ -38,7 +38,6 @@
 		<PackageReference Include="Microsoft.Orleans.OrleansSqlUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />
-		<PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
-		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" />
+		<PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />		
 	</ItemGroup>
 </Project>

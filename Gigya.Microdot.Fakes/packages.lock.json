@@ -1395,7 +1395,7 @@
         "dependencies": {
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -1433,7 +1433,7 @@
           "Gigya.Microdot.Orleans.Hosting": "4.0.0",
           "Gigya.Microdot.ServiceProxy": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "Ninject.Extensions.Conventions": "0.0.0",
           "Ninject.Extensions.Factory": "0.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -1445,16 +1445,15 @@
           "Gigya.Microdot.Hosting": "4.0.0",
           "Gigya.OrleansDashboard.NetStandard": "0.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.AspNetCore.Server.Kestrel": "2.2.0",
-          "Microsoft.CSharp": "4.0.0",
-          "Microsoft.Extensions.FileSystemGlobbing": "5.0.0",
-          "Microsoft.Orleans.CodeGenerator.MSBuild": "3.0.0",
-          "Microsoft.Orleans.Connections.Security": "3.0.0",
-          "Microsoft.Orleans.OrleansProviders": "3.0.0",
-          "Microsoft.Orleans.OrleansRuntime": "3.0.0",
-          "Microsoft.Orleans.OrleansSqlUtils": "2.4.5",
-          "Microsoft.Orleans.OrleansTelemetryConsumers.Counters": "3.0.0",
-          "Microsoft.Orleans.OrleansZooKeeperUtils": "3.0.0",
+          "Microsoft.CSharp": "0.0.0",
+          "Microsoft.Extensions.FileSystemGlobbing": "0.0.0",
+          "Microsoft.Orleans.CodeGenerator.MSBuild": "0.0.0",
+          "Microsoft.Orleans.Connections.Security": "0.0.0",
+          "Microsoft.Orleans.OrleansProviders": "0.0.0",
+          "Microsoft.Orleans.OrleansRuntime": "0.0.0",
+          "Microsoft.Orleans.OrleansSqlUtils": "0.0.0",
+          "Microsoft.Orleans.OrleansTelemetryConsumers.Counters": "0.0.0",
+          "Microsoft.Orleans.OrleansZooKeeperUtils": "0.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.Text.Json": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -1466,7 +1465,7 @@
           "Gigya.Microdot.Configuration": "4.0.0",
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Collections.Immutable": "5.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0",
@@ -1494,7 +1493,7 @@
           "Gigya.Microdot.Interfaces": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.ValueTuple": "4.0.0"
@@ -1503,7 +1502,7 @@
       "metrics": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0"
         }
@@ -3855,7 +3854,7 @@
         "dependencies": {
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -3893,7 +3892,7 @@
           "Gigya.Microdot.Orleans.Hosting": "4.0.0",
           "Gigya.Microdot.ServiceProxy": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "Ninject.Extensions.Conventions": "0.0.0",
           "Ninject.Extensions.Factory": "0.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -3905,16 +3904,15 @@
           "Gigya.Microdot.Hosting": "4.0.0",
           "Gigya.OrleansDashboard.NetStandard": "0.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.AspNetCore.Server.Kestrel": "2.2.0",
-          "Microsoft.CSharp": "4.0.0",
-          "Microsoft.Extensions.FileSystemGlobbing": "5.0.0",
-          "Microsoft.Orleans.CodeGenerator.MSBuild": "3.0.0",
-          "Microsoft.Orleans.Connections.Security": "3.0.0",
-          "Microsoft.Orleans.OrleansProviders": "3.0.0",
-          "Microsoft.Orleans.OrleansRuntime": "3.0.0",
-          "Microsoft.Orleans.OrleansSqlUtils": "2.4.5",
-          "Microsoft.Orleans.OrleansTelemetryConsumers.Counters": "3.0.0",
-          "Microsoft.Orleans.OrleansZooKeeperUtils": "3.0.0",
+          "Microsoft.CSharp": "0.0.0",
+          "Microsoft.Extensions.FileSystemGlobbing": "0.0.0",
+          "Microsoft.Orleans.CodeGenerator.MSBuild": "0.0.0",
+          "Microsoft.Orleans.Connections.Security": "0.0.0",
+          "Microsoft.Orleans.OrleansProviders": "0.0.0",
+          "Microsoft.Orleans.OrleansRuntime": "0.0.0",
+          "Microsoft.Orleans.OrleansSqlUtils": "0.0.0",
+          "Microsoft.Orleans.OrleansTelemetryConsumers.Counters": "0.0.0",
+          "Microsoft.Orleans.OrleansZooKeeperUtils": "0.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.Text.Json": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0"
@@ -3926,7 +3924,7 @@
           "Gigya.Microdot.Configuration": "4.0.0",
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Collections.Immutable": "5.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Threading.Tasks.Dataflow": "5.0.0",
@@ -3954,7 +3952,7 @@
           "Gigya.Microdot.Interfaces": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.ComponentModel.Annotations": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.ValueTuple": "4.0.0"
@@ -3963,7 +3961,7 @@
       "metrics": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.0",
+          "Microsoft.CSharp": "0.0.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0"
         }
