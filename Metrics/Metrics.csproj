@@ -4,6 +4,7 @@
 		<TargetFrameworks>netstandard2.0</TargetFrameworks>
 		<AssemblyTitle>Metrics</AssemblyTitle>
 		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>
+		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<DebugType>full</DebugType>

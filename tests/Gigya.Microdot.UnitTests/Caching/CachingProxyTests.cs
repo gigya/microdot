@@ -558,12 +558,12 @@ namespace Gigya.Microdot.UnitTests.Caching
                     result.Value.ShouldBe(expectedResult, message);
                     return;
                 }
-                catch (Exception ex)
+                catch
                 {
                     if (retry == 0)
                     {
                         Debugger.Break();
-                        throw ex;
+                        throw;
                     }
                     await Task.Delay(100);
                     
