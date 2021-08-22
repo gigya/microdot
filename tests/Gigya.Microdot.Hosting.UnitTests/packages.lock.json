@@ -85,7 +85,7 @@
       },
       "System.ValueTuple": {
         "type": "Direct",
-        "requested": "[4.*, )",
+        "requested": "[*, )",
         "resolved": "4.5.0",
         "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
       },
@@ -1779,7 +1779,7 @@
           "Microsoft.CSharp": "0.0.0",
           "NSubstitute": "0.0.0",
           "Ninject": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.configuration": {
@@ -1788,9 +1788,9 @@
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.fakes": {
@@ -1799,7 +1799,7 @@
           "Gigya.Microdot.Configuration": "4.0.0",
           "Gigya.Microdot.Ninject": "4.0.0",
           "Ninject": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.hosting": {
@@ -1810,11 +1810,11 @@
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
-          "System.Collections.Immutable": "5.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.ServiceProcess.ServiceController": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.Collections.Immutable": "0.0.0",
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.ServiceProcess.ServiceController": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "gigya.microdot.interfaces": {
@@ -1846,7 +1846,7 @@
           "Microsoft.CSharp": "0.0.0",
           "Ninject.Extensions.Conventions": "0.0.0",
           "Ninject.Extensions.Factory": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.ninject.host": {
@@ -1857,7 +1857,7 @@
           "Microsoft.CSharp": "0.0.0",
           "Ninject.Extensions.Conventions": "0.0.0",
           "Ninject.Extensions.Factory": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.orleans.hosting": {
@@ -1875,9 +1875,9 @@
           "Microsoft.Orleans.OrleansSqlUtils": "0.0.0",
           "Microsoft.Orleans.OrleansTelemetryConsumers.Counters": "0.0.0",
           "Microsoft.Orleans.OrleansZooKeeperUtils": "0.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0",
-          "System.Text.Json": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.Diagnostics.PerformanceCounter": "0.0.0",
+          "System.Text.Json": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.servicediscovery": {
@@ -1887,10 +1887,10 @@
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.Collections.Immutable": "5.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.Collections.Immutable": "0.0.0",
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "gigya.microdot.serviceproxy": {
@@ -1900,12 +1900,12 @@
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
           "Nito.AsyncEx": "0.0.0",
-          "System.Collections.Immutable": "5.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Reflection.DispatchProxy": "4.0.0",
-          "System.Runtime.Caching": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.Collections.Immutable": "0.0.0",
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Reflection.DispatchProxy": "0.0.0",
+          "System.Runtime.Caching": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "gigya.microdot.sharedlogic": {
@@ -1915,9 +1915,9 @@
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "gigya.microdot.testing.shared": {
@@ -1929,7 +1929,7 @@
           "Gigya.ServiceContract": "0.0.0",
           "Microsoft.CSharp": "0.0.0",
           "Ninject": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.unittests": {
@@ -1951,15 +1951,15 @@
           "Ninject": "0.0.0",
           "RichardSzalay.MockHttp": "0.0.0",
           "Shouldly": "0.0.0",
-          "System.Runtime.Caching": "5.0.0"
+          "System.Runtime.Caching": "0.0.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },

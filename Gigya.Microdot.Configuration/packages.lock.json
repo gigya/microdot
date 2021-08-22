@@ -28,13 +28,13 @@
       },
       "System.ComponentModel.Annotations": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "aM7cbfEfVNlEEOj3DsZP+2g9NRwbkyiAv2isQEzw7pnkDg9ekCU2m1cdJLM02Uq691OaCS91tooaxcEn8d0q5w==",
         "dependencies": {
@@ -44,7 +44,7 @@
       },
       "System.Threading.Tasks.Dataflow": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "NBp0zSAMZp4muDje6XmbDfmkqw9+qsDCHp+YMEtnVgHEjQZ3Q7MzFTTp3eHqpExn4BwMrS7JkUVOTcVchig4Sw=="
       },
@@ -139,17 +139,17 @@
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },
@@ -194,13 +194,13 @@
       },
       "System.ComponentModel.Annotations": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "aM7cbfEfVNlEEOj3DsZP+2g9NRwbkyiAv2isQEzw7pnkDg9ekCU2m1cdJLM02Uq691OaCS91tooaxcEn8d0q5w==",
         "dependencies": {
@@ -210,7 +210,7 @@
       },
       "System.Threading.Tasks.Dataflow": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "NBp0zSAMZp4muDje6XmbDfmkqw9+qsDCHp+YMEtnVgHEjQZ3Q7MzFTTp3eHqpExn4BwMrS7JkUVOTcVchig4Sw=="
       },
@@ -318,17 +318,17 @@
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },

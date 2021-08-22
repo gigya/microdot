@@ -28,7 +28,7 @@
       },
       "System.Collections.Immutable": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "FXkLXiK0sVVewcso0imKQoOxjoPAj42R8HtjjbSjVPAzwDfzoyoznWxgA3c38LDbN9SJux1xXoXYAhz98j7r2g==",
         "dependencies": {
@@ -37,19 +37,19 @@
       },
       "System.ComponentModel.Annotations": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Threading.Tasks.Dataflow": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "NBp0zSAMZp4muDje6XmbDfmkqw9+qsDCHp+YMEtnVgHEjQZ3Q7MzFTTp3eHqpExn4BwMrS7JkUVOTcVchig4Sw=="
       },
       "System.ValueTuple": {
         "type": "Direct",
-        "requested": "[4.*, )",
+        "requested": "[*, )",
         "resolved": "4.5.0",
         "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
       },
@@ -137,9 +137,9 @@
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.interfaces": {
@@ -159,17 +159,17 @@
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },
@@ -214,25 +214,25 @@
       },
       "System.Collections.Immutable": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "FXkLXiK0sVVewcso0imKQoOxjoPAj42R8HtjjbSjVPAzwDfzoyoznWxgA3c38LDbN9SJux1xXoXYAhz98j7r2g=="
       },
       "System.ComponentModel.Annotations": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Threading.Tasks.Dataflow": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "NBp0zSAMZp4muDje6XmbDfmkqw9+qsDCHp+YMEtnVgHEjQZ3Q7MzFTTp3eHqpExn4BwMrS7JkUVOTcVchig4Sw=="
       },
       "System.ValueTuple": {
         "type": "Direct",
-        "requested": "[4.*, )",
+        "requested": "[*, )",
         "resolved": "4.5.0",
         "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
       },
@@ -333,9 +333,9 @@
           "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "0.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Threading.Tasks.Dataflow": "5.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Threading.Tasks.Dataflow": "0.0.0"
         }
       },
       "gigya.microdot.interfaces": {
@@ -355,17 +355,17 @@
           "Gigya.ServiceContract": "0.0.0",
           "Metrics": "4.0.0",
           "Microsoft.CSharp": "0.0.0",
-          "System.ComponentModel.Annotations": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0",
-          "System.ValueTuple": "4.0.0"
+          "System.ComponentModel.Annotations": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0",
+          "System.ValueTuple": "0.0.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },

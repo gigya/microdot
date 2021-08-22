@@ -28,19 +28,19 @@
       },
       "System.ComponentModel.Annotations": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.1",
         "contentHash": "omeUtUiY6Mqhfspdujqh0JJ2fLyb+kz+hhAxqgaUUpxlvHFtXVw7i/JjbA426hiZstzUL0GuXFGjTjmcx0ts/w=="
       },
       "System.ValueTuple": {
         "type": "Direct",
-        "requested": "[4.*, )",
+        "requested": "[*, )",
         "resolved": "4.5.0",
         "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
       },
@@ -131,8 +131,8 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },
@@ -177,13 +177,13 @@
       },
       "System.ComponentModel.Annotations": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.0",
         "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.1",
         "contentHash": "omeUtUiY6Mqhfspdujqh0JJ2fLyb+kz+hhAxqgaUUpxlvHFtXVw7i/JjbA426hiZstzUL0GuXFGjTjmcx0ts/w==",
         "dependencies": {
@@ -195,7 +195,7 @@
       },
       "System.ValueTuple": {
         "type": "Direct",
-        "requested": "[4.*, )",
+        "requested": "[*, )",
         "resolved": "4.5.0",
         "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
       },
@@ -293,15 +293,15 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "0.0.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.0"
+          "System.Configuration.ConfigurationManager": "0.0.0",
+          "System.Diagnostics.PerformanceCounter": "0.0.0"
         }
       }
     },
     ".NETCoreApp,Version=v5.0/win10-x64": {
       "System.Diagnostics.PerformanceCounter": {
         "type": "Direct",
-        "requested": "[5.*, )",
+        "requested": "[*, )",
         "resolved": "5.0.1",
         "contentHash": "omeUtUiY6Mqhfspdujqh0JJ2fLyb+kz+hhAxqgaUUpxlvHFtXVw7i/JjbA426hiZstzUL0GuXFGjTjmcx0ts/w==",
         "dependencies": {

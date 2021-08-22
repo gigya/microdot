@@ -7,9 +7,7 @@
 		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
-		<Version>4.0.0$(VersionSuffix)</Version>
-		<OutputType>Library</OutputType>
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<Version>4.0.0$(VersionSuffix)</Version>		
 	</PropertyGroup>
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net5.0-windows</TargetFrameworks>
@@ -17,10 +15,14 @@
 		<RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>		
 		<LangVersion>8.0</LangVersion>
 		<IncludeSymbols>true</IncludeSymbols>
+		<OutputType>Library</OutputType>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+
+		<NoWarn>CS0414;CS0219;CS0618</NoWarn>
 	</PropertyGroup>
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />

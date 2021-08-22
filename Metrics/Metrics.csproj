@@ -13,7 +13,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>
 		<DocumentationFile>..\..\bin\$(Configuration)\Metrics.XML</DocumentationFile>
-		<NoWarn>1591;1570;1587;</NoWarn>
+		<NoWarn>1591;1570;1587;CS0414;CS0219;CS0618</NoWarn>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|x64'">
 	  <CodeAnalysisRuleSet />
