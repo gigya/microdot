@@ -14,23 +14,13 @@
 		</Description>
 		<PackageTags>gigya microdot microservice microservices discovery service-discovery consul</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
-	<Target Name="CopyPackage" AfterTargets="Pack">
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
-	</Target>
+	</PropertyGroup>	
 	<ItemGroup>
 		<Content Include="Rewrite\_diagram_from_draw.io.xml" />
 		<Content Include="Rewrite\_diagram.png" />

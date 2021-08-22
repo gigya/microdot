@@ -8,19 +8,13 @@
 		</Description>
 		<PackageTags>gigya microdot microservice microservices fakes mocks mocking unit-testing</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
+	</PropertyGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />		
 		<ProjectReference Include="..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />

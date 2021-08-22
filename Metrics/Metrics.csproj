@@ -3,24 +3,16 @@
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0</TargetFrameworks>
 		<AssemblyTitle>Metrics</AssemblyTitle>
-		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>
-		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>		
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>
 		<NoWarn />
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<DebugType>pdbonly</DebugType>
-		<DocumentationFile>..\..\bin\$(Configuration)\Metrics.XML</DocumentationFile>
+		<DebugType>pdbonly</DebugType>		
 		<NoWarn>1591;1570;1587;CS0414;CS0219;CS0618</NoWarn>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
 	</PropertyGroup>
 	<ItemGroup>
 		<EmbeddedResource Include="Endpoints\index.full.html.gz" />

@@ -6,18 +6,12 @@
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
 		<DefineConstants>CODE_ANALYSIS;DEBUG;TRACE</DefineConstants>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Metrics\Metrics.csproj" />

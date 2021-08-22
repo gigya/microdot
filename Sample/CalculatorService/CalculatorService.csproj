@@ -4,11 +4,11 @@
 		<AssemblyTitle>CalculatorService</AssemblyTitle>
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>
 		<WarningLevel>3</WarningLevel>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
 		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>	
 	<ItemGroup>

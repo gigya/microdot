@@ -8,18 +8,12 @@
 			Gigya.Microdot.Fakes). Part of the Microdot Framework.
 		</Description>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
 		<DebugType>full</DebugType>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|x64'">
-	  <CodeAnalysisRuleSet />
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.LanguageExtensions\Gigya.Microdot.LanguageExtensions.csproj" />
