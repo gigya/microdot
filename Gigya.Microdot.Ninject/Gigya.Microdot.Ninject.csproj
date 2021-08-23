@@ -19,7 +19,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Ninject.Extensions.Conventions" />
 		<PackageReference Include="Ninject.Extensions.Factory" />

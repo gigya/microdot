@@ -21,10 +21,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />
-		<PackageReference Include="System.Collections.Immutable" />
-		<PackageReference Include="System.ValueTuple" />
-		<PackageReference Include="System.ComponentModel.Annotations" />
-		<PackageReference Include="System.ServiceProcess.ServiceController" />			
+		<PackageReference Include="System.ValueTuple" />		
 	</ItemGroup>
 </Project>

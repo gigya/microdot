@@ -17,20 +17,14 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />
-		<PackageReference Include="System.Diagnostics.PerformanceCounter" />
-				
-		<PackageReference Include="OrleansDashboard" />
-		<PackageReference Include="System.Text.Json" />
-				
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" />				
+		<PackageReference Include="OrleansDashboard" />					
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" />
 		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" />
-		<PackageReference Include="Microsoft.Orleans.OrleansProviders" />
 		<PackageReference Include="Microsoft.Orleans.Connections.Security" />
 		<PackageReference Include="Microsoft.Orleans.OrleansSqlUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" />
-		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />
-		<PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />		
+		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />			
 	</ItemGroup>
 </Project>

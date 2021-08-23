@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Attributes;
@@ -14,9 +12,7 @@ using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Metrics;
-
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 using Shouldly;

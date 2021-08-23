@@ -16,7 +16,7 @@
 		<PackageReference Update="Microsoft.Orleans.Connections.Security" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansZooKeeperUtils" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="$(Orleans_Version)"/>
-		<PackageReference Update="OrleansDashboard " Version="$(Orleans_Version)"/>
+		<PackageReference Update="OrleansDashboard" Version="3.5.*"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansSqlUtils" Version="2.*"/>
 		
 	</ItemGroup>
@@ -48,8 +48,7 @@
 
 	<ItemGroup Label="Microsoft_Extensions">
 		<PackageReference Update="Microsoft.Extensions.Logging" Version="$(Microsoft_Extensions_Version)"/>
-		<PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="$(Microsoft_Extensions_Version)"/>		
-		<PackageReference Update="Microsoft.Extensions.FileSystemGlobbing" Version="$(Microsoft_Extensions_Version)"/>		
+		<PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="$(Microsoft_Extensions_Version)"/>
 	</ItemGroup>
 
 	<ItemGroup Label="System">
@@ -57,13 +56,8 @@
 		<PackageReference Update="System.Diagnostics.PerformanceCounter" Version="*"/>
 		<PackageReference Update="System.ComponentModel.Annotations" Version="*"/>
 		<PackageReference Update="System.Threading.Tasks.Dataflow" Version="*"/>
-		<PackageReference Update="System.Runtime.Caching" Version="*"/>
-		<PackageReference Update="System.ServiceProcess.ServiceController" Version="*"/>
+		<PackageReference Update="System.Runtime.Caching" Version="*"/>		
 		<PackageReference Update="System.Collections.Immutable" Version="*"/>		
-		<PackageReference Update="System.Text.Json" Version="*"/>
-		<PackageReference Update="System.Net.Http" Version="*"/>
-		<PackageReference Update="System.ValueTuple" Version="*"/>
-		<PackageReference Update="System.Reflection.Emit" Version="*"/>
-		<!--<PackageReference Update="System.Reflection.DispatchProxy" Version="*"/>-->
+		<PackageReference Update="System.ValueTuple" Version="*"/>		
 	</ItemGroup>
 </Project>

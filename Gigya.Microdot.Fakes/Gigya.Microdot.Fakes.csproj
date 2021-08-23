@@ -17,7 +17,6 @@
 		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />
 		<PackageReference Include="Ninject" />
 	</ItemGroup>
 </Project>

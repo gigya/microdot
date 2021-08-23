@@ -28,9 +28,7 @@
 		<PackageReference Include="System.Collections.Immutable" />
 		<PackageReference Include="System.ValueTuple" />
 		<PackageReference Include="System.ComponentModel.Annotations" />		
-		<PackageReference Include="System.Runtime.Caching" />
-		<!--<PackageReference Include="System.Reflection.DispatchProxy" />-->
-		
+		<PackageReference Include="System.Runtime.Caching" />		
 		<PackageReference Include="Nito.AsyncEx" />
 	</ItemGroup>
 </Project>
