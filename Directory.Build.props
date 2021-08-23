@@ -20,7 +20,7 @@
 		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
 
-		<NoWarn>CS0414;CS0219;CS0618;CS0612;CS1998</NoWarn>
+		<NoWarn>CS0414;CS0219;CS0618;CS0612;CS1998;CS8632</NoWarn>
 
 		<!--<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>-->		
 	</PropertyGroup>
