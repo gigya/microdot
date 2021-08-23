@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
 		<AssemblyTitle>Gigya.Microdot.ServiceProxy</AssemblyTitle>
 		<Description>
 			ServiceProxy is used to call remote Microdot services. It is a
@@ -29,7 +29,7 @@
 		<PackageReference Include="System.ValueTuple" />
 		<PackageReference Include="System.ComponentModel.Annotations" />		
 		<PackageReference Include="System.Runtime.Caching" />
-		<PackageReference Include="System.Reflection.DispatchProxy" />
+		<!--<PackageReference Include="System.Reflection.DispatchProxy" />-->
 		
 		<PackageReference Include="Nito.AsyncEx" />
 	</ItemGroup>

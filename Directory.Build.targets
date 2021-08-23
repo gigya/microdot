@@ -64,6 +64,6 @@
 		<PackageReference Update="System.Net.Http" Version="*"/>
 		<PackageReference Update="System.ValueTuple" Version="*"/>
 		<PackageReference Update="System.Reflection.Emit" Version="*"/>
-		<PackageReference Update="System.Reflection.DispatchProxy" Version="*"/>
+		<!--<PackageReference Update="System.Reflection.DispatchProxy" Version="*"/>-->
 	</ItemGroup>
 </Project>
