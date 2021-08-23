@@ -22,8 +22,8 @@
 
 		<NoWarn>CS0414;CS0219;CS0618;CS0612;CS1998;CS8632</NoWarn>
 
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-		<RestoreLockedMode>true</RestoreLockedMode>
+		<!--<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode>true</RestoreLockedMode>-->
 	</PropertyGroup>
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />

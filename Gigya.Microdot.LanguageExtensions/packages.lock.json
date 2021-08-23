@@ -1,9 +1,0 @@
-{
-  "version": 1,
-  "dependencies": {
-    ".NETStandard,Version=v2.1": {},
-    ".NETStandard,Version=v2.1/win10-x64": {},
-    ".NETCoreApp,Version=v5.0": {},
-    ".NETCoreApp,Version=v5.0/win10-x64": {}
-  }
-}
