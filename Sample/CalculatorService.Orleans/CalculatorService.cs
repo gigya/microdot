@@ -1,8 +1,6 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using CalculatorService.Interface;
-using Gigya.Microdot.SharedLogic.Security;
 using Gigya.ServiceContract.HttpService;
 using Orleans;
 using Orleans.Concurrency;
@@ -17,15 +15,12 @@ namespace CalculatorService.Orleans
     [StatelessWorker, Reentrant]
     public class CalculatorService : Grain, ICalculatorServiceGrain
     {
-        private readonly IMicrodotTypePolicySerializationBinder _binder;
-
-        public CalculatorService(IMicrodotTypePolicySerializationBinder binder)
+        public CalculatorService()
         {
-            _binder = binder;
+         
         }
         public Task<string> Add(int a, int b)
         {
-            _binder.BindToType("foo","bar");
             return Task.FromResult((a + b).ToString());
         }
 
