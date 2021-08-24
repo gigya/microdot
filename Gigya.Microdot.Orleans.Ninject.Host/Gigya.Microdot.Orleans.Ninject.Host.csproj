@@ -10,13 +10,6 @@
 		</Description>
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<DebugType>full</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />

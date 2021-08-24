@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />

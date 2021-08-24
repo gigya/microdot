@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />

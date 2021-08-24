@@ -24,6 +24,13 @@
 		<!--<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<RestoreLockedMode>true</RestoreLockedMode>-->
 	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />

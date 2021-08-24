@@ -15,13 +15,6 @@
 		</Description>
 		<PackageTags>gigya microdot microservice microservices discovery service-discovery consul</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<DebugType>full</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>	
 	<ItemGroup>
 		<Content Include="Rewrite\_diagram_from_draw.io.xml" />
 		<Content Include="Rewrite\_diagram.png" />

@@ -5,13 +5,6 @@
 		<Description>An implementation of Microdot's logging and tracing using NLog.</Description>
 		<PackageTags>gigya microdot microservice microservices NLog logging tracing</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<DebugType>full</DebugType>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<DebugType>pdbonly</DebugType>
-	</PropertyGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
