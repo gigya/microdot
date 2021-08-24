@@ -22,13 +22,22 @@
 
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Environment;
+using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Configurations.Serialization;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Security;
 using Gigya.Microdot.Testing.Service;
+using Ninject;
+using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests
@@ -46,6 +55,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             try
             {
                 _tester = new ServiceTester<CalculatorServiceHost>();
+                
                 _serviceProxyProvider = _tester.GetServiceProxyProvider("CalculatorService");
             }
             catch (Exception e)
@@ -86,6 +96,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             Assert.AreEqual("test.calculator.getAppDomainChain", attribute.EndpointName);
             Assert.AreEqual(false, attribute.RequireHTTPS);
             Assert.AreEqual("something", attribute.PropertyNameForResponseBody);
+        }
+        
+         
+         [Test]
+        public async Task SchemaEndpointUsesBinder()
+        {
+            var serviceSchemaPostProcessor = Substitute.For<IServiceSchemaPostProcessor>();
+
+            var schemaProvider = new ServiceSchema(new[] { typeof(ICalculatorService) });
+            var serviceSchema = new SchemaEndpoint(schemaProvider,
+                serviceSchemaPostProcessor);
+
+            serviceSchemaPostProcessor.Received(1).PostProcessServiceSchema(schemaProvider);
         }
 
     }
