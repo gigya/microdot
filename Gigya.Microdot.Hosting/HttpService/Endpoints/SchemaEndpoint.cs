@@ -20,9 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.SharedLogic.Configurations.Serialization;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
@@ -30,11 +35,26 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
     public class SchemaEndpoint : ICustomEndpoint
     {
         private readonly string _jsonSchema;
-
-        public SchemaEndpoint(ServiceSchema schemaProvider)
+        
+        public SchemaEndpoint(ServiceSchema schemaProvider, IServiceSchemaPostProcessor serviceSchemaPostProcessor)
         {
-            _jsonSchema = JsonConvert.SerializeObject(schemaProvider, new JsonSerializerSettings{Formatting = Formatting.Indented, NullValueHandling = NullValueHandling.Ignore});
-        }        
+            _jsonSchema = GenerateJsonSchema(schemaProvider, serviceSchemaPostProcessor);
+        }
+
+        private string GenerateJsonSchema(ServiceSchema schemaProvider,
+            IServiceSchemaPostProcessor serviceSchemaPostProcessor)
+        {
+            serviceSchemaPostProcessor.PostProcessServiceSchema(schemaProvider);
+
+            var jsonSchema = JsonConvert.SerializeObject(schemaProvider,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    Formatting = Formatting.Indented,
+                    DateParseHandling = DateParseHandling.None,
+                });
+            return jsonSchema;
+        }
 
         public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
         {
