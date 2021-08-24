@@ -5,11 +5,11 @@
 		<AssemblyTitle>Metrics</AssemblyTitle>
 		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>		
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<DebugType>full</DebugType>
 		<NoWarn />
 	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<DebugType>pdbonly</DebugType>		
 		<NoWarn>1591;1570;1587;CS0414;CS0219;CS0618</NoWarn>
