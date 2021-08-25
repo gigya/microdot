@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 {
@@ -22,8 +19,9 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
     public interface IMicrodotSerializationConstraints
     {
         void ThrowIfExcluded(string typeName);
+#nullable enable
         AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName);
-
+#nullable disable
         AssemblyAndTypeName TryGetAssemblyAndTypeNameReplacementFromType(Type serializedType,
             string assemblyName, string typeName);
     }
@@ -78,8 +76,10 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToType type '{typeName}'");    
             }
         }
-        
+
+#nullable enable
         public AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName)
+#nullable disable
         {
             var config = GetSerializationConfigAndRefreshCaches();
 

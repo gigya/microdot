@@ -216,7 +216,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(5)]
         public async Task WhenQueryDeleteShouldFallBackToMaster()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
@@ -284,7 +284,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(5)]
         public void ShouldNotFallBackToMasterOnConsulError()
         {
             SetMockToReturnHost(MasterService());
@@ -410,7 +410,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
             var host = await discovery.GetNextHost();
             host.HostName.ShouldBe("localhost");
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
-
         }
 
         public string GetServiceName([CallerMemberName] string caller = null)
@@ -419,7 +418,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
         
         [Test]
-        [Repeat(Repeat)]
+        [Retry(5)]
         public async Task GetAllEndPointsChangedShouldFireConfigChange()
         {
             var serviceName = GetServiceName();
