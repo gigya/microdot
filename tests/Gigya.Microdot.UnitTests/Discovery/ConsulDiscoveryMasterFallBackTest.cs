@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.Exceptions;
@@ -24,7 +23,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
     public class ConsulDiscoveryMasterFallBackTest
     {
         private const string ServiceVersion = "1.2.30.1234";
-        private string _serviceName2;
         private const string MasterEnvironment = "prod";
         private const string OriginatingEnvironment = "fake_env";
         private readonly TimeSpan _timeOut = TimeSpan.FromSeconds(5);
@@ -34,7 +32,6 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private IEnvironment _environment;
         private ManualConfigurationEvents _configRefresh;
         private IDateTime _dateTimeMock;
-        private int _id;
         private const int Repeat = 1;
 
         [SetUp]
@@ -80,8 +77,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
         {
             _consulClient = new Dictionary<string, ConsulClientMock>();
 
-            CreateConsulMock(MasterService(NUnit.Framework.TestContext.CurrentContext.Test.Name));
-            CreateConsulMock(OriginatingService(NUnit.Framework.TestContext.CurrentContext.Test.Name));
+            CreateConsulMock(MasterService(TestContext.CurrentContext.Test.Name));
+            CreateConsulMock(OriginatingService(TestContext.CurrentContext.Test.Name));
 
         }
 
@@ -365,21 +362,19 @@ namespace Gigya.Microdot.UnitTests.Discovery
             SetMockToReturnHost(OriginatingService());
             
             await discovery.GetNextHost();
-            
-            discovery.EndPointsChanged.LinkTo(new ActionBlock<string>(x => numOfEvent++));
-            //Thread.Sleep(200);
-            numOfEvent = 0;
 
+            int events = numOfEvent;
+            discovery.EndPointsChanged.LinkTo(new ActionBlock<string>(x => events++));
+            
             for (int i = 0; i < 5; i++)
             {
                 await discovery.GetNextHost();
-                //Thread.Sleep((int) reloadInterval.TotalMilliseconds * 10);
             }
-            numOfEvent.ShouldBe(0);
+            events.ShouldBe(0);
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(5)]
         public async Task EndPointsChangedShouldFireConfigChange()
         {
             var serviceName = GetServiceName();
@@ -456,7 +451,8 @@ namespace Gigya.Microdot.UnitTests.Discovery
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
         }
 
-        [Test]        
+        [Test]
+        [Retry(5)]
         public async Task EndPointsChangedShouldFireWhenHostChange()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
@@ -535,7 +531,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        public void ServiceDiscoveySameNameShouldBeTheSame()
+        public void ServiceDiscoverySameNameShouldBeTheSame()
         {
             var serviceName = GetServiceName();
             Assert.AreEqual(GetServiceDiscovery(serviceName), GetServiceDiscovery(serviceName));
