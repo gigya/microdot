@@ -1,30 +1,35 @@
 ﻿using Metrics.MetricData;
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 
 namespace Metrics.PerfCounters
 {
     public class PerformanceCounterGaugeWindows : MetricValueProvider<double>, IPerformanceCounterGauge
     {
         private readonly PerformanceCounter _performanceCounter;
-
         public PerformanceCounterGaugeWindows(string category, string counter)
             : this(category, counter, instance: null)
         { }
 
         public PerformanceCounterGaugeWindows(string category, string counter, string instance)
         {
-            try
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _performanceCounter = new PerformanceCounter(category, counter, instance ?? "", true);
-                
-                Metric.Internal.Counter("Performance Counters", Unit.Custom("Perf Counters")).Increment();
-            }
-            catch (Exception x)
-            {
-                var message = "Error reading performance counter data. The application is currently running as user " + GetIdentity() +
-                    ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
-                MetricsErrorHandler.Handle(x, message);
+                try
+                {
+                    _performanceCounter = new PerformanceCounter(category, counter, instance ?? "", true);
+                    Metric.Internal.Counter("Performance Counters", Unit.Custom("Perf Counters")).Increment();
+                }
+                catch (Exception x)
+                {
+                    var message =
+                        "Error reading performance counter data. The application is currently running as user " +
+                        GetIdentity() +
+                        ". Make sure the user has access to the performance counters. The user needs to be either Admin or belong to Performance Monitor user group.";
+                    MetricsErrorHandler.Handle(x, message);
+                }
             }
         }
 
@@ -32,6 +37,9 @@ namespace Metrics.PerfCounters
         {
             try
             {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    return WindowsIdentity.GetCurrent().Name;
+
                 return Environment.UserName;
             }
             catch (Exception x)
@@ -42,7 +50,7 @@ namespace Metrics.PerfCounters
 
         public double GetValue(bool resetMetric = false)
         {
-            return this.Value;
+            return Value;
         }
 
         public double Value
@@ -51,7 +59,10 @@ namespace Metrics.PerfCounters
             {
                 try
                 {
-                    return this._performanceCounter?.NextValue() ?? double.NaN;
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        return _performanceCounter?.NextValue() ?? double.NaN;
+
+                    return double.NaN;
                 }
                 catch (Exception x)
                 {

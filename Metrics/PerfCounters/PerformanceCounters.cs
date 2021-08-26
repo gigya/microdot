@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 
 namespace Metrics.PerfCounters
 {
@@ -110,14 +111,15 @@ namespace Metrics.PerfCounters
 
         private static string GetIdentity()
         {
-            //try
-            //{
-            //    return WindowsIdentity.GetCurrent().Name;
-            //}
-            //catch (Exception x)
-            //{
-            //    return "[Unknown user | " + x.Message + " ]";
-            //}
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    return WindowsIdentity.GetCurrent().Name;
+            }
+            catch (Exception x)
+            {
+                return "[Unknown user | " + x.Message + " ]";
+            }
             return "[Unknown user]";
         }
 

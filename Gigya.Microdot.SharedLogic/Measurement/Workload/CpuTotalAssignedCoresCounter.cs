@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 {
@@ -29,8 +30,12 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         public CpuTotalAssignedCoresCounter(Process p)
         {
             _counters = new List<PerformanceCounter>(2 /* reasonable for a service with an affinity */);
-            foreach (var index in p.ProcessorAffinityList())
-                _counters.Add(new PerformanceCounter("Processor", "% Processor Time", $"{index}"));
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                foreach (var index in p.ProcessorAffinityList())
+                    _counters.Add(new PerformanceCounter("Processor", "% Processor Time", $"{index}"));
+            }
         }
 
         /// <summary>
@@ -40,7 +45,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         {
             try
             {
-                return Math.Round(_counters.Sum(c => c.NextValue()) / _counters.Count, 2);
+                
+                return Math.Round(_counters.Sum(c => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? c.NextValue() : double.NaN) / _counters.Count, 2);
             }
             catch
             {
@@ -49,7 +55,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         }
 
         /// <summary>
-        /// Dispose the obtainded counters.
+        /// Dispose the obtained counters.
         /// </summary>
         public void Dispose()
         {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 {
@@ -32,7 +33,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 
             try
             {
-                return _counter?.NextValue();
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?_counter?.NextValue() : null;
             }
             catch
             {
@@ -41,7 +42,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
                 _counter = GetCounterByCurrentProcess();
                 try
                 {
-                    return _counter?.NextValue();
+                    return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? _counter?.NextValue() : null;
                 }
                 catch
                 {
@@ -52,21 +53,32 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 
         private PerformanceCounter GetCounterByCurrentProcess()
         {
-            var instanceName = GetInstanceNameByProcessId(Process.GetCurrentProcess().Id) ?? Process.GetCurrentProcess().ProcessName;
-            return new PerformanceCounter(_categoryName, _counterName, instanceName);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var instanceName = GetInstanceNameByProcessId(Process.GetCurrentProcess().Id) ??
+                                   Process.GetCurrentProcess().ProcessName;
+                return new PerformanceCounter(_categoryName, _counterName, instanceName);
+            }
+
+            return null;
         }
 
         private static string GetInstanceNameByProcessId(int pid)
         {
-            var processName = Process.GetCurrentProcess().ProcessName;
-            foreach (string instanceName in new PerformanceCounterCategory("Process").GetInstanceNames().Where(i => i.StartsWith(processName)))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                using (var pidCounter = new PerformanceCounter("Process", "ID Process", instanceName, true))
+                var processName = Process.GetCurrentProcess().ProcessName;
+                foreach (string instanceName in new PerformanceCounterCategory("Process").GetInstanceNames()
+                    .Where(i => i.StartsWith(processName)))
                 {
-                    if ((int)pidCounter.NextValue() == pid)
-                        return instanceName;
+                    using (var pidCounter = new PerformanceCounter("Process", "ID Process", instanceName, true))
+                    {
+                        if ((int)pidCounter.NextValue() == pid)
+                            return instanceName;
+                    }
                 }
             }
+
             return null;
         }
 
