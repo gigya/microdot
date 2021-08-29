@@ -1780,7 +1780,7 @@
       "gigya.microdot.testing.shared": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Common.Tests": "4.0.0",
+          "Gigya.Microdot.Common.Tests": "4.0.1",
           "Gigya.Microdot.Fakes": "4.0.1",
           "Gigya.Microdot.Ninject.Host": "4.0.1",
           "Gigya.ServiceContract": "4.0.0",
