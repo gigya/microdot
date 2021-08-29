@@ -5,8 +5,8 @@
       "Gigya.ServiceContract": {
         "type": "Direct",
         "requested": "[4.0.*, )",
-        "resolved": "4.0.2",
-        "contentHash": "/33K50/5tDFWVV6faNObbrVccpXVnFwuSvVAF/G8PsDUa1DvEsaGKctwBUjfct5TtlUdoCxO9ErE6Nxh7r96WQ==",
+        "resolved": "4.0.0",
+        "contentHash": "a7f/rbT/4WPPtvzACMTYEU8dqgmK6LROq+usKSxxPT52g2c3qSCLsevCMO/LaDXkOup3hA5ZeVdzruj0kTyYCw==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }
@@ -131,7 +131,7 @@
       "gigya.microdot.configuration": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.SharedLogic": "4.0.1",
+          "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "4.0.0",
           "Microsoft.CSharp": "4.0.0",
           "System.ComponentModel.Annotations": "0.0.0",
@@ -142,7 +142,7 @@
       "gigya.microdot.interfaces": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.1",
+          "Gigya.Microdot.LanguageExtensions": "4.0.0",
           "Newtonsoft.Json": "13.0.0"
         }
       },
@@ -152,8 +152,8 @@
       "gigya.microdot.servicediscovery": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Configuration": "4.0.1",
-          "Gigya.Microdot.SharedLogic": "4.0.1",
+          "Gigya.Microdot.Configuration": "4.0.0",
+          "Gigya.Microdot.SharedLogic": "4.0.0",
           "Gigya.ServiceContract": "4.0.0",
           "Microsoft.CSharp": "4.0.0",
           "System.Collections.Immutable": "0.0.0",
@@ -165,9 +165,9 @@
       "gigya.microdot.sharedlogic": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Interfaces": "4.0.1",
+          "Gigya.Microdot.Interfaces": "4.0.0",
           "Gigya.ServiceContract": "4.0.0",
-          "Metrics": "4.0.1",
+          "Metrics": "4.0.0",
           "Microsoft.CSharp": "4.0.0",
           "System.ComponentModel.Annotations": "0.0.0",
           "System.Diagnostics.PerformanceCounter": "0.0.0",
