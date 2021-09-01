@@ -296,8 +296,8 @@ namespace Metrics.Endpoints
             }
             if (this.httpListener.IsListening)
             {
-                this.httpListener.Stop();
                 this.httpListener.Prefixes.Clear();
+                this.httpListener.Stop();                
             }
         }
 
