@@ -110,7 +110,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private readonly MetricsContext _endpointContext;
         private DataAnnotationsValidator _validator = new DataAnnotationsValidator();
         private TaskCompletionSource<int> _ReadyToGetTraffic = new TaskCompletionSource<int>();
-
+        private List<string> _uriPrefixes;
         public void StartGettingTraffic()
         {
             _ReadyToGetTraffic.TrySetResult(1);
@@ -159,12 +159,21 @@ namespace Gigya.Microdot.Hosting.HttpService
             }
 
             Listener = new HttpListener { IgnoreWriteExceptions = true };
+
+            _uriPrefixes = new List<string>();
+
             if (ServiceEndPointDefinition.HttpsPort != null)
-                Listener.Prefixes.Add($"https://+:{ServiceEndPointDefinition.HttpsPort}/");
+                _uriPrefixes.Add($"https://+:{ServiceEndPointDefinition.HttpsPort}/");                
             if (ServiceEndPointDefinition.HttpPort != null)
-                Listener.Prefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/");
-            if (!Listener.Prefixes.Any())
+                _uriPrefixes.Add($"http://+:{ServiceEndPointDefinition.HttpPort}/");
+            if (!_uriPrefixes.Any())
                 Log.Warn(_ => _("HttpServiceListener is not listening on any ports, no HTTP or HTTPS ports in ServiceEndPointDefinition"));
+            else
+            {
+                foreach (string prefix in _uriPrefixes)               
+                    Listener.Prefixes.Add(prefix);
+            }
+
 
             var context = Metric.Context("Service").Context(AppInfo.Name);
             _serializationTime = context.Timer("Serialization", Unit.Calls);
@@ -191,7 +200,7 @@ namespace Gigya.Microdot.Hosting.HttpService
             try
             {
                 Listener.Start();
-                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefixes = string.Join(",", Listener.Prefixes) }));
+                Log.Info(_ => _("HttpServiceListener started", unencryptedTags: new { prefixes = string.Join(",", _uriPrefixes) }));
             }
             catch (HttpListenerException ex)
             {
@@ -201,16 +210,16 @@ namespace Gigya.Microdot.Hosting.HttpService
                         ex.Data["HttpPort"] = $"{ServiceEndPointDefinition.HttpPort}";
                     if (ServiceEndPointDefinition.HttpsPort != null)
                         ex.Data["HttpsPort"] = $"{ServiceEndPointDefinition.HttpsPort}";
-
-                    ex.Data["Prefixes"] = Listener.Prefixes;
+                    
+                    ex.Data["Prefixes"] = string.Join(",", _uriPrefixes);
                     ex.Data["User"] = AppInfo.OsUser;
                     throw;
                 }
 
-                throw new Exception(
+                throw new Exception(                    
                     "One or more of the specified HTTP listen ports wasn't configured to run without administrative permissions.\n" +
                     "To configure them, run the following commands in an elevated (administrator) command prompt:\n" +
-                    string.Join("\n", Listener.Prefixes.Select(prefix => $"netsh http add urlacl url={prefix} user={AppInfo.OsUser}")));
+                    string.Join("\n", _uriPrefixes.Select(prefix => $"netsh http add urlacl url={prefix} user={AppInfo.OsUser}")));
             }
 
             StartListening();
