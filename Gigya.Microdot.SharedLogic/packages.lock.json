@@ -6,7 +6,7 @@
         "type": "Direct",
         "requested": "[4.0.*, )",
         "resolved": "4.0.0",
-        "contentHash": "a7f/rbT/4WPPtvzACMTYEU8dqgmK6LROq+usKSxxPT52g2c3qSCLsevCMO/LaDXkOup3hA5ZeVdzruj0kTyYCw==",
+        "contentHash": "hhN19eNw4L0gXQY6rF6eO+GWZlQt3sip6JnR/DT93vT+RbMyK5WYz+LvNapNkYew99XI0IFIuenLy7osjaLnRA==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }
@@ -39,7 +39,7 @@
         "type": "Direct",
         "requested": "[*, )",
         "resolved": "4.5.0",
-        "contentHash": "okurQJO6NRE/apDIP23ajJ0hpiNmJ+f0BwOlB/cSqTLQlw5upkf+5+96+iG2Jw40G1fCVCyPz/FhIABUjMR+RQ=="
+        "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
