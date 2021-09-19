@@ -28,12 +28,16 @@ using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Shared.Service;
+using Ninject;
 using Orleans;
 using Orleans.Configuration;
 
@@ -41,6 +45,7 @@ namespace Gigya.Microdot.Testing.Service
 {
     public class ServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : MicrodotOrleansServiceHost, new()
     {
+        
         private readonly Type _customSerializer;
         public TServiceHost Host { get; private set; }
         public Task SiloStopped { get; private set; }
@@ -171,6 +176,13 @@ namespace Gigya.Microdot.Testing.Service
                                     options.SerializationProviders.Remove(typeof(OrleansCustomSerialization));
                                 options.SerializationProviders.Add(_customSerializer);
                             }
+                        })
+                        .UseServiceProviderFactory(o =>
+                        {
+                            /*var o2NBinding = Host.Kernel.Get<IOrleansToNinjectBinding>();
+                            o2NBinding.ConfigureServices(o);
+                            Host.Kernel.Rebind(Type.GetType("Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.IGlobalServiceProvider, Gigya.Microdot.Orleans.Ninject.Host")).To(Type.GetType("Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding.MicrodotServiceProviderWithScope, Gigya.Microdot.Orleans.Ninject.Host")).InSingletonScope();*/
+                            return Host.Kernel.Get<IServiceProvider>();
                         });
 
                     var grainClient = grainClientBuilder.Build();
