@@ -291,7 +291,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                         {
                             try
                             {
-                                await CheckSecureConnection(context);
+                                //await CheckSecureConnection(context);
 
                                 ValidateRequest(context);
 
