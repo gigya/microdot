@@ -36,6 +36,7 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
+using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Microsoft.AspNetCore.Connections;
 
@@ -219,6 +220,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                     appName += $"-{_environment.DeploymentEnvironment.DefaultIfNullOrEmpty("NoDeployEnv")}";
                     appName += $"-{CurrentApplicationInfo.HostName.DefaultIfNullOrEmpty("NoHostName")}";
 
+
                     connStr = string.Join(";",
                         connStr
                             .Split(';')
@@ -227,6 +229,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                             .Where(t => !t.ToLower().StartsWith("application")));
 
                     connStr += $";Application Name={appName}";
+
                 }
 
                 silo.UseAdoNetReminderService(options =>
