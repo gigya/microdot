@@ -38,6 +38,7 @@ using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
 using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Microsoft.AspNetCore.Connections;
 
 namespace Gigya.Microdot.Orleans.Hosting
@@ -54,6 +55,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly CurrentApplicationInfo _appInfo;
         private readonly ISiloHostBuilder _siloHostBuilder;
         private readonly ICertificateLocator _certificateLocator;
+        private readonly IEnvironment _environment;
         private IOrleansConfigurationBuilderConfigurator _orleansConfigurationBuilderConfigurator;
 
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
@@ -62,7 +64,8 @@ namespace Gigya.Microdot.Orleans.Hosting
             ServiceArguments serviceArguments,
             CurrentApplicationInfo appInfo,
             ICertificateLocator certificateLocator,
-            IOrleansConfigurationBuilderConfigurator orleansConfigurationBuilderConfigurator)
+            IOrleansConfigurationBuilderConfigurator orleansConfigurationBuilderConfigurator,
+            IEnvironment environment)
         {
             _orleansConfig = orleansConfig;
             _commonConfig = commonConfig;
@@ -73,6 +76,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             _appInfo = appInfo;
             _certificateLocator = certificateLocator;
             _orleansConfigurationBuilderConfigurator = orleansConfigurationBuilderConfigurator;
+            _environment = environment;
             _siloHostBuilder = InitBuilder();
         }
 
@@ -208,11 +212,26 @@ namespace Gigya.Microdot.Orleans.Hosting
         private void SetReminder(ISiloHostBuilder silo)
         {
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.Sql)
+            {
+                var connStr = _orleansConfig.MySql_v4_0.ConnectionString;
+
+                if (_environment?.ApplicationInfo != null)
+                {
+                    connStr = string.Join(";",
+                        connStr
+                            .Split(';')
+                            .Select(x => x.Trim())
+                            .Where(t => !t.ToLower().StartsWith("application")));
+                    connStr += $";Application Name={_environment.ApplicationInfo.Name}-{_environment.DeploymentEnvironment}";
+                }
+
                 silo.UseAdoNetReminderService(options =>
                     {
-                        options.ConnectionString = _orleansConfig.MySql_v4_0.ConnectionString;
+                        options.ConnectionString = connStr;
                         options.Invariant = _orleansConfig.MySql_v4_0.Invariant;
                     });
+            }
+
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.InMemory)
                 silo.UseInMemoryReminderService();
         }
