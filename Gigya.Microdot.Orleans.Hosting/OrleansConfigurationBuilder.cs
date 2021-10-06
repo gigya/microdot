@@ -26,7 +26,6 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Orleans.Configuration;
 using Orleans.Hosting;
-using Orleans.Runtime.Configuration;
 using Orleans.Statistics;
 using System;
 using System.Diagnostics;
@@ -37,7 +36,6 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Microsoft.AspNetCore.Connections;
 
@@ -217,12 +215,18 @@ namespace Gigya.Microdot.Orleans.Hosting
 
                 if (_environment?.ApplicationInfo != null)
                 {
+                    var appName = _environment.ApplicationInfo.Name.DefaultIfNullOrEmpty("NoAppName");
+                    appName += $"-{_environment.DeploymentEnvironment.DefaultIfNullOrEmpty("NoDeployEnv")}";
+                    appName += $"-{CurrentApplicationInfo.HostName.DefaultIfNullOrEmpty("NoHostName")}";
+
                     connStr = string.Join(";",
                         connStr
                             .Split(';')
                             .Select(x => x.Trim())
+                            .Where(t => !string.IsNullOrEmpty(t))
                             .Where(t => !t.ToLower().StartsWith("application")));
-                    connStr += $";Application Name={_environment.ApplicationInfo.Name}-{_environment.DeploymentEnvironment}";
+
+                    connStr += $";Application Name={appName}";
                 }
 
                 silo.UseAdoNetReminderService(options =>
@@ -312,6 +316,14 @@ namespace Gigya.Microdot.Orleans.Hosting
 
                 options.SerializationProviders.Add(add);
             });
+        }
+    }
+
+    public static class CustomExtensions
+    {
+        public static string DefaultIfNullOrEmpty(this string str, string defaultValue)
+        {
+            return string.IsNullOrEmpty(str) ? defaultValue : str;
         }
     }
 }
