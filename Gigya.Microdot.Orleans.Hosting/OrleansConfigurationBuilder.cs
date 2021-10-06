@@ -213,7 +213,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             {
                 var connStr = _orleansConfig.MySql_v4_0.ConnectionString;
 
-                if (_environment?.ApplicationInfo != null)
+                if (_environment?.ApplicationInfo != null && !string.IsNullOrEmpty(connStr))
                 {
                     var appName = _environment.ApplicationInfo.Name.DefaultIfNullOrEmpty("NoAppName");
                     appName += $"-{_environment.DeploymentEnvironment.DefaultIfNullOrEmpty("NoDeployEnv")}";
