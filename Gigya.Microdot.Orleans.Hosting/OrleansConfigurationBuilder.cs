@@ -26,7 +26,6 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.SharedLogic;
 using Orleans.Configuration;
 using Orleans.Hosting;
-using Orleans.Runtime.Configuration;
 using Orleans.Statistics;
 using System;
 using System.Diagnostics;
@@ -37,7 +36,7 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
-using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using Microsoft.AspNetCore.Connections;
 
 namespace Gigya.Microdot.Orleans.Hosting
@@ -54,6 +53,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         private readonly CurrentApplicationInfo _appInfo;
         private readonly ISiloHostBuilder _siloHostBuilder;
         private readonly ICertificateLocator _certificateLocator;
+        private readonly IEnvironment _environment;
         private IOrleansConfigurationBuilderConfigurator _orleansConfigurationBuilderConfigurator;
 
         public OrleansConfigurationBuilder(OrleansConfig orleansConfig, OrleansCodeConfig commonConfig,
@@ -62,7 +62,8 @@ namespace Gigya.Microdot.Orleans.Hosting
             ServiceArguments serviceArguments,
             CurrentApplicationInfo appInfo,
             ICertificateLocator certificateLocator,
-            IOrleansConfigurationBuilderConfigurator orleansConfigurationBuilderConfigurator)
+            IOrleansConfigurationBuilderConfigurator orleansConfigurationBuilderConfigurator,
+            IEnvironment environment)
         {
             _orleansConfig = orleansConfig;
             _commonConfig = commonConfig;
@@ -73,6 +74,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             _appInfo = appInfo;
             _certificateLocator = certificateLocator;
             _orleansConfigurationBuilderConfigurator = orleansConfigurationBuilderConfigurator;
+            _environment = environment;
             _siloHostBuilder = InitBuilder();
         }
 
@@ -208,11 +210,32 @@ namespace Gigya.Microdot.Orleans.Hosting
         private void SetReminder(ISiloHostBuilder silo)
         {
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.Sql)
+            {
+                var connStr = _orleansConfig.MySql_v4_0.ConnectionString;
+
+                if (_environment?.ApplicationInfo != null && !string.IsNullOrEmpty(connStr))
+                {
+                    var appName = _environment.ApplicationInfo.Name.DefaultIfNullOrEmpty("NoAppName");
+                    appName += $"-{_environment.DeploymentEnvironment.DefaultIfNullOrEmpty("NoDeployEnv")}";
+                    appName += $"-{CurrentApplicationInfo.HostName.DefaultIfNullOrEmpty("NoHostName")}";
+
+                    connStr = string.Join(";",
+                        connStr
+                            .Split(';')
+                            .Select(x => x.Trim())
+                            .Where(t => !string.IsNullOrEmpty(t))
+                            .Where(t => !t.ToLower().StartsWith("application")));
+
+                    connStr += $";Application Name={appName}";
+                }
+
                 silo.UseAdoNetReminderService(options =>
                     {
-                        options.ConnectionString = _orleansConfig.MySql_v4_0.ConnectionString;
+                        options.ConnectionString = connStr;
                         options.Invariant = _orleansConfig.MySql_v4_0.Invariant;
                     });
+            }
+
             if (_commonConfig.RemindersSource == OrleansCodeConfig.Reminders.InMemory)
                 silo.UseInMemoryReminderService();
         }
@@ -293,6 +316,14 @@ namespace Gigya.Microdot.Orleans.Hosting
 
                 options.SerializationProviders.Add(add);
             });
+        }
+    }
+
+    public static class CustomExtensions
+    {
+        public static string DefaultIfNullOrEmpty(this string str, string defaultValue)
+        {
+            return string.IsNullOrEmpty(str) ? defaultValue : str;
         }
     }
 }
