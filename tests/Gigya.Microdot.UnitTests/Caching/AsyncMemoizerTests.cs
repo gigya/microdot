@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Common.Contracts.Attributes;
+﻿using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -14,8 +8,13 @@ using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Metrics;
 using NSubstitute;
 using NUnit.Framework;
-
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 // ReSharper disable ConsiderUsingConfigureAwait (not relevant for tests)
 namespace Gigya.Microdot.UnitTests.Caching

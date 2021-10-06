@@ -20,18 +20,17 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {
-	/// <summary>
-	/// Serializes and deserializes exceptions into JSON, with inheritance hierarchy tolerance.
-	/// </summary>
-	public class JsonExceptionSerializer
+    /// <summary>
+    /// Serializes and deserializes exceptions into JSON, with inheritance hierarchy tolerance.
+    /// </summary>
+    public class JsonExceptionSerializer
 	{
 		private readonly IJsonExceptionSerializationSettings _exceptionSerializationSettings;
 		private IStackTraceEnhancer StackTraceEnhancer { get; }

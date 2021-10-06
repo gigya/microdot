@@ -1,7 +1,4 @@
-﻿using System;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Security;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {

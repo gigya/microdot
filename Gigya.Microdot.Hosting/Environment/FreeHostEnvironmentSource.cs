@@ -20,9 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.SharedLogic;
 using System.Collections.Generic;
 using System.IO;
-using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.Environment
 {

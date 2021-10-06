@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using Gigya.Microdot.SharedLogic.Events;
 using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting

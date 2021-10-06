@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Security;
+using System;
 using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Security;
 
 namespace Gigya.Microdot.ServiceProxy
 {

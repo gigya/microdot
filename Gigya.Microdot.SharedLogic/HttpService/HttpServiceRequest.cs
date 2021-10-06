@@ -20,6 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.SharedLogic.Events;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,8 +29,6 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Gigya.Microdot.SharedLogic.Events;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {

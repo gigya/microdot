@@ -25,10 +25,10 @@ using System.Collections.Generic;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-	/// <summary>
-	/// Mapping between service interfaces to grain interfaces. Used in Orleans for additional type information (for creating grain references).
-	/// The map is an identity map outside orleans.
-	/// </summary>
+    /// <summary>
+    /// Mapping between service interfaces to grain interfaces. Used in Orleans for additional type information (for creating grain references).
+    /// The map is an identity map outside orleans.
+    /// </summary>
     public interface IServiceInterfaceMapper
     {
 		/// <summary>

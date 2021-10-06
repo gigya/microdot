@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.HttpService;
 
 namespace Gigya.Microdot.Hosting.Service

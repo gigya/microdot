@@ -1,7 +1,7 @@
-﻿using System;
-using System.Linq;
-using Gigya.Common.Contracts.HttpService;
+﻿using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.Configurations.Serialization;
+using System;
+using System.Linq;
 
 namespace Gigya.Microdot.SharedLogic.HttpService
 {

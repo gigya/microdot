@@ -20,14 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

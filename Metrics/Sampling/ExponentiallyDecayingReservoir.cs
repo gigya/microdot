@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Metrics.ConcurrencyUtilities;
+using Metrics.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using Metrics.ConcurrencyUtilities;
-using Metrics.Utils;
 
 namespace Metrics.Sampling
 {

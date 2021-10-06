@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
+﻿using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
@@ -13,6 +7,7 @@ using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Ninject;
 using NSubstitute;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {

@@ -20,15 +20,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
 using System;
 using System.Linq;
 using System.Reflection;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Common.Contracts.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-	public class IdentityServiceInterfaceMapper : ServiceInterfaceMapper
+    public class IdentityServiceInterfaceMapper : ServiceInterfaceMapper
 	{	        
 	    public IdentityServiceInterfaceMapper(Type serviceInterfaceType) : this(new[] { serviceInterfaceType }) { }
 

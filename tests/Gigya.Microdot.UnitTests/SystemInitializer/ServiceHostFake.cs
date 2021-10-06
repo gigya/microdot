@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
+﻿using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Environment;
@@ -13,6 +12,7 @@ using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 using NSubstitute;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.SystemInitializer
 {

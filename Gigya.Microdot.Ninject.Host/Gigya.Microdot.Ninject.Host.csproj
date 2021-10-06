@@ -14,8 +14,6 @@
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="Ninject.Extensions.Conventions" />
-		<PackageReference Include="Ninject.Extensions.Factory" />	
+		<PackageReference Include="Microsoft.CSharp" />	
 	</ItemGroup>
 </Project>

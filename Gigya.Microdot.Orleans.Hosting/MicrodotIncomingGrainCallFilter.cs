@@ -7,10 +7,10 @@ using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Measurement;
 using Metrics;
 using Orleans;
+using Orleans.Statistics;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Orleans.Statistics;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

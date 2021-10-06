@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Logging;
+﻿using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Metrics;
-using NUnit.Framework;
 using NSubstitute;
+using NUnit.Framework;
+using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {

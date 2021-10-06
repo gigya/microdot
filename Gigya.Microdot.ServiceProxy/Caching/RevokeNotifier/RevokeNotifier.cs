@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Gigya.Microdot.Interfaces.Logging;
+using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Interfaces.Logging;
-using Metrics;
 using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier

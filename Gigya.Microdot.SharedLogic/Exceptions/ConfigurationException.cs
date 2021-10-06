@@ -20,9 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
 using System;
 using System.Runtime.Serialization;
-using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {

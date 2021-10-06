@@ -20,6 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,11 +35,6 @@ using System.Net;
 using System.Reflection;
 using System.Runtime;
 using System.Text;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.SharedLogic;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {

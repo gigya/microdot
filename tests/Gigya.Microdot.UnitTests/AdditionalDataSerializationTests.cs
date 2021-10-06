@@ -1,10 +1,10 @@
-﻿using System.Linq;
-using Gigya.Microdot.SharedLogic.Events;
+﻿using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Shouldly;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests
 {

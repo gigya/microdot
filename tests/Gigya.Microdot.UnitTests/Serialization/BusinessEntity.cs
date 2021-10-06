@@ -2,7 +2,7 @@ using System;
 
 namespace Gigya.Microdot.UnitTests.Serialization
 {
-	public interface IBusinessEntity
+    public interface IBusinessEntity
 	{
 		string Name { get; set; }
 		int Number { get; set; }

@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Metrics.Logging;
+using Metrics.MetricData;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using Metrics.Logging;
-using Metrics.MetricData;
 
 namespace Metrics.Utils
 {

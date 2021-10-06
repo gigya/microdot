@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading.Tasks;
 using Gigya.Microdot.Interfaces.Events;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Fakes
 {

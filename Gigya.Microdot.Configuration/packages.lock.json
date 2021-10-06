@@ -2,42 +2,19 @@
   "version": 1,
   "dependencies": {
     ".NETCoreApp,Version=v5.0": {
-      "Gigya.ServiceContract": {
-        "type": "Direct",
-        "requested": "[4.0.*, )",
-        "resolved": "4.0.0",
-        "contentHash": "hhN19eNw4L0gXQY6rF6eO+GWZlQt3sip6JnR/DT93vT+RbMyK5WYz+LvNapNkYew99XI0IFIuenLy7osjaLnRA==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.1"
-        }
-      },
       "Microsoft.CSharp": {
         "type": "Direct",
-        "requested": "[4.*, )",
+        "requested": "[4.7.0, )",
         "resolved": "4.7.0",
         "contentHash": "pTj+D3uJWyN3My70i2Hqo+OXixq3Os2D1nJ2x92FFo6sk8fYS1m1WLNTs0Dc1uPaViH0YvEEwvzddQ7y4rhXmA=="
       },
-      "System.ComponentModel.Annotations": {
-        "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.0.0",
-        "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
-      },
-      "System.Configuration.ConfigurationManager": {
-        "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.0.0",
-        "contentHash": "aM7cbfEfVNlEEOj3DsZP+2g9NRwbkyiAv2isQEzw7pnkDg9ekCU2m1cdJLM02Uq691OaCS91tooaxcEn8d0q5w==",
+      "Gigya.ServiceContract": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "fewPiJVDJF2CNhaDWp/ZmbFbY9lVFFRaA7p++zkk1rIhGa3lFw6WJX2S4lEBngp1sUgu2zMJP9BNoVjGpZTYFQ==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "5.0.0",
-          "System.Security.Permissions": "5.0.0"
+          "Newtonsoft.Json": "13.0.1"
         }
-      },
-      "System.Threading.Tasks.Dataflow": {
-        "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.0.0",
-        "contentHash": "NBp0zSAMZp4muDje6XmbDfmkqw9+qsDCHp+YMEtnVgHEjQZ3Q7MzFTTp3eHqpExn4BwMrS7JkUVOTcVchig4Sw=="
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
@@ -65,6 +42,15 @@
         "type": "Transitive",
         "resolved": "13.0.1",
         "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+      },
+      "System.Configuration.ConfigurationManager": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "aM7cbfEfVNlEEOj3DsZP+2g9NRwbkyiAv2isQEzw7pnkDg9ekCU2m1cdJLM02Uq691OaCS91tooaxcEn8d0q5w==",
+        "dependencies": {
+          "System.Security.Cryptography.ProtectedData": "5.0.0",
+          "System.Security.Permissions": "5.0.0"
+        }
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Transitive",
@@ -116,7 +102,7 @@
       "System.ValueTuple": {
         "type": "Transitive",
         "resolved": "4.5.0",
-        "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
+        "contentHash": "okurQJO6NRE/apDIP23ajJ0hpiNmJ+f0BwOlB/cSqTLQlw5upkf+5+96+iG2Jw40G1fCVCyPz/FhIABUjMR+RQ=="
       },
       "System.Windows.Extensions": {
         "type": "Transitive",
@@ -129,8 +115,8 @@
       "gigya.microdot.interfaces": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.0",
-          "Newtonsoft.Json": "13.0.0"
+          "Gigya.Microdot.LanguageExtensions": "4.0.1",
+          "Newtonsoft.Json": "13.0.1"
         }
       },
       "gigya.microdot.languageextensions": {
@@ -139,21 +125,19 @@
       "gigya.microdot.sharedlogic": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Interfaces": "4.0.0",
-          "Gigya.ServiceContract": "4.0.0",
-          "Metrics": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
-          "System.ComponentModel.Annotations": "0.0.0",
-          "System.Diagnostics.PerformanceCounter": "0.0.0",
-          "System.ValueTuple": "0.0.0"
+          "Gigya.Microdot.Interfaces": "4.0.1",
+          "Gigya.ServiceContract": "4.0.1",
+          "Metrics": "4.0.1",
+          "Microsoft.CSharp": "4.7.0",
+          "System.ValueTuple": "4.5.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.0",
-          "System.Configuration.ConfigurationManager": "0.0.0",
-          "System.Diagnostics.PerformanceCounter": "0.0.0"
+          "Microsoft.CSharp": "4.7.0",
+          "System.Configuration.ConfigurationManager": "5.0.0",
+          "System.Diagnostics.PerformanceCounter": "5.0.1"
         }
       }
     },

@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Common.Tests;
+﻿using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using NSubstitute;
-
 using NUnit.Framework;
-
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {

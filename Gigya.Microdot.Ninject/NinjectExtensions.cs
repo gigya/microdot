@@ -20,11 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Ninject;
+using Ninject.Planning.Bindings;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Ninject;
-using Ninject.Planning.Bindings;
 
 #pragma warning disable 1574
 

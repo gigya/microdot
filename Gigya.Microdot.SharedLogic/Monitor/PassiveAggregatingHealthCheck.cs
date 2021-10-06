@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Gigya.Microdot.Interfaces.SystemWrappers;
+using Metrics;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using Gigya.Microdot.Interfaces.SystemWrappers;
-using Metrics;
 
 namespace Gigya.Microdot.SharedLogic.Monitor
-{   
+{
     /// <remarks>If you ever find you want this class as a pure health status not connected to Metrics.Net,
     /// feel free to split it (i.e. create a new class that only links between Metrics.Net and this health check).</remarks>
     public class PassiveAggregatingHealthCheck : IPassiveAggregatingHealthCheck

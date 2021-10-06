@@ -20,15 +20,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Ninject;
 using Orleans;
 using Orleans.Core;
 using Orleans.Runtime;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {

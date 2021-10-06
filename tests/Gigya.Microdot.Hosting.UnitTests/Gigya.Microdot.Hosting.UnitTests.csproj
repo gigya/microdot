@@ -10,17 +10,9 @@
 		<ProjectReference Include="..\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="Microsoft.CSharp" />		
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />			
-		<PackageReference Include="Ninject" />
-		<PackageReference Include="ZooKeeperNetEx" />
+		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="System.ValueTuple" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" />
-		<PackageReference Include="NSubstitute" />
-		<PackageReference Include="NUnit" />
 		<PackageReference Include="NUnit3TestAdapter" />
-		<PackageReference Include="Shouldly" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Update="loadPaths.json">

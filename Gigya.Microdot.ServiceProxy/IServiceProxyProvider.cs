@@ -20,12 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.ServiceProxy
 {

@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Runtime.Caching;
 using Nito.AsyncEx;
+using System.Runtime.Caching;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {

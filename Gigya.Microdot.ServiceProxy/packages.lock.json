@@ -2,61 +2,42 @@
   "version": 1,
   "dependencies": {
     ".NETCoreApp,Version=v5.0": {
-      "Gigya.ServiceContract": {
-        "type": "Direct",
-        "requested": "[4.0.*, )",
-        "resolved": "4.0.0",
-        "contentHash": "hhN19eNw4L0gXQY6rF6eO+GWZlQt3sip6JnR/DT93vT+RbMyK5WYz+LvNapNkYew99XI0IFIuenLy7osjaLnRA==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.1"
-        }
-      },
       "Nito.AsyncEx": {
         "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.1.0",
-        "contentHash": "KOahZdW0fRLnoym5lGtyWpFUZ94I5s0wLgYF5RHhK8RUhXpCiEX+185qjNvkse3H9WJV2/pFfPlKZHv8Eej7Hw==",
+        "requested": "[5.1.2, )",
+        "resolved": "5.1.2",
+        "contentHash": "hq+N63M/2znx2z1VzvPDHNg+HIWKdIloEZre+P7E0O+2iRf1Q4HBOgeiJU6SzFD/fWoyKyKSSSrekk4RgiXaeQ==",
         "dependencies": {
-          "Nito.AsyncEx.Context": "5.1.0",
-          "Nito.AsyncEx.Coordination": "5.1.0",
-          "Nito.AsyncEx.Interop.WaitHandles": "5.1.0",
-          "Nito.AsyncEx.Oop": "5.1.0",
-          "Nito.AsyncEx.Tasks": "5.1.0",
-          "Nito.Cancellation": "1.1.0"
+          "Nito.AsyncEx.Context": "5.1.2",
+          "Nito.AsyncEx.Coordination": "5.1.2",
+          "Nito.AsyncEx.Interop.WaitHandles": "5.1.2",
+          "Nito.AsyncEx.Oop": "5.1.2",
+          "Nito.AsyncEx.Tasks": "5.1.2",
+          "Nito.Cancellation": "1.1.2"
         }
-      },
-      "System.Collections.Immutable": {
-        "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.0.0",
-        "contentHash": "FXkLXiK0sVVewcso0imKQoOxjoPAj42R8HtjjbSjVPAzwDfzoyoznWxgA3c38LDbN9SJux1xXoXYAhz98j7r2g=="
-      },
-      "System.ComponentModel.Annotations": {
-        "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.0.0",
-        "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
       },
       "System.Runtime.Caching": {
         "type": "Direct",
-        "requested": "[*, )",
+        "requested": "[5.0.0, )",
         "resolved": "5.0.0",
         "contentHash": "30D6MkO8WF9jVGWZIP0hmCN8l9BTY4LCsAzLIe4xFSXzs+AjDotR7DpSmj27pFskDURzUvqYYY0ikModgBTxWw==",
         "dependencies": {
           "System.Configuration.ConfigurationManager": "5.0.0"
         }
       },
-      "System.Threading.Tasks.Dataflow": {
-        "type": "Direct",
-        "requested": "[*, )",
-        "resolved": "5.0.0",
-        "contentHash": "NBp0zSAMZp4muDje6XmbDfmkqw9+qsDCHp+YMEtnVgHEjQZ3Q7MzFTTp3eHqpExn4BwMrS7JkUVOTcVchig4Sw=="
-      },
       "System.ValueTuple": {
         "type": "Direct",
-        "requested": "[*, )",
+        "requested": "[4.5.0, )",
         "resolved": "4.5.0",
-        "contentHash": "vAmzwCwsBb7DPqttNVxvqkWGIA4u+nvUnRz9N9nvkBnJIA58oidNMvF2gCXbF+W6yMqQfpa1Un3ShVD6Zc1Jqg=="
+        "contentHash": "okurQJO6NRE/apDIP23ajJ0hpiNmJ+f0BwOlB/cSqTLQlw5upkf+5+96+iG2Jw40G1fCVCyPz/FhIABUjMR+RQ=="
+      },
+      "Gigya.ServiceContract": {
+        "type": "Transitive",
+        "resolved": "4.0.1",
+        "contentHash": "fewPiJVDJF2CNhaDWp/ZmbFbY9lVFFRaA7p++zkk1rIhGa3lFw6WJX2S4lEBngp1sUgu2zMJP9BNoVjGpZTYFQ==",
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.1"
+        }
       },
       "Microsoft.CSharp": {
         "type": "Transitive",
@@ -92,65 +73,70 @@
       },
       "Nito.AsyncEx.Context": {
         "type": "Transitive",
-        "resolved": "5.1.0",
-        "contentHash": "EE7M37c5E/kvulzEkpUR6v1AnK34b2wysOLJHSjl78p/3hL7grte0XCPRqCfLZDwq98AD9GHMTCRfZy7TEeHhw==",
+        "resolved": "5.1.2",
+        "contentHash": "rMwL7Nj3oNyvFu/jxUzQ/YBobEkM2RQHe+5mpCDRyq6mfD7vCj7Z3rjB6XgpM6Mqcx1CA2xGv0ascU/2Xk8IIg==",
         "dependencies": {
-          "Nito.AsyncEx.Tasks": "5.1.0"
+          "Nito.AsyncEx.Tasks": "5.1.2"
         }
       },
       "Nito.AsyncEx.Coordination": {
         "type": "Transitive",
-        "resolved": "5.1.0",
-        "contentHash": "Nv+oA+cSxidjOImiKcz2FJgMIDxiK0A6xormKmsUklUBjTNqQpjtdJsACMgTQG56PkTHdbMi5QijPTTUsmcCeg==",
+        "resolved": "5.1.2",
+        "contentHash": "QMyUfsaxov//0ZMbOHWr9hJaBFteZd66DV1ay4J5wRODDb8+K/uHC7+3VsOflo6SVw/29mu8OWZp8vMDSuzc0w==",
         "dependencies": {
-          "Nito.AsyncEx.Tasks": "5.1.0",
-          "Nito.Collections.Deque": "1.1.0"
+          "Nito.AsyncEx.Tasks": "5.1.2",
+          "Nito.Collections.Deque": "1.1.1"
         }
       },
       "Nito.AsyncEx.Interop.WaitHandles": {
         "type": "Transitive",
-        "resolved": "5.1.0",
-        "contentHash": "wFm3lrXXNPBtZHjLI21xhcADoh5CzO5KKNO38ybLO/CcL9zMUWWfsNiAFbw8JGp/wHoxhfdEUlThBnY3XaLR/w==",
+        "resolved": "5.1.2",
+        "contentHash": "qym29lFBCSIacKvFcJDW+beXzuO+6y9lWdd1KecxzzAqtNuvlYgNPwIsxwdhEINLhTT4aDuCM3JalpUZYWI51Q==",
         "dependencies": {
-          "Nito.AsyncEx.Tasks": "5.1.0"
+          "Nito.AsyncEx.Tasks": "5.1.2"
         }
       },
       "Nito.AsyncEx.Oop": {
         "type": "Transitive",
-        "resolved": "5.1.0",
-        "contentHash": "J5DVgQrmE9qMNhK2eEMsuEw7V7cw7MIPrv3jqqQWolzDXkOxJFFYKUK+4dnC6UAEmum3xRVD2oBAoXg0vdYDDQ==",
+        "resolved": "5.1.2",
+        "contentHash": "MxQl/NFoPgMApyjbB2fSZBrjdf9r6ODd/BTrWLyJKYX6UeNfw0Ocr0cPiTg2LRN0Ayud8Gj4dh67AdasNn709Q==",
         "dependencies": {
-          "Nito.AsyncEx.Coordination": "5.1.0"
+          "Nito.AsyncEx.Coordination": "5.1.2"
         }
       },
       "Nito.AsyncEx.Tasks": {
         "type": "Transitive",
-        "resolved": "5.1.0",
-        "contentHash": "tU3Ib4zs8ivM+uS8n7F7ReWZlA3mODyLqwPE+v+WJI94hZ8xLXl+a9npfj/IcmeXo9a6fGKLWkswKQHOeTWqwA==",
+        "resolved": "5.1.2",
+        "contentHash": "jEkCfR2/M26OK/U4G7SEN063EU/F4LiVA06TtpZILMdX/quIHCg+wn31Zerl2LC+u1cyFancjTY3cNAr2/89PA==",
         "dependencies": {
-          "Nito.Disposables": "2.2.0"
+          "Nito.Disposables": "2.2.1"
         }
       },
       "Nito.Cancellation": {
         "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "BSezc6jsEEAoa8UtVjQ6Qr/D5xX+FozlDKFHAvDeTv24I7ZZmmfbFxEmdjaSLnrboz1WMRjUKCQwZw7Gf4+WcA==",
+        "resolved": "1.1.2",
+        "contentHash": "Z+SZKp0KxMC6tEVbXe8ah4pBJadyqP0pObQMaZcBavhIDEIsGuxt7PL+B9AiNJD3Ni5VgnZsnii5HPJgVDE81w==",
         "dependencies": {
-          "Nito.Disposables": "2.2.0"
+          "Nito.Disposables": "2.2.1"
         }
       },
       "Nito.Collections.Deque": {
         "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "RXHe531Oaw2IathDr0Q2kbid0iuudBxtgZsfBZ2eUPuFI8I1P7HMiuUeaIefqYykcDYFTDQsFAPAljduIjihLA=="
+        "resolved": "1.1.1",
+        "contentHash": "CU0/Iuv5VDynK8I8pDLwkgF0rZhbQoZahtodfL0M3x2gFkpBRApKs8RyMyNlAi1mwExE4gsmqQXk4aFVvW9a4Q=="
       },
       "Nito.Disposables": {
         "type": "Transitive",
-        "resolved": "2.2.0",
-        "contentHash": "QcL+uBwUCEoK8GKp/WzjdCiG8/3G1WLlVNJgLJUNG7bIIVAcEV+Mro4s53VT4Nd8xMSplv0gy+Priw44vRvLaA==",
+        "resolved": "2.2.1",
+        "contentHash": "6sZ5uynQeAE9dPWBQGKebNmxbY4xsvcc5VplB5WkYEESUS7oy4AwnFp0FhqxTSKm/PaFrFqLrYr696CYN8cugg==",
         "dependencies": {
-          "System.Collections.Immutable": "1.4.0"
+          "System.Collections.Immutable": "1.7.1"
         }
+      },
+      "System.Collections.Immutable": {
+        "type": "Transitive",
+        "resolved": "1.7.1",
+        "contentHash": "B43Zsz5EfMwyEbnObwRxW5u85fzJma3lrDeGcSAV1qkhSRTNY5uXAByTn9h9ddNdhM+4/YoLc/CI43umjwIl9Q=="
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
@@ -216,22 +202,11 @@
           "System.Drawing.Common": "5.0.0"
         }
       },
-      "gigya.microdot.configuration": {
-        "type": "Project",
-        "dependencies": {
-          "Gigya.Microdot.SharedLogic": "4.0.0",
-          "Gigya.ServiceContract": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
-          "System.ComponentModel.Annotations": "0.0.0",
-          "System.Configuration.ConfigurationManager": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "0.0.0"
-        }
-      },
       "gigya.microdot.interfaces": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.0",
-          "Newtonsoft.Json": "13.0.0"
+          "Gigya.Microdot.LanguageExtensions": "4.0.1",
+          "Newtonsoft.Json": "13.0.1"
         }
       },
       "gigya.microdot.languageextensions": {
@@ -240,41 +215,34 @@
       "gigya.microdot.servicediscovery": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Configuration": "4.0.0",
-          "Gigya.Microdot.SharedLogic": "4.0.0",
-          "Gigya.ServiceContract": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
-          "System.Collections.Immutable": "0.0.0",
-          "System.ComponentModel.Annotations": "0.0.0",
-          "System.Threading.Tasks.Dataflow": "0.0.0",
-          "System.ValueTuple": "0.0.0"
+          "Gigya.Microdot.SharedLogic": "4.0.1",
+          "Microsoft.CSharp": "4.7.0",
+          "System.ValueTuple": "4.5.0"
         }
       },
       "gigya.microdot.sharedlogic": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Interfaces": "4.0.0",
-          "Gigya.ServiceContract": "4.0.0",
-          "Metrics": "4.0.0",
-          "Microsoft.CSharp": "4.0.0",
-          "System.ComponentModel.Annotations": "0.0.0",
-          "System.Diagnostics.PerformanceCounter": "0.0.0",
-          "System.ValueTuple": "0.0.0"
+          "Gigya.Microdot.Interfaces": "4.0.1",
+          "Gigya.ServiceContract": "4.0.1",
+          "Metrics": "4.0.1",
+          "Microsoft.CSharp": "4.7.0",
+          "System.ValueTuple": "4.5.0"
         }
       },
       "metrics": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.0",
-          "System.Configuration.ConfigurationManager": "0.0.0",
-          "System.Diagnostics.PerformanceCounter": "0.0.0"
+          "Microsoft.CSharp": "4.7.0",
+          "System.Configuration.ConfigurationManager": "5.0.0",
+          "System.Diagnostics.PerformanceCounter": "5.0.1"
         }
       }
     },
     ".NETCoreApp,Version=v5.0/linux-x64": {
       "System.Runtime.Caching": {
         "type": "Direct",
-        "requested": "[*, )",
+        "requested": "[5.0.0, )",
         "resolved": "5.0.0",
         "contentHash": "30D6MkO8WF9jVGWZIP0hmCN8l9BTY4LCsAzLIe4xFSXzs+AjDotR7DpSmj27pFskDURzUvqYYY0ikModgBTxWw==",
         "dependencies": {
@@ -348,7 +316,7 @@
     ".NETCoreApp,Version=v5.0/win10-x64": {
       "System.Runtime.Caching": {
         "type": "Direct",
-        "requested": "[*, )",
+        "requested": "[5.0.0, )",
         "resolved": "5.0.0",
         "contentHash": "30D6MkO8WF9jVGWZIP0hmCN8l9BTY4LCsAzLIe4xFSXzs+AjDotR7DpSmj27pFskDURzUvqYYY0ikModgBTxWw==",
         "dependencies": {

@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Gigya.Microdot.SharedLogic.Events;
+﻿using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.HttpService;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests
 {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
+﻿using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
@@ -15,6 +10,11 @@ using Metrics.MetricData;
 using Ninject;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {

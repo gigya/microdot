@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Gigya.Microdot.LanguageExtensions;
+using System;
 using System.Reflection;
-using Gigya.Microdot.LanguageExtensions;
 
 namespace Gigya.Microdot.SharedLogic
 {

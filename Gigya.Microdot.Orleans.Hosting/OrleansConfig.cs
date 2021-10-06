@@ -1,11 +1,11 @@
-﻿using System;
-using Gigya.Microdot.Interfaces.Configuration;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using Gigya.Microdot.Interfaces.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

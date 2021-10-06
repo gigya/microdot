@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Diagnostics;
 using Gigya.Microdot.Interfaces.Logging;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics;
 
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging

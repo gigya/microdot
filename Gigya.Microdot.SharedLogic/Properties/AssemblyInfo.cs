@@ -21,7 +21,6 @@
 #endregion
 
 using Gigya.Microdot.SharedLogic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using Gigya.Microdot.Interfaces.Logging;
+﻿using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using Metrics.EventCounters.Linux.CPU;
+using System;
+using System.Diagnostics;
+using System.Linq;
 using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload

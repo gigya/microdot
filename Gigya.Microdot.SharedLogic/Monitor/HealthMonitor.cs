@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Metrics;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Metrics;
 
 namespace Gigya.Microdot.SharedLogic.Monitor
 {

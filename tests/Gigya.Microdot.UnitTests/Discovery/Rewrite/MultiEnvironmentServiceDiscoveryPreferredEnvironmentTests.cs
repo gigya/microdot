@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
+﻿using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery;
 using Gigya.Microdot.ServiceDiscovery.Config;
@@ -16,6 +13,9 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {

@@ -20,13 +20,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Ninject.Modules;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.Ninject
 {

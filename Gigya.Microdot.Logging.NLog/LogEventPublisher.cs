@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.Logging;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.Logging.NLog
 {

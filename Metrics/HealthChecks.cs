@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Metrics.Core;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Metrics.Core;
 
 namespace Metrics
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
+﻿using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.Environment;
@@ -11,6 +7,10 @@ using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.UnitTests.SystemInitializer
 {

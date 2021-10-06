@@ -1,8 +1,8 @@
 ﻿
-using System;
 using Metrics.MetricData;
 using Metrics.PerfCounters;
 using Metrics.Sampling;
+using System;
 namespace Metrics.Core
 {
     public sealed class DefaultMetricsBuilder : MetricsBuilder

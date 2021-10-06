@@ -1,11 +1,11 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
+﻿using Gigya.Common.Contracts.HttpService;
 using Gigya.ServiceContract.HttpService;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests
 {

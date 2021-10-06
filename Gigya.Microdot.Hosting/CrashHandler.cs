@@ -20,11 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.SharedLogic.Events;
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.SharedLogic.Events;
 
 namespace Gigya.Microdot.Hosting
 {

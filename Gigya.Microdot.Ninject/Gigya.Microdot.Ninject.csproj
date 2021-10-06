@@ -11,7 +11,6 @@
 		<ProjectReference Include="..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Ninject.Extensions.Conventions" />
 		<PackageReference Include="Ninject.Extensions.Factory" />

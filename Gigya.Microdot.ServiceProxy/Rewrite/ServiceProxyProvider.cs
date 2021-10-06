@@ -1,3 +1,9 @@
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Security;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -5,22 +11,13 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Rewrite;
-using Gigya.Microdot.SharedLogic.Security;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-	/// <summary>
-	/// This is a beta version. Please do not use it until it's ready
-	/// </summary>
-	public class ServiceProxyProvider : IServiceProxyProvider
+    /// <summary>
+    /// This is a beta version. Please do not use it until it's ready
+    /// </summary>
+    public class ServiceProxyProvider : IServiceProxyProvider
     {
         public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {

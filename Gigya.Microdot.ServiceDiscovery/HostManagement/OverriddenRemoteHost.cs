@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using Gigya.Common.Contracts.Exceptions;
+using System;
 
 namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 {

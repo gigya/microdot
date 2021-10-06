@@ -20,16 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.HttpService;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-	/// <summary>
-	/// A representation of a service method which contains the method to be invoked, and in Orleans, the grain interface type too.
-	/// </summary>
+    /// <summary>
+    /// A representation of a service method which contains the method to be invoked, and in Orleans, the grain interface type too.
+    /// </summary>
     public class ServiceMethod
     {
 		/// <summary>The type of the grain interface, used in Orleans to create a grain reference (not used elsewhere)

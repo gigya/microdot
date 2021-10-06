@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using NUnit.Framework;
+using System;
 
 [SetUpFixture]
 [NonParallelizable]

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Gigya.Microdot.Interfaces.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier
 {

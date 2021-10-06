@@ -1,8 +1,8 @@
 ﻿#nullable enable
 
-using System;
 using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Newtonsoft.Json.Serialization;
+using System;
 
 namespace Gigya.Microdot.SharedLogic.Security
 {

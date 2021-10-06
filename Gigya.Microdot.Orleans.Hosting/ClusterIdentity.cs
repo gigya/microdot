@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
+using System;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

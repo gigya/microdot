@@ -1,13 +1,10 @@
-﻿using System;
-using CalculatorService.Interface;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Hosting.Environment;
+﻿using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Ninject;
+using System;
 
 namespace CalculatorService
 {

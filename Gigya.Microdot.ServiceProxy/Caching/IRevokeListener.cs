@@ -24,7 +24,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
-   public interface IRevokeListener
+    public interface IRevokeListener
     {
         ISourceBlock<string> RevokeSource { get; }
     }

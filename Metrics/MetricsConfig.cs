@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Metrics.Endpoints;
+using Metrics.Logging;
+using Metrics.MetricData;
+using Metrics.Reports;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Metrics.Endpoints;
-using Metrics.Logging;
-using Metrics.MetricData;
-using Metrics.Reports;
 
 namespace Metrics
 {

@@ -20,26 +20,25 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
-using Metrics;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {
 
-	/// <summary>
-	/// Monitors Consul using Health API and KeyValue API to find the current active version/instancename of a service,
-	/// and provides a list of up-to-date, healthy nodes.
-	/// </summary>
-	internal class ConsulNodeSource : INodeSource
+    /// <summary>
+    /// Monitors Consul using Health API and KeyValue API to find the current active version/instancename of a service,
+    /// and provides a list of up-to-date, healthy nodes.
+    /// </summary>
+    internal class ConsulNodeSource : INodeSource
 	{
 		private const int InitialModifyIndex = 0;
 		private ILog Log { get; }

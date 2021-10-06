@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Gigya.Microdot.SharedLogic.Configurations.Serialization;
+using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
-using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.Serialization
 {

@@ -20,11 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.SharedLogic.HttpService;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {

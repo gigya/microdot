@@ -22,10 +22,7 @@
 
 #endregion Copyright
 
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using System;
 using System.Threading.Tasks;

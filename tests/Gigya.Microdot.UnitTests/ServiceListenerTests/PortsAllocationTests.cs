@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-
-using FluentAssertions;
-
+﻿using FluentAssertions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces;
@@ -15,14 +9,14 @@ using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
-
 using Ninject;
-
 using NUnit.Framework;
-
 using RichardSzalay.MockHttp;
-
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {

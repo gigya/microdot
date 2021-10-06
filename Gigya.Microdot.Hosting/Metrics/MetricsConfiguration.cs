@@ -1,5 +1,5 @@
-﻿using System;
-using Gigya.Microdot.Interfaces.Configuration;
+﻿using Gigya.Microdot.Interfaces.Configuration;
+using System;
 
 namespace Gigya.Microdot.Hosting.Metrics
 {

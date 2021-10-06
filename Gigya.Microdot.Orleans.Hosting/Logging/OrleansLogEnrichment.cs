@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Orleans.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Orleans.Runtime;
 
 namespace Gigya.Microdot.Orleans.Hosting.Logging
 {

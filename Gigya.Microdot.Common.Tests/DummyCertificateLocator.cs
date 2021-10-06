@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Gigya.Microdot.SharedLogic.HttpService;
+using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Common.Tests
 {

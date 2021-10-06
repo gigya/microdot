@@ -1,14 +1,12 @@
-﻿using System;
+﻿using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.ServiceDiscovery.Config;
+using Ninject;
+using NUnit.Framework;
+using Shouldly;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
-using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceDiscovery.Config;
-using Ninject;
-
-using NUnit.Framework;
-
-using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Metrics.ConcurrencyUtilities;
+using System;
 using System.Linq;
-using Metrics.ConcurrencyUtilities;
 
 namespace Metrics.Sampling
 {

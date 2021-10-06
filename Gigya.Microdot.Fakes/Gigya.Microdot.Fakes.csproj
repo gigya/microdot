@@ -9,7 +9,4 @@
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Ninject" />
-	</ItemGroup>
 </Project>

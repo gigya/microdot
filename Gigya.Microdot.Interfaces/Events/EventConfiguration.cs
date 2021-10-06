@@ -1,5 +1,5 @@
-﻿using System.Text.RegularExpressions;
-using Gigya.Microdot.Interfaces.Configuration;
+﻿using Gigya.Microdot.Interfaces.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Gigya.Microdot.Interfaces.Events
 {

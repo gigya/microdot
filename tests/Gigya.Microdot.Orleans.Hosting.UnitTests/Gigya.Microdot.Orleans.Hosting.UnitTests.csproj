@@ -12,18 +12,10 @@
 		<ProjectReference Include="..\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />
-		<PackageReference Include="Microsoft.Orleans.OrleansProviders" />		
-		<PackageReference Include="Ninject" />
-		<PackageReference Include="ZooKeeperNetEx" />
 		<PackageReference Include="System.ValueTuple" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" />
-		<PackageReference Include="NSubstitute" />
-		<PackageReference Include="NUnit" />
 		<PackageReference Include="NUnit3TestAdapter" />
-		<PackageReference Include="Shouldly" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Remove="Microservice\GrainAgeLimitTestService\GrainAgeLimitTestServiceHost.cs" />

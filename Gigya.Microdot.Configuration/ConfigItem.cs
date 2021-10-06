@@ -20,14 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.SharedLogic.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.SharedLogic.Exceptions;
 
 namespace Gigya.Microdot.Configuration
 {

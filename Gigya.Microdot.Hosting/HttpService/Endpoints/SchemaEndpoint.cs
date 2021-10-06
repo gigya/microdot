@@ -20,15 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Linq;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Newtonsoft.Json;
 using System.Net;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Security;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {

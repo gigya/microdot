@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Diagnostics;
 using Gigya.Microdot.Interfaces.Events;
+using System.Diagnostics;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {

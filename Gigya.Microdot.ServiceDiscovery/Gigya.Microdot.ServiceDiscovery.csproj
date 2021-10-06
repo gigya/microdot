@@ -19,15 +19,10 @@
 		<Content Include="Rewrite\_diagram.png" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="Microsoft.CSharp" />	
-		<PackageReference Include="System.ComponentModel.Annotations" />
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />		
+		<PackageReference Include="Microsoft.CSharp" />		
 		<PackageReference Include="System.ValueTuple" />
-		<PackageReference Include="System.Collections.Immutable" />
 	</ItemGroup>
 </Project>

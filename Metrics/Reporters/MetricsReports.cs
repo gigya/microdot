@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using Metrics.MetricData;
+﻿using Metrics.MetricData;
 using Metrics.Reporters;
 using Metrics.Utils;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
 
 namespace Metrics.Reports
 {

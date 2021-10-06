@@ -1,13 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-using Gigya.Microdot.SharedLogic.Monitor;
-
+﻿using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
-
 using NUnit.Framework;
-
 using Shouldly;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {

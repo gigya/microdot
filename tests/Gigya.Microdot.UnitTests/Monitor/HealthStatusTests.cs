@@ -1,13 +1,10 @@
-﻿using System.Threading.Tasks;
-
-using Gigya.Common.Contracts.Exceptions;
+﻿using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
-
 using NUnit.Framework;
-
 using Shouldly;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests
 {

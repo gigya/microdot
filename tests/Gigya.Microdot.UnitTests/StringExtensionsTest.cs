@@ -1,9 +1,7 @@
-using Gigya.Microdot.SharedLogic.Utils;
 
-using NUnit.Framework;
-
-using Shouldly;
 using Gigya.Microdot.LanguageExtensions;
+using NUnit.Framework;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests
 {

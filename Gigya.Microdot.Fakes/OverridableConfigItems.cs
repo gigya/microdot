@@ -20,11 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Fakes
 {

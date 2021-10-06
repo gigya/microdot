@@ -6,10 +6,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />		
-		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="Ninject" />		
+	<ItemGroup>		
+		<PackageReference Include="Microsoft.CSharp" />		
 		<PackageReference Include="NSubstitute" />		
 	</ItemGroup>
 </Project>

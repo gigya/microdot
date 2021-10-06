@@ -1,4 +1,3 @@
-using System;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -7,6 +6,7 @@ using Ninject.Activation;
 using Ninject.Modules;
 using Ninject.Parameters;
 using Ninject.Syntax;
+using System;
 
 namespace Gigya.Microdot.Logging.NLog
 {

@@ -1,12 +1,11 @@
-﻿using System.Threading.Tasks;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NSubstitute;
-
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {

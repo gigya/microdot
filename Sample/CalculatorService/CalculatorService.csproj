@@ -24,8 +24,5 @@
 		<ProjectReference Include="..\..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 		<ProjectReference Include="..\..\Gigya.Microdot.Ninject.Host\Gigya.Microdot.Ninject.Host.csproj" />
 		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
-	</ItemGroup>	
-	<ItemGroup>
-		<PackageReference Include="Ninject" />		
 	</ItemGroup>
 </Project>

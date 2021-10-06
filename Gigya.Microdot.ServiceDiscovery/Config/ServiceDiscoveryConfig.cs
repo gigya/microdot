@@ -20,9 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService;
+using System;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

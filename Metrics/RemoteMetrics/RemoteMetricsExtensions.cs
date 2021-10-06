@@ -1,6 +1,6 @@
-﻿using System;
-using Metrics.Json;
+﻿using Metrics.Json;
 using Metrics.RemoteMetrics;
+using System;
 
 namespace Metrics
 {

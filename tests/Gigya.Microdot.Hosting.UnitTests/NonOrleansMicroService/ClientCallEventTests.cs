@@ -1,16 +1,4 @@
-﻿using System;
-using System.Linq;
-using Gigya.Microdot.SharedLogic.Events;
-using NUnit.Framework;
-using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Events;
-using Gigya.Microdot.Hosting.UnitTests.NonOrleansMicroService;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Testing.Shared.Service;
-using Ninject;
-
-namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
+﻿namespace Gigya.Common.OrleansInfra.FunctionalTests.Events
 {/*
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     public class ClientCallEventTests

@@ -11,6 +11,5 @@
 	</ItemGroup>
 	<ItemGroup>		
 		<PackageReference Include="NLog" />
-		<PackageReference Include="Ninject" />
 	</ItemGroup>
 </Project>

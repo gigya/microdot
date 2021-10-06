@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.SystemWrappers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.SystemWrappers
 {

@@ -20,9 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using System;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {

@@ -20,17 +20,17 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-	internal class ServiceMethodResolver
+    internal class ServiceMethodResolver
 	{
 		private Dictionary<InvocationTarget, ServiceMethod> MethodCache { get; }
 

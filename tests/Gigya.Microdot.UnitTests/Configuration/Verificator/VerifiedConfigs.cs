@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Gigya.Microdot.Interfaces.Configuration;
+﻿using Gigya.Microdot.Interfaces.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 {
-	[ConfigurationRoot("VerifiedConfig1", RootStrategy.ReplaceClassNameWithPath)]
+    [ConfigurationRoot("VerifiedConfig1", RootStrategy.ReplaceClassNameWithPath)]
 	public class VerifiedConfig1 : IConfigObject
 	{
 		/// <summary>

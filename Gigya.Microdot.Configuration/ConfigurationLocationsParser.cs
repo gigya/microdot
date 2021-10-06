@@ -20,6 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Exceptions;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,12 +32,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.SharedLogic.Utils;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.Configuration
 {

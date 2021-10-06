@@ -1,23 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-
-using FluentAssertions;
-
+﻿using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Logging.NLog;
-using Gigya.Microdot.Ninject;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Shared.Service;
 using Metrics;
 using Metrics.MetricData;
 using Ninject;
 using NSubstitute;
-
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {

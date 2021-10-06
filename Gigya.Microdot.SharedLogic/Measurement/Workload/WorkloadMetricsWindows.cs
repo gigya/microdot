@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq;
-using Gigya.Microdot.Interfaces.Logging;
+﻿using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
+using System;
+using System.Linq;
 using Timer = System.Threading.Timer;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload

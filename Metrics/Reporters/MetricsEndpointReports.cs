@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Metrics.Endpoints;
+﻿using Metrics.Endpoints;
 using Metrics.MetricData;
 using Metrics.Reporters;
+using System;
+using System.Collections.Generic;
 
 namespace Metrics.Reports
 {

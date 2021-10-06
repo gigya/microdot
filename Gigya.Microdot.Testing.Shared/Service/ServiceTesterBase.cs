@@ -23,17 +23,14 @@
 #endregion Copyright
 
 using Gigya.Microdot.Fakes.Discovery;
+using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.UnitTests.Caching.Host;
 using Ninject;
 using Ninject.Parameters;
 using System;
-using Gigya.Microdot.Ninject;
-using Gigya.Microdot.UnitTests.Caching.Host;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {

@@ -20,11 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Net;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic;
+using System;
 
 namespace Gigya.Microdot.ServiceDiscovery
 {

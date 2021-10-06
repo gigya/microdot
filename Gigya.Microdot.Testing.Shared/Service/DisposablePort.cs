@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Gigya.Microdot.SharedLogic;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
-using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {

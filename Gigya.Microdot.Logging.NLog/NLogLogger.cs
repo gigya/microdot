@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Logging;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.Logging;
-using NLog;
 
 namespace Gigya.Microdot.Logging.NLog
 {

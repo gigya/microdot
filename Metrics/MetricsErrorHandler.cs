@@ -1,8 +1,8 @@
 ﻿
+using Metrics.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Metrics.Logging;
 namespace Metrics
 {
     public class MetricsErrorHandler

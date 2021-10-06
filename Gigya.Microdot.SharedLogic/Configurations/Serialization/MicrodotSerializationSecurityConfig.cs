@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Gigya.Microdot.Interfaces.Configuration;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
-using Gigya.Microdot.Interfaces.Configuration;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 {

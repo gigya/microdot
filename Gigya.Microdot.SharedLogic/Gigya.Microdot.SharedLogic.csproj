@@ -11,8 +11,6 @@
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="System.Diagnostics.PerformanceCounter" />		
-		<PackageReference Include="System.ComponentModel.Annotations" />
 		<PackageReference Include="System.ValueTuple" />
 	</ItemGroup>
 </Project>

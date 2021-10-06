@@ -1,8 +1,8 @@
-﻿using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
+﻿using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces.Configuration;
 using Ninject;
 using Ninject.Syntax;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.Ninject
 {

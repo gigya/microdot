@@ -20,9 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Logging;
@@ -33,13 +30,13 @@ using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.SharedLogic.Rewrite;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
-
 using Ninject;
 using NSubstitute;
-using NSubstitute.Core;
 using NUnit.Framework;
-
 using Shouldly;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Discovery.Rewrite
 {

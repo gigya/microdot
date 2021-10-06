@@ -1,5 +1,4 @@
 ﻿using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
-using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;

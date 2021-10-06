@@ -1,8 +1,8 @@
-﻿using System.Linq;
-using Gigya.Microdot.Orleans.Hosting;
+﻿using Gigya.Microdot.Orleans.Hosting;
 using Metrics.MetricData;
 using NUnit.Framework;
 using Shouldly;
+using System.Linq;
 using Metric = Metrics.Metric;
 
 

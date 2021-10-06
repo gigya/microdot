@@ -1,10 +1,8 @@
 ﻿using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace Gigya.Microdot.Hosting.Environment
 {

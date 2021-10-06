@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Threading.Tasks;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Gigya.Common.Application.HttpService.Client;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Common.Tests;
@@ -22,10 +16,14 @@ using Newtonsoft.Json;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
-
 using RichardSzalay.MockHttp;
-
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {

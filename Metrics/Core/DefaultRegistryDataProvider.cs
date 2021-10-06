@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Metrics.MetricData;
+using System;
 using System.Collections.Generic;
-using Metrics.MetricData;
 
 namespace Metrics.Core
 {

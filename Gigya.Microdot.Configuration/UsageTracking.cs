@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.Configuration
 {

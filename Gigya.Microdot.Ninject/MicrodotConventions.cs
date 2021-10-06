@@ -20,9 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
@@ -30,6 +27,9 @@ using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Orleans.Hosting;
 using Ninject.Extensions.Conventions;
 using Ninject.Syntax;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Gigya.Microdot.Ninject
 {

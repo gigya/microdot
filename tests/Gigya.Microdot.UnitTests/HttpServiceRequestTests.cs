@@ -1,16 +1,14 @@
-﻿using System.IO;
-using System.Reflection;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
-using Gigya.Microdot.SharedLogic.Events;
+﻿using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
-
 using NUnit.Framework;
-using Shouldly;
+using System.IO;
+using System.Reflection;
 
-namespace Gigya.Microdot.UnitTests {
+namespace Gigya.Microdot.UnitTests
+{
 
     public class HttpServiceRequestTests {
         private MethodInfo methodInfo;

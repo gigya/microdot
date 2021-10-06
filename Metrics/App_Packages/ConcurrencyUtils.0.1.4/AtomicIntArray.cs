@@ -29,7 +29,7 @@ namespace Metrics.ConcurrencyUtilities
 #if CONCURRENCY_UTILS_PUBLIC
 public
 #else
-internal
+    internal
 #endif
     struct AtomicIntArray
     {

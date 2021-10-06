@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading.Tasks.Dataflow;
 using Gigya.Microdot.Interfaces.Configuration;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.Configuration
 {

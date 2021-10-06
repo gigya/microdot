@@ -20,9 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Newtonsoft.Json;
 using System;
 using System.Globalization;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {

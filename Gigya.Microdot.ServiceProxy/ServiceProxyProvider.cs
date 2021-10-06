@@ -20,6 +20,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Application.HttpService.Client;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Common.Contracts.HttpService;
+using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.ServiceDiscovery.Config;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Rewrite;
+using Gigya.Microdot.SharedLogic.Security;
+using Gigya.Microdot.SharedLogic.Utils;
+using Metrics;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,26 +47,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Common.Application.HttpService.Client;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Rewrite;
-using Gigya.Microdot.SharedLogic.Security;
-using Gigya.Microdot.SharedLogic.Utils;
-using Metrics;
-using Newtonsoft.Json;
-using Timer = Metrics.Timer;
-
 using static Gigya.Microdot.LanguageExtensions.MiscExtensions;
+using Timer = Metrics.Timer;
 
 namespace Gigya.Microdot.ServiceProxy
 {

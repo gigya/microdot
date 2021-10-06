@@ -1,7 +1,7 @@
 ﻿
-using System.Collections.Generic;
 using Metrics.MetricData;
 using Metrics.Utils;
+using System.Collections.Generic;
 
 namespace Metrics.Json
 {

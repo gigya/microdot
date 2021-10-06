@@ -1,13 +1,9 @@
-﻿using System;
-using System.Linq;
-
-using Gigya.Microdot.Ninject;
-
+﻿using Gigya.Microdot.Ninject;
 using Ninject;
-
 using NUnit.Framework;
-
 using Shouldly;
+using System;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests
 {

@@ -20,11 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
@@ -41,16 +36,17 @@ using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
-using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Factory;
 using Ninject.Modules;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
 using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 

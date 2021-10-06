@@ -20,18 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Attributes;
+using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Metrics;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Attributes;
-using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.ServiceDiscovery.Config;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.ServiceContract.HttpService;
-using Metrics;
-using Newtonsoft.Json;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {

@@ -1,12 +1,10 @@
-﻿using System;
-using System.Net.Http;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
+﻿using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.Security;
-using Gigya.Microdot.UnitTests.ServiceProxyTests;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Net.Http;
 
 namespace Gigya.Microdot.UnitTests.Serialization
 {

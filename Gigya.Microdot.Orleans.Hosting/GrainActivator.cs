@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Concurrent;
 using Gigya.Microdot.Hosting.HttpService;
 using Orleans;
+using System;
+using System.Collections.Concurrent;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

@@ -20,12 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
 using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.Rewrite;
+using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Fakes.Discovery
 {

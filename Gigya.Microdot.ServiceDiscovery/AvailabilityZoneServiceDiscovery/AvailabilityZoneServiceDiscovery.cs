@@ -1,10 +1,10 @@
 ﻿using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
 {

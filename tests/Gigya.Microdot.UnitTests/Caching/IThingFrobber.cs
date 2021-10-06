@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Gigya.Common.Contracts.Attributes;
+using Gigya.ServiceContract.HttpService;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-
-using Gigya.Common.Contracts.Attributes;
-using Gigya.ServiceContract.HttpService;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {

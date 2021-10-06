@@ -1,7 +1,7 @@
 ﻿
+using Metrics.MetricData;
 using System.Collections.Generic;
 using System.Linq;
-using Metrics.MetricData;
 namespace Metrics.Json
 {
     public class JsonCounter : JsonMetric

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
-using Gigya.Microdot.SharedLogic.Security;
+﻿using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {

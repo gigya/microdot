@@ -1,13 +1,11 @@
-﻿using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
+﻿using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
-using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Gigya.Microdot.Testing.Shared.Service;
 using NSubstitute;
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.SystemInitializer
 {

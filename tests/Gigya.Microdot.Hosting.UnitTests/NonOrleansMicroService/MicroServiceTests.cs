@@ -1,7 +1,5 @@
-using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Metrics;
-using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using NUnit.Framework;
 using Shouldly;

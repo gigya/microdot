@@ -18,10 +18,5 @@
 		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 		<ProjectReference Include="..\..\tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 		<ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
-		<ProjectReference Include="..\CalculatorService\CalculatorService.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Ninject" />
-		<PackageReference Include="Ninject.Extensions.Factory" />
 	</ItemGroup>
 </Project>

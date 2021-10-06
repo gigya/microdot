@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Linq;
 using Metrics;
+using System.Linq;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {

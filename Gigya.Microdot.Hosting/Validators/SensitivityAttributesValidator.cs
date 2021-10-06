@@ -20,13 +20,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Hosting.HttpService;
+using Gigya.ServiceContract.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Hosting.Validators
 {

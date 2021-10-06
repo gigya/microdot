@@ -20,6 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.SharedLogic.Exceptions;
+using Gigya.Microdot.SharedLogic.Monitor;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -28,15 +36,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.SharedLogic.Exceptions;
-using Gigya.Microdot.SharedLogic.Monitor;
-using Metrics;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration.Objects
 {

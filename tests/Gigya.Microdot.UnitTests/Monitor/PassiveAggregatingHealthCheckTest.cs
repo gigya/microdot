@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using Gigya.Microdot.Fakes;
+﻿using Gigya.Microdot.Fakes;
 using Gigya.Microdot.SharedLogic.Monitor;
 using Metrics;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {

@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using Gigya.Microdot.Fakes;
+﻿using Gigya.Microdot.Fakes;
 using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.SharedLogic.Exceptions;
 using Gigya.Microdot.Testing.Shared;
 using Metrics;
-
 using Ninject;
-using Ninject.Parameters;
-
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
-  
+
     [TestFixture,Parallelizable(ParallelScope.None)]
     public abstract class AbstractServiceProxyTest
     {

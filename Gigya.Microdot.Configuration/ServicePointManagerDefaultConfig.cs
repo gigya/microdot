@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using Gigya.Microdot.Interfaces.Configuration;
+using System;
 
 namespace Gigya.Microdot.Configuration
 {

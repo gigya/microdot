@@ -1,11 +1,11 @@
-﻿using System;
-using System.Diagnostics;
-using Gigya.Microdot.Common.Tests;
+﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
+using System;
+using System.Diagnostics;
 
 
 namespace Gigya.Microdot.Fakes.KernelUtils

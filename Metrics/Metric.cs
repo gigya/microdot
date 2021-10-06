@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Metrics.Logging;
+using Metrics.Utils;
+using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Metrics.Logging;
-using Metrics.Utils;
 
 namespace Metrics
 {

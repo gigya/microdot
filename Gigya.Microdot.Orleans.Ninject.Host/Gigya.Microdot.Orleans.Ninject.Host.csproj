@@ -15,13 +15,7 @@
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />		
-		<PackageReference Include="System.Diagnostics.PerformanceCounter" />					
+	<ItemGroup>					
 		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" />
-		<PackageReference Include="Microsoft.Orleans.OrleansProviders" />
-		<PackageReference Include="Ninject.Extensions.Conventions" />
-		<PackageReference Include="Ninject.Extensions.Factory" />
 	</ItemGroup>
 </Project>

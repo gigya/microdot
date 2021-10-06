@@ -1,8 +1,8 @@
 ﻿
-using System.Collections.Generic;
-using System.Linq;
 using Metrics.MetricData;
 using Metrics.Utils;
+using System.Collections.Generic;
+using System.Linq;
 namespace Metrics.Json
 {
     public class JsonMeter : JsonMetric

@@ -1,6 +1,6 @@
 ﻿
-using System;
 using Metrics.MetricData;
+using System;
 namespace Metrics.Core
 {
     public interface GaugeImplementation : MetricValueProvider<double> { }

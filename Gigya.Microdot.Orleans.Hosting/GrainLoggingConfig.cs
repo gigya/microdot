@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using Gigya.Microdot.Interfaces.Configuration;
+using System.ComponentModel.DataAnnotations;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {

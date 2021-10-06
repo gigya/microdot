@@ -19,16 +19,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
- 
-using System;
-using System.Collections.Concurrent;
-using System.Reflection;
+
 using Gigya.Common.Contracts.Attributes;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.ServiceContract.HttpService;
- 
+using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+
 namespace Gigya.Microdot.ServiceProxy.Caching
 {
     public class CachingProxyProvider<TInterface> : ICachingProxyProvider<TInterface>

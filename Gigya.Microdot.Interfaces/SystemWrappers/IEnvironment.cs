@@ -21,7 +21,6 @@
 #endregion
 
 using Gigya.Microdot.SharedLogic;
-using System;
 using System.IO;
 
 namespace Gigya.Microdot.Interfaces.SystemWrappers

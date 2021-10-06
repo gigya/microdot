@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Gigya.Common.Contracts.Exceptions;
+﻿using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -9,11 +6,13 @@ using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 using Ninject;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.UnitTests.Serialization
 {
 
-	[TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
 	public class ExceptionSerializationTests
     {
 	    private MyServiceException MyServiceException { get; set; }

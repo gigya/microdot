@@ -20,21 +20,19 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.ServiceProxy.Rewrite
 {
-	/// <summary>
-	/// This is a beta version. Please do not use it until it's ready
-	/// </summary>
+    /// <summary>
+    /// This is a beta version. Please do not use it until it's ready
+    /// </summary>
     public interface IServiceProxyProvider : IProxyable
     {
         Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings = null);

@@ -1,6 +1,6 @@
-﻿using System;
-using Gigya.Microdot.Interfaces.SystemWrappers;
+﻿using Gigya.Microdot.Interfaces.SystemWrappers;
 using Metrics;
+using System;
 
 namespace Gigya.Microdot.SharedLogic.Measurement.Workload
 {

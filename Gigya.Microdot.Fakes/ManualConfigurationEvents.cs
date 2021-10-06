@@ -20,16 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces.Configuration;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.Fakes
 {
-   public class ManualConfigurationEvents : IConfigurationDataWatcher
+    public class ManualConfigurationEvents : IConfigurationDataWatcher
     {
         private readonly IConfigEventFactory _eventFactory;
         private readonly BroadcastBlock<bool> block = new BroadcastBlock<bool>(null);

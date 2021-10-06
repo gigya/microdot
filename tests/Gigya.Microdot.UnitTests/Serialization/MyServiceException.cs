@@ -1,11 +1,10 @@
+using Gigya.Common.Contracts.Exceptions;
 using System;
 using System.Runtime.Serialization;
 
-using Gigya.Common.Contracts.Exceptions;
-
 namespace Gigya.Microdot.UnitTests.Serialization
 {
-	[Serializable]
+    [Serializable]
 	public class MyServiceException : RequestException
 	{
 		public IBusinessEntity Entity { get; private set; }

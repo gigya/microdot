@@ -1,5 +1,6 @@
 ﻿using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.Testing.Shared.Service;
 using NUnit.Framework;
 using Shouldly;
@@ -7,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Gigya.Microdot.SharedLogic.HttpService;
 
 namespace Gigya.Microdot.UnitTests.Caching.Host
 {

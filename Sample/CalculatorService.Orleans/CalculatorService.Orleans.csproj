@@ -14,9 +14,7 @@
 		<ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Ninject" />
-		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />
-		<PackageReference Include="Microsoft.Orleans.Core" />			
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />			
 	</ItemGroup>	
 	<ItemGroup>
 		<None Include="loadPaths.json">

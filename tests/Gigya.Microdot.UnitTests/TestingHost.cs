@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
@@ -17,6 +14,9 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject;
 using Ninject.Syntax;
 using NSubstitute;
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests
 {

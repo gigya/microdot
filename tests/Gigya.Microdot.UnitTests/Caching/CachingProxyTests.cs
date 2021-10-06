@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
+﻿using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces;
@@ -16,8 +13,11 @@ using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
-using Gigya.Common.Contracts.Attributes;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.UnitTests.Caching
 {

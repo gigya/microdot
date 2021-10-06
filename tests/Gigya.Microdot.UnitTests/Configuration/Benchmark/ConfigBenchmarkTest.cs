@@ -1,10 +1,10 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Gigya.Microdot.Logging.NLog;
+﻿using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Ninject;
 using NUnit.Framework;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
 {

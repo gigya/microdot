@@ -1,19 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Configuration;
+﻿using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.Interfaces.SystemWrappers;
-using Gigya.Microdot.Ninject;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.UnitTests.Caching.Host;
-
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Configuration.Verificator
 {

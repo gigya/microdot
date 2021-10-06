@@ -20,12 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.LanguageExtensions;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.SharedLogic.Utils;
 
 namespace Gigya.Microdot.Configuration
 {

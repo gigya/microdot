@@ -1,8 +1,8 @@
 ﻿
+using Metrics.Utils;
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using Metrics.Utils;
 namespace Metrics
 {
     [DebuggerDisplay("{Name}")]

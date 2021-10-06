@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Gigya.Microdot.ServiceDiscovery.Config;
+using System;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.UnitTests.Configuration.Benchmark
 {

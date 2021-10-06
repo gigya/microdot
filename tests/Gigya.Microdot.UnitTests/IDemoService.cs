@@ -1,6 +1,5 @@
-using System.Threading.Tasks;
-
 using Gigya.Common.Contracts.HttpService;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests
 {

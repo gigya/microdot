@@ -22,17 +22,9 @@
 
 #endregion Copyright
 
-using System;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Ninject.Host;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
@@ -40,6 +32,11 @@ using Gigya.Microdot.Testing.Shared.Service;
 using Ninject;
 using Orleans;
 using Orleans.Configuration;
+using System;
+using System.Linq;
+using System.Net;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Testing.Service
 {

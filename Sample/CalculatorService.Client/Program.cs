@@ -1,19 +1,11 @@
-﻿using System;
-using System.Diagnostics;
-using System.Net;
-using System.Threading.Tasks;
-using CalculatorService.Interface;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
+﻿using CalculatorService.Interface;
 using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.SystemWrappers;
 using Gigya.Microdot.UnitTests.Caching;
 using Ninject;
+using System;
+using System.Threading.Tasks;
 
 namespace CalculatorService.Client
 {

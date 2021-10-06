@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.Logging;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Logging;
 
 namespace Gigya.Microdot.ServiceDiscovery.HostManagement
 {

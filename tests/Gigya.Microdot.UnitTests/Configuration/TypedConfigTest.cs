@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration;
+﻿using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.SharedLogic.Exceptions;
@@ -11,8 +6,12 @@ using Gigya.Microdot.SharedLogic.Monitor;
 using Gigya.Microdot.Testing.Shared;
 using Ninject;
 using NUnit.Framework;
-
 using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {

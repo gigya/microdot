@@ -1,9 +1,9 @@
-﻿using System;
-using Gigya.Microdot.Logging.NLog;
+﻿using Gigya.Microdot.Logging.NLog;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Ninject.Host;
-using System.Threading.Tasks;
 using Orleans;
+using System;
+using System.Threading.Tasks;
 
 namespace CalculatorService.Orleans
 {

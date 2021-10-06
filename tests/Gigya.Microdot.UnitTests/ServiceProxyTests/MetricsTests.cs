@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-
-using Gigya.Common.Contracts.Exceptions;
+﻿using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Metrics;
 using Metrics.MetricData;
-
 using NUnit.Framework;
-
 using RichardSzalay.MockHttp;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 // ReSharper disable UnusedVariable
 

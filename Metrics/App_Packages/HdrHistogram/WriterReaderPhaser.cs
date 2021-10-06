@@ -4,9 +4,9 @@
 // Ported to .NET by Iulian Margarintescu under the same license and terms as the java version
 // Java Version repo: https://github.com/HdrHistogram/HdrHistogram
 // Latest ported version is available in the Java submodule in the root of the repo
+using Metrics.ConcurrencyUtilities;
 using System;
 using System.Threading;
-using Metrics.ConcurrencyUtilities;
 
 namespace HdrHistogram
 {

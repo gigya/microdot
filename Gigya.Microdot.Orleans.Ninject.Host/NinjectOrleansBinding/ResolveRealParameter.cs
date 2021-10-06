@@ -20,19 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Gigya.Microdot.Orleans.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Ninject;
 using Ninject.Activation;
 using Ninject.Parameters;
-using Ninject.Planning.Bindings;
 using Ninject.Planning.Targets;
-using Ninject.Syntax;
-using Orleans.Runtime;
+using System;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 {

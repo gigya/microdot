@@ -4,9 +4,9 @@
     ".NETCoreApp,Version=v5.0": {
       "Gigya.ServiceContract": {
         "type": "Direct",
-        "requested": "[4.0.*, )",
-        "resolved": "4.0.0",
-        "contentHash": "hhN19eNw4L0gXQY6rF6eO+GWZlQt3sip6JnR/DT93vT+RbMyK5WYz+LvNapNkYew99XI0IFIuenLy7osjaLnRA==",
+        "requested": "[4.0.1, )",
+        "resolved": "4.0.1",
+        "contentHash": "fewPiJVDJF2CNhaDWp/ZmbFbY9lVFFRaA7p++zkk1rIhGa3lFw6WJX2S4lEBngp1sUgu2zMJP9BNoVjGpZTYFQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }

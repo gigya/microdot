@@ -20,10 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.Attributes;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.ServiceContract.HttpService;
+using System.Threading.Tasks;
 
 namespace CalculatorService.Interface
 {

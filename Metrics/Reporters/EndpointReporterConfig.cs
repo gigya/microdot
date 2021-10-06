@@ -1,10 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using Metrics.Endpoints;
+﻿using Metrics.Endpoints;
 using Metrics.Json;
 using Metrics.MetricData;
 using Metrics.Reports;
+using System;
+using System.Linq;
+using System.Text;
 
 namespace Metrics.Reporters
 {

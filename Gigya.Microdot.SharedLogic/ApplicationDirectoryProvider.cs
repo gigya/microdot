@@ -20,9 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces;
 using System.IO;
 using System.Reflection;
-using Gigya.Microdot.Interfaces;
 
 namespace Gigya.Microdot.SharedLogic
 {

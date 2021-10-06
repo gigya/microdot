@@ -20,16 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Collections.Generic;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {
-	/// <summary>
-	/// Contains the metadata for establishing the service endpoing and resolving calls handled by a service.
-	/// </summary>
+    /// <summary>
+    /// Contains the metadata for establishing the service endpoing and resolving calls handled by a service.
+    /// </summary>
     public interface IServiceEndPointDefinition
     {
 		/// <summary>

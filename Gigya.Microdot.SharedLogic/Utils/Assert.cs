@@ -20,12 +20,13 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using Gigya.Common.Contracts.Exceptions;
 
-namespace Gigya.Microdot.SharedLogic.Utils {
+namespace Gigya.Microdot.SharedLogic.Utils
+{
 
     /// <summary>A Gigya equivalent for Microsoft.VisualStudio.TestTools.UnitTesting.Assert, to prevent including that
     /// dependency, and to throw our own exception type. Assertion errors should be communicated to developers somehow in

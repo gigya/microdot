@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Gigya.Common.Contracts.Exceptions;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
 
 namespace Gigya.Microdot.ServiceDiscovery.AvailabilityZoneServiceDiscovery
 {

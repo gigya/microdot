@@ -1,7 +1,7 @@
-﻿using System;
-using System.Threading;
-using Metrics.MetricData;
+﻿using Metrics.MetricData;
 using Metrics.Utils;
+using System;
+using System.Threading;
 
 namespace Metrics.Reporters
 {

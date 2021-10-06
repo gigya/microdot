@@ -23,7 +23,7 @@
 using System;
 
 namespace Gigya.Microdot.Interfaces.Events
-{    
+{
     /// <summary>Indicates this field should be written, and what name to use for the field name.</summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]    
     public class EventFieldAttribute : Attribute

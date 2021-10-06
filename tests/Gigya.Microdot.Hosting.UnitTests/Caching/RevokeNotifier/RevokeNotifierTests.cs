@@ -1,19 +1,15 @@
-﻿using Gigya.Microdot.Interfaces.Logging;
+﻿using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Ninject;
+using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
-using Metrics;
+using Gigya.Microdot.UnitTests.Caching;
+using Ninject;
+using Ninject.Parameters;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using System.ServiceModel;
 using System.Threading;
-using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Ninject;
-using Gigya.Microdot.ServiceProxy.Caching;
-using Gigya.Microdot.UnitTests.Caching;
-using Ninject;
-using Ninject.Extensions.Factory;
-using Ninject.Parameters;
 
 namespace Gigya.Microdot.Hosting.UnitTests.Caching.RevokeNotifier
 {

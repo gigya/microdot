@@ -1,5 +1,5 @@
-﻿using System;
-using Metrics.MetricData;
+﻿using Metrics.MetricData;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Metrics.PerfCounters

@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Gigya.Microdot.Hosting.Events;
+﻿using Gigya.Microdot.Hosting.Events;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic.Events;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {

@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.Exceptions;
+using System;
 using System.Net;
 using System.Net.Http;
 
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Exceptions;
-
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 {
-   public static class HttpResponseFactory
+    public static class HttpResponseFactory
     {
        public static HttpResponseMessage GetResponseWithException(JsonExceptionSerializer exceptionSerializer, Exception ex, HttpStatusCode? statusCode = null, bool withGigyaHostHeader = true) 
        {

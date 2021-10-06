@@ -1,10 +1,7 @@
-using System.Linq;
-
 using Metrics.MetricData;
-
 using NUnit.Framework;
-
 using Shouldly;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests
 {

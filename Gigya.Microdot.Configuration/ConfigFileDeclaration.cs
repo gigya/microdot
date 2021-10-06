@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using Newtonsoft.Json;
+using System;
 
 namespace Gigya.Microdot.Configuration
 {

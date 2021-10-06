@@ -21,12 +21,11 @@
 #endregion
 
 
-using System;
+using Gigya.Microdot.SharedLogic.Events;
+using Gigya.ServiceContract.Attributes;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.ServiceContract.Attributes;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {

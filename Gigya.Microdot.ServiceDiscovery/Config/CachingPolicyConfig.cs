@@ -20,11 +20,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Attributes;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Runtime.Serialization;
-using Gigya.Common.Contracts.Attributes;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

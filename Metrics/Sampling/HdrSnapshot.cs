@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using HdrHistogram;
+using System.Collections.Generic;
 using System.Linq;
-using HdrHistogram;
 
 namespace Metrics.Sampling
 {

@@ -20,14 +20,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Configuration.Objects;
+using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic.Exceptions;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 // ReSharper disable RedundantDefaultMemberInitializer
 #pragma warning disable 1591 // XML docs for public members

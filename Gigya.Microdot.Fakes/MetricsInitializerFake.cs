@@ -1,8 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces;
+﻿using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Metrics;
+using System;
+using System.Threading.Tasks;
 
 namespace Gigya.Microdot.Fakes
 {

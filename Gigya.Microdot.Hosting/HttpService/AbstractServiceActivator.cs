@@ -20,11 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System;
 using System.Diagnostics;
-using System.Reflection;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts;
 
 namespace Gigya.Microdot.Hosting.HttpService
 {

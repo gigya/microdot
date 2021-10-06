@@ -1,8 +1,8 @@
+using Gigya.Microdot.ServiceDiscovery;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.ServiceDiscovery;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {

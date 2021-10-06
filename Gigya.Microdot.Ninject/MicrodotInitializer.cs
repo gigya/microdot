@@ -1,10 +1,10 @@
-﻿using System;
-using Gigya.Microdot.Hosting.Environment;
+﻿using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
+using System;
 
 namespace Gigya.Microdot.Ninject
 {

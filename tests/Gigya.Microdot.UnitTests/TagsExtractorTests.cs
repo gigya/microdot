@@ -1,11 +1,11 @@
-﻿using System.Linq;
-using Gigya.Common.Contracts.Exceptions;
+﻿using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Logging;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Gigya.Microdot.UnitTests
 {
-	[TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
 	public class TagsExtractorTests
 	{
 		[Test]

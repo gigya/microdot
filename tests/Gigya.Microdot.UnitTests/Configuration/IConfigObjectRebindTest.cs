@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Configuration.Objects;
+﻿using Gigya.Microdot.Configuration.Objects;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
@@ -8,6 +6,8 @@ using Gigya.Microdot.ServiceDiscovery.Config;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Threading.Tasks.Dataflow;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {

@@ -1,6 +1,5 @@
-using System.Collections.Generic;
-
 using Metrics;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.UnitTests
 {

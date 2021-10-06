@@ -20,12 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Gigya.Microdot.Interfaces.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.Configuration
 {

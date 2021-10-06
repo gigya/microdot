@@ -20,11 +20,11 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.SharedLogic.Rewrite;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.SharedLogic.Rewrite;
 
 namespace Gigya.Microdot.ServiceDiscovery.Rewrite
 {

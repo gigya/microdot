@@ -15,11 +15,7 @@
 		<ProjectReference Include="..\Metrics\Metrics.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="System.Threading.Tasks.Dataflow" />
-		<PackageReference Include="System.Collections.Immutable" />
-		<PackageReference Include="System.ValueTuple" />
-		<PackageReference Include="System.ComponentModel.Annotations" />		
+		<PackageReference Include="System.ValueTuple" />		
 		<PackageReference Include="System.Runtime.Caching" />		
 		<PackageReference Include="Nito.AsyncEx" />
 	</ItemGroup>

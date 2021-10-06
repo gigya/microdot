@@ -1,7 +1,7 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using CalculatorService.Interface;
+﻿using CalculatorService.Interface;
 using Gigya.ServiceContract.HttpService;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CalculatorService
 {

@@ -20,12 +20,12 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.SharedLogic;
 using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 {

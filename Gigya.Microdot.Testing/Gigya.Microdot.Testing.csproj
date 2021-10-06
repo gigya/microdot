@@ -14,8 +14,6 @@
 		<ProjectReference Include="..\Gigya.Microdot.Orleans.Ninject.Host\Gigya.Microdot.Orleans.Ninject.Host.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="Ninject" />
 	</ItemGroup>
 </Project>

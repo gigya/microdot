@@ -1,10 +1,10 @@
-using System;
 using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Ninject;
 using Ninject.Syntax;
+using System;
 
 namespace Gigya.Microdot.Common.Tests
 {

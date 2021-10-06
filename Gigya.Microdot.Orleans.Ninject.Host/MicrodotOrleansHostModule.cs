@@ -21,21 +21,18 @@
 #endregion
 
 using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.Orleans.Hosting.Logging;
+using Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding;
 using Gigya.Microdot.SharedLogic;
 using Ninject.Modules;
 using Orleans;
-using System;
-using System.Collections.Generic;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Orleans.Hosting.Logging;
-using Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Security;
-using Ninject;
 using Orleans.Runtime;
 using Orleans.Serialization;
+using System;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.Orleans.Ninject.Host
 {

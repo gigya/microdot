@@ -20,8 +20,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using System.Collections.Generic;
 using Gigya.Microdot.SharedLogic;
+using System.Collections.Generic;
 
 namespace Gigya.Microdot.ServiceDiscovery.Config
 {

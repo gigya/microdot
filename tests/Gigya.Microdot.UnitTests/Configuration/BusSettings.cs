@@ -1,9 +1,7 @@
-﻿using System;
+﻿using Gigya.Microdot.Interfaces.Configuration;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
-
-
-using Gigya.Microdot.Interfaces.Configuration;
 
 namespace Gigya.Microdot.UnitTests.Configuration
 {

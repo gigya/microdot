@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Interfaces.SystemWrappers;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.SharedLogic.Events
 {

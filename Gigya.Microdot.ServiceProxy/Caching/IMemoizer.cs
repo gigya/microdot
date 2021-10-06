@@ -20,10 +20,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Attributes;
 using System;
 using System.Reflection;
-using Gigya.Common.Contracts.Attributes;
-using Gigya.Microdot.ServiceDiscovery.Config;
 
 namespace Gigya.Microdot.ServiceProxy.Caching
 {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Gigya.Microdot.Interfaces;
+using System;
 using System.Collections.Generic;
-using Gigya.Microdot.Interfaces;
 
 namespace Gigya.Microdot.Configuration.Objects
 {

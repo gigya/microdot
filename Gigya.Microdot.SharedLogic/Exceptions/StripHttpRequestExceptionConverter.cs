@@ -1,9 +1,9 @@
-﻿using System;
-using System.Net.Http;
-using Gigya.Common.Contracts.Exceptions;
+﻿using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.SharedLogic.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Net.Http;
 
 namespace Gigya.Microdot.SharedLogic.Exceptions
 {

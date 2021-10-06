@@ -20,16 +20,16 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.SharedLogic;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.SharedLogic;
 
 namespace Gigya.Microdot.Hosting.Service
 {

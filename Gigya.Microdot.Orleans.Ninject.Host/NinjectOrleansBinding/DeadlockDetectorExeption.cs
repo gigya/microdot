@@ -21,21 +21,7 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using Gigya.Microdot.Orleans.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Ninject;
-using Ninject.Activation;
-using Ninject.Activation.Caching;
-using Ninject.Parameters;
-using Ninject.Planning.Bindings;
-using Ninject.Planning.Targets;
-using Ninject.Syntax;
-using Orleans.Runtime;
 
 
 

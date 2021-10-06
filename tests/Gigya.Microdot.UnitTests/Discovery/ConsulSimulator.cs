@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Gigya.Microdot.LanguageExtensions;
+using Gigya.Microdot.ServiceDiscovery;
+using Gigya.Microdot.SharedLogic;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,10 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Gigya.Microdot.LanguageExtensions;
-using Gigya.Microdot.ServiceDiscovery;
-using Gigya.Microdot.SharedLogic;
-using Newtonsoft.Json.Linq;
 
 namespace Gigya.Microdot.UnitTests.Discovery
 {

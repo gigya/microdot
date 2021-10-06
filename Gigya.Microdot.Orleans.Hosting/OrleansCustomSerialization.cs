@@ -22,14 +22,13 @@
 
 #endregion Copyright
 
+using Gigya.Microdot.SharedLogic.Security;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Orleans.Serialization;
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using Gigya.Microdot.SharedLogic.Configurations;
-using Gigya.Microdot.SharedLogic.Security;
+using System.Linq;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
