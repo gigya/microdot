@@ -36,7 +36,6 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using Orleans.Providers;
 using Orleans;
 using Orleans.Connections.Security;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Microsoft.AspNetCore.Connections;
 
