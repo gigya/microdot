@@ -13,6 +13,7 @@
 		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="System.ValueTuple" />
 		<PackageReference Include="NUnit3TestAdapter" />
+		<PackageReference Include="Microsoft.NET.Test.SDK" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Update="loadPaths.json">

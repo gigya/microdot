@@ -16,6 +16,7 @@
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />
 		<PackageReference Include="System.ValueTuple" />
 		<PackageReference Include="NUnit3TestAdapter" />
+		<PackageReference Include="Microsoft.NET.Test.SDK" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Remove="Microservice\GrainAgeLimitTestService\GrainAgeLimitTestServiceHost.cs" />
