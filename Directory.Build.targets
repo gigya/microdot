@@ -4,7 +4,7 @@
 	</PropertyGroup>
 
 	<ItemGroup Label="Gigya">
-		<PackageReference Update="Gigya.ServiceContract" Version="4.0.1"/>		
+		<PackageReference Update="Gigya.ServiceContract" Version="4.0.0-beta3533"/>		
 	</ItemGroup>
 
 	<ItemGroup Label="Orleans">	
