@@ -3,31 +3,41 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Service;
+using Gigya.Microdot.UnitTests.ServiceProxyTests;
 using Metrics;
+using Newtonsoft.Json;
 using Ninject;
 using NSubstitute;
 using NUnit.Framework;
+using RichardSzalay.MockHttp;
+using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
-    [TestFixture]
     public class ConfigurableHost<T>:TestingHost<T> where T:class
     {
         public MicrodotHostingConfig MicrodotHostingConfigMock = new MicrodotHostingConfig();
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
+            base.Configure(kernel,commonConfig);
             kernel.Rebind<Func<MicrodotHostingConfig>>().ToMethod(_ => ()=> MicrodotHostingConfigMock);
             
         }
     }
-    
-    public class StatusEndpointsTets
+ 
+    [TestFixture, Parallelizable(ParallelScope.None)]
+    public class StatusEndpointsTets:AbstractServiceProxyTest
     {
         private NonOrleansServiceTester<ConfigurableHost<IDemoService>> _testinghost;
 
@@ -36,28 +46,22 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             _testinghost = new NonOrleansServiceTester<ConfigurableHost<IDemoService>>();
 
-
-            Metric.ShutdownContext("Service");
+        //    Metric.Context("Service");
             TracingContext.SetRequestID("1");
         }
-
-        [Test]
-        public async Task StatusEndpiontsShouldLog()
+        
+        [TearDown]
+        public virtual void TearDown()
         {
-            var loggerSub = Substitute.For<ILog>();
-            var microdotHostingConfig = new MicrodotHostingConfig();
-
-            var statusEndpoints = new StatusEndpoints(() => microdotHostingConfig, loggerSub);
-
-            List<(string data, HttpStatusCode status, string type)> writes =
-                new List<(string data, HttpStatusCode status, string type)>(); 
-                
-            await statusEndpoints.TryHandle(null, (data, status, type) =>
+            try
             {
-                writes.Add((data,status,type));
-                return Task.CompletedTask;
-            });
-
+                _testinghost.Dispose();
+             //   Metric.ShutdownContext("Service");
+            }
+            catch
+            {
+                //should not fail tests
+            }
         }
 
         [Test]
