@@ -21,6 +21,8 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
@@ -42,6 +44,8 @@ namespace Gigya.Microdot.Hosting.Service
     {
         public bool FailServiceStartOnConfigError = true;
         public bool ExtendedDelaysTimeLogging = true;
+        public List<string> StatusEndpoints = new List<string>();
+        public bool ShouldLogStatusEndpoint = false;
     }
 
     public abstract class ServiceHostBase : IDisposable
