@@ -118,5 +118,30 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             Assert.NotNull(response);
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         }
+        
+        [Test]
+        public async Task TestGetStatusShouldNotWorkForSuffix()
+        {
+            var client = _testinghost.GetServiceProxyProvider("DemoService");
+
+            _testinghost.Host.MicrodotHostingConfigMock.StatusEndpoints = 
+                new List<string>(new []{"/status"});
+            
+            _testinghost.Host.MicrodotHostingConfigMock.ShouldLogStatusEndpoint = false;
+            
+            var httpClient = new HttpClient();
+
+            var uri = $"http://localhost:{_testinghost.BasePort}/status";
+
+            var response = await httpClient.GetAsync(uri);
+            Assert.NotNull(response);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            
+            uri = $"http://localhost:{_testinghost.BasePort}/some/status";
+            
+            response = await httpClient.GetAsync(uri);
+            Assert.NotNull(response);
+            Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        }
     }
 }

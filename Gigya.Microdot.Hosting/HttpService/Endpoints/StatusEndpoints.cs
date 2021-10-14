@@ -21,10 +21,10 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
         public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
         {
             var microdotHostingConfig = _microdotHostingConfigFactory();
-            
+
             foreach (var statusEndpoint in microdotHostingConfig.StatusEndpoints)
             {
-                if (context.Request.Url.AbsolutePath.EndsWith(statusEndpoint))
+                if (context.Request.Url.AbsolutePath.Equals(statusEndpoint, StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (microdotHostingConfig.ShouldLogStatusEndpoint)
                     {
@@ -38,7 +38,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                         });
                     }
 
-                    await writeResponse("").ConfigureAwait(false);
+                    await writeResponse(string.Empty).ConfigureAwait(false);
                     return true;
                 }
             }
