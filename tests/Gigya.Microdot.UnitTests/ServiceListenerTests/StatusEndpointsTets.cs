@@ -3,25 +3,13 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Service;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
-using Metrics;
-using Newtonsoft.Json;
 using Ninject;
-using NSubstitute;
 using NUnit.Framework;
-using RichardSzalay.MockHttp;
-using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -42,21 +30,19 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         private NonOrleansServiceTester<ConfigurableHost<IDemoService>> _testinghost;
 
         [SetUp]
-        public virtual void SetUp()
+        public override void SetUp()
         {
             _testinghost = new NonOrleansServiceTester<ConfigurableHost<IDemoService>>();
 
-        //    Metric.Context("Service");
             TracingContext.SetRequestID("1");
         }
         
         [TearDown]
-        public virtual void TearDown()
+        public override void TearDown()
         {
             try
             {
-                _testinghost.Dispose();
-             //   Metric.ShutdownContext("Service");
+                _testinghost.Dispose();             
             }
             catch
             {
