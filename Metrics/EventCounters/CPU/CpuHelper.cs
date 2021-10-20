@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
-
-namespace Metrics.EventCounters.Linux.CPU
+namespace Metrics.EventCounters.CPU
 {
     public static class CpuHelper
     {
@@ -10,9 +10,15 @@ namespace Metrics.EventCounters.Linux.CPU
         {
             ICpuUsageCalculator calculator;
 
-            calculator = new LinuxCpuUsageCalculator();
-
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                calculator = new WindowsCpuUsageCalculator();
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                calculator = new LinuxCpuUsageCalculator();
+            else
+                throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
+            
             calculator.Init();
+
             return calculator;
         }
         public static long GetNumberOfActiveCores(Process process)
@@ -25,7 +31,7 @@ namespace Metrics.EventCounters.Linux.CPU
             {
                 return ProcessorInfo.ProcessorCount;
             }
-            catch (Exception e)
+            catch
             {
                 return ProcessorInfo.ProcessorCount;
             }
@@ -48,7 +54,7 @@ namespace Metrics.EventCounters.Linux.CPU
             {
                 return (0, 0);
             }
-            catch (Exception e)
+            catch
             {
 
                 return (0, 0);

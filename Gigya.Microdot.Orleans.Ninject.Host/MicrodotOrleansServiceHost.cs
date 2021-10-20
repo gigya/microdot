@@ -71,9 +71,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
 
-            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
-            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
-
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
 
