@@ -13,27 +13,24 @@ using Shouldly;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.Monitor
 {
-    [TestFixture,Parallelizable(ParallelScope.None)]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class WorkloadMetricsTests
     {
         private const string Cpu = "CPU";
+        private const string ThreadPool = "ThreadPool";
         private const string Memory = "Memory";
         private const string Gc = "GC";
 
-        private const string DotNetLogicalThreadCount = "DotNet logical thread count";
         private const string CpuUsage = "CPU usage";
-        private const string CpuTotal = "CPU total";
+        private const string CpuTotal = "Machine Cpu Usage";
         private const string GcGen2Collections = "Gen-2 collections";
         private const string TimeInGc = "Time in GC";
-        private const string MemoryPrivate = "Private";
-        private const string MemoryVirtual = "Virtual";
         private const string MemoryWorkingSet = "Working set";
-        private const string ThreadCount = "Thread count";
+        private const string ThreadCount = "Thread Count";
 
         private IKernel _kernel;
         private ServiceArguments _serviceArguments;
@@ -91,15 +88,12 @@ namespace Gigya.Microdot.UnitTests.Monitor
         public async Task AddWorkloadGaugesToMetrics()
         {
             Init();
-            AssertMetricIsPositive(Cpu, DotNetLogicalThreadCount);
             AssertMetricIsPositive(Cpu, CpuUsage);
             AssertMetricIsPositive(Cpu, CpuTotal);
             AssertMetricIsPositive(Gc, GcGen2Collections);
             AssertMetricIsPositive(Gc, TimeInGc);
-            AssertMetricIsPositive(Memory, MemoryPrivate);
-            AssertMetricIsPositive(Memory, MemoryVirtual);
             AssertMetricIsPositive(Memory, MemoryWorkingSet);
-            AssertMetricIsPositive(Cpu, ThreadCount);
+            AssertMetricIsPositive(ThreadPool, ThreadCount);
         }
 
 
@@ -109,15 +103,11 @@ namespace Gigya.Microdot.UnitTests.Monitor
         {
             _config.ReadPerformanceCounters = false;
             Init();
-            AssertMetricIsZero(Cpu, DotNetLogicalThreadCount);
             AssertMetricIsZero(Cpu, CpuUsage);
-            AssertMetricIsZero(Cpu, CpuTotal);
             AssertMetricIsZero(Gc, GcGen2Collections);
             AssertMetricIsZero(Gc, TimeInGc);
-            AssertMetricIsZero(Memory, MemoryPrivate);
-            AssertMetricIsZero(Memory, MemoryVirtual);
             AssertMetricIsZero(Memory, MemoryWorkingSet);
-            AssertMetricIsZero(Cpu, ThreadCount);
+            AssertMetricIsZero(ThreadPool, ThreadCount);
         }
 
 
@@ -135,6 +125,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         {
             _config.MaxHealthyThreadsCount = 1;
             Init();
+            await Task.Delay(1000);
             _dateTimeFake.UtcNow += MinUnhealthyDuration + TimeSpan.FromSeconds(1);
             GetHealthCheck().IsHealthy.ShouldBe(false);
         }
@@ -145,8 +136,18 @@ namespace Gigya.Microdot.UnitTests.Monitor
         {
             _config.MaxHealthyCpuUsage = 0.01;
             Init();
-            _dateTimeFake.UtcNow += MinUnhealthyDuration + TimeSpan.FromSeconds(1);
-            GetHealthCheck().IsHealthy.ShouldBe(false);
+
+            Task.Run(async () =>
+            {
+                var random = new Random();                
+                while (true)
+                {
+                    random.Next(10000000);
+                }
+            });
+            await Task.Delay(2000);
+            _dateTimeFake.UtcNow += MinUnhealthyDuration + TimeSpan.FromSeconds(0.1);
+            GetHealthCheck().IsHealthy.ShouldBe(false);                   
         }
 
         [Test]
@@ -208,7 +209,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
 
         private GaugeValueSource MetricShouldExist(string context, string gaugeName)
         {
-            var gauge = GetGaute(context, gaugeName);
+            var gauge = GetGauge(context, gaugeName);
             gauge.ShouldNotBeNull($"Gauge '{gaugeName}' does not exist");
             return gauge;
         }
@@ -237,7 +238,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
 
-        private static GaugeValueSource GetGaute(string context, string gaugeName)
+        private static GaugeValueSource GetGauge(string context, string gaugeName)
         {
             return Metric.Context("Workload").Context(context).DataProvider.
                           CurrentMetricsData.Gauges.FirstOrDefault(x => x.Name == gaugeName);

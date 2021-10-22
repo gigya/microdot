@@ -69,7 +69,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context.Context("ThreadPool").Gauge("Queue Length", () => { double threads = ReadPerfCounter("threadpool-queue-length"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("ThreadPool").Gauge("Completed Item Count", () => { double threads = ReadPerfCounter("threadpool-completed-items-count"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter("working-set"), Unit.Bytes); 
-            _context.Context("Memory").Gauge("# Bytes in all Heaps", () => ReadPerfCounter("# Bytes in all Heaps"), Unit.Bytes);
+            _context.Context("Memory").Gauge("Bytes in all Heaps", () => ReadPerfCounter("# Bytes in all Heaps"), Unit.Bytes);
             _context.Context("Memory").Gauge("Allocated Bytes/second", () => ReadPerfCounter("Allocated Bytes/second"), Unit.Bytes);
             _context.Context("Memory").Gauge("POH Size", () => ReadPerfCounter("poh-size"), Unit.Bytes);
             _context.Context("Memory").Gauge("LOH Size", () => ReadPerfCounter("loh-size"), Unit.Bytes);
@@ -79,10 +79,10 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context.Context("GC").Gauge("Gen 0 heap size", () => ReadPerfCounter("Gen 0 heap size"), Unit.Bytes);
             _context.Context("GC").Gauge("Gen 1 heap size", () => ReadPerfCounter("Gen 1 heap size"), Unit.Bytes);
             _context.Context("GC").Gauge("Gen 2 heap size", () => ReadPerfCounter("Gen 2 heap size"), Unit.Bytes);
-            _context.Context("GC").Gauge("% Time in GC", () => ReadPerfCounter("% Time in GC"), Unit.Percent);
+            _context.Context("GC").Gauge("Time in GC", () => ReadPerfCounter("% Time in GC"), Unit.Percent);
             _context.Context("GC").Gauge("GC Fragmentation", () => ReadPerfCounter("gc-fragmentation"), Unit.Percent);            
-            _context.Context("General").Gauge("# of Exceps Thrown / Sec", () => ReadPerfCounter("# of Exceps Thrown / Sec"), Unit.Items);
-            _context.Context("General").Gauge("# of Active Timers", () => ReadPerfCounter("active-timer-count"), Unit.Items);
+            _context.Context("General").Gauge("Exceps Thrown / Sec", () => ReadPerfCounter("# of Exceps Thrown / Sec"), Unit.Items);
+            _context.Context("General").Gauge("Active Timers", () => ReadPerfCounter("active-timer-count"), Unit.Items);
 
 
             _cpuUsageHealthCheck = new LowSensitivityHealthCheck(CpuUsageHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
@@ -124,7 +124,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             if (!_getConfig().ReadPerformanceCounters)
                 return HealthCheckResult.Healthy("CPU Usage: Reading perf counter disabled by configuration");
 
-            var cpuUsage = ReadPerfCounter("% Processor Time");//ReadPerfCounter(_processorTimePercent);
+            var cpuUsage = ReadPerfCounter("% Processor Time");
             var maxCpuUsage = _getConfig().MaxHealthyCpuUsage;
 
             if (cpuUsage > maxCpuUsage)
@@ -138,7 +138,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             if (!_getConfig().ReadPerformanceCounters)
                 return HealthCheckResult.Healthy("Threads: Reading perf counter disabled by configuration");
 
-            var threads = ReadPerfCounter("# of current logical Threads");//ReadPerfCounter(_threadCount);
+            var threads = ReadPerfCounter("# of current logical Threads");
             var maxThreads = _getConfig().MaxHealthyThreadsCount;
 
             if (threads > maxThreads)

@@ -32,6 +32,10 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         /// </summary>
         public TimeSpan MinUnhealthyDuration { get; set; } = TimeSpan.FromMinutes(3);
 
-        public Dictionary<string,string> PerformanceCountersToEventCounters { get; set; }
+        public Dictionary<string, string> PerformanceCountersToEventCounters { get; set; } = new Dictionary<string, string>
+        {
+            { "processor_time", "cpu-usage"},
+            { "of_current_logical_threads", "threadpool-thread-count"}
+        };
     }
 }
