@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Metrics.EventCounters.Linux.CPU
+namespace Metrics.EventCounters.CPU
 {
     public class ProcessInfo
     {
