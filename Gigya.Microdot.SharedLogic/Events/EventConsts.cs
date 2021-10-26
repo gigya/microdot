@@ -92,5 +92,15 @@ namespace Gigya.Microdot.SharedLogic.Events
         
         public const string statsRetryCount = "debug.retryCount";
         public const string above10KmsgLength = "debug.above10KmsgLength";
+
+
+        /// <summary>
+        /// Measure request time helpers. Remove after debugging
+        /// </summary>
+        public const string RecvContextTime = "debug.recvContext.time";
+        public const string ReqStartupDelta = "debug.reqStartupDelta.ms";
+        public const string TimeFromLastReq = "debug.timeFromLastReq.ms";
+        public const string OutstandingRecvRequests = "debug.OutstandingRecvRequests";
+        //////////////////////////////////////////////////////////////////////////
     }
 }

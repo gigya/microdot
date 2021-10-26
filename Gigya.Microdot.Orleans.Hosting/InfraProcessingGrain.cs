@@ -34,7 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         Task Do(Immutable<RequestProcessingAction> action);
 	}
 
-    [ExcludeGrainFromStatistics]
+    //[ExcludeGrainFromStatistics]
     [StatelessWorker, Reentrant]
 	public class RequestProcessingGrain : Grain, IRequestProcessingGrain
 	{

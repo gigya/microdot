@@ -86,6 +86,24 @@ namespace Gigya.Microdot.Hosting.Events
 
         public IEnumerable<Param> Params { get; set; }
 
+
+        /// <summary>
+        /// Measure request time helpers. Remove after debugging
+        /// </summary>
+        [EventField(EventConsts.RecvContextTime)]
+        public string RecvContextTime { get; set; }
+
+        [EventField(EventConsts.ReqStartupDelta)]
+        public double ReqStartupDelta { get; set; }
+
+        [EventField(EventConsts.TimeFromLastReq)]
+        public long TimeFromLastReq { get; set; }
+
+        [EventField(EventConsts.OutstandingRecvRequests)]
+        public long OutstandingRecvRequests { get; set; }
+        //////////////////////////////////////////////////////////////
+
+
         private IEnumerable<KeyValuePair<string, object>> GetRequestParams(Sensitivity sensitivity)
         {
             if (Params != null)
