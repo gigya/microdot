@@ -113,6 +113,7 @@ namespace Gigya.Microdot.Hosting.HttpService
         private TaskCompletionSource<int> _ReadyToGetTraffic = new TaskCompletionSource<int>();
         private List<string> _uriPrefixes;
         private readonly bool _extendedDelayTimeLogging = false;
+        private readonly long _extendedDelaysElapsedMs = 100;
 
         private readonly Func<double, double> TicksToMs;
 
@@ -150,7 +151,8 @@ namespace Gigya.Microdot.Hosting.HttpService
             LoadSheddingConfig = loadSheddingConfig;
             AppInfo = appInfo;
             _extendedDelayTimeLogging = microdotHostingConfigFactory().ExtendedDelaysTimeLogging; // no need to read every request
-            
+            _extendedDelaysElapsedMs = microdotHostingConfigFactory().ExtendedDelaysElapsedMs; // no need to read every request
+
             Expression<Func<double, double>> expr = ticks => ticks / Stopwatch.Frequency * 1000;
             TicksToMs = expr.Compile();
 
@@ -263,9 +265,9 @@ namespace Gigya.Microdot.Hosting.HttpService
                     Worker.FireAndForget(() => HandleRequest(context, ticks, timeFromLastReq));
 
                     long elapsed = sp.ElapsedMilliseconds;
-                    if (_extendedDelayTimeLogging && elapsed > 30)
+                    if (_extendedDelayTimeLogging && elapsed > _extendedDelaysElapsedMs)
                     {
-                        Log.Info((t) => t("FireAndForget took more then 30 ms", unencryptedTags: new Tags
+                        Log.Info((t) => t($"FireAndForget took more then {_extendedDelaysElapsedMs} ms", unencryptedTags: new Tags
                         {
                             {"debug.delay.fireAndForget", elapsed.ToString()}
                         }));

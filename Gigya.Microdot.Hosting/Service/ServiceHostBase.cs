@@ -45,6 +45,7 @@ namespace Gigya.Microdot.Hosting.Service
     {
         public bool FailServiceStartOnConfigError = true;
         public bool ExtendedDelaysTimeLogging = true;
+        public long ExtendedDelaysElapsedMs = 100;
         public List<string> StatusEndpoints = new List<string>();
         public bool ShouldLogStatusEndpoint = false;
     }
