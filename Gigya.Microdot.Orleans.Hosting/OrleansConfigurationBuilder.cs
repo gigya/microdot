@@ -216,8 +216,8 @@ namespace Gigya.Microdot.Orleans.Hosting
                 if (_environment?.ApplicationInfo != null && !string.IsNullOrEmpty(connStr))
                 {
                     var appName = _environment.ApplicationInfo.Name.DefaultIfNullOrEmpty("NoAppName");
-                    appName += $"-{_environment.DeploymentEnvironment.DefaultIfNullOrEmpty("NoDeployEnv")}";
-                    appName += $"-{CurrentApplicationInfo.HostName.DefaultIfNullOrEmpty("NoHostName")}";
+                    appName += $"_{_environment.DeploymentEnvironment.DefaultIfNullOrEmpty("NoDeployEnv")}";
+                    appName += $"_{CurrentApplicationInfo.HostName.DefaultIfNullOrEmpty("NoHostName")}";
 
                     connStr = string.Join(";",
                         connStr
