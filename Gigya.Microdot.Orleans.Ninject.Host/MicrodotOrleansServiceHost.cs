@@ -79,11 +79,11 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             CrashHandler = Kernel.Get<ICrashHandler>();
             CrashHandler.Init(OnCrash);
 
-            IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
-            workloadMetrics.Init();
+            //IWorkloadMetrics workloadMetrics = Kernel.Get<IWorkloadMetrics>();
+            //workloadMetrics.Init();
 
-            var metricsInitializer = Kernel.Get<IMetricsInitializer>();
-            metricsInitializer.Init();
+            //var metricsInitializer = Kernel.Get<IMetricsInitializer>();
+            //metricsInitializer.Init();
 
             if (PerSiloGrainType != null)
                 Kernel.Get<OrleansConfigurationBuilder>().GetBuilder()

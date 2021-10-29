@@ -34,4 +34,9 @@
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
 	</Target>
+	<PropertyGroup Label="GC configuration for service">
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+	</PropertyGroup>
 </Project>
