@@ -548,8 +548,8 @@
       },
       "NLog": {
         "type": "Transitive",
-        "resolved": "4.7.11",
-        "contentHash": "A7EpoOjWesV5BPx1cOiBndazZq1VGdagIs6oK8ttcRDl5adCMtHiTqnsD5yYaOrMxOQeCjHBf/w3nKzCmhGbgw=="
+        "resolved": "4.7.12",
+        "contentHash": "cFe+YQVxghBt4hoB8IH+XVW/vyS6rWJPfWmm0rmgS/iaI3lzzFsGRzjw3VhByovLugw7Zp3kY7nVUWADCu6n2g=="
       },
       "OrleansDashboard": {
         "type": "Transitive",
@@ -1702,7 +1702,7 @@
         "dependencies": {
           "Gigya.Microdot.Interfaces": "4.0.0",
           "Gigya.Microdot.Ninject": "4.0.0",
-          "NLog": "4.7.11"
+          "NLog": "4.7.12"
         }
       },
       "gigya.microdot.ninject": {
