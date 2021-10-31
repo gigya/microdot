@@ -47,6 +47,14 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             return true;
         }
 
+        public double? ReadPerfCounter(string performanceCounterName)
+        {
+            if (_perfCounters.ContainsKey(performanceCounterName))
+                return _perfCounters[performanceCounterName].Value;
+
+            return null;
+        }
+
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             if (EventSources.Contains(eventSource.Name))
@@ -64,15 +72,15 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
                 {
                     if (eventData.Payload[i] is IDictionary<string, object> eventPayload)
                     {
-                        var counter = GetMetric(eventPayload);
-                        if (_counters.ContainsKey(counter.Name))
-                            _counters[counter.Name].Value = counter.Value;
+                        var (Name, Value) = GetMetric(eventPayload);
+                        if (_counters.ContainsKey(Name))
+                            _counters[Name].Value = Value;
                     }
                 }
             }
         }
 
-        private (string Name, double Value) GetMetric(IDictionary<string, object> eventPayload)
+        private static (string Name, double Value) GetMetric(IDictionary<string, object> eventPayload)
         {
             string name = string.Empty;
             double value = 0;
@@ -92,17 +100,9 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             return (name, value);
         }
 
-        private string NormalizeCounterName(string name)
+        private static string NormalizeCounterName(string name)
         {
             return name.Replace("#", "").Replace("%", "").Trim().Replace(" ", "_").Replace("/", "_").ToLower();
-        }
-
-        public double? ReadPerfCounter(string performanceCounterName)
-        {
-            if (_perfCounters.ContainsKey(performanceCounterName))
-                return _perfCounters[performanceCounterName].Value;
-
-            return null;
         }
     }
 }

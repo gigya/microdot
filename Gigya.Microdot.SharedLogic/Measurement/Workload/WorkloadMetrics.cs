@@ -20,12 +20,12 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         private LowSensitivityHealthCheck _cpuUsageHealthCheck;
         private LowSensitivityHealthCheck _threadsCountHealthCheck;
         private LowSensitivityHealthCheck _orleansQueueHealthCheck;
-        private ICpuUsageCalculator _cpuUsageCalculator;
+        private readonly ICpuUsageCalculator _cpuUsageCalculator;
 
         private readonly MetricsContext _context = Metric.Context("Workload");
         private Timer _triggerHealthChecksEvery5Seconds;
         private bool _disposed;
-
+        private const int MegabyteToByte = 1024 * 1024;
         private ILog Log { get; }
 
 
@@ -49,8 +49,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _eventListener.Subscribe("working-set");
             _eventListener.Subscribe("# Bytes in all Heaps");
             _eventListener.Subscribe("Allocated Bytes/second");
-            _eventListener.Subscribe("POH Size");
-            _eventListener.Subscribe("LOH Size");
+            _eventListener.Subscribe("poh-size");
+            _eventListener.Subscribe("loh-size");
             _eventListener.Subscribe("# Gen 0 Collections");
             _eventListener.Subscribe("# Gen 1 Collections"); 
             _eventListener.Subscribe("# Gen 2 Collections");
@@ -68,8 +68,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context.Context("ThreadPool").Gauge("Thread Count", () => { double threads = ReadPerfCounter("# of current logical Threads"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("ThreadPool").Gauge("Queue Length", () => { double threads = ReadPerfCounter("threadpool-queue-length"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("ThreadPool").Gauge("Completed Item Count", () => { double threads = ReadPerfCounter("threadpool-completed-items-count"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
-            _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter("working-set"), Unit.Bytes); 
-            _context.Context("Memory").Gauge("Bytes in all Heaps", () => ReadPerfCounter("# Bytes in all Heaps"), Unit.Bytes);
+            _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter("working-set") * MegabyteToByte, Unit.Bytes); 
+            _context.Context("Memory").Gauge("Bytes in all Heaps", () => ReadPerfCounter("# Bytes in all Heaps") * MegabyteToByte, Unit.Bytes);
             _context.Context("Memory").Gauge("Allocated Bytes/second", () => ReadPerfCounter("Allocated Bytes/second"), Unit.Bytes);
             _context.Context("Memory").Gauge("POH Size", () => ReadPerfCounter("poh-size"), Unit.Bytes);
             _context.Context("Memory").Gauge("LOH Size", () => ReadPerfCounter("loh-size"), Unit.Bytes);
