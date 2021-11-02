@@ -57,7 +57,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _eventListener.Subscribe("Gen 0 heap size");
             _eventListener.Subscribe("Gen 1 heap size");
             _eventListener.Subscribe("Gen 2 heap size");
-            _eventListener.Subscribe("% Time in GC");
+            _eventListener.Subscribe("Time in GC");
             _eventListener.Subscribe("gc-fragmentation");
             _eventListener.Subscribe("# of Exceps Thrown / Sec");
             _eventListener.Subscribe("active-timer-count");
@@ -79,7 +79,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context.Context("GC").Gauge("Gen 0 heap size", () => ReadPerfCounter("Gen 0 heap size"), Unit.Bytes);
             _context.Context("GC").Gauge("Gen 1 heap size", () => ReadPerfCounter("Gen 1 heap size"), Unit.Bytes);
             _context.Context("GC").Gauge("Gen 2 heap size", () => ReadPerfCounter("Gen 2 heap size"), Unit.Bytes);
-            _context.Context("GC").Gauge("Time in GC", () => ReadPerfCounter("% Time in GC"), Unit.Percent);
+            _context.Context("GC").Gauge("Time in GC", () => ReadPerfCounter("Time in GC"), Unit.Percent);
             _context.Context("GC").Gauge("GC Fragmentation", () => ReadPerfCounter("gc-fragmentation"), Unit.Percent);            
             _context.Context("General").Gauge("Exceps Thrown / Sec", () => ReadPerfCounter("# of Exceps Thrown / Sec"), Unit.Items);
             _context.Context("General").Gauge("Active Timers", () => ReadPerfCounter("active-timer-count"), Unit.Items);

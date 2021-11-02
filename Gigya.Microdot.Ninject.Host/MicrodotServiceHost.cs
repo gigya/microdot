@@ -91,6 +91,8 @@ namespace Gigya.Microdot.Ninject.Host
 
             VerifyConfigurationsIfNeeded(Kernel.Get<MicrodotHostingConfig>(), Kernel.Get<ConfigurationVerificator>());
 
+            this.SetThreadPoolConfigurations(Kernel);
+
             this.Warmup(Kernel);
 
             //don't move up the get should be after all the binding are done
@@ -124,6 +126,14 @@ namespace Gigya.Microdot.Ninject.Host
             }
 
             Dispose();
+        }
+
+        /// <summary>
+        /// An extensibility point - used to change default values of .Net ThreadPool.
+        /// </summary>
+        protected virtual void SetThreadPoolConfigurations(IKernel kernel)
+        {
+            base.SetThreadPoolConfigurations(kernel.Get<MicrodotHostingThreadPoolConfig>());
         }
 
         /// <summary>
