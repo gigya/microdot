@@ -1669,34 +1669,42 @@
           "System.Net.NameResolution": "4.3.0"
         }
       },
+      "Gigya.Metrics": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CSharp": "4.7.0",
+          "System.Configuration.ConfigurationManager": "5.0.0",
+          "System.Diagnostics.PerformanceCounter": "5.0.1"
+        }
+      },
       "gigya.microdot.configuration": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.SharedLogic": "4.0.0",
+          "Gigya.Microdot.SharedLogic": "4.0.1",
           "Microsoft.CSharp": "4.7.0"
         }
       },
       "gigya.microdot.fakes": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Configuration": "4.0.0",
-          "Gigya.Microdot.Ninject": "4.0.0"
+          "Gigya.Microdot.Configuration": "4.0.1",
+          "Gigya.Microdot.Ninject": "4.0.1"
         }
       },
       "gigya.microdot.hosting": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Configuration": "4.0.0",
-          "Gigya.Microdot.ServiceDiscovery": "4.0.0",
-          "Gigya.Microdot.SharedLogic": "4.0.0",
-          "Metrics": "4.0.0",
+          "Gigya.Metrics": "4.0.1",
+          "Gigya.Microdot.Configuration": "4.0.1",
+          "Gigya.Microdot.ServiceDiscovery": "4.0.1",
+          "Gigya.Microdot.SharedLogic": "4.0.1",
           "System.ValueTuple": "4.5.0"
         }
       },
       "gigya.microdot.interfaces": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.0",
+          "Gigya.Microdot.LanguageExtensions": "4.0.1",
           "Newtonsoft.Json": "13.0.1"
         }
       },
@@ -1706,9 +1714,9 @@
       "gigya.microdot.ninject": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Hosting": "4.0.0",
-          "Gigya.Microdot.Orleans.Hosting": "4.0.0",
-          "Gigya.Microdot.ServiceProxy": "4.0.0",
+          "Gigya.Microdot.Hosting": "4.0.1",
+          "Gigya.Microdot.Orleans.Hosting": "4.0.1",
+          "Gigya.Microdot.ServiceProxy": "4.0.1",
           "Microsoft.CSharp": "4.7.0",
           "Ninject.Extensions.Conventions": "3.3.0",
           "Ninject.Extensions.Factory": "3.3.3"
@@ -1717,7 +1725,7 @@
       "gigya.microdot.orleans.hosting": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Hosting": "4.0.0",
+          "Gigya.Microdot.Hosting": "4.0.1",
           "Microsoft.CSharp": "4.7.0",
           "Microsoft.Orleans.CodeGenerator.MSBuild": "3.5.0",
           "Microsoft.Orleans.Connections.Security": "3.5.0",
@@ -1731,7 +1739,7 @@
       "gigya.microdot.servicediscovery": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.SharedLogic": "4.0.0",
+          "Gigya.Microdot.SharedLogic": "4.0.1",
           "Microsoft.CSharp": "4.7.0",
           "System.ValueTuple": "4.5.0"
         }
@@ -1739,8 +1747,8 @@
       "gigya.microdot.serviceproxy": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.ServiceDiscovery": "4.0.0",
-          "Metrics": "4.0.0",
+          "Gigya.Metrics": "4.0.1",
+          "Gigya.Microdot.ServiceDiscovery": "4.0.1",
           "Nito.AsyncEx": "5.1.2",
           "System.Runtime.Caching": "5.0.0",
           "System.ValueTuple": "4.5.0"
@@ -1749,19 +1757,11 @@
       "gigya.microdot.sharedlogic": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Interfaces": "4.0.0",
+          "Gigya.Metrics": "4.0.1",
+          "Gigya.Microdot.Interfaces": "4.0.1",
           "Gigya.ServiceContract": "4.0.1",
-          "Metrics": "4.0.0",
           "Microsoft.CSharp": "4.7.0",
           "System.ValueTuple": "4.5.0"
-        }
-      },
-      "metrics": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.CSharp": "4.7.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.1"
         }
       }
     },

@@ -112,17 +112,25 @@
           "System.Drawing.Common": "5.0.0"
         }
       },
+      "Gigya.Metrics": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.CSharp": "4.7.0",
+          "System.Configuration.ConfigurationManager": "5.0.0",
+          "System.Diagnostics.PerformanceCounter": "5.0.1"
+        }
+      },
       "gigya.microdot.configuration": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.SharedLogic": "4.0.0",
+          "Gigya.Microdot.SharedLogic": "4.0.1",
           "Microsoft.CSharp": "4.7.0"
         }
       },
       "gigya.microdot.interfaces": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.0",
+          "Gigya.Microdot.LanguageExtensions": "4.0.1",
           "Newtonsoft.Json": "13.0.1"
         }
       },
@@ -132,7 +140,7 @@
       "gigya.microdot.servicediscovery": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.SharedLogic": "4.0.0",
+          "Gigya.Microdot.SharedLogic": "4.0.1",
           "Microsoft.CSharp": "4.7.0",
           "System.ValueTuple": "4.5.0"
         }
@@ -140,19 +148,11 @@
       "gigya.microdot.sharedlogic": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.Interfaces": "4.0.0",
+          "Gigya.Metrics": "4.0.1",
+          "Gigya.Microdot.Interfaces": "4.0.1",
           "Gigya.ServiceContract": "4.0.1",
-          "Metrics": "4.0.0",
           "Microsoft.CSharp": "4.7.0",
           "System.ValueTuple": "4.5.0"
-        }
-      },
-      "metrics": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.CSharp": "4.7.0",
-          "System.Configuration.ConfigurationManager": "5.0.0",
-          "System.Diagnostics.PerformanceCounter": "5.0.1"
         }
       }
     },

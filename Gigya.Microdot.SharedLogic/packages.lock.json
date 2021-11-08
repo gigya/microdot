@@ -114,23 +114,23 @@
           "System.Drawing.Common": "5.0.0"
         }
       },
-      "gigya.microdot.interfaces": {
-        "type": "Project",
-        "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.0",
-          "Newtonsoft.Json": "13.0.1"
-        }
-      },
-      "gigya.microdot.languageextensions": {
-        "type": "Project"
-      },
-      "metrics": {
+      "Gigya.Metrics": {
         "type": "Project",
         "dependencies": {
           "Microsoft.CSharp": "4.7.0",
           "System.Configuration.ConfigurationManager": "5.0.0",
           "System.Diagnostics.PerformanceCounter": "5.0.1"
         }
+      },
+      "gigya.microdot.interfaces": {
+        "type": "Project",
+        "dependencies": {
+          "Gigya.Microdot.LanguageExtensions": "4.0.1",
+          "Newtonsoft.Json": "13.0.1"
+        }
+      },
+      "gigya.microdot.languageextensions": {
+        "type": "Project"
       }
     },
     ".NETCoreApp,Version=v5.0/linux-x64": {
