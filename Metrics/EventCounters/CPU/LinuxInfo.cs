@@ -1,5 +1,5 @@
 ﻿
-namespace Metrics.EventCounters.Linux.CPU
+namespace Metrics.EventCounters.CPU
 {
     public class LinuxInfo : ProcessInfo
     {

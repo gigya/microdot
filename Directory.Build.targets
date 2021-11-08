@@ -4,7 +4,7 @@
 	</PropertyGroup>
 
 	<ItemGroup Label="Gigya">
-		<PackageReference Update="Gigya.ServiceContract" Version="4.0.1"/>		
+		<PackageReference Update="Gigya.ServiceContract" Version="4.0.1"/>
 	</ItemGroup>
 
 	<ItemGroup Label="Orleans">	
@@ -22,16 +22,16 @@
 		<PackageReference Update="Nito.AsyncEx" Version="5.1.2"/>		
 		<PackageReference Update="Ninject.Extensions.Conventions" Version="3.3.0"/>
 		<PackageReference Update="Ninject.Extensions.Factory" Version="3.3.3"/>
-		<PackageReference Update="NLog" Version="4.7.11"/>		
+		<PackageReference Update="NLog" Version="4.7.12"/>		
 	</ItemGroup>
 
 	<ItemGroup Label="Test">		
 		<PackageReference Update="NSubstitute" Version="4.2.2"/>		
 		<PackageReference Update="Shouldly" Version="4.0.3"/>
-		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.11.0"/>		
+		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0"/>		
 		<PackageReference Update="NUnit" Version="3.13.2"/>
 		<PackageReference Update="NUnit3TestAdapter" Version="4.0.0"/>
-		<PackageReference Update="FluentAssertions" Version="6.1.0"/>
+		<PackageReference Update="FluentAssertions" Version="6.2.0"/>
 		<PackageReference Update="RichardSzalay.MockHttp" Version="6.0.0"/>		
 	</ItemGroup>
 

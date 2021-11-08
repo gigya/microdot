@@ -200,8 +200,8 @@ namespace Gigya.Microdot.Configuration.Objects
                     if (Latest != null)
                         ValidationErrors = null;
                     
-                    if (ConfigPath.Contains("StackTraceEnhancerSettings"))
-                        Log.Info(_=> _($"RemoveThis: Decided that config was not changed for path {ConfigPath}. Old config :{LatestNode} new config: {config}"));
+                    //if (ConfigPath.Contains("StackTraceEnhancerSettings"))
+                    //    Log.Info(_=> _($"RemoveThis: Decided that config was not changed for path {ConfigPath}. Old config :{LatestNode} new config: {config}"));
 
                     return;
                 }

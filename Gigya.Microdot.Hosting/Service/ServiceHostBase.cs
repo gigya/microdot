@@ -20,16 +20,23 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using Gigya.Common.Contracts.Exceptions;
-using Gigya.Microdot.Configuration;
-using Gigya.Microdot.Interfaces.Configuration;
-using Gigya.Microdot.SharedLogic;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Gigya.Common.Contracts.Exceptions;
+using Gigya.Microdot.Configuration;
+using Gigya.Microdot.Hosting.HttpService;
+using Gigya.Microdot.Interfaces.Configuration;
+using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.SystemWrappers;
+
 
 namespace Gigya.Microdot.Hosting.Service
 {
@@ -38,7 +45,22 @@ namespace Gigya.Microdot.Hosting.Service
     {
         public bool FailServiceStartOnConfigError = true;
         public bool ExtendedDelaysTimeLogging = true;
+        public List<string> StatusEndpoints = new List<string>();
+        public bool ShouldLogStatusEndpoint = false;
     }
+
+    [ConfigurationRoot("Microdot.Hosting.ThreadPool", RootStrategy.ReplaceClassNameWithPath)]
+    public class MicrodotHostingThreadPoolConfig : IConfigObject
+    {
+        public bool MinThreadOverrideEnabled = true;
+        public bool MaxThreadOverrideEnabled = false;
+        public int MinWorkerThreads = 64;
+        public int MinCompletionPortThreads = 64;
+        public int MaxWorkerThreads = 32767;
+        public int MaxCompletionPortThreads = 1000;
+    }
+
+
 
     public abstract class ServiceHostBase : IDisposable
     {
@@ -268,7 +290,6 @@ namespace Gigya.Microdot.Hosting.Service
             }
         }
 
-
         protected void VerifyConfigurationsIfNeeded(
             MicrodotHostingConfig hostingConfig, ConfigurationVerificator configurationVerificator)
         {
@@ -280,7 +301,6 @@ namespace Gigya.Microdot.Hosting.Service
                         + badConfigs.Aggregate(new StringBuilder(), (sb, bc) => sb.Append(bc).Append('\n')));
             }
         }
-
 
         /// <summary>
         /// Waits for the service to finish starting. Mainly used from tests.
@@ -311,6 +331,21 @@ namespace Gigya.Microdot.Hosting.Service
             Stop();
             WaitForServiceGracefullyStoppedAsync().Wait(5000);
             Dispose();
+        }
+
+        protected void SetThreadPoolConfigurations(MicrodotHostingThreadPoolConfig config)
+        {
+            if (config != null)
+            {
+                if (config.MinThreadOverrideEnabled == true)
+                {
+                    ThreadPool.SetMinThreads(config.MinWorkerThreads, config.MinCompletionPortThreads);
+                }
+                if (config.MaxThreadOverrideEnabled == true)
+                {
+                    ThreadPool.SetMaxThreads(config.MaxWorkerThreads, config.MaxCompletionPortThreads);
+                }
+            }
         }
 
         protected virtual void Dispose(bool disposing)

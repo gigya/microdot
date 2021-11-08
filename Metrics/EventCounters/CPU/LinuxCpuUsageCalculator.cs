@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Metrics.EventCounters.Linux.CPU
+namespace Metrics.EventCounters.CPU
 {
 
     public class LinuxCpuUsageCalculator : CpuUsageCalculator<LinuxInfo>

@@ -70,9 +70,6 @@ namespace Gigya.Microdot.Ninject.Host
 
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
 
-            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
-            Kernel.Bind<IWorkloadMetrics>().To<WorkloadMetricsLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux));
-
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
 
@@ -93,6 +90,8 @@ namespace Gigya.Microdot.Ninject.Host
             this.OnInitilize(Kernel);
 
             VerifyConfigurationsIfNeeded(Kernel.Get<MicrodotHostingConfig>(), Kernel.Get<ConfigurationVerificator>());
+
+            this.SetThreadPoolConfigurations(Kernel);
 
             this.Warmup(Kernel);
 
@@ -127,6 +126,14 @@ namespace Gigya.Microdot.Ninject.Host
             }
 
             Dispose();
+        }
+
+        /// <summary>
+        /// An extensibility point - used to change default values of .Net ThreadPool.
+        /// </summary>
+        protected virtual void SetThreadPoolConfigurations(IKernel kernel)
+        {
+            base.SetThreadPoolConfigurations(kernel.Get<MicrodotHostingThreadPoolConfig>());
         }
 
         /// <summary>

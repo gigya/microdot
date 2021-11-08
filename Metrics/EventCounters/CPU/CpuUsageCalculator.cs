@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Metrics.EventCounters.Linux.CPU
+namespace Metrics.EventCounters.CPU
 {
     public abstract class CpuUsageCalculator<T> : ICpuUsageCalculator where T : ProcessInfo
     {
