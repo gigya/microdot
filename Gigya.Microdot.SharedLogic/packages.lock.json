@@ -125,7 +125,7 @@
       "gigya.microdot.interfaces": {
         "type": "Project",
         "dependencies": {
-          "Gigya.Microdot.LanguageExtensions": "4.0.1",
+          "Gigya.Microdot.LanguageExtensions": "4.0.0",
           "Newtonsoft.Json": "13.0.1"
         }
       },
