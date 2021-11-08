@@ -71,8 +71,8 @@
       },
       "Gigya.ServiceContract": {
         "type": "Transitive",
-        "resolved": "4.0.0-beta3533",
-        "contentHash": "lnveW64v9mQmJma1KQK5KKoI8BhNFS+/fWTJaCSsyXvTFXOse0E9Pwc2Y2peLtoSgummGTbKADDwQx7DM7Kllw==",
+        "resolved": "4.0.1",
+        "contentHash": "BWX+W0k4cjnW37Ti+1L1LS2/B0S8GVvUcNvPiltn1i6hmXqMcyW1GZ4+AKyw/lFeU7AjY4QFCxg7emew9kILyQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }
@@ -1728,7 +1728,7 @@
         "type": "Project",
         "dependencies": {
           "Gigya.Microdot.Interfaces": "4.0.0",
-          "Gigya.ServiceContract": "4.0.0-beta3533",
+          "Gigya.ServiceContract": "4.0.1",
           "Metrics": "4.0.0",
           "Microsoft.CSharp": "4.7.0",
           "System.ValueTuple": "4.5.0"
