@@ -7,6 +7,7 @@
 		<PackageReference Update="Gigya.ServiceContract" Version="4.0.1"/>
 	</ItemGroup>
 
+	
 	<ItemGroup Label="Orleans">	
 		<PackageReference Update="Microsoft.Orleans.CodeGenerator.MSBuild" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansRuntime" Version="$(Orleans_Version)"/>	
