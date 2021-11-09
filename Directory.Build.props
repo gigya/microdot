@@ -10,6 +10,7 @@
 		<Version>4.0.0$(VersionSuffix)</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
+	
 	<PropertyGroup>
 		<TargetFrameworks>net5.0</TargetFrameworks>
 		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>		
