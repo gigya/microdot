@@ -7,10 +7,9 @@
 		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
-		<Version>4.0.0$(VersionSuffix)</Version>
+		<Version>4.0.2$(VersionSuffix)</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	</PropertyGroup>
-	
+	</PropertyGroup>	
 	<PropertyGroup>
 		<TargetFrameworks>net5.0</TargetFrameworks>
 		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>		
@@ -20,16 +19,12 @@
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-		<NoWarn>CS0612</NoWarn>
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
-		<RestoreLockedMode>true</RestoreLockedMode>		
+		<NoWarn>CS0612</NoWarn>		
 	</PropertyGroup>	
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
 	</Target>
-
 	<PropertyGroup Label="GC configuration for service">
 		<ServerGarbageCollection>true</ServerGarbageCollection>
 		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>

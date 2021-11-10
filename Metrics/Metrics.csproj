@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Metrics</AssemblyTitle>
+		<PackageId>Gigya.Metrics</PackageId>
 		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>
 	</PropertyGroup>
 	<ItemGroup>
