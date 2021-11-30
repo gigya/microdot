@@ -7,23 +7,27 @@
 		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
-		<Version>4.0.3$(VersionSuffix)</Version>
+		<Version>4.5.0$(VersionSuffix)</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>	
 	<PropertyGroup>
-		<TargetFrameworks>net5.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net5.0;net6.0</TargetFrameworks>
 		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>		
-		<LangVersion>8.0</LangVersion>
+		<LangVersion>latest</LangVersion>
 		<IncludeSymbols>true</IncludeSymbols>
-		<OutputType>Library</OutputType>				
+		<OutputType>Library</OutputType>
+		<IsPublishable>false</IsPublishable>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
 		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-		<NoWarn>CS0612</NoWarn>		
-	</PropertyGroup>	
+		<NoWarn>NU1701;CS0612;CS1998</NoWarn>		
+	</PropertyGroup>
+	<Target Name="SignDlls" AfterTargets="AfterBuild" Condition="'$(teamcity_server_url)'!=''" >
+		<Exec Command="$(full_command_to_sign) $(OutputPath)*.dll" />
+	</Target>
 	<Target Name="CopyPackage" AfterTargets="Pack">
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(SolutionDir)nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(SolutionDir)symbolPackages" />
 	</Target>
 	<PropertyGroup Label="GC configuration for service">
 		<ServerGarbageCollection>true</ServerGarbageCollection>

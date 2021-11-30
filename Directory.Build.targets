@@ -1,39 +1,38 @@
 <Project>
 	<PropertyGroup>
-		<Orleans_Version>3.5.0</Orleans_Version>
+		<Orleans_Version>3.5.1</Orleans_Version>
 	</PropertyGroup>
 
 	<ItemGroup Label="Gigya">
 		<PackageReference Update="Gigya.ServiceContract" Version="4.0.2"/>
 	</ItemGroup>
 
-	
-	<ItemGroup Label="Orleans">	
+	<ItemGroup Label="Orleans">
 		<PackageReference Update="Microsoft.Orleans.CodeGenerator.MSBuild" Version="$(Orleans_Version)"/>
-		<PackageReference Update="Microsoft.Orleans.OrleansRuntime" Version="$(Orleans_Version)"/>	
+		<PackageReference Update="Microsoft.Orleans.OrleansRuntime" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Connections.Security" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansZooKeeperUtils" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="$(Orleans_Version)"/>
-		<PackageReference Update="OrleansDashboard" Version="3.5.2"/>
-		<PackageReference Update="Microsoft.Orleans.OrleansSqlUtils" Version="2.4.5"/>		
+		<PackageReference Update="Microsoft.Orleans.OrleansSqlUtils" Version="2.4.5"/>
+		<!--<PackageReference Update="OrleansDashboard" Version="3.6.1"/>-->
 	</ItemGroup>
 
 	<ItemGroup Label="External_Libraries">
 		<PackageReference Update="Newtonsoft.Json" Version="13.0.1"/>
-		<PackageReference Update="Nito.AsyncEx" Version="5.1.2"/>		
+		<PackageReference Update="Nito.AsyncEx" Version="5.1.2"/>
 		<PackageReference Update="Ninject.Extensions.Conventions" Version="3.3.0"/>
 		<PackageReference Update="Ninject.Extensions.Factory" Version="3.3.3"/>
-		<PackageReference Update="NLog" Version="4.7.12"/>		
+		<PackageReference Update="NLog" Version="4.7.12"/>
 	</ItemGroup>
 
-	<ItemGroup Label="Test">		
-		<PackageReference Update="NSubstitute" Version="4.2.2"/>		
+	<ItemGroup Label="Test">
+		<PackageReference Update="NSubstitute" Version="4.2.2"/>
 		<PackageReference Update="Shouldly" Version="4.0.3"/>
-		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0"/>		
+		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
 		<PackageReference Update="NUnit" Version="3.13.2"/>
-		<PackageReference Update="NUnit3TestAdapter" Version="4.0.0"/>
+		<PackageReference Update="NUnit3TestAdapter" Version="4.1.0"/>
 		<PackageReference Update="FluentAssertions" Version="6.2.0"/>
-		<PackageReference Update="RichardSzalay.MockHttp" Version="6.0.0"/>		
+		<PackageReference Update="RichardSzalay.MockHttp" Version="6.0.0"/>
 	</ItemGroup>
 
 	<ItemGroup Label="Microsoft">
@@ -41,9 +40,15 @@
 	</ItemGroup>
 
 	<ItemGroup Label="System">
-		<PackageReference Update="System.Configuration.ConfigurationManager" Version="5.0.0"/>
-		<PackageReference Update="System.Diagnostics.PerformanceCounter" Version="5.0.1"/>			
-		<PackageReference Update="System.Runtime.Caching" Version="5.0.0"/>				
-		<PackageReference Update="System.ValueTuple" Version="4.5.0"/>		
+		<PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.0"/>
+		<PackageReference Update="System.Diagnostics.PerformanceCounter" Version="6.0.0"/>
+		<PackageReference Update="System.Runtime.Caching" Version="6.0.0"/>
+		<PackageReference Update="System.ValueTuple" Version="4.5.0"/>
+		<PackageReference Update="System.Threading.Tasks.Dataflow" Verson="6.0.0" />
+		<PackageReference Update="System.Threading.Tasks.Dataflow" Version="6.0.0" />
+		<PackageReference Update="System.ComponentModel.Annotations" Version="5.0.0" />
+		<PackageReference Update="System.Collections.Immutable" Version="6.0.0" />
+		<PackageReference Update="System.Reflection.DispatchProxy" Version="4.7.1" />
+		<PackageReference Update="System.Net.Http" Version="4.3.4" />
 	</ItemGroup>
 </Project>

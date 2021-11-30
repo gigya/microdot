@@ -179,10 +179,10 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
             string netCoreExceptionJson = null;
-            Assembly asm = Assembly.GetExecutingAssembly();
-            using( Stream rsrcStream = asm.GetManifestResourceStream(strResourceName))
+            System.Reflection.Assembly asm = System.Reflection.Assembly.GetExecutingAssembly();
+            using(System.IO.Stream rsrcStream = asm.GetManifestResourceStream(strResourceName))
             {
-                using (StreamReader sRdr = new StreamReader(rsrcStream))
+                using (System.IO.StreamReader sRdr = new System.IO.StreamReader(rsrcStream))
                 {
                     //For instance, gets it as text
                     netCoreExceptionJson = sRdr.ReadToEnd();
@@ -219,21 +219,20 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     "false")
             });
 
-            var conf = _unitTestingKernel.Get<Func<ExceptionSerializationConfig>>();
             string strResourceName = "Gigya.Microdot.UnitTests.ServiceProxyTests.ExceptionFromNetCore.json";
 
             string netCoreExceptionJson = null;
-            Assembly asm = Assembly.GetExecutingAssembly();
-            using( Stream rsrcStream = asm.GetManifestResourceStream(strResourceName))
+            System.Reflection.Assembly asm = System.Reflection.Assembly.GetExecutingAssembly();
+            using(System.IO.Stream rsrcStream = asm.GetManifestResourceStream(strResourceName))
             {
-                using (StreamReader sRdr = new StreamReader(rsrcStream))
+                using (System.IO.StreamReader sRdr = new System.IO.StreamReader(rsrcStream))
                 {
                     //For instance, gets it as text
                     netCoreExceptionJson = sRdr.ReadToEnd();
                 }
             }
             
-            Assert.Throws<JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
+            Assert.Throws<Newtonsoft.Json.JsonSerializationException>(() => ExceptionSerializer.Deserialize(netCoreExceptionJson));
         }
 #endif
     }

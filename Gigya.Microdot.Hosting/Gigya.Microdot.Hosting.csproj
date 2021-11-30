@@ -3,16 +3,12 @@
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Hosting</AssemblyTitle>
 		<Description>Infrastructure used for hosting Microdot services, part of the Microdot framework.</Description>
-		<PackageTags>gigya microdot microservice microservices</PackageTags>
-		<DefineConstants>CODE_ANALYSIS;DEBUG;TRACE</DefineConstants>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>		
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Metrics\Metrics.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="System.ValueTuple" />		
 	</ItemGroup>
 </Project>

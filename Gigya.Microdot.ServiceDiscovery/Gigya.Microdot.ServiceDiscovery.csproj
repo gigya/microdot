@@ -21,8 +21,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.CSharp" />		
-		<PackageReference Include="System.ValueTuple" />
+	<ItemGroup>		
+		<PackageReference Include="System.Collections.Immutable" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" />
 	</ItemGroup>
 </Project>

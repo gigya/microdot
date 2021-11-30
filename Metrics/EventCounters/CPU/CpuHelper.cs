@@ -25,7 +25,10 @@ namespace Metrics.EventCounters.CPU
         {
             try
             {
-                return NumberOfSetBits(process.ProcessorAffinity.ToInt64());
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    return NumberOfSetBits(process.ProcessorAffinity.ToInt64());
+
+                throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
             }
             catch (NotSupportedException)
             {

@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
@@ -10,8 +11,6 @@
 		<ProjectReference Include="..\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="System.ValueTuple" />
 		<PackageReference Include="NUnit3TestAdapter" />
 		<PackageReference Include="Microsoft.NET.Test.SDK" />
 	</ItemGroup>

@@ -2,12 +2,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Sample.CalculatorService.Interface</AssemblyTitle>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageReference Include="Gigya.ServiceContract" />
-	</ItemGroup>
+	</PropertyGroup>	
 	<Target Name="CopyPackage" AfterTargets="Pack">
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\..\nugetPackages" />
 		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\..\symbolPackages" />
 	</Target>
+	<ItemGroup>
+		<PackageReference Include="Gigya.ServiceContract" />
+	</ItemGroup>
 </Project>

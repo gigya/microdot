@@ -261,3 +261,4 @@ OrleansAdoNetContent/
 /.paket/
 /testlogs/
 /CustomEvent
+/output*

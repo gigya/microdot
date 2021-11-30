@@ -86,9 +86,9 @@ namespace Gigya.Microdot.ServiceProxy
         /// network.
         /// </summary>
         public Action<HttpServiceRequest> PrepareRequest { get; set; }
-        [Obsolete]
+        [Obsolete("Will be removed in feature versions")]
         public ISourceBlock<string> EndPointsChanged => null;
-        [Obsolete]
+        [Obsolete("Will be removed in feature versions")]
         public ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged => null;
         private TimeSpan? Timeout { get; set; }
 
@@ -129,8 +129,6 @@ namespace Gigya.Microdot.ServiceProxy
         private bool Disposed { get; set; }
 
         private CurrentApplicationInfo AppInfo { get; }
-
-        private ObjectPool<Stopwatch> _stopwatchPool = new ObjectPool<Stopwatch>(() => new Stopwatch(), 4096);
 
         public ServiceProxyProvider(string serviceName, IEventPublisher<ClientCallEvent> eventPublisher,
             ILog log,
@@ -288,7 +286,7 @@ namespace Gigya.Microdot.ServiceProxy
             if (port == null)
                 throw new Exception("No port is configured");
 
-            Func<bool, (HttpClient client, bool isHttps)> clientFactory = tryHttps  => GetHttpClient(config, GetDiscoveryConfig(), tryHttps, node.Hostname, port.Value);
+            (HttpClient client, bool isHttps) clientFactory(bool tryHttps) => GetHttpClient(config, GetDiscoveryConfig(), tryHttps, node.Hostname, port.Value);
             return ValidateReachability(node.Hostname, port.Value, fallbackOnProtocolError: true, clientFactory: clientFactory, cancellationToken: cancellationToken);
         }
 

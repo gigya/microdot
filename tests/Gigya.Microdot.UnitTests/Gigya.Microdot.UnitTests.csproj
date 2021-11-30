@@ -2,7 +2,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
-		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>		
+		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 	</PropertyGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
@@ -13,7 +14,6 @@
 		<ProjectReference Include="..\..\Gigya.Microdot.Testing.Shared\Gigya.Microdot.Testing.Shared.csproj" />
 	</ItemGroup>
 	<ItemGroup>	
-		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="FluentAssertions" />
 		<PackageReference Include="NUnit" />
