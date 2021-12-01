@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.Versioning;
+#endif
 
 namespace Metrics.EventCounters.CPU
 {
@@ -16,19 +19,24 @@ namespace Metrics.EventCounters.CPU
                 calculator = new LinuxCpuUsageCalculator();
             else
                 throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
-            
+
             calculator.Init();
 
             return calculator;
         }
+
+#if NET6_0_OR_GREATER
+        [SupportedOSPlatformGuard("windows")]
+        [SupportedOSPlatformGuard("linux")]
+#endif
         public static long GetNumberOfActiveCores(Process process)
         {
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     return NumberOfSetBits(process.ProcessorAffinity.ToInt64());
-
-                throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
+                else
+                    throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
             }
             catch (NotSupportedException)
             {

@@ -2,8 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.SharedLogic</AssemblyTitle>
-		<Description>Various components and utilities shared between different parts of the Microdot framework.</Description>
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
+		<Description>Various components and utilities shared between different parts of the Microdot framework.</Description>		
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
