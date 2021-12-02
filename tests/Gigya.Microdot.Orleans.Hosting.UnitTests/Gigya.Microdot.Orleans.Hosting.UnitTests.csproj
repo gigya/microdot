@@ -9,9 +9,6 @@
 		<None Update="loadPaths.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-	</ItemGroup>
-	<ItemGroup>
-		<Compile Remove="Microservice\GrainAgeLimitTestService\GrainAgeLimitTestServiceHost.cs" />
 	</ItemGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
