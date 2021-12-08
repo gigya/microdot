@@ -27,4 +27,10 @@
 		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />			
 	</ItemGroup>
+
+	<ItemGroup Label="WS issues">
+		<PackageReference Include="System.Text.RegularExpressions" />
+		<PackageReference Include="System.Text.Encodings.Web" />
+		<PackageReference Include="System.Net.Http" />
+	</ItemGroup>
 </Project>	
