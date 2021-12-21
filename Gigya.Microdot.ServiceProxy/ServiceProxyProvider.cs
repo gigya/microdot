@@ -496,10 +496,19 @@ namespace Gigya.Microdot.ServiceProxy
                 }
                 catch (HttpRequestException ex)
                 {
+                    var configList = new List<string>();
+
+
                     //In case we get any https request exception and we were trying HTTPs we must fallback to HTTP
                     //otherwise we will be stuck trying HTTPs because we didn't change the Http client and will probably 
                     //get different error than Tls errors
-                    if (allowNonHttps && isHttps)
+                    if (   allowNonHttps 
+                        && isHttps 
+                        && (
+                                ex.Message == null 
+                            || 
+                                (discoveryConfig.CertificateErrorMessageSubstrings??Enumerable.Empty<string>()).Any(ex.Message.Contains))
+                            )
                     {
                         tryHttps = false;
                         continue;
