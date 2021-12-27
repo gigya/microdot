@@ -46,7 +46,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         {
             _testinghost = new NonOrleansServiceTester<ConfigurableHost<IDemoService>>();
 
-        //    Metric.Context("Service");
             TracingContext.SetRequestID("1");
         }
         
@@ -56,7 +55,6 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             try
             {
                 _testinghost.Dispose();
-             //   Metric.ShutdownContext("Service");
             }
             catch
             {
