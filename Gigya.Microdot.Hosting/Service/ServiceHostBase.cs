@@ -47,6 +47,8 @@ namespace Gigya.Microdot.Hosting.Service
         public bool ExtendedDelaysTimeLogging = true;
         public List<string> StatusEndpoints = new List<string>();
         public bool ShouldLogStatusEndpoint = false;
+        public bool GCEndpointEnabled = false;
+        public TimeSpan? GcEndpointCooldown = TimeSpan.FromHours(1);
     }
 
     [ConfigurationRoot("Microdot.Hosting.ThreadPool", RootStrategy.ReplaceClassNameWithPath)]
