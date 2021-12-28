@@ -24,7 +24,11 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
             if (gcHandleResult.Successful)
             {
                 await writeResponse(
-                    JsonConvert.SerializeObject(gcHandleResult)
+                    JsonConvert.SerializeObject(new
+                    {
+                        gcHandleResult.Message,
+                        gcHandleResult.GcCollectionResult
+                    })
                     ).ConfigureAwait(false);
                 
                 return true;

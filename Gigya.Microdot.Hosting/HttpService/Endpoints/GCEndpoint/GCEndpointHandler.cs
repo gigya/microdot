@@ -74,7 +74,6 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
             }
             else
             {
-                _logger.Info(log=>log("GC endpoint was called, but config is turned off"));
                 return new GCHandlingResult(false);
             }
 
