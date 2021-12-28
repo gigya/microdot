@@ -840,7 +840,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     .Respond(req =>
                     {
                         if (httpsMethodCalled)
-                            throw new HttpRequestException("", new WebException("", WebExceptionStatus.ProtocolError));
+                            throw new HttpRequestException("Element not found", new WebException("", WebExceptionStatus.ProtocolError));
                         if (req.RequestUri.AbsoluteUri == $"https://{host}:{port + httpsPortOffset}/")
                         {
                             httpsTestCount++;
