@@ -10,9 +10,11 @@
 		<ProjectReference Include="..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.ServiceProxy\Gigya.Microdot.ServiceProxy.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.CSharp" />
+	<ItemGroup>		
 		<PackageReference Include="Ninject.Extensions.Conventions" />
-		<PackageReference Include="Ninject.Extensions.Factory" />
+		<PackageReference Include="Ninject.Extensions.Factory" />			
 	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+	</ItemGroup>	
 </Project>

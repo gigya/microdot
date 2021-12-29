@@ -12,7 +12,4 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.CSharp" />
-	</ItemGroup>
 </Project>

@@ -21,13 +21,7 @@
 #endregion
 
 using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
-using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.Testing.Service;
 using Gigya.Microdot.Testing.Shared.Service;

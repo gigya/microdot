@@ -11,8 +11,7 @@
 			<Link>Endpoints\metrics_32.png</Link>
 		</EmbeddedResource>
 	</ItemGroup>
-	<ItemGroup>	
-		<PackageReference Include="Microsoft.CSharp" />
+	<ItemGroup>			
 		<PackageReference Include="System.Configuration.ConfigurationManager" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" />
 	</ItemGroup>
