@@ -33,7 +33,6 @@ using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Ninject;
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Gigya.Microdot.Ninject.Host

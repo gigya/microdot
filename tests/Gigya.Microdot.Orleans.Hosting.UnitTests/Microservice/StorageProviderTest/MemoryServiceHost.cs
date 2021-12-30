@@ -4,15 +4,10 @@ using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.Validators;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
-using Ninject.Syntax;
-using Orleans;
 using Orleans.Hosting;
-using Orleans.Providers;
-using System.Threading.Tasks;
 using static Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService.CalculatorServiceHost;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderTest

@@ -14,8 +14,7 @@
 		<ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
 		<ProjectReference Include="..\Metrics\Metrics.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="System.ValueTuple" />		
+	<ItemGroup>		
 		<PackageReference Include="System.Runtime.Caching" />		
 		<PackageReference Include="Nito.AsyncEx" />
 	</ItemGroup>

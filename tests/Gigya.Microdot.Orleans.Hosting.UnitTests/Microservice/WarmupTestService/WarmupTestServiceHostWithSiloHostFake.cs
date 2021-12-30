@@ -1,6 +1,4 @@
-﻿using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
+﻿using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.SharedLogic;
 using Ninject;
 

@@ -12,4 +12,7 @@
 	<ItemGroup>		
 		<PackageReference Include="NLog" />
 	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+	</ItemGroup>
 </Project>

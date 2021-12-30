@@ -10,7 +10,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
-		<PackageReference Include="Microsoft.CSharp" />
-		<PackageReference Include="System.ValueTuple" />
+	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
 	</ItemGroup>
 </Project>
