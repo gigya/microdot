@@ -54,6 +54,14 @@ namespace Gigya.Microdot.Fakes
             }
         }
 
+        public void ClearLog()
+        {
+            lock (LogEntriesList)
+            {
+                LogEntriesList.Clear();
+            }
+        }
+
 
         protected override Task<bool> WriteLog(TraceEventType severity, LogCallSiteInfo logCallSiteInfo, string message, IDictionary<string, string> encryptedTags, IDictionary<string, string> unencryptedTags, Exception exception = null, string stackTrace = null)
         {            

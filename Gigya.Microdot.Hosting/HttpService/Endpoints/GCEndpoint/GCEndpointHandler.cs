@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
@@ -17,16 +18,17 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
         private readonly Func<MicrodotHostingConfig> _microdotHostingConfigFactory;
         private readonly ILog _logger;
         private readonly IGCCollectionRunner _gcCollectionRunner;
-        private readonly IDateTime _dateTime;
+        private readonly IGCTokenHandler _gcTokenHandler;
 
-        public DateTime LastCalled = DateTime.MinValue;
-
-        public GCEndpointHandler(Func<MicrodotHostingConfig> microdotHostingConfigFactory, ILog logger, IGCCollectionRunner gcCollectionRunner, IDateTime dateTime)
+        public GCEndpointHandler(Func<MicrodotHostingConfig> microdotHostingConfigFactory, 
+            ILog logger, 
+            IGCCollectionRunner gcCollectionRunner, 
+            IGCTokenHandler gcTokenHandler)
         {
             _microdotHostingConfigFactory = microdotHostingConfigFactory;
             _logger = logger;
             _gcCollectionRunner = gcCollectionRunner;
-            _dateTime = dateTime;
+            _gcTokenHandler = gcTokenHandler;
         }
 
         public async Task<GCHandlingResult> Handle(Uri url, NameValueCollection queryString)
@@ -36,25 +38,18 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
 
             var config = _microdotHostingConfigFactory();
 
-
             if (config.GCEndpointEnabled)
             {
-                var now = _dateTime.UtcNow;
-                var configGcEndpointCooldown = config.GcEndpointCooldown;
-
-                var gcTypeQueryParam = queryString.Get("gcType");
                 
-                if (false == Enum.TryParse(gcTypeQueryParam, out GCType gcType))
-                {
-                    return new GCHandlingResult(true, "GCEndpoint called with unsupported GCType" );
-                }
+                if (_gcTokenHandler.TryProcessAsTokenGenerationRequest(queryString, out var additionalInfo))
+                    return new GCHandlingResult(true, additionalInfo);
 
-                if (false == AssertCoolDownTime(configGcEndpointCooldown, now, out var gcEndpointCooldownWaitTimeLeft)) 
-                    return new GCHandlingResult(true,
-                        $"GC call cooldown in effect, will be ready in {gcEndpointCooldownWaitTimeLeft}");
+                if (false == _gcTokenHandler.ValidateToken(queryString, out additionalInfo))
+                    return new GCHandlingResult(true, additionalInfo);
 
-                LastCalled = now; 
-                    
+                if (false == _gcTokenHandler.ValidateGcType(queryString, out additionalInfo, out var gcType))
+                    return new GCHandlingResult(true, additionalInfo);
+
                 var gcCollectionResult = _gcCollectionRunner.Collect(gcType);
 
                 _logger.Info(log=>log("GC endpoint was called",unencryptedTags:new
@@ -75,32 +70,6 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
             else
             {
                 return new GCHandlingResult(false);
-            }
-
-            bool AssertCoolDownTime(TimeSpan? configGcEndpointCooldown, DateTime now, out TimeSpan gcEndpointCooldownWaitTimeLeft)
-            {
-                if (configGcEndpointCooldown != null
-                    && configGcEndpointCooldown.HasValue)
-                {
-                    gcEndpointCooldownWaitTimeLeft =
-                        now - this.LastCalled - configGcEndpointCooldown.Value;
-
-                    if (gcEndpointCooldownWaitTimeLeft < TimeSpan.Zero)
-                    {
-                        gcEndpointCooldownWaitTimeLeft = gcEndpointCooldownWaitTimeLeft.Negate();
-                        return false;
-                    }
-                    else
-                    {
-                        gcEndpointCooldownWaitTimeLeft = TimeSpan.Zero;
-                    }
-                }
-                else
-                {
-                    gcEndpointCooldownWaitTimeLeft = TimeSpan.MaxValue;
-                }
-
-                return true;
             }
         }
     }
