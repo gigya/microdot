@@ -47,7 +47,7 @@ namespace Gigya.Microdot.Hosting.Service
         public List<string> StatusEndpoints = new List<string>();
         public bool ShouldLogStatusEndpoint = false;
         public bool GCEndpointEnabled = false;
-        public TimeSpan? GcEndpointCooldown = TimeSpan.FromHours(1);
+        public TimeSpan? GCGetTokenCooldown = TimeSpan.FromHours(1);
     }
 
     public abstract class ServiceHostBase : IDisposable
