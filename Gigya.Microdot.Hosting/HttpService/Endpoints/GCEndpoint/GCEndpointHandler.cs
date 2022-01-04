@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Specialized;
+using System.Net;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
@@ -10,28 +11,25 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
 {
     public interface IGCEndpointHandler
     {
-        Task<GCHandlingResult> Handle(Uri url, NameValueCollection queryString);
+        Task<GCHandlingResult> Handle(Uri url, NameValueCollection queryString, IPAddress ipAddress);
     }
     
     public class GCEndpointHandler : IGCEndpointHandler
     {
         private readonly Func<MicrodotHostingConfig> _microdotHostingConfigFactory;
         private readonly ILog _logger;
-        private readonly IGCCollectionRunner _gcCollectionRunner;
-        private readonly IGCTokenHandler _gcTokenHandler;
+        private readonly IGCEndpointHandlerUtils _gcEndpointHandlerUtils;
 
         public GCEndpointHandler(Func<MicrodotHostingConfig> microdotHostingConfigFactory, 
             ILog logger, 
-            IGCCollectionRunner gcCollectionRunner, 
-            IGCTokenHandler gcTokenHandler)
+            IGCEndpointHandlerUtils gcEndpointHandlerUtils)
         {
             _microdotHostingConfigFactory = microdotHostingConfigFactory;
             _logger = logger;
-            _gcCollectionRunner = gcCollectionRunner;
-            _gcTokenHandler = gcTokenHandler;
+            _gcEndpointHandlerUtils = gcEndpointHandlerUtils;
         }
-
-        public async Task<GCHandlingResult> Handle(Uri url, NameValueCollection queryString)
+        
+        public async Task<GCHandlingResult> Handle(Uri url, NameValueCollection queryString, IPAddress ipAddress)
         {
             if (url.AbsolutePath != "/force-traffic-affecting-gc")
                 return new GCHandlingResult(false);
@@ -41,24 +39,24 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
             if (config.GCEndpointEnabled)
             {
                 
-                if (_gcTokenHandler.TryProcessAsTokenGenerationRequest(queryString, out var additionalInfo))
+                if (_gcEndpointHandlerUtils.TryProcessAsTokenGenerationRequest(queryString, ipAddress, out var additionalInfo))
                     return new GCHandlingResult(true, additionalInfo);
 
-                if (false == _gcTokenHandler.ValidateToken(queryString, out additionalInfo))
+                if (false == _gcEndpointHandlerUtils.ValidateToken(queryString, out additionalInfo))
                     return new GCHandlingResult(true, additionalInfo);
 
-                if (false == _gcTokenHandler.ValidateGcType(queryString, out additionalInfo, out var gcType))
+                if (false == _gcEndpointHandlerUtils.ValidateGcType(queryString, out additionalInfo, out var gcType))
                     return new GCHandlingResult(true, additionalInfo);
 
-                var gcCollectionResult = _gcCollectionRunner.Collect(gcType);
+                var gcCollectionResult = _gcEndpointHandlerUtils.Collect(gcType);
 
-                _logger.Info(log=>log("GC endpoint was called",unencryptedTags:new
+                _logger.Warn(log=>log("GC endpoint was called",unencryptedTags:new
                 {
                     GcType = gcType,
                     TotalMemoryAfterGC = gcCollectionResult.TotalMemoryAfterGC,
                     TotalMemoryBeforeGC = gcCollectionResult.TotalMemoryBeforeGC,
-                    GCDuration = gcCollectionResult.ElapsedMilliseconds
-                    
+                    GCDuration = gcCollectionResult.ElapsedMilliseconds,
+                    IPAddress = ipAddress.ToString()
                 }));
 
                 return new GCHandlingResult(

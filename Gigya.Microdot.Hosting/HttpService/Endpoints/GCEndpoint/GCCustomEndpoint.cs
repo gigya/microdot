@@ -16,24 +16,32 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
         }
         public async Task<bool> TryHandle(HttpListenerContext context, WriteResponseDelegate writeResponse)
         {
-            var url = context?.Request.Url;
-            var queryString = context?.Request.QueryString;
-
-            var gcHandleResult =  await _gcEndpointHandler.Handle(url, queryString);
-
-            if (gcHandleResult.Successful)
+            try
             {
-                await writeResponse(
-                    JsonConvert.SerializeObject(new
-                    {
-                        gcHandleResult.Message,
-                        gcHandleResult.GcCollectionResult
-                    })
+                var url = context?.Request.Url;
+                var sourceIPAddress = context?.Request.RemoteEndPoint?.Address;
+                var queryString = context?.Request.QueryString;
+
+                var gcHandleResult =  await _gcEndpointHandler.Handle(url, queryString, sourceIPAddress);
+
+                if (gcHandleResult.Successful)
+                {
+                    await writeResponse(
+                        JsonConvert.SerializeObject(new
+                        {
+                            gcHandleResult.Message,
+                            gcHandleResult.GcCollectionResult
+                        })
                     ).ConfigureAwait(false);
                 
-                return true;
+                    return true;
+                }
             }
-
+            catch (Exception e)
+            {            
+                // ignore exceptions
+            }
+            
             return false;
         }
     }

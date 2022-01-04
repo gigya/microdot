@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Gigya.Microdot.Fakes;
 using Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
@@ -21,20 +21,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
     public class GCEndpointTests
     {
         private IGCEndpointHandler _gcEndpointHandler;
-        private IGCCollectionRunner _gcCollectionrSub;
         private ILog _logger;
         private IDateTime _dateTime;
-        private IGCTokenHandler _gcTokenHandler;
+        private IGCEndpointHandlerUtils _gcEndpointHandlerUtils;
         private IGCTokenContainer _gcTokenContainer;
 
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
             _gcEndpointHandler = Substitute.For<IGCEndpointHandler>();
-            _gcCollectionrSub = Substitute.For<IGCCollectionRunner>();
             _logger = Substitute.For<ILog>();
             _dateTime = Substitute.For<IDateTime>();
-            _gcTokenHandler = Substitute.For<IGCTokenHandler>();
+            _gcEndpointHandlerUtils = Substitute.For<IGCEndpointHandlerUtils>();
             _gcTokenContainer = Substitute.For<IGCTokenContainer>();
         }
         
@@ -42,11 +40,10 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public void Setup()
         {
             _gcEndpointHandler.ClearSubstitute();
-            _gcCollectionrSub.ClearSubstitute();
             _logger.ClearSubstitute();
             _dateTime.ClearSubstitute();
-            _gcTokenHandler.ClearSubstitute();
-            _gcTokenHandler.ClearSubstitute();
+            _gcEndpointHandlerUtils.ClearSubstitute();
+            _gcEndpointHandlerUtils.ClearSubstitute();
         }
         
         [Test]
@@ -57,7 +54,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
                 new GCHandlingResult(true, "foo bar", gcCollectionResult);
             
             _gcEndpointHandler
-                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>())
+                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>(), Arg.Any<IPAddress>())
                 .Returns(Task.FromResult(gcHandlingResult));
             
             var responses = new List<(string, HttpStatusCode, string)>();
@@ -67,7 +64,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 
             var receivedCalls = _gcEndpointHandler
                 .Received(1)
-                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>());
+                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>(), Arg.Any<IPAddress>());
             
             Assert.AreEqual(true, tryHandleResult);
             Assert.AreEqual(1, responses.Count());
@@ -82,7 +79,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task NotHandledGcEndpointTest()
         {
             _gcEndpointHandler
-                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>())
+                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>(), Arg.Any<IPAddress>())
                 .Returns(Task.FromResult(new GCHandlingResult(false)));
             
             var responses = new List<(string, HttpStatusCode, string)>();
@@ -92,7 +89,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 
             var receivedCalls = _gcEndpointHandler
                 .Received(1)
-                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>());
+                .Handle(Arg.Any<Uri>(), Arg.Any<NameValueCollection>(), Arg.Any<IPAddress>());
             
             Assert.AreEqual(false, tryHandleResult);
             Assert.AreEqual(0, responses.Count());
@@ -104,13 +101,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             var gcEndpointHandler = new GCEndpointHandler(() => new MicrodotHostingConfig()
             {
                 GCEndpointEnabled = false
-            }, _logger, _gcCollectionrSub, _gcTokenHandler);
+            }, _logger, _gcEndpointHandlerUtils);
 
             var gcHandlingResult = await gcEndpointHandler
                 .Handle(new Uri("http://my-host-name/force-traffic-affecting-gc"), new NameValueCollection()
                 {
                     { "gcType", "gen0" }
-                });
+                },IPAddress.Parse("20.30.40.50"));
             
             Assert.IsFalse(gcHandlingResult.Successful);
             Assert.IsNull(gcHandlingResult.Message);
@@ -124,13 +121,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             {
                 GCEndpointEnabled = true
             }, 
-                _logger, _gcCollectionrSub, _gcTokenHandler);
+                _logger, _gcEndpointHandlerUtils);
 
             var gcHandlingResult = await gcEndpointHandler
                 .Handle(new Uri("http://my-host-name/not-matching-path"), new NameValueCollection()
-            {
-                { "gcType", "someGcType" }
-            });
+                {
+                    { "gcType", "someGcType" }
+                },IPAddress.Parse("20.30.40.50"));
             
             Assert.IsFalse(gcHandlingResult.Successful);
             Assert.IsNull(gcHandlingResult.Message);
@@ -141,22 +138,26 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task GCEndpointHandlerTest_Config_On_Token_Generation_Failed()
         {
             var expectedMessage = "Some Token Generation Failed Message";
-            _gcTokenHandler.TryProcessAsTokenGenerationRequest(
+            _gcEndpointHandlerUtils.TryProcessAsTokenGenerationRequest(
                 Arg.Any<NameValueCollection>(),
+                Arg.Any<IPAddress>(),
                 out Arg.Any<string>())
                 .Returns(x =>
                 {
-                    x[1] = expectedMessage;
+                    x[2] = expectedMessage;
                     return false;
                 });
             
             var gcEndpointHandler = new GCEndpointHandler(() => new MicrodotHostingConfig()
             {
                 GCEndpointEnabled = true
-            }, _logger, _gcCollectionrSub, _gcTokenHandler);
+            }, _logger,  _gcEndpointHandlerUtils);
 
             var gcHandlingResult = await gcEndpointHandler
-                .Handle(new Uri("http://my-host-name/force-traffic-affecting-gc"), new NameValueCollection());
+                .Handle(
+                    new Uri("http://my-host-name/force-traffic-affecting-gc"), 
+                    new NameValueCollection(),
+                    IPAddress.Parse("20.30.40.50"));
             
             Assert.IsTrue(gcHandlingResult.Successful);
             Assert.AreEqual(expectedMessage,gcHandlingResult.Message);
@@ -167,12 +168,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task GCEndpointHandlerTest_Config_On_Token_Validation_Failed()
         {
             var expectedMessage = "Some Token Validation Failed Message";
-            _gcTokenHandler.TryProcessAsTokenGenerationRequest(
+            _gcEndpointHandlerUtils.TryProcessAsTokenGenerationRequest(
                     Arg.Any<NameValueCollection>(),
+                    Arg.Any<IPAddress>(),
                     out Arg.Any<string>())
                 .Returns(false);
 
-            _gcTokenHandler.ValidateToken(Arg.Any<NameValueCollection>(),
+            _gcEndpointHandlerUtils.ValidateToken(Arg.Any<NameValueCollection>(),
                 out Arg.Any<string>()).Returns(x =>
             {
                 x[1] = expectedMessage;
@@ -182,10 +184,12 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             var gcEndpointHandler = new GCEndpointHandler(() => new MicrodotHostingConfig()
             {
                 GCEndpointEnabled = true
-            }, _logger, _gcCollectionrSub, _gcTokenHandler);
+            }, _logger, _gcEndpointHandlerUtils);
 
             var gcHandlingResult = await gcEndpointHandler
-                .Handle(new Uri("http://my-host-name/force-traffic-affecting-gc"), new NameValueCollection());
+                .Handle(new Uri("http://my-host-name/force-traffic-affecting-gc"), 
+                    new NameValueCollection(),
+                    IPAddress.Parse("20.30.40.50"));
             
             Assert.IsTrue(gcHandlingResult.Successful);
             Assert.AreEqual(expectedMessage,gcHandlingResult.Message);
@@ -197,10 +201,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         {
             var expectedMessage = "Some GcType Validation Failed Message";
 
-            _gcTokenHandler.TryProcessAsTokenGenerationRequest(Arg.Any<NameValueCollection>(),
+            _gcEndpointHandlerUtils.TryProcessAsTokenGenerationRequest(Arg.Any<NameValueCollection>(),
+                Arg.Any<IPAddress>(),
                 out Arg.Any<string>()).Returns(false);
             
-            _gcTokenHandler.ValidateGcType(
+            _gcEndpointHandlerUtils.ValidateGcType(
                     Arg.Any<NameValueCollection>(),
                     out Arg.Any<string>(), 
                     out Arg.Any<GCType>())
@@ -210,16 +215,19 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
                     return false;
                 });
 
-            _gcTokenHandler.ValidateToken(Arg.Any<NameValueCollection>(),
+            _gcEndpointHandlerUtils.ValidateToken(Arg.Any<NameValueCollection>(),
                 out Arg.Any<string>()).Returns(true);
             
             var gcEndpointHandler = new GCEndpointHandler(() => new MicrodotHostingConfig()
             {
                 GCEndpointEnabled = true
-            }, _logger, _gcCollectionrSub, _gcTokenHandler);
+            }, _logger, _gcEndpointHandlerUtils);
 
             var gcHandlingResult = await gcEndpointHandler
-                .Handle(new Uri("http://my-host-name/force-traffic-affecting-gc"), new NameValueCollection());
+                .Handle(
+                    new Uri("http://my-host-name/force-traffic-affecting-gc"), 
+                    new NameValueCollection(),
+                    IPAddress.Parse("20.30.40.50"));
             
             Assert.IsTrue(gcHandlingResult.Successful);
             Assert.AreEqual(expectedMessage,gcHandlingResult.Message);
@@ -230,7 +238,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task GCTokenHandlerTest_No_GcType()
         {
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -250,7 +258,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task GCTokenHandlerTest_Wrong_GcType()
         {
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -278,7 +286,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task GCTokenHandlerTest_Valid_GcType(string gcTypeString)
         {
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -301,7 +309,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         public async Task GCTokenHandlerTest_ValidateToken_No_Param()
         {
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -316,14 +324,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
                     out var additionalInfo);
 
             Assert.IsFalse(validateTokenResult);
-            Assert.AreEqual("Illegal or missing token", additionalInfo);
+            Assert.AreEqual("Illegal request", additionalInfo);
         }
         
         [Test]
         public async Task GCTokenHandlerTest_ValidateToken_UnrecognizedToken()
         {
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -338,14 +346,14 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
                     out var additionalInfo);
 
             Assert.IsFalse(validateTokenResult);
-            Assert.AreEqual("Illegal or missing token", additionalInfo);
+            Assert.AreEqual("Illegal request", additionalInfo);
         }
         
         [Test]
         public async Task GCTokenHandlerTest_ValidateToken_Illegal_Token()
         {
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -360,7 +368,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
                     out var additionalInfo);
 
             Assert.IsFalse(validateTokenResult);
-            Assert.AreEqual("Illegal or missing token", additionalInfo);
+            Assert.AreEqual("Illegal request", additionalInfo);
         }
         
         [Test]
@@ -370,7 +378,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             _gcTokenContainer.ValidateToken(Arg.Is<Guid>(expectedToken)).Returns(true);
             
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig(), 
                     _logger, 
                     _dateTime, 
@@ -393,12 +401,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             var now = DateTime.UtcNow;
             var generatedToken = Guid.NewGuid();
             _dateTime.UtcNow.Returns(now);
+            var ipAddress = IPAddress.Parse("40.30.40.80");
             
             _gcTokenContainer.GenerateToken().Returns(generatedToken);
             _gcTokenContainer.ValidateToken(Arg.Is<Guid>(x => x == generatedToken)).Returns(true);
             
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig()
                     {
                         GCGetTokenCooldown = null
@@ -409,10 +418,11 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 
             var nameValueCollection = new NameValueCollection();
             nameValueCollection.Add("getToken", null);
-            
+
             var generateTokenResult = 
                 gcTokenHandler.TryProcessAsTokenGenerationRequest(
-                    nameValueCollection, 
+                    nameValueCollection,
+                    ipAddress,
                     out var additionalInfo);
 
             Assert.IsTrue(generateTokenResult);
@@ -437,6 +447,9 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             var tags = logCalls.First().unencryptedTags;
             var loggedToken = tags.GetType().GetProperty("Token").GetValue(tags);
             Assert.AreEqual(generatedToken, loggedToken);
+            var loggedIP = tags.GetType().GetProperty("IPAddress").GetValue(tags);
+            Assert.AreEqual(ipAddress.ToString(), loggedIP);
+
         }
         
         [Test]
@@ -450,7 +463,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             _gcTokenContainer.ValidateToken(Arg.Is<Guid>(x => x == generatedToken)).Returns(true);
             
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig()
                     {
                         GCGetTokenCooldown = null
@@ -463,7 +476,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
 
             var generateTokenResult = 
                 gcTokenHandler.TryProcessAsTokenGenerationRequest(
-                    nameValueCollection, 
+                    nameValueCollection,
+                    IPAddress.Parse("40.33.78.111"),
                     out var additionalInfo);
 
             Assert.IsFalse(generateTokenResult);
@@ -481,7 +495,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             _gcTokenContainer.ValidateToken(Arg.Is<Guid>(x => x == generatedToken)).Returns(true);
             
             var gcTokenHandler =
-                new GCTokenHandler(
+                new GCEndpointHandlerUtils(
                     () => new MicrodotHostingConfig()
                     {
                         GCGetTokenCooldown = TimeSpan.FromMinutes(10)
@@ -495,7 +509,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             
             var generateTokenResult = 
                 gcTokenHandler.TryProcessAsTokenGenerationRequest(
-                    nameValueCollection, 
+                    nameValueCollection,
+                    IPAddress.Parse("40.33.78.111"),
                     out var additionalInfo);
 
             Assert.IsTrue(generateTokenResult);
@@ -505,7 +520,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             
             generateTokenResult = 
                 gcTokenHandler.TryProcessAsTokenGenerationRequest(
-                    nameValueCollection, 
+                    nameValueCollection,
+                    IPAddress.Parse("40.33.78.111"),
                     out additionalInfo);
 
             Assert.IsTrue(generateTokenResult);
@@ -515,7 +531,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             _dateTime.UtcNow.Returns(now.AddMinutes(11));
             generateTokenResult = 
                 gcTokenHandler.TryProcessAsTokenGenerationRequest(
-                    nameValueCollection, 
+                    nameValueCollection,
+                    IPAddress.Parse("40.33.78.111"),
                     out additionalInfo);
             
             Assert.IsTrue(generateTokenResult);
@@ -560,12 +577,18 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             var totalMemoryBeforeGc = 500;
             var totalMemoryAfterGc = 70;
             var elapsedMilliseconds = 33;
+            var ipAddress = IPAddress.Parse("40.33.78.111");
+            var logSpy = new LogSpy();
 
-            _gcTokenHandler.ValidateToken(Arg.Any<NameValueCollection>(), out Arg.Any<string>())
+
+            _gcEndpointHandlerUtils.ValidateToken(Arg.Any<NameValueCollection>(), out Arg.Any<string>())
                 .Returns(true);
-            _gcTokenHandler.TryProcessAsTokenGenerationRequest(Arg.Any<NameValueCollection>(), out Arg.Any<string>())
+            _gcEndpointHandlerUtils.TryProcessAsTokenGenerationRequest(
+                    Arg.Any<NameValueCollection>(),
+                    Arg.Any<IPAddress>(),
+                    out Arg.Any<string>())
                 .Returns(false);
-            _gcTokenHandler.ValidateGcType(
+            _gcEndpointHandlerUtils.ValidateGcType(
                     Arg.Any<NameValueCollection>(),
                     out Arg.Any<string>(),
                     out Arg.Any<GCType>())
@@ -575,23 +598,25 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
                     return true;
                 });
             
-            _gcCollectionrSub.Collect(Arg.Any<GCType>()).Returns(
+            _gcEndpointHandlerUtils.Collect(Arg.Any<GCType>()).Returns(
                 new GCCollectionResult(
                     totalMemoryBeforeGc, 
                     totalMemoryAfterGc, 
                     elapsedMilliseconds)
                 );
-            
+
             var gcEndpointHandler = new GCEndpointHandler(() => new MicrodotHostingConfig()
             {
                 GCEndpointEnabled = true,
-            }, _logger, _gcCollectionrSub, _gcTokenHandler);
+            }, logSpy, _gcEndpointHandlerUtils);
 
             var gcHandlingResult = await gcEndpointHandler
                 .Handle(new Uri("http://my-host-name/force-traffic-affecting-gc"), new NameValueCollection()
                 {
                     { "gcType", gcType.ToString() }
-                });
+                },
+                    ipAddress
+                    );
             
             Assert.IsTrue(gcHandlingResult.Successful);
             Assert.AreEqual("GC ran successfully",gcHandlingResult.Message);
@@ -599,6 +624,13 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
             Assert.AreEqual(totalMemoryBeforeGc, gcHandlingResult.GcCollectionResult.TotalMemoryBeforeGC);
             Assert.AreEqual(totalMemoryAfterGc, gcHandlingResult.GcCollectionResult.TotalMemoryAfterGC);
             Assert.AreEqual(elapsedMilliseconds, gcHandlingResult.GcCollectionResult.ElapsedMilliseconds);
+            Assert.AreEqual(1, logSpy.LogEntries.Count());
+            var logEntry = logSpy.LogEntries.Single();
+            Assert.AreEqual(gcType.ToString(), logEntry.UnencryptedTags["tags.GcType"]);
+            Assert.AreEqual(ipAddress.ToString(), logEntry.UnencryptedTags["tags.IPAddress"]);
+            Assert.AreEqual(totalMemoryAfterGc.ToString(), logEntry.UnencryptedTags["tags.TotalMemoryAfterGC_i"]);
+            Assert.AreEqual(totalMemoryBeforeGc.ToString(), logEntry.UnencryptedTags["tags.TotalMemoryBeforeGC_i"]);
+            Assert.NotNull(logEntry.UnencryptedTags["tags.GCDuration_i"]);
         }
 
         [Test]
@@ -609,7 +641,8 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice
         [TestCase(GCType.BlockingLohCompaction)]
         public async Task GCCollectionRunner_Sanity(GCType genType)
         {
-            var gcCollectionRunner = new GCCollectionRunner();
+            var gcCollectionRunner = new GCEndpointHandlerUtils(() => new MicrodotHostingConfig(),
+                _logger, _dateTime, _gcTokenContainer);
             Assert.DoesNotThrow(()=>gcCollectionRunner.Collect(genType));
         }
     }

@@ -115,7 +115,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var responseString = await response.Content.ReadAsStringAsync();
             var gcHandlingResult = JsonConvert.DeserializeObject<GCHandlingResult>(responseString);
             
-            Assert.AreEqual("Illegal or missing token", gcHandlingResult.Message);
+            Assert.AreEqual("Illegal request", gcHandlingResult.Message);
             
             Assert.AreEqual(0, _flumeQueue.Events.Count);
         }
