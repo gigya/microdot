@@ -1,51 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.Environment;
-using Gigya.Microdot.Hosting.HttpService;
-using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Ninject;
-using Gigya.Microdot.Orleans.Hosting.Logging;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
-using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.StorageProviderTest;
 using Gigya.Microdot.Orleans.Ninject.Host;
 using Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding;
-using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Security;
-using Gigya.Microdot.Testing.Service;
-using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.UnitTests;
-using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.Microdot.UnitTests.Serialization;
-using Gigya.Microdot.UnitTests.ServiceProxyTests;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Ninject;
 using Ninject.Syntax;
-using NSubstitute;
 using NUnit.Framework;
 using Orleans;
 using Orleans.Configuration;
-using Orleans.Runtime;
 using Orleans.Serialization;
 using Shouldly;
 
 namespace Gigya.Microdot.Orleans.Hosting.UnitTests.Serialization
 {
 
-	[TestFixture,Parallelizable(ParallelScope.Fixtures)]
+    [TestFixture,Parallelizable(ParallelScope.Fixtures)]
 	public class ExceptionSerializationTests
     {
 	    class MicrodotServiceProviderWithScope2 : IServiceProvider, IServiceScope, IGlobalServiceProvider

@@ -15,7 +15,8 @@
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Orleans.Hosting\Gigya.Microdot.Orleans.Hosting.csproj" />
 	</ItemGroup>
-	<ItemGroup>					
-		<PackageReference Include="Microsoft.CSharp" />
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+		<PackageReference Include="System.Net.Http" />
 	</ItemGroup>
 </Project>

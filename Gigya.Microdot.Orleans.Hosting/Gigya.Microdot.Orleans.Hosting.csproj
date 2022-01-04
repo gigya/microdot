@@ -9,13 +9,16 @@
 		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
 	</ItemGroup>
 	<ItemGroup>				
-		<PackageReference Include="OrleansDashboard" />					
-		<PackageReference Include="Microsoft.CSharp" />
+		<PackageReference Include="OrleansDashboard" />							
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" />
 		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" />
 		<PackageReference Include="Microsoft.Orleans.Connections.Security" />
 		<PackageReference Include="Microsoft.Orleans.OrleansSqlUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />			
+	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+		<PackageReference Include="System.Net.Http" />
 	</ItemGroup>
 </Project>

@@ -7,7 +7,9 @@
 		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
 	</ItemGroup>
 	<ItemGroup>		
-		<PackageReference Include="Microsoft.CSharp" />		
 		<PackageReference Include="NSubstitute" />		
+	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
 	</ItemGroup>
 </Project>

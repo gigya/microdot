@@ -12,9 +12,7 @@
 		<ProjectReference Include="..\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.CSharp" />
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />
-		<PackageReference Include="System.ValueTuple" />
 		<PackageReference Include="NUnit3TestAdapter" />
 		<PackageReference Include="Microsoft.NET.Test.SDK" />
 	</ItemGroup>

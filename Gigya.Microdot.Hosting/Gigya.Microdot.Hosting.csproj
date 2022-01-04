@@ -12,7 +12,4 @@
 		<ProjectReference Include="..\Gigya.Microdot.Configuration\Gigya.Microdot.Configuration.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.ServiceDiscovery\Gigya.Microdot.ServiceDiscovery.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="System.ValueTuple" />		
-	</ItemGroup>
 </Project>

@@ -4,23 +4,45 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Common.Tests;
+using Gigya.Microdot.Fakes;
+using Gigya.Microdot.Hosting.HttpService.Endpoints;
+using Gigya.Microdot.Hosting.Service;
+using Gigya.Microdot.Interfaces.Events;
+using Gigya.Microdot.Interfaces.Logging;
+using Gigya.Microdot.Ninject;
+using Gigya.Microdot.ServiceDiscovery.Rewrite;
+using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.Events;
 using Gigya.Microdot.Testing.Shared.Service;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
 using Ninject;
+using Ninject.Syntax;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
     public class ConfigurableHost<T>:TestingHost<T> where T:class
     {
-        public MicrodotHostingConfig MicrodotHostingConfigMock = new MicrodotHostingConfig();
+        public readonly MicrodotHostingConfig MicrodotHostingConfigMock;
+        public readonly LogSpy LogSpy;
+        public readonly SpyEventPublisher SpyEventPublisher;
+
+        public ConfigurableHost()
+        {
+            MicrodotHostingConfigMock = new MicrodotHostingConfig();
+            LogSpy = new LogSpy();
+            SpyEventPublisher = new SpyEventPublisher();
+        }
+
         protected override void Configure(IKernel kernel, BaseCommonConfig commonConfig)
         {
             base.Configure(kernel,commonConfig);
             kernel.Rebind<Func<MicrodotHostingConfig>>().ToMethod(_ => ()=> MicrodotHostingConfigMock);
-            
+            kernel.Rebind<ILog>().ToConstant(LogSpy);
+            kernel.Rebind<IEventPublisher>().ToConstant(SpyEventPublisher);
         }
     }
  

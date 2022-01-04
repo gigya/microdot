@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
-using Ninject.Extensions.Factory;
 using Ninject.Syntax;
 using NUnit.Framework;
 using Orleans.Runtime;
