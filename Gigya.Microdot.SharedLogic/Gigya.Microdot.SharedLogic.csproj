@@ -12,4 +12,7 @@
 		<PackageReference Include="Gigya.ServiceContract" />
 		<PackageReference Include="System.ComponentModel.Annotations" />
 	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+	</ItemGroup>
 </Project>

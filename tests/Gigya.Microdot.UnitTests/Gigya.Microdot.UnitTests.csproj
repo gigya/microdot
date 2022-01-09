@@ -6,6 +6,15 @@
 		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 	</PropertyGroup>	
 	<ItemGroup>
+		<None Include="loadpaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
+		<EmbeddedResource Include="ServiceProxyTests\ExceptionFromNetCore.json" />
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Common.Tests\Gigya.Microdot.Common.Tests.csproj" />
 		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
 		<ProjectReference Include="..\..\Gigya.Microdot.Logging.NLog\Gigya.Microdot.Logging.NLog.csproj" />
@@ -21,13 +30,7 @@
 		<PackageReference Include="RichardSzalay.MockHttp" />
 		<PackageReference Include="Shouldly" />						
 	</ItemGroup>
-	<ItemGroup>
-		<None Include="loadpaths.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-	<ItemGroup>
-		<None Remove="ServiceProxyTests\ExceptionFromNetCore.json" />
-		<EmbeddedResource Include="ServiceProxyTests\ExceptionFromNetCore.json" />
-	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+	</ItemGroup>	
 </Project>

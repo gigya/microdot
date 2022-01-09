@@ -23,12 +23,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Interfaces;
-using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Ninject;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
@@ -40,7 +37,6 @@ using Gigya.Microdot.UnitTests.Caching.Host;
 using Gigya.ServiceContract.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Ninject;
 using NUnit.Framework;
 using Shouldly;
 

@@ -12,5 +12,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />
-	</ItemGroup>	
+	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Text.RegularExpressions" />
+		<PackageReference Include="System.Net.Http" />
+	</ItemGroup>
 </Project>

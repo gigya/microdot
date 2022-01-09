@@ -22,20 +22,13 @@
 
 using System;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Gigya.Common.Contracts.HttpService;
-using Gigya.Microdot.Common.Tests;
-using Gigya.Microdot.Hosting.Environment;
 using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Orleans.Hosting.UnitTests.Microservice.CalculatorService;
 using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Configurations.Serialization;
 using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.SharedLogic.Security;
 using Gigya.Microdot.Testing.Service;
-using Ninject;
 using NSubstitute;
 using NSubstitute.ReceivedExtensions;
 using NUnit.Framework;

@@ -10,5 +10,8 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
-	</ItemGroup>	
+	</ItemGroup>
+	<ItemGroup Label="WS pinning">
+		<PackageReference Include="System.Net.Http" />
+	</ItemGroup>
 </Project>

@@ -839,7 +839,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     .Respond(req =>
                     {
                         if (httpsMethodCalled)
-                            throw new HttpRequestException("", new WebException("", WebExceptionStatus.ProtocolError));
+                            throw new HttpRequestException("Element not found", new WebException("", WebExceptionStatus.ProtocolError));
                         if (req.RequestUri.AbsoluteUri == $"https://{host}:{port + httpsPortOffset}/")
                         {
                             httpsTestCount++;
@@ -973,5 +973,88 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 await serviceProxy.Invoke(request, typeof(string));
             }
         }
+		
+		[Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public async Task RequestsWithHttpRequestsExceptionsContainingConfiguredSubstringsShouldNotBetreatedAsHttpsErrorSuspect(bool handleErrorAsCertificateError)
+        {
+            var port = DisposablePort.GetPort().Port;
+            var dict = new Dictionary<string, string> {
+                {"Discovery.Services.DemoService.Source", "Config"},
+                {"Discovery.Services.DemoService.Hosts", "host1,host2"},
+                {"Discovery.ServiceHttpsOverride", "True"},
+                {"Discovery.TryHttps", "True"},
+                {"Discovery.Services.DemoService.DefaultPort", port.ToString()},
+            };
+            
+            if (false == handleErrorAsCertificateError)
+                dict.Add("Discovery.CertificateErrorMessageSubstrings-collection", "[\"foo\"]");
+            
+            bool isFirstRequest = true;
+
+            bool isSecondRequestFirstAttempt = true;
+
+            bool usedHttpsInSecondRequest = false;
+
+            Func<HttpClientConfiguration, HttpMessageHandler> messageHandlerFactory = _=>
+            {
+                var messageHandler = new MockHttpMessageHandler();
+                messageHandler
+                    .When("*")
+                    .Respond(req =>
+                    {
+                        if (req.RequestUri.AbsolutePath == "/")
+                            return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
+
+                        if (isFirstRequest)
+                        {
+                            isFirstRequest = false;
+                            return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
+                        }
+
+                        if (isSecondRequestFirstAttempt)
+                        {
+                            isSecondRequestFirstAttempt = false;
+                            throw new HttpRequestException("foo");
+                        }
+
+                        usedHttpsInSecondRequest = req.RequestUri.Scheme == "https";
+
+                        return HttpResponseFactory.GetResponse(content: $"'{req.RequestUri.Host}'");
+                    });
+                return messageHandler;
+            };
+
+            using (var kernel =
+                new TestingKernel<ConsoleLog>(
+                    k =>
+                    {
+                        k.Rebind<IDiscovery>().To<ServiceDiscovery.Rewrite.Discovery>().InSingletonScope();
+                        k.Rebind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => messageHandlerFactory);
+                    },
+                    dict))
+            {
+
+                var providerFactory = kernel.Get<Func<string, ServiceProxyProvider>>();
+                var serviceProxy = providerFactory("DemoService");
+                serviceProxy.DefaultPort = port;
+
+                //If we set Request Id we would like always to select same Host
+                TracingContext.SetRequestID("dumyId1");
+                var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
+                var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
+                
+                var host = (string)await serviceProxy.Invoke(request, typeof(string));
+
+                if (handleErrorAsCertificateError)
+                    Assert.IsTrue(usedHttpsInSecondRequest);
+                else
+                    Assert.IsFalse(usedHttpsInSecondRequest);
+
+
+            }
+        }
+		
     }
 }

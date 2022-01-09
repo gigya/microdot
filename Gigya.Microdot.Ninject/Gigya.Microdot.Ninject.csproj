@@ -12,7 +12,7 @@
 	</ItemGroup>
 	<ItemGroup>		
 		<PackageReference Include="Ninject.Extensions.Conventions" />
-		<PackageReference Include="Ninject.Extensions.Factory" />
+		<PackageReference Include="Ninject.Extensions.Factory" />			
 	</ItemGroup>
 
 	<ItemGroup Label="WS issues">

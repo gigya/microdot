@@ -29,13 +29,9 @@
 		<PackageReference Update="Shouldly" Version="4.0.3"/>
 		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
 		<PackageReference Update="NUnit" Version="3.13.2"/>
-		<PackageReference Update="NUnit3TestAdapter" Version="4.1.0"/>
-		<PackageReference Update="FluentAssertions" Version="6.2.0"/>
+		<PackageReference Update="NUnit3TestAdapter" Version="4.2.0" NoWarn="NU1701"/>
+		<PackageReference Update="FluentAssertions" Version="6.3.0"/>
 		<PackageReference Update="RichardSzalay.MockHttp" Version="6.0.0"/>
-	</ItemGroup>
-
-	<ItemGroup Label="Microsoft">
-		<PackageReference Update="Microsoft.CSharp" Version="4.7.0"/>
 	</ItemGroup>
 
 	<ItemGroup Label="System">
@@ -46,6 +42,7 @@
 		<PackageReference Update="System.ComponentModel.Annotations" Version="5.0.0" />
 		<PackageReference Update="System.Collections.Immutable" Version="6.0.0" />
 		<PackageReference Update="System.Reflection.DispatchProxy" Version="4.7.1" />		
+		<PackageReference Update="Microsoft.CSharp" Version="4.7.0" />		
 	</ItemGroup>
 
 	<ItemGroup Label="WS issues">

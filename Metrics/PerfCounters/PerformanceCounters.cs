@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 
 namespace Metrics.PerfCounters
 {
@@ -114,7 +113,7 @@ namespace Metrics.PerfCounters
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    return WindowsIdentity.GetCurrent().Name;
+                    return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             }
             catch (Exception x)
             {
