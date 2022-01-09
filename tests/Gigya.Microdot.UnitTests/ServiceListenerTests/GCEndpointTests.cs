@@ -29,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         }
 
         [TearDown]
-        public virtual void TearDown()
+        public override void TearDown()
         {
             try
             {
