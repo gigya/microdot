@@ -6,8 +6,7 @@
 			Tools to help write tests for Microdot services.
 			The project contains logic for both Orleans and Non-Orleans host testers.
 		</Description>
-		<PackageTags>gigya microdot microservice microservices fakes mocks mocking unit-testing</PackageTags>
-		<TargetFrameworks>net5.0</TargetFrameworks>
+		<PackageTags>gigya microdot microservice microservices fakes mocks mocking unit-testing</PackageTags>		
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />

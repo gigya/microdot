@@ -2,8 +2,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Orleans.Hosting.FunctionalTests</AssemblyTitle>
-		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>	
+		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 	</PropertyGroup>
+	<ItemGroup>
+		<None Update="loadPaths.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>	
 	<ItemGroup>
 		<ProjectReference Include="..\..\Gigya.Microdot.Fakes\Gigya.Microdot.Fakes.csproj" />
 		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
@@ -12,17 +18,8 @@
 		<ProjectReference Include="..\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MsBuild" />		
 		<PackageReference Include="NUnit3TestAdapter" />
 		<PackageReference Include="Microsoft.NET.Test.SDK" />
 	</ItemGroup>
-	<ItemGroup>
-		<Compile Remove="Microservice\GrainAgeLimitTestService\GrainAgeLimitTestServiceHost.cs" />
-	</ItemGroup>
-	<ItemGroup>
-		<None Update="loadPaths.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
 </Project>

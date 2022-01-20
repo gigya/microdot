@@ -14,7 +14,10 @@
 		<PackageReference Include="Ninject.Extensions.Conventions" />
 		<PackageReference Include="Ninject.Extensions.Factory" />			
 	</ItemGroup>
-	<ItemGroup Label="WS pinning">
+
+	<ItemGroup Label="WS issues">
 		<PackageReference Include="System.Text.RegularExpressions" />
-	</ItemGroup>	
+		<PackageReference Include="System.Text.Encodings.Web" />
+		<PackageReference Include="System.Net.Http" />
+	</ItemGroup>
 </Project>

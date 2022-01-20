@@ -7,23 +7,28 @@
 		<RepositoryUrl>https://github.com/gigya/microdot</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/gigya/microdot/blob/master/LICENSE.md</PackageProjectUrl>
 		<PackageTags>gigya microdot microservice microservices</PackageTags>
-		<Version>4.0.4$(VersionSuffix)</Version>
+		<Version>4.1.0$(VersionSuffix)</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	</PropertyGroup>	
+	</PropertyGroup>
 	<PropertyGroup>
-		<TargetFrameworks>net5.0</TargetFrameworks>
-		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>		
-		<LangVersion>8.0</LangVersion>
+		<TargetFrameworks>netstandard2.0;net5.0;net6.0</TargetFrameworks>
+		<RuntimeIdentifiers>win10-x64;linux-x64</RuntimeIdentifiers>
+		<LangVersion>latest</LangVersion>
 		<IncludeSymbols>true</IncludeSymbols>
-		<OutputType>Library</OutputType>				
+		<OutputType>Library</OutputType>
+		<IsPublishable>false</IsPublishable>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
-		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
-		<NoWarn>CS0612</NoWarn>		
-	</PropertyGroup>	
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>		
+	</PropertyGroup>
+	<Target Name="SignDlls"
+			AfterTargets="AfterBuild"
+			Condition="'$(teamcity_server_url)'!='' And Exists('$(OutputPath)$(AssemblyName).dll') And $(GeneratePackageOnBuild) == true" >
+		<Exec Command="$(full_command_to_sign) $(OutputPath)$(AssemblyName).dll" />
+	</Target>
 	<Target Name="CopyPackage" AfterTargets="Pack">
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(OutputPath)..\..\..\nugetPackages" />
-		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(OutputPath)..\..\..\symbolPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(SolutionDir)nugetPackages" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" DestinationFolder="$(SolutionDir)symbolPackages" />
 	</Target>
 	<PropertyGroup Label="GC configuration for service">
 		<ServerGarbageCollection>true</ServerGarbageCollection>

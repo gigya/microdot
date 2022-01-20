@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Net;
 using System.Threading.Tasks;
 using Gigya.Microdot.Hosting.Service;
 using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.Interfaces.SystemWrappers;
 
 namespace Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint
 {

@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Fakes</AssemblyTitle>
 		<Description>Tools to help write tests for Microdot services.</Description>
-		<PackageTags>gigya microdot microservice microservices fakes mocks mocking unit-testing</PackageTags>
+		<PackageTags>gigya microdot microservice microservices fakes mocks mocking unit-testing</PackageTags>		
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Ninject\Gigya.Microdot.Ninject.csproj" />

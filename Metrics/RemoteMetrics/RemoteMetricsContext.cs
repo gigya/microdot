@@ -1,18 +1,18 @@
-﻿using Metrics.Core;
+﻿using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Metrics.Core;
 using Metrics.Json;
 using Metrics.MetricData;
 using Metrics.Utils;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Metrics.RemoteMetrics
 {
     public sealed class RemoteMetricsContext : ReadOnlyMetricsContext, MetricsDataProvider
     {
-        private readonly Scheduler scheduler;
-
-        private MetricsData currentData = MetricsData.Empty;
+        private readonly Scheduler _scheduler;
+        private readonly HttpClient _httpClient;
+        private MetricsData _currentData = MetricsData.Empty;
 
         public RemoteMetricsContext(Uri remoteUri, TimeSpan updateInterval, Func<string, JsonMetricsContext> deserializer)
             : this(new ActionScheduler(), remoteUri, updateInterval, deserializer)
@@ -20,36 +20,39 @@ namespace Metrics.RemoteMetrics
 
         public RemoteMetricsContext(Scheduler scheduler, Uri remoteUri, TimeSpan updateInterval, Func<string, JsonMetricsContext> deserializer)
         {
-            this.scheduler = scheduler;
-            this.scheduler.Start(updateInterval, c => UpdateMetrics(remoteUri, deserializer, c));
+            _scheduler = scheduler;
+            _scheduler.Start(updateInterval, c => UpdateMetrics(remoteUri, deserializer));
         }
 
-        private async Task UpdateMetrics(Uri remoteUri, Func<string, JsonMetricsContext> deserializer, CancellationToken token)
+        private async Task UpdateMetrics(Uri remoteUri, Func<string, JsonMetricsContext> deserializer)
         {
             try
             {
-                var remoteContext = await HttpRemoteMetrics.FetchRemoteMetrics(remoteUri, deserializer, token).ConfigureAwait(false);
+                string response = await _httpClient.GetStringAsync(remoteUri);
+                JsonMetricsContext remoteContext = deserializer(response);
                 remoteContext.Environment.Add("RemoteUri", remoteUri.ToString());
                 remoteContext.Environment.Add("RemoteVersion", remoteContext.Version);
                 remoteContext.Environment.Add("RemoteTimestamp", Clock.FormatTimestamp(remoteContext.Timestamp));
-
-                this.currentData = remoteContext.ToMetricsData();
+            
+                _currentData = remoteContext.ToMetricsData();
             }
             catch (Exception x)
             {
                 MetricsErrorHandler.Handle(x, "Error updating metrics data from " + remoteUri);
-                this.currentData = MetricsData.Empty;
+                _currentData = MetricsData.Empty;
             }
         }
 
-        public override MetricsDataProvider DataProvider { get { return this; } }
-        public MetricsData CurrentMetricsData { get { return this.currentData; } }
+        public override MetricsDataProvider DataProvider => this;
+        public MetricsData CurrentMetricsData => _currentData;
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                using (this.scheduler) { }
+                _httpClient?.Dispose();
+
+                using (_scheduler) { }
             }
             base.Dispose(disposing);
         }

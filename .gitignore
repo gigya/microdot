@@ -261,4 +261,5 @@ OrleansAdoNetContent/
 /.paket/
 /testlogs/
 /CustomEvent
+/output*
 /whitesource
