@@ -3,13 +3,20 @@
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.Orleans.Host</AssemblyTitle>
 		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>
-		<PackageTags>gigya microdot microservice microservices</PackageTags>
+		<PackageTags>gigya microdot microservice microservices</PackageTags>		
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Hosting\Gigya.Microdot.Hosting.csproj" />
 	</ItemGroup>
 	<ItemGroup>				
-		<PackageReference Include="OrleansDashboard" />							
+		<PackageReference Include="OrleansDashboard" Version="3.6.1" Condition="'$(TargetFramework)' == 'net5.0' or '$(TargetFramework)' == 'net6.0'"/>
+		<PackageReference Include="OrleansDashboard" Version="2.4.5" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
+
+		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
+		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets" Version="2.2.1" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
+		<PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
+		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
+		
 		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" />
 		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" />
 		<PackageReference Include="Microsoft.Orleans.Connections.Security" />
@@ -17,8 +24,10 @@
 		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />			
 	</ItemGroup>
-	<ItemGroup Label="WS pinning">
+
+	<ItemGroup Label="WS issues">
 		<PackageReference Include="System.Text.RegularExpressions" />
+		<PackageReference Include="System.Text.Encodings.Web" />
 		<PackageReference Include="System.Net.Http" />
 	</ItemGroup>
-</Project>
+</Project>	

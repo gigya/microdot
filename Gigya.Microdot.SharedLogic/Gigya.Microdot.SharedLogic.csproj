@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.SharedLogic</AssemblyTitle>
-		<Description>Various components and utilities shared between different parts of the Microdot framework.</Description>
+		<Description>Various components and utilities shared between different parts of the Microdot framework.</Description>		
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Gigya.Microdot.Interfaces\Gigya.Microdot.Interfaces.csproj" />
@@ -10,6 +10,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Gigya.ServiceContract" />
+		<PackageReference Include="System.ComponentModel.Annotations" />
 	</ItemGroup>
 	<ItemGroup Label="WS pinning">
 		<PackageReference Include="System.Text.RegularExpressions" />

@@ -6,12 +6,16 @@
 		<Description>Infrastructure used for hosting Orleans Microdot services, part of the Microdot framework.</Description>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="RemoteMetrics\HttpRemoteMetrics.cs" />
+	</ItemGroup>
+	<ItemGroup>
 		<EmbeddedResource Include="Endpoints\index.full.html.gz" />
 		<EmbeddedResource Include="metrics_32.png">
 			<Link>Endpoints\metrics_32.png</Link>
 		</EmbeddedResource>
 	</ItemGroup>
-	<ItemGroup>			
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CSharp" />	
 		<PackageReference Include="System.Configuration.ConfigurationManager" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" />
 	</ItemGroup>

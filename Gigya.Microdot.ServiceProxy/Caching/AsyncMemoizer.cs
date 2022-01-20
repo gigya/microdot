@@ -77,7 +77,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
             var stream = new MemoryStream();
             using (ComputeArgumentHash.NewContext())
             using (var writer = new StreamWriter(stream) { AutoFlush = true })
-            using (SHA1 sha = new SHA1CryptoServiceProvider())
+            using (SHA1 sha = SHA1.Create())
             {
                 JsonSerializer.Create().Serialize(writer, args);                
                 stream.Seek(0, SeekOrigin.Begin);
@@ -89,6 +89,7 @@ namespace Gigya.Microdot.ServiceProxy.Caching
         {
             Cache.TryDispose();
             Metrics.TryDispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

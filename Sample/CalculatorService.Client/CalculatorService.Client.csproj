@@ -3,7 +3,9 @@
 	<PropertyGroup>
 		<AssemblyTitle>CalculatorService.Client</AssemblyTitle>
 		<OutputType>Exe</OutputType>
-		<ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+		<IsPublishable>true</IsPublishable>
+		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+		<ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>		
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="loadPaths.json">
@@ -18,5 +20,8 @@
 		<ProjectReference Include="..\..\Gigya.Microdot.SharedLogic\Gigya.Microdot.SharedLogic.csproj" />
 		<ProjectReference Include="..\..\tests\Gigya.Microdot.UnitTests\Gigya.Microdot.UnitTests.csproj" />
 		<ProjectReference Include="..\CalculatorService.Interface\CalculatorService.Interface.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Net.Http" Version="4.3.4" Condition="'$(TargetFramework)' == 'net472'" />		
 	</ItemGroup>
 </Project>

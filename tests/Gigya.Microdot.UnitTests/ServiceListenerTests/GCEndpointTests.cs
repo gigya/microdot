@@ -1,32 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Fakes;
-using Gigya.Microdot.Hosting.HttpService.Endpoints;
 using Gigya.Microdot.Hosting.HttpService.Endpoints.GCEndpoint;
-using Gigya.Microdot.Hosting.Service;
-using Gigya.Microdot.Interfaces.Events;
-using Gigya.Microdot.Interfaces.Logging;
-using Gigya.Microdot.ServiceDiscovery.Rewrite;
-using Gigya.Microdot.ServiceProxy;
-using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.Events;
-using Gigya.Microdot.SharedLogic.HttpService;
-using Gigya.Microdot.Testing.Shared;
 using Gigya.Microdot.Testing.Shared.Service;
 using Gigya.Microdot.UnitTests.ServiceProxyTests;
-using Metrics;
 using Newtonsoft.Json;
-using Ninject;
-using NSubstitute;
-using NSubstitute.ClearExtensions;
 using NUnit.Framework;
-using RichardSzalay.MockHttp;
-using Shouldly;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -46,7 +29,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
         }
 
         [TearDown]
-        public virtual void TearDown()
+        public override void TearDown()
         {
             try
             {

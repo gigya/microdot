@@ -120,7 +120,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(5)]
         public async Task BeUnhealthyAfterThreadsCountIsTooHighForMoreThanSpecifiedDuration()
         {
             _config.MaxHealthyThreadsCount = 1;

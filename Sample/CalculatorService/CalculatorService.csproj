@@ -3,14 +3,9 @@
 	<PropertyGroup>
 		<AssemblyTitle>CalculatorService</AssemblyTitle>
 		<OutputType>Exe</OutputType>
+		<IsPublishable>true</IsPublishable>
+		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<DebugType>full</DebugType>
-		<WarningLevel>3</WarningLevel>
-	</PropertyGroup>
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>	
 	<ItemGroup>
 		<None Include="loadPaths.json">
