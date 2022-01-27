@@ -1,6 +1,6 @@
 <Project>
 	<PropertyGroup>
-		<Orleans_Version>3.5.1</Orleans_Version>
+		<Orleans_Version>3.6.0</Orleans_Version>
 	</PropertyGroup>
 
 	<ItemGroup Label="Gigya">
@@ -25,12 +25,12 @@
 	</ItemGroup>
 
 	<ItemGroup Label="Test">
-		<PackageReference Update="NSubstitute" Version="4.2.2"/>
+		<PackageReference Update="NSubstitute" Version="4.3.0"/>
 		<PackageReference Update="Shouldly" Version="4.0.3"/>
 		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
 		<PackageReference Update="NUnit" Version="3.13.2"/>
-		<PackageReference Update="NUnit3TestAdapter" Version="4.2.0" NoWarn="NU1701"/>
-		<PackageReference Update="FluentAssertions" Version="6.3.0"/>
+		<PackageReference Update="NUnit3TestAdapter" Version="4.2.1" NoWarn="NU1701"/>
+		<PackageReference Update="FluentAssertions" Version="6.4.0"/>
 		<PackageReference Update="RichardSzalay.MockHttp" Version="6.0.0"/>
 	</ItemGroup>
 
