@@ -99,7 +99,11 @@ namespace Gigya.Microdot.Ninject
             Kernel.BindPerKey<string, ReachabilityChecker, IServiceDiscovery, ServiceDiscovery.ServiceDiscovery>();
             Kernel.Bind<Func<HttpClientConfiguration, HttpMessageHandler>>().ToMethod(c => HttpClientConfiguration =>
             {
-                var clientHandler = new HttpClientHandler();
+                ServicePointManagerDefaultConfig config = Kernel.Get<Func<ServicePointManagerDefaultConfig>>()();
+                var clientHandler = new HttpClientHandler()
+                {
+                    MaxConnectionsPerServer = config.DefaultConnectionLimit                    
+                };
                 if (HttpClientConfiguration.UseHttps)
                 {
                     var httpAuthenticator = c.Kernel.Get<IHttpsAuthenticator>();
