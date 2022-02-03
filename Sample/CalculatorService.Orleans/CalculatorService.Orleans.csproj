@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<AssemblyTitle>CalculatorService.Orleans</AssemblyTitle>
 		<OutputType>Exe</OutputType>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<IsPublishable>true</IsPublishable>
 		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
