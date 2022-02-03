@@ -477,8 +477,9 @@ namespace Gigya.Microdot.ServiceProxy
                     finally
                     {
                         clientCallEvent.ResponseEndTimestamp = Stopwatch.GetTimestamp();
-                        
+#if !NET5_0_OR_GREATER
                         PublishServiceConnectionMetrics(uri);
+#endif
                     }
                     if (response.Headers.TryGetValues(GigyaHttpHeaders.ExecutionTime, out IEnumerable<string> values))
                     {
