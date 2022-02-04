@@ -32,7 +32,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         private IEnvironment _environment;
         private ManualConfigurationEvents _configRefresh;
         private IDateTime _dateTimeMock;
-        private const int Repeat = 1;
+        private const int Retry = 5;
 
         [SetUp]
         public void SetUp()
@@ -63,9 +63,13 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [TearDown]
-        public void Teardown()
+        public void TearDown()
         {
             _unitTestingKernel?.Dispose();
+            foreach (var consulClient in _consulClient)
+            {
+                consulClient.Value.Dispose();
+            }
             _configDic?.Clear();
             _configDic = null;
             _configRefresh = null;
@@ -93,19 +97,10 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             _consulClient[serviceName] = mock;
         }
-
-        [TearDown]
-        public void TearDown()
-        {
-            _unitTestingKernel.Dispose();
-            foreach (var consulClient in _consulClient)
-            {
-                consulClient.Value.Dispose();
-            }
-        }
+     
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task QueryNotDefinedShouldFallBackToMaster()
         {
             SetMockToReturnHost(MasterService());
@@ -128,7 +123,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task FallBackToMasterShouldNotHaveOriginatingServiceHealth()
         {
             var serviceName = GetServiceName();
@@ -154,7 +149,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task NoFallBackShouldNotHavMasterServiceHealth()
         {
             var serviceName = GetServiceName();
@@ -180,7 +175,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public void CreateServiceDiscoveryWithoutGetNextHostNoServiceHealthShouldAppear()
         {
             var serviceName = GetServiceName();
@@ -193,7 +188,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task ScopeZoneShouldUseServiceNameAsConsoleQuery()
         {
             var serviceName = GetServiceName();
@@ -216,7 +211,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Retry(5)]
+        [Retry(Retry)]
         public async Task WhenQueryDeleteShouldFallBackToMaster()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
@@ -238,18 +233,18 @@ namespace Gigya.Microdot.UnitTests.Discovery
             
             var waitForEvents = discovery.EndPointsChanged.WhenEventReceived(_timeOut);
 
-            var nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(OriginatingService());
+            var nextHost = await discovery.GetNextHost();           
+            Assert.That(nextHost.HostName, Is.EqualTo(OriginatingService()).After(100, 500));
 
             SetMockToReturnServiceNotDefined(OriginatingService());
             await waitForEvents;
 
-            nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(MasterService());
+            nextHost = await discovery.GetNextHost();            
+            Assert.That(nextHost.HostName, Is.EqualTo(MasterService()).After(100, 500));
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task WhenQueryAddShouldNotFallBackToMaster()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
@@ -274,22 +269,23 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
             var nextHost = await discovery.GetNextHost();
             nextHost.HostName.ShouldBe(MasterService());
+            Assert.That(nextHost.HostName, Is.EqualTo(MasterService()).After(100, 500));
 
             var waitForEvents = discovery.EndPointsChanged.WhenEventReceived(_timeOut);
             SetMockToReturnHost(OriginatingService());
             await waitForEvents;
 
-            nextHost = await discovery.GetNextHost();
-            nextHost.HostName.ShouldBe(OriginatingService());
+            nextHost = await discovery.GetNextHost();            
+            Assert.That(nextHost.HostName, Is.EqualTo(OriginatingService()).After(100, 500));
         }
 
         [Test]
-        [Retry(5)]
+        [Retry(Retry)]
         public void ShouldNotFallBackToMasterOnConsulError()
         {
             SetMockToReturnHost(MasterService());
-            SetMockToReturnError(OriginatingService());
-            var exception = Should.Throw<EnvironmentException>(async () => await GetServiceDiscovery().GetNextHost());
+            SetMockToReturnError(OriginatingService());            
+            var exception = Should.Throw<EnvironmentException>(async () => await GetServiceDiscovery().GetNextHost());            
             exception.UnencryptedTags["responseLog"].ShouldBe("Error response log");
             exception.UnencryptedTags["queryDefined"].ShouldBe("True");
             exception.UnencryptedTags["consulError"].ShouldNotBeNullOrEmpty();
@@ -298,7 +294,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task QueryDefinedShouldNotFallBackToMaster()
         {
             SetMockToReturnHost(MasterService());
@@ -322,7 +318,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public void MasterShouldNotFallBack()
         {
             _environment = Substitute.For<IEnvironment>();
@@ -336,7 +332,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Repeat(Repeat)]
+        [Retry(Retry)]
         public async Task EndPointsChangedShouldNotFireWhenNothingChange()
         {
             var serviceName = GetServiceName();
@@ -374,7 +370,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
-        [Retry(5)]
+        [Retry(Retry)]
         public async Task EndPointsChangedShouldFireConfigChange()
         {
             var serviceName = GetServiceName();
@@ -408,7 +404,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             await _configRefresh.ApplyChanges<DiscoveryConfig>();
             await waitForChangeEvent;
             var host = await discovery.GetNextHost();
-            host.HostName.ShouldBe("localhost");
+            Assert.That(host.HostName, Is.EqualTo("localhost").After(100, 500));
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
         }
 
@@ -418,7 +414,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
         
         [Test]
-        [Retry(5)]
+        [Retry(Retry)]
         public async Task GetAllEndPointsChangedShouldFireConfigChange()
         {
             var serviceName = GetServiceName();
@@ -446,12 +442,12 @@ namespace Gigya.Microdot.UnitTests.Discovery
 
 
             endPoints = await discovery.GetAllEndPoints();
-            endPoints.Single().HostName.ShouldBe("localhost");
+            Assert.That(endPoints.Single().HostName, Is.EqualTo("localhost").After(100, 500));
             waitForEvents.ReceivedEvents.Count.ShouldBe(1);
         }
 
         [Test]
-        [Retry(5)]
+        [Retry(Retry)]
         public async Task EndPointsChangedShouldFireWhenHostChange()
         {
             var reloadInterval = TimeSpan.FromMilliseconds(5);
@@ -530,6 +526,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
         }
 
         [Test]
+        [Retry(Retry)]  
         public void ServiceDiscoverySameNameShouldBeTheSame()
         {
             var serviceName = GetServiceName();
