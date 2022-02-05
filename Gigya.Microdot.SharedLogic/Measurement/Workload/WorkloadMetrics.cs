@@ -25,7 +25,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         private readonly MetricsContext _context = Metric.Context("Workload");
         private Timer _triggerHealthChecksEvery5Seconds;
         private bool _disposed;
-        private const int MegabyteToByte = 1024 * 1024;
+        //private const int MegabyteToByte = 1024 * 1024;
         private ILog Log { get; }
 
 
@@ -38,8 +38,8 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _cpuUsageCalculator = CpuHelper.GetOSCpuUsageCalculator();
             _healthStatus = getAggregatingHealthStatus("Workload");
         }
-
         
+
         public void Init()
         {
             _eventListener.Subscribe("% Processor Time");
@@ -61,15 +61,15 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _eventListener.Subscribe("gc-fragmentation");
             _eventListener.Subscribe("# of Exceps Thrown / Sec");
             _eventListener.Subscribe("active-timer-count");
-                       
+
             _context.Context("CPU").Gauge("Machine Cpu Usage", () => _cpuUsageCalculator.Calculate().MachineCpuUsage, Unit.Percent);          
             _context.Context("CPU").Gauge("Processor Affinity", () => Process.GetCurrentProcess().ProcessorAffinityList().Count(), Unit.Items);
             _context.Context("CPU").Gauge("CPU usage", () => ReadPerfCounter("% Processor Time"), Unit.Percent);
             _context.Context("ThreadPool").Gauge("Thread Count", () => { double threads = ReadPerfCounter("# of current logical Threads"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("ThreadPool").Gauge("Queue Length", () => { double threads = ReadPerfCounter("threadpool-queue-length"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("ThreadPool").Gauge("Completed Item Count", () => { double threads = ReadPerfCounter("threadpool-completed-items-count"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
-            _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter("working-set") * MegabyteToByte, Unit.Bytes); 
-            _context.Context("Memory").Gauge("Bytes in all Heaps", () => ReadPerfCounter("# Bytes in all Heaps") * MegabyteToByte, Unit.Bytes);
+            _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter("working-set"), Unit.MegaBytes); 
+            _context.Context("Memory").Gauge("MegaBytes in all Heaps", () => ReadPerfCounter("# Bytes in all Heaps"), Unit.MegaBytes);
             _context.Context("Memory").Gauge("Allocated Bytes/second", () => ReadPerfCounter("Allocated Bytes/second"), Unit.Bytes);
             _context.Context("Memory").Gauge("POH Size", () => ReadPerfCounter("poh-size"), Unit.Bytes);
             _context.Context("Memory").Gauge("LOH Size", () => ReadPerfCounter("loh-size"), Unit.Bytes);
@@ -84,6 +84,31 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _context.Context("General").Gauge("Exceps Thrown / Sec", () => ReadPerfCounter("# of Exceps Thrown / Sec"), Unit.Items);
             _context.Context("General").Gauge("Active Timers", () => ReadPerfCounter("active-timer-count"), Unit.Items);
 
+#if NET5_0_OR_GREATER
+            _eventListener.Subscribe("requests-started");
+            _eventListener.Subscribe("requests-started-rate");
+            _eventListener.Subscribe("requests-failed");
+            _eventListener.Subscribe("requests-failed-rate");
+            _eventListener.Subscribe("current-requests");
+            _eventListener.Subscribe("http11-connections-current-total");
+            _eventListener.Subscribe("http20-connections-current-total");
+            _eventListener.Subscribe("http11-requests-queue-duration");
+            _eventListener.Subscribe("http20-requests-queue-duration");
+            _eventListener.Subscribe("outgoing-connections-established");
+            _eventListener.Subscribe("incoming-connections-established");
+            _eventListener.Subscribe("bytes-received");
+            _eventListener.Subscribe("bytes-sent");           
+
+            _context.Context("Http").Gauge("Requests Started", () => ReadPerfCounter("requests-started"), Unit.Requests);
+            _context.Context("Http").Gauge("Requests Started Rate", () => ReadPerfCounter("requests-started-rate"), Unit.Requests);
+            _context.Context("Http").Gauge("Requests Failed", () => ReadPerfCounter("requests-failed"), Unit.Requests);
+            _context.Context("Http").Gauge("Requests Failed Rate", () => ReadPerfCounter("requests-failed-rate"), Unit.Requests);
+            _context.Context("Http").Gauge("Current Requests", () => ReadPerfCounter("current-requests"), Unit.Requests);
+            _context.Context("Http").Gauge("Http11 Connections Current Total", () => ReadPerfCounter("http11-connections-current-total"), Unit.Custom("Connections"));
+            _context.Context("Http").Gauge("Http20 Connections Current Total", () => ReadPerfCounter("http20-connections-current-total"), Unit.Custom("Connections"));
+            _context.Context("Sockets").Gauge("Bytes Received", () => ReadPerfCounter("bytes-received"), Unit.Bytes);
+            _context.Context("Sockets").Gauge("Bytes Sent", () => ReadPerfCounter("bytes-sent"), Unit.Bytes);
+#endif
 
             _cpuUsageHealthCheck = new LowSensitivityHealthCheck(CpuUsageHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
             _threadsCountHealthCheck = new LowSensitivityHealthCheck(ThreadsCountHealth, () => _getConfig().MinUnhealthyDuration, _dateTime);
