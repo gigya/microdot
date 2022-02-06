@@ -7,6 +7,12 @@
 		<IsPublishable>true</IsPublishable>
 		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
+	  <WarningLevel>5</WarningLevel>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
+	  <WarningLevel>5</WarningLevel>
 	</PropertyGroup>	
 	<ItemGroup>
 		<None Include="loadPaths.json">

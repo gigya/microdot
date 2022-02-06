@@ -71,6 +71,12 @@ namespace Gigya.Microdot.SharedLogic
         public int? ShutdownWhenPidExits { get; }
 
         /// <summary>
+        /// Specifies flag to shutdown on signal. When the signal recieved, a graceful shutdown is performed.
+        /// Implemented in .Net6 and greater.
+        /// </summary>
+        public bool IsShutdownOnSignal { get; }
+
+        /// <summary>
         /// Specifies drain time in this time the service status will be 521.
         /// </summary>
         public int? ServiceDrainTimeSec { get;  }
@@ -104,7 +110,9 @@ namespace Gigya.Microdot.SharedLogic
                                 ConsoleOutputMode consoleOutputMode = ConsoleOutputMode.Unspecified,
                                 SiloClusterMode siloClusterMode = SiloClusterMode.Unspecified,
                                 int? basePortOverride = null, string instanceName = null,
-                                int? shutdownWhenPidExits = null, int? slotNumber = null, int? onStopWaitTimeSec=null,int? serviceDrainTimeSec=null, int?  initTimeOutSec=null)
+                                int? shutdownWhenPidExits = null,
+                                bool isShutdownOnSignal = false,
+                                int? slotNumber = null, int? onStopWaitTimeSec=null,int? serviceDrainTimeSec=null, int?  initTimeOutSec=null)
         {
             ServiceStartupMode = serviceStartupMode;
             ConsoleOutputMode = consoleOutputMode;
@@ -112,6 +120,7 @@ namespace Gigya.Microdot.SharedLogic
             BasePortOverride = basePortOverride;
             InstanceName = instanceName;
             ShutdownWhenPidExits = shutdownWhenPidExits;
+            IsShutdownOnSignal = isShutdownOnSignal;
             SlotNumber = slotNumber;
             OnStopWaitTimeSec = onStopWaitTimeSec;
             ServiceDrainTimeSec = serviceDrainTimeSec;
@@ -132,6 +141,7 @@ namespace Gigya.Microdot.SharedLogic
             BasePortOverride      = ParseIntArg(nameof(BasePortOverride), args);
             InstanceName          = ParseStringArg(nameof(InstanceName), args);
             ShutdownWhenPidExits  = ParseIntArg(nameof(ShutdownWhenPidExits), args);
+            IsShutdownOnSignal    = ParseBoolArg(nameof(IsShutdownOnSignal), args);
             SlotNumber            = ParseIntArg(nameof(SlotNumber), args);
             OnStopWaitTimeSec     = ParseIntArg(nameof(OnStopWaitTimeSec), args);
             ServiceDrainTimeSec   = ParseIntArg(nameof(ServiceDrainTimeSec), args);
@@ -211,8 +221,7 @@ namespace Gigya.Microdot.SharedLogic
         {
             return args.FirstOrDefault(a => a.StartsWith($"--{name}:", StringComparison.InvariantCultureIgnoreCase))
                 ?.Split(':').Last();
-        }
-
+        }               
 
         private static int? ParseIntArg(string name, string[] args)
         {
@@ -224,6 +233,15 @@ namespace Gigya.Microdot.SharedLogic
             else return value;
         }
 
+        private static bool ParseBoolArg(string name, string[] args)
+        {
+            string valueStr = ParseStringArg(name, args);
+            if (valueStr == null)
+                return false;
+            else if (!bool.TryParse(valueStr, out bool value))
+                throw new ArgumentException($"Invalid value '{valueStr}' for parameter '{name}'. Must be an boolean.");
+            else return value;
+        }
 
         public static bool IsHelpRequired(string[] args) => args.Any(arg => arg == "-h" || arg == "--help" || arg == "/?");
 
@@ -295,6 +313,10 @@ Supported parameters:
 
 --ShutdownWhenPidExits: Specifies the process ID of a process that should be
     monitored. When the process exists, a graceful shutdown is performed.
+
+--IsShutdownOnSignal: Specifies the boolean flag to shutdown on signal. 
+    When the signal recieved, a graceful shutdown is performed.
+    Implemented in .Net6 and greater.
 
 --ServiceDrainTimeSec: Specifies drain time in this time the service status will
     be 521.

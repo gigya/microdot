@@ -2,11 +2,11 @@
   "profiles": {
     "CalculatorService": {
       "commandName": "Project",
-      "commandLineArgs": "--ServiceStartupMode:CommandLineInteractive --ConsoleOutputMode:Color"
+      "commandLineArgs": "--ServiceStartupMode:CommandLineInteractive --ConsoleOutputMode:Color --IsShutdownOnSignal:true"
     },
     "Docker": {
       "commandName": "Docker",
-      "commandLineArgs": "--ServiceStartupMode:CommandLineInteractive --ConsoleOutputMode:Color",
+      "commandLineArgs": "--ServiceStartupMode:CommandLineInteractive --ConsoleOutputMode:Color --IsShutdownOnSignal:true",
       "environmentVariables": {
         "GIGYA_ENVVARS_FILE": "/gigya/environmentVariablesLinux.json"
       },
