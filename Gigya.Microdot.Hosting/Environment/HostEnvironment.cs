@@ -44,7 +44,7 @@ namespace Gigya.Microdot.Hosting.Environment
     public class HostEnvironment : IEnvironment
     {
         private const string GIGYA_CONFIG_ROOT_DEFAULT = "config";
-        private const string LOADPATHS_JSON = "loadPaths.json";
+        private const string LOADPATHS_JSON = "loadpaths.json";
 
         private const string GIGYA_CONFIG_ROOT_KEY = "GIGYA_CONFIG_ROOT";
         private const string GIGYA_CONFIG_PATHS_FILE_KEY = "GIGYA_CONFIG_PATHS_FILE";
