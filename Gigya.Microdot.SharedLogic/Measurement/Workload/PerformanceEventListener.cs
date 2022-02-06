@@ -32,11 +32,13 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         public bool Subscribe(string performanceCounterName)
         {
             string counterName = NormalizeCounterName(performanceCounterName);
+            string eventCounter;
 
             var translationDictionary = _getConfig().PerformanceCountersToEventCounters;
             if (translationDictionary == null || !translationDictionary.ContainsKey(counterName))
-                return false;
-            string eventCounter = translationDictionary[counterName];
+                eventCounter = counterName;
+            else
+                eventCounter = translationDictionary[counterName];
             if (_counters.ContainsKey(eventCounter))
                 return true;
 
