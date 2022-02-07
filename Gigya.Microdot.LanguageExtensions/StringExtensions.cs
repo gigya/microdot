@@ -71,5 +71,25 @@ namespace Gigya.Microdot.LanguageExtensions
                 ? self
                 : null;
         }
+
+        //In .net >= core, GetHashCode() returns a different result on every application run (it uses randomization to avoid hash flooding)
+        //In cases in which you need a deterministic hash code, you can use the following method
+        public static int GetDeterministicHashCode(this string str)
+        {
+            if (str == null)
+                throw new ArgumentNullException(nameof(str));
+
+            unchecked
+            {
+                int hash = 23;
+
+                foreach (char c in str)
+                {
+                    hash = hash * 31 + c;
+                }
+
+                return hash;
+            }
+        }
     }
 }

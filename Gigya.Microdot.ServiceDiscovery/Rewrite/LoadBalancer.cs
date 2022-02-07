@@ -23,6 +23,7 @@
 using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.HostManagement;
 using Gigya.Microdot.SharedLogic.Events;
@@ -136,7 +137,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
                 case TrafficRoutingStrategy.RoundRobin:
                     return (uint)Interlocked.Increment(ref _roundRobinIndex);
                 case TrafficRoutingStrategy.RandomByRequestID:
-                    return (uint?)TracingContext.TryGetRequestID()?.GetHashCode() ?? (uint)Interlocked.Increment(ref _roundRobinIndex);
+                    return (uint?)TracingContext.TryGetRequestID()?.GetDeterministicHashCode() ?? (uint)Interlocked.Increment(ref _roundRobinIndex);
                 default:
                     throw new ProgrammaticException($"The {nameof(TrafficRoutingStrategy)} '{TrafficRoutingStrategy}' is not supported by LoadBalancer.");
             }
