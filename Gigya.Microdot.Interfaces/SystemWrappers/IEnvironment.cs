@@ -49,6 +49,8 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         // TODO: Abstract away
         string ConsulAddress { get; }
 
+        string HostIPAddress { get; }
+
         /// <summary>
         /// Logical instance name for the current application, which can be used to differentiate between
         /// multiple identical applications running on the same host.

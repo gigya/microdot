@@ -63,6 +63,7 @@ namespace Gigya.Microdot.Hosting.Environment
                 Region                = pipeParameter(nameof(Region),                Region,                s.Region);
                 DeploymentEnvironment = pipeParameter(nameof(DeploymentEnvironment), DeploymentEnvironment, s.DeploymentEnvironment);
                 ConsulAddress         = pipeParameter(nameof(ConsulAddress),         ConsulAddress,         s.ConsulAddress);
+                HostIPAddress         = pipeParameter(nameof(HostIPAddress),         HostIPAddress,         s.HostIPAddress);
                 ApplicationInfo       = pipeParameter(nameof(ApplicationInfo),       ApplicationInfo,       s.ApplicationInfo);
                 InstanceName          = pipeParameter(nameof(InstanceName),          InstanceName,          s.InstanceName);
                 ConfigRoot            = pipeFsiParameter(nameof(ConfigRoot),         ConfigRoot,            s.ConfigRoot);
@@ -153,6 +154,7 @@ namespace Gigya.Microdot.Hosting.Environment
         public string Region { get; }
         public string DeploymentEnvironment { get; }
         public string ConsulAddress { get; }
+        public string HostIPAddress { get; }
         public DirectoryInfo ConfigRoot { get; }
         public FileInfo LoadPathsFile { get; }
         public CurrentApplicationInfo ApplicationInfo { get; }
