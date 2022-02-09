@@ -74,6 +74,12 @@ namespace Gigya.Common.Contracts.HttpService
         /// </summary>
         public bool UsingRequestObject { get; set; } = false;
 
+        /// <summary>
+        /// Comma separated list of allowed http request methods, empty/null to allow all
+        /// </summary>
+        public string AllowedRequestMethods { get; set; } = null;
+
+
         /// <param name="endpointName"> Full endpoint name (e.g. "accounts.getPolicies"). If <see cref="UrlPathRegex" /> is specified, <see cref="EndpointName" /> should specify the a logical name in the same format, which will be used for logging and rate limit.</param>
         /// <param name="requireHTTPS">
         /// Whether Gator should reject requests from the outside world that were passed over http and not https, and

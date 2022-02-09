@@ -32,7 +32,7 @@ nuget Microsoft.Extensions.Options.ConfigurationExtensions == 3.1.17
 
 
 
-nuget Gigya.ServiceContract ~> 2.7.7
+nuget Gigya.ServiceContract ~> 2.7.8
 
 # .Net
 # Pinning to 4.7.0 as 5.0.0+ are net5 nugets
