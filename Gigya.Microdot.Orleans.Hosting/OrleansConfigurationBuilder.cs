@@ -37,6 +37,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 
 namespace Gigya.Microdot.Orleans.Hosting
@@ -245,10 +246,15 @@ namespace Gigya.Microdot.Orleans.Hosting
             switch (_serviceArguments.SiloClusterMode)
             {
                 case SiloClusterMode.ZooKeeper:
+                    IPAddress hostIPAddress = null;
+
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                        IPAddress.TryParse(_environment.HostIPAddress, out hostIPAddress);
+
                     silo.UseZooKeeperClustering(options =>
                     {
                         options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
-                    }).ConfigureEndpoints(siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort)
+                    }).ConfigureEndpoints(advertisedIP: hostIPAddress, siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort)
                    .Configure<ClusterOptions>(options =>
                     {
                         options.ClusterId = _clusterIdentity.DeploymentId;
