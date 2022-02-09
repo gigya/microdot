@@ -13,6 +13,7 @@ namespace Gigya.Microdot.UnitTests
         public string Region => nameof(Region);
         public string DeploymentEnvironment => nameof(DeploymentEnvironment);
         public string ConsulAddress => nameof(ConsulAddress);
+        public string HostIPAddress => nameof(HostIPAddress);
         public string InstanceName => nameof(InstanceName);
         public DirectoryInfo ConfigRoot => new DirectoryInfo(Directory.GetCurrentDirectory());
         public FileInfo LoadPathsFile => new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "loadPaths.json"));

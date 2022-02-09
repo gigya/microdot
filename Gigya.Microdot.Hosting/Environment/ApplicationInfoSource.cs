@@ -14,6 +14,8 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public string ConsulAddress { get; }
 
+        public string HostIPAddress { get; }
+        
         public string InstanceName { get; }
 
         public CurrentApplicationInfo ApplicationInfo { get; }
