@@ -251,15 +251,31 @@ namespace Gigya.Microdot.Orleans.Hosting
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                         IPAddress.TryParse(_environment.HostIPAddress, out hostIPAddress);
 
-                    silo.UseZooKeeperClustering(options =>
+                    if (hostIPAddress == null)
                     {
-                        options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
-                    }).ConfigureEndpoints(advertisedIP: hostIPAddress, siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort)
-                   .Configure<ClusterOptions>(options =>
+                        silo.UseZooKeeperClustering(options =>
+                        {
+                            options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
+                        }).ConfigureEndpoints(siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort)
+                       .Configure<ClusterOptions>(options =>
+                       {
+                           options.ClusterId = _clusterIdentity.DeploymentId;
+                           options.ServiceId = _clusterIdentity.ServiceId.ToString();
+                       });
+                    }
+                    else
                     {
-                        options.ClusterId = _clusterIdentity.DeploymentId;
-                        options.ServiceId = _clusterIdentity.ServiceId.ToString();
-                    });
+                        silo.UseZooKeeperClustering(options =>
+                        {
+                            options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
+                        }).ConfigureEndpoints(advertisedIP: hostIPAddress, siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort)
+                       .Configure<ClusterOptions>(options =>
+                       {
+                           options.ClusterId = _clusterIdentity.DeploymentId;
+                           options.ServiceId = _clusterIdentity.ServiceId.ToString();
+                       });
+                    }
+
                     break;
 
                 case SiloClusterMode.Unspecified:
