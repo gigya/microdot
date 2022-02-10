@@ -268,7 +268,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                         silo.UseZooKeeperClustering(options =>
                         {
                             options.ConnectionString = _orleansConfig.ZooKeeper.ConnectionString;
-                        }).ConfigureEndpoints(advertisedIP: hostIPAddress, siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort)
+                        }).ConfigureEndpoints(advertisedIP: hostIPAddress, siloPort: _endPointDefinition.SiloNetworkingPort, gatewayPort: _endPointDefinition.SiloGatewayPort, listenOnAnyHostAddress: true)
                        .Configure<ClusterOptions>(options =>
                        {
                            options.ClusterId = _clusterIdentity.DeploymentId;
