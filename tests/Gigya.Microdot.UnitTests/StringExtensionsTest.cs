@@ -2,6 +2,7 @@
 using Gigya.Microdot.LanguageExtensions;
 using NUnit.Framework;
 using Shouldly;
+using System;
 
 namespace Gigya.Microdot.UnitTests
 {
@@ -29,6 +30,21 @@ namespace Gigya.Microdot.UnitTests
         public void IsSubPathOfTest(string path, string baseDirPath, bool isSubPath)
         {
             path.IsSubPathOf(baseDirPath).ShouldBe(isSubPath);
+        }
+
+
+        [Test]
+        public void GetDeterministicHashCode_ThrowsForNullInput()
+        {
+            string str = null;
+            Should.Throw<ArgumentNullException>(() => str.GetDeterministicHashCode());
+        }
+
+        [TestCase("dlshjksdjkfhasdjk", 1472961354)]
+        [TestCase("", 23)]
+        public void GetDeterministicHashCode_ReturnsCorrectHashCode(string str, int expectedHashCode)
+        {
+            str.GetDeterministicHashCode().ShouldBe(expectedHashCode);            
         }
     }
 }
