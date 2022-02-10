@@ -53,6 +53,7 @@ namespace Gigya.Microdot.Hosting.Environment
             string region = null,
             string deploymentEnvironment = null,
             string consulAddress = null,
+            string HostIPAddress = null,
             string instanceName = null,
             CurrentApplicationInfo applicationInfo = null,
             DirectoryInfo configRoot = null,
@@ -64,6 +65,7 @@ namespace Gigya.Microdot.Hosting.Environment
             this.Region = region;
             this.DeploymentEnvironment = deploymentEnvironment;
             this.ConsulAddress = consulAddress;
+            this.HostIPAddress = HostIPAddress;
             this.InstanceName = instanceName;
             this.ApplicationInfo = applicationInfo;
             this.ConfigRoot = configRoot;

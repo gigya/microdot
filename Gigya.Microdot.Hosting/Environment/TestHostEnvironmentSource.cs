@@ -54,6 +54,7 @@ namespace Gigya.Microdot.Hosting.Environment
             string region = null,
             string deploymentEnvironment = null,
             string consulAddress = null,
+            string hostIPAddress = null,
             string instanceName = null,
             CurrentApplicationInfo applicationInfo = null,
             DirectoryInfo configRoot = null,
@@ -65,6 +66,7 @@ namespace Gigya.Microdot.Hosting.Environment
             this.Region = region ?? "region";
             this.DeploymentEnvironment = deploymentEnvironment ?? "env";
             this.ConsulAddress = consulAddress ?? "addr";
+            this.HostIPAddress = hostIPAddress;
             this.InstanceName = instanceName ?? "test-instance";
             this.ApplicationInfo = applicationInfo ?? new CurrentApplicationInfo(appName ?? "test", System.Environment.UserName, System.Net.Dns.GetHostName());
             this.ConfigRoot = configRoot ?? new DirectoryInfo(this.GetType().Assembly.Location.To(Path.GetDirectoryName));
