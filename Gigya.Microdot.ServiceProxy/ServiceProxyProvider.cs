@@ -496,10 +496,15 @@ namespace Gigya.Microdot.ServiceProxy
                 }
                 catch (HttpRequestException ex)
                 {
+
                     //In case we get any https request exception and we were trying HTTPs we must fallback to HTTP
                     //otherwise we will be stuck trying HTTPs because we didn't change the Http client and will probably 
                     //get different error than Tls errors
-                    if (allowNonHttps && isHttps)
+                    if (   allowNonHttps 
+                        && isHttps 
+                        && ex.Message != null 
+                        && (discoveryConfig.CertificateErrorMessageSubstrings??Enumerable.Empty<string>()).Any(ex.Message.Contains)
+                        )
                     {
                         tryHttps = false;
                         continue;
@@ -620,12 +625,6 @@ namespace Gigya.Microdot.ServiceProxy
                 }
                 else
                 {
-                    if (allowNonHttps && isHttps)
-                    {
-						tryHttps = false;
-						continue;
-					}
-
                     var exception = response.StatusCode == HttpStatusCode.ServiceUnavailable ?
                         new Exception($"The remote service is unavailable (503) and is not recognized as a Gigya host at uri: {uri}") :
                         new Exception($"The remote service returned a response but is not recognized as a Gigya host at uri: {uri}");
