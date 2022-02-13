@@ -18,6 +18,8 @@ namespace Gigya.Microdot.Hosting.Environment
         public string ConsulAddress { get; }
         
         public string HostIPAddress { get; }
+        
+        public string ContainerParentName { get; }
 
         public string InstanceName { get; }
 
@@ -38,6 +40,7 @@ namespace Gigya.Microdot.Hosting.Environment
             this.DeploymentEnvironment = System.Environment.GetEnvironmentVariable("ENV");
             this.ConsulAddress = System.Environment.GetEnvironmentVariable("CONSUL");
             this.HostIPAddress = System.Environment.GetEnvironmentVariable("HOSTIPADDRESS");
+            this.ContainerParentName = System.Environment.GetEnvironmentVariable("CONTAINERPARENTNAME");
             this.InstanceName = System.Environment.GetEnvironmentVariable("GIGYA_SERVICE_INSTANCE_NAME");
             this.ConfigRoot = System.Environment.GetEnvironmentVariable("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));
             this.LoadPathsFile = System.Environment.GetEnvironmentVariable("GIGYA_CONFIG_PATHS_FILE")?.To(x => new FileInfo(x));
