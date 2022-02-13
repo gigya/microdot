@@ -130,6 +130,11 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
 
         public string EnvironmentFallbackTarget { get; set; }
 
+        public List<string> CertificateErrorMessageSubstrings { get; set; } = new List<string>()
+        {
+            "Element not found"
+        };
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
