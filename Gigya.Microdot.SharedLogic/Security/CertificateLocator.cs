@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Gigya.Microdot.SharedLogic.Security
@@ -48,31 +47,12 @@ namespace Gigya.Microdot.SharedLogic.Security
 		public string LinuxCertsBasePath { get; set; } = "/etc/pki/tls/certs/";
 	}
 
-	public class CertificateLocator : ICertificateLocator
+	public class CertificateLocatorWindows : ICertificateLocator
 	{
 		private Func<HttpsConfiguration> HttpsConfigurationFactory { get; }
 		private CurrentApplicationInfo AppInfo { get; }
 
-		public CertificateLocator(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
-		{
-			HttpsConfigurationFactory = httpsConfigurationFactory;
-			AppInfo = appInfo;
-		}
-
-		public X509Certificate2 GetCertificate(string certName)
-		{
-			return RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-				? new LinuxCertificateLoader(HttpsConfigurationFactory, AppInfo).GetCertificate(certName)
-				: new WindowsCertificateLoader(HttpsConfigurationFactory, AppInfo).GetCertificate(certName);
-		}
-	}
-
-	class WindowsCertificateLoader
-	{
-		private Func<HttpsConfiguration> HttpsConfigurationFactory { get; }
-		private CurrentApplicationInfo AppInfo { get; }
-
-		public WindowsCertificateLoader(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
+		public CertificateLocatorWindows(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
 		{
 			HttpsConfigurationFactory = httpsConfigurationFactory;
 			AppInfo = appInfo;
@@ -109,12 +89,12 @@ namespace Gigya.Microdot.SharedLogic.Security
 		}
 	}
 
-	class LinuxCertificateLoader
+	public class CertificateLocatorLinux : ICertificateLocator
 	{
 		private Func<HttpsConfiguration> HttpsConfigurationFactory { get; }
 		private CurrentApplicationInfo AppInfo { get; }
 
-		public LinuxCertificateLoader(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
+		public CertificateLocatorLinux(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
 		{
 			HttpsConfigurationFactory = httpsConfigurationFactory;
 			AppInfo = appInfo;
