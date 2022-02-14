@@ -27,6 +27,7 @@ using Gigya.Microdot.SharedLogic.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 
@@ -39,18 +40,19 @@ namespace Gigya.Microdot.SharedLogic.Security
 		public string CertificatePath { get; set; }
 	}
 
-	[ConfigurationRoot("Https",RootStrategy.ReplaceClassNameWithPath)]
+	[ConfigurationRoot("Https", RootStrategy.ReplaceClassNameWithPath)]
 	public class HttpsConfiguration : IConfigObject
 	{
-        public Dictionary<string, CertificateConfig>  Certificates { get; set; }    
+        public Dictionary<string, CertificateConfig>  Certificates { get; set; }
+		public string LinuxCertsBasePath { get; set; } = "/etc/pki/tls/certs/";
 	}
 
-	public class WindowsStoreCertificateLocator : ICertificateLocator
+	public class CertificateLocatorWindows : ICertificateLocator
 	{
 		private Func<HttpsConfiguration> HttpsConfigurationFactory { get; }
 		private CurrentApplicationInfo AppInfo { get; }
 
-		public WindowsStoreCertificateLocator(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
+		public CertificateLocatorWindows(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
 		{
 			HttpsConfigurationFactory = httpsConfigurationFactory;
 			AppInfo = appInfo;
@@ -61,20 +63,18 @@ namespace Gigya.Microdot.SharedLogic.Security
 			var config = HttpsConfigurationFactory();
 			if (!config.Certificates.TryGetValue(certName, out CertificateConfig certificateConfig))
 			{
-				throw new ConfigurationException($"No certificate configuration is found for {certName}" );
+				throw new ConfigurationException($"No certificate configuration is found for {certName}");
 			}
 
 			string certPath = certificateConfig.CertificatePath;
 			string errorPrefix = $"Config entry '{certName}.CertificatePath' specifies '{certPath}'";
+
 			var parts = certPath.Split('\\');
 			var storeLocation = StoreLocation.CurrentUser;
 			var storeName = StoreName.My;
 
 			GAssert.IsTrue(parts.Length == 3 && Enum.TryParse(parts[0], true, out storeLocation) && Enum.TryParse(parts[1], true, out storeName),
-				string.Format("{0}; invalid format; expecting <{1}>\\<{2}>\\<certificate subject>",
-					errorPrefix, 
-					string.Join("|", Enum.GetNames(typeof(StoreLocation))),string.Join("|", Enum.GetNames(typeof(StoreName)))
-					));
+				$"{errorPrefix}; invalid format; expecting <{string.Join("|", Enum.GetNames(typeof(StoreLocation)))}>\\<{string.Join("|", Enum.GetNames(typeof(StoreName)))}>\\<certificate subject>");
 
 			var store = new X509Store(storeName, storeLocation);
 			store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
@@ -82,11 +82,46 @@ namespace Gigya.Microdot.SharedLogic.Security
 
 			var foundCert = certs.Cast<X509Certificate2>().FirstOrDefault(cer => cer.GetNameInfo(X509NameType.SimpleName, false) == parts[2]);
 
-			errorPrefix += " and process runs under user '" + AppInfo.OsUser + "'";
-			GAssert.IsTrue(foundCert != null, errorPrefix + ", but certificate was not found.");
-			GAssert.IsTrue(foundCert.HasPrivateKey, errorPrefix + ", but certificate does not contain a private key.");
+			errorPrefix += $" and process runs under user '{AppInfo.OsUser}'";
+			GAssert.IsTrue(foundCert != null, $"{errorPrefix}, but certificate was not found.");
+			GAssert.IsTrue(foundCert.HasPrivateKey, $"{errorPrefix}, but certificate does not contain a private key.");
 			return foundCert;
 		}
+	}
 
+	public class CertificateLocatorLinux : ICertificateLocator
+	{
+		private Func<HttpsConfiguration> HttpsConfigurationFactory { get; }
+		private CurrentApplicationInfo AppInfo { get; }
+
+		public CertificateLocatorLinux(Func<HttpsConfiguration> httpsConfigurationFactory, CurrentApplicationInfo appInfo)
+		{
+			HttpsConfigurationFactory = httpsConfigurationFactory;
+			AppInfo = appInfo;
+		}
+
+		public X509Certificate2 GetCertificate(string certName)
+		{
+			var config = HttpsConfigurationFactory();
+			if (!config.Certificates.TryGetValue(certName, out CertificateConfig certificateConfig))
+			{
+				throw new ConfigurationException($"No certificate configuration is found for {certName}");
+			}
+
+			string certPath = certificateConfig.CertificatePath;
+			string errorPrefix = $"Config entry '{certName}.CertificatePath' specifies '{certPath}'";
+
+			certPath = $"{Path.Combine(config.LinuxCertsBasePath, certificateConfig.CertificatePath)}";
+
+			if (!File.Exists(certPath))
+				throw new ConfigurationException($"{errorPrefix}. File not found: {certPath}");
+
+			var foundCert = new X509Certificate2(certPath);
+
+			errorPrefix += $" and process runs under user '{AppInfo.OsUser}'";
+			GAssert.IsTrue(foundCert != null, $"{errorPrefix}, but certificate was not found.");
+			GAssert.IsTrue(foundCert.HasPrivateKey, $"{errorPrefix}, but certificate does not contain a private key.");
+			return foundCert;
+		}
 	}
 }
