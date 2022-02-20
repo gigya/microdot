@@ -33,7 +33,7 @@ namespace Gigya.Microdot.Hosting.Environment
         string DeploymentEnvironment { get; }
         string ConsulAddress { get; }
         string HostIPAddress { get; }
-        string ContainerParentName { get; }
+        string ContainerName { get; }
         string InstanceName { get; }
         CurrentApplicationInfo ApplicationInfo { get; }
         DirectoryInfo ConfigRoot { get; }

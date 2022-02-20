@@ -23,7 +23,6 @@
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
-using System;
 
 namespace Gigya.Microdot.Orleans.Hosting
 {
@@ -35,7 +34,7 @@ namespace Gigya.Microdot.Orleans.Hosting
         /// ServiceId's are intended to be long lived Id values for a particular service which will remain constant 
         /// even if the service is started / redeployed multiple times during its operations life.
         /// </summary>
-        public Guid ServiceId { get; }
+        public string ServiceId { get; }
 
         /// <summary>
         /// Provides the SiloDeploymentId for this orleans cluster.
@@ -52,12 +51,10 @@ namespace Gigya.Microdot.Orleans.Hosting
             string dc = environment.Zone;
             string env = environment.DeploymentEnvironment;
 
-            var serviceIdSourceString = string.Join("_", dc, env, appInfo.Name, environment.InstanceName);
-            ServiceId = Guid.Parse(serviceIdSourceString.GetHashCode().ToString("X32"));
+            ServiceId = string.Join("_", dc, appInfo.Name).ToLower();
+            DeploymentId = string.Join("_", dc, env, appInfo.Name, environment.InstanceName, appInfo.Version).ToLower();
 
-            DeploymentId = serviceIdSourceString + "_" + appInfo.Version;
-
-            log.Info(_ => _("Orleans Cluster Identity Information (see tags)", unencryptedTags: new { OrleansDeploymentId = DeploymentId, OrleansServiceId = ServiceId, serviceIdSourceString }));
+            log.Info(_ => _("Orleans Cluster Identity Information", unencryptedTags: new { OrleansDeploymentId = DeploymentId, OrleansServiceId = ServiceId }));
         }
     }
 }

@@ -12,11 +12,9 @@ namespace Gigya.Microdot.LanguageExtensions
         /// </summary>
         public static bool IsSubPathOf(this string path, string baseDirPath)
         {
-            string normalizedPath = Path.GetFullPath(path.Replace('/', '\\')
-                                                         .WithEnding("\\"));
+            string normalizedPath = Path.GetFullPath(path.Replace('/', '\\').WithEnding("\\"));
 
-            string normalizedBaseDirPath = Path.GetFullPath(baseDirPath.Replace('/', '\\')
-                                                                       .WithEnding("\\"));
+            string normalizedBaseDirPath = Path.GetFullPath(baseDirPath.Replace('/', '\\').WithEnding("\\"));
 
             return normalizedPath.StartsWith(normalizedBaseDirPath, StringComparison.OrdinalIgnoreCase);
         }
@@ -66,10 +64,7 @@ namespace Gigya.Microdot.LanguageExtensions
 
         public static string NullWhenEmpty(this string self)
         {
-            return
-                string.IsNullOrEmpty(self) == false
-                ? self
-                : null;
+            return string.IsNullOrEmpty(self) == false ? self : null;
         }
 
         //In .net >= core, GetHashCode() returns a different result on every application run (it uses randomization to avoid hash flooding)
@@ -84,9 +79,7 @@ namespace Gigya.Microdot.LanguageExtensions
                 int hash = 23;
 
                 foreach (char c in str)
-                {
-                    hash = hash * 31 + c;
-                }
+                    hash = (hash << 5) - hash + c;  // same as "hash = hash * 31 + c", but faster.
 
                 return hash;
             }
