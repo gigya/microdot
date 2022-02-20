@@ -246,6 +246,10 @@ namespace Gigya.Microdot.SharedLogic.Events
         {
             fallback = new TracingContextNoneOrleans();
 
+            //TODO: this should be refactored to something call agnostic or throw exception if we are not under Orleans.
+            //the fact that the assembly is loaded into AppDomain doesn't necessarily mean we are running under Orleans.
+            //If we are not under Orleans, the behavior of Orleans.Runtime.RequestContext is pretty much *undefined*
+            //(if we are running a functional test but the mock is not a part of Orleans runtime and it runs before Silo is initialized, then what?)
             var type = Type.GetType("Orleans.Runtime.RequestContext, Orleans.Core.Abstractions", throwOnError: false);
             if(type != null)
             {
