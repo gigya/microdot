@@ -22,7 +22,7 @@ namespace Gigya.Microdot.Hosting.Environment
         
         public string HostIPAddress { get; }
         
-        public string ContainerParentName { get; }
+        public string ContainerName { get; }
 
         public string InstanceName { get; }
 
@@ -45,7 +45,7 @@ namespace Gigya.Microdot.Hosting.Environment
             DeploymentEnvironment = get("ENV");
             ConsulAddress         = get("CONSUL");
             HostIPAddress         = get("HOSTIPADDRESS");
-            ContainerParentName   = get("CONTAINERPARENTNAME");
+            ContainerName         = get("CONTAINERNAME");
             InstanceName          = get("GIGYA_SERVICE_INSTANCE_NAME");
 
             ConfigRoot    = get("GIGYA_CONFIG_ROOT")?.To(x => new DirectoryInfo(x));

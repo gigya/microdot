@@ -64,7 +64,7 @@ namespace Gigya.Microdot.Hosting.Environment
                 DeploymentEnvironment = pipeParameter(nameof(DeploymentEnvironment), DeploymentEnvironment, s.DeploymentEnvironment);
                 ConsulAddress         = pipeParameter(nameof(ConsulAddress),         ConsulAddress,         s.ConsulAddress);
                 HostIPAddress         = pipeParameter(nameof(HostIPAddress),         HostIPAddress,         s.HostIPAddress);
-                ContainerParentName   = pipeParameter(nameof(ContainerParentName),   ContainerParentName,   s.ContainerParentName);
+                ContainerName         = pipeParameter(nameof(ContainerName),         ContainerName,         s.ContainerName);
                 ApplicationInfo       = pipeParameter(nameof(ApplicationInfo),       ApplicationInfo,       s.ApplicationInfo);
                 InstanceName          = pipeParameter(nameof(InstanceName),          InstanceName,          s.InstanceName);
                 ConfigRoot            = pipeFsiParameter(nameof(ConfigRoot),         ConfigRoot,            s.ConfigRoot);
@@ -156,7 +156,7 @@ namespace Gigya.Microdot.Hosting.Environment
         public string DeploymentEnvironment { get; }
         public string ConsulAddress { get; }
         public string HostIPAddress { get; }
-        public string ContainerParentName { get; }
+        public string ContainerName { get; }
         public DirectoryInfo ConfigRoot { get; }
         public FileInfo LoadPathsFile { get; }
         public CurrentApplicationInfo ApplicationInfo { get; }
@@ -208,7 +208,7 @@ namespace Gigya.Microdot.Hosting.Environment
                         System.Environment.UserName,
                         System.Net.Dns.GetHostName(),
                         infraVersion: infraVersion,
-                        containerParentName: System.Environment.GetEnvironmentVariable("CONTAINERPARENTNAME"))));
+                        containerName: System.Environment.GetEnvironmentVariable("CONTAINERNAME"))));
 
             return l;
         }

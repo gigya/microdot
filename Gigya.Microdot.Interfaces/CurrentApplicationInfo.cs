@@ -32,7 +32,7 @@ namespace Gigya.Microdot.SharedLogic
         /// Name of host, the current process is running on.
         /// </summary>
         public static string HostName { get; private set; }
-        public static string ContainerParentName { get; private set; }
+        public static string ContainerName { get; private set; } = null;
 
         /// <summary>
         /// Indicates whether current process has an interactive console window.
@@ -45,7 +45,7 @@ namespace Gigya.Microdot.SharedLogic
         internal string InstanceName { get; }
 
         public CurrentApplicationInfo(string name, string instanceName = null, Version infraVersion = null)
-            : this(name, Environment.UserName, System.Net.Dns.GetHostName(), instanceName, infraVersion, containerParentName: null)
+            : this(name, Environment.UserName, System.Net.Dns.GetHostName(), instanceName, infraVersion, containerName: null)
         { }
 
         public CurrentApplicationInfo(
@@ -54,7 +54,7 @@ namespace Gigya.Microdot.SharedLogic
             string hostName,
             string instanceName = null, 
             Version infraVersion = null,
-            string containerParentName = null)
+            string containerName = null)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             OsUser = osUser.NullWhenEmpty() ?? throw new ArgumentNullException(nameof(osUser));
@@ -69,7 +69,7 @@ namespace Gigya.Microdot.SharedLogic
             InfraVersion = infraVersion ?? typeof(CurrentApplicationInfo).Assembly.GetName().Version;
 
             InstanceName = instanceName;
-            ContainerParentName = containerParentName;
+            ContainerName = string.IsNullOrEmpty(containerName) ? null : containerName;
             IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         }
     }

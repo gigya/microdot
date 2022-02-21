@@ -93,11 +93,11 @@ namespace Gigya.Microdot.SharedLogic.Events
         public string InfraVersion  { get; set;} // Publisher populated from CurrentApplicationInfo;
 
         [EventField(EventConsts.containerName, OmitFromAudit = true)]
-        public string ContainerName { get; set;} = CurrentApplicationInfo.ContainerParentName != null ? CurrentApplicationInfo.HostName : null;
+        public string ContainerName { get; set; } = CurrentApplicationInfo.ContainerName;
 
         ///// <summary>The hostname of the server making the report</summary>    
         [EventField(EventConsts.runtimeHost)]
-        public string HostName { get; set; } = CurrentApplicationInfo.ContainerParentName ?? CurrentApplicationInfo.HostName;
+        public string HostName { get; set; } = CurrentApplicationInfo.HostName;
 
         /// <summary>The value of the %REGION% environment variable. .</summary>
         [EventField(EventConsts.runtimeREGION, OmitFromAudit = true)]

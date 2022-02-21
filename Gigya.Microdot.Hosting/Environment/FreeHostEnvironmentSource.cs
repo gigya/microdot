@@ -38,7 +38,7 @@ namespace Gigya.Microdot.Hosting.Environment
         
         public string HostIPAddress { get; }
         
-        public string ContainerParentName { get; }
+        public string ContainerName { get; }
 
         public string InstanceName { get; }
 
@@ -56,7 +56,7 @@ namespace Gigya.Microdot.Hosting.Environment
             string deploymentEnvironment = null,
             string consulAddress = null,
             string HostIPAddress = null,
-            string ContainerParentName = null,
+            string containerName = null,
             string instanceName = null,
             CurrentApplicationInfo applicationInfo = null,
             DirectoryInfo configRoot = null,
@@ -69,7 +69,7 @@ namespace Gigya.Microdot.Hosting.Environment
             this.DeploymentEnvironment = deploymentEnvironment;
             this.ConsulAddress = consulAddress;
             this.HostIPAddress = HostIPAddress;
-            this.ContainerParentName = ContainerParentName;
+            this.ContainerName = ContainerName;
             this.InstanceName = instanceName;
             this.ApplicationInfo = applicationInfo;
             this.ConfigRoot = configRoot;

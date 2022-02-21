@@ -260,7 +260,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                        .Configure<ClusterOptions>(options =>
                        {
                            options.ClusterId = _clusterIdentity.DeploymentId;
-                           options.ServiceId = _clusterIdentity.ServiceId.ToString();
+                           options.ServiceId = _clusterIdentity.ServiceId;
                        });
                     }
                     else
@@ -272,7 +272,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                        .Configure<ClusterOptions>(options =>
                        {
                            options.ClusterId = _clusterIdentity.DeploymentId;
-                           options.ServiceId = _clusterIdentity.ServiceId.ToString();
+                           options.ServiceId = _clusterIdentity.ServiceId;
                        });
                     }
 

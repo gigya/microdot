@@ -16,7 +16,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public string HostIPAddress { get; }
         
-        public string ContainerParentName { get; }
+        public string ContainerName { get; }
         
         public string InstanceName { get; }
 
