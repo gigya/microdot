@@ -33,7 +33,8 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                             log("Status", unencryptedTags: new Tags
                             {
                                 { "RemoteIP", context?.Request?.RemoteEndPoint?.Address?.ToString() ?? "0" },
-                                { "RemotePort", context?.Request?.RemoteEndPoint?.Port.ToString() }
+                                { "RemotePort", context?.Request?.RemoteEndPoint?.Port.ToString() },
+                                { "StatusEndpoint", statusEndpoint }
                             });
                         });
                     }
