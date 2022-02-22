@@ -538,7 +538,17 @@ namespace Gigya.Microdot.Hosting.HttpService
             {
                 context.Response.Headers.Add("Allow", "POST");
                 _failureCounter.Increment("NonPostRequest");
-                throw new RequestException("Only POST calls are allowed.");
+                throw new RequestException(
+                    "Only POST calls are allowed.", 
+                    unencrypted: new Tags
+                    {
+                        { "RemoteIP", context?.Request?.RemoteEndPoint?.Address?.ToString() ?? "0" },
+                        { "RemotePort", context?.Request?.RemoteEndPoint?.Port.ToString() }
+                    },
+                    encrypted:new Tags()
+                    {
+                        { "requestedUrl", context?.Request?.Url?.ToString() }
+                    });
             }
 
             if (context.Request.ContentType == null || context.Request.ContentType.StartsWith("application/json") == false)
