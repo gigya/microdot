@@ -89,15 +89,15 @@ namespace Gigya.Microdot.Configuration
         public XmlNode Node { get; set; }
 
 
-        static readonly Regex MATCH_ENCRYPTED_CONFIG_STRING = new Regex(@"\$enc\((?<aaa>.*?)\)", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+        static readonly Regex MATCH_ENCRYPTED_CONFIG_STRING = new(@"\$enc\((?<encrypted>.*?)\)", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
 
         private string DecryptRawValue(string rawValue)
         {
             return MATCH_ENCRYPTED_CONFIG_STRING.Replace(rawValue, m =>
                {
-                   var inner = m.Groups[1].Value;
-                   if (ConfigDecryptor. IsValidEncryptedStringFormat(inner))
+                   var inner = m.Groups["encrypted"].Value;
+                   if (ConfigDecryptor.IsValidEncryptedStringFormat(inner))
                    {
                        try
                        {

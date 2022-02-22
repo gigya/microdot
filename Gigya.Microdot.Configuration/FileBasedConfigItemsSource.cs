@@ -43,7 +43,7 @@ namespace Gigya.Microdot.Configuration
         private readonly IEnvironment _environment;
         private readonly ConfigDecryptor _configDecryptor;
 
-        private readonly Regex paramMatcher = new Regex(@"([^\\]|^)%(?<envName>[^%]+)%", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+        private readonly Regex paramMatcher = new(@"([^\\]|^)%(?<envName>[^%]+)%", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
 
         /// <summary>
@@ -87,8 +87,8 @@ namespace Gigya.Microdot.Configuration
                                        .Cast<Match>()
                                        .Select(match => new
                                        {
-                                           Placehodler = "%" + match.Groups[1].Value + "%",
-                                           Value = _environment[match.Groups[1].Value.ToUpperInvariant()]
+                                           Placehodler = $"%{match.Groups["envName"].Value}%",
+                                           Value = _environment[match.Groups["envName"].Value.ToUpperInvariant()]
                                        }).ToList();
 
                 if (list.Any())
@@ -111,7 +111,7 @@ namespace Gigya.Microdot.Configuration
 
             if (notFoundEnvVariables.Any())
             {
-                throw new EnvironmentException("Configuration is dependent on following enviroment variables:" + string.Join("\n", notFoundEnvVariables) + "\n but they are not set.");
+                throw new EnvironmentException($"Configuration is dependent on following enviroment variables:{string.Join("\n", notFoundEnvVariables)}\n but they are not set.");
             }
 
             // return merged configuration
@@ -161,19 +161,16 @@ namespace Gigya.Microdot.Configuration
             }
             catch (FileNotFoundException ex)
             {
-                var errMsg = string.Format("Missing configuration file: " + configFile.FullName);
-                throw new ConfigurationException(errMsg, ex);
+                throw new ConfigurationException($"Missing configuration file: {configFile.FullName}", ex);
             }
             catch (IOException ex)
             {
                 // the file didn't finish being written yet
-                var errMsg = string.Format("Error loading configuration file: " + configFile.FullName);
-                throw new ConfigurationException(errMsg, ex);
+                throw new ConfigurationException($"Error loading configuration file: {configFile.FullName}", ex);
             }
             catch (Exception ex)
             {
-                var errMsg = string.Format("Missing or invalid configuration file: " + configFile.FullName);
-                throw new ConfigurationException(errMsg, ex);
+                throw new ConfigurationException($"Missing or invalid configuration file: {configFile.FullName}", ex);
             }
         }
 

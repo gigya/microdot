@@ -64,6 +64,7 @@ namespace Gigya.Microdot.Hosting.Environment
                 DeploymentEnvironment = pipeParameter(nameof(DeploymentEnvironment), DeploymentEnvironment, s.DeploymentEnvironment);
                 ConsulAddress         = pipeParameter(nameof(ConsulAddress),         ConsulAddress,         s.ConsulAddress);
                 HostIPAddress         = pipeParameter(nameof(HostIPAddress),         HostIPAddress,         s.HostIPAddress);
+                ContainerName         = pipeParameter(nameof(ContainerName),         ContainerName,         s.ContainerName);
                 ApplicationInfo       = pipeParameter(nameof(ApplicationInfo),       ApplicationInfo,       s.ApplicationInfo);
                 InstanceName          = pipeParameter(nameof(InstanceName),          InstanceName,          s.InstanceName);
                 ConfigRoot            = pipeFsiParameter(nameof(ConfigRoot),         ConfigRoot,            s.ConfigRoot);
@@ -155,6 +156,7 @@ namespace Gigya.Microdot.Hosting.Environment
         public string DeploymentEnvironment { get; }
         public string ConsulAddress { get; }
         public string HostIPAddress { get; }
+        public string ContainerName { get; }
         public DirectoryInfo ConfigRoot { get; }
         public FileInfo LoadPathsFile { get; }
         public CurrentApplicationInfo ApplicationInfo { get; }
@@ -179,9 +181,10 @@ namespace Gigya.Microdot.Hosting.Environment
 
         public static IEnumerable<IHostEnvironmentSource> GetDefaultSources(string serviceName, Version infraVersion, ServiceArguments arguments = null)
         {
-            var l = new List<IHostEnvironmentSource>(3);
-
-            l.Add(new EnvironmentVarialbesConfigurationSource());
+            var l = new List<IHostEnvironmentSource>(3)
+            {
+                new EnvironmentVarialbesConfigurationSource()
+            };
 
             if (System.Environment.GetEnvironmentVariable("GIGYA_ENVVARS_FILE") is string path)
             {
@@ -195,8 +198,7 @@ namespace Gigya.Microdot.Hosting.Environment
 
             if (arguments != null)
             {
-                l.Add(new FreeHostEnvironmentSource(
-                    instanceName: arguments.InstanceName));
+                l.Add(new FreeHostEnvironmentSource(instanceName: arguments.InstanceName));
             }
 
             l.Add(
@@ -205,7 +207,8 @@ namespace Gigya.Microdot.Hosting.Environment
                         serviceName,
                         System.Environment.UserName,
                         System.Net.Dns.GetHostName(),
-                        infraVersion: infraVersion)));
+                        infraVersion: infraVersion,
+                        containerName: System.Environment.GetEnvironmentVariable("CONTAINERNAME"))));
 
             return l;
         }

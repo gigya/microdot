@@ -50,6 +50,8 @@ namespace Gigya.Microdot.Interfaces.SystemWrappers
         string ConsulAddress { get; }
 
         string HostIPAddress { get; }
+        
+        string ContainerName { get; }
 
         /// <summary>
         /// Logical instance name for the current application, which can be used to differentiate between
