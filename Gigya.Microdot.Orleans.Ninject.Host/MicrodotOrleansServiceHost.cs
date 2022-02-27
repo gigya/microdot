@@ -73,8 +73,10 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
 
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
 
-            Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)).InSingletonScope();
-            Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)).InSingletonScope();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().InSingletonScope();
+            else
+                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
 
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
