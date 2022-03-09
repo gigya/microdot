@@ -25,6 +25,7 @@ using Gigya.Microdot.Interfaces.Configuration;
 using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.Orleans.Hosting;
+using Gigya.Microdot.SharedLogic.HttpService;
 using Ninject.Extensions.Conventions;
 using Ninject.Syntax;
 using System;
@@ -79,6 +80,7 @@ namespace Gigya.Microdot.Ninject
                 typeof(IConfigObject),
                 typeof(IEvent),
                 typeof(IEnvironment),
+                typeof(ICertificateLocator),
                 typeof(HttpServiceListener),
                 typeof(GigyaSiloHost)
             };
