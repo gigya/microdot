@@ -45,6 +45,7 @@ namespace Gigya.Microdot.Ninject
             {
                 typeof(IConfigObject),
                 typeof(IEvent),
+                typeof(ICertificateLocator),
                 typeof(HttpServiceListener),
                 typeof(GigyaSiloHost)
             };
