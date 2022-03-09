@@ -76,7 +76,7 @@ namespace Gigya.Microdot.Ninject.Host
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
             else
-                throw new EnvironmentException("Only Windows or Linux allowed");
+                throw new EnvironmentException("Only Windows or Linux allowed for ICertificateLocator - MicrodotServiceHost");
 
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
 
