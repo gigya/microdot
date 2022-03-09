@@ -20,7 +20,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
-using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.Environment;
@@ -35,15 +34,12 @@ using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Utils;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
-using Gigya.Microdot.SharedLogic.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Orleans;
 using Orleans.Hosting;
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -73,13 +69,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().InSingletonScope();
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
-            else
-                throw new EnvironmentException("Only Windows or Linux allowed for ICertificateLocator - MicrodotOrleansServiceHost");
 
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
