@@ -34,15 +34,12 @@ using Gigya.Microdot.Ninject.SystemInitializer;
 using Gigya.Microdot.Orleans.Hosting;
 using Gigya.Microdot.Orleans.Hosting.Utils;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
-using Gigya.Microdot.SharedLogic.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Ninject;
 using Orleans;
 using Orleans.Hosting;
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,9 +69,6 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
 
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
-
-            Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)).InSingletonScope();
-            Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)).InSingletonScope();
 
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
