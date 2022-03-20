@@ -30,12 +30,9 @@ using Gigya.Microdot.Interfaces.Events;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.Interfaces.SystemWrappers;
 using Gigya.Microdot.SharedLogic;
-using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Measurement.Workload;
-using Gigya.Microdot.SharedLogic.Security;
 using Ninject;
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Gigya.Microdot.Ninject.Host
@@ -69,10 +66,6 @@ namespace Gigya.Microdot.Ninject.Host
             var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
             Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
-
-            Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)).InSingletonScope();
-            Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().When(_ => RuntimeInformation.IsOSPlatform(OSPlatform.Linux)).InSingletonScope();
-
             Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
 
             this.PreConfigure(Kernel, Arguments);

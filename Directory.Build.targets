@@ -5,9 +5,8 @@
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
 		<Orleans_Version>3.6.0</Orleans_Version>
 	</PropertyGroup>
-
 	<ItemGroup Label="Gigya">
-		<PackageReference Update="Gigya.ServiceContract" Version="4.0.3"/>
+		<PackageReference Update="Gigya.ServiceContract" Version="4.0.4"/>
 	</ItemGroup>
 
 	<ItemGroup Label="Orleans">
@@ -24,16 +23,18 @@
 		<PackageReference Update="Nito.AsyncEx" Version="5.1.2"/>
 		<PackageReference Update="Ninject.Extensions.Conventions" Version="3.3.0"/>
 		<PackageReference Update="Ninject.Extensions.Factory" Version="3.3.3"/>
-		<PackageReference Update="NLog" Version="4.7.13"/>
+		<PackageReference Update="NLog" Version="4.7.14"/>
 	</ItemGroup>
-
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+		<PackageReference Update="Newtonsoft.Json" Version="12.0.3"/>
+	</ItemGroup>
 	<ItemGroup Label="Test">
 		<PackageReference Update="NSubstitute" Version="4.3.0"/>
 		<PackageReference Update="Shouldly" Version="4.0.3"/>
-		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
+		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.1.0"/>
 		<PackageReference Update="NUnit" Version="3.13.2"/>
 		<PackageReference Update="NUnit3TestAdapter" Version="4.2.1" NoWarn="NU1701"/>
-		<PackageReference Update="FluentAssertions" Version="6.4.0"/>
+		<PackageReference Update="FluentAssertions" Version="6.5.1"/>
 		<PackageReference Update="RichardSzalay.MockHttp" Version="6.0.0"/>
 	</ItemGroup>
 

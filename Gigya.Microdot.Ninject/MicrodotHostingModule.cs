@@ -20,13 +20,17 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Microdot.Hosting;
 using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Security;
 using Ninject.Modules;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Gigya.Microdot.Ninject
 {
@@ -43,6 +47,14 @@ namespace Gigya.Microdot.Ninject
                 conventionIgnore: new List<Type> { typeof(IServiceInterfaceMapper) },
                 bindInterfacesInAssemblies: new List<Type>{typeof(ILog)},
                 assemblies: new[] { typeof(HostingAssembly) });
+
+            // Good location for Orleans, NotOrleans and Tests hosts
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().InSingletonScope();
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
+            else
+                throw new EnvironmentException($"Only Windows or Linux allowed for ICertificateLocator - {nameof(MicrodotHostingModule)}");
 
             Bind<IServiceDrainListener,ServiceDrainController>().To<ServiceDrainController>().InSingletonScope();
         }
