@@ -119,6 +119,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
             GetHealthCheck().IsHealthy.ShouldBeTrue();
         }
 
+#if !NETFRAMEWORK
         [Test]
         [Retry(5)]
         public async Task BeUnhealthyAfterThreadsCountIsTooHighForMoreThanSpecifiedDuration()
@@ -149,6 +150,7 @@ namespace Gigya.Microdot.UnitTests.Monitor
             _dateTimeFake.UtcNow += MinUnhealthyDuration + TimeSpan.FromSeconds(0.1);
             GetHealthCheck().IsHealthy.ShouldBe(false);                   
         }
+#endif
 
         [Test]
         [Repeat(Repeat)]
