@@ -2,8 +2,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<AssemblyTitle>Gigya.Microdot.UnitTests</AssemblyTitle>
-		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>		
-		<TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<TargetFrameworks>net472;net5.0;net6.0</TargetFrameworks>
 	</PropertyGroup>	
 	<ItemGroup>
 		<None Include="loadpaths.json">
