@@ -54,7 +54,11 @@ namespace Gigya.Microdot.UnitTests.Monitor
                 k.Rebind<IHealthMonitor>().To<HealthMonitor>();
                 k.Rebind<ServiceArguments>().ToMethod(c => _serviceArguments);
                 k.Rebind<IDateTime>().ToMethod(c => _dateTimeFake);
-
+#if NET5_0_OR_GREATER
+                k.Rebind<IWorkloadMetrics>().To<WorkloadMetrics>().InSingletonScope();
+#else
+                k.Rebind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().InSingletonScope();
+#endif
                 k.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
             });
 
@@ -119,7 +123,6 @@ namespace Gigya.Microdot.UnitTests.Monitor
             GetHealthCheck().IsHealthy.ShouldBeTrue();
         }
 
-#if !NETFRAMEWORK
         [Test]
         [Retry(5)]
         public async Task BeUnhealthyAfterThreadsCountIsTooHighForMoreThanSpecifiedDuration()
@@ -150,7 +153,6 @@ namespace Gigya.Microdot.UnitTests.Monitor
             _dateTimeFake.UtcNow += MinUnhealthyDuration + TimeSpan.FromSeconds(0.1);
             GetHealthCheck().IsHealthy.ShouldBe(false);                   
         }
-#endif
 
         [Test]
         [Repeat(Repeat)]
