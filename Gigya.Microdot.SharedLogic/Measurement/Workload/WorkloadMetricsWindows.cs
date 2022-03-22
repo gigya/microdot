@@ -48,9 +48,9 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
         {
             _context.Context("CPU").Gauge("Processor Affinity", () => _processorTimePercent.AssignedCoresCount, Unit.Items);
             _context.Context("CPU").Gauge("CPU usage", () => ReadPerfCounter(_processorTimePercent), Unit.Percent);
-            _context.Context("CPU").Gauge("CPU total", () => _processorTotalPercent.GetValue() ?? 0, Unit.Percent);
-            _context.Context("CPU").Gauge("Thread count", () => { double threads = ReadPerfCounter(_threadCount); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
-            _context.Context("CPU").Gauge("DotNet logical thread count", () => { double threads = ReadPerfCounter(_dotNetThreadCount); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
+            _context.Context("CPU").Gauge("Machine Cpu Usage", () => _processorTotalPercent.GetValue() ?? 0, Unit.Percent);
+            _context.Context("ThreadPool").Gauge("Thread Count", () => { double threads = ReadPerfCounter(_threadCount); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
+            _context.Context("ThreadPool").Gauge("DotNet logical thread count", () => { double threads = ReadPerfCounter(_dotNetThreadCount); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);
             _context.Context("Memory").Gauge("Working set", () => ReadPerfCounter(_workingSet), Unit.Bytes);
             _context.Context("Memory").Gauge("Private", () => ReadPerfCounter(_virtualBytes), Unit.Bytes);
             _context.Context("Memory").Gauge("Virtual", () => ReadPerfCounter(_privateBytes), Unit.Bytes);
