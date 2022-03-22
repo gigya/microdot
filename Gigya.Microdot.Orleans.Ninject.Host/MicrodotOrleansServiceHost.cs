@@ -67,9 +67,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host
             var env = HostEnvironment.CreateDefaultEnvironment(ServiceName, InfraVersion, Arguments);
             Kernel.Bind<IEnvironment>().ToConstant(env).InSingletonScope();
             Kernel.Bind<CurrentApplicationInfo>().ToConstant(env.ApplicationInfo).InSingletonScope();
-
-            Kernel.Bind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
-
+            
             this.PreConfigure(Kernel, Arguments);
             this.Configure(Kernel);
 

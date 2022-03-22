@@ -26,6 +26,7 @@ using Gigya.Microdot.Hosting.HttpService;
 using Gigya.Microdot.Interfaces.Logging;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.HttpService;
+using Gigya.Microdot.SharedLogic.Measurement.Workload;
 using Gigya.Microdot.SharedLogic.Security;
 using Ninject.Modules;
 using System;
@@ -55,6 +56,14 @@ namespace Gigya.Microdot.Ninject
                 Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
             else
                 throw new EnvironmentException($"Only Windows or Linux allowed for ICertificateLocator - {nameof(MicrodotHostingModule)}");
+
+
+#if NET5_0_OR_GREATER
+            Kernel.Rebind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
+            Kernel.Rebind<IWorkloadMetrics>().To<WorkloadMetrics>().InSingletonScope();
+#else
+            Kernel.Rebind<IWorkloadMetrics>().To<WorkloadMetricsWindows>().InSingletonScope();
+#endif
 
             Bind<IServiceDrainListener,ServiceDrainController>().To<ServiceDrainController>().InSingletonScope();
         }
