@@ -135,6 +135,8 @@ namespace Gigya.Microdot.ServiceDiscovery.Config
             "Element not found"
         };
 
+        public bool HttpsAvailabilityFailureShouldWriteLog { get; set; }
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {

@@ -273,17 +273,31 @@ namespace Gigya.Microdot.ServiceProxy
             }
             catch (HttpRequestException ex)
             {
-                
-                if (   ex.Message != null 
-                    && (this.GetDiscoveryConfig().CertificateErrorMessageSubstrings??Enumerable.Empty<string>())
+                var discoveryConfig = this.GetDiscoveryConfig();
+
+                if (discoveryConfig.HttpsAvailabilityFailureShouldWriteLog)
+                {
+                    if (ex.Message != null
+                        && (discoveryConfig.CertificateErrorMessageSubstrings ?? Enumerable.Empty<string>())
                         .Any(ex.Message.Contains)
-                   )
-                {
-                    Log.Error(_ => _($"HTTPS for service {ServiceName} is not available due to certificate error.", ex));        
-                }
-                else
-                {
-                    Log.Info(_ => _($"HTTPS for service {ServiceName} is not available.", ex));
+                       )
+                    {
+                        Log.Warn(_ => _($"HTTPS for service is not available due to certificate error."
+                            , ex
+                            , unencryptedTags: new
+                            {
+                                ServiceName = ServiceName
+                            }));
+                    }
+                    else
+                    {
+                        Log.Error(_ => _($"HTTPS for service is not available due to communication error."
+                            , ex
+                            , unencryptedTags: new
+                            {
+                                ServiceName = ServiceName
+                            }));
+                    }
                 }
             }
         }
