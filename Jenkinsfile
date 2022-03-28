@@ -6,6 +6,7 @@ node('base-win'){
             group: "gigya",
             dotnetVersion: "5.0.403",
             coveragePercentageThreshold: 1,
+            runtests: false,
             coverageFilter: "-:*.Interface;-:*Tests*;-:type=*OrleansCodeGen*",
             releaseNugetBranches: ['main', 'master']
         ]
