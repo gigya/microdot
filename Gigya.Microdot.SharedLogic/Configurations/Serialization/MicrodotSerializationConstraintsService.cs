@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 {
@@ -38,6 +39,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             public ConcurrentDictionary<string, string> AssemblyNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<string, string> TypeNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<Type, AssemblyAndTypeName> TypeToAssemblyCache { get; }
+            public bool? ShouldHandleEmptyPartition { get; }            
 
             public MicrodotSerializationEffectiveConfiguration(MicrodotSerializationSecurityConfig serializationConfig)
             {
@@ -45,6 +47,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
                 RegexReplacements = serializationConfig.AssemblyNamesRegexReplacements?? new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>();
                 ForbiddenTypes = serializationConfig.DeserializationForbiddenTypes?? new List<string>();
+                ShouldHandleEmptyPartition = serializationConfig.ShouldHandleEmptyPartition;
                 AssemblyNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeToAssemblyCache = new ConcurrentDictionary<Type, AssemblyAndTypeName>();
@@ -55,8 +58,9 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 return _lastConfig != serializationConfig;
             }
         }
-        
-      
+
+        private readonly Regex _emptyPartitionRegex = new Regex($@"System\.Linq\.EmptyPartition`1\[\[([^\]]*)]]", RegexOptions.Compiled);
+
         private readonly Func<MicrodotSerializationSecurityConfig> _getSerializationConfig;
 
         private MicrodotSerializationEffectiveConfiguration _effectiveConfigCache;
@@ -81,6 +85,9 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
         public AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName)
 #nullable disable
         {
+            var originalAssemblyName = assemblyName;
+            var originalTypeName = typeName;    
+
             var config = GetSerializationConfigAndRefreshCaches();
 
             // treat deserialization of net core System.Private.CoreLib library classes to net framework counterparts
@@ -97,9 +104,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     ) >= 0)
                     {
                         localAssemblyName = assemblyNameToRegexReplacement.AssemblyRegularExpression
-                            .Replace(localAssemblyName, assemblyNameToRegexReplacement.AssemblyReplacement);
-
-                        config.AssemblyNameToFixedAssyemblyCache.TryAdd(assemblyName, localAssemblyName);
+                            .Replace(localAssemblyName, assemblyNameToRegexReplacement.AssemblyReplacement);                        
 
                         if (localAssemblyName != assemblyName)
                         {
@@ -126,9 +131,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     ) >= 0)
                     {
                         localTypeName = assemblyNameToRegexReplacement.AssemblyRegularExpression
-                            .Replace(localTypeName, assemblyNameToRegexReplacement.AssemblyReplacement);
-
-                        config.TypeNameToFixedAssyemblyCache.TryAdd(typeName, localTypeName);
+                            .Replace(localTypeName, assemblyNameToRegexReplacement.AssemblyReplacement);                        
 
                         if (localTypeName != typeName)
                         {
@@ -142,6 +145,11 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             {
                 typeName = localTypeName;
             }
+
+            (assemblyName, typeName) = HandleEmptyPartition(assemblyName, typeName, config);
+
+            config.AssemblyNameToFixedAssyemblyCache.TryAdd(originalAssemblyName, assemblyName);
+            config.TypeNameToFixedAssyemblyCache.TryAdd(originalTypeName, typeName);
 
             return new AssemblyAndTypeName(assemblyName, typeName);
         }
@@ -212,10 +220,35 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     break;
                 }
             }
-                
-            config.TypeToAssemblyCache.TryAdd(serializedType, new AssemblyAndTypeName(assemblyName, typeName));
+
+            (assemblyName, typeName) = HandleEmptyPartition(assemblyName, typeName, config);
+
+            config.TypeToAssemblyCache.TryAdd(serializedType, new AssemblyAndTypeName(assemblyName, typeName));            
 
             return new AssemblyAndTypeName(assemblyName, typeName);
+        }
+
+        //Enumerable.Empty<> in .net > 4 is serialaized to EmptyPartition type which does not exist in net4
+        //In order to support .net4 and .net > 4 serialization we convert Enumerable.Empty<> to an Array
+        private (string assemblyName, string typeName) HandleEmptyPartition(string assemblyName, string typeName, MicrodotSerializationEffectiveConfiguration config)
+        {
+            if (config.ShouldHandleEmptyPartition.HasValue && config.ShouldHandleEmptyPartition.Value == true) 
+            {                
+                var match = _emptyPartitionRegex.Match(typeName);
+
+                if (match.Success && match.Groups.Count == 2)
+                {                    
+                    var typeAndAssemblyArr = match.Groups[1].Value.Split(',');
+
+                    if (typeAndAssemblyArr.Length == 2)
+                    {
+                        typeName = $"{typeAndAssemblyArr[0]}[], {typeAndAssemblyArr[1]}";
+                        assemblyName = typeAndAssemblyArr[1];
+                    }
+                }
+            }
+
+            return (assemblyName, typeName);
         }
         
     }
