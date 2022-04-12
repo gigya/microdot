@@ -24,9 +24,13 @@ namespace Gigya.Microdot.SharedLogic.Security
         public override Type BindToType(string? assemblyName, string typeName)
         {
             _serializationConstraints.ThrowIfExcluded(typeName);
-            
-            var assemblyAndTypeName = _serializationConstraints. 
-                TryGetAssemblyNameAndTypeReplacement(assemblyName, typeName);
+
+            AssemblyAndTypeName assemblyAndTypeName = null;
+
+            if (assemblyName != null && typeName != null)
+                assemblyAndTypeName = _serializationConstraints.TryGetAssemblyNameAndTypeReplacement(assemblyName, typeName);
+            else
+                assemblyAndTypeName = new AssemblyAndTypeName(assemblyName, typeName);
 
             return base.BindToType(assemblyAndTypeName.AssemblyName, assemblyAndTypeName.TypeName);
         }
@@ -39,8 +43,12 @@ namespace Gigya.Microdot.SharedLogic.Security
             
             base.BindToName(serializedType, out assemblyName, out typeName);
 
-            var assemblyAndTypeName = _serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
-                serializedType, assemblyName, typeName);
+            AssemblyAndTypeName assemblyAndTypeName = null;
+
+            if (assemblyName != null && typeName != null)
+                assemblyAndTypeName = _serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(serializedType, assemblyName, typeName);
+            else
+                assemblyAndTypeName = new AssemblyAndTypeName(assemblyName, typeName);
 
             assemblyName = assemblyAndTypeName.AssemblyName;
             typeName = assemblyAndTypeName.TypeName;

@@ -20,7 +20,8 @@
 		<IsPublishable>false</IsPublishable>
 		<OutputPath>bin\$(Configuration)</OutputPath>
 		<RunSettingsFilePath>$(SolutionDir)test.runsettings</RunSettingsFilePath>
-		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>		
+		<CodeAnalysisRuleSet>$(SolutionDir)main.ruleset</CodeAnalysisRuleSet>
+		<NoWarn>CS8600</NoWarn>
 	</PropertyGroup>
 	<Target Name="SignDlls"
 			AfterTargets="AfterBuild"

@@ -51,19 +51,21 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             };
                         
             var serialized = JsonConvert.SerializeObject(new Bar()
-            {                
-                Doubles = Enumerable.Empty<double>(),    
-                Bools   = Enumerable.Empty<bool>(),
-                Floats  = Enumerable.Empty<float>(), 
-                Ints    = Enumerable.Empty<int>(),
-                Longs   = Enumerable.Empty<long>(),
-                Strings = Enumerable.Empty<string>()   
+            {
+                Bars    = Enumerable.Empty<Bar>(),
+                Doubles = Enumerable.Empty<double>(),
+                Bools = Enumerable.Empty<bool>(),
+                Floats = Enumerable.Empty<float>(),
+                Ints = Enumerable.Empty<int>(),
+                Longs = Enumerable.Empty<long>(),
+                Strings = Enumerable.Empty<string>()
             }, settings);
 
             serialized.ShouldNotContain("EmptyPartition"); //net4 does not contain EmptyPartition & net6 handled by SerializationBinder  
 
             var newObj = JsonConvert.DeserializeObject<Bar>(serialized, settings);
 
+            Assert.IsEmpty(newObj.Bars);
             Assert.IsEmpty(newObj.Doubles);
             Assert.IsEmpty(newObj.Bools);
             Assert.IsEmpty(newObj.Floats);
@@ -80,16 +82,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 TypeNameHandling = TypeNameHandling.Auto,
                 NullValueHandling = NullValueHandling.Ignore,
                 Formatting = Formatting.Indented,
-                DateParseHandling = DateParseHandling.None,                
+                DateParseHandling = DateParseHandling.None,
             };
 
             var serialized = JsonConvert.SerializeObject(new Bar()
             {
+                Bars = Enumerable.Empty<Bar>(),
                 Doubles = Enumerable.Empty<double>(),
-                Bools   = Enumerable.Empty<bool>(),
-                Floats  = Enumerable.Empty<float>(),
-                Ints    = Enumerable.Empty<int>(),
-                Longs   = Enumerable.Empty<long>(),
+                Bools = Enumerable.Empty<bool>(),
+                Floats = Enumerable.Empty<float>(),
+                Ints = Enumerable.Empty<int>(),
+                Longs = Enumerable.Empty<long>(),
                 Strings = Enumerable.Empty<string>()
             }, settings);
 
@@ -97,12 +100,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
             //because SerializationBinder is not used
             int count = serialized.Split("EmptyPartition").Length - 1;
-            count.ShouldBe(6);            
+            count.ShouldBe(7);            
 
 #endif
 
             var newObj = JsonConvert.DeserializeObject<Bar>(serialized, settings);
 
+            Assert.IsEmpty(newObj.Bars);
             Assert.IsEmpty(newObj.Doubles);
             Assert.IsEmpty(newObj.Bools);
             Assert.IsEmpty(newObj.Floats);
@@ -114,12 +118,13 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
 
     public class Bar
-    {        
+    {
+        public IEnumerable<Bar>    Bars;
         public IEnumerable<double> Doubles;
-        public IEnumerable<int>    Ints;
+        public IEnumerable<int> Ints;
         public IEnumerable<string> Strings;
-        public IEnumerable<bool>   Bools;
-        public IEnumerable<float>  Floats;
-        public IEnumerable<long>   Longs;        
-    }
+        public IEnumerable<bool> Bools;
+        public IEnumerable<float> Floats;
+        public IEnumerable<long> Longs;
+    }    
 }

@@ -21,7 +21,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
     {
         void ThrowIfExcluded(string typeName);
 #nullable enable
-        AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName);
+        AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string assemblyName, string typeName);
 #nullable disable
         AssemblyAndTypeName TryGetAssemblyAndTypeNameReplacementFromType(Type serializedType,
             string assemblyName, string typeName);
@@ -82,13 +82,14 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
         }
 
 #nullable enable
-        public AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string? assemblyName, string typeName)
+        public AssemblyAndTypeName TryGetAssemblyNameAndTypeReplacement(string assemblyName, string typeName)
 #nullable disable
         {
             var originalAssemblyName = assemblyName;
-            var originalTypeName = typeName;    
+            var originalTypeName = typeName;
 
             var config = GetSerializationConfigAndRefreshCaches();
+
 
             // treat deserialization of net core System.Private.CoreLib library classes to net framework counterparts
             // https://programmingflow.com/2020/02/18/could-not-load-system-private-corelib.html
@@ -104,7 +105,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     ) >= 0)
                     {
                         localAssemblyName = assemblyNameToRegexReplacement.AssemblyRegularExpression
-                            .Replace(localAssemblyName, assemblyNameToRegexReplacement.AssemblyReplacement);                        
+                            .Replace(localAssemblyName, assemblyNameToRegexReplacement.AssemblyReplacement);
 
                         if (localAssemblyName != assemblyName)
                         {
@@ -119,6 +120,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 assemblyName = localAssemblyName;
             }
 
+
             if (false == config.TypeNameToFixedAssyemblyCache.TryGetValue(typeName, out var localTypeName))
             {
                 localTypeName = typeName;
@@ -131,7 +133,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     ) >= 0)
                     {
                         localTypeName = assemblyNameToRegexReplacement.AssemblyRegularExpression
-                            .Replace(localTypeName, assemblyNameToRegexReplacement.AssemblyReplacement);                        
+                            .Replace(localTypeName, assemblyNameToRegexReplacement.AssemblyReplacement);
 
                         if (localTypeName != typeName)
                         {
@@ -237,13 +239,14 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 var match = _emptyPartitionRegex.Match(typeName);
 
                 if (match.Success && match.Groups.Count == 2)
-                {                    
-                    var typeAndAssemblyArr = match.Groups[1].Value.Split(',');
+                {
+                    var typeAndAssembly = match.Groups[1].Value;
+                    var typeAssemblySeparator = typeAndAssembly.IndexOf(',');
 
-                    if (typeAndAssemblyArr.Length == 2)
+                    if (typeAssemblySeparator != -1)
                     {
-                        typeName = $"{typeAndAssemblyArr[0]}[], {typeAndAssemblyArr[1]}";
-                        assemblyName = typeAndAssemblyArr[1];
+                        assemblyName = typeAndAssembly.Substring(typeAssemblySeparator + 1);
+                        typeName = $"{typeAndAssembly.Substring(0, typeAssemblySeparator)}[], {assemblyName}";
                     }
                 }
             }
