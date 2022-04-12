@@ -11,7 +11,9 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
     {
         public List<string> DeserializationForbiddenTypes;
         public List<AssemblyNameToRegexReplacement> AssemblyNamesRegexReplacements;
-      
+        public bool? ShouldHandleEmptyPartition;
+
+
         [OnDeserialized]
         private void OnDeserialized(System.Runtime.Serialization.StreamingContext context)
         {
@@ -33,6 +35,9 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                 {
                     new AssemblyNameToRegexReplacement("System.Private.CoreLib", "mscorlib")
                 };
+
+            if (ShouldHandleEmptyPartition == null)
+                ShouldHandleEmptyPartition = true;
         }
 
         public class AssemblyNameToRegexReplacement

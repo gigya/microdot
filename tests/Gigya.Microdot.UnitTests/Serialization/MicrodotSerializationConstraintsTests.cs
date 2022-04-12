@@ -16,7 +16,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new MicrodotSerializationConstraints(
                     () => new MicrodotSerializationSecurityConfig
                     {
-                        DeserializationForbiddenTypes = new[] {"foo"}.ToList()
+                        DeserializationForbiddenTypes = new[] {"foo"}.ToList(),
+                        ShouldHandleEmptyPartition = true
                     });
                 
             
@@ -30,7 +31,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new MicrodotSerializationConstraints(
                     () => new MicrodotSerializationSecurityConfig
                     {
-                        DeserializationForbiddenTypes = new[] {"foo"}.ToList()
+                        DeserializationForbiddenTypes = new[] {"foo"}.ToList(),
+                        ShouldHandleEmptyPartition = true
                     }
                 );
 
@@ -49,7 +51,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     {
                         new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
                     }
-            )
+            ),
+                ShouldHandleEmptyPartition = true
             };
 
         var serializationConstraints =
@@ -69,7 +72,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
-                })
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("foobar", "bar");
@@ -86,7 +90,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
-                })};
+                }),
+                ShouldHandleEmptyPartition = true
+            };
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -106,7 +112,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
-                })
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("bar", "foobar");
@@ -123,8 +130,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
-                })
-                
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             var serializationConstraints =
@@ -148,7 +155,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
-                })
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
@@ -170,8 +178,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                         new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new[]
                         {
                             new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
-                        })
-                };
+                        }),
+                ShouldHandleEmptyPartition = true
+            };
                 
             
             var serializationConstraints =
@@ -204,7 +213,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("moobar", "buz")
-                })};
+                }),
+                ShouldHandleEmptyPartition = true
+            };
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -235,7 +246,7 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull")
-                })};
+                }), ShouldHandleEmptyPartition = true};
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -265,8 +276,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
-                })
-                
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             var serializationConstraints =
@@ -288,7 +299,104 @@ namespace Gigya.Microdot.UnitTests.Serialization
             Assert.AreEqual("bar", result.AssemblyName);
             Assert.AreEqual("buz", result.TypeName);
         }
-        
+
+        [Test]
+        [TestCase(true, "foobar[], bar")]
+        [TestCase(false, "System.Linq.EmptyPartition`1[[foobar,bar]]")]
+        public void TryGetTypeNameReplacementWhenEmptyPartitionExist(bool shouldHandleEmptyPartition, string newTypeName)
+        {
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
+            {                
+                ShouldHandleEmptyPartition = shouldHandleEmptyPartition
+            };
+
+            var serializationConstraints =
+                new MicrodotSerializationConstraints(
+                    () =>
+                    {
+                        return microdotSerializationSecurityConfig;
+                    });
+
+            var result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("bar", "System.Linq.EmptyPartition`1[[foobar,bar]]");
+
+            Assert.AreEqual("bar", result.AssemblyName);
+            Assert.AreEqual(newTypeName, result.TypeName);
+
+            result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
+                typeof(string), "bar", "System.Linq.EmptyPartition`1[[foobar,bar]]");
+
+            Assert.AreEqual("bar", result.AssemblyName);
+            Assert.AreEqual(newTypeName, result.TypeName);
+        }
+
+        [Test]
+        [TestCase(true, "foo[], rar")]
+        [TestCase(false, "System.Linq.EmptyPartition`1[[foo,rar]]")]
+        public void TryGetTypeNameReplacementWhenReplacementAndEmptyPartitionExist(bool shouldHandleEmptyPartition, string newTypeName)
+        {
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
+            {
+                AssemblyNamesRegexReplacements =
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new[]
+                {
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("bar", "rar")
+                }),
+                ShouldHandleEmptyPartition = shouldHandleEmptyPartition
+            };
+
+            var serializationConstraints =
+                new MicrodotSerializationConstraints(
+                    () =>
+                    {
+                        return microdotSerializationSecurityConfig;
+                    });
+
+            var result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("bar", "System.Linq.EmptyPartition`1[[foo,bar]]");
+
+            Assert.AreEqual("rar", result.AssemblyName);
+            Assert.AreEqual(newTypeName, result.TypeName);
+
+            result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
+                typeof(string), "bar", "System.Linq.EmptyPartition`1[[foo,bar]]");
+
+            Assert.AreEqual("rar", result.AssemblyName);
+            Assert.AreEqual(newTypeName, result.TypeName);
+        }
+
+        [Test]
+        [TestCase(true, "far[[foo,bar]]")]
+        [TestCase(false, "far[[foo,bar]]")]
+        public void TryGetTypeNameReplacementWhenReplacementAndEmptyPartitionExist2(bool shouldHandleEmptyPartition, string newTypeName)
+        {
+            var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
+            {
+                AssemblyNamesRegexReplacements =
+                new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new[]
+                {
+                    new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("System.Linq.EmptyPartition`1", "far")
+                }),
+                ShouldHandleEmptyPartition = shouldHandleEmptyPartition
+            };
+
+            var serializationConstraints =
+                new MicrodotSerializationConstraints(
+                    () =>
+                    {
+                        return microdotSerializationSecurityConfig;
+                    });
+
+            var result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("bar", "System.Linq.EmptyPartition`1[[foo,bar]]");
+
+            Assert.AreEqual("bar", result.AssemblyName);
+            Assert.AreEqual(newTypeName, result.TypeName);
+
+            result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
+                typeof(string), "bar", "System.Linq.EmptyPartition`1[[foo,bar]]");
+
+            Assert.AreEqual("bar", result.AssemblyName);
+            Assert.AreEqual(newTypeName, result.TypeName);
+        }
+
         [Test]
         public void TryGetTypeNameReplacementWhenReplacementDoesNotExists()
         {
@@ -297,8 +405,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("mobar", "buz")
-                })
-         
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             var serializationConstraints =
@@ -330,7 +438,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull")
-                })};
+                }),
+                ShouldHandleEmptyPartition = true
+            };
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -361,7 +471,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "gilboa")
-                })};
+                }),
+                ShouldHandleEmptyPartition = true
+            };
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -392,8 +504,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("buz", "foobar"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("gilboa", "carmel")
-                })
-                
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             var serializationConstraints =
@@ -427,7 +539,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "gilboa"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "megido"),
-                })};
+                }),
+                ShouldHandleEmptyPartition = true
+            };
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -457,7 +571,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
-                })
+                }),
+                ShouldHandleEmptyPartition = true
             };
             
             var serializationConstraints =
@@ -481,7 +596,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>(new []
                     {
                         new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
-                    })
+                    }),
+                ShouldHandleEmptyPartition = true
             };
             
             result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
