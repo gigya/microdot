@@ -123,7 +123,7 @@ namespace Gigya.Microdot.Hosting.HttpService
                 else
                 {
                     HttpPort = basePort + (int)PortOffsets.Http;
-                    HttpsPort = UseSecureChannel ? basePort + (int)PortOffsets.Https : (int?)null;
+                    HttpsPort = basePort + (int)PortOffsets.Https;
                 }
                 MetricsPort = basePort + (int)PortOffsets.Metrics;
                 SiloGatewayPort = basePort + (int)PortOffsets.SiloGateway;
