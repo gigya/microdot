@@ -116,8 +116,13 @@ namespace Gigya.Microdot.SharedLogic.Security
 			if (!File.Exists(certPath))
 				throw new ConfigurationException($"{errorPrefix}. File not found: {certPath}");
 
-			var foundCert = new X509Certificate2(certPath);
+			X509Certificate2 foundCert;
 
+#if NET5_0_OR_GREATER
+			foundCert = X509Certificate2.CreateFromPemFile(certPath);
+#else
+			foundCert = new X509Certificate2(certPath);
+#endif
 			errorPrefix += $" and process runs under user '{AppInfo.OsUser}'";
 			GAssert.IsTrue(foundCert != null, $"{errorPrefix}, but certificate was not found.");
 			GAssert.IsTrue(foundCert.HasPrivateKey, $"{errorPrefix}, but certificate does not contain a private key.");
