@@ -32,7 +32,7 @@ namespace Gigya.Microdot.Testing.Shared.Service
     public class NonOrleansServiceTester<TServiceHost> : ServiceTesterBase where TServiceHost : ServiceHostBase, new()
     {
         public TServiceHost Host;
-        private Task _hostStopped;
+        private Task _hostStopped;        
 
         public NonOrleansServiceTester()
         {
@@ -55,6 +55,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
                 throw new ArgumentException("ServiceArguments.BasePortOverride should not be null.");
 
             BasePort = serviceArguments.BasePortOverride.Value;
+
+            HandleHttpsConnection();
 
             Host = new TServiceHost()
             {
@@ -80,10 +82,14 @@ namespace Gigya.Microdot.Testing.Shared.Service
             }
             else if (_hostStopped.IsCompleted)
                 throw new Exception($"Host failed to start. The port: {BasePort}");
-        }
+        }        
+
+        protected override bool IsOriginallyHttpsSupporting() => false;        
+
+        protected override string GetServiceName() => Host.ServiceName;
 
         public override void Dispose()
-        {
+        { 
             var timeout = TimeSpan.FromSeconds(60);
 
             base.Dispose();

@@ -20,6 +20,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
+using Gigya.Common.Contracts.Exceptions;
 using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Configuration.Objects;
@@ -38,6 +39,7 @@ using Gigya.Microdot.ServiceProxy.Caching.RevokeNotifier;
 using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Gigya.Microdot.SharedLogic.Monitor;
+using Gigya.Microdot.SharedLogic.Security;
 using Metrics;
 using Ninject;
 using Ninject.Activation;
@@ -47,6 +49,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using ConsulClient = Gigya.Microdot.ServiceDiscovery.ConsulClient;
 using IConsulClient = Gigya.Microdot.ServiceDiscovery.IConsulClient;
 
@@ -146,6 +149,14 @@ namespace Gigya.Microdot.Ninject
             Kernel.Rebind<IRevokeContextConcurrentCollection>().To<RevokeContextConcurrentCollection>().InTransientScope();
             Kernel.Bind<IRevokeContextConcurrentCollectionFactory>().ToFactory();
             Kernel.Bind<IRevokeKeyIndexerFactory>().ToFactory();
+
+            // Good location for Orleans, NotOrleans and Tests hosts
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().InSingletonScope();
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
+            else
+                throw new EnvironmentException($"Only Windows or Linux allowed for ICertificateLocator - {nameof(MicrodotHostingModule)}");
         }
 
 
