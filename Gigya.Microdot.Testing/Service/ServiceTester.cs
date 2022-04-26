@@ -45,12 +45,13 @@ namespace Gigya.Microdot.Testing.Service
         
         private readonly Type _customSerializer;
         public TServiceHost Host { get; private set; }
-        public Task SiloStopped { get; private set; }
-
+        public Task SiloStopped { get; private set; }        
 
         private IClusterClient _clusterClient;
         
         private readonly object _locker = new object();
+
+        private HttpServiceAttribute _httpServiceAttribute;
 
         public ServiceArguments ServiceArguments{ get; private set; }
 
@@ -64,7 +65,9 @@ namespace Gigya.Microdot.Testing.Service
                             _port.Port, 
                             initTimeOutSec: 15,
                             onStopWaitTimeSec: 30);
-            
+
+            _httpServiceAttribute = GetHttpServiceAttribute();
+
             Initialize();
         }
 
@@ -74,8 +77,10 @@ namespace Gigya.Microdot.Testing.Service
             {
                 FailServiceStartOnConfigError = false
             };
+            
+            BasePort = ServiceArguments.BasePortOverride ?? _httpServiceAttribute.BasePort;
 
-            BasePort = ServiceArguments.BasePortOverride ?? GetBasePortFromHttpServiceAttribute();
+            HandleHttpsConnection();
 
             SiloStopped = Task.Run(() => Host.Run(ServiceArguments));
 
@@ -98,14 +103,18 @@ namespace Gigya.Microdot.Testing.Service
                 throw new Exception("Silo Failed to start");
         }
 
-        private int GetBasePortFromHttpServiceAttribute()
+        private HttpServiceAttribute GetHttpServiceAttribute()
         {
             var commonConfig = new BaseCommonConfig();
             var mapper = new OrleansServiceInterfaceMapper(new AssemblyProvider(new ApplicationDirectoryProvider(commonConfig), commonConfig, new ConsoleLog()));
-            var basePort = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>().BasePort;
+            var attribute = mapper.ServiceInterfaceTypes.First().GetCustomAttribute<HttpServiceAttribute>();
 
-            return basePort;
+            return attribute;
         }
+
+        protected override bool IsOriginallyHttpsSupporting() => _httpServiceAttribute.UseHttps;        
+
+        protected override string GetServiceName() => Host.ServiceName;
 
         public override void Dispose()
         {
@@ -124,7 +133,7 @@ namespace Gigya.Microdot.Testing.Service
 
             if (waitStopped.IsCompleted && waitStopped.Result == StopResult.Force)
                 throw new TimeoutException("ServiceTester: The service failed to shutdown gracefully.");
-           
+
             base.Dispose();
         }
 

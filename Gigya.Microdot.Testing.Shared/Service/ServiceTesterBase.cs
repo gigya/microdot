@@ -22,15 +22,19 @@
 
 #endregion Copyright
 
+using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.Fakes.Discovery;
 using Gigya.Microdot.Ninject;
+using Gigya.Microdot.ServiceDiscovery.Config;
 using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
+using Gigya.Microdot.SharedLogic;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Ninject;
 using Ninject.Parameters;
 using System;
+using System.Diagnostics;
 
 namespace Gigya.Microdot.Testing.Shared.Service
 {
@@ -41,6 +45,8 @@ namespace Gigya.Microdot.Testing.Shared.Service
         public int BasePort { get; protected set; }
         
         protected DisposablePort _port;
+
+        protected int? _httpsPort;
 
         protected ServiceTesterBase()
         {
@@ -123,6 +129,39 @@ namespace Gigya.Microdot.Testing.Shared.Service
         {
             _port?.Dispose(); // as if not allocated, will be null;
             CommunicationKernel.Dispose();
+
+            if (_httpsPort != null)
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = $"http delete sslcert ipport=0.0.0.0:{_httpsPort}"
+                };
+
+                Process.Start(psi).WaitForExit();
+            }
         }
+
+        protected void HandleHttpsConnection()
+        {
+            var config = CommunicationKernel.Get<Func<DiscoveryConfig>>()();
+            var useSecureChannel = config.Services[GetServiceName()].ServiceHttpsOverride ?? config.ServiceHttpsOverride;
+
+            if (useSecureChannel)
+            {
+                _httpsPort = IsOriginallyHttpsSupporting() ? BasePort + (int)PortOffsets.Http : BasePort + (int)PortOffsets.Https;
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = $@"http add sslcert ipport=0.0.0.0:{_httpsPort} certhash=33ccad5538d93c2af131a3281ba5539ae80e0483 appid={{00112233-4455-6677-8899-AABBCCDDEEFF}}"
+                };
+
+                Process.Start(psi).WaitForExit();
+            }
+        }
+
+        protected abstract bool IsOriginallyHttpsSupporting();
+        protected abstract string GetServiceName();
     }
 }
