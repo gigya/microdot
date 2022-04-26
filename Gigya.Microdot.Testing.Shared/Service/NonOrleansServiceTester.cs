@@ -54,14 +54,15 @@ namespace Gigya.Microdot.Testing.Shared.Service
             if (serviceArguments.BasePortOverride == null)
                 throw new ArgumentException("ServiceArguments.BasePortOverride should not be null.");
 
-            BasePort = serviceArguments.BasePortOverride.Value;
-
-            HandleHttpsConnection();
-
             Host = new TServiceHost()
             {
                 FailServiceStartOnConfigError = false
             };
+
+            BasePort = serviceArguments.BasePortOverride.Value;
+
+            HandleHttpsConnection();
+
             //Host
             this._hostStopped = Task.Run(() => this.Host.Run((ServiceArguments)serviceArguments));
 
