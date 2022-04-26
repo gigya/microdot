@@ -47,16 +47,7 @@ namespace Gigya.Microdot.Ninject
             this.BindInterfacesAsSingleton(
                 conventionIgnore: new List<Type> { typeof(IServiceInterfaceMapper) },
                 bindInterfacesInAssemblies: new List<Type>{typeof(ILog)},
-                assemblies: new[] { typeof(HostingAssembly) });
-
-            // Good location for Orleans, NotOrleans and Tests hosts
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().InSingletonScope();
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
-            else
-                throw new EnvironmentException($"Only Windows or Linux allowed for ICertificateLocator - {nameof(MicrodotHostingModule)}");
-
+                assemblies: new[] { typeof(HostingAssembly) });            
 
 #if NET5_0_OR_GREATER
             Kernel.Rebind<PerformanceEventListener>().To<PerformanceEventListener>().InSingletonScope();
