@@ -30,6 +30,7 @@ using Gigya.Microdot.ServiceDiscovery.Rewrite;
 using Gigya.Microdot.ServiceProxy;
 using Gigya.Microdot.ServiceProxy.Caching;
 using Gigya.Microdot.SharedLogic;
+using Gigya.Microdot.Testing.Shared.Utils;
 using Gigya.Microdot.UnitTests.Caching.Host;
 using Ninject;
 using Ninject.Parameters;
@@ -144,20 +145,23 @@ namespace Gigya.Microdot.Testing.Shared.Service
 
         protected void HandleHttpsConnection()
         {
-            var config = CommunicationKernel.Get<Func<DiscoveryConfig>>()();
-            var useSecureChannel = config.Services[GetServiceName()].ServiceHttpsOverride ?? config.ServiceHttpsOverride;
-
-            if (useSecureChannel)
+            var serviceTesterConfig = CommunicationKernel.Get<Func<ServiceTesterConfig>>()();
+            if (serviceTesterConfig.ShouldHandleHttpsConnection)
             {
-                _httpsPort = IsOriginallyHttpsSupporting() ? BasePort + (int)PortOffsets.Http : BasePort + (int)PortOffsets.Https;
-
-                var psi = new ProcessStartInfo
+                var discoveryConfig = CommunicationKernel.Get<Func<DiscoveryConfig>>()();
+                var useSecureChannel = discoveryConfig.Services[GetServiceName()].ServiceHttpsOverride ?? discoveryConfig.ServiceHttpsOverride;
+                if (useSecureChannel)
                 {
-                    FileName = "netsh",
-                    Arguments = $@"http add sslcert ipport=0.0.0.0:{_httpsPort} certhash=33ccad5538d93c2af131a3281ba5539ae80e0483 appid={{00112233-4455-6677-8899-AABBCCDDEEFF}}"
-                };
+                    _httpsPort = IsOriginallyHttpsSupporting() ? BasePort + (int)PortOffsets.Http : BasePort + (int)PortOffsets.Https;
 
-                Process.Start(psi).WaitForExit();
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = $@"http add sslcert ipport=0.0.0.0:{_httpsPort} certhash={serviceTesterConfig.HttpsConnectionCertHash} appid={{00112233-4455-6677-8899-AABBCCDDEEFF}}"
+                    };
+
+                    Process.Start(psi).WaitForExit();
+                }
             }
         }
 
