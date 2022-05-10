@@ -51,7 +51,7 @@ namespace Gigya.Microdot.Orleans.Hosting
             string dc = environment.Zone;
             string env = environment.DeploymentEnvironment;
 
-            ServiceId = string.Join("_", dc, appInfo.Name).ToLower();
+            ServiceId = string.Join("_", dc, env, appInfo.Name).ToLower();
             DeploymentId = string.Join("_", dc, env, appInfo.Name, environment.InstanceName, appInfo.Version).ToLower();
 
             log.Info(_ => _("Orleans Cluster Identity Information", unencryptedTags: new { OrleansDeploymentId = DeploymentId, OrleansServiceId = ServiceId }));

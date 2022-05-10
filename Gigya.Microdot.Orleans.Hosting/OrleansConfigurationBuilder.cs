@@ -248,7 +248,7 @@ namespace Gigya.Microdot.Orleans.Hosting
                 case SiloClusterMode.ZooKeeper:
                     IPAddress hostIPAddress = null;
 
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                         IPAddress.TryParse(_environment.HostIPAddress, out hostIPAddress);
 
                     if (hostIPAddress == null)

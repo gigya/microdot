@@ -16,7 +16,7 @@ namespace Metrics.PerfCounters
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 _performanceCounterGauge = new PerformanceCounterGaugeWindows(category, counter, instance);
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 _performanceCounterGauge = new PerformanceCounterGaugeLinux(category, counter, instance);
             else 
                 throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
