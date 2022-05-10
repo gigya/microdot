@@ -70,7 +70,7 @@ namespace Gigya.Microdot.SharedLogic
 
             InstanceName = instanceName;
             ContainerName = string.IsNullOrEmpty(containerName) ? null : containerName;
-            IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+            IsLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         }
     }
 }

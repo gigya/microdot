@@ -17,10 +17,12 @@ namespace Metrics.EventCounters.CPU
                 calculator = new WindowsCpuUsageCalculator();
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 calculator = new LinuxCpuUsageCalculator();
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                calculator = null;
             else
                 throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
 
-            calculator.Init();
+            calculator?.Init();
 
             return calculator;
         }
@@ -28,6 +30,7 @@ namespace Metrics.EventCounters.CPU
 #if NET6_0_OR_GREATER
         [SupportedOSPlatformGuard("windows")]
         [SupportedOSPlatformGuard("linux")]
+        [SupportedOSPlatformGuard("iOS")]
 #endif
         public static long GetNumberOfActiveCores(Process process)
         {
@@ -36,11 +39,7 @@ namespace Metrics.EventCounters.CPU
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     return NumberOfSetBits(process.ProcessorAffinity.ToInt64());
                 else
-                    throw new NotSupportedException($"Platform '{RuntimeInformation.OSDescription}' not supported");
-            }
-            catch (NotSupportedException)
-            {
-                return ProcessorInfo.ProcessorCount;
+                    return ProcessorInfo.ProcessorCount;
             }
             catch
             {

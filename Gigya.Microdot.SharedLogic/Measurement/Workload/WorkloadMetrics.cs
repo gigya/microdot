@@ -62,7 +62,7 @@ namespace Gigya.Microdot.SharedLogic.Measurement.Workload
             _eventListener.Subscribe("# of Exceps Thrown / Sec");
             _eventListener.Subscribe("active-timer-count");
 
-            _context.Context("CPU").Gauge("Machine Cpu Usage", () => _cpuUsageCalculator.Calculate().MachineCpuUsage, Unit.Percent);          
+            _context.Context("CPU").Gauge("Machine Cpu Usage", () => _cpuUsageCalculator != null ? _cpuUsageCalculator.Calculate().MachineCpuUsage : 0, Unit.Percent);          
             _context.Context("CPU").Gauge("Processor Affinity", () => Process.GetCurrentProcess().ProcessorAffinityList().Count(), Unit.Items);
             _context.Context("CPU").Gauge("CPU usage", () => ReadPerfCounter("% Processor Time"), Unit.Percent);
             _context.Context("ThreadPool").Gauge("Thread Count", () => { double threads = ReadPerfCounter("# of current logical Threads"); return threads < 0 || threads > 1000000 ? 0 : threads; }, Unit.Items);

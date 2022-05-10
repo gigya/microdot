@@ -151,12 +151,12 @@ namespace Gigya.Microdot.Ninject
             Kernel.Bind<IRevokeKeyIndexerFactory>().ToFactory();
 
             // Good location for Orleans, NotOrleans and Tests hosts
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 Kernel.Bind<ICertificateLocator>().To<CertificateLocatorLinux>().InSingletonScope();
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 Kernel.Bind<ICertificateLocator>().To<CertificateLocatorWindows>().InSingletonScope();
             else
-                throw new EnvironmentException($"Only Windows or Linux allowed for ICertificateLocator - {nameof(MicrodotHostingModule)}");
+                throw new EnvironmentException($"Only Windows, Linux or OSX allowed for ICertificateLocator - {nameof(MicrodotHostingModule)}");
         }
 
 
