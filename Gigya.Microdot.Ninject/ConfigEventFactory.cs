@@ -9,7 +9,7 @@ namespace Gigya.Microdot.Ninject
     public  class ConfigEventFactory : IConfigEventFactory
     {
         private readonly IResolutionRoot _resolutionRoot;
-        private readonly static object _obj;
+        private readonly static object _obj = new object();
 
         public ConfigEventFactory(IResolutionRoot resolutionRoot)
         {
@@ -18,6 +18,7 @@ namespace Gigya.Microdot.Ninject
 
         public ISourceBlock<T> GetChangeEvent<T>() where T : IConfigObject
         {
+            //return _resolutionRoot.Get<ISourceBlock<T>>();
             lock (_obj)
             {
                 return _resolutionRoot.Get<ISourceBlock<T>>();

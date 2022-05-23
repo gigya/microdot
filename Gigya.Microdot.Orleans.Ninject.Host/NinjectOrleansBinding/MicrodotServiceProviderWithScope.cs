@@ -37,7 +37,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
         private readonly IResolutionRoot _resolver;
         internal readonly MicrodotNinjectScopeParameter _microdotNinectScopParameter;
         private readonly ScopeCache _cacheItem;
-        private readonly static object _obj;
+        private readonly static object _obj = new object();
 
 
         public MicrodotServiceProviderWithScope(IResolutionRoot resolver)
@@ -56,6 +56,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public object GetService(Type type)
         {
+            //return _resolver.Get(type, _microdotNinectScopParameter);
             lock (_obj)
             {
                 return _resolver.Get(type, _microdotNinectScopParameter);
