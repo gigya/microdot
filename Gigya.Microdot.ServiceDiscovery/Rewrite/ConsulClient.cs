@@ -166,7 +166,7 @@ namespace Gigya.Microdot.ServiceDiscovery.Rewrite
         /// <remarks>In case Consul doesn't have a change and the wait time passed, Consul will return a response to the query (with no changes since last call).</remarks>
         public async Task<ConsulResponse<string[]>> GetAllKeys(ulong modifyIndex, string folder, CancellationToken cancellationToken=default(CancellationToken))
         {
-            var urlCommand = $"v1/kv/{folder}?dc={Zone}&keys&index={modifyIndex}";
+            var urlCommand = $"v1/kv/{folder}/?dc={Zone}&keys&index={modifyIndex}";
             var response = await Call<string[]>(urlCommand, cancellationToken, longPolling: true).ConfigureAwait(false);
 	        if (response.StatusCode != HttpStatusCode.OK)
 	        {
