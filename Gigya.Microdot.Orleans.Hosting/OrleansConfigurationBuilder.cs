@@ -182,7 +182,12 @@ namespace Gigya.Microdot.Orleans.Hosting
                     tlsOptions.ClientCertificateMode = RemoteCertificateMode.AllowCertificate;
                     tlsOptions.RemoteCertificateMode = RemoteCertificateMode.AllowCertificate;
                     
+#if NET5_0_OR_GREATER
+                    tlsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+#else
                     tlsOptions.SslProtocols = SslProtocols.Tls12;
+#endif
+
 
                     tlsOptions.OnAuthenticateAsClient = OnAuthenticateAsClient;
                 });

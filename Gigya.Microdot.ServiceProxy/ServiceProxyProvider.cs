@@ -480,6 +480,7 @@ namespace Gigya.Microdot.ServiceProxy
                             {
                                 remoteEndpoint = nodeAndLoadBalancer.Node.Hostname,
                                 remotePort = actualPort,
+                                remoteProtocolSchema = clientCallEvent.ProtocolSchema,
                                 remoteServiceName = ServiceName,
                                 remoteMethodName = request.Target.MethodName
                             }));

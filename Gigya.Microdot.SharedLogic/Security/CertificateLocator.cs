@@ -121,7 +121,7 @@ namespace Gigya.Microdot.SharedLogic.Security
 #if NET5_0_OR_GREATER
 			foundCert = X509Certificate2.CreateFromPemFile(certPath);
 #else
-			foundCert = new X509Certificate2(certPath);
+			throw new Common.Contracts.Exceptions.ProgrammaticException("Linux only for net5 or above");
 #endif
 			errorPrefix += $" and process runs under user '{AppInfo.OsUser}'";
 			GAssert.IsTrue(foundCert != null, $"{errorPrefix}, but certificate was not found.");
