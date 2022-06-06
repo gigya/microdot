@@ -20,14 +20,15 @@ namespace Gigya.Microdot.Ninject
         public ISourceBlock<T> GetChangeEvent<T>() where T : IConfigObject
         {
             var guid = Guid.NewGuid().ToString("N");
-            Console.WriteLine($"*** {nameof(T)} - {guid}");
+            var fullName = typeof(T).FullName;
+            Console.WriteLine($"*** ConfigEventFactory - {fullName} - {guid}");
 
             ISourceBlock<T> res;
             lock (_obj)
             {
-                Console.WriteLine($"*** Inside1 lock on ConfigEventFactory - {nameof(T)} - {guid}");
+                Console.WriteLine($"*** Inside1 lock on ConfigEventFactory - {fullName} - {guid}");
                 res = _resolutionRoot.Get<ISourceBlock<T>>();
-                Console.WriteLine($"*** Inside2 lock on ConfigEventFactory - {nameof(T)} - {guid}");
+                Console.WriteLine($"*** Inside2 lock on ConfigEventFactory - {fullName} - {guid}");
             }
             Console.WriteLine($"*** After lock on ConfigEventFactory - {guid}");
             return res;
