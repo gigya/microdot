@@ -28,6 +28,7 @@
 		<PackageReference Update="Nito.AsyncEx" Version="5.1.2"/>
 		<PackageReference Update="Ninject.Extensions.Conventions" Version="3.3.0"/>
 		<PackageReference Update="Ninject.Extensions.Factory" Version="3.3.3"/>
+		<PackageReference Update="Ninject" Version="3.3.6"/>
 		<PackageReference Update="NLog" Version="4.7.14"/>
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">

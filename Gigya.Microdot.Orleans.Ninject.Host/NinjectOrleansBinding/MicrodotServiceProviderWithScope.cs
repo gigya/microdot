@@ -56,11 +56,18 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
         public object GetService(Type type)
         {
-            //return _resolver.Get(type, _microdotNinectScopParameter);
+            var guid = Guid.NewGuid().ToString("N");
+            Console.WriteLine($"*** {nameof(type)} - {guid}");
+            object res;
+
             lock (_obj)
             {
-                return _resolver.Get(type, _microdotNinectScopParameter);
+                Console.WriteLine($"*** Inside1 lock on MicrodotServiceProviderWithScope - {nameof(type)} - {guid}");
+                res = _resolver.Get(type, _microdotNinectScopParameter);
+                Console.WriteLine($"*** Inside2 lock on MicrodotServiceProviderWithScope - {nameof(type)} - {guid}");
             }
+            Console.WriteLine($"*** After lock on MicrodotServiceProviderWithScope - {guid}");
+            return res;
         }
 
     }
