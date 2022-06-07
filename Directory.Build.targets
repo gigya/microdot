@@ -3,7 +3,7 @@
 		<Orleans_Version>3.5.1</Orleans_Version>		
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<Orleans_Version>3.6.2</Orleans_Version>
+		<Orleans_Version>3.6.0</Orleans_Version>
 	</PropertyGroup>
 	
 	<ItemGroup Label="Gigya">
