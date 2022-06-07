@@ -15,7 +15,8 @@
 		<PackageReference Update="Microsoft.Orleans.OrleansRuntime" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Connections.Security" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansZooKeeperUtils" Version="$(Orleans_Version)"/>
-		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="$(Orleans_Version)"/>
+		<!--<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="$(Orleans_Version)"/>-->
+		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Clustering.AdoNet" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansProviders" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Persistence.AdoNet" Version="$(Orleans_Version)"/>

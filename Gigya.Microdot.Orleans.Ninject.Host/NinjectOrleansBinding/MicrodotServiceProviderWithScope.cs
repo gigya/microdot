@@ -65,7 +65,7 @@ namespace Gigya.Microdot.Orleans.Ninject.Host.NinjectOrleansBinding
 
             Console.WriteLine($"*** GetAwaiter {id}");
 
-            System.Threading.Tasks.Task.Delay(200).GetAwaiter().GetResult();
+            System.Threading.Tasks.Task.Delay(32).GetAwaiter().GetResult();
 
             Console.WriteLine($"*** BeforeMonitor {id}");
 

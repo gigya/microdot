@@ -128,7 +128,7 @@ namespace Gigya.Microdot.Orleans.Hosting
 
                     options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
                 })
-                .UsePerfCounterEnvironmentStatistics()
+                .UseLinuxEnvironmentStatistics()
                 // We paid attention that AddFromApplicationBaseDirectory making issues of non-discovering grain types.
                 .ConfigureApplicationParts(parts => parts.AddFromAppDomain())
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
