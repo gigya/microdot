@@ -117,7 +117,9 @@ namespace Gigya.Microdot.Orleans.Hosting
 
             _orleansConfigurationBuilderConfigurator.PreInitializationConfiguration(hostBuilder);
 
-            hostBuilder.Configure<SerializationProviderOptions>(options =>
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                hostBuilder.Configure<SerializationProviderOptions>(options =>
                 {
                     options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
                     
@@ -132,6 +134,25 @@ namespace Gigya.Microdot.Orleans.Hosting
                 // We paid attention that AddFromApplicationBaseDirectory making issues of non-discovering grain types.
                 .ConfigureApplicationParts(parts => parts.AddFromAppDomain())
                 .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
+            }
+            else
+            {
+                hostBuilder.Configure<SerializationProviderOptions>(options =>
+                {
+                    options.SerializationProviders.Add(typeof(OrleansCustomSerialization));
+
+                    // A workaround for an Orleans issue
+                    // to ensure the stack trace properly de/serialized
+                    // Gigya.Microdot.UnitTests.Serialization.ExceptionSerializationTests
+                    options.SerializationProviders.Add(typeof(NonSerializedExceptionsSerializer));
+
+                    options.FallbackSerializationProvider = typeof(OrleansCustomSerialization);
+                })
+                .UsePerfCounterEnvironmentStatistics()
+                // We paid attention that AddFromApplicationBaseDirectory making issues of non-discovering grain types.
+                .ConfigureApplicationParts(parts => parts.AddFromAppDomain())
+                .Configure<SiloOptions>(options => options.SiloName = _appInfo.Name);
+            }
 
             if (_orleansConfig.Dashboard.Enable)
             {

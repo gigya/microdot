@@ -22,7 +22,7 @@
 		<PackageReference Include="Microsoft.Orleans.Connections.Security" />
 		<PackageReference Include="Microsoft.Orleans.OrleansSqlUtils" />
 		<PackageReference Include="Microsoft.Orleans.OrleansZooKeeperUtils" />
-		<!--<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />-->
+		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" />
 		<PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" />
 		<PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" />
 		<PackageReference Include="Microsoft.Orleans.OrleansProviders" />
