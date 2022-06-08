@@ -236,7 +236,7 @@ namespace Gigya.Microdot.ServiceDiscovery
 
         private async Task<ConsulResponse> SearchServiceInAllKeys()
         {
-            var urlCommand = $"v1/kv/service?dc={Zone}&keys&index={_allKeysModifyIndex}";
+            var urlCommand = $"v1/kv/service/?dc={Zone}&keys&index={_allKeysModifyIndex}";
             var response = await CallConsul(urlCommand, ShutdownToken.Token, longPolling: true).ConfigureAwait(false);
 
             if (response.ModifyIndex.HasValue)

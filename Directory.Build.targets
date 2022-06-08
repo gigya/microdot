@@ -16,6 +16,7 @@
 		<PackageReference Update="Microsoft.Orleans.Connections.Security" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansZooKeeperUtils" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Counters" Version="$(Orleans_Version)"/>
+		<PackageReference Update="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Clustering.AdoNet" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.OrleansProviders" Version="$(Orleans_Version)"/>
 		<PackageReference Update="Microsoft.Orleans.Persistence.AdoNet" Version="$(Orleans_Version)"/>
@@ -45,7 +46,7 @@
 
 	<ItemGroup Label="System">
 		<PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.0"/>
-		<PackageReference Update="System.Diagnostics.PerformanceCounter" Version="6.0.0"/>
+		<PackageReference Update="System.Diagnostics.PerformanceCounter" Version="6.0.1"/>
 		<PackageReference Update="System.Runtime.Caching" Version="6.0.0"/>
 		<PackageReference Update="System.Threading.Tasks.Dataflow" Version="6.0.0" />
 		<PackageReference Update="System.ComponentModel.Annotations" Version="5.0.0" />

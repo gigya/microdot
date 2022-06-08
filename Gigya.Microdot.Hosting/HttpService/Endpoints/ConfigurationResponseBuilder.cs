@@ -23,6 +23,7 @@
 using Gigya.Microdot.Configuration;
 using Gigya.Microdot.Interfaces;
 using Gigya.Microdot.Interfaces.SystemWrappers;
+using Gigya.Microdot.LanguageExtensions;
 using Gigya.Microdot.SharedLogic;
 using Newtonsoft.Json;
 using System;
@@ -41,6 +42,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
     public class ConfigurationResponseBuilder
     {
         readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented};
+        private readonly Func<ConfigurationResponseBuilderConfig> _configurationResponseBuilderConfig;
 
         private UsageTracking UsageTracking { get; }
         private ServiceArguments ServiceArguments { get; }
@@ -54,6 +56,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
                                             IAssemblyProvider assemblyProvider,
                                             UsageTracking usageTracking,
                                             ServiceArguments serviceArguments,
+                                            Func<ConfigurationResponseBuilderConfig> ConfigurationResponseBuilderConfig,
                                             CurrentApplicationInfo appInfo)
         {
             UsageTracking = usageTracking;
@@ -62,6 +65,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
             ConfigCache = configCache;
             Envs = envs;
             AssemblyProvider = assemblyProvider;
+            _configurationResponseBuilderConfig = ConfigurationResponseBuilderConfig;
         }
 
 
@@ -141,11 +145,11 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
         private Dictionary<string, int> GetHashes()
         {
-            var env = JsonConvert.SerializeObject(GetEnvironmentVariables()).GetHashCode();
-            var ver = JsonConvert.SerializeObject(GetAssemblyVersions()).GetHashCode();
-            var runtime = JsonConvert.SerializeObject(GetRuntimeInfo()).GetHashCode();
-            var arguments = JsonConvert.SerializeObject(GetServiceArguments()).GetHashCode();
-            var config = JsonConvert.SerializeObject(GetConfigurationEntries()).GetHashCode();
+            var env = JsonConvert.SerializeObject(GetEnvironmentVariables()).GetDeterministicHashCode();
+            var ver = JsonConvert.SerializeObject(GetAssemblyVersions()).GetDeterministicHashCode();
+            var runtime = JsonConvert.SerializeObject(GetRuntimeInfo()).GetDeterministicHashCode();
+            var arguments = JsonConvert.SerializeObject(GetServiceArguments()).GetDeterministicHashCode();
+            var config = JsonConvert.SerializeObject(GetConfigurationEntries()).GetDeterministicHashCode();
             var all = (((env * 397 ^ ver) * 397 ^ runtime) * 397 ^ arguments) * 397 ^ config;
 
             return new Dictionary<string, int>
@@ -161,7 +165,7 @@ namespace Gigya.Microdot.Hosting.HttpService.Endpoints
 
         private Dictionary<string, string> GetEnvironmentVariables()
         {
-            string[] envs = { "DC", "ZONE", "REGION", "ENV", "CONSUL", "OS" };
+            var envs = _configurationResponseBuilderConfig().envs;
 
             return System.Environment.GetEnvironmentVariables()
                        .OfType<DictionaryEntry>()

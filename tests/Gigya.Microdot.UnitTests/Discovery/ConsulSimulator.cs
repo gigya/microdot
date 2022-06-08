@@ -261,7 +261,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
                 var responseByRegEx = new Dictionary<string, Func<string, ulong, Task<ConsulResponse>>>
                 {
                     {@"\/health\/service\/(.+)\?(.+)index=(\d+)", GetHealthResponse},
-                    {@"\/kv\/service\?(.*)keys(.+)index=(\d+)", GetAllKeysResponse},
+                    {@"\/kv\/service(/?)\?(.*)keys(.+)index=(\d+)", GetAllKeysResponse},
                     {@"\/kv\/service\/(.+)\?(.+)index=(\d+)", GetKeyValueResponse},
                     {@"query\/(.+)\/execute", GetQueryResponse}
                 };
