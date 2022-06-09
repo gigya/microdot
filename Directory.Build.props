@@ -12,7 +12,7 @@
 		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
 	</PropertyGroup>
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net5.0;net6.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
 		<RuntimeIdentifiers>win10-x64;linux-x64;osx-x64</RuntimeIdentifiers>
 		<LangVersion>latest</LangVersion>
 		<IncludeSymbols>true</IncludeSymbols>
