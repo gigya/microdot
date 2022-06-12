@@ -5,7 +5,7 @@
 		<OutputType>Exe</OutputType>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<IsPublishable>true</IsPublishable>
-		<TargetFrameworks>net472;net6.0</TargetFrameworks>
+		<TargetFrameworks>net6.0</TargetFrameworks>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	</PropertyGroup>	
 	<ItemGroup>
