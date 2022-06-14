@@ -40,7 +40,7 @@ namespace Gigya.Microdot.UnitTests.Discovery
             Reset();
 
             var prefix = $"http://+:{consulPort}/";
-            _consulListener = new HttpListener { Prefixes = { prefix } };
+            _consulListener = new HttpListener { Prefixes = { prefix }, IgnoreWriteExceptions = true };
             try
             {
                 _consulListener.Start();

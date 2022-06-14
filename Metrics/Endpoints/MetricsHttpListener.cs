@@ -31,7 +31,7 @@ namespace Metrics.Endpoints
             this.cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
             this.prefixPath = ParsePrefixPath(listenerUriPrefix);
-            this.httpListener = new HttpListener();
+            this.httpListener = new HttpListener { IgnoreWriteExceptions = true };
             this.httpListener.Prefixes.Add(listenerUriPrefix);
             this.endpointHandler = new MetricsEndpointHandler(endpoints);
         }
