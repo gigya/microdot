@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
@@ -15,8 +17,8 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
             AssemblyName = assemblyName;
             TypeName = typeName;
         }
-    }    
-    
+    }
+
     public interface IMicrodotSerializationConstraints
     {
         void ThrowIfExcluded(string typeName);
@@ -32,22 +34,24 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
         public class MicrodotSerializationEffectiveConfiguration
         {
             private MicrodotSerializationSecurityConfig _lastConfig;
-            
+
             public List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement> RegexReplacements { get; }
             public List<string> ForbiddenTypes { get; }
 
             public ConcurrentDictionary<string, string> AssemblyNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<string, string> TypeNameToFixedAssyemblyCache { get; }
             public ConcurrentDictionary<Type, AssemblyAndTypeName> TypeToAssemblyCache { get; }
-            public bool? ShouldHandleEmptyPartition { get; }            
+            public bool? ShouldHandleEmptyPartition { get; }
+            public bool UseTypeForwardFromAttribute { get; }
 
             public MicrodotSerializationEffectiveConfiguration(MicrodotSerializationSecurityConfig serializationConfig)
             {
                 _lastConfig = serializationConfig;
 
-                RegexReplacements = serializationConfig.AssemblyNamesRegexReplacements?? new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>();
-                ForbiddenTypes = serializationConfig.DeserializationForbiddenTypes?? new List<string>();
+                RegexReplacements = serializationConfig.AssemblyNamesRegexReplacements ?? new List<MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement>();
+                ForbiddenTypes = serializationConfig.DeserializationForbiddenTypes ?? new List<string>();
                 ShouldHandleEmptyPartition = serializationConfig.ShouldHandleEmptyPartition;
+                UseTypeForwardFromAttribute = serializationConfig.UseTypeForwardFromAttribute;
                 AssemblyNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeNameToFixedAssyemblyCache = new ConcurrentDictionary<string, string>();
                 TypeToAssemblyCache = new ConcurrentDictionary<Type, AssemblyAndTypeName>();
@@ -76,8 +80,8 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
             foreach (var deserializationForbiddenType in config.ForbiddenTypes)
             {
-                if (typeName.IndexOf(deserializationForbiddenType, StringComparison.InvariantCultureIgnoreCase) >=0)
-                    throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToType type '{typeName}'");    
+                if (typeName.IndexOf(deserializationForbiddenType, StringComparison.InvariantCultureIgnoreCase) >= 0)
+                    throw new UnauthorizedAccessException($"JSON Serialization Binder forbids BindToType type '{typeName}'");
             }
         }
 
@@ -169,19 +173,40 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
         }
 
 
-        public AssemblyAndTypeName TryGetAssemblyAndTypeNameReplacementFromType(Type serializedType, 
+        public AssemblyAndTypeName TryGetAssemblyAndTypeNameReplacementFromType(Type serializedType,
             string assemblyName, string typeName)
         {
             var config = GetSerializationConfigAndRefreshCaches();
 
             // treat deserialization of net core System.Private.CoreLib library classes to net framework counterparts
             // https://programmingflow.com/2020/02/18/could-not-load-system-private-corelib.html
-        
+
             // treat deserialization of net core System.Private.CoreLib library classes to net framework counterparts
             if (config.TypeToAssemblyCache.TryGetValue(serializedType, out var assemblyNameAndTypeName))
             {
                 return assemblyNameAndTypeName;
             }
+
+            if (config.UseTypeForwardFromAttribute)
+            {
+                var typeForwardedFromAttribute =
+                    serializedType.CustomAttributes.FirstOrDefault(x =>
+                        x.AttributeType == typeof(TypeForwardedFromAttribute));
+
+                if (typeForwardedFromAttribute != null)
+                {
+
+                    assemblyNameAndTypeName =
+                     new AssemblyAndTypeName(typeForwardedFromAttribute.ConstructorArguments[0].Value as string, typeName);
+
+                    (assemblyName, typeName) = HandleEmptyPartition(assemblyNameAndTypeName.AssemblyName, assemblyNameAndTypeName.TypeName, config);
+
+                    config.TypeToAssemblyCache.TryAdd(serializedType, assemblyNameAndTypeName);
+
+                    return new AssemblyAndTypeName(assemblyName, typeName);
+                }
+            }
+
 
             var localTypeName = typeName;
             var localAssemblyName = assemblyName;
@@ -203,7 +228,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
                     break;
                 }
             }
-                
+
             foreach (var assemblyNameToRegexReplacement in config.RegexReplacements)
             {
                 if (localAssemblyName.IndexOf(
@@ -225,7 +250,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
             (assemblyName, typeName) = HandleEmptyPartition(assemblyName, typeName, config);
 
-            config.TypeToAssemblyCache.TryAdd(serializedType, new AssemblyAndTypeName(assemblyName, typeName));            
+            config.TypeToAssemblyCache.TryAdd(serializedType, new AssemblyAndTypeName(assemblyName, typeName));
 
             return new AssemblyAndTypeName(assemblyName, typeName);
         }
@@ -234,8 +259,8 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
         //In order to support .net4 and .net > 4 serialization we convert Enumerable.Empty<> to an Array
         private (string assemblyName, string typeName) HandleEmptyPartition(string assemblyName, string typeName, MicrodotSerializationEffectiveConfiguration config)
         {
-            if (config.ShouldHandleEmptyPartition.HasValue && config.ShouldHandleEmptyPartition.Value == true) 
-            {                
+            if (config.ShouldHandleEmptyPartition.HasValue && config.ShouldHandleEmptyPartition.Value == true)
+            {
                 var match = _emptyPartitionRegex.Match(typeName);
 
                 if (match.Success && match.Groups.Count == 2)
@@ -253,6 +278,6 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
 
             return (assemblyName, typeName);
         }
-        
+
     }
 }

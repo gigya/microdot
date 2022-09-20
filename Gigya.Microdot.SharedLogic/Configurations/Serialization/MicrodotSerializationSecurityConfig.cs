@@ -12,6 +12,7 @@ namespace Gigya.Microdot.SharedLogic.Configurations.Serialization
         public List<string> DeserializationForbiddenTypes;
         public List<AssemblyNameToRegexReplacement> AssemblyNamesRegexReplacements;
         public bool? ShouldHandleEmptyPartition;
+        public bool UseTypeForwardFromAttribute { get; set; } = true;
 
 
         [OnDeserialized]

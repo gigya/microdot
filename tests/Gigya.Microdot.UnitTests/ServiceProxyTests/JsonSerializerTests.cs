@@ -58,7 +58,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 Floats = Enumerable.Empty<float>(),
                 Ints = Enumerable.Empty<int>(),
                 Longs = Enumerable.Empty<long>(),
-                Strings = Enumerable.Empty<string>()
+                Strings = Enumerable.Empty<string>(),
+                HashSet = new HashSet<string>() 
+
             }, settings);
 
             serialized.ShouldNotContain("EmptyPartition"); //net4 does not contain EmptyPartition & net6 handled by SerializationBinder  
@@ -72,6 +74,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Assert.IsEmpty(newObj.Ints);
             Assert.IsEmpty(newObj.Longs);
             Assert.IsEmpty(newObj.Strings);
+            Assert.IsEmpty(newObj.HashSet);
         }
 
         [Test]
@@ -93,7 +96,8 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 Floats = Enumerable.Empty<float>(),
                 Ints = Enumerable.Empty<int>(),
                 Longs = Enumerable.Empty<long>(),
-                Strings = Enumerable.Empty<string>()
+                Strings = Enumerable.Empty<string>(),
+                HashSet = new HashSet<string>()
             }, settings);
 
 #if NET5_0_OR_GREATER
@@ -113,6 +117,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             Assert.IsEmpty(newObj.Ints);
             Assert.IsEmpty(newObj.Longs);
             Assert.IsEmpty(newObj.Strings);
+            Assert.IsEmpty(newObj.HashSet);
         }
     }
 
@@ -126,5 +131,6 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
         public IEnumerable<bool> Bools;
         public IEnumerable<float> Floats;
         public IEnumerable<long> Longs;
+        public HashSet<string> HashSet;
     }    
 }

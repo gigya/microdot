@@ -91,7 +91,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -113,7 +114,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             result = serializationConstraints.TryGetAssemblyNameAndTypeReplacement("bar", "foobar");
@@ -131,7 +133,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -156,7 +159,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
@@ -179,7 +183,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                         {
                             new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
                         }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
                 
             
@@ -214,7 +219,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("moobar", "buz")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -246,7 +252,9 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull")
-                }), ShouldHandleEmptyPartition = true};
+                }), ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false
+                };
             
             var serializationConstraints =
                 new MicrodotSerializationConstraints(
@@ -277,7 +285,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true, 
+                UseTypeForwardFromAttribute = false  
             };
             
             var serializationConstraints =
@@ -307,7 +316,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
         {
             var microdotSerializationSecurityConfig = new MicrodotSerializationSecurityConfig
             {                
-                ShouldHandleEmptyPartition = shouldHandleEmptyPartition
+                ShouldHandleEmptyPartition = shouldHandleEmptyPartition,
+                UseTypeForwardFromAttribute = false,
             };
 
             var serializationConstraints =
@@ -341,7 +351,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("bar", "rar")
                 }),
-                ShouldHandleEmptyPartition = shouldHandleEmptyPartition
+                ShouldHandleEmptyPartition = shouldHandleEmptyPartition,
+                UseTypeForwardFromAttribute = false,
             };
 
             var serializationConstraints =
@@ -375,7 +386,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("System.Linq.EmptyPartition`1", "far")
                 }),
-                ShouldHandleEmptyPartition = shouldHandleEmptyPartition
+                ShouldHandleEmptyPartition = shouldHandleEmptyPartition,
+                UseTypeForwardFromAttribute = false,
             };
 
             var serializationConstraints =
@@ -406,7 +418,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("mobar", "buz")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                 UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -439,7 +452,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "bull")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -472,7 +486,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "gilboa")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -505,7 +520,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("buz", "foobar"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("gilboa", "carmel")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -540,7 +556,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "gilboa"),
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("carmel", "megido"),
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -572,7 +589,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                 {
                     new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "buz")
                 }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             var serializationConstraints =
@@ -597,7 +615,8 @@ namespace Gigya.Microdot.UnitTests.Serialization
                     {
                         new MicrodotSerializationSecurityConfig.AssemblyNameToRegexReplacement("foobar", "ding")
                     }),
-                ShouldHandleEmptyPartition = true
+                ShouldHandleEmptyPartition = true,
+                UseTypeForwardFromAttribute = false,
             };
             
             result = serializationConstraints.TryGetAssemblyAndTypeNameReplacementFromType(
