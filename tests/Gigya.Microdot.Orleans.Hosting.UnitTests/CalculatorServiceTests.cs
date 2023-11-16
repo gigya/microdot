@@ -23,6 +23,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Gigya.Microdot.Common.Tests;
 using Gigya.Microdot.Interfaces;
@@ -135,7 +136,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var request = new HttpServiceRequest(typeof(ICalculatorService).GetMethod(nameof(ICalculatorService.AddWithOptions)), arguments);
             request.Target.ParameterTypes = request.Target.ParameterTypes.Take(arguments.Length).ToArray();
             var proxy = Tester.GetServiceProxyProvider("CalculatorService");
-            var res = (Tuple<int, string, JObject>)await proxy.Invoke(request, typeof(Tuple<int, string, JObject>));
+            var res = (Tuple<int, string, JObject>)await proxy.Invoke(request, typeof(Tuple<int, string, JObject>),CancellationToken.None);
             return res;
         }
 
@@ -189,7 +190,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
                 {"localDateTimeOffset", localDateTimeOffset}
             };
 
-            var res = await ProxyProvider.Invoke(new HttpServiceRequest("ToUniversalTime", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("ToUniversalTime", typeof(ICalculatorService).FullName, dict), typeof(JObject), CancellationToken.None);
             var json = (JToken)res;
             DateTimeOffset.Parse(json["Item1"].Value<string>()).ShouldBe(DateTime.Parse(localDateString).ToUniversalTime());
             DateTimeOffset.Parse(json["Item2"].Value<string>()).ShouldBe(localDateTimeOffset.DateTime);
@@ -204,7 +205,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var wrapper = new Wrapper { INT = 100, STR = "100" };
             var dict = new Dictionary<string, object> { { "wrapper", JsonConvert.SerializeObject(wrapper) } };
 
-            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoComplex", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoComplex", typeof(ICalculatorService).FullName, dict), typeof(JObject), CancellationToken.None);
 
             ((JToken)res).ToObject<Wrapper>().INT.ShouldBe(wrapper.INT);
             ((JToken)res).ToObject<Wrapper>().STR.ShouldBe(wrapper.STR);
@@ -218,7 +219,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var dict = new Dictionary<string, object> { { "a", "5" } };
 
-            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JValue));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("DoInt", typeof(ICalculatorService).FullName, dict), typeof(JValue), CancellationToken.None);
             ((JToken)res).Value<int>().ShouldBe(5);
         }
 
@@ -230,7 +231,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
             var dict = new Dictionary<string, object>();
 
 
-            var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", typeof(ICalculatorService).FullName, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", typeof(ICalculatorService).FullName, dict), typeof(JObject), CancellationToken.None);
             var json = (JToken)res;
             json.ShouldBe(null);
         }
@@ -241,7 +242,7 @@ namespace Gigya.Microdot.Orleans.Hosting.UnitTests
 
             var dict = new Dictionary<string, object>();
 
-            var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", null, dict), typeof(JObject));
+            var res = await ProxyProvider.Invoke(new HttpServiceRequest("Do", null, dict), typeof(JObject), CancellationToken.None);
             var json = (JToken)res;
             json.ShouldBe(null);
         }

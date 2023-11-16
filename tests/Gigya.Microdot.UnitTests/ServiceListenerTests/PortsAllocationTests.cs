@@ -16,6 +16,7 @@ using Shouldly;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
@@ -41,7 +42,7 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var serviceProxyFunc = kernel.Get<Func<string, ServiceProxyProvider>>();
             var serviceProxy = serviceProxyFunc(TestingKernel<ConsoleLog>.APPNAME);
 
-            await serviceProxy.Invoke(new HttpServiceRequest("myMethod", null, new Dictionary<string, object>()), typeof(int?));
+            await serviceProxy.Invoke(new HttpServiceRequest("myMethod", null, new Dictionary<string, object>()), typeof(int?), CancellationToken.None);
         }
 
         

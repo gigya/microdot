@@ -24,6 +24,7 @@ using Gigya.Common.Contracts.HttpService;
 using Gigya.Microdot.SharedLogic.HttpService;
 using Newtonsoft.Json;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -37,8 +38,8 @@ namespace Gigya.Microdot.ServiceProxy
 
     public interface IServiceProxyProvider
     {
-        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType);
-        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings);
+        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, CancellationToken cancellationToken);
+        Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings, CancellationToken cancellationToken);
         Task<ServiceSchema> GetSchema();
         ISourceBlock<string> EndPointsChanged { get; }
         ISourceBlock<ServiceReachabilityStatus> ReachabilityChanged { get; }

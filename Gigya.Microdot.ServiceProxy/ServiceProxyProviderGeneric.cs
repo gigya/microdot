@@ -27,6 +27,7 @@ using Gigya.Microdot.SharedLogic.HttpService;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 
 namespace Gigya.Microdot.ServiceProxy
 {
@@ -95,9 +96,22 @@ namespace Gigya.Microdot.ServiceProxy
         {
             var resultReturnType = targetMethod.ReturnType.GetGenericArguments().SingleOrDefault() ?? typeof(object);
 
+            CancellationToken cancellationToken = CancellationToken.None;
+
+            if (args != null)
+            {
+                foreach (var arg in args)
+                {
+                    if (arg?.GetType() == typeof(CancellationToken))
+                    {
+                        cancellationToken = (CancellationToken)arg;
+                    }
+                }
+            }
+
             var request = new HttpServiceRequest(targetMethod, args);
 
-            return TaskConverter.ToStronglyTypedTask(InnerProvider.Invoke(request, resultReturnType), resultReturnType);
+            return TaskConverter.ToStronglyTypedTask(InnerProvider.Invoke(request, resultReturnType, cancellationToken), resultReturnType);
         }
 
     }

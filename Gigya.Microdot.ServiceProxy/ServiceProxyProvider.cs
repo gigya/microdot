@@ -235,7 +235,7 @@ namespace Gigya.Microdot.ServiceProxy
             TimeSpan? timeout = Timeout ?? requestTimeout;
             if (timeout.HasValue)
                 httpClient.Timeout = timeout.Value;
-
+         
             return httpClient;
         }
 
@@ -365,19 +365,17 @@ namespace Gigya.Microdot.ServiceProxy
             return node.Port ?? DefaultPort ?? config.DefaultPort;
         }
 
-
-        public virtual Task<object> Invoke(HttpServiceRequest request, Type resultReturnType)
+        public virtual Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, CancellationToken cancellationToken)
         {
-            return Invoke(request, resultReturnType, JsonSettings);
+            return Invoke(request, resultReturnType, JsonSettings, cancellationToken);
         }
-
-        public virtual async Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings)
+        public virtual async Task<object> Invoke(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings, CancellationToken cancellationToken)
         {
             using (_roundtripTime.NewContext())
-                return await InvokeCore(request, resultReturnType, jsonSettings).ConfigureAwait(false);
+                return await InvokeCore(request, resultReturnType, jsonSettings, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object> InvokeCore(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings)
+        private async Task<object> InvokeCore(HttpServiceRequest request, Type resultReturnType, JsonSerializerSettings jsonSettings, CancellationToken cancellationToken)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -487,8 +485,7 @@ namespace Gigya.Microdot.ServiceProxy
                         clientCallEvent.TargetHostName = nodeAndLoadBalancer.Node.Hostname;
                         clientCallEvent.TargetEnvironment = nodeAndLoadBalancer.TargetEnvironment;
                         clientCallEvent.TargetPort = actualPort;
-
-                        response = await httpClient.PostAsync(uri, httpContent).ConfigureAwait(false);
+                        response = await httpClient.PostAsync(uri, httpContent, cancellationToken).ConfigureAwait(false);
                         responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     }
                     catch (Exception ex)
@@ -667,7 +664,9 @@ namespace Gigya.Microdot.ServiceProxy
 
         public async Task<ServiceSchema> GetSchema()
         {
-            var result = await InvokeCore(new HttpServiceRequest { Target = new InvocationTarget { Endpoint = "schema" } }, typeof(ServiceSchema), JsonSettings).ConfigureAwait(false);
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+            var result = await InvokeCore(new HttpServiceRequest { Target = new InvocationTarget { Endpoint = "schema" } }, typeof(ServiceSchema), JsonSettings, cancellationToken).ConfigureAwait(false);
             return (ServiceSchema)result;
         }
 

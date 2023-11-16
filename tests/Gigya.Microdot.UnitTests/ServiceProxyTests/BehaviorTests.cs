@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gigya.Microdot.UnitTests.ServiceProxyTests
@@ -80,16 +81,16 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 //If we set Request Id we would like always to select same Host
                 TracingContext.SetRequestID("dumyId1");
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
-                var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
+                var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string),CancellationToken.None);
                 string host;
                 for (int i = 0; i < 50; i++)
                 {
-                    host = (string)await serviceProxy.Invoke(request, typeof(string));
+                    host = (string)await serviceProxy.Invoke(request, typeof(string),CancellationToken.None);
                     host.ShouldBe(hostOfFirstReq);
                 }
 
                 TracingContext.SetRequestID("dumyId2");
-                host = (string)await serviceProxy.Invoke(request, typeof(string));
+                host = (string)await serviceProxy.Invoke(request, typeof(string),CancellationToken.None);
                 host.ShouldNotBe(hostOfFirstReq);
             }
         }
@@ -145,7 +146,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
                 using (TracingContext.Tags.SetUnencryptedTag("test", 1))
                 using (TracingContext.SuppressCaching(CacheSuppress.RecursiveAllDownstreamServices))
-                    await serviceProxy.Invoke(request, typeof(string));
+                    await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                 var body = requestMessage;
                 Console.WriteLine($"error: {body}");
@@ -273,7 +274,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
             for (int i = 0; i < 50; i++)
             {
-                var host = (string)await serviceProxy.Invoke(request, typeof(string));
+                var host = (string)await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
                 host.ShouldBe($"{overrideHost}:{defaultPort}");
             }
 
@@ -324,7 +325,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
-                Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
+                Func<Task> act = () => serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
                 await act.ShouldThrowAsync<ServiceUnreachableException>();
                 counter.ShouldBe(2);
             }
@@ -382,7 +383,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < retries; i++)
                 {
-                    var server = await serviceProxy.Invoke(request, typeof(string));
+                    var server = await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
                     server.ShouldBe("host2");
                 }
 
@@ -442,7 +443,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 3; i++)
                 {
-                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
+                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                     await act.ShouldThrowAsync<HttpRequestException>();
                 }
@@ -496,7 +497,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 10; i++)
                 {
-                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string));
+                    Func<Task> act = () => serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                     await act.ShouldThrowAsync<ServiceUnreachableException>();
                 }
@@ -710,7 +711,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 for (int i = 0; i < 10; i++)
                 {
-                    var server = await serviceProxy.Invoke(request, typeof(string));
+                    var server = await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                     server.ShouldBe("someResponse");
                 }
@@ -800,7 +801,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                     if (httpsReachabilityCount == 0)
                         await Task.Delay(100);
 
-                    var server = await serviceProxy.Invoke(request, typeof(string));
+                    var server = await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                     bool httpsTestFinished = httpsTestCount > 0;
 
@@ -893,17 +894,17 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
-                var server = await serviceProxy.Invoke(request, typeof(string));
+                var server = await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                 server.ShouldBe("some HTTP response");
 
                 Assert.That(() => httpsTestCount, Is.EqualTo(1).After(10).Seconds.PollEvery(1).Seconds);
 
-                server = await serviceProxy.Invoke(request, typeof(string));
+                server = await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                 server.ShouldBe("some HTTPS response");
 
-                server = await serviceProxy.Invoke(request, typeof(string));
+                server = await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                 server.ShouldBe("some HTTP response");
             }
@@ -970,7 +971,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
 
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
 
-                await serviceProxy.Invoke(request, typeof(string));
+                await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
             }
         }
 		
@@ -1043,9 +1044,9 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
                 //If we set Request Id we would like always to select same Host
                 TracingContext.SetRequestID("dumyId1");
                 var request = new HttpServiceRequest("testMethod", null, new Dictionary<string, object>());
-                var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string));
+                var hostOfFirstReq = (string)await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
                 
-                var host = (string)await serviceProxy.Invoke(request, typeof(string));
+                var host = (string)await serviceProxy.Invoke(request, typeof(string), CancellationToken.None);
 
                 if (handleErrorAsCertificateError)
                     Assert.IsTrue(usedHttpsInSecondRequest);
